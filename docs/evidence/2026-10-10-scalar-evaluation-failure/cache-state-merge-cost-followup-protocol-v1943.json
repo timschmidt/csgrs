@@ -1,0 +1,391 @@
+{
+  "status": "Frozen after the complete original-cap comparison and before follow-up execution",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "original_record": "cache-state-merge-initial-cost-review-v1943.json",
+  "original_record_sha256": "162b241d5906e2dff0d972ddc556db1bc05c31a7c660696f30b65dc90608ee12",
+  "original_run": "cache-state-merge-preconditioned-cost-v1943",
+  "original_run_complete": true,
+  "initial_above_five_percent_increases": [
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_one",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          3435864,
+          3520038,
+          3508659,
+          3466013,
+          3441664,
+          3471531,
+          3432255,
+          3483241,
+          3513420
+        ],
+        "candidate": [
+          3822438,
+          3727264,
+          4096969,
+          3654659,
+          3697406,
+          3712825,
+          3734354,
+          3671178,
+          3771241
+        ]
+      },
+      "median_ns": {
+        "baseline": 3471531,
+        "candidate": 3727264
+      },
+      "median_percent_change": 7.366576879192488
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_integer_many",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          6696431,
+          6858040,
+          6543261,
+          6585959,
+          6504983,
+          6563540,
+          6564690,
+          7061805,
+          7086524
+        ],
+        "candidate": [
+          7023708,
+          7009669,
+          11365430,
+          6461937,
+          6464966,
+          6447158,
+          9729142,
+          6355584,
+          7077055
+        ]
+      },
+      "median_ns": {
+        "baseline": 6585959,
+        "candidate": 7009669
+      },
+      "median_percent_change": 6.433535343903607
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_many",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          3513489,
+          3552666,
+          3833747,
+          3547107,
+          3542847,
+          3594664,
+          6502934,
+          3485981,
+          3486101
+        ],
+        "candidate": [
+          3741043,
+          6920466,
+          3828727,
+          3703486,
+          3669138,
+          4198512,
+          3785350,
+          3659400,
+          3674778
+        ]
+      },
+      "median_ns": {
+        "baseline": 3547107,
+        "candidate": 3741043
+      },
+      "median_percent_change": 5.467441495280512
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          81014,
+          77265,
+          74825,
+          81834,
+          76565,
+          75604,
+          76944,
+          104953,
+          102933
+        ],
+        "candidate": [
+          122332,
+          78144,
+          80104,
+          86664,
+          81464,
+          97123,
+          82544,
+          79145,
+          81504
+        ]
+      },
+      "median_ns": {
+        "baseline": 77265,
+        "candidate": 81504
+      },
+      "median_percent_change": 5.4863133372160755
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          87374,
+          87574,
+          84954,
+          90894,
+          99423,
+          123991,
+          92793,
+          168098,
+          99943
+        ],
+        "candidate": [
+          88274,
+          131791,
+          147440,
+          94513,
+          144420,
+          94933,
+          103513,
+          104022,
+          96154
+        ]
+      },
+      "median_ns": {
+        "baseline": 92793,
+        "candidate": 103513
+      },
+      "median_percent_change": 11.552595562165259
+    },
+    {
+      "family": "algebraic",
+      "arguments": [
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          204136,
+          221955,
+          209515,
+          202516,
+          201976,
+          225824,
+          202306,
+          202656,
+          330497
+        ],
+        "candidate": [
+          201667,
+          217095,
+          227754,
+          196097,
+          217365,
+          195886,
+          216735,
+          202506,
+          214766
+        ]
+      },
+      "median_ns": {
+        "baseline": 204136,
+        "candidate": 214766
+      },
+      "median_percent_change": 5.207312771877581
+    }
+  ],
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "followup_strategy": "cache-state-merge-cost-followup-strategy-v1943.json",
+  "followup_strategy_sha256": "5bc85aad8ceb0dff1a2d72c52ef9fb8708be53db4c5bddf949fb55806d9e06a3",
+  "unchanged_inputs": "The complete original run remains immutable. Every fixture in each affected family is retained as an unchanged control; none is selected according to a favorable timing outcome.",
+  "jobs": [
+    {
+      "output": "cache-state-merge-focused-cost-v1943",
+      "prelude": "cache-state-merge-focused-cpu-prelude-v1943",
+      "repetitions": 27,
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "wall_seconds": 4,
+      "selection": {
+        "atan": [
+          [
+            "small_integer",
+            "4096"
+          ],
+          [
+            "small_reciprocal",
+            "4096"
+          ],
+          [
+            "medium_integer",
+            "512"
+          ],
+          [
+            "medium_reciprocal",
+            "512"
+          ],
+          [
+            "wide_integer",
+            "64"
+          ],
+          [
+            "wide_reciprocal",
+            "64"
+          ],
+          [
+            "dense_integer",
+            "4"
+          ],
+          [
+            "dense_reciprocal",
+            "4"
+          ],
+          [
+            "cached_integer_one",
+            "100000"
+          ],
+          [
+            "cached_reciprocal_one",
+            "100000"
+          ],
+          [
+            "cached_integer_many",
+            "100000"
+          ],
+          [
+            "cached_reciprocal_many",
+            "100000"
+          ]
+        ],
+        "inverse_trig": [
+          [
+            "cost",
+            "atan",
+            "0",
+            "64"
+          ],
+          [
+            "cost",
+            "atan",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "acos",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "terms",
+            "0",
+            "64"
+          ],
+          [
+            "cost",
+            "terms",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "pi",
+            "1024",
+            "64"
+          ]
+        ],
+        "algebraic": [
+          [
+            "cost",
+            "2",
+            "2",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "3",
+            "3",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "4",
+            "4",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "3",
+            "0",
+            "true",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "256",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "1024",
+            "true",
+            "64"
+          ]
+        ]
+      },
+      "scope": "Twenty-seven alternating-order pairs for every unchanged original fixture in each family with an initial increase above five percent. The family selection follows the strategy frozen before any candidate timings. Preserve all full-size inputs, binaries, checksums, allocation/work receipts, original 192 MiB/CPU 2/3-second/four-second wall limits and the identical 50-million-step CPU prelude. Keep initial and follow-up observations without causal attribution or a uniform-speedup claim."
+    }
+  ]
+}

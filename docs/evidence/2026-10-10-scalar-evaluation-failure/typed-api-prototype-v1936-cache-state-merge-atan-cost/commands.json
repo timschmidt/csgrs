@@ -1,0 +1,1769 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03202020423486829,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.314376681111753,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "repeat-0-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03445075685158372,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03372215712442994,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03384020924568176,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033960350789129734,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06620961893349886,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06688100332394242,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03477028617635369,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0664928499609232,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018567416816949844,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0180232641287148,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1160432524047792,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11655455688014627,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03448238596320152,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03382556000724435,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033721527084708214,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03377487417310476,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06603100197389722,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06635012989863753,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034009736962616444,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06584504479542375,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018091059289872646,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017698406241834164,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11588118318468332,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11642327578738332,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03418890479952097,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03375922469422221,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03375836508348584,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03419051505625248,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0658813719637692,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0660245418548584,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0341955148614943,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03395572071895003,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01789636304602027,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017843045759946108,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11619798094034195,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11651806998997927,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03426216961815953,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03401411697268486,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03389233583584428,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03404729487374425,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06643177382647991,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06622789800167084,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033882477320730686,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03375794505700469,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01767293782904744,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017599732615053654,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11584546603262424,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11635115975514054,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03442179970443249,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03422186290845275,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03378926310688257,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033696448896080256,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06603985093533993,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06647250102832913,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0342289530672133,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06584732420742512,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017978197429329157,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017785870004445314,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11582165723666549,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11666577914729714,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034488325007259846,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03398850932717323,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03413589904084802,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0337639837525785,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06579548818990588,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06606281874701381,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03384605934843421,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033737475983798504,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017433614004403353,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017597552854567766,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11582387704402208,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11691987095400691,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034504823852330446,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034634573850780725,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0344103598035872,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033972639590501785,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06592683773487806,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06585898296907544,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06577913882210851,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03396874014288187,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017813497688621283,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017701176926493645,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11586462426930666,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11658912478014827,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03438333189114928,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03410065080970526,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03401859709993005,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034010497853159904,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06612942507490516,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06645290274173021,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03445111773908138,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03441620897501707,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018247997853904963,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017893053125590086,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11607776023447514,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11647929158061743,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03392271418124437,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0336971590295434,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03376247501000762,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03360859490931034,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06549046793952584,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06559283193200827,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03340120008215308,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033609524834901094,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017579083796590567,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017544426955282688,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1157503118738532,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1936-cache-state-merge-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11622748943045735,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

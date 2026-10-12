@@ -1,0 +1,1193 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03189621213823557,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3142235307022929,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "repeat-0-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010440053883939981,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009631820023059845,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053843907080590725,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00540529889985919,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3673774469643831,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.368677088059485,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3174914070405066,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2672888096421957,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010771261062473059,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009688084945082664,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005485713016241789,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009561064187437296,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3677373719401658,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.318837305996567,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.26662952499464154,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.26623738184571266,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00958592165261507,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009404784999787807,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005418017972260714,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0054588159546256065,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3171900189481676,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3685464658774436,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31697963178157806,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3172736610285938,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01070263609290123,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00971628399565816,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005894496105611324,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005496412981301546,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3676852551288903,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3683110331185162,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3171749389730394,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3171132719144225,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010466061998158693,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009736671578139067,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005456575658172369,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0053799510933458805,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3175809318199754,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3185534258373082,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.26659717690199614,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31613591918721795,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010623801965266466,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00973743200302124,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009537085890769958,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00951249711215496,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3676452278159559,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3692475892603397,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31688377913087606,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31621528463438153,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010583514347672462,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009991494007408619,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009801007807254791,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009471480268985033,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3681117263622582,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.36922691995278,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3171914769336581,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3175583523698151,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010701695922762156,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009877393022179604,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009783749002963305,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055547188967466354,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3676069914363325,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3687208136543632,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.317396083381027,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31709212390705943,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01071597496047616,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00944582186639309,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009514497127383947,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009503059089183807,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3675710842944682,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.368578135035932,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31726276222616434,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1942-cache-state-merge-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.317398683167994,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

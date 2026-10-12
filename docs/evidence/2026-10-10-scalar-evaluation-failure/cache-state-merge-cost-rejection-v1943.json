@@ -1,0 +1,56 @@
+{
+  "status": "Do not retain the outlined cache-state merge after its capped family repeat failed",
+  "source_record": "typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "partial_cost_record": "cache-state-merge-partial-cost-review-v1943.json",
+  "cost_controller": "cache-state-merge-cost-validation-v1943.json",
+  "cost_controller_sha256": "8c3e97dfc3a7857e97af0e0591078563062b75b75957702d0a1e9a31923003ee",
+  "proposal_patch": "cache-state-merge-proposal-v1926.patch",
+  "proposal_patch_sha256": "05b1df74a270c3c4c8276beae0919039ddca79dcc85f75692d499dcd41755cf9",
+  "failure": {
+    "name": "algebraic-72-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": -24,
+    "wall_timeout": false,
+    "wall_seconds": 2.123114719055593,
+    "binary_sha256": "053d5aa83a583399c9de24a85085812e8aef41f0fe0c5009b44b85b698c1010f",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "successful_cost_processes": 2520,
+  "failed_capped_cost_processes": 1,
+  "separate_cpu_preludes": 2053,
+  "cost_gate_passed": false,
+  "runtime_retained": false,
+  "replays_started": false,
+  "main_runtime_admitted": false,
+  "passing_evidence": {
+    "verified_units": 651,
+    "negative_mutations": 247,
+    "positive_guard_baselines": 4,
+    "acceptance_tests": 10,
+    "runtime_validation_commands": 9
+  },
+  "limits": [
+    "The retained runtime remains v1836; the working isolated source is an unretained proposal. All original worktree entries and main runtime are preserved.",
+    "The fresh conditional proof remains valid for its exact source. Producer soundness, independent real existence, decoder equivalence, atomic publication, caller obligations and all thirteen whole-crate proof groups remain open.",
+    "The earlier v1857 BoundInfo extraction failed its timing gate. The v1638/v1710 original-cap failures, prior retained integer-control tradeoff and fixed pre-Verus baseline remain explicit; none is reset by this attempt.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered algebraic helpers. Whole-workspace/CI, native combination, full-board admission and all 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "next_priority": "Diagnose CPU work on the unchanged full-size algebraic fixture, preserving construction, warming and query stages and every original cap. Keep this outlined selector unretained until a concrete correction passes a fresh frozen comparison and the pending replays. A diagnostic with extra instrumentation or a larger cap cannot replace the failed run.",
+  "partial_cost_record_sha256": "313c8fd43e278a3f035e0e20f6f93c1785c2929dddc7133f26ed8764a2daa4b8"
+}

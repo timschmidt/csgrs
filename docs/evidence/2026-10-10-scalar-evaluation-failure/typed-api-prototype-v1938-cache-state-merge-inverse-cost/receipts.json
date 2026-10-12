@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "atan_small-0",
+    "command": {
+      "name": "atan_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01824540877714753,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48266",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-1",
+    "command": {
+      "name": "atan_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017666479106992483,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45147",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-2",
+    "command": {
+      "name": "atan_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017615981865674257,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46766",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-3",
+    "command": {
+      "name": "atan_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01773841306567192,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46227",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-4",
+    "command": {
+      "name": "atan_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01766983838751912,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56707",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-5",
+    "command": {
+      "name": "atan_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017681497149169445,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47247",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-6",
+    "command": {
+      "name": "atan_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017616851720958948,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49596",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-7",
+    "command": {
+      "name": "atan_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018048332072794437,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58166",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-8",
+    "command": {
+      "name": "atan_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017698686104267836,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47387",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-0",
+    "command": {
+      "name": "atan_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03370762802660465,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53026",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-1",
+    "command": {
+      "name": "atan_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06597295496612787,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60256",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-2",
+    "command": {
+      "name": "atan_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034576309379190207,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55116",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-3",
+    "command": {
+      "name": "atan_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03402424696832895,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57296",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-4",
+    "command": {
+      "name": "atan_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0338679077103734,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53746",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-5",
+    "command": {
+      "name": "atan_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033888156060129404,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "64586",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-6",
+    "command": {
+      "name": "atan_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03390456456691027,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53186",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-7",
+    "command": {
+      "name": "atan_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03395915077999234,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "66005",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-8",
+    "command": {
+      "name": "atan_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03394956234842539,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53926",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-0",
+    "command": {
+      "name": "acos_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06620909972116351,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110413",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-1",
+    "command": {
+      "name": "acos_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06701122503727674,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118952",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-2",
+    "command": {
+      "name": "acos_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0670977677218616,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "125621",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-3",
+    "command": {
+      "name": "acos_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06702967314049602,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "144680",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-4",
+    "command": {
+      "name": "acos_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06732436316087842,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110532",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-5",
+    "command": {
+      "name": "acos_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06641171500086784,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110732",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-6",
+    "command": {
+      "name": "acos_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06680352939292789,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114823",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-7",
+    "command": {
+      "name": "acos_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06648268131539226,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116842",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-8",
+    "command": {
+      "name": "acos_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06666134763509035,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112063",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-0",
+    "command": {
+      "name": "terms_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.035055805929005146,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81594",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-1",
+    "command": {
+      "name": "terms_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.035380544140934944,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83554",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-2",
+    "command": {
+      "name": "terms_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03486923919990659,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81905",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-3",
+    "command": {
+      "name": "terms_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01865148078650236,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "105563",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-4",
+    "command": {
+      "name": "terms_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0342387817800045,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "80775",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-5",
+    "command": {
+      "name": "terms_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03560725785791874,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "84384",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-6",
+    "command": {
+      "name": "terms_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.035171688068658113,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "87214",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-7",
+    "command": {
+      "name": "terms_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034334704745560884,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "98684",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-8",
+    "command": {
+      "name": "terms_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03429863788187504,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "94903",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-0",
+    "command": {
+      "name": "terms_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06635505007579923,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "95374",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-1",
+    "command": {
+      "name": "terms_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06691254070028663,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "93523",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-2",
+    "command": {
+      "name": "terms_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06702246284112334,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "89824",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-3",
+    "command": {
+      "name": "terms_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06683334615081549,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "147850",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-4",
+    "command": {
+      "name": "terms_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06742675695568323,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103363",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-5",
+    "command": {
+      "name": "terms_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06731787323951721,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "139511",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-6",
+    "command": {
+      "name": "terms_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06657327432185411,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "100283",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-7",
+    "command": {
+      "name": "terms_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06697626691311598,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "92934",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-8",
+    "command": {
+      "name": "terms_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06669695628806949,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "87384",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010149854235351086,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49416",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009740012232214212,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48757",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00997530622407794,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57656",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00968265626579523,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "61936",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00971683394163847,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60885",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009782179724425077,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56166",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009838046040385962,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56846",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009776429738849401,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "99063",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1938-cache-state-merge-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01001922320574522,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49367",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

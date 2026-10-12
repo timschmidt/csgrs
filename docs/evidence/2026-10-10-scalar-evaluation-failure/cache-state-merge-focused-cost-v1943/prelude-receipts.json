@@ -1,0 +1,6704 @@
+[
+  {
+    "before": "atan-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-72-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-73-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-73-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-74-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-74-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-75-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-75-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-76-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-76-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-77-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-77-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-78-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-78-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-79-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-79-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-80-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-80-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-81-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-81-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-82-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-82-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-83-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-83-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-84-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-84-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-85-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-85-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-86-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-86-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-87-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-87-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-88-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-88-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-89-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-89-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-90-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-90-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-91-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-91-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-92-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-92-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-93-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-93-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-94-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-94-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-95-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-95-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-96-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-96-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-97-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-97-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-98-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-98-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-99-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-99-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-100-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-100-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-101-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-101-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-102-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-102-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-103-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-103-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-104-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-104-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-105-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-105-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-106-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-106-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-107-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-107-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-108-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-108-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-109-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-109-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-110-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-110-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-111-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-111-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-112-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-112-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-113-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-113-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-114-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-114-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-115-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-115-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-116-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-116-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-117-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-117-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-118-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-118-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-119-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-119-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-120-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-120-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-121-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-121-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-122-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-122-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-123-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-123-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-124-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-124-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-125-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-125-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-126-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-126-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-127-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-127-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-128-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-128-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-129-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-129-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-130-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-130-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-131-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-131-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-132-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-132-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-133-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-133-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-134-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-134-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-135-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-135-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-136-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-136-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-137-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-137-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-138-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-138-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-139-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-139-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-140-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-140-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-141-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-141-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-142-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-142-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-143-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-143-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-144-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-144-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-145-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-145-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-146-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-146-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-147-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-147-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-148-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-148-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-149-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-149-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-150-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-150-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-151-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-151-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-152-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-152-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-153-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-153-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-154-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-154-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-155-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-155-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-156-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-156-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-157-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-157-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-158-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-158-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-159-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-159-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-160-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-160-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-161-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-161-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-162-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-162-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-163-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-163-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-164-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-164-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-165-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-165-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-166-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-166-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-167-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-167-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-168-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-168-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-169-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-169-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-170-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-170-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-171-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-171-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-172-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-172-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-173-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-173-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-174-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-174-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-175-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-175-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-176-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-176-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-177-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-177-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-178-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-178-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-179-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-179-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-180-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-180-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-181-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-181-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-182-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-182-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-183-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-183-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-184-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-184-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-185-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-185-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-186-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-186-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-187-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-187-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-188-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-188-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-189-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-189-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-190-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-190-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-191-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-191-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-192-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-192-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-193-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-193-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-194-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-194-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-195-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-195-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-196-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-196-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-197-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-197-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-198-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-198-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-199-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-199-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-200-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-200-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-201-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-201-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-202-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-202-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-203-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-203-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-204-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-204-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-205-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-205-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-206-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-206-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-207-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-207-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-208-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-208-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-209-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-209-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-210-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-210-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-211-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-211-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-212-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-212-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-213-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-213-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-214-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-214-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-215-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-215-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-216-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-216-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-217-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-217-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-218-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-218-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-219-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-219-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-220-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-220-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-221-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-221-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-222-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-222-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-223-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-223-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-224-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-224-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-225-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-225-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-226-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-226-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-227-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-227-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-228-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-228-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-229-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-229-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-230-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-230-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-231-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-231-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-232-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-232-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-233-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-233-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-234-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-234-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-235-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-235-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-236-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-236-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-237-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-237-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-238-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-238-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-239-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-239-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-240-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-240-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-241-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-241-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-242-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-242-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-243-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-243-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-244-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-244-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-245-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-245-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-246-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-246-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-247-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-247-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-248-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-248-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-249-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-249-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-250-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-250-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-251-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-251-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-252-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-252-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-253-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-253-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-254-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-254-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-255-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-255-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-256-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-256-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-257-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-257-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-258-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-258-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-259-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-259-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-260-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-260-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-261-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-261-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-262-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-262-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-263-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-263-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-264-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-264-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-265-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-265-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-266-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-266-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-267-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-267-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-268-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-268-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-269-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-269-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-270-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-270-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-271-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-271-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-272-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-272-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-273-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-273-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-274-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-274-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-275-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-275-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-276-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-276-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-277-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-277-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-278-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-278-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-279-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-279-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-280-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-280-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-281-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-281-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-282-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-282-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-283-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-283-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-284-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-284-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-285-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-285-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-286-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-286-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-287-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-287-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-288-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-288-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-289-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-289-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-290-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-290-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-291-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-291-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-292-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-292-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-293-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-293-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-294-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-294-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-295-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-295-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-296-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-296-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-297-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-297-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-298-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-298-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-299-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-299-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-300-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-300-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-301-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-301-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-302-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-302-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-303-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-303-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-304-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-304-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-305-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-305-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-306-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-306-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-307-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-307-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-308-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-308-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-309-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-309-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-310-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-310-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-311-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-311-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-312-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-312-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-313-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-313-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-314-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-314-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-315-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-315-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-316-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-316-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-317-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-317-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-318-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-318-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-319-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-319-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-320-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-320-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-321-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-321-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-322-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-322-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-323-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "atan-323-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-81-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-81-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-82-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-82-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-83-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-83-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-84-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-84-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-85-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-85-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-86-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-86-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-87-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-87-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-88-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-88-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-89-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-89-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-90-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-90-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-91-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-91-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-92-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-92-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-93-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-93-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-94-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-94-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-95-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-95-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-96-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-96-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-97-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-97-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-98-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-98-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-99-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-99-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-100-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-100-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-101-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-101-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-102-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-102-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-103-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-103-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-104-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-104-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-105-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-105-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-106-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-106-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-107-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-107-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-108-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-108-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-109-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-109-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-110-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-110-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-111-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-111-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-112-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-112-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-113-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-113-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-114-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-114-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-115-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-115-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-116-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-116-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-117-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-117-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-118-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-118-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-119-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-119-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-120-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-120-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-121-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-121-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-122-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-122-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-123-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-123-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-124-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-124-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-125-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-125-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-126-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-126-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-127-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-127-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-128-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-128-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-129-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-129-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-130-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-130-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-131-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-131-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-132-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-132-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-133-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-133-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-134-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-134-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-135-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-135-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-136-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-136-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-137-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-137-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-138-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-138-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-139-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-139-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-140-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-140-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-141-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-141-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-142-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-142-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-143-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-143-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-144-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-144-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-145-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-145-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-146-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-146-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-147-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-147-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-148-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-148-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-149-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-149-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-150-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-150-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-151-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-151-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-152-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-152-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-153-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-153-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-154-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-154-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-155-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-155-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-156-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-156-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-157-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-157-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-158-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-158-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-159-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-159-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-160-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-160-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-161-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-161-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "algebraic-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  }
+]

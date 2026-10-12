@@ -1,0 +1,80 @@
+{
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "runner_sha256": "eff11ff3727b89fa204c579f78214d1f1f61f301eb4642bd3b0888b340b98044",
+  "followup_strategy_sha256": "5bc85aad8ceb0dff1a2d72c52ef9fb8708be53db4c5bddf949fb55806d9e06a3",
+  "complete": false,
+  "steps": [
+    {
+      "label": "standalone",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_cache_state_merge_costs.py"
+      ],
+      "helper_sha256": "95b4d63091a86aa06fb08b8e0d2159177b254121f4ccd24b1f2284422070e0ab",
+      "exit_code": 0,
+      "seconds": 96.30496917571872,
+      "stdout": "cache-state-merge-cost-controller-v1943/standalone.stdout",
+      "stdout_sha256": "3b3f96c127deb49c1eaeb76e0085b93659509cf5760a08d14ec0d04a6d9ac4ae",
+      "stderr": "cache-state-merge-cost-controller-v1943/standalone.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "paired",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_cache_state_merge_cost.py"
+      ],
+      "helper_sha256": "67984bc6996a80a157ee3077d2c70fc507ffc99a55bbf15f8f4883412325b393",
+      "exit_code": 0,
+      "seconds": 224.22145516006276,
+      "stdout": "cache-state-merge-cost-controller-v1943/paired.stdout",
+      "stdout_sha256": "4b912d24c9729cef979fc9b1b3661fc317d3a32c8820db2fab9c13b4254cf0a0",
+      "stderr": "cache-state-merge-cost-controller-v1943/paired.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "initial-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_cache_state_merge_initial_costs.py"
+      ],
+      "helper_sha256": "865849afc695056b120ff64a620c73682a6ed8913c48e5fca006975721f718dd",
+      "exit_code": 0,
+      "seconds": 1.6301284180954099,
+      "stdout": "cache-state-merge-cost-controller-v1943/initial-review.stdout",
+      "stdout_sha256": "2b68eb18d028eb4cda0b0c157b76f3df91ffd85ddc1709d1bee6a98ccff3e148",
+      "stderr": "cache-state-merge-cost-controller-v1943/initial-review.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "freeze-followup",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/prepare_cache_state_merge_cost_followup.py"
+      ],
+      "helper_sha256": "b6e81e289b57bc21c0e85a2f3520b19c56e72acb7221ba38a6f47f063fc473a4",
+      "exit_code": 0,
+      "seconds": 0.03351998096331954,
+      "stdout": "cache-state-merge-cost-controller-v1943/freeze-followup.stdout",
+      "stdout_sha256": "2aacecbf3f1515f63092567ecf0c4229aa8f107e44fef8aebf27cac854424833",
+      "stderr": "cache-state-merge-cost-controller-v1943/freeze-followup.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "followup-0",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_cache_state_merge_followup.py",
+        "0"
+      ],
+      "helper_sha256": "63a6c5c22050eb0bd3c99b38d948cf8517b12c2261aa39ac1467916017dd0e8d",
+      "exit_code": 1,
+      "seconds": 202.47532285610214,
+      "stdout": "cache-state-merge-cost-controller-v1943/followup-0.stdout",
+      "stdout_sha256": "2fa92420e4063df3d3f621367430e28a958fd79370e5dc9ce5188800b4c088f3",
+      "stderr": "cache-state-merge-cost-controller-v1943/followup-0.stderr",
+      "stderr_sha256": "1fb40ef6a9c70ff6450837c4a88188597d453d6056f04c559c0e5fa18dd81962"
+    }
+  ],
+  "scope": "Sequential standalone and paired original-cap costs, original receipt audit, predeclared family repeats when needed, and final cost audit. No concurrent builds/tests/measurements or source edits; all unsuccessful steps remain recorded."
+}

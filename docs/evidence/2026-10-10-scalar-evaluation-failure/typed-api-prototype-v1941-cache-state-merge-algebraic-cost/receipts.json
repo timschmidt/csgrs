@@ -1,0 +1,1622 @@
+[
+  {
+    "name": "square_roots-0",
+    "command": {
+      "name": "square_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03446663590148091,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "156040",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-1",
+    "command": {
+      "name": "square_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0339095052331686,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112512",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-2",
+    "command": {
+      "name": "square_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033863597083836794,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112102",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-3",
+    "command": {
+      "name": "square_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03389815520495176,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108573",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-4",
+    "command": {
+      "name": "square_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03393866308033466,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "133451",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-5",
+    "command": {
+      "name": "square_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03385501867160201,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109232",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-6",
+    "command": {
+      "name": "square_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03393383277580142,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "140231",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-7",
+    "command": {
+      "name": "square_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03385058930143714,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110952",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-8",
+    "command": {
+      "name": "square_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034260590095072985,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111003",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-0",
+    "command": {
+      "name": "cube_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7671494991518557,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1168040",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-1",
+    "command": {
+      "name": "cube_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7677623378112912,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1150701",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-2",
+    "command": {
+      "name": "cube_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7677246602252126,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1141912",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-3",
+    "command": {
+      "name": "cube_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7675250140018761,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1159091",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-4",
+    "command": {
+      "name": "cube_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7680150610394776,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1142912",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-5",
+    "command": {
+      "name": "cube_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7678258237428963,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1150291",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-6",
+    "command": {
+      "name": "cube_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7681677900254726,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1147532",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-7",
+    "command": {
+      "name": "cube_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7679265062324703,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1180099",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-8",
+    "command": {
+      "name": "cube_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.767294880002737,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1168700",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-0",
+    "command": {
+      "name": "fourth_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.819855285808444,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11614643",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-1",
+    "command": {
+      "name": "fourth_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8195337182842195,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11690898",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-2",
+    "command": {
+      "name": "fourth_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8697482240386307,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11846908",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-3",
+    "command": {
+      "name": "fourth_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8700395449995995,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11706117",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-4",
+    "command": {
+      "name": "fourth_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.869622902944684,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11731606",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-5",
+    "command": {
+      "name": "fourth_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.819037833251059,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11622443",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-6",
+    "command": {
+      "name": "fourth_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.819215141236782,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11860027",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-7",
+    "command": {
+      "name": "fourth_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8699222533032298,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11812940",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-8",
+    "command": {
+      "name": "fourth_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8200778206810355,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "16558464",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-0",
+    "command": {
+      "name": "reciprocals-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06699788477271795,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "194706",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-1",
+    "command": {
+      "name": "reciprocals-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06612089602276683,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "185437",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-2",
+    "command": {
+      "name": "reciprocals-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06584713514894247,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "193067",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-3",
+    "command": {
+      "name": "reciprocals-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06581976637244225,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "193877",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-4",
+    "command": {
+      "name": "reciprocals-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06590513000264764,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "192857",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-5",
+    "command": {
+      "name": "reciprocals-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06598666496574879,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "203457",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-6",
+    "command": {
+      "name": "reciprocals-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06655281595885754,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "198056",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-7",
+    "command": {
+      "name": "reciprocals-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06581807741895318,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "189337",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-8",
+    "command": {
+      "name": "reciprocals-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06576556898653507,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "185287",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-0",
+    "command": {
+      "name": "wide_256-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03355495911091566,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "260682",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-1",
+    "command": {
+      "name": "wide_256-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03347712382674217,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "264552",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-2",
+    "command": {
+      "name": "wide_256-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033582796808332205,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "268102",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-3",
+    "command": {
+      "name": "wide_256-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03368841903284192,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "265002",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-4",
+    "command": {
+      "name": "wide_256-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03356022806838155,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "260873",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-5",
+    "command": {
+      "name": "wide_256-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0339531609788537,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "255963",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-6",
+    "command": {
+      "name": "wide_256-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03380936197936535,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "269111",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-7",
+    "command": {
+      "name": "wide_256-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03377450397238135,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "263762",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-8",
+    "command": {
+      "name": "wide_256-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033709597773849964,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "269051",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-0",
+    "command": {
+      "name": "wide_1024_inverse-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03372558671981096,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "353806",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-1",
+    "command": {
+      "name": "wide_1024_inverse-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03364588273689151,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "352426",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-2",
+    "command": {
+      "name": "wide_1024_inverse-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033514991868287325,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "352586",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-3",
+    "command": {
+      "name": "wide_1024_inverse-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03350266208872199,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "360445",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-4",
+    "command": {
+      "name": "wide_1024_inverse-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033838968724012375,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "440370",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-5",
+    "command": {
+      "name": "wide_1024_inverse-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0339987981133163,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "364625",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-6",
+    "command": {
+      "name": "wide_1024_inverse-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03434463497251272,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "354815",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-7",
+    "command": {
+      "name": "wide_1024_inverse-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034358033910393715,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "354736",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-8",
+    "command": {
+      "name": "wide_1024_inverse-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03444985719397664,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "357525",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]
