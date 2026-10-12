@@ -1,0 +1,81 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.386414801236242,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cache-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 27.474551332183182,
+      "sources_unchanged": true,
+      "stdout_sha256": "493b830712bc014443ed1bce5e2c0817e06c1fccd7ed99914932e2c8e0cfc12f",
+      "stderr_sha256": "b7e511cbe689a195020727a73ba1f723b0e7de291b3044703a02aace3e18ebaf"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 123.1525795031339,
+      "sources_unchanged": true,
+      "stdout_sha256": "7b63ea4fca795b2d278129853d532f8c2e8bced081a8ada60f1a787224984009",
+      "stderr_sha256": "f26b1fb293a5ef4c0b669da1ac402eaaab5568bc84afa69f28d1213fee4d958c"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/diagnostic-v2/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 162.1707929316908,
+      "sources_unchanged": true,
+      "stdout_sha256": "3f684bb7299ffe874b7b954db8947d1a01c8043dc1253c57b66763a7bba8c4b4",
+      "stderr_sha256": "585b7f63664aeb8dbc69b3e0a884bbaa0e51f11e7d446705dc33483e3fc989d9"
+    }
+  ],
+  "complete": true,
+  "counter_rows": 3,
+  "timing_is_perturbed": true,
+  "runtime_admitted": false
+}

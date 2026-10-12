@@ -1,0 +1,28 @@
+{
+  "scope": "Diagnose retained certificate projections on the complete native boards.\n\nMake a separate instrumented source and target. Preserve the original runtime\ncandidate, fallback, ownership, query limits and fixtures. Counter/timer costs\nand changed code generation mean this is not matched speedup evidence.\n",
+  "runner_sha256": "fe159dacc01afb6f7a8946bd6170e26ddacfba9a1cdb6cc20a19f62b0d6d6951",
+  "preparation_sha256": "04776730ea13e3cc582f59cf4f9ca190746860b2f303e9b402a467bfb58e40e7",
+  "candidate_delta_sha256": "c456808964256d7dde35084bb3d5110f9b2378d6b0b55ca66d4243df4c1bda8d",
+  "only_instrumented_sources": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "c56ab88e4ec5d06578c819224ce4ea54a986ede86482ad549992c098158ddd69",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "ff0f503bfc86970767a5e02d85f84478f6fb723171dde5a20fdf6c0f6dc94690",
+    "crates/hyperreal/src/computable/node/persistent_laurent_diagnostic.rs": "a05965cebaf06259e6dd599e47feb5c1fc9319511a19c5a48d68855be0bef65d"
+  },
+  "instrumentation_archive_sha256": "0d7324ecdb1e0b3880aaa56683ca9ae54e356955e2dcdf4fcdced3fa2a475593",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/diagnostic-v1/target"
+  },
+  "outcome_order": [
+    "cold_success",
+    "retained_success",
+    "cold_decline",
+    "retry_success",
+    "retry_decline"
+  ],
+  "unchanged_full_board_limit_seconds": 120,
+  "runtime_admitted": false
+}

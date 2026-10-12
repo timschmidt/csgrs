@@ -1,0 +1,90 @@
+{
+  "decision": "Diagnostic retained; investigate successful quadratic projection costs without removing the proven-necessary fallback. No new runtime admission.",
+  "observations": [
+    {
+      "projection": "rational",
+      "calls": 108199,
+      "cold_success": 251,
+      "retained_success": 75996,
+      "cold_decline": 7987,
+      "retry_success": 0,
+      "retry_decline": 23965,
+      "first_pass_wall_seconds": 0.298348303,
+      "retry_wall_seconds": 0.287514312,
+      "first_pass_node_visits": 859586
+    },
+    {
+      "projection": "quadratic",
+      "calls": 19296432,
+      "cold_success": 25647,
+      "retained_success": 17280775,
+      "cold_decline": 16259,
+      "retry_success": 0,
+      "retry_decline": 1973751,
+      "first_pass_wall_seconds": 29.216456027,
+      "retry_wall_seconds": 17.625391592,
+      "first_pass_node_visits": 81397294
+    },
+    {
+      "projection": "compact",
+      "calls": 29484,
+      "cold_success": 17607,
+      "retained_success": 11715,
+      "cold_decline": 0,
+      "retry_success": 0,
+      "retry_decline": 162,
+      "first_pass_wall_seconds": 1.043154653,
+      "retry_wall_seconds": 0.044428152,
+      "first_pass_node_visits": 1464382
+    }
+  ],
+  "counter_rows": 3,
+  "pi_multiple_rows_observed": 0,
+  "instrumented_full_board": {
+    "worker_cpu_seconds": 160.23915283,
+    "unchanged_limit_seconds": 120,
+    "passed": false,
+    "findings": [
+      12,
+      197
+    ]
+  },
+  "meaning_of_counts": "Retained success means the first recognizer used at least one cached certificate and its requested projection succeeded. It does not mean a root cache hit. Cold decline means no retained certificate was used. Retry success/decline describes the original recognizer after an unsuccessful retained pass.",
+  "interpretation": "Quadratic projection dominates this recorded workload. Its retained-success calls account for about 23.8 seconds of first-pass timers; unsuccessful original retries add about 17.6 seconds. These observations guide another consumer-cost experiment but do not prove a cache or rewrite will meet the board gate.",
+  "fallback_requirement": "No fallback recovered a proof on these two boards, but expansion_at_a_term_limit_retries_the_original_proof is a passing deterministic counterexample to removing it. The eight/nine-term frontier and all original limits remain part of every later candidate gate.",
+  "timing_limits": "Instrumentation changes code generation and adds timer/counter overhead. Durations are partial wall-time measurements around recognition/projection; success timing excludes later reconstruction and memo destruction. Inclusive work elsewhere may overlap. These are not matched speedup measurements, CPU profile percentages, or an extrapolation to every caller.",
+  "compilation_failure_preserved": "diagnostic-v1 failed before executing its five tests because its counter format string had an unmatched closing brace. diagnostic-v1-correction.json and both source archives/logs preserve that failure and the corrected diagnostic-v2 build.",
+  "next_step": "Evaluate a narrow path for obtaining and combining already certified quadratic coefficients, reducing vector allocation on successful queries. Keep original recognition as the fallback, preserve proof publication and ownership, and measure first/warm/cloned/opaque controls before any retention. Also update public recognition-budget wording before considering a cache runtime admission.",
+  "artifacts_sha256": {
+    "diagnostic-v1/cache-regressions.stderr": "fa22d397c63208edc9153676b1fdec75365dc6a70ad5868882eb81de7e8b2c48",
+    "diagnostic-v1/cache-regressions.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/instrumentation.patch": "d94517742036b0aa3fa14efa0ebe13d2b77155b0fddeadaa80318b57d7353337",
+    "diagnostic-v1/instrumentation.tar.gz": "0d7324ecdb1e0b3880aaa56683ca9ae54e356955e2dcdf4fcdced3fa2a475593",
+    "diagnostic-v1/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/protocol.json": "036464bb1a5d9fc1a143103fe36129f7342d89584fc72e9ae92a88427ea6e1ce",
+    "diagnostic-v1/result.json": "cce43ba7551760cbf5d78828264211077bc32fd175004e939361174d1d9acb22",
+    "diagnostic-v2/binary.json": "bb990e0c5b25885e79d8ec55875ad3fd32a5bd5fc2f758461d06b3cf9c4f121a",
+    "diagnostic-v2/build-board-tests.stderr": "f26b1fb293a5ef4c0b669da1ac402eaaab5568bc84afa69f28d1213fee4d958c",
+    "diagnostic-v2/build-board-tests.stdout": "7b63ea4fca795b2d278129853d532f8c2e8bced081a8ada60f1a787224984009",
+    "diagnostic-v2/cache-regressions.stderr": "b7e511cbe689a195020727a73ba1f723b0e7de291b3044703a02aace3e18ebaf",
+    "diagnostic-v2/cache-regressions.stdout": "493b830712bc014443ed1bce5e2c0817e06c1fccd7ed99914932e2c8e0cfc12f",
+    "diagnostic-v2/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/counters.json": "febdafcb97bfd460e2855966e8784244d9bf41b3a0571d23326547dfc14feca4",
+    "diagnostic-v2/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/full-board.stderr": "585b7f63664aeb8dbc69b3e0a884bbaa0e51f11e7d446705dc33483e3fc989d9",
+    "diagnostic-v2/full-board.stdout": "3f684bb7299ffe874b7b954db8947d1a01c8043dc1253c57b66763a7bba8c4b4",
+    "diagnostic-v2/instrumentation.patch": "ca4566f5cb69f47f99d754548ba52e0742fce35aed34a8572b2ff989f380b87a",
+    "diagnostic-v2/instrumentation.tar.gz": "b5278aea7b00b33a13b397be3231c4e5224e0c26aa3baa016ef34445e1387216",
+    "diagnostic-v2/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/protocol.json": "55304bba5ae2cfee6e9585856c85167a51d71ecf2d34962fc60ad5234181a22e",
+    "diagnostic-v2/result.json": "cb2f365dd150de516ba7d92abed0392fa0ee3ef2bca3bf9d66fcf0825de8106c"
+  },
+  "runtime_candidate_unchanged": true,
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
