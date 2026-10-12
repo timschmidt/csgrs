@@ -1,0 +1,76 @@
+{
+  "protocol_sha256": "f8665e3e68691e5223582637b37ddb69d5890257c338c3be703cf3a1d679f1a1",
+  "runs": [
+    {
+      "name": "resolve",
+      "exit_code": 0,
+      "seconds": 0.06693401001393795,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "8406354181ff073458b5323e767e8b034a9217741a35a41fe2bc049684428588"
+    },
+    {
+      "name": "workspace-msrv",
+      "exit_code": 0,
+      "seconds": 1.5874936250038445,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "9eff94f2aecd00b4844d13fec4dbb2acc35a9eea48b039065d6d5bc338a5424b"
+    },
+    {
+      "name": "workspace-msrv-no-std",
+      "exit_code": 0,
+      "seconds": 0.9573998949490488,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a6887c71128bcca33e7591de8979b9bdd3bf59f6fcf1233790ae51c4e37ce20a"
+    },
+    {
+      "name": "i686-no-std",
+      "exit_code": 0,
+      "seconds": 1.294005470816046,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "47207978d56e8fcf9bb258070de46868b76d7fe2ac51274aa22884985fea3c1f"
+    },
+    {
+      "name": "wasm32-no-std",
+      "exit_code": 0,
+      "seconds": 1.0877655949443579,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "bce1ccac7dd183e0f28d4684f8e519c14d6b23d8a29febf6d7159898f83d9a66"
+    },
+    {
+      "name": "clippy-all-features",
+      "exit_code": 101,
+      "seconds": 0.0970647232607007,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": false,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e694fb6a50a56a1b9fa9832bf132f1ffdc6e0e626ada13f682581443b82f7680"
+    }
+  ],
+  "complete": false,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "portable_source_unchanged": true,
+  "dependency_artifacts_unchanged": true,
+  "tooling_unchanged": true,
+  "locked_inputs_sha256": "09dc6d5bae8b90516f7c6373501bdacec968d7a27d9b7330ac7dcb0dbbdc11b3",
+  "package_record_sha256": null,
+  "export_sha256": null,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

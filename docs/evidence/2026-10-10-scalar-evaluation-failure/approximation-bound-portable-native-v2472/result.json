@@ -1,0 +1,52 @@
+{
+  "protocol_sha256": "625ff099008d9509b87c7eaf414907a78d5791de4a3334359f4d4b8191cff9cb",
+  "runs": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 0.019344063941389322,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observations": null
+    },
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "seconds": 0.14749070489779115,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observations": null
+    },
+    {
+      "name": "execute",
+      "exit_code": 0,
+      "seconds": 1.5716698998585343,
+      "gate_passed": true,
+      "stdout_sha256": "43fd3e9afe540b9b370669c5588b9b080dededde0c2f5fa6fe53577258a8b094",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "observations": {
+        "fixtures": "198258",
+        "queries": "2775612",
+        "plain_values": "5551224",
+        "counted_values": "5551224",
+        "unknown": "925372",
+        "overflow": "396474",
+        "exact": "1450504",
+        "inexact": "3262",
+        "diagnostic_checksum": "83aad051019b1358"
+      }
+    }
+  ],
+  "complete": true,
+  "binary_sha256": "0d3d49d4e1660fd637a3c52e7cb342ffb91f5945295c4c122a2fd0479b6fda9f",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "dependency_inputs_unchanged": true,
+  "harness_inputs_unchanged_during_validation": true,
+  "fresh_scalar_runtime_tests": 0,
+  "fresh_isolated_producer_corpus_executions": 1,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

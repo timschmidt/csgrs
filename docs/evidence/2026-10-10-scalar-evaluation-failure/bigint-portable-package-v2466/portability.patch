@@ -1,0 +1,29 @@
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -106 +106 @@
+-#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/verified/mod.rs"]
++#[path = "../verification/verified/mod.rs"]
+@@ -109 +109 @@
+-#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/magnitude_model.rs"]
++#[path = "../verification/magnitude_model.rs"]
+@@ -112 +112 @@
+-#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/bit_length_model.rs"]
++#[path = "../verification/bit_length_model.rs"]
+@@ -115 +115 @@
+-#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/digit_scan_model.rs"]
++#[path = "../verification/digit_scan_model.rs"]
+@@ -118 +118 @@
+-#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/word_scan_model.rs"]
++#[path = "../verification/word_scan_model.rs"]
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -36 +36,2 @@
+-license = "MIT OR Apache-2.0"
++license = "Apache-2.0"
++publish = false
+@@ -109 +110 @@
+-# Local verification preview; excluded from the production workspace until admitted.
++# Local dependency package with self-contained proof inputs; not a registry release.
+@@ -113 +114 @@
+-unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)'] }
++unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)', 'cfg(verus_keep_ghost_body)'] }

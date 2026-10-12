@@ -1,0 +1,5 @@
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -18,0 +19,2 @@
++    "/Cargo.toml.orig",
++    "/.cargo_vcs_info.json",

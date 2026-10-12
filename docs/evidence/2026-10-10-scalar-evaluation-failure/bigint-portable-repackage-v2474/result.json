@@ -1,0 +1,43 @@
+{
+  "protocol_sha256": "63be2c1b52c45d6780bd26024b1b1f82ce695cbd237e1cba6a7442a4614ecc95",
+  "runs": [
+    {
+      "name": "packaged-build",
+      "exit_code": 0,
+      "seconds": 1.1962598850950599,
+      "warnings": 0,
+      "verification_results": null,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1be2404e01ec5a9bb83f27b6158f9231aa951d531e7e59b05e6f43cda6728bf8"
+    },
+    {
+      "name": "packaged-proof",
+      "exit_code": 0,
+      "seconds": 7.368258201051503,
+      "warnings": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 453,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true,
+      "stdout_sha256": "2605a27f1086dac92f2c126c1d035e100b06cf86d04d2d5530338120350150ec",
+      "stderr_sha256": "a77649e922470f608d5f68e20e448455fad05b1e1284ed08461efa9343a0a71c"
+    }
+  ],
+  "complete": true,
+  "reused_archive_integrity_gate_passed": true,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "packaging_inputs_unchanged": true,
+  "dependency_artifacts_unchanged": true,
+  "tooling_unchanged": true,
+  "package_record_sha256": "f4bf59ed67119da5b117c5b1a947c63ebb2839f76fc84b0663e7b18928aa1620",
+  "export_sha256": "b3839fcf09b69569a8260c29f94211972c7c9a0c4ef24bd33576530d3a1506b1",
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

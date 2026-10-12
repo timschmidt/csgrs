@@ -1,0 +1,4 @@
+{"$message_type":"artifact","artifact":"/tmp/csgrs-bigint-portable-repackage-v2473/proof-artifacts/num_bigint-424a953ec75d9d03.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/tmp/csgrs-bigint-portable-repackage-v2473/proof-artifacts/num_bigint-424a953ec75d9d03.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/tmp/csgrs-bigint-portable-repackage-v2473/proof-artifacts/libnum_bigint-424a953ec75d9d03.rmeta","emit":"metadata"}
+{"$message_type":"artifact","artifact":"/tmp/csgrs-bigint-portable-repackage-v2473/proof-artifacts/libnum_bigint-424a953ec75d9d03.rlib","emit":"link"}

@@ -1,0 +1,22 @@
+{
+  "status": "Frozen before populating the cache from the unchanged lockfile",
+  "runner_sha256": "7635865e9047fa3cd03e470d89c624ba8655e54d4b3be416701551fe0d4509db",
+  "previous_result_sha256": "8babb9dce2a6ed4b3d5005534060ef2027ffe7a98da4c55e1ad468e52a1a2065",
+  "previous_protocol_sha256": "f8665e3e68691e5223582637b37ddb69d5890257c338c3be703cf3a1d679f1a1",
+  "locked_inputs_sha256": "09dc6d5bae8b90516f7c6373501bdacec968d7a27d9b7330ac7dcb0dbbdc11b3",
+  "command": [
+    "cargo",
+    "fetch",
+    "--locked",
+    "--target",
+    "x86_64-unknown-linux-gnu",
+    "--manifest-path",
+    "/tmp/csgrs-bigint-portable-validation-v2468/num-bigint/Cargo.toml"
+  ],
+  "environment_overrides": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "false",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "scope": "The all-feature Clippy command stopped before compiling because quickcheck 1.0.3 was absent from the offline cache. Cargo may fetch native-target packages already pinned by the unchanged lockfile; no dependency version, package source, source code, prior result or verification input is changed. This cache preparation is not a passing Clippy result."
+}

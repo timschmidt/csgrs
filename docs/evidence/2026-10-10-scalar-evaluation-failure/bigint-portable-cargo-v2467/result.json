@@ -1,0 +1,44 @@
+{
+  "error": null,
+  "seconds": 11.223318272735924,
+  "gate_passed": true,
+  "protocol_sha256": "0726c6607fe5d0e3629fa3c57ad9a4b7731b63d1ef979c210b1ff477546937ed",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "fixture_unchanged": true,
+  "tooling_unchanged": true,
+  "compiler_result": {
+    "exit_code": 0,
+    "seconds": 7.013369050808251,
+    "verification_results": {
+      "encountered-error": false,
+      "encountered-vir-error": false,
+      "success": true,
+      "verified": 453,
+      "errors": 0,
+      "is-verifying-entire-crate": true
+    },
+    "gate_passed": true,
+    "warnings": 0,
+    "inherited_jobserver_descriptors": [
+      3,
+      5
+    ],
+    "stdout_sha256": "2bf5759fdb635c915629b466fd0717c88c6752021d31efccd56531f478d6aeb1",
+    "stderr_sha256": "96163ae883bdd13f6be24c822ea690491d1d7a5f0366a54053cef891d0512eb9",
+    "export_sha256": "8834462b2a9bbfe8f8fc24d5478567ca1272087007a73e70076d2a13187711cb",
+    "compiler_invocation_sha256": "b962a6d9c8e634b96c4ef952bf7dbf3383bcea427604475a525143ce710b65a8"
+  },
+  "compiler_result_sha256": "e517f7eb216813b1940c2b2c68dfad952ffb28e345fb8e3a18c1de9e1631e64d",
+  "dependency_report_sha256": "5c6a48765b16e54a68489a9f3654737b2e03b173c832242621464ede984d7997",
+  "export_sha256": "8834462b2a9bbfe8f8fc24d5478567ca1272087007a73e70076d2a13187711cb",
+  "retained_coverage_changed": false,
+  "runtime_admitted": false,
+  "verus_arguments": [
+    "--extern",
+    "num=/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-portable-cargo-v2467/target/verification-dependencies/debug/deps/libnum-157a29ea443e7331.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-portable-cargo-v2467/target/verification-dependencies/debug/deps"
+  ],
+  "bound_packages": 8
+}

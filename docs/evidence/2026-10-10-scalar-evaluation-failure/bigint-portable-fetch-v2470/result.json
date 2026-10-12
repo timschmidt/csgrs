@@ -1,0 +1,13 @@
+{
+  "exit_code": 0,
+  "seconds": 1.2746043619699776,
+  "gate_passed": true,
+  "protocol_sha256": "5ca03a4cbfc97564952456e662a269ee576190543ece19798bc8c14182b2628f",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "2cbba36f36ee1188838eb80250ef7553a3445f1174d3831b5e65568d85ea455b",
+  "locked_inputs_unchanged": true,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

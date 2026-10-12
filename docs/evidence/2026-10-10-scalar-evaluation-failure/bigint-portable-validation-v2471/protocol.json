@@ -1,0 +1,125 @@
+{
+  "status": "Frozen before resuming four unchanged commands after dependency cache preparation",
+  "runner_sha256": "5b020553c61387624ec42742830b4998d4228016c02cc1411ecf9f482d7a65ab",
+  "previous_protocol_sha256": "f8665e3e68691e5223582637b37ddb69d5890257c338c3be703cf3a1d679f1a1",
+  "previous_result_sha256": "8babb9dce2a6ed4b3d5005534060ef2027ffe7a98da4c55e1ad468e52a1a2065",
+  "fetch_result_sha256": "ccf2402493b1dde4126e299be2aff9a26eb522eff36df33248337421ed54084f",
+  "locked_inputs_sha256": "09dc6d5bae8b90516f7c6373501bdacec968d7a27d9b7330ac7dcb0dbbdc11b3",
+  "jobs": [
+    {
+      "name": "clippy-all-features",
+      "command": [
+        "cargo",
+        "clippy",
+        "--offline",
+        "--locked",
+        "--lib",
+        "--all-features",
+        "--manifest-path",
+        "/tmp/csgrs-bigint-portable-validation-v2468/num-bigint/Cargo.toml",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    },
+    {
+      "name": "package",
+      "command": [
+        "cargo",
+        "package",
+        "--offline",
+        "--locked",
+        "--allow-dirty",
+        "--no-verify",
+        "--manifest-path",
+        "/tmp/csgrs-bigint-portable-validation-v2468/num-bigint/Cargo.toml"
+      ]
+    },
+    {
+      "name": "packaged-build",
+      "command": [
+        "cargo",
+        "+1.98.1",
+        "check",
+        "--offline",
+        "--locked",
+        "--lib",
+        "--manifest-path",
+        "/tmp/csgrs-bigint-portable-validation-v2468/unpacked/num-bigint-0.4.6/Cargo.toml"
+      ]
+    },
+    {
+      "name": "packaged-proof",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--no-cheating",
+        "--output-json",
+        "--compile",
+        "--export",
+        "/tmp/csgrs-bigint-portable-validation-v2468/proof-artifacts/num_bigint.vir",
+        "--crate-name",
+        "num_bigint",
+        "--edition=2021",
+        "/tmp/csgrs-bigint-portable-validation-v2468/unpacked/num-bigint-0.4.6/src/lib.rs",
+        "--error-format=json",
+        "--json=diagnostic-rendered-ansi,artifacts,future-incompat",
+        "--crate-type",
+        "lib",
+        "--emit=dep-info,metadata,link",
+        "-C",
+        "embed-bitcode=no",
+        "--warn=unexpected_cfgs",
+        "--check-cfg",
+        "cfg(verus_keep_ghost)",
+        "--check-cfg",
+        "cfg(verus_keep_ghost_body)",
+        "--cfg",
+        "feature=\"std\"",
+        "--check-cfg",
+        "cfg(docsrs,test)",
+        "--check-cfg",
+        "cfg(feature, values(\"arbitrary\", \"default\", \"quickcheck\", \"rand\", \"serde\", \"std\"))",
+        "-C",
+        "metadata=1e9596c84631ee05",
+        "-C",
+        "extra-filename=-424a953ec75d9d03",
+        "--out-dir",
+        "/tmp/csgrs-bigint-portable-validation-v2468/proof-artifacts",
+        "-C",
+        "strip=debuginfo",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-portable-cargo-v2467/target/verification-dependencies/debug/deps",
+        "--extern",
+        "num_integer=/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-portable-cargo-v2467/target/verification-dependencies/debug/deps/libnum_integer-526021e90628cf45.rmeta",
+        "--extern",
+        "num_traits=/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-portable-cargo-v2467/target/verification-dependencies/debug/deps/libnum_traits-693e8768d4881801.rmeta",
+        "-D",
+        "warnings",
+        "--check-cfg",
+        "cfg(verus_keep_ghost_body)",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux"
+      ]
+    }
+  ],
+  "environment_overrides": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/tmp/csgrs-bigint-portable-validation-v2468/target",
+    "CARGO_INCREMENTAL": "0",
+    "CARGO_PROFILE_DEV_DEBUG": "0",
+    "CARGO_TERM_COLOR": "never",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "RUSTFLAGS": "-D warnings"
+  },
+  "reused_successful_phases": [
+    "resolve",
+    "workspace-msrv",
+    "workspace-msrv-no-std",
+    "i686-no-std",
+    "wasm32-no-std"
+  ],
+  "correction": "Populate missing locked optional dependencies, then rerun only the command that failed before compilation and run the three unattempted commands. All commands and input source/lock bytes remain exactly as frozen in v2468. Its failed Clippy attempt remains failed; its five successful phases are reused, not rerun or counted as fresh.",
+  "scope": "Run from a fresh /tmp tree outside the repository and its Cargo configuration hierarchy. Check the workspace's declared Rust 1.95, no_std, both native word-width selections via i686 and wasm32 cross compilation, and strict library Clippy with all optional features. Package locally without publishing, build the unpacked crate and verify/compile its actual root using the qualified Cargo compiler arguments with only source/export/output paths relocated. The cross checks do not execute target binaries or prove a full 32-bit crate; Rust 1.60 is not installed and is not credited. This is dependency packaging evidence, not downstream registry binding, scalar runtime admission, cost/memory/size or full repository CI.",
+  "package_preparation": "After local cargo package, extract the archive with the data filter and require every source/model/license/provenance byte to match the frozen package input. Only Cargo manifest normalization, Cargo.toml.orig, generated Cargo.lock and Cargo VCS metadata may differ. Freeze the extracted complete source catalog before its build and proof."
+}
