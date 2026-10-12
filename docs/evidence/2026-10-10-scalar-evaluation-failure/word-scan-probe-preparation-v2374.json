@@ -1,0 +1,11 @@
+{
+  "status": "Frozen before typed word-sequence support probing",
+  "preparation_sha256": "38f85d69414eaa670b27874b2b615b9dbc9ca138f1186578356b0d05c4177f96",
+  "parent_runner_sha256": "e7c61e9177676211d2b55bc63d74e58fac103800080246e41571318e0a6f60fb",
+  "proposal_sha256": "ab699019df58bbdc7f02714b1bbbd0dc46170f2b66e3a4e386a22907c5999821",
+  "runner_sha256": "da4760abba97f36e89941281b7514e1ffa7a21dccddf9692a718c99d39c30a61",
+  "new_proof_functions": 18,
+  "retained_checkpoint": "typed-api-prototype-v2373-state.json",
+  "source_changed": false,
+  "scope": "Seven proofs per word width and four shared connections. The u64 denotation is tied to the actual verified limb prefix. First-match, normalization and maximum aggregate bit-count premises are explicit. This is not a Vec iterator proof, an actual BigUint import, a new retained theorem count or runtime change; preserve every failed support attempt."
+}

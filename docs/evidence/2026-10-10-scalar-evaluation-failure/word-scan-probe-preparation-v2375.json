@@ -1,0 +1,12 @@
+{
+  "status": "Frozen before the typed-word syntax correction probe",
+  "preparation_sha256": "51f6ec0c9eb55b691165656e23456a66a2623f09e32678365fc84f970fd2973e",
+  "parent_proposal_sha256": "ab699019df58bbdc7f02714b1bbbd0dc46170f2b66e3a4e386a22907c5999821",
+  "parent_runner_sha256": "da4760abba97f36e89941281b7514e1ffa7a21dccddf9692a718c99d39c30a61",
+  "proposal_sha256": "8c783eb806e15b6d45b9fa378fc310a9e90bbd616432bc6404f8f9a367247575",
+  "runner_sha256": "6e0dea30aee216b1b95d4ff3aee9e19066f773fafb594f503dc18a00e64b5874",
+  "failed_result_sha256": "d3e0e2571f5b812fee2a3af705d797e282b2af7b6c57271ee0c01cafccb2dd38",
+  "change": "Parenthesize each cast immediately before a less-than operator; all mathematical premises and results are unchanged.",
+  "source_changed": false,
+  "prior_failure_preserved": true
+}

@@ -1,0 +1,12 @@
+{
+  "status": "Frozen before the intended-module-scope probe",
+  "preparation_sha256": "1cda3f28a62ddd70150edbbf2e6a0e6492f031341473078759d3a3b12ffa52cc",
+  "parent_proposal_sha256": "000c8d1c17bf30d0088cf207b5065c84455d335a25982fefa01c8a32ab37947d",
+  "parent_runner_sha256": "db73c85ab34b96a983f0c1763c49f97a90f44a8c1acf65d6b394f1d23c9f79fd",
+  "proposal_sha256": "acafda1cd0805510057735b175221702d90f21dea127dc70ed2189bf4509a2a9",
+  "runner_sha256": "58dd9f516bc4828af7749ab040fb17d7a976f28f3732c3945e72213c7d8dfe8d",
+  "failed_result_sha256": "ed1a13ff53e17152da7c8203fdd53c5c1df7ca9840569308ef25e488ddc7c2b4",
+  "change": "Place the unchanged crate-visible spec and proof items inside word_scan_model, matching the intended proof target's module scope and the retained model modules. No contract, proof body or imported definition changes.",
+  "source_changed": false,
+  "prior_failures_preserved": true
+}

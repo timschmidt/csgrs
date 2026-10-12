@@ -1,0 +1,10 @@
+{
+  "status": "Preparation rejected a nonunique mutation anchor before source application",
+  "failed_preparation_sha256": "1b36c1ede946a296ec014b568a6053141561bb18a0db3b91dbe241f5a072be0e",
+  "partial_model_sha256": "122618717728552162e1127ada580a005b089ce7143d0b5f0a5c422c7ceff631",
+  "function": "digit_scan_count_fits_u64",
+  "anchor_occurrences": 2,
+  "reason": "The same requirement text occurs in the function contract and its nonlinear proof assertion. The preparer rejected the ambiguous mutation.",
+  "source_applied": false,
+  "partial_candidate_preserved": "word-scan-baseline-v2378"
+}

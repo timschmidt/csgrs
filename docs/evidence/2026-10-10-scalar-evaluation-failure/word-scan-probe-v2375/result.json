@@ -1,0 +1,12 @@
+{
+  "exit_code": 1,
+  "seconds": 3.5601477711461484,
+  "protocol_sha256": "6f69c312fc1e52589faf3ed5333110f4ca3bcb02094112cdfe37dd625186482b",
+  "stdout_sha256": "f6de49ab48da1fb94275546d514453ace8da91ef693a9120c0dde038381ad5e9",
+  "stderr_sha256": "5eea5af593904342c971b1958c70efa1bc431c507b2acd3beba93c499955c778",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "next_step": "Inspect the exact result before using any primitive contract in a metadata model. BigUint storage, normalization, aggregate scans, length ranges and production caller refinement remain separate."
+}

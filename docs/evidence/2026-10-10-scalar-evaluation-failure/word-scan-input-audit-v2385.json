@@ -1,0 +1,283 @@
+{
+  "status": "Typed word-scan proofs and controls pass; unchanged prior proof/runtime inputs remain applicable",
+  "runner_sha256": "ebe841a109a1ba19c11e84146c96dd00a07051696951e5a7191d484fb3ebc03b",
+  "prior_audit_helper_sha256": "b7741725b0b4d0f85ff63f97ba73c3ffcb57b3dfc25cd5afccd4313dc05f88cd",
+  "previous_checkpoint": "typed-api-prototype-v2373-state.json",
+  "previous_checkpoint_sha256": "163bf723328ab72df0a56025f9a55960eda13eb4c6767669965b61e66333508a",
+  "source_record": "typed-api-prototype-v2380-word-scan-verus/source-hashes.json.gz",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "source_files_verified": 24751,
+  "main_files_verified": 1167,
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "42453d638f19acb73323970c871fe6a215986235cb370b829ec8bf4a5ae4fcd0",
+      "after": "45d87734e174eab6169f105100b3c8341345c8c168a176b17112ff10083b392c"
+    },
+    "crates/hyperreal/verification/lib.rs": {
+      "before": "2d2d2bea5136e0fe44adbfac0005733380ff912359cabbd2af23db4dedc2dc1a",
+      "after": "ba4ad4688382c4748af647cb97c28467218b2f1b05e286513f9b449a28188048"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "f72d68b70d40f98a378b52953db6c5e0932413534914db82b207117bbb036bc6",
+      "after": "2f85afaf2351cc3a16bb83a0ee6e7aff94cfb4e389f7fb37277783cf2ffb697a"
+    },
+    "crates/hyperreal/verification/test_rejections.py": {
+      "before": "bcd200c9c219886f851d1da28f7c2c56ba47d1af279a5ca0ec73932c72aa3332",
+      "after": "555dd12a07fe7aa4482786b53c56331797905026ca4fb0e53f6858329a3343dd"
+    },
+    "crates/hyperreal/verification/test_word_scan_rejections.py": {
+      "before": null,
+      "after": "1f73460285d0705aef18fcfd0ce700306242468d5f907534869e57ce3ae8a59e"
+    },
+    "crates/hyperreal/verification/word_scan_model.rs": {
+      "before": null,
+      "after": "122618717728552162e1127ada580a005b089ce7143d0b5f0a5c422c7ceff631"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "conditional_proof": {
+    "verified_units": 736,
+    "errors": 0,
+    "production_contracts": 98,
+    "model_theorems": 178,
+    "open_obligation_groups": 13
+  },
+  "fresh_validation_record_sha256": "e078a0351e32dc15dbbb352d7ad287f41f6afb1029f1e996f835c681dd397b51",
+  "fresh_rejected_mutations": 20,
+  "fresh_positive_baselines": 1,
+  "fresh_guard_log_sha256": "d4ae46dc7525181213a2432eabb0dbd11c016145c71ecd6bdf6b33bc13d5c8b8",
+  "fresh_mutations": [
+    {
+      "function": "trimmed_zero_suffix_preserves_value",
+      "invocation_index": 1,
+      "mutated_source_sha256": "75975dbef4bf7d48dcd3a773ca53e8cca09b6b1f28bca3a1f43968bcc7eed17e"
+    },
+    {
+      "function": "u64_digit_prefix_matches_production",
+      "invocation_index": 2,
+      "mutated_source_sha256": "6a5f1f33ff004a9173bb01b4629a55cc5541da74db7c3e541eb0f16b79250dc8"
+    },
+    {
+      "function": "digit_scan_count_fits_u64",
+      "invocation_index": 3,
+      "mutated_source_sha256": "20250e90760f7fe390324614408e1a2d14c3928abbe307f6ff645a07da4f1c5e"
+    },
+    {
+      "function": "digit_scan_count_fits_u64",
+      "invocation_index": 4,
+      "mutated_source_sha256": "52065e640afb2bb4c4aaf34c0da805a7816e5ab0d0d781dd4b6d921ccdd93c3f"
+    },
+    {
+      "function": "typed_digit_bounds_u32",
+      "invocation_index": 5,
+      "mutated_source_sha256": "cc5c14116723af331b5db8e8fbac281c1e111cae557e8280e861568cd626a393"
+    },
+    {
+      "function": "typed_normalized_bit_length_u32",
+      "invocation_index": 6,
+      "mutated_source_sha256": "6d63b11b313edcadd6eeb2072b34438f46d5b57d0414b4d2a9487fe12ff4b550"
+    },
+    {
+      "function": "typed_zero_scan_u32",
+      "invocation_index": 7,
+      "mutated_source_sha256": "fa4e6e8640d76daafaf7bacde7003b77785b2725b2e1de4848e359505938f07e"
+    },
+    {
+      "function": "typed_one_scan_u32",
+      "invocation_index": 8,
+      "mutated_source_sha256": "c79e29da0ee806e1d2fcfcb8c7c8b47e1720c62eab83c491f0d6a0d6563e3238"
+    },
+    {
+      "function": "typed_zero_scan_none_u32",
+      "invocation_index": 9,
+      "mutated_source_sha256": "fdcfe9de01d21c8405979d2fe9c6f1079ff1afdfaabd92fd98c756414e5afc8f"
+    },
+    {
+      "function": "typed_one_scan_none_u32",
+      "invocation_index": 10,
+      "mutated_source_sha256": "acc6abf1e8519bab4b097688082a1551807595ac13aca7c6ec0bcef740e8bf44"
+    },
+    {
+      "function": "typed_zero_suffix_truncation_u32",
+      "invocation_index": 11,
+      "mutated_source_sha256": "b6101edbcc3e126b03d2c5e5c5700f59a7a0919201af3d6cbb8fe34dc68eca7b"
+    },
+    {
+      "function": "typed_zero_suffix_truncation_u32",
+      "invocation_index": 12,
+      "mutated_source_sha256": "aac4e3d5e0e6176dc6bde73e26a2908db227238ea7b6785e808a53d2d83eb7fe"
+    },
+    {
+      "function": "typed_digit_bounds_u64",
+      "invocation_index": 13,
+      "mutated_source_sha256": "2e80ea434b628d6e3083e9f1d030f31c37db3cfcfb2eb6f48c20304f91f1f7a3"
+    },
+    {
+      "function": "typed_normalized_bit_length_u64",
+      "invocation_index": 14,
+      "mutated_source_sha256": "0bc3c32f12c904575e2fa2a4ca164c5a2793745357f215ed1a6006301c8c8dee"
+    },
+    {
+      "function": "typed_zero_scan_u64",
+      "invocation_index": 15,
+      "mutated_source_sha256": "61178632d91d38a76563c5ef07b27a76db14608a4f9a5b7d849115b7abe930cf"
+    },
+    {
+      "function": "typed_one_scan_u64",
+      "invocation_index": 16,
+      "mutated_source_sha256": "936c5d880aa16fa0f57f0e146934922d5eed9bce353de4aec3b999a0f06e9f06"
+    },
+    {
+      "function": "typed_zero_scan_none_u64",
+      "invocation_index": 17,
+      "mutated_source_sha256": "a96bac5185025ce1f11602cd9827757f824515071b03a32e02735607ea0958ac"
+    },
+    {
+      "function": "typed_one_scan_none_u64",
+      "invocation_index": 18,
+      "mutated_source_sha256": "729db17620f5c0b9a0c30a742d917dd6416c1d2658707ea4943a7c0100e61e02"
+    },
+    {
+      "function": "typed_zero_suffix_truncation_u64",
+      "invocation_index": 19,
+      "mutated_source_sha256": "a74874085e1d1ba2fc50340b7a34551306bfc7772a474d681019422639124548"
+    },
+    {
+      "function": "typed_zero_suffix_truncation_u64",
+      "invocation_index": 20,
+      "mutated_source_sha256": "3168c1be73798534f9a4775af95c5fc3dd5d88b49e58bea08ea1f79bf634b67f"
+    }
+  ],
+  "fresh_acceptance_tests": 10,
+  "included_format_files": 112,
+  "inherited_input_audit": "digit-scan-input-audit-v2372.json",
+  "inherited_input_audit_sha256": "219cb18b2d02d00755f2958e091dab028c0df57a8587c460e6152142616987b1",
+  "reused_rejected_mutations": 286,
+  "reused_positive_baselines": 6,
+  "total_applicable_rejected_mutations": 306,
+  "total_applicable_positive_baselines": 7,
+  "reconstructed_prior_temporary_entrypoints": {
+    "test_rejections.py": 104,
+    "test_structural_rejections.py": 22,
+    "test_bound_rejections.py": 91,
+    "test_cache_rejections.py": 42,
+    "test_bit_metadata_rejections.py": 13,
+    "test_digit_scan_rejections.py": 20
+  },
+  "prior_guard_logs_sha256": {
+    "typed-api-prototype-v2339-approximation-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "9ce5d2933e9b162930faaa4299bc56dc826c7a4370dc13ced992f7b611bb8efa",
+    "typed-api-prototype-v2353-trailing-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "a26a937acb1ef609fc263f188a06f15f25195b13025fdfce3ed55652df3afa24",
+    "typed-api-prototype-v2368-digit-scan-rejections/proof-checks/verus-invocations.jsonl.gz": "1ef7ffcb8549a4f7ac3e30e33667e48429a3920d704bfc0b9f0e375e191e300f"
+  },
+  "old_guard_reuse_basis": "All previous model and production Rust sources and guard generators are unchanged from v2373. Each of 292 temporary entrypoints reconstructs exactly from its unchanged generator and original path. None imports the new model or changed full-target lib.rs. Removing the new guard import and call restores the prior test entrypoint. The v2372/v2357/v2344 audits and all original execution identities remain in force.",
+  "unchanged_proof_dependencies_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "historical_runtime_evidence_applicable": true,
+  "unchanged_frozen_probe_binaries": 7,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "support_probes": {
+    "word-scan-probe-v2374": {
+      "result_sha256": "d3e0e2571f5b812fee2a3af705d797e282b2af7b6c57271ee0c01cafccb2dd38",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 0,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    },
+    "word-scan-probe-v2375": {
+      "result_sha256": "cae904223a9db782b1c6e1aafcc2ee78b08106b836177cf3f1ed49cbbd71b94f",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      }
+    },
+    "word-scan-probe-v2376": {
+      "result_sha256": "ed1a13ff53e17152da7c8203fdd53c5c1df7ca9840569308ef25e488ddc7c2b4",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      }
+    },
+    "word-scan-probe-v2377": {
+      "result_sha256": "3302dcd574a520371d18e6738b9bab73f2185f52e9288a9e2103aec1fb1a79db",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 438,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    }
+  },
+  "preparation_failure": "word-scan-preparation-failure-v2378.json",
+  "preparation_failure_sha256": "02577420af93870a7bce218a9446538c27b15d20e869c4e35a2535b694643819",
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "scope": "Eighteen conditional typed-word lemmas and twenty controls. The 64-bit denotation agrees with the actual verified limb prefix; both native widths supply the generic scan factors, normalized bit lengths and zero-suffix truncation identity. Real dependency storage and iterator execution, machine count range premises, sign imports, approximation truth, independent existence, callers and atomic publication remain open. No runtime evidence is relabelled, and no main/native/property/target admission follows."
+}

@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before primitive support probing",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--no-cheating",
+    "--output-json",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs"
+  ],
+  "runner_sha256": "6e0dea30aee216b1b95d4ff3aee9e19066f773fafb594f503dc18a00e64b5874",
+  "probe_sha256": "8c783eb806e15b6d45b9fa378fc310a9e90bbd616432bc6404f8f9a367247575",
+  "retained_checkpoint": "typed-api-prototype-v2373-state.json",
+  "retained_checkpoint_sha256": "163bf723328ab72df0a56025f9a55960eda13eb4c6767669965b61e66333508a",
+  "source_record_sha256": "a83cff31d79bb8bbbb5100829d14a5683ca081410433e95b32d22460a062a730",
+  "pinned_toolchain": {
+    "version": "0.2026.09.13.671956e",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+    "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+    "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+    "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+    "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+  },
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "question": "Do typed u32/u64 word views, scan witnesses and zero-suffix truncation connect to retained generic digit denotation and actual native factor helpers, with explicit count-range premises?",
+  "scope": "Compile the actual retained verified helpers, magnitude model and bit-length model alongside the generic scan proposal. Use the pinned vstd axioms and no new trusted assumptions. Report verifier units separately from new proof functions; imported existing units are not new coverage. This support probe is not a production BigInt proof, a SOURCE change, a new retained theorem or runtime admission. Preserve a failure without changing completed artifacts."
+}

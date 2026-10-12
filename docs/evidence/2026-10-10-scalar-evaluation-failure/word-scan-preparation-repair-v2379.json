@@ -1,0 +1,8 @@
+{
+  "status": "Frozen correction before preparing a separate candidate",
+  "repair_sha256": "64d9c077aabf0bc10378c20f747aca15d954ec0e5368b4a32d5c6ec600f92b8b",
+  "parent_sha256": "1b36c1ede946a296ec014b568a6053141561bb18a0db3b91dbe241f5a072be0e",
+  "new_preparation_sha256": "23cb82a94ba65c4562cc7f9335f7c5f89f15e1a60603001c51b9ef5642ed8854",
+  "failure_record_sha256": "02577420af93870a7bce218a9446538c27b15d20e869c4e35a2535b694643819",
+  "change": "Extend only the within-digit mutation anchor through the following ensures keyword. The intended single contract mutation and all proof statements remain unchanged."
+}

@@ -1,0 +1,88 @@
+error: in 'ensures' clause of public function, cannot refer to private function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:22:13
+   |
+22 |     ensures digit_value(digits.subrange(0, length), width) == digit_value(digits, width),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:36:13
+   |
+36 |     ensures digit_prefix(word_digits_u64(words), 64, length)
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:46:38
+   |
+46 |     ensures word_value_u64(words) == crate::verified::limbs::value(words),
+   |                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in pub open spec function, cannot refer to private function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:70:5
+   |
+70 |     digit_value(word_digits_u32(words), 32)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:96:9
+   |
+96 |         normalized_digits(word_digits_u32(words), 32) == normalized_u32(words),
+   |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:120:13
+    |
+120 |       ensures has_odd_factor(word_value_u32(words),
+    |  _____________^
+121 | |             32 * index as nat + u32_trailing_zeros(words[index]) as nat),
+    | |________________________________________________________________________^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:137:13
+    |
+137 |       ensures has_odd_factor(word_value_u32(words) + 1,
+    |  _____________^
+138 | |             32 * index as nat + u32_trailing_ones(words[index]) as nat),
+    | |_______________________________________________________________________^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:167:13
+    |
+167 |     ensures has_odd_factor(word_value_u32(words) + 1, 32 * words.len()),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in pub open spec function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:197:5
+    |
+197 |     digit_value(word_digits_u64(words), 64)
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:223:9
+    |
+223 |         normalized_digits(word_digits_u64(words), 64) == normalized_u64(words),
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:247:13
+    |
+247 |       ensures has_odd_factor(word_value_u64(words),
+    |  _____________^
+248 | |             64 * index as nat + u64_trailing_zeros(words[index]) as nat),
+    | |________________________________________________________________________^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:264:13
+    |
+264 |       ensures has_odd_factor(word_value_u64(words) + 1,
+    |  _____________^
+265 | |             64 * index as nat + u64_trailing_ones(words[index]) as nat),
+    | |_______________________________________________________________________^
+
+error: in 'ensures' clause of public function, cannot refer to private function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2375/probe.rs:294:13
+    |
+294 |     ensures has_odd_factor(word_value_u64(words) + 1, 64 * words.len()),
+    |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 13 previous errors
+

@@ -1,0 +1,10 @@
+{
+  "status": "Frozen before typed-word validation",
+  "preparation_sha256": "835121a5a3efd54c1f1e941781ae95fb6b84065b77318da63cc17a7621f5bd61",
+  "parent_sha256": "5d4799d19a854414797b9af631dc1b3600094de13811b463af7df900525d9356",
+  "runner_sha256": "9d79790e227d65ce3e6e2ef1f39ee699f55fe14298d8888a8c8c541c88d7ce54",
+  "new_negative_controls": 20,
+  "positive_baselines": 1,
+  "format_inputs": 112,
+  "scope": "Only phase/source identities, the permitted new guard module, expected counts and the added format file change. Actual invocation capture and rejection criteria stay unchanged. All commands execute sequentially with no SOURCE edits."
+}

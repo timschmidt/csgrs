@@ -1,0 +1,50 @@
+{
+  "status": "Frozen before applying the typed word-scan model",
+  "runner_sha256": "23cb82a94ba65c4562cc7f9335f7c5f89f15e1a60603001c51b9ef5642ed8854",
+  "retained_checkpoint": "typed-api-prototype-v2373-state.json",
+  "retained_checkpoint_sha256": "163bf723328ab72df0a56025f9a55960eda13eb4c6767669965b61e66333508a",
+  "retained_source_record": "typed-api-prototype-v2367-digit-scan-final-verus/source-hashes.json.gz",
+  "retained_source_record_sha256": "a83cff31d79bb8bbbb5100829d14a5683ca081410433e95b32d22460a062a730",
+  "base_commit": "d38a363b53bea2a5686a3c082bf826d8d2bda87d",
+  "support_result_sha256": "3302dcd574a520371d18e6738b9bab73f2185f52e9288a9e2103aec1fb1a79db",
+  "candidate_files_sha256": {
+    "crates/hyperreal/verification/lib.rs": "ba4ad4688382c4748af647cb97c28467218b2f1b05e286513f9b449a28188048",
+    "crates/hyperreal/verification/test_rejections.py": "555dd12a07fe7aa4482786b53c56331797905026ca4fb0e53f6858329a3343dd",
+    "crates/hyperreal/verification/scope.json": "2f85afaf2351cc3a16bb83a0ee6e7aff94cfb4e389f7fb37277783cf2ffb697a",
+    "crates/hyperreal/verification/README.md": "45d87734e174eab6169f105100b3c8341345c8c168a176b17112ff10083b392c",
+    "crates/hyperreal/verification/word_scan_model.rs": "122618717728552162e1127ada580a005b089ce7143d0b5f0a5c422c7ceff631",
+    "crates/hyperreal/verification/test_word_scan_rejections.py": "1f73460285d0705aef18fcfd0ce700306242468d5f907534869e57ce3ae8a59e"
+  },
+  "new_source_files": [
+    "crates/hyperreal/verification/word_scan_model.rs",
+    "crates/hyperreal/verification/test_word_scan_rejections.py"
+  ],
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "proposal_patch_sha256": "da9b0a6b9296d0356f9520c407ee35b8451019a28fd46d91f5aa3fcb7a0a6385",
+  "runtime_source_files_changed": 0,
+  "new_model_theorems": [
+    "word_scan_model::trimmed_zero_suffix_preserves_value",
+    "word_scan_model::u64_digit_prefix_matches_production",
+    "word_scan_model::u64_digit_value_matches_production",
+    "word_scan_model::digit_scan_count_fits_u64",
+    "word_scan_model::typed_digit_bounds_u32",
+    "word_scan_model::typed_normalized_bit_length_u32",
+    "word_scan_model::typed_zero_scan_u32",
+    "word_scan_model::typed_one_scan_u32",
+    "word_scan_model::typed_zero_scan_none_u32",
+    "word_scan_model::typed_one_scan_none_u32",
+    "word_scan_model::typed_zero_suffix_truncation_u32",
+    "word_scan_model::typed_digit_bounds_u64",
+    "word_scan_model::typed_normalized_bit_length_u64",
+    "word_scan_model::typed_zero_scan_u64",
+    "word_scan_model::typed_one_scan_u64",
+    "word_scan_model::typed_zero_scan_none_u64",
+    "word_scan_model::typed_one_scan_none_u64",
+    "word_scan_model::typed_zero_suffix_truncation_u64"
+  ],
+  "new_negative_controls": 20,
+  "unchanged_production_contracts": 98,
+  "unchanged_open_obligation_groups": 13,
+  "gates": "Full conditional proof, twenty fresh negative controls and baseline, acceptance and both format commands. Reuse earlier guards and runtime evidence only after exact-input, dependency and tool audits. No SOURCE edits or overlapping validations while commands run.",
+  "scope": "Eighteen conditional model lemmas connect typed native word sequences to retained digit arithmetic. Actual dependency storage, normalization and first-match iterators, range premises, sign import, approximation and caller truth, independent existence and atomic publication remain open. This does not admit runtime/main changes or complete any property or target."
+}

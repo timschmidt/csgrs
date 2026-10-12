@@ -1,0 +1,8 @@
+error: expected `,`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/word-scan-probe-v2374/probe.rs:122:74
+    |
+122 |         32 * index as nat + u32_trailing_zeros(words[index]) as nat < 32 * words.len(),
+    |                                                                          ^
+
+error: aborting due to 1 previous error
+
