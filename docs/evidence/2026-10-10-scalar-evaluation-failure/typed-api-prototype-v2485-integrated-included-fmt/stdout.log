@@ -1,0 +1,10 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/computable_bounds.rs:1:
+ // Verify the included production bound operations against their typed contracts.
+ // Denotation lemmas refine these contracts conditional on valid input bounds.
+ // Production callers and the remaining bound operations remain open.
+[31m-use num::bigint::Sign;
+(B[m use crate::structural::{MagnitudeBits, RealSign};
+[32m+use num::bigint::Sign;
+(B[m 
+ include!("../src/computable/node/bounds.rs");
+ 

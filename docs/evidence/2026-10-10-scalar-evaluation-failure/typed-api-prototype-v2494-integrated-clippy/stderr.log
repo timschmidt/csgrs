@@ -1,0 +1,28 @@
+    Checking num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/vendor/num-bigint)
+    Checking num-rational v0.4.2
+    Checking arrow-buffer v57.3.1
+    Checking num v0.4.3
+    Checking nalgebra v0.35.0
+    Checking gerber-types v0.7.0
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Checking arrow-data v57.3.1
+    Checking gerber_parser v0.4.0
+    Checking arrow-array v57.3.1
+    Checking arrow-select v57.3.1
+    Checking arrow-ord v57.3.1
+    Checking arrow-ipc v57.3.1
+    Checking arrow-cast v57.3.1
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlattice)
+    Checking parquet v57.3.1
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperlimit)
+    Checking gauss-quad v0.3.2
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypersolve)
+    Checking curvo v0.1.92
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypermesh)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hypercurve)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperphysics)
+    Checking hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperpath)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source)
+    Checking hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 32.69s

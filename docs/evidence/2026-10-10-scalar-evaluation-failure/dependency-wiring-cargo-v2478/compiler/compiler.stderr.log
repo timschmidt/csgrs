@@ -1,0 +1,4 @@
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/num_bigint-2b1ebb4e1afc933f.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/num_bigint-2b1ebb4e1afc933f.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/libnum_bigint-2b1ebb4e1afc933f.rmeta","emit":"metadata"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/libnum_bigint-2b1ebb4e1afc933f.rlib","emit":"link"}

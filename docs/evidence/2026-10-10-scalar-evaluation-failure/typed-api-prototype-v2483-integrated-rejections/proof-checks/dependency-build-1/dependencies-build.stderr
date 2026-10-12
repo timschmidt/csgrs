@@ -1,0 +1,10 @@
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.46
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/vendor/num-bigint)
+   Compiling num-iter v0.1.45
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal-verification-dependencies v0.0.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies)
+    Finished `dev` profile [unoptimized] target(s) in 11.56s

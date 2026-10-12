@@ -1,0 +1,61 @@
+{
+  "status": "Frozen before checking the full preview with the reusable builder's exact bound arguments",
+  "runner_sha256": "b2fdc2864b478d26a77f4b39da0e60466a82afa8898670f6e4b3b7c4c00c595a",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--crate-name",
+    "approximation_bound_preview",
+    "--no-cheating",
+    "--output-json",
+    "-D",
+    "warnings",
+    "--check-cfg",
+    "cfg(verus_keep_ghost)",
+    "--check-cfg",
+    "cfg(verus_keep_ghost_body)",
+    "--check-cfg",
+    "cfg(test)",
+    "--check-cfg",
+    "cfg(feature, values(\"serde\"))",
+    "--extern",
+    "num=/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/libnum-908562656f0e98ef.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps",
+    "--import",
+    "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/num_bigint.vir",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/approximation-bound-candidate-v2460/proof.rs"
+  ],
+  "retained_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "build_result_sha256": "f81d81fa1076e27a83f5a6fe66a3eccb2bd4b3ffe3d50568b15429a7c95d1d26",
+  "build_protocol_sha256": "1a457e5f96f9a0ae470ca441ba1094827e30cccbe8e7a93adf672b543658b871",
+  "dependency_report_sha256": "7f3996ee021c1ab56b6b7b28485b0d7d214f517eddfc81e9d0ecacae51fbff8d",
+  "preview_protocol_sha256": "61f93073f540909931e3f9dd07ffd8f21921787c833148301cead012a1182e86",
+  "preview_files_sha256": {
+    "candidate/crates/hyperreal/src/computable/node/approximation_bound.rs": "c289588b060b3e4e02dfb9a7a4381097a8e8f8602b0ad7cbcf83196cb9d86d7a",
+    "candidate/crates/hyperreal/src/computable/node/structural_analysis.rs": "4736bb508d59e83df5d99e481ea5ec6f1b2d55d96303fc6be547c29ed15d0bf4",
+    "candidate/crates/hyperreal/src/computable/node.rs": "e920d79c7bd2eecd6d90e5c0eeae8bd64910ed6c28f283b5eec26c61607f267c",
+    "candidate.patch": "f01df3af9cb28ae70725e991a6d8e9ab51d4b734a8d6cf6a878635f9cb86c34c",
+    "computable_bounds.rs": "4825f63417c6c96c1a6e7bc9e4c8ea427ac7a4e1d5d83b855016627364fa3071",
+    "original/crates/hyperreal/src/computable/node/structural_analysis.rs": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+    "original/crates/hyperreal/src/computable/node.rs": "faf381222f9cfecd9bd5fd631dd936580ededb9e6275c7ea27684e2c53c9f042",
+    "original-method.rs": "042c58893d6f1066dec2b51ec767fed07647e51460d3f3092da0a5302b437506",
+    "proof.rs": "f851f7c3c84b07ed6adf8858fbd6c3c2431bb2d2db7913403125caad60c00af7"
+  },
+  "proposal_files_sha256": {
+    "test_verified_export.py": "778bce6586ee7c84600227a2474f7ac0d79d3fb0c67967e246da9679637b11d9",
+    "verus_bigint.py": "106922227d176b51ac21b43e9e25c6aaca4d8a09ce79eae29f9857e87cacb9e2",
+    "verus_dependencies.py": "30e83a4df074352ae89cf985b88f55bf617fb41701072150245314a22dc3c357",
+    "verus_rustc_wrapper.py": "96718856ac7c80bc1ffc755e8c4e2242ca636fe46cc23cd0a08405aa4fd0dc1c"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_TERM_COLOR": "never",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "scope": "The reusable dependency builder supplies both the Cargo num library and its bound num-bigint VIR import. The complete existing scalar preview and exact shared producer consume those arguments without separate dependency reconstruction. Run the proposed identity checker before and after the proof. This remains a conditional static producer proof under normalization/range and approximation-truth premises, not SOURCE integration, whole-node coverage or runtime admission."
+}

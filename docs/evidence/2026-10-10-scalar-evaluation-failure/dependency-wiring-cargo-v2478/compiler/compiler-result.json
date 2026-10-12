@@ -1,0 +1,27 @@
+{
+  "gate_passed": true,
+  "exit_code": 0,
+  "verified": 453,
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 453,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "warnings": 0,
+  "config_sha256": "5784db238e5c88495edfc2d0aab6a19ea94dc8758b6bff807e012283b4f07037",
+  "library_artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/libnum_bigint-2b1ebb4e1afc933f.rlib": "083377b2df9f9214ef91f7360614cf86136a6310f843b8a4f427ccb4d26902c7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-wiring-cargo-v2478/target/verification-dependencies/verified-phavcwd1/cargo/debug/deps/libnum_bigint-2b1ebb4e1afc933f.rmeta": "1302f63272809dc362902c495a6db360ac0961f524c75d152a95e231a99ac4d6"
+  },
+  "inherited_jobserver_descriptors": [
+    3,
+    5
+  ],
+  "export_sha256": "6fcc0be86f8364201c1e189d8a33e284ce2940088fe21595a3c1bdd38c0bca3f",
+  "stdout_sha256": "151ac1707d02ff30e14ac81caea51b68d6549965146bd7e545b6c20ce4c4bf94",
+  "stderr_sha256": "aac9fb61b5b32a78b23f28f5c5ca8672ed6ceddf1582fbfb88e1741dcd04b9d4",
+  "invocation_sha256": "8bbc17b2308f9d471387de4fa0d3fdeb2b31cc0499d0ec50a186d5190f424a33"
+}

@@ -1,0 +1,86 @@
+{
+  "upstream": {
+    "package": "num-bigint",
+    "version": "0.4.6",
+    "license": "MIT OR Apache-2.0",
+    "archive_sha256": "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
+  },
+  "qualified_metadata_preview": "bigint-metadata-export-v2450",
+  "qualified_metadata_protocol_sha256": "5cb8ee4a961d380e12365125341e54545d56590e9e0ef464a7351382726f6af9",
+  "scalar_checkpoint": "typed-api-prototype-v2440-state.json",
+  "scalar_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "proof_models": {
+    "verification/verified/accumulate.rs": {
+      "source": "crates/hyperreal/src/verified/accumulate.rs",
+      "sha256": "2de8f6b68a1759dd2ccbed6080dbd4644889d7e20e0dfce0e33b0bd87bb08a64"
+    },
+    "verification/verified/aggregate.rs": {
+      "source": "crates/hyperreal/src/verified/aggregate.rs",
+      "sha256": "446a40bd55378ee04e6d3760646d93312727a156dbc67628d4ec6bf73e6c32f9"
+    },
+    "verification/verified/division.rs": {
+      "source": "crates/hyperreal/src/verified/division.rs",
+      "sha256": "e5d1b9a29ddf017ec421ffe51e24a197b8186e76f804437a5a216c64fc5cae34"
+    },
+    "verification/verified/dyadic.rs": {
+      "source": "crates/hyperreal/src/verified/dyadic.rs",
+      "sha256": "fa7fe3e7e4b554846e01bf7d200eb650a7e55829e7909c1183c65d6604b93db0"
+    },
+    "verification/verified/fixed_gcd.rs": {
+      "source": "crates/hyperreal/src/verified/fixed_gcd.rs",
+      "sha256": "43b3341f2f1b65f18d50c4af4a457959ec42daa13496f7ba77a97961c287a6e1"
+    },
+    "verification/verified/float.rs": {
+      "source": "crates/hyperreal/src/verified/float.rs",
+      "sha256": "9e770026a2a723fb343c00ff1e9efd1994d73d2c308c30aebb4eb88bf7b5f373"
+    },
+    "verification/verified/fraction.rs": {
+      "source": "crates/hyperreal/src/verified/fraction.rs",
+      "sha256": "406faff9417c001f05a56850065bcdf06683ab090781ed50ece8a48433e7f1f3"
+    },
+    "verification/verified/gcd.rs": {
+      "source": "crates/hyperreal/src/verified/gcd.rs",
+      "sha256": "0fd60ca5b0ebaebd6b63e8665d3dd6cf2b4f150fbe44a013f51a3661d38cbbb5"
+    },
+    "verification/verified/lehmer.rs": {
+      "source": "crates/hyperreal/src/verified/lehmer.rs",
+      "sha256": "2d48c7616a324ea460c32e926272c1c8364a85dce09027e5bd02660d8201ffb6"
+    },
+    "verification/verified/limbs.rs": {
+      "source": "crates/hyperreal/src/verified/limbs.rs",
+      "sha256": "e9ca4cfff89d1d3ef4c0876d958027288e120ca3eca784313bfc06cdffb3f333"
+    },
+    "verification/verified/mod.rs": {
+      "source": "crates/hyperreal/src/verified/mod.rs",
+      "sha256": "be729856835810d26315c4b6e525e796421e6c39e868a4f7653986a369336756"
+    },
+    "verification/verified/product.rs": {
+      "source": "crates/hyperreal/src/verified/product.rs",
+      "sha256": "0cf9d15d809d3346683964e37135916780380e5d78408925b9104427059edb10"
+    },
+    "verification/verified/word.rs": {
+      "source": "crates/hyperreal/src/verified/word.rs",
+      "sha256": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601"
+    },
+    "verification/magnitude_model.rs": {
+      "source": "crates/hyperreal/verification/magnitude_model.rs",
+      "sha256": "65a429965050ada682c4c0a8bfaaee6bd47f47a5a58fdf64a9698dbd81e948f8"
+    },
+    "verification/bit_length_model.rs": {
+      "source": "crates/hyperreal/verification/bit_length_model.rs",
+      "sha256": "2b203e4b81195594395272b899cabd8246ec774943e5331eaa8fa5fc75a112c2"
+    },
+    "verification/digit_scan_model.rs": {
+      "source": "crates/hyperreal/verification/digit_scan_model.rs",
+      "sha256": "af28a1fc717138f0aa9ee4a49d948d2e229e846c4d99f2c95cde3a9feb14ea41"
+    },
+    "verification/word_scan_model.rs": {
+      "source": "crates/hyperreal/verification/word_scan_model.rs",
+      "sha256": "122618717728552162e1127ada580a005b089ce7143d0b5f0a5c422c7ceff631"
+    }
+  },
+  "proof_model_license": "Apache-2.0 as declared by the Hyperreal package manifest",
+  "proof_model_license_text_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+  "package_license_selection": "Apache-2.0 covers the copied proof files and selects the Apache option for upstream dual-licensed source; upstream notices and both original license files are preserved.",
+  "scope": "All added models are compiled only under verus_keep_ghost. Relative module paths remove the dependency on a specific scalar checkout. Models remain byte copies of the qualified checkpoint, so changes must be reconciled by digest before crediting new proofs. This local package is not published; Cargo workspace patches do not propagate automatically to downstream registry consumers. Original upstream Rust 1.60 metadata is retained but does not itself establish a fresh MSRV pass. Scalar dependency/runtime admission and release integration are separate."
+}

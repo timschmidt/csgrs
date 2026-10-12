@@ -1,0 +1,34 @@
+{
+  "protocol_sha256": "aa1d58bac5a6885ec6210be05a0ef33d85741e8e6b5370dd898fd42eac4a05cd",
+  "phases": [
+    {
+      "phase": "typed-api-prototype-v2484-integrated-workspace-fmt",
+      "result_sha256": "05d7ceadd7b5bfb3e8971e51c361cc7491c27c00e3f70c56638b585b5de0a196",
+      "gate_passed": true,
+      "result": {
+        "exit_code": 0,
+        "seconds": 12.175999198108912,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2485-integrated-included-fmt",
+      "result_sha256": "60efafee661e457654dbf097d1698d12af1ed147ac61803f10b1b39e65700a47",
+      "gate_passed": false,
+      "result": {
+        "exit_code": 1,
+        "seconds": 1.773958370089531,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  ],
+  "complete": false
+}

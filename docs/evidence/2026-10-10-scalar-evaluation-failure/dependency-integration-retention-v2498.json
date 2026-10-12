@@ -1,0 +1,99 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v2440-state.json",
+  "status": "Retain validated isolated integer dependency and shared approximation-bound integration; current candidate is not runtime-admitted",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "runtime_reference_applies_to_current_candidate": false,
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "input_audit": "dependency-integration-audit-v2497/result.json",
+  "input_audit_sha256": "9c6b60d4da91e22d39d3e3f103e706cab8af1e9a46fd9f0e68c4b77fe55238c5",
+  "fresh_validation_record": "corrected-integration-validation-v2490/result.json",
+  "fresh_validation_record_sha256": "fea462c40f3f6a0403bfcb31e095048ec26bf8c5c6ee8c860fe6ae145cd583c7",
+  "conditional_proof": {
+    "verified_units": 737,
+    "errors": 0,
+    "listed_production_contracts": 99,
+    "listed_model_theorems": 178,
+    "open_obligation_groups": 13,
+    "fresh_distinct_acceptance_tests": 51,
+    "fresh_rejected_mutants": 318,
+    "fresh_passing_guard_baselines": 8,
+    "dependency_verified_units_per_build": 453,
+    "dependency_fresh_builds_in_final_gates": 4,
+    "dependency_units_are_not_additive_unique_scalar_coverage": true,
+    "control_input_and_outcome_comparisons": 326
+  },
+  "fresh_scalar_native_tests": {
+    "top_level_batches": 1,
+    "top_level_passed": 1074,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1074,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1074,
+        "status": "ok",
+        "passed": 1074,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-85892b5461cd5cde)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "rejection_run_seconds": {
+    "before_module_selection": 1472.8426005616784,
+    "after_module_selection": 968.7038393360563,
+    "comparison_is_matched_performance_benchmark": false,
+    "fits_current_15_minute_ci_job_locally": false
+  },
+  "main_runtime_admitted": false,
+  "current_candidate_runtime_admitted": false,
+  "existing_worktree_changes_in_scope": true,
+  "existing_worktree_phase_handling": "The 49 existing entries were kept unchanged while these checks ran. The user has explicitly included them in the task; review, validation and intended commits remain to follow this checkpoint.",
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "coverage_limits": [
+    "The scalar proof verifies the shared static associated function, with a fieldless proof owner; expression-graph state and its three production call sites are not proved.",
+    "Metadata contracts require normalized integer representation and a u64 aggregate bit-count bound. Constructors, arithmetic, derivation of the count bound, approximation truth and publication invariants remain open.",
+    "The 453-unit dependency export includes copied mathematical models; its count is reported separately and is not added to the scalar count as unique coverage. Unannotated upstream implementations remain unproved.",
+    "The local host proof imports the actual Cargo library and fresh export. Earlier cross-target compile checks and two-width models do not establish a complete 32-bit dependency proof.",
+    "Dependency binding covers the configured workspace and standalone proof manifests. Published packages and other Cargo roots still require separate binding and release qualification.",
+    "Native compilation and scalar tests do not establish matched cost, memory, size, concurrent publication, original-cap success or full-board admission. Historical v2335 runtime artifacts remain a separate immutable reference, not evidence for this changed candidate.",
+    "The two retained matching-baseline algebraic SIGXCPU failures and all earlier rejected variants remain unresolved. EvaluationBudget excludes bytes, time and unmetered exact algebraic work.",
+    "The corrected rejection sweep retains all 326 input/outcome controls but still exceeds the current 15-minute CI job locally; CI runtime qualification remains open."
+  ],
+  "retained_failures": [
+    "The v2485 included-source formatting failure is retained. The import-order correction passes v2491.",
+    "The initial v2483 rejection sweep passes all 326 controls in 1472.8426005616784 seconds. The selected-module sweep passes the same controls in 968.7038393360563 seconds; these are observed runs, not a matched performance benchmark, and still exceed the current local 15-minute CI job allowance.",
+    "All previous rejected experiments and the two matching-baseline algebraic SIGXCPU failures remain retained and unresolved. Their original caps have not been relaxed."
+  ],
+  "remaining_requirements": [
+    "Qualify the changed vendor/runtime extraction under default and debug configurations, native consumers, original process caps, replay, and proportionate matched cost, memory and size gates before runtime admission.",
+    "Prove the three production callers, constructor normalization, count-range bounds, approximation truth, independent existence and concurrent publication; all 13 whole-crate obligation groups remain open.",
+    "Review and validate the existing main worktree changes now explicitly in scope, committing intended changes as they become qualified.",
+    "Continue expression/coefficient growth, original-cap failures, native combination and full-board admission, and the complete properties.md plan including all 39 properties, 14 targets and crate-specific future work.",
+    "Complete every required repository workflow validation before any future push; no push is requested or performed here."
+  ]
+}

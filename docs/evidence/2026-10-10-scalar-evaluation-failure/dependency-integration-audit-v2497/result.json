@@ -1,0 +1,393 @@
+{
+  "status": "Validated isolated dependency and shared-producer integration; no main/runtime admission",
+  "runner_sha256": "d063bf446121872bfa515793cb0af193335e11d2ae5f5b37360ab55aad97a8f1",
+  "previous_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "integration_protocol_sha256": "f82c5afea0ba839494d47e10bd5ecb7b577c516cbd69daf1a24d3680945c8155",
+  "source_record": "typed-api-prototype-v2492-integrated-verus/source-hashes.json.gz",
+  "source_record_sha256": "4239d674ede502a489ab4be91fddcaf533384ad7ae8a2412a979f9e752b2b8c8",
+  "source_files": 24831,
+  "changed_since_checkpoint": 100,
+  "correction_protocol_sha256": "957b2b12f5d978f4342e5413beb260495f8cf6f7679bdb053710b38060f05741",
+  "control_outcomes_compared": 326,
+  "control_input_differences_reconstructed": 279,
+  "rejection_run_seconds": {
+    "before_module_selection": 1472.8426005616784,
+    "after_module_selection": 968.7038393360563,
+    "comparison_is_matched_performance_benchmark": false,
+    "fits_current_15_minute_ci_job_locally": false
+  },
+  "phases": {
+    "typed-api-prototype-v2492-integrated-verus": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 33.50014503626153,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "8cd8e4e60814e65ed70ad63569ebf983f7f841e6922b636134d1826a37bca307",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_verus.py",
+        "typed-api-prototype-v2492-integrated-verus"
+      ],
+      "stdout_sha256": "868ba0d36eee0d03ed13a5a5808ed46e3e84d47824668f20581d5c7f63453fe2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "typed-api-prototype-v2493-integrated-acceptance": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.779597387649119,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "93443b26c4c5211281be76bafe2cde7c9967d84781fcf9fbb9e85d595bab95ef",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_integrated_proof_checks_v2482.py",
+        "typed-api-prototype-v2493-integrated-acceptance",
+        "test_acceptance.py"
+      ],
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a42d320f5850fdf6a3c1b2ac902e14b36a6f950f118920ded3b60c9daafda186"
+    },
+    "typed-api-prototype-v2496-integrated-rejections": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 968.7038393360563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "611a6e06f274198d23277a7aee6062510312124a58b8f3c9d8693a0a14850a49",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_integrated_proof_checks_v2482.py",
+        "typed-api-prototype-v2496-integrated-rejections",
+        "test_rejections.py"
+      ],
+      "stdout_sha256": "2130cec59ad80d792ca53c342db18776ee883b0d4dd403e46ae8e2698ecae6d0",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "typed-api-prototype-v2490-integrated-workspace-fmt": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 11.46901343204081,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "8494d412955bb771b590b61632fe2a0973fd0ffb018fe18989e494bff1b762b2",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "typed-api-prototype-v2491-integrated-included-fmt": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.7945501087233424,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "e954f679ad84b44c9a11019ef2d7a02039b330e83b4c1ae30e243a4c024bcdd2",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--config-path",
+        "crates/.rustfmt.toml",
+        "--config",
+        "skip_children=true",
+        "--check",
+        "crates/hypercurve/src/spline_periodic.rs",
+        "crates/hyperlimit/tests/real_representations.rs",
+        "crates/hyperreal/benches/adversarial_library.rs",
+        "crates/hyperreal/benches/adversarial_transcendentals.rs",
+        "crates/hyperreal/benches/dispatch_trace.rs",
+        "crates/hyperreal/benches/gmp_api.rs",
+        "crates/hyperreal/benches/library_perf.rs",
+        "crates/hyperreal/benches/numerical_micro.rs",
+        "crates/hyperreal/benches/scalar_micro.rs",
+        "crates/hyperreal/examples/computable_graphs.rs",
+        "crates/hyperreal/examples/computable_refinement_steps.rs",
+        "crates/hyperreal/fuzz/fuzz_targets/computable_approximation.rs",
+        "crates/hyperreal/fuzz/fuzz_targets/real_elementary.rs",
+        "crates/hyperreal/fuzz/fuzz_targets/structural_representations.rs",
+        "crates/hyperreal/src/computable/approximation.rs",
+        "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+        "crates/hyperreal/src/computable/approximation/constants.rs",
+        "crates/hyperreal/src/computable/approximation/dispatch.rs",
+        "crates/hyperreal/src/computable/approximation/e_plan_tests.rs",
+        "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+        "crates/hyperreal/src/computable/approximation/logarithms.rs",
+        "crates/hyperreal/src/computable/approximation/precision_tests.rs",
+        "crates/hyperreal/src/computable/approximation/representation.rs",
+        "crates/hyperreal/src/computable/approximation/serialization_index_tests.rs",
+        "crates/hyperreal/src/computable/approximation/statistics.rs",
+        "crates/hyperreal/src/computable/approximation/trig.rs",
+        "crates/hyperreal/src/computable/approximation/trig_operands.rs",
+        "crates/hyperreal/src/computable/budget.rs",
+        "crates/hyperreal/src/computable/format.rs",
+        "crates/hyperreal/src/computable/mod.rs",
+        "crates/hyperreal/src/computable/node.rs",
+        "crates/hyperreal/src/computable/node/algebra.rs",
+        "crates/hyperreal/src/computable/node/algebra_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/approximation_queries.rs",
+        "crates/hyperreal/src/computable/node/bounds.rs",
+        "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_publication_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_rescale_tests.rs",
+        "crates/hyperreal/src/computable/node/certified_planning_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_certificates.rs",
+        "crates/hyperreal/src/computable/node/domain_validation.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_trig.rs",
+        "crates/hyperreal/src/computable/node/fractional_separation_tests.rs",
+        "crates/hyperreal/src/computable/node/integer_scale_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs",
+        "crates/hyperreal/src/computable/node/linear_demand_tests.rs",
+        "crates/hyperreal/src/computable/node/logarithms.rs",
+        "crates/hyperreal/src/computable/node/magnitude_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs",
+        "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/precision_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+        "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/private_trig_range_tests.rs",
+        "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+        "crates/hyperreal/src/computable/node/radical_tower.rs",
+        "crates/hyperreal/src/computable/node/rational_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/representation.rs",
+        "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/node/scale.rs",
+        "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs",
+        "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/symbolic_work.rs",
+        "crates/hyperreal/src/computable/node/tests.rs",
+        "crates/hyperreal/src/computable/node/trig_domain.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_operands.rs",
+        "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic_tests.rs",
+        "crates/hyperreal/src/lib.rs",
+        "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+        "crates/hyperreal/src/real/arithmetic/elementary_functions.rs",
+        "crates/hyperreal/src/real/arithmetic/facts.rs",
+        "crates/hyperreal/src/real/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/real/arithmetic/representation.rs",
+        "crates/hyperreal/src/real/arithmetic/tests.rs",
+        "crates/hyperreal/src/real/convert.rs",
+        "crates/hyperreal/src/real/tests.rs",
+        "crates/hyperreal/src/serde.rs",
+        "crates/hyperreal/src/structural.rs",
+        "crates/hyperreal/src/verified/word.rs",
+        "crates/hyperreal/tests/gmp_api_coverage.rs",
+        "crates/hyperreal/tests/numerical_cross_reference.rs",
+        "crates/hyperreal/tests/precision_limits.rs",
+        "crates/hyperreal/tests/public_numeric_semantics.rs",
+        "crates/hyperreal/tests/real_representations.rs",
+        "crates/hyperreal/verification/bound_denotation.rs",
+        "crates/hyperreal/verification/cache_encoding_model.rs",
+        "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_bound_tests.rs",
+        "crates/hyperreal/verification/bit_length_model.rs",
+        "crates/hyperreal/verification/digit_scan_model.rs",
+        "crates/hyperreal/verification/lib.rs",
+        "crates/hyperreal/verification/word_scan_model.rs",
+        "crates/hyperreal/src/computable/node/approximation_bound.rs",
+        "crates/hyperreal/verification/lib.rs",
+        "crates/hyperreal/verification/approximation_bound.rs",
+        "crates/hyperreal/verification/computable_bounds.rs"
+      ],
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "typed-api-prototype-v2494-integrated-clippy": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 33.93764459295198,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "0d51d4eb2311b2df62fe173af8ceea1398aba117115820c98a56deed5abfac52",
+      "command": [
+        "cargo",
+        "clippy",
+        "--release",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hyperlimit",
+        "-p",
+        "hyperlattice",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6c74951a8ccbdd5e56bae3f1703b45867023c2244b3b2e110a16fc9a888408ae"
+    },
+    "typed-api-prototype-v2495-integrated-scalar-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 28.584699833299965,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "result_sha256": "46e5b779d2a38f2ea5acbcb2b6a6396f512e6bfb1a0beac281edb37e76ce1d76",
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--all-features"
+      ],
+      "stdout_sha256": "47ead587c649a868e15c62f9726feddbee1a5fb6e9cc1042a6ae9a789241bfa7",
+      "stderr_sha256": "bb9c3b3bdd35f955ed72b8be1d34d8437ffa40fd7736c18c1b98de5443c769a4"
+    }
+  },
+  "scalar_verified_units": 737,
+  "scalar_errors": 0,
+  "listed_production_contracts": 99,
+  "listed_model_theorems": 178,
+  "dependency_verified_units_per_build": 453,
+  "dependency_compiler_warnings": 0,
+  "fresh_dependency_builds": 4,
+  "compiler_results": [
+    {
+      "directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/verified-hq37j8nz",
+      "result_sha256": "d539b8d527f0db1f770ec6d8ceae53381c0076e3d9ebfefb1fdecd2e6bffede3"
+    },
+    {
+      "directory": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2496-integrated-rejections/proof-checks/dependency-build-0",
+      "result_sha256": "7471aa828f8db51cfeedd6e1d30340bb6189d0cde32ffb1aed8f1652de926d2a"
+    },
+    {
+      "directory": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2496-integrated-rejections/proof-checks/dependency-build-1",
+      "result_sha256": "9e2ee287dda920f328f530ec1e05ee798759eef94a9c9d7f027e8e58dd9de2a1"
+    },
+    {
+      "directory": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2496-integrated-rejections/proof-checks/dependency-build-2",
+      "result_sha256": "2f2ff85c0f019e982843097ca59c194960f38cf8cd9a58a9bf3f914de7f2e9a9"
+    }
+  ],
+  "compiler_receipts_sha256": {
+    "compiler-invocation.json": "8924189c7269cfafcb1d83b3590f9dd25abfb4e74c2e00c7d8c5858e2344e794",
+    "compiler-result.json": "d539b8d527f0db1f770ec6d8ceae53381c0076e3d9ebfefb1fdecd2e6bffede3",
+    "compiler.stderr.log": "e08f4a12fb00e794a6441fd0558234f0543fb0bf2d62913efd8b925aea94ede9",
+    "compiler-config.json": "2f24133844b9ed4e1cea3e7cfa79d953c7e2fa3216150af9da5f24b8389afc37",
+    "compiler.stdout.json": "d87f868c0140ec55da6d58c342c52f9008ed1328b754504fc5f47a06acb6210a"
+  },
+  "fresh_distinct_acceptance_tests": 51,
+  "fresh_guard_baselines": 8,
+  "fresh_rejected_controls": 318,
+  "fresh_scalar_native_tests": {
+    "top_level_batches": 1,
+    "top_level_passed": 1074,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1074,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1074,
+        "status": "ok",
+        "passed": 1074,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-85892b5461cd5cde)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "producer_mutant_inputs_reconstructed": 12,
+  "producer_full_rust_inputs_checked": 159,
+  "source_catalog_rechecked": true,
+  "main_files_unchanged": 1167,
+  "original_worktree_entries_preserved": 49,
+  "existing_worktree_changes_in_scope": true,
+  "retained_runtime_reference": "typed-api-prototype-v2335-state.json",
+  "runtime_reference_applies_to_current_candidate": false,
+  "current_candidate_runtime_admitted": false,
+  "whole_crate_obligation_groups_open": 13,
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "limits": [
+    "The scalar proof verifies the shared static associated function, with a fieldless proof owner; expression-graph state and its three production call sites are not proved.",
+    "Metadata contracts require normalized integer representation and a u64 aggregate bit-count bound. Constructors, arithmetic, derivation of the count bound, approximation truth and publication invariants remain open.",
+    "The 453-unit dependency export includes copied mathematical models; its count is reported separately and is not added to the scalar count as unique coverage. Unannotated upstream implementations remain unproved.",
+    "The local host proof imports the actual Cargo library and fresh export. Earlier cross-target compile checks and two-width models do not establish a complete 32-bit dependency proof.",
+    "Dependency binding covers the configured workspace and standalone proof manifests. Published packages and other Cargo roots still require separate binding and release qualification.",
+    "Native compilation and scalar tests do not establish matched cost, memory, size, concurrent publication, original-cap success or full-board admission. Historical v2335 runtime artifacts remain a separate immutable reference, not evidence for this changed candidate.",
+    "The two retained matching-baseline algebraic SIGXCPU failures and all earlier rejected variants remain unresolved. EvaluationBudget excludes bytes, time and unmetered exact algebraic work.",
+    "The corrected rejection sweep retains all 326 input/outcome controls but still exceeds the current 15-minute CI job locally; CI runtime qualification remains open."
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "runner_sha256": "65f35905e9b4ea9bff69c7ebbcef7ab896e66c582fe056ddca02a8dc5d6acbbd",
+  "previous_source_record_sha256": "95e555d2203f6e70297a38bf2f3d07d2772ccf4629cbcb2903efd6437b5f649a",
+  "overlay_files_sha256": {
+    "crates/hyperreal/verification/computable_bounds.rs": "837945d6e7c61b2f1d0bae3b8dcf6aff315b221cc138100b858580dcd22f855f",
+    "crates/hyperreal/verification/test_rejections.py": "b7d6db378f8b86fb17f2091c5116382ba2b92da69ee5b69ffbb53dea9d342768",
+    "crates/hyperreal/verification/test_bound_rejections.py": "c0603d3a5ed49ebace08e14db35c5d92e1e1a381c9b8870ccf10a5d8494ff3bd",
+    "crates/hyperreal/verification/test_cache_rejections.py": "40b24e72b6a1773d370312e5fe37efda696e7c995932c234ec7efbe8a5edf2c2",
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": "e571a722d531c371e013dbeea650f34dfb9cc3e166237da94311afef12ed8e10",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "a145d5b748c744ad13f4bda6f322c12756d929f84c60297d1f9c67a0c217966b",
+    "crates/hyperreal/verification/test_word_scan_rejections.py": "4f99c6db19012d1dbd00688061f227fd9d0bc04f08fcff89115855dd24d6b739",
+    "crates/hyperreal/verification/README.md": "4bfeda3bc36a0dd400a125bff0fb7d9e69b06e65065ac4936eb36a7cc6562acc"
+  },
+  "prior_files_sha256": {
+    "crates/hyperreal/verification/computable_bounds.rs": "44d52afb354f4041df95cb4b82d3f6070fb919d4e464ff287488efe7fccc9edf",
+    "crates/hyperreal/verification/test_rejections.py": "1182d5c9d9b119a1dced4ac972766ca8147e708bccb514d2d42d36329d73c36d",
+    "crates/hyperreal/verification/test_bound_rejections.py": "d0c9df855a1a2c4cffb9a75c255ddad36031325f531818059aedbbd5330d959d",
+    "crates/hyperreal/verification/test_cache_rejections.py": "cf7452723fff8b1442f47e3c7bf6846a64fe5be7de35f0a53e23d7b510b34950",
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": "3531a23197a89238b958184ca101dfae106494e642a207e933c5484f55349ba4",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "0f246d84619d9e848373307e1538c451adc4ccf61b1bc765ddc393750b920f3a",
+    "crates/hyperreal/verification/test_word_scan_rejections.py": "1f73460285d0705aef18fcfd0ce700306242468d5f907534869e57ce3ae8a59e",
+    "crates/hyperreal/verification/README.md": "5fb813b5306767f5fed102c3dca5fea8c99e3be581250a106d97b7c9f8ff1cb3"
+  },
+  "unchanged_mutation_declaration_ast_sha256": {
+    "crates/hyperreal/verification/test_rejections.py": "aba74570d8621108e10972ba531ba354b8b0301051cf878c6dfdc49b239e7b84",
+    "crates/hyperreal/verification/test_bound_rejections.py": "3ca57174a9be970c8f7b1baf1e0cd75308255a7fade8eb0e34c747cebd4f2e4c",
+    "crates/hyperreal/verification/test_cache_rejections.py": "d761fa78de0373dcf42b91ff6753c8ce6c1c763652f38c6d53f7ccd9dfd77949",
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": "716fe8a8297c024e7294478148f461433bade66c77971184554812b58c40d878",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "1454b849bc648f777fe7a0c6bd04ec66a70f86cfb34631f840ea59addc78fbd7",
+    "crates/hyperreal/verification/test_word_scan_rejections.py": "37e8e671fa80960dcf33da45effeeb987f70d14f8dbeb16a72607511e53ecb3b"
+  },
+  "full_sweep_result_sha256": "73d06efa8d3d468f6186c538caa50665c652a8a2283d78a7e69f70b1daade22d",
+  "format_failure_result_sha256": "60efafee661e457654dbf097d1698d12af1ed147ac61803f10b1b39e65700a47",
+  "scope": "One import permutation fixes formatting. Six guard scripts select only the mutated module for negative runs; complete baselines, mutations, source construction and rejection criteria stay unchanged. Fresh full positive proof and the entire 318-control suite must pass before retention. No runtime or proof contract/model body changes."
+}

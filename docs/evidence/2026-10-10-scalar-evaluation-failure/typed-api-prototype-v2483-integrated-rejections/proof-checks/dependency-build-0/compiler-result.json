@@ -1,0 +1,27 @@
+{
+  "gate_passed": true,
+  "exit_code": 0,
+  "verified": 453,
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 453,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "warnings": 0,
+  "config_sha256": "f1caba626ac7535ec8e7661d05b0e61369607a9dd358b26ec8b55f73430d98f1",
+  "library_artifacts": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/verified-dwxi5gyu/cargo/debug/deps/libnum_bigint-ea4e223a1062f232.rmeta": "bc66a0cf328ce58701c4d36850e43f43f2fb863684ece0434c3f0c88d42d2215",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/verified-dwxi5gyu/cargo/debug/deps/libnum_bigint-ea4e223a1062f232.rlib": "d91e1424ec9813ba3ef44d9839b0dbf8f73ff35a00b8fff2ef4ecb54a67ce271"
+  },
+  "inherited_jobserver_descriptors": [
+    3,
+    5
+  ],
+  "export_sha256": "cff2a98f372064daa0047d6b66f7ee4b8272e557587a7b7c53f81d5b984afce1",
+  "stdout_sha256": "0e74b1965afe9f081a7debbeb233a67efa3dcf7f05cd408bc17cf38181aa9850",
+  "stderr_sha256": "3125808296cd4a9d85777aadc3d9357206183d3f591974fd00a99465d14e49c8",
+  "invocation_sha256": "2880492b6b4f3d2f4737d3e2f5a5c53e4244decbd674ffe2710c049f62bd2d2f"
+}

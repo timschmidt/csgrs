@@ -1,0 +1,104 @@
+{
+  "protocol_sha256": "992431c8bf5bae1d6b74b2dce2ac8f3a4987ddb3a8a8f2c1fc412a7a74104cb3",
+  "phases": [
+    {
+      "phase": "typed-api-prototype-v2490-integrated-workspace-fmt",
+      "result_sha256": "8494d412955bb771b590b61632fe2a0973fd0ffb018fe18989e494bff1b762b2",
+      "result": {
+        "exit_code": 0,
+        "seconds": 11.46901343204081,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2491-integrated-included-fmt",
+      "result_sha256": "e954f679ad84b44c9a11019ef2d7a02039b330e83b4c1ae30e243a4c024bcdd2",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.7945501087233424,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2492-integrated-verus",
+      "result_sha256": "8cd8e4e60814e65ed70ad63569ebf983f7f841e6922b636134d1826a37bca307",
+      "result": {
+        "exit_code": 0,
+        "seconds": 33.50014503626153,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2493-integrated-acceptance",
+      "result_sha256": "93443b26c4c5211281be76bafe2cde7c9967d84781fcf9fbb9e85d595bab95ef",
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.779597387649119,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2494-integrated-clippy",
+      "result_sha256": "0d51d4eb2311b2df62fe173af8ceea1398aba117115820c98a56deed5abfac52",
+      "result": {
+        "exit_code": 0,
+        "seconds": 33.93764459295198,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2495-integrated-scalar-tests",
+      "result_sha256": "46e5b779d2a38f2ea5acbcb2b6a6396f512e6bfb1a0beac281edb37e76ce1d76",
+      "result": {
+        "exit_code": 0,
+        "seconds": 28.584699833299965,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    },
+    {
+      "phase": "typed-api-prototype-v2496-integrated-rejections",
+      "result_sha256": "611a6e06f274198d23277a7aee6062510312124a58b8f3c9d8693a0a14850a49",
+      "result": {
+        "exit_code": 0,
+        "seconds": 968.7038393360563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "gate_passed": true
+    }
+  ],
+  "complete": true
+}
