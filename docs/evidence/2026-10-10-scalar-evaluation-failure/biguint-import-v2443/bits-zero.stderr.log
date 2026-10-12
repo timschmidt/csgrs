@@ -1,0 +1,11 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/bits-zero.rs:10:13
+   |
+10 |     ensures value.metadata_value() == 0 <==> bits == 0,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+14 |     0
+   |     - at the end of the function body
+
+error: aborting due to 1 previous error
+

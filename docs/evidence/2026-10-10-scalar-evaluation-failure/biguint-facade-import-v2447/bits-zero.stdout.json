@@ -1,0 +1,70 @@
+{
+  "func-details": {
+    "biguint_facade_caller::imported_trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::pow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "biguint_facade_caller::imported_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::pow2": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "biguint_facade_caller::imported_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    }
+  },
+  "verification-results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 2,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  }
+}

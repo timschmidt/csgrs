@@ -1,0 +1,27 @@
+--- v2413/src/lib.rs
++++ v2441/src/lib.rs
+@@ -100,6 +100,24 @@
+ #![warn(rust_2018_idioms)]
+ #![no_std]
+ 
++#![cfg_attr(verus_keep_ghost, feature(proc_macro_hygiene))]
++
++#[cfg(verus_keep_ghost)]
++#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/verified/mod.rs"]
++mod verified;
++#[cfg(verus_keep_ghost)]
++#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/magnitude_model.rs"]
++mod magnitude_model;
++#[cfg(verus_keep_ghost)]
++#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/bit_length_model.rs"]
++mod bit_length_model;
++#[cfg(verus_keep_ghost)]
++#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/digit_scan_model.rs"]
++mod digit_scan_model;
++#[cfg(verus_keep_ghost)]
++#[path = "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/word_scan_model.rs"]
++mod word_scan_model;
++
+ #[macro_use]
+ extern crate alloc;
+ 

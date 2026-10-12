@@ -1,0 +1,8 @@
+{
+  "vendor": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-cargo-export-v2444/vendor/num-bigint",
+  "reports": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-cargo-export-v2444/compiler",
+  "export": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-cargo-export-v2444/artifacts/num_bigint.vir",
+  "verus": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+  "verus_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "wrapper_sha256": "6ecf6c185b24b842782eeb9cd8da86a8a90a814a56c6e13fe8ab8a0dcddeba08"
+}

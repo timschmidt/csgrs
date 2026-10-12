@@ -1,0 +1,8 @@
+{
+  "prior_runner_sha256": "57bec9ea7c803af1d62fec84b683a77eec84715a8de4a42e21e889490e6a227e",
+  "runner_sha256": "55976b58133b16126b45328029cfa0b3a439710036377a71d2b53cb3e1789cf1",
+  "failed_result_sha256": "3940436d3d7966d6bf101e86b2826ad12662473726a94e034641646dec745445",
+  "change": "Declare both Verus-generated cfg names for the standalone strict caller. Cargo supplied verus_keep_ghost through the vendor manifest, but this direct invocation has no Cargo lint configuration. Keep -D warnings and the same caller, export and Cargo artifacts.",
+  "failed_phase_proof_credit": 0,
+  "source_changed": false
+}

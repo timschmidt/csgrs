@@ -1,0 +1,21 @@
+error: unexpected `cfg` condition name: `verus_keep_ghost`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/biguint-facade-import-v2446/baseline.rs:6:1
+   |
+ 6 | / verus! {
+ 7 | |
+ 8 | | pub fn imported_bits(value: &BigUint) -> (bits: u64)
+ 9 | |     requires value.metadata_normalized(), value.metadata_storage_bits() <= u64::MAX,
+...  |
+44 | | }
+   | |_^
+   |
+   = note: using a cfg inside a macro will use the cfgs from the destination crate and not the ones from the defining crate
+   = help: try referring to `verus` crate for guidance on how handle this unexpected cfg
+   = help: to expect this configuration use `--check-cfg=cfg(verus_keep_ghost)`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+   = note: `-D unexpected-cfgs` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+   = note: this error originates in the macro `verus` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+error: aborting due to 1 previous error
+

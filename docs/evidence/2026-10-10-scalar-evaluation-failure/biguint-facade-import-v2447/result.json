@@ -1,0 +1,85 @@
+{
+  "protocol_sha256": "bd41d378068487e91796a773a76004e29924461388fb727ebdf18c890c3d7440",
+  "runs": [
+    {
+      "name": "baseline",
+      "exit_code": 0,
+      "seconds": 0.6067276489920914,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 3,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true,
+      "proof_failure": false,
+      "stdout_sha256": "fc228052c229b48d479acd433fc09f993cd58d773807863be82c05ad189215c6",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "source_sha256": "e630587c25b429ad9e6d94e9c51852697db51796fb436d89f0375e617973df7c"
+    },
+    {
+      "name": "bits-zero",
+      "exit_code": 1,
+      "seconds": 0.47908913204446435,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true,
+      "proof_failure": true,
+      "stdout_sha256": "7ff4b57a980b26050851e832ba1798e6e40362eb4d9f75e8f4c9d6bc38a8609a",
+      "stderr_sha256": "24257a1e22f6abd9746b9f32745da8260366278611c10f3048bf45b739223a37",
+      "source_sha256": "8f0d2526441c9b1d3f25250b48a8bc77e85743bb79ac33b2ac8d7e138ccb1f81"
+    },
+    {
+      "name": "zeros-none",
+      "exit_code": 1,
+      "seconds": 0.46427999809384346,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true,
+      "proof_failure": true,
+      "stdout_sha256": "ff640894a2b426a1077a16d06283575910a1fcdc99199795087b5d2a152d5a6f",
+      "stderr_sha256": "992ec28a871254a771042ea27e4235aeb94facf37dcee090703482a3b6384276",
+      "source_sha256": "ff4fb7b78366161b52cc8886d1edba816c37587760055a43cc9678c6ef791ba1"
+    },
+    {
+      "name": "ones-zero",
+      "exit_code": 1,
+      "seconds": 0.450458446983248,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true,
+      "proof_failure": true,
+      "stdout_sha256": "b7c497f219d54ab09f5e0d23a549703a1a23178db645b1dedc677f37c0d3388d",
+      "stderr_sha256": "5267f4be0a83ffba9adba853e8116e16f7a5ed88cc252911b13e070d707e7ba1",
+      "source_sha256": "63c4bef76ce9e59e011044cc0ada7a386672939f546267dcfff19a9d5e2f5fcf"
+    }
+  ],
+  "complete": true,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "export_inputs_unchanged": true,
+  "tooling_unchanged": true,
+  "caller_inputs_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

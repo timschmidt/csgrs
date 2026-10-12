@@ -1,0 +1,31 @@
+{
+  "protocol_sha256": "9f10c0c0a965b6f801bc42bca9cb4d70d46e2612813014df9d456bb1f2a54b37",
+  "runs": [
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "seconds": 0.1774122416973114,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "execute",
+      "exit_code": 0,
+      "seconds": 0.5608158679679036,
+      "gate_passed": true,
+      "stdout_sha256": "f3598386985c93b4e77a64ada29cd6935ade0ca7a550d8d09323512386cc4acf",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "complete": true,
+  "binary_sha256": "018325231f443f7be26478e66d882eb870ed69fa42d3b5dd5ed86bf11261b064",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "dependency_inputs_unchanged": true,
+  "corpus_unchanged": true,
+  "fresh_scalar_runtime_tests": 0,
+  "fresh_dependency_corpus_executions": 1,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

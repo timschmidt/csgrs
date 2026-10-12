@@ -1,0 +1,104 @@
+{
+  "status": "Frozen before actual dependency-import callers and guards",
+  "runner_sha256": "a91848e1c374376ec4d6a22bbdf77684e80bc41b41c1cf9c51f2ab14d39f908c",
+  "caller_sha256": "73f023ea822d97842894e542de541f0e88b2890ef7db6bf09a1fc72b151375c4",
+  "retained_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "export_protocol_sha256": "163565b9e2d1e9f07cc2df92128924de44a63343d98dee33f8c34deb89474770",
+  "export_result_sha256": "d2c7e09b72829a7053fbaa1c4516f0950d010a22b702b19e2d9afb8b9f5ef2f7",
+  "exported_artifacts_sha256": {
+    "libnum_bigint.rlib": "b8ce4f1bd68f9de716e02de822a80f0e28cac23afd8e3e627f94f8c8a07d143d",
+    "num_bigint.vir": "6845d48d8024d9cd93ff9950b2d0921fff6019a4a2ff9adeaa415e500c6050b3"
+  },
+  "jobs": [
+    {
+      "name": "baseline",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/baseline.rs",
+      "source_sha256": "73f023ea822d97842894e542de541f0e88b2890ef7db6bf09a1fc72b151375c4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--edition=2021",
+        "--crate-type=lib",
+        "--crate-name",
+        "biguint_metadata_caller",
+        "--no-cheating",
+        "--output-json",
+        "--extern",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/libnum_bigint.rlib",
+        "--import",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/num_bigint.vir",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/baseline.rs"
+      ],
+      "expected_exit": 0
+    },
+    {
+      "name": "bits-zero",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/bits-zero.rs",
+      "source_sha256": "90a6f5ff241ebd8567ef6156ebe61a88317fa571d860eed8ad8bf6d2f8f55858",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--edition=2021",
+        "--crate-type=lib",
+        "--crate-name",
+        "biguint_metadata_caller",
+        "--no-cheating",
+        "--output-json",
+        "--extern",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/libnum_bigint.rlib",
+        "--import",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/num_bigint.vir",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/bits-zero.rs"
+      ],
+      "expected_exit": 1
+    },
+    {
+      "name": "zeros-none",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/zeros-none.rs",
+      "source_sha256": "d96d4840566bb71c760efeecd334a737898e4f6c718926b19ac5f2e23efecb42",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--edition=2021",
+        "--crate-type=lib",
+        "--crate-name",
+        "biguint_metadata_caller",
+        "--no-cheating",
+        "--output-json",
+        "--extern",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/libnum_bigint.rlib",
+        "--import",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/num_bigint.vir",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/zeros-none.rs"
+      ],
+      "expected_exit": 1
+    },
+    {
+      "name": "ones-zero",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/ones-zero.rs",
+      "source_sha256": "63e4d6651710276c365481ee16c311ed5e8f1e8f29c69720f2b807fd76c5bd8b",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--edition=2021",
+        "--crate-type=lib",
+        "--crate-name",
+        "biguint_metadata_caller",
+        "--no-cheating",
+        "--output-json",
+        "--extern",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/libnum_bigint.rlib",
+        "--import",
+        "num_bigint=/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-crate-export-v2442/artifacts/num_bigint.vir",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/target/verification-dependencies/debug/deps",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/ones-zero.rs"
+      ],
+      "expected_exit": 1
+    }
+  ],
+  "scope": "Three conditional callers use the actual num_bigint::BigUint methods from the exported complete crate. A passing import and rejected body substitutions test use of those contracts without local assumptions. The external export verifies selected metadata bodies only. Normalization and count-range preconditions remain explicit; scalar/facade Cargo integration and runtime admission remain open. These are support calls, not additions to the retained 736-unit proof or historical 306-control suite."
+}

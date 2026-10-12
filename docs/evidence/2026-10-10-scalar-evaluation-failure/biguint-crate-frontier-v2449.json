@@ -1,0 +1,126 @@
+{
+  "status": "Actual BigUint crate export, Cargo num facade import and proof-erased corpus pass in isolated support fixtures",
+  "runner_sha256": "e168779f3b77c9ee999aad0f1ae86aee6a37d5680a6a68b6059e823d2da92016",
+  "retained_checkpoint": "typed-api-prototype-v2440-state.json",
+  "retained_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "retained_source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "source_files_rechecked": 24751,
+  "main_files_rechecked": 1167,
+  "candidate_sources_changed": false,
+  "source_catalog_unchanged": true,
+  "main_runtime_admitted": false,
+  "retained_verified_units": 736,
+  "new_retained_proof_units": 0,
+  "whole_crate_obligation_groups_open": 13,
+  "crate_export_attempts": {
+    "biguint-crate-export-v2441": {
+      "result_sha256": "674668f0b30a714fb53d6de4e39d0ab452d743b4ae35a317a610d829f832b213",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      }
+    },
+    "biguint-crate-export-v2442": {
+      "result_sha256": "d2c7e09b72829a7053fbaa1c4516f0950d010a22b702b19e2d9afb8b9f5ef2f7",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 450,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    }
+  },
+  "cargo_export_attempts": {
+    "biguint-cargo-export-v2444": {
+      "result_sha256": "c5964634805ffcc2f2762d9e607e20f293bfecdedb03f71730b6beb7bc94333d",
+      "compiler_result_sha256": "b950dfafc4aef8b5e23fa46a45977289d32859a8e4156483729b5b0edda55dbc",
+      "dependency_report_sha256": "474d4e19ea0f9dda324adaa8bb04b192262ea57d43cefb267c2b0f98c639fe2e",
+      "verified_units_including_imports": 450,
+      "bound_packages": 8,
+      "warning_diagnostics_including_summaries": 510,
+      "warning_messages": {
+        "failed to connect to jobserver from environment variable `CARGO_MAKEFLAGS=\"-j --jobserver-fds=3,5 --jobserver-auth=3,5\"`: cannot open file descriptor 3 from the jobserver environment variable value: Bad file descriptor (os error 9)": 2,
+        "unexpected `cfg` condition name: `verus_keep_ghost_body`": 506,
+        "253 warnings emitted": 2
+      },
+      "warning_free_gate_passed": false,
+      "exported_metadata_sha256": "0118eaf52c3cf9b7c8f9c3f33e1136d1b013fc0d3ab34552173222992487c047"
+    },
+    "biguint-cargo-export-v2445": {
+      "result_sha256": "a14eaaafef2455756cc621573c8b77560e83cd76a485be23be4d38e6ee816ceb",
+      "compiler_result_sha256": "c70191ebf461596779d9aebd4a04d00b767a8e3424abfbc8586dd0416c99c63f",
+      "dependency_report_sha256": "bfdd4d236e880054d7e4ee4badcb1548d95ad5bfcc470d28751df197ac4e6ee9",
+      "verified_units_including_imports": 450,
+      "bound_packages": 8,
+      "warning_diagnostics_including_summaries": 0,
+      "warning_messages": {},
+      "warning_free_gate_passed": true,
+      "exported_metadata_sha256": "9ff9ed521a7548fc19c19d9d256c1cd91c3d89df381320b91bc4bb6e9ed0f163"
+    }
+  },
+  "import_attempts": {
+    "biguint-import-v2443": {
+      "result_sha256": "9326db469d062bcf1cfdeafc676e1456c7d9793f7b7b11b4f2f90e31758117c9",
+      "complete": true,
+      "executed_jobs": 4,
+      "passing_baselines": 1,
+      "real_proof_failures": 3,
+      "verified_caller_functions": 3
+    },
+    "biguint-facade-import-v2446": {
+      "result_sha256": "3940436d3d7966d6bf101e86b2826ad12662473726a94e034641646dec745445",
+      "complete": false,
+      "executed_jobs": 1,
+      "passing_baselines": 0,
+      "real_proof_failures": 0,
+      "verified_caller_functions": 0
+    },
+    "biguint-facade-import-v2447": {
+      "result_sha256": "a0cf35a3ad068d342b4a4dc94f60efc6305affa82838db58c595c97ad878de7a",
+      "complete": true,
+      "executed_jobs": 4,
+      "passing_baselines": 1,
+      "real_proof_failures": 3,
+      "verified_caller_functions": 3
+    }
+  },
+  "native_runtime_result_sha256": "f1528a9392c696ed9cbe23ae8a7959623ea03509dd95b472565ba6ecbcc6fe97",
+  "native_corpus": {
+    "cases": "67137",
+    "paired_values": "170970",
+    "helper_width_checks": "134274",
+    "diagnostic_checksum": "f8af72a05fcd32ff"
+  },
+  "fresh_dependency_corpus_executions": 1,
+  "fresh_scalar_runtime_tests": 0,
+  "verified_native_width": 64,
+  "final_export_verified_units_including_existing_models": 450,
+  "selected_metadata_executable_functions": 9,
+  "new_export_units_including_loops_and_constant": 12,
+  "existing_imported_units": 438,
+  "passing_import_paths": 2,
+  "import_caller_functions_per_path": 3,
+  "import_negative_controls_per_path": 3,
+  "distinct_caller_body_mutations": 3,
+  "fresh_import_positive_baselines": 2,
+  "fresh_import_negative_executions": 6,
+  "final_cargo_compiler_warnings": 0,
+  "unretained_failures_preserved": [
+    "biguint-crate-export-v2441",
+    "biguint-facade-import-v2446"
+  ],
+  "warning_bearing_build_preserved": "biguint-cargo-export-v2444",
+  "scope": "The actual complete num-bigint crate root, private BigUint representation and public inherent methods are compiled; only annotated metadata bodies and imported models are verified. Cargo builds one coherent num dependency graph and binds its local BigUint source to the isolated fixture's production root. Importing only num as a direct Rust external crate successfully resolves the exported transitive BigUint proof identity. A native execution of the unchanged independent oracle corpus agrees with the pinned upstream library after proof erasure. SOURCE still uses its retained registry dependency and is unchanged. No whole-num-bigint verification, new retained scalar theorem, production dependency admission or scalar runtime/cost/memory/size qualification is claimed.",
+  "remaining": [
+    "Apply a reviewable source/Cargo integration only after preserving the fixed scalar correctness, resource, cost, memory and size gates. The final proof metadata currently belongs to an isolated fixture, not SOURCE.",
+    "Connect actual BigInt sign/magnitude and bound-producing callers to the imported BigUint contracts; normalization and aggregate count-range premises remain explicit. Preserve early Unknown, metadata short-circuiting, lazy trailing-zero scans and existing allocation policy.",
+    "Make proof-model placement and Cargo/Verus wiring suitable for the repository and publication, then qualify supported features, native and 32-bit targets, MSRV and packaging. The actual crate export here covers host u64 limbs; the earlier shared-source proof covers both helper widths separately.",
+    "Continue approximation truth, independent real existence, atomic publication and exact-operation resource work. Both historical baseline CPU failures, all thirteen whole-crate groups, 39 properties, 14 targets, crate future work, main/native/full-board admission and complete pre-push verification remain open."
+  ],
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true
+}

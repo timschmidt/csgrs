@@ -1,0 +1,17 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/biguint-import-v2443/ones-zero.rs:34:13
+   |
+34 |       ensures {
+   |  _____________^
+35 | |         let unit = pow2(count as nat);
+36 | |         let quotient = (value.metadata_value() + 1) / unit;
+37 | |         quotient > 0 && quotient % 2 == 1 && value.metadata_value() + 1 == quotient * unit
+38 | |             && count <= value.metadata_storage_bits()
+39 | |     },
+   | |_____^ failed this postcondition
+40 |   {
+41 |       0
+   |       - at the end of the function body
+
+error: aborting due to 1 previous error
+

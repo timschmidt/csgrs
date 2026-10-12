@@ -1,0 +1,8 @@
+{
+  "previous_runner_sha256": "44eb5be927c598962abd815de1a7afeaeff92ec04b76063acfe68444aea50638",
+  "runner_sha256": "5f3a5c1d8226f5e4d716958f6c275cee433d9515fa0d796a834071174b53b5a0",
+  "failed_result_sha256": "674668f0b30a714fb53d6de4e39d0ab452d743b4ae35a317a610d829f832b213",
+  "change": "Pass the export output path alone. The pinned CLI help advertises CRATENAME=PATH for export, but this build treats the complete argument as the output filename. Crate name remains explicitly num_bigint.",
+  "previous_verification_pass_claimed": false,
+  "source_changed": false
+}

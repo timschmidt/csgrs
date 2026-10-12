@@ -1,0 +1,20 @@
+{
+  "prior_wrapper_sha256": "6ecf6c185b24b842782eeb9cd8da86a8a90a814a56c6e13fe8ab8a0dcddeba08",
+  "prior_runner_sha256": "9763fe5af531180492cc9d7f1ead968ccc533aa51ef785c4edf6429da57622e0",
+  "wrapper_sha256": "14413b1ad57145065ccf51dabc86676c50a0f6209eeffea0d6112a84689064cb",
+  "runner_sha256": "23795ef898939be665862b311221f4ee20e3f10fb2536c5e704112406290a41a",
+  "previous_result_sha256": "c5964634805ffcc2f2762d9e607e20f293bfecdedb03f71730b6beb7bc94333d",
+  "previous_warning_messages": {
+    "failed to connect to jobserver from environment variable `CARGO_MAKEFLAGS=\"-j --jobserver-fds=3,5 --jobserver-auth=3,5\"`: cannot open file descriptor 3 from the jobserver environment variable value: Bad file descriptor (os error 9)": 2,
+    "unexpected `cfg` condition name: `verus_keep_ghost_body`": 506,
+    "253 warnings emitted": 2
+  },
+  "changes": [
+    "Preserve the numeric Cargo jobserver descriptors when invoking Verus through Python.",
+    "Declare the Verus-generated verus_keep_ghost_body configuration name using Cargo RUSTFLAGS.",
+    "Use -D warnings and independently reject any warning-level compiler diagnostics."
+  ],
+  "previous_proof_build_pass_retained": true,
+  "previous_warning_free_pass_claimed": false,
+  "source_changed": false
+}

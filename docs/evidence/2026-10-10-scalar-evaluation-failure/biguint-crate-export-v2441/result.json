@@ -1,0 +1,20 @@
+{
+  "exit_code": 1,
+  "seconds": 4.035380193963647,
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": true,
+    "success": false
+  },
+  "protocol_sha256": "9f4d37f1aeadb748cb84abd98b65bb8838935842af6c5c592b5a3145d89b4ca4",
+  "stdout_sha256": "f6de49ab48da1fb94275546d514453ace8da91ef693a9120c0dde038381ad5e9",
+  "stderr_sha256": "42315217a3d8c804b92dd431f0a53d320d6fae9a4e97738ed1a76eb195169bdd",
+  "emitted_artifacts_sha256": {},
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "tooling_unchanged": true,
+  "vendor_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}
