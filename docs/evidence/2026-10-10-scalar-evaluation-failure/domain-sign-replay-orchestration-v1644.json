@@ -1,0 +1,90 @@
+{
+  "source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "complete": true,
+  "results": [
+    {
+      "family": "inverse_trig",
+      "phase": "typed-api-prototype-v1640-domain-sign-inverse-replay",
+      "baseline": "typed-api-prototype-v1362-integer-scale-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v1624-domain-sign-release-build",
+        "typed-api-prototype-v1640-domain-sign-inverse-replay",
+        "typed-api-prototype-v1622-domain-sign-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.5819297563284636,
+      "expected_cases": 384,
+      "summary_sha256": "7c7426895946794d9f6d3decdfdb884698d39a5a4ee78b6fab7bddfdd14e12cf"
+    },
+    {
+      "family": "evaluation",
+      "phase": "typed-api-prototype-v1641-domain-sign-evaluation-replay",
+      "baseline": "typed-api-prototype-v1363-integer-scale-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v1624-domain-sign-release-build",
+        "typed-api-prototype-v1641-domain-sign-evaluation-replay",
+        "typed-api-prototype-v1622-domain-sign-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 7.043560951016843,
+      "expected_cases": 384,
+      "summary_sha256": "7a5176f9ded1a20a372c01026a23785ed7c8b2743166db97b9ca56fa4818d71d"
+    },
+    {
+      "family": "algebraic",
+      "phase": "typed-api-prototype-v1642-domain-sign-algebraic-replay",
+      "baseline": "typed-api-prototype-v1364-integer-scale-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v1624-domain-sign-release-build",
+        "typed-api-prototype-v1642-domain-sign-algebraic-replay",
+        "typed-api-prototype-v1622-domain-sign-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 9.626794559881091,
+      "expected_cases": 288,
+      "summary_sha256": "d4934cfeb66c31a1321110aad73be83e23fc9180ea771ff8f2c28297cf420702"
+    },
+    {
+      "family": "algebraic_wide",
+      "phase": "typed-api-prototype-v1643-domain-sign-algebraic-wide-replay",
+      "baseline": "typed-api-prototype-v1365-integer-scale-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v1624-domain-sign-release-build",
+        "typed-api-prototype-v1643-domain-sign-algebraic-wide-replay",
+        "typed-api-prototype-v1622-domain-sign-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 37.03227322315797,
+      "expected_cases": 144,
+      "summary_sha256": "a3722e5118ff28c2a0ddba4efc900d04e0afa829c44b2542eea0e78c44a32775"
+    },
+    {
+      "family": "normal_form",
+      "phase": "typed-api-prototype-v1644-domain-sign-normal-form-replay",
+      "baseline": "typed-api-prototype-v1366-integer-scale-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v1624-domain-sign-release-build",
+        "typed-api-prototype-v1644-domain-sign-normal-form-replay",
+        "typed-api-prototype-v1622-domain-sign-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.285500396043062,
+      "expected_cases": 384,
+      "summary_sha256": "55d0320f4d09f56f7072f5f04d0848e8a089eee21a963f994015a510e86a33ad"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "failed_helper": "record_domain_sign_retention.py",
+  "failed_helper_sha256": "c05e0b1a2a301955952811498472b1a71b26b245bd89e5a41ee38f0604495498",
+  "exit_code": 1,
+  "failure": "The phase(1372) glob found both the stack-tests directory and test-summary.json. Assertion failed before writing any retention record.",
+  "corrected_helper": "record_domain_sign_retention_v2.py",
+  "correction": "Filter phase glob entries to directories before requiring a unique result. No measured input or prior output changes.",
+  "source_unchanged": true
+}

@@ -1,0 +1,17 @@
+{
+  "status": "Scoped source review; remaining requirements stay open",
+  "completed_review": [
+    "Complete domain_certificates.rs and domain_validation.rs, including proof prerequisites, fallback order and sign publication. The new helper has two call sites; each is subordinate to the existing independent existence proof.",
+    "Canonical rational signs read stored Sign metadata; unreduced/lazy ratios retain metered recognition unless a root certificate already exists. Atomic publication uses the existing monotone compare/exchange implementation.",
+    "Log constructor smooth-factor extraction and logarithm range fallback were traced to public deserialization and ordinary asinh construction. The normal 5000-bit square-folding limit changes the public expression shape."
+  ],
+  "unresolved": [
+    "A retained magnitude bound may suffice for open/closed-unit or at-least-one domain membership before bounded rational recognition. Establish separate public reachability and proof-retention evidence before another ordering change.",
+    "The logarithm smooth-prime factoring loop remains unmetered and can repeatedly copy wide integers. A power-of-two optimization needs a frozen full-size baseline and ordinary-path cost controls; do not call it a time/byte budget fix.",
+    "The stored/public logarithm survey contains a misleading shared-constant warmup comment; its actual setup and process order are preserved and explicitly limited in log-range-survey-v1583.json. No universal cold/warm equivalence or uniform timing claim follows.",
+    "Direct Real budget API scope, other constructor preflights, lazy Laurent/tower coefficient copies, composed ln/exp/inverse-hyperbolic paths, concurrent/reconstructed and cross-root schedules remain open.",
+    "The modified runtime domain traversal and fact-use ordering remain outside the existing conditional Verus target. Whole-crate proof coverage and all thirteen obligation groups remain open.",
+    "Full unchanged replay, native-prototype combination and complete board admission remain necessary before modifying the main runtime. The 49 original worktree entries and original main scalar failure remain preserved.",
+    "All 39 properties, 14 targets and crate future work remain in scope; this domain proof extension is one scalar checkpoint."
+  ]
+}

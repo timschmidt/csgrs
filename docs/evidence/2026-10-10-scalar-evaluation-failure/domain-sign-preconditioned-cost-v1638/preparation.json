@@ -1,0 +1,35 @@
+{
+  "cpu": 0,
+  "available_cpus": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "-D",
+    "warnings",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/acos_cost_cpu_prelude.rs",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/domain-sign-cost-cpu-prelude-v1638"
+  ],
+  "prelude_sha256": "fa8cf871d96381d2310f1fb6d5d884148478fafbc0783c644ac4dc98fcfe5f4e",
+  "prelude_source_sha256": "c08078e6da4c9ddbb48e7117f161abbd03243586073348fc1e6ab8e8c442d6e8",
+  "iterations": 50000000,
+  "timed_query_inputs_and_caps_unchanged": true
+}

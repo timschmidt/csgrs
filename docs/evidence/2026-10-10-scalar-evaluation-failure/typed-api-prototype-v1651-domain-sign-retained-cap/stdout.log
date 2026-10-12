@@ -1,0 +1,11 @@
+
+running 5 tests
+test computable::node::trig_lattice_tests::compressed_lattice_carries_cancel_and_invalid_operands_stay_unknown ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_keeps_observed_stops_and_numeric_publication_separate ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_matches_independent_small_integer_modular_oracle ... ok
+test computable::node::trig_lattice_tests::compressed_lattice_values_poles_and_shared_proofs ... ok
+test computable::node::trig_lattice_tests::nearby_finite_trig_values_are_not_mistaken_for_lattice_points ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1060 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::trig_lattice_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "b2f3269a6ba8c6165b9c924d3147cbf4fc7a2baf3477c5040d8c2e7777e35143", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.045380808878690004}

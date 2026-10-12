@@ -1,0 +1,2342 @@
+[
+  {
+    "name": "case-0",
+    "family": "one",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.00459458539262414,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "one",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-1",
+    "family": "one",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003825007937848568,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "one",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-2",
+    "family": "one",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0036160023882985115,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "one",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-3",
+    "family": "one",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0036372211761772633,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "one",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-4",
+    "family": "one",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038292580284178257,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "one",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-5",
+    "family": "one",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "one",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003986387047916651,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "one",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-6",
+    "family": "rational",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004264647141098976,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "rational",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-7",
+    "family": "rational",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003745193127542734,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "rational",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-8",
+    "family": "rational",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003935010172426701,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "rational",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-9",
+    "family": "rational",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0037226052954792976,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "rational",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-10",
+    "family": "rational",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003743992652744055,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "rational",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-11",
+    "family": "rational",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "rational",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003941160161048174,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "rational",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-12",
+    "family": "pi",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004517799708992243,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-13",
+    "family": "pi",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003903802018612623,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-14",
+    "family": "pi",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038115186616778374,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-15",
+    "family": "pi",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0037672617472708225,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-16",
+    "family": "pi",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003795540425926447,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-17",
+    "family": "pi",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003804659005254507,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-18",
+    "family": "e",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004685839172452688,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "e",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-19",
+    "family": "e",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004019805230200291,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "e",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-20",
+    "family": "e",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038960729725658894,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "e",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-21",
+    "family": "e",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003919401206076145,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "e",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-22",
+    "family": "e",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003939620219171047,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "e",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-23",
+    "family": "e",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "e",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0037916800938546658,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "e",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-24",
+    "family": "sqrt_two",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004921572748571634,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-25",
+    "family": "sqrt_two",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004011135082691908,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-26",
+    "family": "sqrt_two",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004084079992026091,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-27",
+    "family": "sqrt_two",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003983897157013416,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-28",
+    "family": "sqrt_two",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003970087971538305,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-29",
+    "family": "sqrt_two",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sqrt_two",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003923090640455484,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sqrt_two",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-30",
+    "family": "ln_two",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004741405136883259,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-31",
+    "family": "ln_two",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004530840087682009,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-32",
+    "family": "ln_two",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038080490194261074,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-33",
+    "family": "ln_two",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.00398459704592824,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-34",
+    "family": "ln_two",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038828239776194096,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-35",
+    "family": "ln_two",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "ln_two",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038708741776645184,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "ln_two",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-36",
+    "family": "sin_one",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004779443144798279,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-37",
+    "family": "sin_one",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003910602070391178,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-38",
+    "family": "sin_one",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004005335737019777,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-39",
+    "family": "sin_one",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038551860488951206,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-40",
+    "family": "sin_one",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003838947042822838,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-41",
+    "family": "sin_one",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "sin_one",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038031889125704765,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "sin_one",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-42",
+    "family": "cos_one",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004622573032975197,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-43",
+    "family": "cos_one",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0037232250906527042,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-44",
+    "family": "cos_one",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003994806203991175,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-45",
+    "family": "cos_one",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038009588606655598,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-46",
+    "family": "cos_one",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003856165334582329,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-47",
+    "family": "cos_one",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "cos_one",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003578015137463808,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "cos_one",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-48",
+    "family": "pi_plus_e",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0044544050469994545,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-49",
+    "family": "pi_plus_e",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003980907145887613,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-50",
+    "family": "pi_plus_e",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003997405990958214,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-51",
+    "family": "pi_plus_e",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003752503078430891,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-52",
+    "family": "pi_plus_e",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003541467245668173,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-53",
+    "family": "pi_plus_e",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_plus_e",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.00386209599673748,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_plus_e",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-54",
+    "family": "pi_times_e",
+    "precision": -2147483647,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "-2147483647"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004745014943182468,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": -2147483647,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-55",
+    "family": "pi_times_e",
+    "precision": -2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "-2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.004131616093218327,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": -2147483646,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-56",
+    "family": "pi_times_e",
+    "precision": -2147483632,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "-2147483632"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003937140107154846,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": null,
+        "curve_scope_success": null,
+        "error": "Exhausted",
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": -2147483632,
+        "preparation": "control",
+        "result": null
+      },
+      {
+        "bits": null,
+        "error": "Exhausted",
+        "result": null,
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-57",
+    "family": "pi_times_e",
+    "precision": 2147483646,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "2147483646"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0038662846200168133,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": 2147483646,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-58",
+    "family": "pi_times_e",
+    "precision": 2147483645,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "2147483645"
+    ],
+    "exit_code": 0,
+    "seconds": 0.0037968000397086143,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": 2147483645,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  },
+  {
+    "name": "case-59",
+    "family": "pi_times_e",
+    "precision": 2147483631,
+    "command": [
+      "timeout",
+      "--kill-after=2s",
+      "3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1664-domain-sign-replay/probe",
+      "pi_times_e",
+      "control",
+      "approx",
+      "2147483631"
+    ],
+    "exit_code": 0,
+    "seconds": 0.003794219810515642,
+    "timeout_seconds": 3,
+    "address_space_cap_mib": 192,
+    "receipts": [
+      {
+        "aborted": false,
+        "bits": 0,
+        "curve_scope_success": null,
+        "error": null,
+        "family": "pi_times_e",
+        "operation": "approx",
+        "precision": 2147483631,
+        "preparation": "control",
+        "result": "0"
+      },
+      {
+        "bits": 0,
+        "error": null,
+        "result": "0",
+        "retry": true
+      }
+    ],
+    "valid": true
+  }
+]

@@ -1,0 +1,137 @@
+{
+  "status": "Prepared after preserving the incomplete fixed-CPU run and before these follow-up measurements",
+  "source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "previous_failed_run": "domain-sign-preconditioned-cost-v1638",
+  "failure": {
+    "name": "algebraic-19-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1361-integer-scale-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": -24,
+    "wall_timeout": false,
+    "wall_seconds": 2.1217771410010755,
+    "binary_sha256": "b96fe4988f96e54cdf31610baf8626bb0d75508b37163ef8348789d118083c35",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "failure_scope": "The retained baseline, not the candidate, received SIGXCPU. The final receipt was not emitted, so the exact interrupted stage is unobserved. The adjacent completed baseline process took 1.93 seconds wall time with only 12.05 milliseconds inside the timed sign-query loop; the cap includes preparation of 64 exact 16384-bit fixtures.",
+  "unchanged_inputs": "All fixture counts, precisions, probes, helper sources, oracle checks, executable hashes and query output checks remain unchanged. Neither original failed output nor completed timing rows are replaced.",
+  "jobs": [
+    {
+      "output": "domain-sign-focused-cost-v1639",
+      "prelude": "domain-sign-focused-cpu-prelude-v1639",
+      "repetitions": 27,
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "wall_seconds": 4,
+      "selection": {
+        "integer": [
+          [
+            "wide_coarse",
+            "10000"
+          ],
+          [
+            "small_coarse",
+            "200000"
+          ]
+        ],
+        "acos": [
+          [
+            "mid_negative",
+            "300"
+          ],
+          [
+            "mid_positive",
+            "300"
+          ]
+        ],
+        "default": [
+          [
+            "structural_cancel",
+            "500"
+          ],
+          [
+            "cold_sin",
+            "1000"
+          ]
+        ]
+      },
+      "scope": "Twenty-seven alternating-order repetitions for each of three above-five-percent regressions and three adjacent controls. Original 192 MiB, CPU 2/3 second and four-second wall limits remain. All earlier observations stay retained; no universal speedup claim."
+    },
+    {
+      "output": "domain-sign-algebraic-cost-v1639",
+      "prelude": "domain-sign-algebraic-cpu-prelude-v1639",
+      "repetitions": 9,
+      "cpu_seconds": [
+        4,
+        5
+      ],
+      "wall_seconds": 8,
+      "selection": {
+        "algebraic": [
+          [
+            "cost",
+            "2",
+            "2",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "3",
+            "3",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "4",
+            "4",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "3",
+            "0",
+            "true",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "256",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "1024",
+            "true",
+            "64"
+          ]
+        ]
+      },
+      "scope": "Separate matched timing diagnostic for all six unchanged algebraic fixtures, nine alternating-order repetitions, with 192 MiB and a larger CPU 4/5 second, eight-second wall process safety cap applied equally to baseline and candidate. This does not pass or replace the original two-second cap failure."
+    }
+  ]
+}

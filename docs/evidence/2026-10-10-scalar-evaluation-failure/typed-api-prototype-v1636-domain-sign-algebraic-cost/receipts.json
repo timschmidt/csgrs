@@ -1,0 +1,1622 @@
+[
+  {
+    "name": "square_roots-0",
+    "command": {
+      "name": "square_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03446393692865968,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118582",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-1",
+    "command": {
+      "name": "square_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03488977812230587,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111312",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-2",
+    "command": {
+      "name": "square_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03388556698337197,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "105273",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-3",
+    "command": {
+      "name": "square_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033721518237143755,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "100044",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-4",
+    "command": {
+      "name": "square_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03357072873041034,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103483",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-5",
+    "command": {
+      "name": "square_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03351652203127742,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107592",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-6",
+    "command": {
+      "name": "square_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033746495842933655,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111572",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-7",
+    "command": {
+      "name": "square_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03365933196619153,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "139170",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-8",
+    "command": {
+      "name": "square_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03386121802031994,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "103863",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-0",
+    "command": {
+      "name": "cube_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.817029298748821,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1178110",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-1",
+    "command": {
+      "name": "cube_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8180915857665241,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1173260",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-2",
+    "command": {
+      "name": "cube_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8182406262494624,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1154511",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-3",
+    "command": {
+      "name": "cube_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.818909979891032,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1194098",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-4",
+    "command": {
+      "name": "cube_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8184323431923985,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1156950",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-5",
+    "command": {
+      "name": "cube_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8175072972662747,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1145521",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-6",
+    "command": {
+      "name": "cube_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7675921181216836,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1159921",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-7",
+    "command": {
+      "name": "cube_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7681578202173114,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1128403",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-8",
+    "command": {
+      "name": "cube_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.817663115914911,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1155421",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-0",
+    "command": {
+      "name": "fourth_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8191922269761562,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11919143",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-1",
+    "command": {
+      "name": "fourth_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8696008808910847,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11530729",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-2",
+    "command": {
+      "name": "fourth_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8700592992827296,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11652281",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-3",
+    "command": {
+      "name": "fourth_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8701029662042856,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11780373",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-4",
+    "command": {
+      "name": "fourth_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8192638419568539,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11945581",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-5",
+    "command": {
+      "name": "fourth_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8189066462218761,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11711257",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-6",
+    "command": {
+      "name": "fourth_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8192857098765671,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "14818394",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-7",
+    "command": {
+      "name": "fourth_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8701412128284574,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11610953",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-8",
+    "command": {
+      "name": "fourth_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8196543650701642,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11598424",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-0",
+    "command": {
+      "name": "reciprocals-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06717549497261643,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "197886",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-1",
+    "command": {
+      "name": "reciprocals-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06661038380116224,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "198516",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-2",
+    "command": {
+      "name": "reciprocals-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06646967306733131,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "244923",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-3",
+    "command": {
+      "name": "reciprocals-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06661729281768203,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "201716",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-4",
+    "command": {
+      "name": "reciprocals-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06597558688372374,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "196107",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-5",
+    "command": {
+      "name": "reciprocals-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06606256077066064,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "287831",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-6",
+    "command": {
+      "name": "reciprocals-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06607358017936349,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "196657",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-7",
+    "command": {
+      "name": "reciprocals-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06645583407953382,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "243954",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-8",
+    "command": {
+      "name": "reciprocals-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06665948033332825,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "205295",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-0",
+    "command": {
+      "name": "wide_256-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03537323512136936,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "324398",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-1",
+    "command": {
+      "name": "wide_256-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034348905086517334,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "274922",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-2",
+    "command": {
+      "name": "wide_256-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03446494694799185,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "268892",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-3",
+    "command": {
+      "name": "wide_256-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034003668930381536,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "260373",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-4",
+    "command": {
+      "name": "wide_256-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033962681889534,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "326377",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-5",
+    "command": {
+      "name": "wide_256-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034255921840667725,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "263082",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-6",
+    "command": {
+      "name": "wide_256-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03410501219332218,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "263342",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-7",
+    "command": {
+      "name": "wide_256-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03392488416284323,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "285470",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-8",
+    "command": {
+      "name": "wide_256-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03423631330952048,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "267602",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-0",
+    "command": {
+      "name": "wide_1024_inverse-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.035169658716768026,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "367144",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-1",
+    "command": {
+      "name": "wide_1024_inverse-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034808413591235876,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "443159",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-2",
+    "command": {
+      "name": "wide_1024_inverse-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03438981203362346,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "386723",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-3",
+    "command": {
+      "name": "wide_1024_inverse-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033963271882385015,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "361565",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-4",
+    "command": {
+      "name": "wide_1024_inverse-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033925704192370176,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "356685",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-5",
+    "command": {
+      "name": "wide_1024_inverse-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0342983091250062,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "355715",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-6",
+    "command": {
+      "name": "wide_1024_inverse-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033952163066715,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "352216",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-7",
+    "command": {
+      "name": "wide_1024_inverse-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034125410951673985,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "354396",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-8",
+    "command": {
+      "name": "wide_1024_inverse-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03413320006802678,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "353256",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

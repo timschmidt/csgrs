@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "atan_small-0",
+    "command": {
+      "name": "atan_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018372081220149994,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50596",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-1",
+    "command": {
+      "name": "atan_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017838896717876196,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57287",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-2",
+    "command": {
+      "name": "atan_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01787018496543169,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55246",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-3",
+    "command": {
+      "name": "atan_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01866352977231145,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48097",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-4",
+    "command": {
+      "name": "atan_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017930021043866873,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44397",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-5",
+    "command": {
+      "name": "atan_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017577385064214468,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48306",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-6",
+    "command": {
+      "name": "atan_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017640999983996153,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58626",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-7",
+    "command": {
+      "name": "atan_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01769030699506402,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47977",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-8",
+    "command": {
+      "name": "atan_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01782535808160901,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48696",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-0",
+    "command": {
+      "name": "atan_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033574908040463924,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52866",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-1",
+    "command": {
+      "name": "atan_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0335881682112813,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51857",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-2",
+    "command": {
+      "name": "atan_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03380805207416415,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52637",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-3",
+    "command": {
+      "name": "atan_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03372834715992212,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52147",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-4",
+    "command": {
+      "name": "atan_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03403036668896675,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54286",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-5",
+    "command": {
+      "name": "atan_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03373953700065613,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51587",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-6",
+    "command": {
+      "name": "atan_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03359123691916466,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60586",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-7",
+    "command": {
+      "name": "atan_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03379056276753545,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54276",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-8",
+    "command": {
+      "name": "atan_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03385666897520423,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52666",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-0",
+    "command": {
+      "name": "acos_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06582133797928691,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109173",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-1",
+    "command": {
+      "name": "acos_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06597749702632427,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "115422",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-2",
+    "command": {
+      "name": "acos_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06571777537465096,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107383",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-3",
+    "command": {
+      "name": "acos_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06581549812108278,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "119912",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-4",
+    "command": {
+      "name": "acos_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06576810125261545,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109582",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-5",
+    "command": {
+      "name": "acos_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06577957095578313,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107353",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-6",
+    "command": {
+      "name": "acos_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06561430171132088,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113352",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-7",
+    "command": {
+      "name": "acos_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06593727972358465,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120562",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-8",
+    "command": {
+      "name": "acos_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06632734322920442,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114372",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-0",
+    "command": {
+      "name": "terms_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03433046629652381,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81465",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-1",
+    "command": {
+      "name": "terms_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033677822444587946,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "94633",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-2",
+    "command": {
+      "name": "terms_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03356828773394227,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73275",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-3",
+    "command": {
+      "name": "terms_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03374207718297839,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "77785",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-4",
+    "command": {
+      "name": "terms_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03387047862634063,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "76475",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-5",
+    "command": {
+      "name": "terms_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017566004768013954,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "82684",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-6",
+    "command": {
+      "name": "terms_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017559197265654802,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "100693",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-7",
+    "command": {
+      "name": "terms_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01765192998573184,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "74005",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-8",
+    "command": {
+      "name": "terms_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017622622195631266,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75195",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-0",
+    "command": {
+      "name": "terms_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06568927690386772,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83654",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-1",
+    "command": {
+      "name": "terms_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06589377205818892,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83524",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-2",
+    "command": {
+      "name": "terms_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06600508512929082,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "85424",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-3",
+    "command": {
+      "name": "terms_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06618240289390087,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83704",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-4",
+    "command": {
+      "name": "terms_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06631471402943134,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81914",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-5",
+    "command": {
+      "name": "terms_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06576689099892974,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "136260",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-6",
+    "command": {
+      "name": "terms_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0661938521079719,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81434",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-7",
+    "command": {
+      "name": "terms_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06585040595382452,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "81994",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-8",
+    "command": {
+      "name": "terms_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06569532584398985,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "82564",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005438726861029863,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45646",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005373411811888218,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43517",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00528981676325202,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46406",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005279858130961657,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43317",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005253619980067015,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43187",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005276569165289402,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45507",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005399919115006924,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47007",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005428636912256479,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46006",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1633-domain-sign-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00534518389031291,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43487",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

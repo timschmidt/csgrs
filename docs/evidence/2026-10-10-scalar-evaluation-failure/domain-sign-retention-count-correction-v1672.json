@@ -1,0 +1,9 @@
+{
+  "failed_helper": "record_domain_sign_retention_v2.py",
+  "failed_helper_sha256": "17f5d6619801cbe6bc52259cf840a66dddd8fcc58640854637b2fc23d0fbaf91",
+  "exit_code": 1,
+  "failure": "The nineteen original capped module logs total 136 top-level tests plus one child, not the assumed 141 plus one. Assertion failed before writing a retention record.",
+  "corrected_helper": "record_domain_sign_retention_v3.py",
+  "correction": "Use all nineteen observed unchanged module counts: 7,5,7,5,1,5,5,6,6,7,4,8,9,6,10,14,10,10,11. All original logs and selected modules are unchanged. Eleven new focused capped tests are separate.",
+  "source_unchanged": true
+}
