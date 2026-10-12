@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::approximation::precision_tests::direct_nth_root_bounds_preserve_small_enclosures ... ok
+test computable::node::tests::direct_nth_root_approximations_match_mpfr ... ok
+test computable::approximation::precision_tests::direct_nth_root_bounds_preserve_wide_power_neighbors ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1073 filtered out; finished in 0.12s
+

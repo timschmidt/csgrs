@@ -1,0 +1,54 @@
+{
+  "status": "Prepared before running the nine broad commands on the combined proposal",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "proof_record": "nth-root-enclosure-proof-validation-v2004.json",
+  "proof_record_sha256": "a968e30410e01a3355824b66d79c8d8f3cea087ae9928897b9bb12c370017ec3",
+  "runner_forks": {
+    "validate_nth_root_enclosure_candidate.py": {
+      "predecessor": "validate_cache_state_merge_candidate.py",
+      "predecessor_sha256": "fcaf5f0df511d67d8069bf3ab6c1c95d5dacd9f908960bbc90d1be7498b69227",
+      "fork_sha256": "a3c5643407f9f912767f72863eaaef95575dd44a6cb4d6c8b439cb5dd28e5a62"
+    },
+    "record_nth_root_enclosure_validation.py": {
+      "predecessor": "record_cache_state_merge_validation.py",
+      "predecessor_sha256": "9ce681b62516e8ce5476f47946fc2bfd4d8322f7b2c3832041160620f147b764",
+      "fork_sha256": "4746c6c0269d45ab7c7e8407b6502505397e01a76087427e7fb7c64e2edb3a2f"
+    }
+  },
+  "generator_sha256": "b56e02f4379c019995371d66bbd89ab7dfdec23a5f2e0ac4631a4c09be3f3081",
+  "baseline_commands": "domain-predicate-candidate-validation-v1772.json",
+  "phases": [
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013
+  ],
+  "expected_tests": {
+    "scalar": [
+      1076,
+      1,
+      0
+    ],
+    "stack": [
+      5860,
+      3,
+      33
+    ],
+    "default": [
+      1061,
+      3,
+      0
+    ],
+    "debug": [
+      1076,
+      1,
+      0
+    ]
+  },
+  "limits": "The commands, 108 included formatting paths, two strict Clippy configurations and inherited warning/ignore comparisons are unchanged. Only the two new endpoint tests change expected pass counts. This does not replace original-cap costs, replays or full-workspace/CI admission."
+}
