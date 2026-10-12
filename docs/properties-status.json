@@ -19,16 +19,18 @@
       "remaining": "All 13 whole-crate obligation groups remain open. Current candidate runtime admission, production callers, normalization/count premises, concurrent publication, matched cost/memory/size, original caps and full-board qualification remain open. The corrected rejection sweep still exceeds the current 15-minute CI job locally. Historical main-worktree guards describe their recorded checkpoint; subsequent authorized main changes require a fresh integration baseline."
     },
     "pending_native_geometry": {
-      "status": "qualification-in-progress",
+      "status": "runtime-gates-failed",
       "scope": "The 35 existing curve/DRC runtime entries remain in scope, including exact source strokes, certificate reuse and their regressions.",
-      "failure": "The first fresh all-feature curve library run passed 1756 tests, failed the existing 48-byte LineSeg2 storage assertion and ignored six cases. The DRC step did not execute after that failure.",
-      "correction": "Line flags and construction certificates now share one enum; the original size assertion and all 11 focused fragment/segment tests pass. Full corrected curve/DRC validation and original full-board runtime gates remain required.",
+      "failure": "The corrected full curve run passes 2485 results with 33 ignores. DRC passes 1560 library results and fails the original full-board worker CPU limit (202.370870026 seconds / 120) and copper-neck wall limit (98.539989332 seconds / 60).",
+      "correction": "Compact line certificates satisfy the unchanged 48-byte guard. All 81 separately executed DRC integration results, four curve/DRC doctests, strict release all-feature/all-target Clippy and warning-denied documentation pass. These checks do not admit the native runtime while both original cost gates fail.",
       "evidence": [
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation/result.json",
         "docs/evidence/2026-10-12-existing-worktree/line-layout-fix/result.json",
-        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/historical-worktree-retention.json"
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/historical-worktree-retention.json",
+        "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
-      "runtime_admitted": false
+      "runtime_admitted": false,
+      "next_step": "Evaluate reusable closed symbolic certificates in shared subexpressions, with cold/warm fact preservation, allocation/size evidence, unchanged fixtures and original runtime limits."
     },
     "plan_complete": false
   },
