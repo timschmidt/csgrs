@@ -1,0 +1,10 @@
+{
+  "status": "Correct frontier wording; all actual property and target statuses are unchanged",
+  "prior_ledger_update": "public-proof-reuse-ledger-update-v1756.json",
+  "before_sha256": "2a95cf5038bece9a7a06a804e11983c59a1508714c1a16abbfea58e858c158e9",
+  "after_sha256": "ea218683c4810544bbf91c8969bdf111f6dd14d499f0f5abeaf74f59635ea107",
+  "replacements": 2,
+  "old_text": "All 39 properties, 14 targets, thirteen whole-crate proof groups and crate future work remain open as previously recorded; no completion status changes.",
+  "new_text": "All 39 properties, 14 targets and crate future work remain in scope; all thirteen whole-crate proof groups remain open. Existing verified target statuses and all other completion statuses are preserved.",
+  "reason": "Three targets already have verified status. The entire plan remains in scope, without describing every target as open."
+}
