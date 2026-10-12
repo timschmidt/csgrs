@@ -1,0 +1,19 @@
+{
+  "accessed": "2026-10-09",
+  "sources": [
+    {
+      "url": "https://docs.kicad.org/doxygen/pcb__track_8cpp_source.html",
+      "lines": "3142-3149, 3235-3242",
+      "role": "Straight track effective geometry is a width-bearing segment; plotted shape uses the oblong constructor."
+    },
+    {
+      "url": "https://docs.kicad.org/doxygen/shape__segment_8h_source.html",
+      "role": "Native segment shape API used by KiCad track geometry."
+    },
+    {
+      "url": "https://dev-docs.kicad.org/en/file-formats/sexpr-intro/index.html",
+      "role": "KiCad S-expression numeric and geometry field grammar."
+    }
+  ],
+  "contract": "Exact authored source values and rounded linear-track geometry; not a KiCad integer-unit-rounding or whole-application differential claim. No upstream source copied."
+}

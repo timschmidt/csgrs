@@ -1,0 +1,43 @@
+{
+  "scope": "Independent exact rational audit of changed legacy test expectations; original inputs and limits are unchanged.",
+  "differential_width": {
+    "source_float_bits": [
+      "0x1.999999999999ap-5",
+      "0x1.999999999999ap-4",
+      "0x1.3333333333333p-2"
+    ],
+    "exact_small": "3602879701896397/72057594037927936",
+    "exact_large": "3602879701896397/36028797018963968",
+    "threshold": "1/20",
+    "correct_delta": "3602879701896397/72057594037927936",
+    "threshold_excess": "1/360287970189639680",
+    "legacy_small": "3602879701896397/72057594037927936",
+    "legacy_large": "900719925474099/9007199254740992",
+    "legacy_delta": "3602879701896395/72057594037927936",
+    "expected_findings": [
+      "below review threshold",
+      "above balance threshold"
+    ]
+  },
+  "coincident_track": {
+    "source": "(start 1 1) (end 1 1) (width 0.2)",
+    "area_pi_coefficient": "1/100",
+    "center": [
+      "1",
+      "1"
+    ],
+    "expected_features": 1
+  },
+  "incomplete_objects": {
+    "source_segment": "(segment (start 0 0) (width 0.2) (layer \"F.Cu\"))",
+    "expected_features": [
+      "failed pad",
+      "failed segment"
+    ],
+    "expected_checks": [
+      "geometry-uncertainty",
+      "geometry-uncertainty"
+    ],
+    "drill_limitation": "The malformed via in the unchanged fixture remains omitted; general drill admission is outside this change."
+  }
+}

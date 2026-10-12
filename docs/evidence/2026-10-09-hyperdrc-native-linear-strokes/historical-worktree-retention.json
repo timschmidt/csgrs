@@ -1,0 +1,29 @@
+{
+  "status": "Retain previously untracked native-stroke investigation scripts and historical audits",
+  "authorization": "The user explicitly included existing csgrs worktree changes and requested incremental commits.",
+  "files_sha256": {
+    "audit_reports.py": "29dfb1dc4a0251f019b52984556694757d5c27f42ac4ff736d25ca60befd1ac8",
+    "legacy-expectation-audit.json": "73c2c0216689dcd365746f1813b245c5b9e8155f9f3e4699ca6bee85572de56a",
+    "reference-sources.json": "a5511a421492f3043dcefa1e556e4aca3f3f8798e23214e10853adfde20076c7",
+    "remaining-source-audit.json": "22ed151766fce2d90e6736f0933bf421deb910939415a94410c11e9c1bb3e7b6",
+    "reproduce_cost.py": "9a75f863f90cf2a5e9a97edf2a5bd796522d6b4a6599e82b24c554a184444abb",
+    "reproduce_report_replay.py": "5d847969974cf5648fdfe4cc13ebd34df5393e339b3f60a464fad51c6070bdc6",
+    "reproduce_stroke_audit.py": "b34d40526651d7eee8fa3f6c42754c1ae2c4fbe5826c80be91cfc21245eb5158",
+    "reproduce_validation.py": "7870cb391e52a464c06ecf72d1971f3ef1ff1c2fb7489600d3295082546c57e5",
+    "track_oracle.py": "7a39c9d3b029183476dfc6bd1f1bb302e55b714c588116d34b66a3bece2fd983"
+  },
+  "validation": "All six Python sources parse and all three JSON records parse. Scripts were read and their command, input, source-identity and outcome guards reviewed. No historical experiment is counted as newly executed.",
+  "scope": "These files support the already retained native-stroke investigation. Committing them does not admit the pending runtime prototype or claim the full-board gate passes.",
+  "historical_corrections": [
+    "remaining-source-audit.json records an earlier Unknown result for the forty-capsule area equality. The later diagnostics-33.json admits a separate bounded scalar/area completeness repair and supersedes that particular open-frontier entry. The original failed query remains evidence.",
+    "The source inventory is a dated inspection, not current whole-repository behavioral coverage. reference-sources.json records the original source access date; this retention performs no new online source check.",
+    "The reproduction drivers describe their own command matrices and preserved fixtures. Their presence is not evidence that those commands passed for the current native prototype."
+  ],
+  "later_references": {
+    "diagnostics-33.json": "208aef820adcb2d40ad920445541b553f82f930ce467ac29c8bacbd9c89ca2cf",
+    "diagnostics-83.json": "215c183ed54a8e41418ff8e6bc3a09eade5e10d11442b8b22d4ad2846b518873",
+    "diagnostics-84.json": "01f57202affabe29e78db25c8b8e29bad7ee1ff138ed2e7e8a4dfd67a58b2d6f"
+  },
+  "runtime_admission": false,
+  "remaining": "Qualify the pending native runtime changes, preserve full-board gates and all prior failures, and complete the properties.md plan."
+}
