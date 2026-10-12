@@ -1,0 +1,69 @@
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_integer": 12687260, "small_reciprocal": 13134719, "medium_integer": 20426030, "medium_reciprocal": 19795932, "wide_integer": 48606657, "wide_reciprocal": 48226463, "dense_integer": 18396919, "dense_reciprocal": 18636702, "cached_integer_one": 6663503, "cached_reciprocal_one": 3662829, "cached_integer_many": 6473446, "cached_reciprocal_many": 3606383}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_fine": 8105195, "small_coarse": 8043439, "small_identity": 6978712, "wide_coarse": 589959, "wide_gap": 100953, "wide_halfway": 19976820, "wide_fine": 2236656, "wide_identity": 1263274}
+Inverse-trig budget probe built; no builds during capped workloads.
+atan_small completed
+atan_wide completed
+acos_wide completed
+terms_small completed
+terms_wide completed
+pi_wide completed
+{"processes": 54, "source_hashes_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3", "build_phase": "typed-api-prototype-v2007-nth-root-enclosure-release-build", "guards_unchanged": true, "mode": "cost"}
+Normal-form budget probe built; no builds during capped workloads.
+pi_small completed
+pi_wide completed
+inverse_wide completed
+rational_wide completed
+atom_small completed
+atom_wide completed
+{"processes": 54, "source_hashes_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3", "build_phase": "typed-api-prototype-v2007-nth-root-enclosure-release-build", "guards_unchanged": true, "mode": "cost"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"cold_sin": 2545825, "cold_opaque": 8246225, "shared_hot": 6510783, "structural_cancel": 5806632, "domain_tree": 8791987, "nested_exp": 27201835}
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3", "build_phase": "typed-api-prototype-v2007-nth-root-enclosure-release-build", "guards_unchanged": true, "mode": "cost"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_positive": 4645271, "small_negative": 4645081, "mid_positive": 1984214, "mid_negative": 2321130, "wide_positive": 1050178726, "wide_negative": 1049983939, "cached_positive": 683293, "cached_negative": 1239315}
+All seven cost families completed: 468 separate processes.

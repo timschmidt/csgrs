@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_nth_root_enclosure_costs.py", line 140, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_nth_root_enclosure_costs.py", line 136, in main
+    assert passed, "Persistent timing increases prevent cost-gate acceptance"
+           ^^^^^^
+AssertionError: Persistent timing increases prevent cost-gate acceptance

@@ -1,0 +1,1847 @@
+{
+  "status": "Copied-kernel allocation observations completed; public qualification remains separate",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "protocol": "nth-root-enclosure-allocation-protocol-v2021.json",
+  "protocol_sha256": "6b5a4b305e173ae9fdb36df57fb2782fac2da06e2b5748f9346ec1c26cca0d98",
+  "libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "3002b8bbf0e21800381cfa647d427ee1a40b485578fc446cb3dec21a61b026c0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum-3f13fa42f92eed91.rlib": "9e67e97e09af2662ea7f31b97fe0b813a09c16d16d2c43500eab4a7e43898ef8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-071dd1d0e00847d9.rlib": "520da50758c94f122a1a9159b5b5c2966a95b9ad155c252e0c29293b22b1da19",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-0782512b7f93e5d2.rlib": "f5cd484e7f769f5a58d72d13d9351a7bd57fb0504293bbbf2bba0adcd3439d44",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-11fa144f0d56288e.rlib": "03f6caf35b16af1316acee42e8ff462c158358158336b0a9dc3c802b21e65c04",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-957406a0d9c8de02.rlib": "db22654b23b63729324d6677bab9b9227cc541cac901e69b5fd4b427e8ed0a54",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-a1cd195a6b313474.rlib": "f5c70560c60da65bb0dbbb6c2b786c010c4ac456502ded99c6b4152efccd7dac",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-a8ec785b516467a7.rlib": "be1e2f51bf8adbf0030c4e5bef9db806c9d41d384c40f54d25af7d2ee053efad",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-bd70f9fc692e428f.rlib": "9dd355149af5cd51f884fc93a55e8f980755346611c08909ee9dcfaa02a92c6b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-d7d9e049217e2ef1.rlib": "854965c7a0a8d58343116c7df5230eee124acde73ffceaa64c781bafcf20a2ab",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_bigint-ee05bd349773c740.rlib": "dbb856011d09571ff0ceb7974249ebf6458eb34d276c43aacdac209657ad5e55",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-059556f9dba1fa73.rlib": "8fb8c163337977fb8204b133826aef1d006495da64478e1055f1575eecdd6fe9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-08e9d9656e6873f6.rlib": "df3249eb3bc38ca6edb6e451cc9710c746f21736e654aca5b84b602df48fcfa3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-1395c26ceba59a41.rlib": "5a589b9cdc928faf8022ca3e6069654cd19931ac8185d57aa98a347e99f64139",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-4fefb1b4bbb0a462.rlib": "2e88d0d6424c4351f7eb5a09fc11054582e0dc803bc4364f1c0996c0f71cacff",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-58cf6d4e05f17059.rlib": "abe9c3867600c33a1ef5c577459b4e984d4a5f6e98edb67dab7f9db0ae75eb4b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-900b8f884b986d8c.rlib": "d57e6748832fc42719169aec570656339e888986a597fcd5e30ab011555b1cca",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-91f7d41949b6330c.rlib": "2c7c9ab88b57dbf2184f49ad30c83aed2a18c6deeffe46ba48b277ff55eacc6a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-cf100c22fb537f3b.rlib": "381bd2bd53d275b36bf8ff95f318eccaa440c4e8b9d2c605aa74c49ed88f480c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-f5bd3e53b288da2b.rlib": "f8ee33f7565e79da3981ea04f6de31377c16b13da9f27001b8745536138dcc31",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_complex-f5eecd1906413dc1.rlib": "cd178280de80d301ec7be2a7fdcd49366dda1d6c202e066140403afea5cb72da",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_integer-15d7a815a4ce369c.rlib": "50850660f6d74f6d9ad4f0c609bafcd53aaae226af7a43c3e80dde5cecb40e80",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_integer-589770e6fb8d11c2.rlib": "8b75a838192fbf60d613806ca689db4925b06d7dc23d5b6b718f9d858783c9b2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_integer-5c8a8ef2f4fab9ff.rlib": "14d573bfa80d5e766ca757d72593fac1eecde384f1c9e26d5412f767fd897ee1",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_integer-8d570bfa22b51e67.rlib": "883ff465c5b116cdd291328f236b7a8bce45472fd454ee2ed3c185a74544d914",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_integer-98d9278d5a8f83ad.rlib": "bf0504d65b194ba08eb751dec73efc86845e527bc033e834da67723b01fb0fb6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_iter-44476dd0c6498daa.rlib": "5eef30ffb9e96d478c33107a5717e33e032c65ed17f0647a2932f2743d872f76",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_iter-504242a6dc523882.rlib": "5947a7ce68f5fab225cd062358d6589a6c7a2a60f857b384544b2926fc157549",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_iter-c2004d84d89dc398.rlib": "68bcaf6717ed7ec863212290967e4774d559db16c0a5c2ee5e7cf9e59ef0aebb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_iter-d10faf3c366f4be0.rlib": "d67f0bbe2f1c5d8ebd5a47b7ba115358a6a7d87dcdeb98aef58ee0bc76f41bd6",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_iter-e42500791eaaaaef.rlib": "5cb0fa785abde293584541e88822f6387a719fb8c1aee91d1fef05605578a1cf",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-16c53895572d5ac7.rlib": "b5fbaad53e63a079148a5ea8a73192acf9aff2f4c2d4a6fff65e0e396d87e8dd",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-379698876f812f6e.rlib": "771d5544e82d8c0a369229e77f4a37b5eeb0a3b81a1c056b6d6531244a385b38",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-4265b5bdf9b2408d.rlib": "c8036abad7a28828d0594deec1c94540b18efe8c8d4d92308449a852b89abbd9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-481389b7c7ebe7d7.rlib": "3248c5a6360ca50a515f719c2ab9bdff28079e2aaab362b9baac57bf89e1e12a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-9e111d3bbf2afe44.rlib": "329f6f4ab22a9546c112922b8f32222fa46705751cd3e069db6bfcd4fca4445c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-bbdeabea4386549c.rlib": "e6d5c76082fe04c64034f977de5bbdc9a2c0153e7476a61e9ffe3d2f7bbce29e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-dae17f2e65562ad0.rlib": "b27b95a730fef48759e6f70ab4889307ef4b21d3b17d850e778480e93f1d710a",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-dd74b82350613b44.rlib": "63abc859aeed3907916e217662f69ac82beaba7c1f8a7190fae65fa83af34e03",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_rational-e3f45f78202b37f8.rlib": "37100ed060b23ba533345bd818bba84299b6ad6c838a8f0c4be24925591d5e8e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_traits-19d85b97674f93e2.rlib": "bb0b7fc4ecf02b6e47c87a2b9ebb6cb31e67dd15caea80ea485e5b302f2b8a77",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_traits-425baf489a184607.rlib": "785bb28c268323fa060bb36b33ac6248657df26edfcf22eccf4ed2dafe540de0",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_traits-54ae92be4ad2ada3.rlib": "16557298c0e7292956eda8b1407d8252b1cead6ee842a9bc7bf8a695e7b8f1a4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum_traits-89e9c028c8bc737c.rlib": "4deb1b7adbeeae7f9c497becc2a46d4fa416b0bff6fcf324e93520e529a7a9ac"
+  },
+  "production_num_dependency": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum-3f13fa42f92eed91.rlib",
+  "binary_sha256": "8344c32b8f751a04c16df5969e1cdae77cf937d7691cb378a86a891cef304ce0",
+  "binary_bytes": 4638752,
+  "source_files_verified": 24746,
+  "main_guarded_files_verified": 1167,
+  "guards_unchanged": true,
+  "fixtures": 84,
+  "paired_observations": 252,
+  "kernel_calls": 504,
+  "exact_endpoints_equal": true,
+  "counts_stable": true,
+  "measurement_fields": [
+    "successful_allocation_calls_including_realloc",
+    "total_requested_bytes_including_full_realloc_size",
+    "successful_reallocation_calls"
+  ],
+  "comparisons": [
+    {
+      "degree": 3,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 49,
+      "baseline": [
+        7,
+        104,
+        0
+      ],
+      "candidate": [
+        6,
+        72,
+        0
+      ],
+      "change": [
+        -1,
+        -32,
+        0
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 49,
+      "baseline": [
+        8,
+        112,
+        0
+      ],
+      "candidate": [
+        7,
+        80,
+        0
+      ],
+      "change": [
+        -1,
+        -32,
+        0
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 49,
+      "baseline": [
+        8,
+        112,
+        0
+      ],
+      "candidate": [
+        7,
+        80,
+        0
+      ],
+      "change": [
+        -1,
+        -32,
+        0
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 385,
+      "baseline": [
+        37,
+        1416,
+        2
+      ],
+      "candidate": [
+        20,
+        736,
+        2
+      ],
+      "change": [
+        -17,
+        -680,
+        0
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 385,
+      "baseline": [
+        38,
+        1424,
+        2
+      ],
+      "candidate": [
+        21,
+        744,
+        2
+      ],
+      "change": [
+        -17,
+        -680,
+        0
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 385,
+      "baseline": [
+        33,
+        1224,
+        2
+      ],
+      "candidate": [
+        20,
+        728,
+        1
+      ],
+      "change": [
+        -13,
+        -496,
+        -1
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 3073,
+      "baseline": [
+        55,
+        9880,
+        6
+      ],
+      "candidate": [
+        29,
+        4960,
+        4
+      ],
+      "change": [
+        -26,
+        -4920,
+        -2
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 3073,
+      "baseline": [
+        57,
+        9896,
+        7
+      ],
+      "candidate": [
+        31,
+        4976,
+        5
+      ],
+      "change": [
+        -26,
+        -4920,
+        -2
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 3073,
+      "baseline": [
+        52,
+        8696,
+        7
+      ],
+      "candidate": [
+        30,
+        4976,
+        4
+      ],
+      "change": [
+        -22,
+        -3720,
+        -3
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 21856,
+      "delta": -1,
+      "sample_bits": 65569,
+      "baseline": [
+        381,
+        430816,
+        97
+      ],
+      "candidate": [
+        223,
+        223304,
+        57
+      ],
+      "change": [
+        -158,
+        -207512,
+        -40
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 21856,
+      "delta": 0,
+      "sample_bits": 65569,
+      "baseline": [
+        383,
+        430832,
+        98
+      ],
+      "candidate": [
+        225,
+        223320,
+        58
+      ],
+      "change": [
+        -158,
+        -207512,
+        -40
+      ]
+    },
+    {
+      "degree": 3,
+      "root_bits": 21856,
+      "delta": 1,
+      "sample_bits": 65569,
+      "baseline": [
+        312,
+        352152,
+        79
+      ],
+      "candidate": [
+        224,
+        223320,
+        57
+      ],
+      "change": [
+        -88,
+        -128832,
+        -22
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 65,
+      "baseline": [
+        27,
+        408,
+        3
+      ],
+      "candidate": [
+        13,
+        184,
+        2
+      ],
+      "change": [
+        -14,
+        -224,
+        -1
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 65,
+      "baseline": [
+        29,
+        448,
+        3
+      ],
+      "candidate": [
+        15,
+        224,
+        2
+      ],
+      "change": [
+        -14,
+        -224,
+        -1
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 65,
+      "baseline": [
+        22,
+        336,
+        3
+      ],
+      "candidate": [
+        15,
+        224,
+        2
+      ],
+      "change": [
+        -7,
+        -112,
+        -1
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 513,
+      "baseline": [
+        67,
+        2760,
+        4
+      ],
+      "candidate": [
+        33,
+        1328,
+        3
+      ],
+      "change": [
+        -34,
+        -1432,
+        -1
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 513,
+      "baseline": [
+        69,
+        2776,
+        5
+      ],
+      "candidate": [
+        35,
+        1344,
+        4
+      ],
+      "change": [
+        -34,
+        -1432,
+        -1
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 513,
+      "baseline": [
+        61,
+        2424,
+        5
+      ],
+      "candidate": [
+        34,
+        1328,
+        3
+      ],
+      "change": [
+        -27,
+        -1096,
+        -2
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 4097,
+      "baseline": [
+        134,
+        19072,
+        14
+      ],
+      "candidate": [
+        69,
+        9504,
+        9
+      ],
+      "change": [
+        -65,
+        -9568,
+        -5
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 4097,
+      "baseline": [
+        136,
+        19088,
+        15
+      ],
+      "candidate": [
+        71,
+        9520,
+        10
+      ],
+      "change": [
+        -65,
+        -9568,
+        -5
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 4097,
+      "baseline": [
+        128,
+        16952,
+        15
+      ],
+      "candidate": [
+        70,
+        9520,
+        9
+      ],
+      "change": [
+        -58,
+        -7432,
+        -6
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16392,
+      "delta": -1,
+      "sample_bits": 65569,
+      "baseline": [
+        757,
+        581504,
+        166
+      ],
+      "candidate": [
+        432,
+        293856,
+        107
+      ],
+      "change": [
+        -325,
+        -287648,
+        -59
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16392,
+      "delta": 0,
+      "sample_bits": 65569,
+      "baseline": [
+        759,
+        581520,
+        167
+      ],
+      "candidate": [
+        434,
+        293872,
+        108
+      ],
+      "change": [
+        -325,
+        -287648,
+        -59
+      ]
+    },
+    {
+      "degree": 4,
+      "root_bits": 16392,
+      "delta": 1,
+      "sample_bits": 65569,
+      "baseline": [
+        621,
+        467736,
+        140
+      ],
+      "candidate": [
+        433,
+        293864,
+        107
+      ],
+      "change": [
+        -188,
+        -173872,
+        -33
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 81,
+      "baseline": [
+        39,
+        656,
+        9
+      ],
+      "candidate": [
+        19,
+        304,
+        4
+      ],
+      "change": [
+        -20,
+        -352,
+        -5
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 81,
+      "baseline": [
+        40,
+        664,
+        9
+      ],
+      "candidate": [
+        20,
+        312,
+        4
+      ],
+      "change": [
+        -20,
+        -352,
+        -5
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 81,
+      "baseline": [
+        31,
+        520,
+        7
+      ],
+      "candidate": [
+        20,
+        312,
+        4
+      ],
+      "change": [
+        -11,
+        -208,
+        -3
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 641,
+      "baseline": [
+        62,
+        3072,
+        4
+      ],
+      "candidate": [
+        32,
+        1536,
+        3
+      ],
+      "change": [
+        -30,
+        -1536,
+        -1
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 641,
+      "baseline": [
+        64,
+        3088,
+        5
+      ],
+      "candidate": [
+        34,
+        1552,
+        4
+      ],
+      "change": [
+        -30,
+        -1536,
+        -1
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 641,
+      "baseline": [
+        57,
+        2712,
+        5
+      ],
+      "candidate": [
+        33,
+        1536,
+        3
+      ],
+      "change": [
+        -24,
+        -1176,
+        -2
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 5121,
+      "baseline": [
+        138,
+        25344,
+        20
+      ],
+      "candidate": [
+        70,
+        12496,
+        11
+      ],
+      "change": [
+        -68,
+        -12848,
+        -9
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 5121,
+      "baseline": [
+        140,
+        25360,
+        21
+      ],
+      "candidate": [
+        72,
+        12512,
+        12
+      ],
+      "change": [
+        -68,
+        -12848,
+        -9
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 5121,
+      "baseline": [
+        128,
+        22136,
+        19
+      ],
+      "candidate": [
+        71,
+        12512,
+        11
+      ],
+      "change": [
+        -57,
+        -9624,
+        -8
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 13114,
+      "delta": -1,
+      "sample_bits": 65571,
+      "baseline": [
+        875,
+        500976,
+        208
+      ],
+      "candidate": [
+        488,
+        268176,
+        120
+      ],
+      "change": [
+        -387,
+        -232800,
+        -88
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 13114,
+      "delta": 0,
+      "sample_bits": 65571,
+      "baseline": [
+        877,
+        500992,
+        209
+      ],
+      "candidate": [
+        490,
+        268192,
+        121
+      ],
+      "change": [
+        -387,
+        -232800,
+        -88
+      ]
+    },
+    {
+      "degree": 5,
+      "root_bits": 13114,
+      "delta": 1,
+      "sample_bits": 65571,
+      "baseline": [
+        705,
+        405136,
+        167
+      ],
+      "candidate": [
+        489,
+        268184,
+        120
+      ],
+      "change": [
+        -216,
+        -136952,
+        -47
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 97,
+      "baseline": [
+        45,
+        728,
+        9
+      ],
+      "candidate": [
+        21,
+        328,
+        4
+      ],
+      "change": [
+        -24,
+        -400,
+        -5
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 97,
+      "baseline": [
+        46,
+        736,
+        9
+      ],
+      "candidate": [
+        22,
+        336,
+        4
+      ],
+      "change": [
+        -24,
+        -400,
+        -5
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 97,
+      "baseline": [
+        35,
+        568,
+        7
+      ],
+      "candidate": [
+        22,
+        336,
+        4
+      ],
+      "change": [
+        -13,
+        -232,
+        -3
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 769,
+      "baseline": [
+        76,
+        4176,
+        4
+      ],
+      "candidate": [
+        38,
+        2024,
+        3
+      ],
+      "change": [
+        -38,
+        -2152,
+        -1
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 769,
+      "baseline": [
+        78,
+        4192,
+        5
+      ],
+      "candidate": [
+        40,
+        2040,
+        4
+      ],
+      "change": [
+        -38,
+        -2152,
+        -1
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 769,
+      "baseline": [
+        69,
+        3664,
+        5
+      ],
+      "candidate": [
+        39,
+        2032,
+        3
+      ],
+      "change": [
+        -30,
+        -1632,
+        -2
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 6145,
+      "baseline": [
+        149,
+        31736,
+        20
+      ],
+      "candidate": [
+        77,
+        16096,
+        12
+      ],
+      "change": [
+        -72,
+        -15640,
+        -8
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 6145,
+      "baseline": [
+        151,
+        31752,
+        21
+      ],
+      "candidate": [
+        79,
+        16112,
+        13
+      ],
+      "change": [
+        -72,
+        -15640,
+        -8
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 6145,
+      "baseline": [
+        137,
+        27472,
+        19
+      ],
+      "candidate": [
+        78,
+        16112,
+        12
+      ],
+      "change": [
+        -59,
+        -11360,
+        -7
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 10928,
+      "delta": -1,
+      "sample_bits": 65569,
+      "baseline": [
+        782,
+        521904,
+        174
+      ],
+      "candidate": [
+        411,
+        269776,
+        93
+      ],
+      "change": [
+        -371,
+        -252128,
+        -81
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 10928,
+      "delta": 0,
+      "sample_bits": 65569,
+      "baseline": [
+        784,
+        521920,
+        175
+      ],
+      "candidate": [
+        413,
+        269792,
+        94
+      ],
+      "change": [
+        -371,
+        -252128,
+        -81
+      ]
+    },
+    {
+      "degree": 6,
+      "root_bits": 10928,
+      "delta": 1,
+      "sample_bits": 65569,
+      "baseline": [
+        620,
+        419168,
+        136
+      ],
+      "candidate": [
+        412,
+        269784,
+        93
+      ],
+      "change": [
+        -208,
+        -149384,
+        -43
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 113,
+      "baseline": [
+        67,
+        1064,
+        13
+      ],
+      "candidate": [
+        32,
+        496,
+        6
+      ],
+      "change": [
+        -35,
+        -568,
+        -7
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 113,
+      "baseline": [
+        68,
+        1072,
+        13
+      ],
+      "candidate": [
+        33,
+        504,
+        6
+      ],
+      "change": [
+        -35,
+        -568,
+        -7
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 113,
+      "baseline": [
+        57,
+        904,
+        11
+      ],
+      "candidate": [
+        33,
+        504,
+        6
+      ],
+      "change": [
+        -24,
+        -400,
+        -5
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 897,
+      "baseline": [
+        77,
+        4696,
+        4
+      ],
+      "candidate": [
+        39,
+        2288,
+        3
+      ],
+      "change": [
+        -38,
+        -2408,
+        -1
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 897,
+      "baseline": [
+        79,
+        4712,
+        5
+      ],
+      "candidate": [
+        41,
+        2304,
+        4
+      ],
+      "change": [
+        -38,
+        -2408,
+        -1
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 897,
+      "baseline": [
+        70,
+        4120,
+        5
+      ],
+      "candidate": [
+        40,
+        2296,
+        3
+      ],
+      "change": [
+        -30,
+        -1824,
+        -2
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 7169,
+      "baseline": [
+        163,
+        39288,
+        24
+      ],
+      "candidate": [
+        81,
+        18744,
+        12
+      ],
+      "change": [
+        -82,
+        -20544,
+        -12
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 7169,
+      "baseline": [
+        165,
+        39304,
+        25
+      ],
+      "candidate": [
+        83,
+        18760,
+        13
+      ],
+      "change": [
+        -82,
+        -20544,
+        -12
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 7169,
+      "baseline": [
+        146,
+        32904,
+        21
+      ],
+      "candidate": [
+        82,
+        18760,
+        12
+      ],
+      "change": [
+        -64,
+        -14144,
+        -9
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 9367,
+      "delta": -1,
+      "sample_bits": 65570,
+      "baseline": [
+        1058,
+        704248,
+        249
+      ],
+      "candidate": [
+        562,
+        358360,
+        127
+      ],
+      "change": [
+        -496,
+        -345888,
+        -122
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 9367,
+      "delta": 0,
+      "sample_bits": 65570,
+      "baseline": [
+        1060,
+        704264,
+        250
+      ],
+      "candidate": [
+        564,
+        358376,
+        128
+      ],
+      "change": [
+        -496,
+        -345888,
+        -122
+      ]
+    },
+    {
+      "degree": 7,
+      "root_bits": 9367,
+      "delta": 1,
+      "sample_bits": 65570,
+      "baseline": [
+        834,
+        562656,
+        191
+      ],
+      "candidate": [
+        563,
+        358368,
+        127
+      ],
+      "change": [
+        -271,
+        -204288,
+        -64
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 129,
+      "baseline": [
+        41,
+        672,
+        6
+      ],
+      "candidate": [
+        19,
+        320,
+        3
+      ],
+      "change": [
+        -22,
+        -352,
+        -3
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 129,
+      "baseline": [
+        42,
+        680,
+        6
+      ],
+      "candidate": [
+        20,
+        328,
+        3
+      ],
+      "change": [
+        -22,
+        -352,
+        -3
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 129,
+      "baseline": [
+        32,
+        536,
+        5
+      ],
+      "candidate": [
+        20,
+        328,
+        3
+      ],
+      "change": [
+        -12,
+        -208,
+        -2
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 1025,
+      "baseline": [
+        130,
+        8304,
+        8
+      ],
+      "candidate": [
+        64,
+        4000,
+        5
+      ],
+      "change": [
+        -66,
+        -4304,
+        -3
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 1025,
+      "baseline": [
+        132,
+        8320,
+        9
+      ],
+      "candidate": [
+        66,
+        4016,
+        6
+      ],
+      "change": [
+        -66,
+        -4304,
+        -3
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 1025,
+      "baseline": [
+        122,
+        7624,
+        9
+      ],
+      "candidate": [
+        65,
+        4008,
+        5
+      ],
+      "change": [
+        -57,
+        -3616,
+        -4
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 8193,
+      "baseline": [
+        169,
+        40104,
+        18
+      ],
+      "candidate": [
+        86,
+        19304,
+        11
+      ],
+      "change": [
+        -83,
+        -20800,
+        -7
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 8193,
+      "baseline": [
+        171,
+        40120,
+        19
+      ],
+      "candidate": [
+        88,
+        19320,
+        12
+      ],
+      "change": [
+        -83,
+        -20800,
+        -7
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 8193,
+      "baseline": [
+        153,
+        33600,
+        17
+      ],
+      "candidate": [
+        87,
+        19320,
+        11
+      ],
+      "change": [
+        -66,
+        -14280,
+        -6
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 8196,
+      "delta": -1,
+      "sample_bits": 65569,
+      "baseline": [
+        1127,
+        748064,
+        254
+      ],
+      "candidate": [
+        613,
+        368936,
+        148
+      ],
+      "change": [
+        -514,
+        -379128,
+        -106
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 8196,
+      "delta": 0,
+      "sample_bits": 65569,
+      "baseline": [
+        1129,
+        748080,
+        255
+      ],
+      "candidate": [
+        615,
+        368952,
+        149
+      ],
+      "change": [
+        -514,
+        -379128,
+        -106
+      ]
+    },
+    {
+      "degree": 8,
+      "root_bits": 8196,
+      "delta": 1,
+      "sample_bits": 65569,
+      "baseline": [
+        896,
+        589856,
+        204
+      ],
+      "candidate": [
+        614,
+        368944,
+        148
+      ],
+      "change": [
+        -282,
+        -220912,
+        -56
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 16,
+      "delta": -1,
+      "sample_bits": 145,
+      "baseline": [
+        43,
+        920,
+        9
+      ],
+      "candidate": [
+        21,
+        424,
+        4
+      ],
+      "change": [
+        -22,
+        -496,
+        -5
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 16,
+      "delta": 0,
+      "sample_bits": 145,
+      "baseline": [
+        44,
+        928,
+        9
+      ],
+      "candidate": [
+        22,
+        432,
+        4
+      ],
+      "change": [
+        -22,
+        -496,
+        -5
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 16,
+      "delta": 1,
+      "sample_bits": 145,
+      "baseline": [
+        34,
+        712,
+        7
+      ],
+      "candidate": [
+        22,
+        432,
+        4
+      ],
+      "change": [
+        -12,
+        -280,
+        -3
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 128,
+      "delta": -1,
+      "sample_bits": 1153,
+      "baseline": [
+        108,
+        9296,
+        8
+      ],
+      "candidate": [
+        55,
+        4616,
+        5
+      ],
+      "change": [
+        -53,
+        -4680,
+        -3
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 128,
+      "delta": 0,
+      "sample_bits": 1153,
+      "baseline": [
+        110,
+        9312,
+        9
+      ],
+      "candidate": [
+        57,
+        4632,
+        6
+      ],
+      "change": [
+        -53,
+        -4680,
+        -3
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 128,
+      "delta": 1,
+      "sample_bits": 1153,
+      "baseline": [
+        102,
+        8664,
+        9
+      ],
+      "candidate": [
+        56,
+        4624,
+        5
+      ],
+      "change": [
+        -46,
+        -4040,
+        -4
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 1024,
+      "delta": -1,
+      "sample_bits": 9217,
+      "baseline": [
+        162,
+        44400,
+        24
+      ],
+      "candidate": [
+        82,
+        21768,
+        13
+      ],
+      "change": [
+        -80,
+        -22632,
+        -11
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 1024,
+      "delta": 0,
+      "sample_bits": 9217,
+      "baseline": [
+        164,
+        44416,
+        25
+      ],
+      "candidate": [
+        84,
+        21784,
+        14
+      ],
+      "change": [
+        -80,
+        -22632,
+        -11
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 1024,
+      "delta": 1,
+      "sample_bits": 9217,
+      "baseline": [
+        143,
+        37216,
+        21
+      ],
+      "candidate": [
+        83,
+        21784,
+        13
+      ],
+      "change": [
+        -60,
+        -15432,
+        -8
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 7286,
+      "delta": -1,
+      "sample_bits": 65575,
+      "baseline": [
+        1052,
+        596320,
+        222
+      ],
+      "candidate": [
+        566,
+        308632,
+        125
+      ],
+      "change": [
+        -486,
+        -287688,
+        -97
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 7286,
+      "delta": 0,
+      "sample_bits": 65575,
+      "baseline": [
+        1054,
+        596336,
+        223
+      ],
+      "candidate": [
+        568,
+        308648,
+        126
+      ],
+      "change": [
+        -486,
+        -287688,
+        -97
+      ]
+    },
+    {
+      "degree": 9,
+      "root_bits": 7286,
+      "delta": 1,
+      "sample_bits": 65575,
+      "baseline": [
+        830,
+        473456,
+        176
+      ],
+      "candidate": [
+        567,
+        308640,
+        125
+      ],
+      "change": [
+        -263,
+        -164816,
+        -51
+      ]
+    }
+  ],
+  "increases": [],
+  "limits": "This copies the exact candidate helper and the archived prior endpoint block (indentation and a tuple-return wrapper only), linking the same num dependency as the production release library. It measures Rust allocation requests during the helper call only. Input construction, output checks, formatting and output destruction are outside the counter window. It does not measure peak/live memory, production call-site behavior, public query allocations, consumed evaluation work or execution time. It cannot pass or replace any original public cost or replay gate, including earlier SIGXCPU failures.",
+  "artifacts_sha256": {
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "commands.json": "7b782e13de882292277fdb9c81c1c82b09385a19373b5dbfdd75bf0942e06edd",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "measure.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "measure.stdout": "ab781ce09c0347afcbf103c96166b721e1f157e1d0daad1ca4054df3256e82b5",
+    "probe.rs": "275c748516fc9deaf67de40977681a67dc0a0caf30c9db7f6770a5c8be5f8869",
+    "reproduce.py": "534f20deb6e7409d2ca6565c46cbaa24e91f20ef0b6e5f06700db7f9127f9376"
+  }
+}

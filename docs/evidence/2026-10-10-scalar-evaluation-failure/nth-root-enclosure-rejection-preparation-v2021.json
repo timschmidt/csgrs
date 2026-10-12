@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_bound_merge_rejection.py",
+  "predecessor_sha256": "d694682109eca57be8bd8c73c0e03fd72d8d0e645dbcf230719571e613d98d76",
+  "recorder": "record_nth_root_enclosure_rejection.py",
+  "recorder_sha256": "ecb7110db4d366505023136e0fce117f58aab3e46774b5c2566c725588b25308",
+  "patch": "nth-root-enclosure-rejection-preparation-v2021.patch",
+  "patch_sha256": "9c8a5f5ae0af3060aedd34fc5c78419894da01502be975f17c3b8ac0b9da12d4",
+  "preparer_sha256": "67f680b067a74771d04edeb56653d2583539b01d4eed86996e3990728e1cd252",
+  "scope": "Record the failed frozen timing gate, all successful capped processes, the new wide_gap increase, refreshed/reused proof scope, separate allocation/wall/size observations, unchanged main files and unstarted replays. Keep retained v1836 and every older failure."
+}

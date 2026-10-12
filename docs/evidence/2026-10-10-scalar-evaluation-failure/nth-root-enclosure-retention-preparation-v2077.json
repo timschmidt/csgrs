@@ -1,0 +1,14 @@
+{
+  "status": "Prepared only; all runtime, cost, allocation and replay gates must pass before execution",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "predecessor": "record_cache_state_merge_retention.py",
+  "predecessor_sha256": "d8032a7bea074b4bf5d4102bd56a6e787a60a91af8c9b743f918897722b2de40",
+  "recorder": "record_nth_root_enclosure_retention.py",
+  "recorder_sha256": "7de2480bd38c5e9d867b28b55df0c615b3d5a7641a55e01974760911a22e48cb",
+  "patch": "nth-root-enclosure-retention-preparation-v2077.patch",
+  "patch_sha256": "c5b2558399df969cbb0c7b902483ebc5a3a904794fe1203bcf6056039dfcc3dc",
+  "preparer_sha256": "de73670aa803d4db5bc453c0fa353c908171d1ed9da27917d60560526b856032",
+  "conditional_retention_checkpoint": "typed-api-prototype-v2077-state.json",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "scope": "Preserve every original cost, cap, replay and fact-retention audit, accounting for two new scalar tests and eight changed files. Require the supplementary copied-kernel allocation study and report its limited scope. Distinguish fresh conditional verification from reused mutation guards and the unverified bigint kernel. Preserve all earlier failures and every property/target status; preparation is not retention."
+}

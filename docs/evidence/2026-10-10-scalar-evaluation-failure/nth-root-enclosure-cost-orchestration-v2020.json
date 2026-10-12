@@ -1,0 +1,118 @@
+{
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "runner_sha256": "fae0610e6aff46fb7a3e84dba12e16ca542a5cea884ffabc253050d90c85d160",
+  "completed": true,
+  "results": [
+    {
+      "family": "atan",
+      "phase": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_atan_zero_term_cost.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2014-nth-root-enclosure-atan-cost"
+      ],
+      "helper_sha256": "617489543d16bf8fd45d235e82de08f92caeee93818c3540caa9647307c462c2",
+      "exit_code": 0,
+      "seconds": 8.440979879815131,
+      "processes": 108,
+      "summary_sha256": "14f94f109f3b5da752b51602a174f00d8d85c58933c8cb1231574b5ec92133b5"
+    },
+    {
+      "family": "integer",
+      "phase": "typed-api-prototype-v2015-nth-root-enclosure-integer-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_integer_scale_cost.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2015-nth-root-enclosure-integer-cost"
+      ],
+      "helper_sha256": "ace8a426540d960c9cd5a19b2eb8cd2c841effa475bad8177b53eb84c391741a",
+      "exit_code": 0,
+      "seconds": 3.8009254802018404,
+      "processes": 72,
+      "summary_sha256": "bcc4d9e41d830ec9517cd612d554812b48f45e34c440ffc40b734e1b482bf961"
+    },
+    {
+      "family": "inverse_trig",
+      "phase": "typed-api-prototype-v2016-nth-root-enclosure-inverse-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2016-nth-root-enclosure-inverse-cost",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "exit_code": 0,
+      "seconds": 5.99774551903829,
+      "processes": 54,
+      "summary_sha256": "566a8f180636285503a3b53d6d2faadbc37e594d2a0dbe3865b9d5ff3bc7d3b6"
+    },
+    {
+      "family": "normal_form",
+      "phase": "typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "exit_code": 0,
+      "seconds": 4.832265038974583,
+      "processes": 54,
+      "summary_sha256": "9d1b299026450e8b27dace6e24ce1a449081e2f27e7d1ae5bd6d7064eebb5270"
+    },
+    {
+      "family": "default",
+      "phase": "typed-api-prototype-v2018-nth-root-enclosure-default-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget_cost.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2018-nth-root-enclosure-default-cost"
+      ],
+      "helper_sha256": "6e49bf9de05354c03164686fc3308ac7190553767f7a624473bf138f309473af",
+      "exit_code": 0,
+      "seconds": 10.820254436694086,
+      "processes": 54,
+      "summary_sha256": "e5659ca44458dbd39c82b173e738041997f74b0487109917b5fe9a6df2741e23"
+    },
+    {
+      "family": "algebraic",
+      "phase": "typed-api-prototype-v2019-nth-root-enclosure-algebraic-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2019-nth-root-enclosure-algebraic-cost",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "exit_code": 0,
+      "seconds": 18.115992699284106,
+      "processes": 54,
+      "summary_sha256": "fa32f1f77f7a76e6f034115e15e320a9840f633a802e4e7c3d0454e02036bf7d"
+    },
+    {
+      "family": "acos",
+      "phase": "typed-api-prototype-v2020-nth-root-enclosure-acos-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_acos_warm_cost_v2.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2020-nth-root-enclosure-acos-cost"
+      ],
+      "helper_sha256": "4d1d880b36efbbad0fd7a2b32962a5e18861f8dcd865f2de227ebd6a7e94fbad",
+      "exit_code": 0,
+      "seconds": 33.022281538229436,
+      "processes": 72,
+      "summary_sha256": "5c1ee43fc84b51438c866c7f78b5ce71b13dd1b51d6fde61307608429867f0b9"
+    }
+  ]
+}

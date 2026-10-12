@@ -1,0 +1,4538 @@
+[
+  {
+    "before": "integer-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-72-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-73-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-73-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-74-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-74-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-75-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-75-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-76-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-76-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-77-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-77-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-78-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-78-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-79-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-79-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-80-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-80-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-81-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-81-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-82-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-82-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-83-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-83-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-84-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-84-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-85-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-85-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-86-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-86-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-87-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-87-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-88-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-88-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-89-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-89-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-90-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-90-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-91-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-91-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-92-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-92-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-93-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-93-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-94-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-94-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-95-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-95-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-96-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-96-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-97-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-97-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-98-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-98-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-99-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-99-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-100-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-100-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-101-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-101-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-102-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-102-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-103-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-103-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-104-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-104-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-105-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-105-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-106-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-106-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-107-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-107-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-108-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-108-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-109-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-109-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-110-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-110-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-111-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-111-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-112-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-112-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-113-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-113-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-114-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-114-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-115-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-115-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-116-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-116-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-117-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-117-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-118-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-118-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-119-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-119-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-120-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-120-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-121-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-121-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-122-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-122-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-123-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-123-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-124-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-124-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-125-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-125-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-126-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-126-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-127-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-127-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-128-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-128-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-129-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-129-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-130-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-130-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-131-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-131-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-132-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-132-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-133-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-133-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-134-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-134-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-135-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-135-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-136-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-136-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-137-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-137-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-138-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-138-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-139-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-139-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-140-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-140-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-141-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-141-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-142-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-142-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-143-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-143-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-144-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-144-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-145-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-145-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-146-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-146-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-147-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-147-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-148-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-148-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-149-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-149-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-150-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-150-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-151-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-151-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-152-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-152-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-153-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-153-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-154-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-154-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-155-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-155-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-156-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-156-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-157-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-157-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-158-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-158-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-159-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-159-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-160-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-160-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-161-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-161-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-162-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-162-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-163-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-163-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-164-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-164-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-165-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-165-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-166-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-166-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-167-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-167-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-168-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-168-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-169-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-169-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-170-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-170-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-171-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-171-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-172-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-172-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-173-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-173-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-174-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-174-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-175-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-175-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-176-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-176-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-177-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-177-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-178-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-178-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-179-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-179-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-180-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-180-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-181-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-181-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-182-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-182-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-183-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-183-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-184-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-184-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-185-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-185-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-186-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-186-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-187-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-187-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-188-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-188-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-189-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-189-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-190-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-190-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-191-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-191-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-192-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-192-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-193-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-193-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-194-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-194-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-195-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-195-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-196-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-196-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-197-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-197-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-198-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-198-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-199-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-199-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-200-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-200-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-201-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-201-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-202-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-202-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-203-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-203-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-204-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-204-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-205-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-205-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-206-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-206-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-207-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-207-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-208-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-208-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-209-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-209-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-210-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-210-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-211-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-211-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-212-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-212-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-213-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-213-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-214-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-214-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-215-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "integer-215-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-81-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-81-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-82-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-82-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-83-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-83-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-84-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-84-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-85-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-85-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-86-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-86-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-87-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-87-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-88-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-88-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-89-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-89-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-90-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-90-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-91-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-91-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-92-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-92-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-93-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-93-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-94-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-94-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-95-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-95-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-96-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-96-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-97-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-97-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-98-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-98-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-99-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-99-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-100-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-100-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-101-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-101-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-102-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-102-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-103-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-103-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-104-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-104-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-105-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-105-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-106-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-106-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-107-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-107-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-108-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-108-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-109-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-109-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-110-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-110-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-111-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-111-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-112-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-112-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-113-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-113-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-114-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-114-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-115-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-115-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-116-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-116-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-117-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-117-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-118-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-118-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-119-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-119-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-120-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-120-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-121-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-121-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-122-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-122-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-123-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-123-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-124-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-124-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-125-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-125-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-126-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-126-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-127-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-127-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-128-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-128-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-129-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-129-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-130-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-130-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-131-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-131-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-132-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-132-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-133-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-133-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-134-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-134-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-135-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-135-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-136-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-136-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-137-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-137-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-138-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-138-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-139-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-139-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-140-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-140-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-141-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-141-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-142-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-142-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-143-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-143-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-144-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-144-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-145-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-145-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-146-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-146-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-147-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-147-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-148-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-148-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-149-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-149-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-150-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-150-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-151-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-151-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-152-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-152-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-153-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-153-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-154-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-154-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-155-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-155-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-156-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-156-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-157-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-157-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-158-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-158-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-159-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-159-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-160-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-160-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-161-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-161-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  }
+]

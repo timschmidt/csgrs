@@ -1,0 +1,130 @@
+{
+  "status": "Separate resource observations for the combined proposal; retention still requires every gate",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "initial_cost_review": "nth-root-enclosure-initial-cost-review-v2021.json",
+  "initial_cost_review_sha256": "048d629a5a5c9854a0cc6731414cbac6bdf42633de4c04735e05ee26d4b5b07f",
+  "cost_controller": "nth-root-enclosure-cost-validation-v2021.json",
+  "cost_controller_sha256": "752bcf03b85f809726fc0a785be95dde10ad4665070cbc46217aabc53d491614",
+  "cost_controller_passed": false,
+  "original_algebraic_fixture": {
+    "arguments": [
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "pairs": 9,
+    "samples": {
+      "baseline": {
+        "whole_process_wall_seconds": [
+          1.8288379712030292,
+          1.9286729446612298,
+          1.8784097023308277,
+          2.028686486184597,
+          1.827288057655096,
+          1.8820888800546527,
+          1.881537816952914,
+          1.8791526197455823,
+          1.8797950269654393
+        ],
+        "median_whole_process_wall_seconds": 1.8797950269654393,
+        "maximum_whole_process_wall_seconds": 2.028686486184597,
+        "query_elapsed_ns": [
+          11873486,
+          11625922,
+          12138768,
+          11985017,
+          11693078,
+          11696098,
+          11661820,
+          11704857,
+          12265909
+        ],
+        "median_query_elapsed_ns": 11704857
+      },
+      "candidate": {
+        "whole_process_wall_seconds": [
+          0.9763022321276367,
+          0.9756812639534473,
+          0.9794654846191406,
+          0.9773499597795308,
+          0.9764108941890299,
+          0.9792496100999415,
+          0.9759473758749664,
+          0.9764587613753974,
+          0.9769870149902999
+        ],
+        "median_whole_process_wall_seconds": 0.9764587613753974,
+        "maximum_whole_process_wall_seconds": 0.9794654846191406,
+        "query_elapsed_ns": [
+          11801501,
+          11977049,
+          11772733,
+          11824050,
+          11837398,
+          11978598,
+          11843717,
+          14035427,
+          13739707
+        ],
+        "median_query_elapsed_ns": 11843717
+      }
+    },
+    "median_whole_process_wall_percent_change": -48.055040716237095,
+    "median_query_percent_change": 1.186345121516652
+  },
+  "allocation_study": "nth-root-enclosure-allocation-study-v2021/summary.json",
+  "allocation_study_sha256": "f8f5e1b1c59c5ee7437f6ba573d80b58eb575be00464055a44bb4181725e4052",
+  "allocation_observations": {
+    "successful_allocation_calls_including_realloc": {
+      "lower_cases": 84,
+      "equal_cases": 0,
+      "higher_cases": 0,
+      "baseline_range": [
+        7,
+        1129
+      ],
+      "candidate_range": [
+        6,
+        615
+      ]
+    },
+    "total_requested_bytes_including_full_realloc_size": {
+      "lower_cases": 84,
+      "equal_cases": 0,
+      "higher_cases": 0,
+      "baseline_range": [
+        104,
+        748080
+      ],
+      "candidate_range": [
+        72,
+        368952
+      ]
+    },
+    "successful_reallocation_calls": {
+      "lower_cases": 79,
+      "equal_cases": 5,
+      "higher_cases": 0,
+      "baseline_range": [
+        0,
+        255
+      ],
+      "candidate_range": [
+        0,
+        149
+      ]
+    }
+  },
+  "prior_failed_run": "cache-state-merge-cost-rejection-v1943.json",
+  "prior_failed_run_sha256": "9b3fd75c5e2810813e06faefbe6bff56d0d108707d7cc675deec91969e805718",
+  "limits": [
+    "The algebraic whole-process wall observations include construction, warmup and the query loop; the query timer excludes construction and warmup. Wall time is not CPU time and does not identify an internal stage. This comparison changes both the outlined selector and root enclosure relative to retained v1836, so it cannot isolate either change's causal contribution.",
+    "The fixed acceptance rule still uses the original query timing comparisons, every full-size fixture and all original process caps. These supplemental wall observations neither relax that rule nor replace any failure or prescribed repeat.",
+    "This copies the exact candidate helper and the archived prior endpoint block (indentation and a tuple-return wrapper only), linking the same num dependency as the production release library. It measures Rust allocation requests during the helper call only. Input construction, output checks, formatting and output destruction are outside the counter window. It does not measure peak/live memory, production call-site behavior, public query allocations, consumed evaluation work or execution time. It cannot pass or replace any original public cost or replay gate, including earlier SIGXCPU failures.",
+    "Earlier capped failures remain failed. The single instrumented v2000 observation identified warmup as dominant in that diagnostic only; it did not retroactively identify the stage of the uninstrumented v1943 failure.",
+    "The combined runtime remains unretained until cost qualification and all capped, numerical and public replays and fact audits pass. A failed cost gate prevents starting those replays. Main/native/full-board admission, the fixed pre-Verus baseline and every whole-crate proof group remain open."
+  ]
+}

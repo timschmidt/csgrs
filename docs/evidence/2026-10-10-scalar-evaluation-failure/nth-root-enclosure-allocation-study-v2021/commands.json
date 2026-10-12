@@ -1,0 +1,62 @@
+[
+  {
+    "label": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/nth-root-enclosure-allocation-study-v2021/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 0.01588198123499751,
+    "wall_seconds_limit": 120,
+    "address_space_mib": null,
+    "cpu_seconds_soft_hard": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/nth-root-enclosure-allocation-study-v2021/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "num=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libnum-3f13fa42f92eed91.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/nth-root-enclosure-allocation-study-v2021/probe"
+    ],
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 0.26424817694351077,
+    "wall_seconds_limit": 120,
+    "address_space_mib": null,
+    "cpu_seconds_soft_hard": null,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "label": "measure",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/nth-root-enclosure-allocation-study-v2021/probe"
+    ],
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 0.11663783108815551,
+    "wall_seconds_limit": 4,
+    "address_space_mib": 192,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "stdout_sha256": "ab781ce09c0347afcbf103c96166b721e1f157e1d0daad1ca4054df3256e82b5",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

@@ -1,0 +1,94 @@
+{
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "runner_sha256": "e2fc03dcaa62a8f782883f455bf1fe9891b260df812a5570d3e6b32c807977fc",
+  "followup_strategy_sha256": "5e86614885d38e96933498c28443dad2535443d954c6472b60d1161b50fd6511",
+  "complete": false,
+  "steps": [
+    {
+      "label": "standalone",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_nth_root_enclosure_costs.py"
+      ],
+      "helper_sha256": "fae0610e6aff46fb7a3e84dba12e16ca542a5cea884ffabc253050d90c85d160",
+      "exit_code": 0,
+      "seconds": 85.070431958884,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/standalone.stdout",
+      "stdout_sha256": "7b81f8db92f5d4cfbc4166daeb25be3de3bfb1953f48f59115941217735791a8",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/standalone.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "paired",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_nth_root_enclosure_cost.py"
+      ],
+      "helper_sha256": "9f27ed4bfcc4728735e36c973309e72510aab485deac88dc995f69a9ae4ab244",
+      "exit_code": 0,
+      "seconds": 212.03025094559416,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/paired.stdout",
+      "stdout_sha256": "5aa72eb2ddcf81d1e0e81a52cea5f1e99bb5c9016f2b95365b726a9ac6f65f15",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/paired.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "initial-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_nth_root_enclosure_initial_costs.py"
+      ],
+      "helper_sha256": "e3cb8d7499b659d6c2eb9be0bf370305620902043a6a218a3870f0d2715c5fce",
+      "exit_code": 0,
+      "seconds": 1.652261801995337,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/initial-review.stdout",
+      "stdout_sha256": "92722cd2e8e1b9e36f5676e00cbd086bcf56837e2903435c9e377d9eccfb845d",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/initial-review.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "freeze-followup",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/prepare_nth_root_enclosure_cost_followup.py"
+      ],
+      "helper_sha256": "c3b5177fb577234bca34a500885f20d44170ca9af15a601c25f31595e7e6f5be",
+      "exit_code": 0,
+      "seconds": 0.033074311912059784,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/freeze-followup.stdout",
+      "stdout_sha256": "eeba7963a9c82cfafd46eff7737f85b6c276a4482b1abe406e0fd3ca8ce3b3d1",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/freeze-followup.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "followup-0",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_nth_root_enclosure_followup.py",
+        "0"
+      ],
+      "helper_sha256": "552e47ba4c01a838e70fb941184a38221933487777173becf01f355a034070c7",
+      "exit_code": 0,
+      "seconds": 77.52782564377412,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/followup-0.stdout",
+      "stdout_sha256": "70d69490f786dafc753baef4b4041c7ff03c13ec40bba1f07a4c5829afc9a15f",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/followup-0.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "final-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_nth_root_enclosure_costs.py"
+      ],
+      "helper_sha256": "438f7a5cedb8f955cf82e0e7148d934b903860242a6664e5c881e8fc4f566caf",
+      "exit_code": 1,
+      "seconds": 0.20448786532506347,
+      "stdout": "nth-root-enclosure-cost-controller-v2021/final-review.stdout",
+      "stdout_sha256": "faefa1a0a29e921112fdcc01f2b43883877ec34ceec28c3a2d4e1976e6216e66",
+      "stderr": "nth-root-enclosure-cost-controller-v2021/final-review.stderr",
+      "stderr_sha256": "971685a3a0f6dd8f77dd4ada2a205b38f1e7541ae86f1bcf20af256d06d0e5e6"
+    }
+  ],
+  "scope": "Sequential standalone and paired original-cap costs, original receipt audit, predeclared family repeats when needed, and final cost audit. No concurrent builds/tests/measurements or source edits; all unsuccessful steps remain recorded."
+}

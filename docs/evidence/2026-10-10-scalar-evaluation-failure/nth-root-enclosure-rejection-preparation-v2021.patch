@@ -1,0 +1,128 @@
+--- record_bound_merge_rejection.py
++++ record_nth_root_enclosure_rejection.py
+@@ -17,2 +17,2 @@
+-    out = E / "bound-merge-cost-rejection-v1857.json"
+-    ledger_record = E / "bound-merge-rejection-ledger-v1857.json"
++    out = E / "nth-root-enclosure-cost-rejection-v2021.json"
++    ledger_record = E / "nth-root-enclosure-rejection-ledger-v2021.json"
+@@ -20 +20 @@
+-    costs_path = E / "bound-merge-cost-review-v1857.json"
++    costs_path = E / "nth-root-enclosure-cost-review-v2021.json"
+@@ -24 +24 @@
+-    controller_path = E / "bound-merge-cost-validation-v1857.json"
++    controller_path = E / "nth-root-enclosure-cost-validation-v2021.json"
+@@ -26,2 +26,2 @@
+-    proof = read(E / "bound-merge-proof-validation-v1840.json")
+-    broad = read(E / "bound-merge-broad-validation-v1849.json")
++    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
++    broad = read(E / "nth-root-enclosure-broad-validation-v2013.json")
+@@ -44,2 +44,2 @@
+-    assert costs["successful_cost_processes_including_standalone"] == 2484
+-    assert costs["separate_cpu_preparation_processes"] == 2016 and costs["original_process_caps_preserved"]
++    assert costs["successful_cost_processes_including_standalone"] == 2160
++    assert costs["separate_cpu_preparation_processes"] == 1692 and costs["original_process_caps_preserved"]
+@@ -49,2 +49,2 @@
+-    assert repeat["successful_processes"] == 1080 and repeat["failed_attempts"] == 0
+-    assert sum(map(len, repeat["cases"].values())) == 20
++    assert repeat["successful_processes"] == 756 and repeat["failed_attempts"] == 0
++    assert sum(map(len, repeat["cases"].values())) == 14
+@@ -53,2 +53 @@
+-        ("atan", ("cached_reciprocal_one", "100000")),
+-        ("atan", ("cached_reciprocal_many", "100000"))}
++        ("integer", ("wide_gap", "10000"))}
+@@ -62 +61 @@
+-    source_record = E / "typed-api-prototype-v1843-bound-merge-release-build/source-hashes.json.gz"
++    source_record = E / "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz"
+@@ -68,3 +67,20 @@
+-    assert not (E / "bound-merge-cost-milestone-v1857.json").exists()
+-    assert not (E / "bound-merge-replay-validation-v1911.json").exists()
+-    assert not (E / "typed-api-prototype-v1913-state.json").exists()
++    assert not (E / "nth-root-enclosure-cost-milestone-v2021.json").exists()
++    assert not (E / "nth-root-enclosure-replay-validation-v2075.json").exists()
++    assert not (E / "typed-api-prototype-v2077-state.json").exists()
++    allocation_path = E / "nth-root-enclosure-allocation-study-v2021/summary.json"
++    allocation = read(allocation_path)
++    resource_path = E / "nth-root-enclosure-resource-review-v2021.json"
++    resource = read(resource_path)
++    assert allocation["source_record_sha256"] == resource["source_record_sha256"] == expected
++    assert allocation["guards_unchanged"] and allocation["counts_stable"] and allocation["exact_endpoints_equal"]
++    assert allocation["fixtures"] == 84 and allocation["kernel_calls"] == 504 and not allocation["increases"]
++    assert resource["cost_controller_sha256"] == sha(controller_path) and not resource["cost_controller_passed"]
++    assert resource["allocation_study_sha256"] == sha(allocation_path)
++    for name, digest in allocation["artifacts_sha256"].items():
++        assert sha(allocation_path.parent / name) == digest
++    main_guard = json.loads(gzip.decompress((E / "candidate-preparation/main-hashes.json.gz").read_bytes()))
++    assert len(main_guard) == 1167 and all(sha(ROOT / name) == digest for name, digest in main_guard.items())
++    assert proof["fresh_rejected_mutants"] == proof["fresh_passing_guard_baselines"] == 0
++    assert proof["reused_rejected_mutants"] == 247 and proof["reused_passing_guard_baselines"] == 4
++    assert sha(E / proof["prior_failure"]) == proof["prior_failure_sha256"]
++    assert not read(E / proof["prior_failure"])["runtime_retained"]
+@@ -72,2 +88,3 @@
+-        "Investigate the two persistent cached-reciprocal atan increases using the preserved "
+-        "binaries and unchanged full-size controls. Any revised extraction needs a new frozen "
++        "Investigate the prescribed-repeat wide-integer-gap increase using the preserved binaries "
++        "and unchanged controls. Inspect generated code and the exact-integer fast path before "
++        "proposing a justified source change. Any revised proposal needs a new frozen "
+@@ -78 +95 @@
+-        "status": "Reject the isolated bound-merge extraction: two prescribed repeat controls exceed the frozen timing threshold",
++        "status": "Reject the isolated combined root/cache proposal: a prescribed repeat control exceeds the frozen timing threshold",
+@@ -84,0 +102,3 @@
++        "resource_review": resource_path.name, "resource_review_sha256": sha(resource_path),
++        "allocation_study": str(allocation_path.relative_to(E)), "allocation_study_sha256": sha(allocation_path),
++        "main_guarded_files_verified": len(main_guard),
+@@ -87 +107 @@
+-        "successful_cost_processes": 2484, "separate_cpu_preludes": 2016,
++        "successful_cost_processes": 2160, "separate_cpu_preludes": 1692,
+@@ -89 +109 @@
+-        "original_fixture_count": 52, "family_repeat_fixture_count": 20,
++        "original_fixture_count": 52, "family_repeat_fixture_count": 14,
+@@ -91,2 +111,3 @@
+-        "passing_evidence": {"verified_units": 651, "fresh_rejected_mutants": 246,
+-            "fresh_passing_guard_baselines": 4, "fresh_acceptance_tests": 10,
++        "passing_evidence": {"verified_units": 651, "fresh_rejected_mutants": 0,
++            "fresh_passing_guard_baselines": 0, "reused_rejected_mutants": 247,
++            "reused_passing_guard_baselines": 4, "fresh_acceptance_tests": 10, "focused_tests": 3,
+@@ -96,4 +117,4 @@
+-            "The gate rejects this candidate based on the frozen local comparison. Timing does not establish a code-level cause or a uniform regression; integer-family initial increases did not persist in the repeat.",
+-            "The 468 standalone, 936 original paired and 1080 family-repeat processes all pass their original caps, as do 2016 separate CPU preludes. Process success does not override the failed timing gate.",
+-            "The seven probe executables grow by 320-408 bytes, recorded separately from timing. These sizes do not establish whole-board effects.",
+-            "The conditional production proof and nine runtime checks remain valid evidence for their source. Prepared cost-milestone/retention helpers and the 39-cap/4129-numerical/648-public replay protocol were not executed; none is an admission result.",
++            "The gate rejects this candidate based on the frozen family-repeat rule. The three initially flagged cases fall below the threshold on repeat, but the unchanged wide_gap control rises 11.175507824761223 percent in that repeat (its initial change was -6.268224844107484 percent). The predeclared rule checks every fixture in each affected family, not only the initially flagged cases. Timing establishes neither a code-level cause nor a uniform regression.",
++            "The 468 standalone, 936 original paired and 756 family-repeat processes all pass their original caps, as do 1692 separate CPU preludes. Process success does not override the failed timing gate.",
++            "The seven probe executables shrink by 864-1008 bytes, recorded separately from timing. The copied-kernel allocation study reduces requests in all 84 cases, and the full algebraic fixture has lower observed whole-process wall time. These separate results do not override the failed timing gate or establish whole-board effects.",
++            "The refreshed conditional cache proof, reused mutation guards and nine runtime checks remain valid evidence for their declared source and scope. The bigint root helper is outside Verus coverage. Prepared cost-milestone/retention helpers and the 39-cap/4129-numerical/648-public replay protocol were not executed; none is an admission result.",
+@@ -111 +132 @@
+-    for name in [initial_path.name, costs_path.name, out.name]:
++    for name in [initial_path.name, costs_path.name, resource_path.name, str(allocation_path.relative_to(E)), out.name]:
+@@ -116,9 +137,16 @@
+-        "The v1850-v1857 cost gate rejects the bound-merge extraction. All 2484 cost processes "
+-        "and 2016 separate CPU preludes pass their original caps and preserve non-timing "
+-        "observations, but the predeclared family-wide 27-pair repeat leaves cached reciprocal "
+-        "atan increases of 9.1308 and 7.2137 percent. Integer-family initial increases do not "
+-        "persist. Probe executables grow 320-408 bytes. All original and repeated observations "
+-        "remain immutable; the 651-unit proof and nine passing runtime commands do not override "
+-        "the failed cost gate. Replays and the prepared retention helper were not run. The "
+-        "retained runtime remains v1836 and all property/target statuses, older failures/tradeoff, "
+-        "fixed pre-Verus baseline and main/native/full-board obligations remain unchanged."
++        "The v2014-v2021 cost gate rejects the combined one-root enclosure and outlined cache "
++        "proposal. All 2160 cost processes and 1692 CPU preludes pass their original limits and "
++        "preserve every non-timing output. All three initial increases fall below five percent "
++        "on the prescribed 27-pair repeat, but another unchanged integer control (wide_gap) "
++        "increases 11.1755 percent; its initial change was -6.2682 percent. Every affected-family "
++        "control remains part of the frozen gate. All 84 copied-kernel allocation cases use "
++        "fewer requests and bytes with identical endpoints; seven probes shrink 864-1008 bytes. "
++        "The original algebraic 4/4/0/false/64 fixture passes all paired processes and has "
++        "48.0550 percent lower median whole-process wall time, while its timed query loop "
++        "changes +1.1863 percent. These observations do not isolate a causal contribution or "
++        "override the failed timing gate. All initial/repeated observations and earlier "
++        "failures remain immutable. The 651-unit conditional proof, 247 reused mutation "
++        "guards and nine broad checks retain their scope; the bigint helper is not formally "
++        "verified. Replays and retention were not executed. Retained runtime stays v1836, "
++        "with all property/target statuses, fixed pre-Verus baseline and main/native/full-board "
++        "obligations unchanged."
+@@ -131 +159 @@
+-        "The frozen cost comparison rejects the bound-merge extraction; retain v1836. " + next_priority, 1)
++        "The frozen cost comparison rejects the combined root/cache proposal; retain v1836. " + next_priority, 1)
+@@ -147 +175 @@
+-    print(json.dumps({"status": record["status"], "cost_processes_passed": 2484,
++    print(json.dumps({"status": record["status"], "cost_processes_passed": 2160,

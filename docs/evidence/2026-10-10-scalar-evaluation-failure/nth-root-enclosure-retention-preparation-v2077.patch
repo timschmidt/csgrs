@@ -1,0 +1,172 @@
+--- record_cache_state_merge_retention.py
++++ record_nth_root_enclosure_retention.py
+@@ -18 +18 @@
+-SOURCE_HASH = "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59"
++SOURCE_HASH = "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3"
+@@ -32,2 +32,2 @@
+-    outputs = [E / name for name in ["cache-state-merge-retention-v1999.json",
+-        "typed-api-prototype-v1999-metadata.json", "cache-state-merge-ledger-update-v1999.json"]]
++    outputs = [E / name for name in ["nth-root-enclosure-retention-v2077.json",
++        "typed-api-prototype-v2077-metadata.json", "nth-root-enclosure-ledger-update-v2077.json"]]
+@@ -35,2 +35,2 @@
+-    proof = read(E / "cache-state-merge-proof-validation-v1926.json")
+-    broad = read(E / "cache-state-merge-broad-validation-v1935.json")
++    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
++    broad = read(E / "nth-root-enclosure-broad-validation-v2013.json")
+@@ -38,2 +38,2 @@
+-    costs = read(E / "cache-state-merge-cost-review-v1943.json")
+-    plan_path = E / "cache-state-merge-replay-protocol-v1944.json"
++    costs = read(E / "nth-root-enclosure-cost-review-v2021.json")
++    plan_path = E / "nth-root-enclosure-replay-protocol-v2022.json"
+@@ -41,4 +41,4 @@
+-    replay = read(E / "cache-state-merge-replay-validation-v1997.json")
+-    queries = read(E / "cache-state-merge-domain-query-comparison-v1982.json")
+-    comparison = read(E / "cache-state-merge-deterministic-replay-comparison-v1998.json")
+-    facts = read(E / "cache-state-merge-public-fact-audit-v1998.json")
++    replay = read(E / "nth-root-enclosure-replay-validation-v2075.json")
++    queries = read(E / "nth-root-enclosure-domain-query-comparison-v2060.json")
++    comparison = read(E / "nth-root-enclosure-deterministic-replay-comparison-v2076.json")
++    facts = read(E / "nth-root-enclosure-public-fact-audit-v2076.json")
+@@ -51 +51 @@
+-    assert replay["runner_sha256"] == sha(E / "run_cache_state_replays.py")
++    assert replay["runner_sha256"] == sha(E / "run_nth_root_replays.py")
+@@ -56,3 +56,8 @@
+-    assert proof["fresh_rejected_mutants"] == 247 and proof["fresh_passing_guard_baselines"] == 4
+-    assert proof["reused_rejected_mutants"] == 0
+-    for name, digest in proof["prior_experiments_sha256"].items():
++    assert proof["focused_tests"] == 3
++    assert proof["fresh_rejected_mutants"] == proof["fresh_passing_guard_baselines"] == 0
++    assert proof["reused_rejected_mutants"] == 247 and proof["reused_passing_guard_baselines"] == 4
++    reused_path = E / proof["reused_proof_record"]
++    assert sha(reused_path) == proof["reused_proof_record_sha256"]
++    reused = read(reused_path)
++    assert reused["proof_and_guard_inputs_sha256"] == proof["proof_and_guard_inputs_sha256"]
++    for name, digest in reused["prior_experiments_sha256"].items():
+@@ -60,3 +65 @@
+-    rejected = read(E / "bound-merge-cost-rejection-v1857.json")
+-    assert not rejected["runtime_retained"]
+-    for name, diagnostic in proof["compile_only_diagnostics"].items():
++    for name, diagnostic in reused["compile_only_diagnostics"].items():
+@@ -65 +68,9 @@
+-    for key in ["fresh_verification_phase", "fresh_acceptance_phase", "fresh_rejection_phase"]:
++    prior_failure_path = E / proof["prior_failure"]
++    assert sha(prior_failure_path) == proof["prior_failure_sha256"]
++    assert not read(prior_failure_path)["runtime_retained"]
++    assert not read(E / "bound-merge-cost-rejection-v1857.json")["runtime_retained"]
++    rejection = E / proof["reused_rejection_phase"]
++    rejection_result = read(rejection / "result.json")
++    assert rejection_result["exit_code"] == 0 and rejection_result["source_unchanged"] and rejection_result["main_unchanged"]
++    assert sha(rejection / "proof-checks/tooling.json") == proof["reused_rejection_tooling_sha256"]
++    for key in ["focused_phase", "fresh_verification_phase", "fresh_acceptance_phase"]:
+@@ -66,0 +78,2 @@
++    assert sha(E / proof["fresh_verification_phase"] / "proof-reports/dependencies.json") == proof["proof_dependency_identity_sha256"]
++    assert sha(E / reused["fresh_verification_phase"] / "proof-reports/dependencies.json") == proof["proof_dependency_identity_sha256"]
+@@ -80,2 +93,2 @@
+-    expected_tests = {1927: (1074, 1, 0), 1932: (5858, 3, 33),
+-                      1933: (1059, 3, 0), 1934: (1074, 1, 0)}
++    expected_tests = {2005: (1076, 1, 0), 2010: (5860, 3, 33),
++                      2011: (1061, 3, 0), 2012: (1076, 1, 0)}
+@@ -150 +163 @@
+-    cost_controller_path = E / "cache-state-merge-cost-validation-v1943.json"
++    cost_controller_path = E / "nth-root-enclosure-cost-validation-v2021.json"
+@@ -152 +165 @@
+-    cost_milestone = read(E / "cache-state-merge-cost-milestone-v1943.json")
++    cost_milestone = read(E / "nth-root-enclosure-cost-milestone-v2021.json")
+@@ -156 +169 @@
+-    assert cost_milestone["cost_record_sha256"] == sha(E / "cache-state-merge-cost-review-v1943.json")
++    assert cost_milestone["cost_record_sha256"] == sha(E / "nth-root-enclosure-cost-review-v2021.json")
+@@ -158 +171 @@
+-    assert subprocess.check_output(["git", "show", "HEAD:" + str((E / "cache-state-merge-cost-review-v1943.json").relative_to(ROOT))], cwd=ROOT) == (E / "cache-state-merge-cost-review-v1943.json").read_bytes()
++    assert subprocess.check_output(["git", "show", "HEAD:" + str((E / "nth-root-enclosure-cost-review-v2021.json").relative_to(ROOT))], cwd=ROOT) == (E / "nth-root-enclosure-cost-review-v2021.json").read_bytes()
+@@ -170 +183 @@
+-    source_record = "typed-api-prototype-v1929-cache-state-merge-release-build/source-hashes.json.gz"
++    source_record = "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz"
+@@ -177 +190 @@
+-    assert changed == proof["changed_sources_sha256"] and len(changed) == 6
++    assert changed == proof["changed_sources_sha256"] and len(changed) == 8
+@@ -180,0 +194,9 @@
++    allocation_path = E / "nth-root-enclosure-allocation-study-v2021/summary.json"
++    allocation = read(allocation_path)
++    assert allocation["source_record_sha256"] == SOURCE_HASH and allocation["guards_unchanged"]
++    assert allocation["exact_endpoints_equal"] and allocation["counts_stable"]
++    assert allocation["fixtures"] == 84 and allocation["kernel_calls"] == 504
++    assert not allocation["increases"], "Review allocation increases before retention"
++    for name, digest in allocation["artifacts_sha256"].items():
++        assert sha(allocation_path.parent / name) == digest
++
+@@ -183 +205 @@
+-        "Ten acceptance/dependency tests and 247 rejected mutations plus four passing baselines do not satisfy the still-pending fixed pre-Verus acceptance report. The outlined extraction has no failed proof attempt. The earlier BoundInfo extraction failed its timing gate; its rejection, the unsupported Option::or probe and the compile-only variants remain immutable.",
++        "Ten fresh acceptance tests and 651 freshly verified units cover the unchanged conditional proof target. The 247 rejected mutations and four passing baselines are reused, with identical proof/guard inputs and dependency identities; zero new mutations were run. The bigint root kernel is outside Verus coverage. Its exact endpoints have focused inequality/differential tests and unchanged public MPFR cases. The fixed pre-Verus acceptance report remains pending. All earlier failed experiments remain immutable.",
+@@ -190 +212,2 @@
+-        "The local cost baseline remains v1836. Older original-cap failures at v1638/v1710, the rejected BoundInfo extraction's v1857 timing regressions, the earlier retained integer-control tradeoff and the fixed pre-Verus acceptance baseline are not erased or reset by this successful comparison.",
++        "The local cost baseline remains v1836. The outlined selector alone failed its original CPU cap at v1943. That failure, v1857 timing regressions, original-cap failures at v1638/v1710, the retained integer-control tradeoff and the fixed pre-Verus acceptance baseline remain unchanged; this combined-source run does not pass any earlier failed run.",
++        "The 84-case copied-kernel allocation study records stable counts and identical endpoints across 504 helper calls. It measures allocation requests only, not production call-site behavior, live/peak memory, query work or time. All cases and its limitations remain recorded separately.",
+@@ -203 +226 @@
+-        "status": "Retain the isolated proved outlined cache-state merge; main admission remains open",
++        "status": "Retain the isolated one-root enclosure and conditionally proved outlined cache merge; main admission remains open",
+@@ -209,2 +232,4 @@
+-        "prior_experiments_sha256": proof["prior_experiments_sha256"],
+-        "compile_only_diagnostics": proof["compile_only_diagnostics"],
++        "prior_experiments_sha256": reused["prior_experiments_sha256"],
++        "compile_only_diagnostics": reused["compile_only_diagnostics"],
++        "prior_capped_failure": proof["prior_failure"], "prior_capped_failure_sha256": proof["prior_failure_sha256"],
++        "allocation_study": str(allocation_path.relative_to(E)), "allocation_study_sha256": sha(allocation_path),
+@@ -214,2 +239,2 @@
+-        "proof_record": "cache-state-merge-proof-validation-v1926.json",
+-        "proof_record_sha256": sha(E / "cache-state-merge-proof-validation-v1926.json"),
++        "proof_record": "nth-root-enclosure-proof-validation-v2004.json",
++        "proof_record_sha256": sha(E / "nth-root-enclosure-proof-validation-v2004.json"),
+@@ -218 +243 @@
+-            "fresh_passing_guard_baselines", "reused_rejected_mutants"]},
++            "fresh_passing_guard_baselines", "reused_rejected_mutants", "reused_passing_guard_baselines", "focused_tests"]},
+@@ -221 +246 @@
+-        "replay_orchestration": "cache-state-merge-replay-validation-v1997.json",
++        "replay_orchestration": "nth-root-enclosure-replay-validation-v2075.json",
+@@ -223,3 +248,3 @@
+-        "domain_observation_comparison": "cache-state-merge-domain-query-comparison-v1982.json",
+-        "deterministic_replay_comparison": "cache-state-merge-deterministic-replay-comparison-v1998.json",
+-        "public_fact_audit": "cache-state-merge-public-fact-audit-v1998.json",
++        "domain_observation_comparison": "nth-root-enclosure-domain-query-comparison-v2060.json",
++        "deterministic_replay_comparison": "nth-root-enclosure-deterministic-replay-comparison-v2076.json",
++        "public_fact_audit": "nth-root-enclosure-public-fact-audit-v2076.json",
+@@ -227 +252 @@
+-        "cost_record": "cache-state-merge-cost-review-v1943.json",
++        "cost_record": "nth-root-enclosure-cost-review-v2021.json",
+@@ -230 +255 @@
+-        "decision": "Keep the exact runtime bound selection and route it through the same pure BoundCache::merge body included by Verus. The extraction adds conditional denotation, compatibility, certificate-retention and domain-retention proofs without losing any observed successful query, fact, work allowance or allocation behavior in the frozen deterministic corpora. Original-cap costs and the predeclared repeat rule pass. This is the new isolated baseline; main runtime admission remains open.",
++        "decision": "Keep the one-root integer enclosure with identical tested endpoints, together with the same pure BoundCache::merge body included by Verus. The kernel change reduces duplicate root computation; it has finite numerical and allocation evidence, not a formal kernel proof. The outlined selector has conditional denotation, compatibility, certificate-retention and domain-retention proofs. All frozen deterministic observations, original-cap costs and prescribed repeats pass. This becomes the isolated retained baseline; main runtime admission remains open.",
+@@ -236,2 +261,2 @@
+-        record["deterministic_replay_comparison"], record["public_fact_audit"], outputs[0].name,
+-        "typed-api-prototype-v1999-state.json"]
++        record["deterministic_replay_comparison"], record["public_fact_audit"], record["allocation_study"], outputs[0].name,
++        "typed-api-prototype-v2077-state.json"]
+@@ -250,3 +275,3 @@
+-        "The v1999 isolated checkpoint retains the proved compatible cached-bound merge "
+-        "after all frozen gates: 651 verified units, 247 rejected mutations, four passing guard "
+-        "baselines, ten acceptance tests, nine broad commands, 39 capped phases (156 top-level "
++        "The v2077 isolated checkpoint retains the one-root enclosure and outlined cached-bound merge "
++        "after all frozen gates: 651 fresh verified units, 247 reused rejected mutations and four reused "
++        "passing guard baselines, ten fresh acceptance tests, nine broad commands, 39 capped phases (156 top-level "
+@@ -260 +285,2 @@
+-        "baseline remain explicit. This changes only the isolated retained candidate. "
++        "baseline remain explicit. The bigint kernel is outside Verus; its focused endpoint checks and "
++        "84-case copied-kernel allocation study remain separate finite evidence. This changes only the isolated retained candidate. "
+@@ -269 +295 @@
+-        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v1999-state.json before production admission.", 1)
++        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v2077-state.json before production admission.", 1)
+@@ -273 +299 @@
+-        "All capped/numerical/public replays and receipt/fact audits pass; the extraction is retained in v1999. " + next_priority, 1)
++        "All capped/numerical/public replays and receipt/fact audits pass; the combined proposal is retained in v2077. " + next_priority, 1)
+@@ -285 +311 @@
+-        "evidence_commits": ["dec6ce44ffc109de6f8f52d2ce253cec1cae5dbf", subprocess.check_output(["git", "log", "-1", "--format=%H", "--", str((E / "cache-state-merge-broad-milestone-v1935.json").relative_to(ROOT))], cwd=ROOT, text=True).strip(), subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()],
++        "evidence_commits": ["dec6ce44ffc109de6f8f52d2ce253cec1cae5dbf", "85a24c007460551c9dee5746b68a192cb569b045", subprocess.check_output(["git", "log", "-1", "--format=%H", "--", str((E / "nth-root-enclosure-broad-milestone-v2013.json").relative_to(ROOT))], cwd=ROOT, text=True).strip(), subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()],
+@@ -290,2 +316,2 @@
+-        "fresh_stack_counts": {"top_level_passed": 5858, "child_process_passed": 3, "ignored": 33},
+-        "fresh_scalar_counts": {"top_level_passed": 1074, "child_process_passed": 1},
++        "fresh_stack_counts": {"top_level_passed": 5860, "child_process_passed": 3, "ignored": 33},
++        "fresh_scalar_counts": {"top_level_passed": 1076, "child_process_passed": 1},
+@@ -294,0 +321 @@
++        "allocation_study": record["allocation_study"], "allocation_study_sha256": record["allocation_study_sha256"],
+@@ -315 +342 @@
+-        "retained_runtime_checkpoint": "typed-api-prototype-v1999-state.json", "main_runtime_admitted": False,
++        "retained_runtime_checkpoint": "typed-api-prototype-v2077-state.json", "main_runtime_admitted": False,

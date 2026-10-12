@@ -1,0 +1,211 @@
+{
+  "status": "Reject the isolated combined root/cache proposal: a prescribed repeat control exceeds the frozen timing threshold",
+  "source_record": "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "cost_record": "nth-root-enclosure-cost-review-v2021.json",
+  "cost_record_sha256": "61981b73cfe8b94cce5486f3db381a00cfca8b935edaf18e07cbee34527f6e94",
+  "cost_controller": "nth-root-enclosure-cost-validation-v2021.json",
+  "cost_controller_sha256": "752bcf03b85f809726fc0a785be95dde10ad4665070cbc46217aabc53d491614",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "proposal_patch": "nth-root-enclosure-proposal-v2004.patch",
+  "proposal_patch_sha256": "f0f43ed17731da32de529e8f377151c09227c64b2397a1ef5f3a6228c2fb8ad5",
+  "resource_review": "nth-root-enclosure-resource-review-v2021.json",
+  "resource_review_sha256": "e1a3512b0e6bf1f3e584f1f3003aeb3e52150aea10c6bc62c4dd227639c393bb",
+  "allocation_study": "nth-root-enclosure-allocation-study-v2021/summary.json",
+  "allocation_study_sha256": "f8f5e1b1c59c5ee7437f6ba573d80b58eb575be00464055a44bb4181725e4052",
+  "main_guarded_files_verified": 1167,
+  "persistent_increases": [
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_gap",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          99863,
+          150439,
+          104373,
+          143330,
+          89204,
+          145870,
+          86864,
+          83974,
+          87004,
+          82534,
+          83035,
+          103213,
+          88094,
+          84464,
+          83494,
+          104362,
+          116432,
+          83014,
+          89184,
+          88024,
+          101953,
+          87544,
+          130381,
+          126312,
+          83445,
+          122512,
+          89764
+        ],
+        "candidate": [
+          99173,
+          145001,
+          81685,
+          136691,
+          86754,
+          101593,
+          100363,
+          102263,
+          81255,
+          147430,
+          81644,
+          80294,
+          93244,
+          86724,
+          82605,
+          99783,
+          100393,
+          81724,
+          108443,
+          102073,
+          86684,
+          102113,
+          80304,
+          100933,
+          99833,
+          80315,
+          81234
+        ]
+      },
+      "median_ns": {
+        "baseline": 89204,
+        "candidate": 99173
+      },
+      "median_percent_change": 11.175507824761223
+    }
+  ],
+  "initial_and_followup_percent": [
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_identity",
+        "10000"
+      ],
+      "initial_percent": 12.553391311427276,
+      "followup_percent": -3.340805237911204
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "initial_percent": 6.761713782646983,
+      "followup_percent": 1.280897491216182
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "initial_percent": 10.093789936534758,
+      "followup_percent": -6.208601801216451
+    }
+  ],
+  "successful_cost_processes": 2160,
+  "separate_cpu_preludes": 1692,
+  "failed_capped_cost_processes": 0,
+  "cost_gate_passed": false,
+  "original_fixture_count": 52,
+  "family_repeat_fixture_count": 14,
+  "executable_size_comparison": {
+    "atan": {
+      "bytes": {
+        "baseline": 6261016,
+        "candidate": 6260088
+      },
+      "delta_bytes": -928,
+      "percent_change": -0.014821875555026676
+    },
+    "integer": {
+      "bytes": {
+        "baseline": 6239120,
+        "candidate": 6238224
+      },
+      "delta_bytes": -896,
+      "percent_change": -0.014360999628149074
+    },
+    "inverse_trig": {
+      "bytes": {
+        "baseline": 6920888,
+        "candidate": 6919976
+      },
+      "delta_bytes": -912,
+      "percent_change": -0.013177499765926193
+    },
+    "normal_form": {
+      "bytes": {
+        "baseline": 6925912,
+        "candidate": 6924968
+      },
+      "delta_bytes": -944,
+      "percent_change": -0.013629973929785155
+    },
+    "default": {
+      "bytes": {
+        "baseline": 6498336,
+        "candidate": 6497328
+      },
+      "delta_bytes": -1008,
+      "percent_change": -0.01551166329349929
+    },
+    "algebraic": {
+      "bytes": {
+        "baseline": 6914520,
+        "candidate": 6913656
+      },
+      "delta_bytes": -864,
+      "percent_change": -0.012495444369242659
+    },
+    "acos": {
+      "bytes": {
+        "baseline": 6244448,
+        "candidate": 6243528
+      },
+      "delta_bytes": -920,
+      "percent_change": -0.014733087696461311
+    }
+  },
+  "passing_evidence": {
+    "verified_units": 651,
+    "fresh_rejected_mutants": 0,
+    "fresh_passing_guard_baselines": 0,
+    "reused_rejected_mutants": 247,
+    "reused_passing_guard_baselines": 4,
+    "fresh_acceptance_tests": 10,
+    "focused_tests": 3,
+    "broad_runtime_commands": 9,
+    "all_observed_non_timing_cost_outputs_identical": true
+  },
+  "replays_started": false,
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "limits": [
+    "The gate rejects this candidate based on the frozen family-repeat rule. The three initially flagged cases fall below the threshold on repeat, but the unchanged wide_gap control rises 11.175507824761223 percent in that repeat (its initial change was -6.268224844107484 percent). The predeclared rule checks every fixture in each affected family, not only the initially flagged cases. Timing establishes neither a code-level cause nor a uniform regression.",
+    "The 468 standalone, 936 original paired and 756 family-repeat processes all pass their original caps, as do 1692 separate CPU preludes. Process success does not override the failed timing gate.",
+    "The seven probe executables shrink by 864-1008 bytes, recorded separately from timing. The copied-kernel allocation study reduces requests in all 84 cases, and the full algebraic fixture has lower observed whole-process wall time. These separate results do not override the failed timing gate or establish whole-board effects.",
+    "The refreshed conditional cache proof, reused mutation guards and nine runtime checks remain valid evidence for their declared source and scope. The bigint root helper is outside Verus coverage. Prepared cost-milestone/retention helpers and the 39-cap/4129-numerical/648-public replay protocol were not executed; none is an admission result.",
+    "The retained runtime remains v1836, and the current candidate directory still holds the rejected proposal for diagnosis. Older failures/tradeoffs, the fixed pre-Verus acceptance baseline, thirteen whole-crate proof groups and all main/native/full-board obligations remain unchanged."
+  ],
+  "next_priority": "Investigate the prescribed-repeat wide-integer-gap increase using the preserved binaries and unchanged controls. Inspect generated code and the exact-integer fast path before proposing a justified source change. Any revised proposal needs a new frozen source/protocol and all required proof, runtime, cost and replay gates. Preserve this failed comparison; do not retry unchanged timings until a favorable result appears."
+}

@@ -1,0 +1,1193 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.015864711720496416,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.364312969148159,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "repeat-0-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010385347995907068,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009565084706991911,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005546378903090954,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005403769202530384,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.367773718200624,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3685717140324414,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3169395769946277,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31719430861994624,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01060947310179472,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009602691978216171,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005632464308291674,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00959960138425231,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.367727401200682,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3685402953997254,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31686459202319384,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2666504238732159,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009768070187419653,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009550644550472498,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009628130123019218,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005477634724229574,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3174836868420243,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3683331101201475,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31699757277965546,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3170483987778425,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01095292903482914,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009902740828692913,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055987657979130745,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009560845326632261,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3176131779327989,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3181165540590882,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3171551707200706,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3173721260391176,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01075618201866746,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009897221345454454,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005705039016902447,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0059422519989311695,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3678014161996543,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3687918693758547,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3171700509265065,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.317113074939698,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010613122023642063,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009732532780617476,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005642822943627834,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009531226940453053,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3174483398906887,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.368469180073589,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3168051643297076,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3166855308227241,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010466482024639845,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009483339730650187,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055598788894712925,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055129616521298885,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.367459035012871,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3684281990863383,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3173961518332362,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3170212069526315,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.011020383797585964,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009943417739123106,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005747674964368343,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009711573831737041,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3680038778111339,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3689036550931633,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2668190295808017,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.2665297002531588,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010444214101880789,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009617940057069063,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-mid_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0055352007038891315,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-mid_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005326713901013136,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.3172050509601831,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 1.318421137984842,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_positive",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31668573105707765,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_negative",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.3165762680582702,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

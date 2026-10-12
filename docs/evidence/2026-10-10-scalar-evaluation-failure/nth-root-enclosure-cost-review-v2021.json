@@ -1,0 +1,3277 @@
+{
+  "status": "Persistent timing increases require review; do not retain the combined proposal",
+  "local_timing_and_process_gates_passed": false,
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "initial_record": "nth-root-enclosure-initial-cost-review-v2021.json",
+  "initial_record_sha256": "048d629a5a5c9854a0cc6731414cbac6bdf42633de4c04735e05ee26d4b5b07f",
+  "families": {
+    "atan": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+        "candidate": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost"
+      },
+      "processes": 108,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2014-nth-root-enclosure-atan-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+        "candidate": "088b158e5d2e4367bb61c3d43ca4134b62f67e870bfcbd9013b8d653726e51bb"
+      },
+      "binary_bytes": {
+        "baseline": 6261016,
+        "candidate": 6260088
+      },
+      "non_timing_outputs_identical": true
+    },
+    "integer": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1774-domain-predicate-integer-cost",
+        "candidate": "typed-api-prototype-v2015-nth-root-enclosure-integer-cost"
+      },
+      "processes": 72,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1774-domain-predicate-integer-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2015-nth-root-enclosure-integer-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+        "candidate": "97d2f48bfd46ca220b0fc97438cfdb9163276e7140a026360098dbdbe7a55725"
+      },
+      "binary_bytes": {
+        "baseline": 6239120,
+        "candidate": 6238224
+      },
+      "non_timing_outputs_identical": true
+    },
+    "inverse_trig": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1775-domain-predicate-inverse-cost",
+        "candidate": "typed-api-prototype-v2016-nth-root-enclosure-inverse-cost"
+      },
+      "processes": 54,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2016-nth-root-enclosure-inverse-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+        "candidate": "5e4e7e04026964fa85e38e4d7f06ea265e19cea64a553f9b8af745baf972aba0"
+      },
+      "binary_bytes": {
+        "baseline": 6920888,
+        "candidate": 6919976
+      },
+      "non_timing_outputs_identical": true
+    },
+    "normal_form": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1776-domain-predicate-normal-form-cost",
+        "candidate": "typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost"
+      },
+      "processes": 54,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1776-domain-predicate-normal-form-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+        "candidate": "6074589344f8dfecb2106114dcd718545d7e42a6a3ec2f36cc25d6fab501ff23"
+      },
+      "binary_bytes": {
+        "baseline": 6925912,
+        "candidate": 6924968
+      },
+      "non_timing_outputs_identical": true
+    },
+    "default": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1777-domain-predicate-default-cost",
+        "candidate": "typed-api-prototype-v2018-nth-root-enclosure-default-cost"
+      },
+      "processes": 54,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1777-domain-predicate-default-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2018-nth-root-enclosure-default-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+        "candidate": "6af105fd4a5b21f5d68f7a42f08fd51183eb26d32fec92c30273d9f2301c7c68"
+      },
+      "binary_bytes": {
+        "baseline": 6498336,
+        "candidate": 6497328
+      },
+      "non_timing_outputs_identical": true
+    },
+    "algebraic": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1778-domain-predicate-algebraic-cost",
+        "candidate": "typed-api-prototype-v2019-nth-root-enclosure-algebraic-cost"
+      },
+      "processes": 54,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2019-nth-root-enclosure-algebraic-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "candidate": "72c291b87aa9fb4bce3dc71823a8c8dbdfa2b83130adc621b20ea7698e773539"
+      },
+      "binary_bytes": {
+        "baseline": 6914520,
+        "candidate": 6913656
+      },
+      "non_timing_outputs_identical": true
+    },
+    "acos": {
+      "phases": {
+        "baseline": "typed-api-prototype-v1779-domain-predicate-acos-cost",
+        "candidate": "typed-api-prototype-v2020-nth-root-enclosure-acos-cost"
+      },
+      "processes": 72,
+      "binaries": {
+        "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1779-domain-predicate-acos-cost/probe",
+        "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2020-nth-root-enclosure-acos-cost/probe"
+      },
+      "binary_sha256": {
+        "baseline": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+        "candidate": "9a41417a7ec6e0e239637cb6c06146b534d3e985a1f53b90c0cea6bfee0e4d50"
+      },
+      "binary_bytes": {
+        "baseline": 6244448,
+        "candidate": 6243528
+      },
+      "non_timing_outputs_identical": true
+    }
+  },
+  "executable_size_comparison": {
+    "atan": {
+      "bytes": {
+        "baseline": 6261016,
+        "candidate": 6260088
+      },
+      "delta_bytes": -928,
+      "percent_change": -0.014821875555026676
+    },
+    "integer": {
+      "bytes": {
+        "baseline": 6239120,
+        "candidate": 6238224
+      },
+      "delta_bytes": -896,
+      "percent_change": -0.014360999628149074
+    },
+    "inverse_trig": {
+      "bytes": {
+        "baseline": 6920888,
+        "candidate": 6919976
+      },
+      "delta_bytes": -912,
+      "percent_change": -0.013177499765926193
+    },
+    "normal_form": {
+      "bytes": {
+        "baseline": 6925912,
+        "candidate": 6924968
+      },
+      "delta_bytes": -944,
+      "percent_change": -0.013629973929785155
+    },
+    "default": {
+      "bytes": {
+        "baseline": 6498336,
+        "candidate": 6497328
+      },
+      "delta_bytes": -1008,
+      "percent_change": -0.01551166329349929
+    },
+    "algebraic": {
+      "bytes": {
+        "baseline": 6914520,
+        "candidate": 6913656
+      },
+      "delta_bytes": -864,
+      "percent_change": -0.012495444369242659
+    },
+    "acos": {
+      "bytes": {
+        "baseline": 6244448,
+        "candidate": 6243528
+      },
+      "delta_bytes": -920,
+      "percent_change": -0.014733087696461311
+    }
+  },
+  "original_run": {
+    "phase": "nth-root-enclosure-preconditioned-cost-v2021",
+    "successful_processes": 936,
+    "complete_fixtures": 52,
+    "cases": [
+      {
+        "family": "atan",
+        "arguments": [
+          "small_integer",
+          "4096"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            18670010,
+            12715888,
+            13216853,
+            12666611,
+            12924983,
+            12616775,
+            12993019,
+            12923424,
+            12548539
+          ],
+          "candidate": [
+            19674801,
+            12505433,
+            12916484,
+            19465804,
+            12536990,
+            12638223,
+            12749666,
+            12776084,
+            14399423
+          ]
+        },
+        "median_ns": {
+          "baseline": 12923424,
+          "candidate": 12776084
+        },
+        "median_percent_change": -1.1401003325434478
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "small_reciprocal",
+          "4096"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            17996706,
+            11643061,
+            11731105,
+            17338261,
+            12138657,
+            11650971,
+            12088741,
+            11711887,
+            12046014
+          ],
+          "candidate": [
+            18498691,
+            11561487,
+            11689568,
+            17857745,
+            11541598,
+            11506151,
+            11601204,
+            11662150,
+            11930322
+          ]
+        },
+        "median_ns": {
+          "baseline": 12046014,
+          "candidate": 11662150
+        },
+        "median_percent_change": -3.1866474669546285
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "medium_integer",
+          "512"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            19231061,
+            19064453,
+            19035274,
+            27187516,
+            22473558,
+            19393689,
+            19206573,
+            18928442,
+            31657659
+          ],
+          "candidate": [
+            19446646,
+            20027566,
+            19636653,
+            28117592,
+            19946582,
+            19641203,
+            19464065,
+            32649221,
+            26713258
+          ]
+        },
+        "median_ns": {
+          "baseline": 19231061,
+          "candidate": 19946582
+        },
+        "median_percent_change": 3.7206527502564812
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "medium_reciprocal",
+          "512"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            18693948,
+            26032605,
+            19274409,
+            27804013,
+            19346803,
+            18628032,
+            18840758,
+            18690848,
+            18795201
+          ],
+          "candidate": [
+            28178087,
+            19504802,
+            19411998,
+            28094023,
+            19350953,
+            19386141,
+            19040044,
+            19057263,
+            18898793
+          ]
+        },
+        "median_ns": {
+          "baseline": 18840758,
+          "candidate": 19386141
+        },
+        "median_percent_change": 2.8946977610985636
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "wide_integer",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            50683924,
+            47494533,
+            48669703,
+            72832614,
+            47213692,
+            50432122,
+            47416838,
+            48474416,
+            47519221
+          ],
+          "candidate": [
+            47614595,
+            48573418,
+            49440349,
+            73924950,
+            53493971,
+            49591009,
+            48085663,
+            48031326,
+            48821942
+          ]
+        },
+        "median_ns": {
+          "baseline": 48474416,
+          "candidate": 48821942
+        },
+        "median_percent_change": 0.7169266361042981
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "wide_reciprocal",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            46917422,
+            47182744,
+            49649465,
+            47212702,
+            48181835,
+            47704248,
+            47233080,
+            48689850,
+            49895498
+          ],
+          "candidate": [
+            48053994,
+            47712568,
+            51435582,
+            65046019,
+            48782575,
+            49475087,
+            48501104,
+            48356724,
+            48299627
+          ]
+        },
+        "median_ns": {
+          "baseline": 47704248,
+          "candidate": 48501104
+        },
+        "median_percent_change": 1.670408891048858
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "dense_integer",
+          "4"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            18364280,
+            19901555,
+            18442595,
+            21995872,
+            18563017,
+            18483292,
+            19059533,
+            18611434,
+            18561787
+          ],
+          "candidate": [
+            18399008,
+            18339643,
+            18716467,
+            18509220,
+            18885605,
+            19148527,
+            19496533,
+            19456486,
+            29425552
+          ]
+        },
+        "median_ns": {
+          "baseline": 18563017,
+          "candidate": 18885605
+        },
+        "median_percent_change": 1.7377994105160832
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "dense_reciprocal",
+          "4"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            18896644,
+            18287306,
+            18787291,
+            18820560,
+            18395479,
+            27845351,
+            19172875,
+            18476033,
+            18191512
+          ],
+          "candidate": [
+            18288286,
+            18632303,
+            20424249,
+            19664912,
+            18900463,
+            19609065,
+            18332073,
+            18513060,
+            18358900
+          ]
+        },
+        "median_ns": {
+          "baseline": 18787291,
+          "candidate": 18632303
+        },
+        "median_percent_change": -0.8249619383656759
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "cached_integer_one",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            6522583,
+            6594567,
+            6639075,
+            6606986,
+            6498374,
+            7425051,
+            6581819,
+            6648134,
+            6516253
+          ],
+          "candidate": [
+            6429759,
+            6370493,
+            10309453,
+            6582469,
+            6690421,
+            11455134,
+            6554370,
+            6475066,
+            6388832
+          ]
+        },
+        "median_ns": {
+          "baseline": 6594567,
+          "candidate": 6554370
+        },
+        "median_percent_change": -0.6095472227365395
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "cached_reciprocal_one",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            3548867,
+            3484261,
+            3510619,
+            3501900,
+            3538247,
+            6857839,
+            3444963,
+            4330713,
+            3599003
+          ],
+          "candidate": [
+            3497790,
+            3560116,
+            3517889,
+            3545066,
+            3523579,
+            6226233,
+            3561896,
+            3624262,
+            3419705
+          ]
+        },
+        "median_ns": {
+          "baseline": 3538247,
+          "candidate": 3545066
+        },
+        "median_percent_change": 0.19272255441749042
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "cached_integer_many",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            6455807,
+            6471986,
+            6501814,
+            11062761,
+            6678972,
+            7568841,
+            11587195,
+            7413652,
+            6520823
+          ],
+          "candidate": [
+            6490565,
+            6733799,
+            6615797,
+            7127562,
+            7700512,
+            6609916,
+            6567709,
+            8292432,
+            6395452
+          ]
+        },
+        "median_ns": {
+          "baseline": 6678972,
+          "candidate": 6615797
+        },
+        "median_percent_change": -0.945879096363933
+      },
+      {
+        "family": "atan",
+        "arguments": [
+          "cached_reciprocal_many",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            3637941,
+            3489831,
+            3488161,
+            3510199,
+            3493001,
+            3492801,
+            3516558,
+            6695431,
+            3787380
+          ],
+          "candidate": [
+            3627942,
+            3486161,
+            3598213,
+            3520759,
+            3496920,
+            3516788,
+            3519719,
+            6008968,
+            3556916
+          ]
+        },
+        "median_ns": {
+          "baseline": 3510199,
+          "candidate": 3520759
+        },
+        "median_percent_change": 0.3008376448172978
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "small_positive",
+          "2000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            4105339,
+            4297556,
+            4240619,
+            4237519,
+            4007955,
+            4070611,
+            4099769,
+            4079230,
+            4077620
+          ],
+          "candidate": [
+            4131037,
+            4295346,
+            4442316,
+            4379599,
+            4232549,
+            4272727,
+            4331223,
+            4171714,
+            4667539
+          ]
+        },
+        "median_ns": {
+          "baseline": 4099769,
+          "candidate": 4295346
+        },
+        "median_percent_change": 4.770439505250179
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "small_negative",
+          "2000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            4356371,
+            4310044,
+            4492542,
+            4460485,
+            4484093,
+            4258068,
+            4467763,
+            4334323,
+            4312934
+          ],
+          "candidate": [
+            4385899,
+            4373500,
+            4630703,
+            4362011,
+            4758403,
+            4697048,
+            4473833,
+            4788311,
+            4479513
+          ]
+        },
+        "median_ns": {
+          "baseline": 4356371,
+          "candidate": 4479513
+        },
+        "median_percent_change": 2.826710580894054
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "mid_positive",
+          "300"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1919359,
+            1966315,
+            2322190,
+            1952556,
+            2196409,
+            2041350,
+            1910519,
+            1956186,
+            2136913
+          ],
+          "candidate": [
+            2203749,
+            2043300,
+            1932117,
+            1857952,
+            1867002,
+            1909329,
+            1889011,
+            2198759,
+            1901920
+          ]
+        },
+        "median_ns": {
+          "baseline": 1966315,
+          "candidate": 1909329
+        },
+        "median_percent_change": -2.8981114419612375
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "mid_negative",
+          "300"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            2054379,
+            1982024,
+            2255446,
+            2066478,
+            2302002,
+            2281914,
+            1956556,
+            2020742,
+            2024201
+          ],
+          "candidate": [
+            2021151,
+            1920058,
+            1984964,
+            1994033,
+            1935148,
+            1970185,
+            2742492,
+            2009312,
+            1986494
+          ]
+        },
+        "median_ns": {
+          "baseline": 2054379,
+          "candidate": 1986494
+        },
+        "median_percent_change": -3.304404883422196
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "wide_positive",
+          "4"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1057234061,
+            1052749649,
+            1048972378,
+            1050370051,
+            1129266711,
+            1049997577,
+            1062251527,
+            1062744063,
+            1051917346
+          ],
+          "candidate": [
+            1044102102,
+            1049069041,
+            1052301339,
+            1051268921,
+            1054269874,
+            1047754071,
+            1057517022,
+            1068266394,
+            1076393577
+          ]
+        },
+        "median_ns": {
+          "baseline": 1052749649,
+          "candidate": 1052301339
+        },
+        "median_percent_change": -0.04258467342409533
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "wide_negative",
+          "4"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1061100526,
+            1109361136,
+            1065091683,
+            1072003938,
+            1058142409,
+            1064064812,
+            1054626340,
+            1075735622,
+            1051143319
+          ],
+          "candidate": [
+            1058286319,
+            1047749291,
+            1058712780,
+            1050188304,
+            1130819924,
+            1052476697,
+            1046873232,
+            1296303025,
+            1053418812
+          ]
+        },
+        "median_ns": {
+          "baseline": 1064064812,
+          "candidate": 1053418812
+        },
+        "median_percent_change": -1.0005029656031894
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "cached_positive",
+          "20000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1139932,
+            669234,
+            687413,
+            689173,
+            691733,
+            690763,
+            686883,
+            687463,
+            1204917
+          ],
+          "candidate": [
+            683473,
+            671624,
+            672954,
+            707131,
+            672304,
+            705812,
+            670354,
+            677514,
+            705432
+          ]
+        },
+        "median_ns": {
+          "baseline": 689173,
+          "candidate": 677514
+        },
+        "median_percent_change": -1.6917377784678167
+      },
+      {
+        "family": "acos",
+        "arguments": [
+          "cached_negative",
+          "20000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            2223118,
+            1266413,
+            1291501,
+            1286941,
+            1328689,
+            1208567,
+            1224016,
+            1234765,
+            1248135
+          ],
+          "candidate": [
+            1307680,
+            1258044,
+            1526515,
+            1247794,
+            2195320,
+            1322669,
+            1242275,
+            1218336,
+            1263273
+          ]
+        },
+        "median_ns": {
+          "baseline": 1266413,
+          "candidate": 1263273
+        },
+        "median_percent_change": -0.24794439096882392
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "small_fine",
+          "200000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            7881570,
+            10817368,
+            7908248,
+            7992292,
+            7615838,
+            7610408,
+            7614918,
+            7892119,
+            11883705
+          ],
+          "candidate": [
+            7633146,
+            11857657,
+            8296451,
+            7874420,
+            7654765,
+            7874660,
+            8454270,
+            8380235,
+            7935736
+          ]
+        },
+        "median_ns": {
+          "baseline": 7892119,
+          "candidate": 7935736
+        },
+        "median_percent_change": 0.5526652601158144
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "small_coarse",
+          "200000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            7783286,
+            7681894,
+            7665474,
+            8359497,
+            7896968,
+            7605228,
+            9164401,
+            9670507,
+            7566681
+          ],
+          "candidate": [
+            7990622,
+            7530154,
+            7940845,
+            7647225,
+            7599369,
+            7471147,
+            7715441,
+            7703772,
+            7673524
+          ]
+        },
+        "median_ns": {
+          "baseline": 7783286,
+          "candidate": 7673524
+        },
+        "median_percent_change": -1.4102269915303167
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "small_identity",
+          "200000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            6298348,
+            6461877,
+            6268660,
+            6349034,
+            6199525,
+            6550391,
+            6360154,
+            6251231,
+            6268190
+          ],
+          "candidate": [
+            6251362,
+            6480805,
+            6227603,
+            6285479,
+            6370264,
+            7573190,
+            6567789,
+            6382402,
+            6317266
+          ]
+        },
+        "median_ns": {
+          "baseline": 6298348,
+          "candidate": 6370264
+        },
+        "median_percent_change": 1.141823220946181
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "wide_coarse",
+          "10000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            566182,
+            467058,
+            458059,
+            506356,
+            533473,
+            486377,
+            515635,
+            492497,
+            473018
+          ],
+          "candidate": [
+            578091,
+            484117,
+            474968,
+            498946,
+            498005,
+            602339,
+            473488,
+            477308,
+            572731
+          ]
+        },
+        "median_ns": {
+          "baseline": 492497,
+          "candidate": 498005
+        },
+        "median_percent_change": 1.1183824469996662
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "wide_gap",
+          "10000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            102593,
+            89164,
+            102573,
+            104372,
+            82534,
+            82565,
+            83525,
+            83515,
+            103163
+          ],
+          "candidate": [
+            100293,
+            83575,
+            81234,
+            86734,
+            101453,
+            86734,
+            80294,
+            81254,
+            81694
+          ]
+        },
+        "median_ns": {
+          "baseline": 89164,
+          "candidate": 83575
+        },
+        "median_percent_change": -6.268224844107484
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "wide_halfway",
+          "10000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            19049744,
+            18732376,
+            18815659,
+            18759293,
+            19505673,
+            19707808,
+            18692298,
+            19973070,
+            18824899
+          ],
+          "candidate": [
+            19140687,
+            19008706,
+            18960030,
+            19454346,
+            18714396,
+            19569958,
+            18968169,
+            19483744,
+            20295489
+          ]
+        },
+        "median_ns": {
+          "baseline": 18824899,
+          "candidate": 19140687
+        },
+        "median_percent_change": 1.67750169602503
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "wide_fine",
+          "10000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1778138,
+            1809696,
+            1745290,
+            1812476,
+            1808476,
+            1782937,
+            1764339,
+            1759839,
+            1780008
+          ],
+          "candidate": [
+            1940637,
+            2992415,
+            1783108,
+            2100496,
+            1752110,
+            1814445,
+            1788057,
+            1842034,
+            1741681
+          ]
+        },
+        "median_ns": {
+          "baseline": 1780008,
+          "candidate": 1814445
+        },
+        "median_percent_change": 1.934654226273147
+      },
+      {
+        "family": "integer",
+        "arguments": [
+          "wide_identity",
+          "10000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1031769,
+            1018210,
+            1026570,
+            1064877,
+            1017930,
+            1084656,
+            1206417,
+            1022120,
+            1071606
+          ],
+          "candidate": [
+            1037849,
+            1256434,
+            1104464,
+            1280082,
+            1161291,
+            1236355,
+            1218976,
+            1032529,
+            1031920
+          ]
+        },
+        "median_ns": {
+          "baseline": 1031769,
+          "candidate": 1161291
+        },
+        "median_percent_change": 12.553391311427276
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "atan",
+          "0",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            89164,
+            49867,
+            47357,
+            50057,
+            52336,
+            61355,
+            52727,
+            54756,
+            48647
+          ],
+          "candidate": [
+            83144,
+            49057,
+            47597,
+            48077,
+            48886,
+            54136,
+            53006,
+            79524,
+            49367
+          ]
+        },
+        "median_ns": {
+          "baseline": 52336,
+          "candidate": 49367
+        },
+        "median_percent_change": -5.672959339651484
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "atan",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            54866,
+            85164,
+            90094,
+            55076,
+            54646,
+            90134,
+            61706,
+            63845,
+            55386
+          ],
+          "candidate": [
+            57346,
+            58056,
+            56506,
+            52387,
+            55776,
+            54976,
+            58596,
+            91464,
+            60175
+          ]
+        },
+        "median_ns": {
+          "baseline": 61706,
+          "candidate": 57346
+        },
+        "median_percent_change": -7.0657634589829215
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "acos",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            113612,
+            109182,
+            165929,
+            194457,
+            185777,
+            116742,
+            116512,
+            134581,
+            122591
+          ],
+          "candidate": [
+            112383,
+            114243,
+            115092,
+            108053,
+            119612,
+            111382,
+            123361,
+            112693,
+            132451
+          ]
+        },
+        "median_ns": {
+          "baseline": 122591,
+          "candidate": 114243
+        },
+        "median_percent_change": -6.809635291334604
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "terms",
+          "0",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            76745,
+            80405,
+            81784,
+            80084,
+            92843,
+            75335,
+            87424,
+            84484,
+            82455
+          ],
+          "candidate": [
+            87864,
+            81354,
+            87484,
+            80895,
+            124711,
+            80225,
+            87314,
+            82095,
+            109863
+          ]
+        },
+        "median_ns": {
+          "baseline": 81784,
+          "candidate": 87314
+        },
+        "median_percent_change": 6.761713782646983
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "terms",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            128911,
+            94033,
+            83994,
+            85144,
+            82455,
+            91494,
+            84875,
+            84574,
+            154779
+          ],
+          "candidate": [
+            152900,
+            89114,
+            95074,
+            84284,
+            96313,
+            94134,
+            86514,
+            83064,
+            87924
+          ]
+        },
+        "median_ns": {
+          "baseline": 85144,
+          "candidate": 89114
+        },
+        "median_percent_change": 4.662689091421601
+      },
+      {
+        "family": "inverse_trig",
+        "arguments": [
+          "cost",
+          "pi",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            51716,
+            45497,
+            46497,
+            49717,
+            44106,
+            52267,
+            46167,
+            45927,
+            45387
+          ],
+          "candidate": [
+            51117,
+            47716,
+            50827,
+            45887,
+            77464,
+            78925,
+            51287,
+            49667,
+            47307
+          ]
+        },
+        "median_ns": {
+          "baseline": 46167,
+          "candidate": 50827
+        },
+        "median_percent_change": 10.093789936534758
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "pi",
+          "0",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            266802,
+            274741,
+            264252,
+            258102,
+            269012,
+            255023,
+            269112,
+            272501,
+            268011
+          ],
+          "candidate": [
+            249173,
+            262542,
+            269192,
+            262792,
+            298650,
+            254982,
+            257373,
+            261702,
+            265652
+          ]
+        },
+        "median_ns": {
+          "baseline": 268011,
+          "candidate": 262542
+        },
+        "median_percent_change": -2.0405878863181015
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "pi",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            334997,
+            339147,
+            331297,
+            343376,
+            345026,
+            329897,
+            332027,
+            333387,
+            347836
+          ],
+          "candidate": [
+            358415,
+            333197,
+            334717,
+            325927,
+            336077,
+            333547,
+            352376,
+            333697,
+            331617
+          ]
+        },
+        "median_ns": {
+          "baseline": 334997,
+          "candidate": 333697
+        },
+        "median_percent_change": -0.38806317668516055
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "inverse",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            598949,
+            637756,
+            611008,
+            615958,
+            606758,
+            597299,
+            600739,
+            883990,
+            883309
+          ],
+          "candidate": [
+            614328,
+            974674,
+            641506,
+            639006,
+            611038,
+            604499,
+            754078,
+            906988,
+            607828
+          ]
+        },
+        "median_ns": {
+          "baseline": 611008,
+          "candidate": 639006
+        },
+        "median_percent_change": 4.582264062009012
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "rational",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1698583,
+            2250746,
+            1601280,
+            1616329,
+            1630818,
+            1601360,
+            1601551,
+            1582971,
+            1570563
+          ],
+          "candidate": [
+            2495179,
+            2401416,
+            1619789,
+            1706863,
+            1628118,
+            1650637,
+            1652417,
+            1599990,
+            1603270
+          ]
+        },
+        "median_ns": {
+          "baseline": 1601551,
+          "candidate": 1650637
+        },
+        "median_percent_change": 3.064903958725007
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "atom",
+          "0",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            195456,
+            201347,
+            347916,
+            202726,
+            204456,
+            207195,
+            199537,
+            199497,
+            197197
+          ],
+          "candidate": [
+            198556,
+            329738,
+            201066,
+            195277,
+            202346,
+            198256,
+            200776,
+            324148,
+            224005
+          ]
+        },
+        "median_ns": {
+          "baseline": 201347,
+          "candidate": 201066
+        },
+        "median_percent_change": -0.1395600629758631
+      },
+      {
+        "family": "normal_form",
+        "arguments": [
+          "cost",
+          "atom",
+          "1024",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            255643,
+            215445,
+            211965,
+            215775,
+            211916,
+            221065,
+            214986,
+            211945,
+            218135
+          ],
+          "candidate": [
+            220515,
+            208046,
+            214205,
+            213565,
+            216775,
+            359915,
+            214935,
+            219445,
+            214386
+          ]
+        },
+        "median_ns": {
+          "baseline": 215445,
+          "candidate": 214935
+        },
+        "median_percent_change": -0.23671934832555364
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "cold_sin",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            2530187,
+            4014394,
+            2579243,
+            2540856,
+            2553084,
+            2864003,
+            2632179,
+            2565984,
+            2523857
+          ],
+          "candidate": [
+            2575973,
+            4072091,
+            2565494,
+            2555734,
+            2541655,
+            2607441,
+            2589973,
+            2525167,
+            2578053
+          ]
+        },
+        "median_ns": {
+          "baseline": 2565984,
+          "candidate": 2575973
+        },
+        "median_percent_change": 0.3892853579757327
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "cold_opaque",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            8206477,
+            13211564,
+            8316450,
+            8456870,
+            8410613,
+            8816305,
+            8294441,
+            9521467,
+            8395765
+          ],
+          "candidate": [
+            8245015,
+            13036556,
+            8457540,
+            8227966,
+            8179869,
+            8598360,
+            8228405,
+            14064035,
+            8312730
+          ]
+        },
+        "median_ns": {
+          "baseline": 8410613,
+          "candidate": 8312730
+        },
+        "median_percent_change": -1.1638033993479402
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "shared_hot",
+          "100000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            6682812,
+            9121345,
+            6747087,
+            6467317,
+            6620246,
+            7802445,
+            6466956,
+            6512953,
+            6552410
+          ],
+          "candidate": [
+            6541941,
+            6593957,
+            6703630,
+            7848572,
+            6558340,
+            7720771,
+            7081514,
+            6681382,
+            6450908
+          ]
+        },
+        "median_ns": {
+          "baseline": 6620246,
+          "candidate": 6681382
+        },
+        "median_percent_change": 0.923470215457245
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "structural_cancel",
+          "500"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            5907054,
+            6632325,
+            5694459,
+            6099721,
+            5925583,
+            6092932,
+            5994148,
+            5039834,
+            5856388
+          ],
+          "candidate": [
+            6532342,
+            6480425,
+            5810761,
+            4711277,
+            6502734,
+            6464257,
+            5475774,
+            5211823,
+            6014897
+          ]
+        },
+        "median_ns": {
+          "baseline": 5925583,
+          "candidate": 6014897
+        },
+        "median_percent_change": 1.507260973308444
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "domain_tree",
+          "32"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            10252397,
+            9012832,
+            15660216,
+            8838263,
+            8892570,
+            13833161,
+            10450604,
+            8754920,
+            9696975
+          ],
+          "candidate": [
+            9539976,
+            10075189,
+            8847264,
+            8754530,
+            9233677,
+            8924218,
+            9197639,
+            8785677,
+            13792614
+          ]
+        },
+        "median_ns": {
+          "baseline": 9696975,
+          "candidate": 9197639
+        },
+        "median_percent_change": -5.149399683922051
+      },
+      {
+        "family": "default",
+        "arguments": [
+          "nested_exp",
+          "1000"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            27479136,
+            27374062,
+            27602937,
+            27115620,
+            27163167,
+            27936304,
+            29052477,
+            26829410,
+            30155602
+          ],
+          "candidate": [
+            42844881,
+            27600597,
+            26605676,
+            26586227,
+            28121212,
+            26997578,
+            28377824,
+            26631734,
+            27061394
+          ]
+        },
+        "median_ns": {
+          "baseline": 27479136,
+          "candidate": 27061394
+        },
+        "median_percent_change": -1.520215191627572
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "2",
+          "2",
+          "0",
+          "false",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            120972,
+            119982,
+            119932,
+            121272,
+            116742,
+            116542,
+            120432,
+            118982,
+            117142
+          ],
+          "candidate": [
+            118792,
+            123171,
+            123862,
+            123442,
+            206626,
+            116852,
+            123661,
+            119842,
+            115092
+          ]
+        },
+        "median_ns": {
+          "baseline": 119932,
+          "candidate": 123171
+        },
+        "median_percent_change": 2.700697061668289
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "3",
+          "3",
+          "0",
+          "false",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            1179629,
+            1167460,
+            1169440,
+            2019942,
+            1214206,
+            1185708,
+            1185379,
+            1192149,
+            1199848
+          ],
+          "candidate": [
+            1204807,
+            1162790,
+            1174649,
+            1202388,
+            1149781,
+            1171729,
+            1273962,
+            1176759,
+            1176520
+          ]
+        },
+        "median_ns": {
+          "baseline": 1185708,
+          "candidate": 1176520
+        },
+        "median_percent_change": -0.774895674145748
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            11873486,
+            11625922,
+            12138768,
+            11985017,
+            11693078,
+            11696098,
+            11661820,
+            11704857,
+            12265909
+          ],
+          "candidate": [
+            11801501,
+            11977049,
+            11772733,
+            11824050,
+            11837398,
+            11978598,
+            11843717,
+            14035427,
+            13739707
+          ]
+        },
+        "median_ns": {
+          "baseline": 11704857,
+          "candidate": 11843717
+        },
+        "median_percent_change": 1.186345121516652
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "2",
+          "3",
+          "0",
+          "true",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            214275,
+            322738,
+            316329,
+            210695,
+            201586,
+            197417,
+            192887,
+            202556,
+            197027
+          ],
+          "candidate": [
+            212996,
+            201436,
+            203456,
+            212285,
+            214395,
+            197496,
+            343057,
+            193047,
+            209895
+          ]
+        },
+        "median_ns": {
+          "baseline": 202556,
+          "candidate": 209895
+        },
+        "median_percent_change": 3.6231955607338273
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "2",
+          "2",
+          "256",
+          "false",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            267232,
+            274531,
+            276911,
+            288290,
+            272192,
+            314608,
+            270521,
+            272811,
+            310789
+          ],
+          "candidate": [
+            276241,
+            274801,
+            269492,
+            266392,
+            275011,
+            285250,
+            291670,
+            267291,
+            270962
+          ]
+        },
+        "median_ns": {
+          "baseline": 274531,
+          "candidate": 274801
+        },
+        "median_percent_change": 0.09834954886698277
+      },
+      {
+        "family": "algebraic",
+        "arguments": [
+          "cost",
+          "2",
+          "2",
+          "1024",
+          "true",
+          "64"
+        ],
+        "elapsed_ns": {
+          "baseline": [
+            367335,
+            359275,
+            352166,
+            362346,
+            354666,
+            368255,
+            574720,
+            364265,
+            362026
+          ],
+          "candidate": [
+            361335,
+            356055,
+            356505,
+            360665,
+            381024,
+            375624,
+            389163,
+            365895,
+            364255
+          ]
+        },
+        "median_ns": {
+          "baseline": 362346,
+          "candidate": 364255
+        },
+        "median_percent_change": 0.526844507735702
+      }
+    ],
+    "failed_attempts": 0
+  },
+  "followups": [
+    {
+      "phase": "nth-root-enclosure-focused-cost-v2021",
+      "protocol": "nth-root-enclosure-cost-followup-protocol-v2021.json",
+      "protocol_sha256": "cce673bd0e43aa2ed6ba6a544e35559034b4c5fcb6b21c867aebc2eef8fcb00d",
+      "summary_sha256": "62a0496d0b67cebd6bf9462d6a0e8792ce7d508294cc9cc5cf305cc520f03cd8",
+      "successful_processes": 756,
+      "cases": {
+        "integer": [
+          {
+            "arguments": [
+              "small_fine",
+              "200000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                7658575,
+                7926757,
+                7994842,
+                7952764,
+                8130162,
+                8015700,
+                8338178,
+                7756328,
+                11027204,
+                7967354,
+                8083615,
+                8063567,
+                7907457,
+                7563411,
+                7850142,
+                7626477,
+                7934095,
+                7613978,
+                7715841,
+                7850392,
+                7924556,
+                8329368,
+                7915268,
+                8182869,
+                8189518,
+                8128833,
+                7702892
+              ],
+              "candidate": [
+                7624247,
+                7998721,
+                8001721,
+                7678744,
+                8310860,
+                8064157,
+                8166340,
+                8052668,
+                8023060,
+                8194488,
+                7589390,
+                8063486,
+                8039118,
+                7797696,
+                9288303,
+                7688023,
+                7608658,
+                8027200,
+                7799745,
+                7930446,
+                7974454,
+                7621607,
+                7712511,
+                7622237,
+                7817413,
+                7805735,
+                7919027
+              ]
+            },
+            "median_ns": {
+              "baseline": 7934095,
+              "candidate": 7930446
+            },
+            "median_percent_change": -0.04599138276010217
+          },
+          {
+            "arguments": [
+              "small_coarse",
+              "200000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                7939786,
+                7452239,
+                7693923,
+                7458709,
+                7531644,
+                8002931,
+                7951574,
+                8013250,
+                7762957,
+                7473468,
+                7481627,
+                10597263,
+                12095680,
+                7601538,
+                7807634,
+                8074876,
+                7809394,
+                7948165,
+                7529964,
+                7616248,
+                7544522,
+                7446940,
+                7631967,
+                7485776,
+                7749548,
+                7752368,
+                7632087
+              ],
+              "candidate": [
+                7634977,
+                7657575,
+                7476478,
+                7666204,
+                7684073,
+                7746449,
+                8043809,
+                7771827,
+                8263523,
+                7506285,
+                7679414,
+                7913387,
+                7639356,
+                7614728,
+                7404863,
+                7584560,
+                7757028,
+                7676103,
+                7698902,
+                7562401,
+                7637046,
+                7570951,
+                7436250,
+                11142715,
+                7630197,
+                8081066,
+                7950805
+              ]
+            },
+            "median_ns": {
+              "baseline": 7693923,
+              "candidate": 7666204
+            },
+            "median_percent_change": -0.36027134661992255
+          },
+          {
+            "arguments": [
+              "small_identity",
+              "200000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                6278329,
+                6535132,
+                6273660,
+                6244711,
+                6235823,
+                6344175,
+                6409590,
+                6326996,
+                6468736,
+                6238272,
+                8299930,
+                8307711,
+                6287878,
+                6237042,
+                6323726,
+                6270290,
+                7863231,
+                6221794,
+                6206614,
+                6338406,
+                6343475,
+                6254121,
+                6412930,
+                6218594,
+                6231632,
+                6547411,
+                6527162
+              ],
+              "candidate": [
+                6474996,
+                6254581,
+                6502764,
+                6411030,
+                6346945,
+                6211255,
+                6359134,
+                6248501,
+                6266201,
+                6440228,
+                8170030,
+                8365557,
+                6526023,
+                6224923,
+                6553610,
+                6760067,
+                6342775,
+                6296408,
+                6323396,
+                6368943,
+                6288909,
+                6309337,
+                6256311,
+                8624898,
+                6341955,
+                6502794,
+                6434989
+              ]
+            },
+            "median_ns": {
+              "baseline": 6323726,
+              "candidate": 6359134
+            },
+            "median_percent_change": 0.5599230580199066
+          },
+          {
+            "arguments": [
+              "wide_coarse",
+              "10000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                479877,
+                493866,
+                475488,
+                580610,
+                494236,
+                580410,
+                529624,
+                495786,
+                555322,
+                791226,
+                710231,
+                705361,
+                470427,
+                530254,
+                603738,
+                669044,
+                532283,
+                480617,
+                652035,
+                459768,
+                496416,
+                490927,
+                488266,
+                479857,
+                723841,
+                475518,
+                477447
+              ],
+              "candidate": [
+                613277,
+                469147,
+                592560,
+                468808,
+                473877,
+                486657,
+                479767,
+                476658,
+                471978,
+                516415,
+                459199,
+                729840,
+                481267,
+                497996,
+                475528,
+                706791,
+                470307,
+                516504,
+                793306,
+                486477,
+                514674,
+                608099,
+                533883,
+                479557,
+                521794,
+                602359,
+                528254
+              ]
+            },
+            "median_ns": {
+              "baseline": 496416,
+              "candidate": 497996
+            },
+            "median_percent_change": 0.3182814413717594
+          },
+          {
+            "arguments": [
+              "wide_gap",
+              "10000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                99863,
+                150439,
+                104373,
+                143330,
+                89204,
+                145870,
+                86864,
+                83974,
+                87004,
+                82534,
+                83035,
+                103213,
+                88094,
+                84464,
+                83494,
+                104362,
+                116432,
+                83014,
+                89184,
+                88024,
+                101953,
+                87544,
+                130381,
+                126312,
+                83445,
+                122512,
+                89764
+              ],
+              "candidate": [
+                99173,
+                145001,
+                81685,
+                136691,
+                86754,
+                101593,
+                100363,
+                102263,
+                81255,
+                147430,
+                81644,
+                80294,
+                93244,
+                86724,
+                82605,
+                99783,
+                100393,
+                81724,
+                108443,
+                102073,
+                86684,
+                102113,
+                80304,
+                100933,
+                99833,
+                80315,
+                81234
+              ]
+            },
+            "median_ns": {
+              "baseline": 89204,
+              "candidate": 99173
+            },
+            "median_percent_change": 11.175507824761223
+          },
+          {
+            "arguments": [
+              "wide_halfway",
+              "10000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                39570066,
+                19437597,
+                19003047,
+                19623764,
+                20941163,
+                36920948,
+                19623774,
+                18764593,
+                18828789,
+                18997767,
+                29621899,
+                18974639,
+                19198583,
+                19001036,
+                19211533,
+                21284031,
+                24005524,
+                18932251,
+                19169355,
+                20459407,
+                19527821,
+                19603416,
+                19038545,
+                18957740,
+                19630884,
+                18719146,
+                18677169
+              ],
+              "candidate": [
+                18939811,
+                19183944,
+                18765503,
+                40335774,
+                21321307,
+                19645423,
+                40675150,
+                18754743,
+                19115269,
+                19083921,
+                19076251,
+                18857847,
+                19153547,
+                18781132,
+                18965810,
+                20918366,
+                18802600,
+                18880505,
+                18892124,
+                20999179,
+                19081652,
+                20315407,
+                19042184,
+                19120188,
+                19568818,
+                18685998,
+                20205445
+              ]
+            },
+            "median_ns": {
+              "baseline": 19211533,
+              "candidate": 19083921
+            },
+            "median_percent_change": -0.6642468354815856
+          },
+          {
+            "arguments": [
+              "wide_fine",
+              "10000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                1824745,
+                1768308,
+                1811706,
+                1774998,
+                2128324,
+                1873811,
+                1818685,
+                2911820,
+                1988814,
+                1790337,
+                1792827,
+                1790947,
+                1810385,
+                1764779,
+                1939857,
+                2015092,
+                2058499,
+                1757459,
+                1818465,
+                1758679,
+                1799927,
+                1834175,
+                1804216,
+                1850173,
+                2166161,
+                1829194,
+                1781648
+              ],
+              "candidate": [
+                1990183,
+                1836634,
+                1785107,
+                1749360,
+                1786598,
+                1816295,
+                1757449,
+                2842745,
+                1917678,
+                2013322,
+                1759059,
+                1743730,
+                1957746,
+                1748730,
+                1781958,
+                3185222,
+                1987534,
+                1760320,
+                1784838,
+                1827384,
+                2177771,
+                1900749,
+                2104205,
+                1769979,
+                2237246,
+                1786377,
+                2164561
+              ]
+            },
+            "median_ns": {
+              "baseline": 1818465,
+              "candidate": 1827384
+            },
+            "median_percent_change": 0.490468609514072
+          },
+          {
+            "arguments": [
+              "wide_identity",
+              "10000"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                1299371,
+                1080476,
+                1059197,
+                1553863,
+                1190158,
+                1062517,
+                1004981,
+                1612850,
+                1242714,
+                1289112,
+                1212557,
+                1011380,
+                1260803,
+                1072687,
+                1013521,
+                1200487,
+                1033719,
+                1018640,
+                1073607,
+                1662826,
+                1066747,
+                1099675,
+                1229746,
+                1072297,
+                1265773,
+                1077146,
+                1104205
+              ],
+              "candidate": [
+                1039988,
+                1065077,
+                1163660,
+                1052988,
+                1241714,
+                1049328,
+                1013041,
+                1541624,
+                1038149,
+                1056448,
+                1126133,
+                1035629,
+                1666416,
+                1077406,
+                1022190,
+                1249125,
+                1050878,
+                1064437,
+                1040939,
+                1205507,
+                1127753,
+                1094095,
+                1062937,
+                1029289,
+                1013501,
+                1255834,
+                1047619
+              ]
+            },
+            "median_ns": {
+              "baseline": 1099675,
+              "candidate": 1062937
+            },
+            "median_percent_change": -3.340805237911204
+          }
+        ],
+        "inverse_trig": [
+          {
+            "arguments": [
+              "cost",
+              "atan",
+              "0",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                50046,
+                70505,
+                70405,
+                71285,
+                52996,
+                52977,
+                51386,
+                50146,
+                52956,
+                54726,
+                52736,
+                54766,
+                49226,
+                69605,
+                52016,
+                54467,
+                52996,
+                53746,
+                59526,
+                61346,
+                52777,
+                56136,
+                51626,
+                52267,
+                51306,
+                71025,
+                59236
+              ],
+              "candidate": [
+                48426,
+                49236,
+                69815,
+                70366,
+                49376,
+                66685,
+                81094,
+                48766,
+                49306,
+                50227,
+                48817,
+                53656,
+                54056,
+                52137,
+                71225,
+                77944,
+                54276,
+                54117,
+                52627,
+                51466,
+                55906,
+                77785,
+                75334,
+                72135,
+                51077,
+                67045,
+                78545
+              ]
+            },
+            "median_ns": {
+              "baseline": 52996,
+              "candidate": 54117
+            },
+            "median_percent_change": 2.115253981432552
+          },
+          {
+            "arguments": [
+              "cost",
+              "atan",
+              "1024",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                57546,
+                52617,
+                53297,
+                58986,
+                53786,
+                59536,
+                58666,
+                93883,
+                83734,
+                60776,
+                59646,
+                108453,
+                68225,
+                98653,
+                90333,
+                67515,
+                59706,
+                62936,
+                62146,
+                59955,
+                57226,
+                60546,
+                58976,
+                57606,
+                59716,
+                76734,
+                56486
+              ],
+              "candidate": [
+                59026,
+                52996,
+                57107,
+                52567,
+                57786,
+                88414,
+                59676,
+                86344,
+                59786,
+                57816,
+                55846,
+                76665,
+                91694,
+                96664,
+                72435,
+                84084,
+                66016,
+                60876,
+                61626,
+                58126,
+                55196,
+                59336,
+                56136,
+                57586,
+                86045,
+                57076,
+                54266
+              ]
+            },
+            "median_ns": {
+              "baseline": 59716,
+              "candidate": 59336
+            },
+            "median_percent_change": -0.6363453680755526
+          },
+          {
+            "arguments": [
+              "cost",
+              "acos",
+              "1024",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                112612,
+                109782,
+                115092,
+                110772,
+                116732,
+                200057,
+                119732,
+                128182,
+                209326,
+                115282,
+                122262,
+                192207,
+                113342,
+                134861,
+                133641,
+                118742,
+                124561,
+                124951,
+                109793,
+                113012,
+                108602,
+                108992,
+                112512,
+                110452,
+                108092,
+                108083,
+                114672
+              ],
+              "candidate": [
+                114452,
+                113622,
+                123011,
+                115652,
+                121551,
+                187948,
+                123042,
+                119632,
+                115842,
+                122462,
+                114183,
+                124172,
+                121032,
+                115642,
+                118392,
+                118812,
+                109733,
+                119742,
+                111063,
+                112732,
+                109873,
+                117042,
+                113082,
+                112472,
+                109733,
+                112252,
+                110952
+              ]
+            },
+            "median_ns": {
+              "baseline": 115092,
+              "candidate": 115652
+            },
+            "median_percent_change": 0.4865672679247979
+          },
+          {
+            "arguments": [
+              "cost",
+              "terms",
+              "0",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                84544,
+                77214,
+                80234,
+                81075,
+                91744,
+                86154,
+                128282,
+                124281,
+                82994,
+                82215,
+                81594,
+                77545,
+                77015,
+                80354,
+                84805,
+                126711,
+                81115,
+                79305,
+                75105,
+                76695,
+                78865,
+                77944,
+                77145,
+                83334,
+                80354,
+                159659,
+                83415
+              ],
+              "candidate": [
+                82154,
+                84724,
+                85524,
+                79845,
+                82235,
+                82364,
+                85344,
+                81575,
+                83374,
+                89204,
+                82384,
+                78235,
+                82734,
+                85554,
+                81634,
+                87344,
+                80674,
+                80804,
+                79245,
+                77075,
+                79765,
+                80574,
+                79645,
+                113592,
+                79754,
+                79544,
+                83064
+              ]
+            },
+            "median_ns": {
+              "baseline": 81115,
+              "candidate": 82154
+            },
+            "median_percent_change": 1.280897491216182
+          },
+          {
+            "arguments": [
+              "cost",
+              "terms",
+              "1024",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                87504,
+                101143,
+                149830,
+                95503,
+                86974,
+                92573,
+                152789,
+                89743,
+                88814,
+                88454,
+                88444,
+                82335,
+                80494,
+                87464,
+                86194,
+                87544,
+                82825,
+                87474,
+                91414,
+                95754,
+                96693,
+                113812,
+                89374,
+                90513,
+                85174,
+                98213,
+                101003
+              ],
+              "candidate": [
+                97924,
+                106603,
+                106913,
+                102243,
+                86344,
+                83264,
+                89774,
+                86574,
+                86764,
+                86134,
+                87864,
+                87674,
+                90143,
+                85264,
+                145300,
+                88564,
+                89063,
+                85054,
+                89764,
+                86224,
+                119382,
+                118482,
+                89844,
+                92494,
+                85654,
+                124271,
+                104313
+              ]
+            },
+            "median_ns": {
+              "baseline": 89374,
+              "candidate": 89764
+            },
+            "median_percent_change": 0.4363685188085942
+          },
+          {
+            "arguments": [
+              "cost",
+              "pi",
+              "1024",
+              "64"
+            ],
+            "elapsed_ns": {
+              "baseline": [
+                44437,
+                56807,
+                57846,
+                59716,
+                52317,
+                63666,
+                57256,
+                54096,
+                59126,
+                54486,
+                52526,
+                55636,
+                50956,
+                59826,
+                53006,
+                57146,
+                54156,
+                56756,
+                55446,
+                57226,
+                54246,
+                53746,
+                75954,
+                53106,
+                55407,
+                54016,
+                53197
+              ],
+              "candidate": [
+                52026,
+                47177,
+                55776,
+                51967,
+                49487,
+                51946,
+                49977,
+                51417,
+                58266,
+                50136,
+                54256,
+                62436,
+                64495,
+                53126,
+                53216,
+                57726,
+                50587,
+                51306,
+                55787,
+                49596,
+                50657,
+                50196,
+                94904,
+                48647,
+                55177,
+                84564,
+                49957
+              ]
+            },
+            "median_ns": {
+              "baseline": 55407,
+              "candidate": 51967
+            },
+            "median_percent_change": -6.208601801216451
+          }
+        ]
+      },
+      "failed_attempts": 0
+    }
+  ],
+  "followup_strategy": "nth-root-enclosure-cost-followup-strategy-v2021.json",
+  "followup_strategy_sha256": "5e86614885d38e96933498c28443dad2535443d954c6472b60d1161b50fd6511",
+  "initial_and_followup_percent": [
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_identity",
+        "10000"
+      ],
+      "initial_percent": 12.553391311427276,
+      "followup_percent": -3.340805237911204
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "initial_percent": 6.761713782646983,
+      "followup_percent": 1.280897491216182
+    },
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "initial_percent": 10.093789936534758,
+      "followup_percent": -6.208601801216451
+    }
+  ],
+  "persistent_above_five_percent_increases": [
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_gap",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          99863,
+          150439,
+          104373,
+          143330,
+          89204,
+          145870,
+          86864,
+          83974,
+          87004,
+          82534,
+          83035,
+          103213,
+          88094,
+          84464,
+          83494,
+          104362,
+          116432,
+          83014,
+          89184,
+          88024,
+          101953,
+          87544,
+          130381,
+          126312,
+          83445,
+          122512,
+          89764
+        ],
+        "candidate": [
+          99173,
+          145001,
+          81685,
+          136691,
+          86754,
+          101593,
+          100363,
+          102263,
+          81255,
+          147430,
+          81644,
+          80294,
+          93244,
+          86724,
+          82605,
+          99783,
+          100393,
+          81724,
+          108443,
+          102073,
+          86684,
+          102113,
+          80304,
+          100933,
+          99833,
+          80315,
+          81234
+        ]
+      },
+      "median_ns": {
+        "baseline": 89204,
+        "candidate": 99173
+      },
+      "median_percent_change": 11.175507824761223
+    }
+  ],
+  "successful_cost_processes_including_standalone": 2160,
+  "separate_cpu_preparation_processes": 1692,
+  "original_process_caps_preserved": true,
+  "interpretation": [
+    "Retain every original observation and every predeclared family-wide repeat. The repeat covers all unchanged controls in affected families; timing alone establishes neither causation nor a uniform speedup.",
+    "Every completed process preserves all frozen non-timing observations, including certification counts, checksums and output fields. CPU preludes are separate processes and all original caps remain in force.",
+    "Probe executable sizes are recorded separately for review; these local measurements do not establish whole-board size or performance parity.",
+    "The local baseline is retained v1836. Older original-cap failures at v1638/v1710, the earlier integer-control tradeoff and the fixed pre-Verus acceptance baseline remain unchanged.",
+    "The combined proposal still awaits capped, numerical and public replays and receipt/fact audits. General graph/atomic proofs, all thirteen whole-crate groups, main/native/full-board admission and the full properties plan remain open."
+  ]
+}

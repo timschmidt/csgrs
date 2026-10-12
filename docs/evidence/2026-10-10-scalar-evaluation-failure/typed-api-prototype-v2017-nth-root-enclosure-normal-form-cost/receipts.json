@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "pi_small-0",
+    "command": {
+      "name": "pi_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010021762922406197,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "310449",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-1",
+    "command": {
+      "name": "pi_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009554335381835699,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "247653",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-2",
+    "command": {
+      "name": "pi_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009335449896752834,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "257682",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-3",
+    "command": {
+      "name": "pi_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009399255272001028,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "263332",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-4",
+    "command": {
+      "name": "pi_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009462290909141302,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "251013",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-5",
+    "command": {
+      "name": "pi_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009383346885442734,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "245793",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-6",
+    "command": {
+      "name": "pi_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009358738083392382,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "258712",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-7",
+    "command": {
+      "name": "pi_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009499609004706144,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "247273",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_small-8",
+    "command": {
+      "name": "pi_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009528606198728085,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "252093",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01751901814714074,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "310808",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017560306005179882,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "315738",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017519009299576283,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "328798",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01761852204799652,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "319658",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01762418169528246,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "311179",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017450413666665554,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "402303",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017698935698717833,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "315869",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01767261838540435,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "327377",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01764220977202058,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "553872",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-0",
+    "command": {
+      "name": "inverse_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009673546999692917,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "575311",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-1",
+    "command": {
+      "name": "inverse_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009609781205654144,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "612858",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-2",
+    "command": {
+      "name": "inverse_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009583223145455122,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "585439",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-3",
+    "command": {
+      "name": "inverse_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009552765171974897,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "586860",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-4",
+    "command": {
+      "name": "inverse_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00954783521592617,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "608409",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-5",
+    "command": {
+      "name": "inverse_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017602263018488884,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "728820",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-6",
+    "command": {
+      "name": "inverse_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009551315102726221,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "586610",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-7",
+    "command": {
+      "name": "inverse_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009463811293244362,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "584010",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "inverse_wide-8",
+    "command": {
+      "name": "inverse_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "inverse",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009541436098515987,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "590229",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-0",
+    "command": {
+      "name": "rational_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03362995479255915,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1591521",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-1",
+    "command": {
+      "name": "rational_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017597972881048918,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1581241",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-2",
+    "command": {
+      "name": "rational_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017645210027694702,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1595410",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-3",
+    "command": {
+      "name": "rational_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03380815079435706,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1572912",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-4",
+    "command": {
+      "name": "rational_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03440687991678715,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1586891",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-5",
+    "command": {
+      "name": "rational_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01774459332227707,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1612240",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-6",
+    "command": {
+      "name": "rational_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017755103297531605,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1634958",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-7",
+    "command": {
+      "name": "rational_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033584677148610353,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1836934",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "rational_wide-8",
+    "command": {
+      "name": "rational_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "rational",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03376816399395466,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1615879",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-0",
+    "command": {
+      "name": "atom_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009615560993552208,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "196436",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-1",
+    "command": {
+      "name": "atom_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009688366204500198,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "240283",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-2",
+    "command": {
+      "name": "atom_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00960080185905099,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "194367",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-3",
+    "command": {
+      "name": "atom_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009678647387772799,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "204096",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-4",
+    "command": {
+      "name": "atom_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009643689263612032,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "241913",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-5",
+    "command": {
+      "name": "atom_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009536755736917257,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "239054",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-6",
+    "command": {
+      "name": "atom_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009652018081396818,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "244903",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-7",
+    "command": {
+      "name": "atom_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009537695907056332,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "191116",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_small-8",
+    "command": {
+      "name": "atom_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00954975513741374,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "197947",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-0",
+    "command": {
+      "name": "atom_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017584565095603466,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "247693",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-1",
+    "command": {
+      "name": "atom_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0176086132414639,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "257343",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-2",
+    "command": {
+      "name": "atom_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01767908688634634,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "204616",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-3",
+    "command": {
+      "name": "atom_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01768111763522029,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "222515",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-4",
+    "command": {
+      "name": "atom_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017766750883311033,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "208425",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-5",
+    "command": {
+      "name": "atom_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017683837097138166,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "202926",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-6",
+    "command": {
+      "name": "atom_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017756103072315454,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "215056",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-7",
+    "command": {
+      "name": "atom_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017842276021838188,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "209206",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atom_wide-8",
+    "command": {
+      "name": "atom_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2017-nth-root-enclosure-normal-form-cost/probe",
+        "cost",
+        "atom",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017896523233503103,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "218715",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]
