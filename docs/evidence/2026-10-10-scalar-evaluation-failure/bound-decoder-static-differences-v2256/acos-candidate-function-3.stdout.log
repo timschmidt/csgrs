@@ -1,0 +1,161 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000a6110 <<hyperreal::computable::node::AtomicFacts>::publish_bound>:
+   a6110:	55                   	push   %rbp
+   a6111:	41 57                	push   %r15
+   a6113:	41 56                	push   %r14
+   a6115:	41 55                	push   %r13
+   a6117:	41 54                	push   %r12
+   a6119:	53                   	push   %rbx
+   a611a:	48 8b 07             	mov    (%rdi),%rax
+   a611d:	44 8b 3e             	mov    (%rsi),%r15d
+   a6120:	44 89 f9             	mov    %r15d,%ecx
+   a6123:	83 e9 02             	sub    $0x2,%ecx
+   a6126:	41 b8 02 00 00 00    	mov    $0x2,%r8d
+   a612c:	44 0f 43 c1          	cmovae %ecx,%r8d
+   a6130:	44 8b 4e 04          	mov    0x4(%rsi),%r9d
+   a6134:	0f b6 4e 09          	movzbl 0x9(%rsi),%ecx
+   a6138:	88 4c 24 fa          	mov    %cl,-0x6(%rsp)
+   a613c:	8b 5e 08             	mov    0x8(%rsi),%ebx
+   a613f:	31 c9                	xor    %ecx,%ecx
+   a6141:	41 f6 c7 01          	test   $0x1,%r15b
+   a6145:	89 da                	mov    %ebx,%edx
+   a6147:	0f 44 d1             	cmove  %ecx,%edx
+   a614a:	89 54 24 fc          	mov    %edx,-0x4(%rsp)
+   a614e:	44 89 f9             	mov    %r15d,%ecx
+   a6151:	80 f1 01             	xor    $0x1,%cl
+   a6154:	88 4c 24 fb          	mov    %cl,-0x5(%rsp)
+   a6158:	0f 1f 84 00 00 00 00 	nopl   0x0(%rax,%rax,1)
+   a615f:	00 
+   a6160:	89 c1                	mov    %eax,%ecx
+   a6162:	83 e1 03             	and    $0x3,%ecx
+   a6165:	48 83 f9 02          	cmp    $0x2,%rcx
+   a6169:	73 35                	jae    a61a0 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x90>
+   a616b:	41 83 ff ff          	cmp    $0xffffffff,%r15d
+   a616f:	0f 84 9c 00 00 00    	je     a6211 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x101>
+   a6175:	44 89 fa             	mov    %r15d,%edx
+   a6178:	44 89 c9             	mov    %r9d,%ecx
+   a617b:	89 de                	mov    %ebx,%esi
+   a617d:	44 0f b6 54 24 fa    	movzbl -0x6(%rsp),%r10d
+   a6183:	45 89 d4             	mov    %r10d,%r12d
+   a6186:	83 fa 02             	cmp    $0x2,%edx
+   a6189:	0f 83 ee 00 00 00    	jae    a627d <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x16d>
+   a618f:	e9 2c 01 00 00       	jmp    a62c0 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1b0>
+   a6194:	66 66 66 2e 0f 1f 84 	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   a619b:	00 00 00 00 00 
+   a61a0:	83 f9 02             	cmp    $0x2,%ecx
+   a61a3:	75 1b                	jne    a61c0 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0xb0>
+   a61a5:	ba 03 00 00 00       	mov    $0x3,%edx
+   a61aa:	41 b2 01             	mov    $0x1,%r10b
+   a61ad:	31 c9                	xor    %ecx,%ecx
+   a61af:	45 85 c0             	test   %r8d,%r8d
+   a61b2:	75 3f                	jne    a61f3 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0xe3>
+   a61b4:	e9 b7 00 00 00       	jmp    a6270 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x160>
+   a61b9:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+   a61c0:	8d 0c 00             	lea    (%rax,%rax,1),%ecx
+   a61c3:	80 e1 18             	and    $0x18,%cl
+   a61c6:	41 be ff 02 00 01    	mov    $0x10002ff,%r14d
+   a61cc:	41 d3 ee             	shr    %cl,%r14d
+   a61cf:	89 c2                	mov    %eax,%edx
+   a61d1:	83 e2 10             	and    $0x10,%edx
+   a61d4:	48 89 c5             	mov    %rax,%rbp
+   a61d7:	48 c1 ed 20          	shr    $0x20,%rbp
+   a61db:	c1 ea 04             	shr    $0x4,%edx
+   a61de:	41 89 c5             	mov    %eax,%r13d
+   a61e1:	41 c0 ed 05          	shr    $0x5,%r13b
+   a61e5:	41 80 e5 01          	and    $0x1,%r13b
+   a61e9:	b1 01                	mov    $0x1,%cl
+   a61eb:	45 31 d2             	xor    %r10d,%r10d
+   a61ee:	45 85 c0             	test   %r8d,%r8d
+   a61f1:	74 7d                	je     a6270 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x160>
+   a61f3:	41 83 f8 01          	cmp    $0x1,%r8d
+   a61f7:	75 20                	jne    a6219 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x109>
+   a61f9:	41 bb 02 00 00 00    	mov    $0x2,%r11d
+   a61ff:	89 e9                	mov    %ebp,%ecx
+   a6201:	44 89 ee             	mov    %r13d,%esi
+   a6204:	45 89 f4             	mov    %r14d,%r12d
+   a6207:	45 84 d2             	test   %r10b,%r10b
+   a620a:	74 6c                	je     a6278 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x168>
+   a620c:	e9 de 00 00 00       	jmp    a62ef <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1df>
+   a6211:	45 31 db             	xor    %r11d,%r11d
+   a6214:	e9 d6 00 00 00       	jmp    a62ef <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1df>
+   a6219:	84 c9                	test   %cl,%cl
+   a621b:	74 53                	je     a6270 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x160>
+   a621d:	45 89 fa             	mov    %r15d,%r10d
+   a6220:	44 89 c9             	mov    %r9d,%ecx
+   a6223:	8b 74 24 fc          	mov    -0x4(%rsp),%esi
+   a6227:	f6 c2 01             	test   $0x1,%dl
+   a622a:	74 79                	je     a62a5 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x195>
+   a622c:	0f b6 4c 24 fb       	movzbl -0x5(%rsp),%ecx
+   a6231:	44 08 e9             	or     %r13b,%cl
+   a6234:	44 89 ee             	mov    %r13d,%esi
+   a6237:	40 80 e6 01          	and    $0x1,%sil
+   a623b:	41 89 ca             	mov    %ecx,%r10d
+   a623e:	41 08 da             	or     %bl,%r10b
+   a6241:	f6 c1 01             	test   $0x1,%cl
+   a6244:	41 0f 44 d7          	cmove  %r15d,%edx
+   a6248:	44 89 c9             	mov    %r9d,%ecx
+   a624b:	0f 45 cd             	cmovne %ebp,%ecx
+   a624e:	40 0f b6 f6          	movzbl %sil,%esi
+   a6252:	41 bb 01 00 00 00    	mov    $0x1,%r11d
+   a6258:	41 0f 44 f3          	cmove  %r11d,%esi
+   a625c:	41 f6 c2 01          	test   $0x1,%r10b
+   a6260:	74 32                	je     a6294 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x184>
+   a6262:	41 89 d2             	mov    %edx,%r10d
+   a6265:	eb 3e                	jmp    a62a5 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x195>
+   a6267:	66 0f 1f 84 00 00 00 	nopw   0x0(%rax,%rax,1)
+   a626e:	00 00 
+   a6270:	89 e9                	mov    %ebp,%ecx
+   a6272:	44 89 ee             	mov    %r13d,%esi
+   a6275:	45 89 f4             	mov    %r14d,%r12d
+   a6278:	83 fa 02             	cmp    $0x2,%edx
+   a627b:	72 43                	jb     a62c0 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1b0>
+   a627d:	74 0d                	je     a628c <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x17c>
+   a627f:	83 fa 03             	cmp    $0x3,%edx
+   a6282:	75 3c                	jne    a62c0 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1b0>
+   a6284:	41 bb 02 00 00 00    	mov    $0x2,%r11d
+   a628a:	eb 63                	jmp    a62ef <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1df>
+   a628c:	41 bb 01 00 00 00    	mov    $0x1,%r11d
+   a6292:	eb 5b                	jmp    a62ef <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1df>
+   a6294:	41 39 e9             	cmp    %ebp,%r9d
+   a6297:	89 e9                	mov    %ebp,%ecx
+   a6299:	41 0f 4c c9          	cmovl  %r9d,%ecx
+   a629d:	41 ba 01 00 00 00    	mov    $0x1,%r10d
+   a62a3:	31 f6                	xor    %esi,%esi
+   a62a5:	41 80 fe ff          	cmp    $0xff,%r14b
+   a62a9:	0f b6 54 24 fa       	movzbl -0x6(%rsp),%edx
+   a62ae:	45 0f b6 e6          	movzbl %r14b,%r12d
+   a62b2:	44 0f 44 e2          	cmove  %edx,%r12d
+   a62b6:	44 89 d2             	mov    %r10d,%edx
+   a62b9:	83 fa 02             	cmp    $0x2,%edx
+   a62bc:	73 bf                	jae    a627d <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x16d>
+   a62be:	66 90                	xchg   %ax,%ax
+   a62c0:	4d 0f be d4          	movsbq %r12b,%r10
+   a62c4:	48 c1 e1 20          	shl    $0x20,%rcx
+   a62c8:	48 83 c9 10          	or     $0x10,%rcx
+   a62cc:	f6 c2 01             	test   $0x1,%dl
+   a62cf:	ba 00 00 00 00       	mov    $0x0,%edx
+   a62d4:	48 0f 44 ca          	cmove  %rdx,%rcx
+   a62d8:	40 c0 e6 05          	shl    $0x5,%sil
+   a62dc:	44 0f b6 de          	movzbl %sil,%r11d
+   a62e0:	49 09 cb             	or     %rcx,%r11
+   a62e3:	48 8d 0d a6 e6 f8 ff 	lea    -0x7195a(%rip),%rcx        # 34990 <anon.9023bb4654a08944d5043612f590d0ff.54.llvm.4660732205840653425+0x48>
+   a62ea:	4e 0b 5c d1 08       	or     0x8(%rcx,%r10,8),%r11
+   a62ef:	89 c1                	mov    %eax,%ecx
+   a62f1:	81 e1 c0 0f ff ff    	and    $0xffff0fc0,%ecx
+   a62f7:	4c 09 d9             	or     %r11,%rcx
+   a62fa:	48 39 c1             	cmp    %rax,%rcx
+   a62fd:	74 0b                	je     a630a <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x1fa>
+   a62ff:	f0 48 0f b1 0f       	lock cmpxchg %rcx,(%rdi)
+   a6304:	0f 85 56 fe ff ff    	jne    a6160 <<hyperreal::computable::node::AtomicFacts>::publish_bound+0x50>
+   a630a:	5b                   	pop    %rbx
+   a630b:	41 5c                	pop    %r12
+   a630d:	41 5d                	pop    %r13
+   a630f:	41 5e                	pop    %r14
+   a6311:	41 5f                	pop    %r15
+   a6313:	5d                   	pop    %rbp
+   a6314:	c3                   	ret

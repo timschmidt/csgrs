@@ -1,0 +1,10 @@
+{
+  "status": "Prepared restoration only; restore/validate modes remain separate",
+  "predecessor": "restore_retained_scalar_v2159.py",
+  "predecessor_sha256": "6d617929c1ed8693862a03c1e4adb865d6150cc8f4957b336112426d40d1776d",
+  "helper": "restore_retained_decoder_v2248.py",
+  "helper_sha256": "9b804f644c5786f3f20064510a4836128e2248a30b4bfb9e66f6455f7d361ab4",
+  "patch": "decoder-restoration-preparation-v2248.patch",
+  "patch_sha256": "a922eeb78a752952442e58c72c1671b167a3b3d25a3a9890858aac15620f881e",
+  "scope": "Restore five failed-candidate files from the frozen v2168 baseline, verify all 24746 source and 1167 main files, and run the same six restoration commands. Existing proofs, tests and failed costs remain immutable; no runtime or property completion is inferred."
+}

@@ -1,0 +1,82 @@
+{
+  "status": "Exact v1836 source restored; six fresh restoration commands pass",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "source_record": "typed-api-prototype-v2249-retained-restoration-scalar-tests/source-hashes.json.gz",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "restored_files": 5,
+  "inputs_sha256": {
+    "decoder-retained-restoration-v2248/protocol.json": "0f7c5c0b1c2cb4ee80b76752a0c97bb2f19506311d9342b29922a041c496e38b",
+    "decoder-retained-restoration-v2248/restoration.json": "1586c9992ce2caa10d8f040dfb45781352ef0f88e113c06798736c453ef0f242",
+    "decoder-retained-restoration-validation-v2254.json": "1a729796770cf9fb529a9539ba5523307b76a501033a93e04a31819a73b21bf4",
+    "domain-predicate-proof-validation-v1763.json": "c8412bdafba1ac06a4b0dbb310119cb2d2b62802254cc1f6f885c5524b342433",
+    "bound-merge-cost-rejection-v1857.json": "7ceea1fbcbb4390ab789f88a6a498ddde7fb5eec96a4a32f23823e6ad890e6b5",
+    "cache-state-merge-cost-rejection-v1943.json": "9b3fd75c5e2810813e06faefbe6bff56d0d108707d7cc675deec91969e805718",
+    "nth-root-enclosure-cost-rejection-v2021.json": "ee52e8b61fbad24c89068ef74b5da8828c51e9e4d94eb0bc9da963547fa3b3e4",
+    "integer-coarse-zero-cost-rejection-v2100.json": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+    "bound-decoder-cost-rejection-v2247.json": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813"
+  },
+  "fresh_commands": 6,
+  "scalar_counts": {
+    "top_level_batches": 1,
+    "top_level_passed": 1074,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1074,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1074,
+        "status": "ok",
+        "passed": 1074,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "included_rustfmt_files": 108,
+  "verified_units": 645,
+  "errors": 0,
+  "listed_production_contracts": 97,
+  "listed_model_theorems": 130,
+  "open_obligation_groups": 13,
+  "fresh_acceptance_tests": 10,
+  "fresh_rejected_mutations": 0,
+  "reused_rejected_mutations": 226,
+  "reused_guard_baselines": 4,
+  "reused_rejection_phase": "typed-api-prototype-v1763-domain-predicate-rejections",
+  "reused_rejection_tooling_sha256": "0ad2cb462c5b226a57582bee1382ee99e257f0d030554f5ecbbf3114ec9c13f6",
+  "proof_dependency_identity_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "new_runtime_admission": false,
+  "main_runtime_admitted": false,
+  "limits": [
+    "Restore only these five isolated files from hash-verified immutable archives. Main source and the 49 original worktree entries remain untouched. The rejected proposals and their tests/proofs remain archived, with every earlier failure unchanged.",
+    "The restored runtime and proof sources match v1836 exactly. Prior broad/cost/replay/mutation evidence is evidence for those identical retained bytes, not new executions. No failed proposal gains admission through restoration.",
+    "Run six fresh restoration checks, including full scalar units, release build, both formatting checks, conditional Verus and acceptance tests. The retained target has 645 conditional units, 97 contracts, 130 model theorems and thirteen open groups. The unretained decoder's additional proofs remain archived and do not describe restored production code.",
+    "After restoration verification, inspect the archived executable differences before selecting a proof-compatible next implementation experiment. Preserve the failed original-cap gate; do not retry unchanged timings until one passes. Producer validity, independent existence, atomic/caller ordering, the fixed pre-Verus baseline and main/native/full-board admission remain open, as does the full properties plan."
+  ],
+  "next_priority": "Inspect the archived decoder executable differences before selecting a proof-compatible implementation experiment from the exact retained v1836 source. Keep the proved but unretained decoder and every failed original-cap comparison archived. Preserve all u64 inputs, signs, signed exponents, absent magnitudes and unrelated bits, without assumed method specifications. Producer validity, independent existence, atomic/caller ordering, resource work and native/full-board admission remain open; the full 39-property/14-target/crate-future-work plan remains in scope."
+}

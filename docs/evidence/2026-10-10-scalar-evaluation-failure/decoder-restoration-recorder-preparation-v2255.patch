@@ -1,0 +1,74 @@
+--- record_scalar_retained_restoration.py
++++ record_decoder_retained_restoration.py
+@@ -8,0 +9,2 @@
++import sys
++sys.dont_write_bytecode = True
+@@ -20,2 +22,2 @@
+-    output = E / "scalar-retained-restoration-review-v2166.json"
+-    ledger_output = E / "scalar-retained-restoration-ledger-v2166.json"
++    output = E / "decoder-retained-restoration-review-v2255.json"
++    ledger_output = E / "decoder-retained-restoration-ledger-v2255.json"
+@@ -23 +25 @@
+-    directory = E / "scalar-retained-restoration-v2159"
++    directory = E / "decoder-retained-restoration-v2248"
+@@ -25 +27 @@
+-    controller_path = E / "scalar-retained-restoration-validation-v2165.json"
++    controller_path = E / "decoder-retained-restoration-validation-v2254.json"
+@@ -44 +46 @@
+-    assert len(protocol["restorations"]) == 9
++    assert len(protocol["restorations"]) == 5
+@@ -86,2 +88,2 @@
+-    inputs = {"scalar-retained-restoration-v2159/protocol.json": sha(directory / "protocol.json"),
+-              "scalar-retained-restoration-v2159/restoration.json": sha(directory / "restoration.json"),
++    inputs = {"decoder-retained-restoration-v2248/protocol.json": sha(directory / "protocol.json"),
++              "decoder-retained-restoration-v2248/restoration.json": sha(directory / "restoration.json"),
+@@ -90 +92 @@
+-                 "nth-root-enclosure-cost-rejection-v2021.json", "integer-coarse-zero-cost-rejection-v2100.json"]:
++                 "nth-root-enclosure-cost-rejection-v2021.json", "integer-coarse-zero-cost-rejection-v2100.json", "bound-decoder-cost-rejection-v2247.json"]:
+@@ -94,7 +96,7 @@
+-        "Connect the actual retained cache-word decoder to its specification, first checking "
+-        "bool::then_some and masked unreachable-arm support without assumed specifications. "
+-        "Preserve all u64 inputs, signs, signed exponent limits, absent magnitudes and unrelated "
+-        "bits; separate encoding correctness from producer validity, independent existence and "
+-        "atomic publication. Keep the merge/root/integer proposals rejected and every original "
+-        "cost failure preserved. Continue the remaining resource, native and unchanged full-board "
+-        "admission work; all 39 properties, 14 targets and crate future work remain in scope."
++        "Inspect the archived decoder executable differences before selecting a proof-compatible "
++        "implementation experiment from the exact retained v1836 source. Keep the proved but "
++        "unretained decoder and every failed original-cap comparison archived. Preserve all "
++        "u64 inputs, signs, signed exponents, absent magnitudes and unrelated bits, without "
++        "assumed method specifications. Producer validity, independent existence, atomic/caller "
++        "ordering, resource work and native/full-board admission remain open; the full "
++        "39-property/14-target/crate-future-work plan remains in scope."
+@@ -105 +107 @@
+-        "source_files_verified": len(sources), "main_files_verified": len(main), "restored_files": 9,
++        "source_files_verified": len(sources), "main_files_verified": len(main), "restored_files": 5,
+@@ -121,11 +123,11 @@
+-        "The v2159-v2166 restoration returns all 24746 isolated source files to the exact v1836 "
+-        "checkpoint. Nine rejected source files and their complete patch remain archived. Six "
+-        "fresh commands pass: 1074 scalar units plus one child, release build, workspace and "
+-        "108 included-input format checks, 645 conditional proof units and ten acceptance tests. "
+-        "The 226 negative mutations and four passing baselines are reused under identical "
+-        "source, dependency and verifier identities. The discarded merge's 651-unit report "
+-        "remains historical evidence for that unretained source. Every cost rejection, including "
+-        "the v2100 baseline SIGXCPU, remains failed. Prior v1836 broad/replay/cost evidence is "
+-        "reused for identical retained bytes, not rerun here. Main and all property/target "
+-        "statuses are unchanged; decoder, producer/existence/atomic and native/full-board "
+-        "obligations remain open."
++        "The v2248-v2255 restoration returns all 24746 isolated source files to the exact "
++        "v1836 checkpoint. Five rejected decoder files and their patch remain archived. "
++        "Six fresh commands pass: 1074 scalar units plus one child, release build, workspace "
++        "and 108 included-input format checks, 645 conditional proof units and ten acceptance "
++        "tests. The 226 negative mutations and four passing baselines are reused under "
++        "identical source, dependency and verifier identities. The rejected decoder's "
++        "655-unit proof and 245 fresh negative guards remain historical evidence for its "
++        "unretained source. Every cost rejection, including the v2247 baseline SIGXCPU, "
++        "remains failed. Prior v1836 broad/replay/cost evidence is reused for the identical "
++        "retained bytes. Main and all property/target statuses are unchanged; producer, "
++        "existence, atomic/caller, resource and native/full-board obligations remain open."
+@@ -134 +136 @@
+-    prior_priority = read(E / "integer-coarse-zero-baseline-profile-review-v2158.json")["next_priority"]
++    prior_priority = read(E / "bound-decoder-cost-rejection-v2247.json")["next_priority"]
+@@ -150 +152 @@
+-    print(json.dumps({"restored_files": 9, "fresh_commands": 6, "scalar_tests": 1074,
++    print(json.dumps({"restored_files": 5, "fresh_commands": 6, "scalar_tests": 1074,

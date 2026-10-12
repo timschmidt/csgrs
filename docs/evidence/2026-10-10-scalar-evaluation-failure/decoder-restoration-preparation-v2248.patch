@@ -1,0 +1,44 @@
+--- restore_retained_scalar_v2159.py
++++ restore_retained_decoder_v2248.py
+@@ -13 +13 @@
+-OUT = E / "scalar-retained-restoration-v2159"
++OUT = E / "decoder-retained-restoration-v2248"
+@@ -28 +28 @@
+-    rejected_path = E / "integer-coarse-zero-cost-rejection-v2100.json"
++    rejected_path = E / "bound-decoder-cost-rejection-v2247.json"
+@@ -30 +30 @@
+-    review_path = E / "integer-coarse-zero-baseline-profile-review-v2158.json"
++    review_path = E / "bound-decoder-binary-comparison-v2181/summary.json"
+@@ -44,3 +44,2 @@
+-    assert len(names) == 9
+-    archives = [E / n / "inputs" for n in ["bound-merge-baseline-v1837",
+-                "nth-root-enclosure-baseline-v2001", "integer-coarse-zero-baseline-v2079"]]
++    assert len(names) == 5
++    archives = [E / "bound-decoder-baseline-v2168/inputs"]
+@@ -58,2 +57,2 @@
+-    for version, prior_version, suffix in [(2160, 1764, "scalar-tests"), (2161, 1766, "release-build"),
+-                                          (2162, 1767, "workspace-fmt"), (2163, 1768, "included-fmt")]:
++    for version, prior_version, suffix in [(2249, 1764, "scalar-tests"), (2250, 1766, "release-build"),
++                                          (2251, 1767, "workspace-fmt"), (2252, 1768, "included-fmt")]:
+@@ -63,2 +62,2 @@
+-    verus_phase = "typed-api-prototype-v2164-retained-restoration-verus"
+-    acceptance_phase = "typed-api-prototype-v2165-retained-restoration-acceptance"
++    verus_phase = "typed-api-prototype-v2253-retained-restoration-verus"
++    acceptance_phase = "typed-api-prototype-v2254-retained-restoration-acceptance"
+@@ -89 +88 @@
+-            "Restore only these nine isolated files from hash-verified immutable archives. Main source and the 49 original worktree entries remain untouched. The rejected proposals and their tests/proofs remain archived, with every earlier failure unchanged.",
++            "Restore only these five isolated files from hash-verified immutable archives. Main source and the 49 original worktree entries remain untouched. The rejected proposals and their tests/proofs remain archived, with every earlier failure unchanged.",
+@@ -91,2 +90,2 @@
+-            "Run six fresh restoration checks, including full scalar units, release build, both formatting checks, conditional Verus and acceptance tests. The retained target has 645 conditional units, 97 contracts, 130 model theorems and thirteen open groups. The unretained merge's additional proofs do not describe restored production code.",
+-            "Continue the actual decoder/model connection from the retained source after restoration verification. Producer validity, independent existence, atomic/caller ordering, the fixed pre-Verus baseline and main/native/full-board admission remain open, as does the full properties plan.",
++            "Run six fresh restoration checks, including full scalar units, release build, both formatting checks, conditional Verus and acceptance tests. The retained target has 645 conditional units, 97 contracts, 130 model theorems and thirteen open groups. The unretained decoder's additional proofs remain archived and do not describe restored production code.",
++            "After restoration verification, inspect the archived executable differences before selecting a proof-compatible next implementation experiment. Preserve the failed original-cap gate; do not retry unchanged timings until one passes. Producer validity, independent existence, atomic/caller ordering, the fixed pre-Verus baseline and main/native/full-board admission remain open, as does the full properties plan.",
+@@ -119 +118 @@
+-        "restored_source_record_sha256": sha(record), "restored_files": 9, "source_files_verified": len(actual),
++        "restored_source_record_sha256": sha(record), "restored_files": 5, "source_files_verified": len(actual),
+@@ -121 +120 @@
+-    print(json.dumps({"restored_files": 9, "source_files_identical_to_retained": len(actual)}))
++    print(json.dumps({"restored_files": 5, "source_files_identical_to_retained": len(actual)}))
+@@ -125 +124 @@
+-    out = E / "scalar-retained-restoration-validation-v2165.json"
++    out = E / "decoder-retained-restoration-validation-v2254.json"

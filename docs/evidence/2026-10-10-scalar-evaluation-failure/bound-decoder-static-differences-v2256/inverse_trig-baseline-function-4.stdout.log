@@ -1,0 +1,1327 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000011d7b0 <<hyperreal::computable::node::Computable>::cheap_bound>:
+  11d7b0:	55                   	push   %rbp
+  11d7b1:	41 57                	push   %r15
+  11d7b3:	41 56                	push   %r14
+  11d7b5:	41 55                	push   %r13
+  11d7b7:	41 54                	push   %r12
+  11d7b9:	53                   	push   %rbx
+  11d7ba:	48 81 ec 28 01 00 00 	sub    $0x128,%rsp
+  11d7c1:	48 89 fb             	mov    %rdi,%rbx
+  11d7c4:	4c 8b 36             	mov    (%rsi),%r14
+  11d7c7:	49 8b 46 38          	mov    0x38(%r14),%rax
+  11d7cb:	89 c1                	mov    %eax,%ecx
+  11d7cd:	83 e1 03             	and    $0x3,%ecx
+  11d7d0:	48 8d 15 cd 0d f2 ff 	lea    -0xdf233(%rip),%rdx        # 3e5a4 <__gmpn_invert_limb_table+0x1284>
+  11d7d7:	48 63 0c 8a          	movslq (%rdx,%rcx,4),%rcx
+  11d7db:	48 01 d1             	add    %rdx,%rcx
+  11d7de:	ff e1                	jmp    *%rcx
+  11d7e0:	48 8d bc 24 b8 00 00 	lea    0xb8(%rsp),%rdi
+  11d7e7:	00 
+  11d7e8:	ba 18 00 00 00       	mov    $0x18,%edx
+  11d7ed:	49 89 f4             	mov    %rsi,%r12
+  11d7f0:	e8 8b 1e 00 00       	call   11f680 <<hyperreal::computable::node::Computable>::cheap_bound_shallow>
+  11d7f5:	83 bc 24 b8 00 00 00 	cmpl   $0xffffffff,0xb8(%rsp)
+  11d7fc:	ff 
+  11d7fd:	74 66                	je     11d865 <<hyperreal::computable::node::Computable>::cheap_bound+0xb5>
+  11d7ff:	8b 84 24 c0 00 00 00 	mov    0xc0(%rsp),%eax
+  11d806:	89 43 08             	mov    %eax,0x8(%rbx)
+  11d809:	48 8b 84 24 b8 00 00 	mov    0xb8(%rsp),%rax
+  11d810:	00 
+  11d811:	48 89 03             	mov    %rax,(%rbx)
+  11d814:	eb 3a                	jmp    11d850 <<hyperreal::computable::node::Computable>::cheap_bound+0xa0>
+  11d816:	b9 03 00 00 00       	mov    $0x3,%ecx
+  11d81b:	eb 28                	jmp    11d845 <<hyperreal::computable::node::Computable>::cheap_bound+0x95>
+  11d81d:	8d 0c 00             	lea    (%rax,%rax,1),%ecx
+  11d820:	80 e1 18             	and    $0x18,%cl
+  11d823:	ba ff 02 00 01       	mov    $0x10002ff,%edx
+  11d828:	d3 ea                	shr    %cl,%edx
+  11d82a:	48 89 c6             	mov    %rax,%rsi
+  11d82d:	48 c1 ee 20          	shr    $0x20,%rsi
+  11d831:	89 c1                	mov    %eax,%ecx
+  11d833:	c1 e9 04             	shr    $0x4,%ecx
+  11d836:	83 e1 01             	and    $0x1,%ecx
+  11d839:	c0 e8 05             	shr    $0x5,%al
+  11d83c:	24 01                	and    $0x1,%al
+  11d83e:	eb 05                	jmp    11d845 <<hyperreal::computable::node::Computable>::cheap_bound+0x95>
+  11d840:	b9 02 00 00 00       	mov    $0x2,%ecx
+  11d845:	89 0b                	mov    %ecx,(%rbx)
+  11d847:	89 73 04             	mov    %esi,0x4(%rbx)
+  11d84a:	88 43 08             	mov    %al,0x8(%rbx)
+  11d84d:	88 53 09             	mov    %dl,0x9(%rbx)
+  11d850:	48 89 d8             	mov    %rbx,%rax
+  11d853:	48 81 c4 28 01 00 00 	add    $0x128,%rsp
+  11d85a:	5b                   	pop    %rbx
+  11d85b:	41 5c                	pop    %r12
+  11d85d:	41 5d                	pop    %r13
+  11d85f:	41 5e                	pop    %r14
+  11d861:	41 5f                	pop    %r15
+  11d863:	5d                   	pop    %rbp
+  11d864:	c3                   	ret
+  11d865:	ff 15 7d a9 0e 00    	call   *0xea97d(%rip)        # 2081e8 <_DYNAMIC+0x290>
+  11d86b:	bf 00 01 00 00       	mov    $0x100,%edi
+  11d870:	be 08 00 00 00       	mov    $0x8,%esi
+  11d875:	ff 15 75 a9 0e 00    	call   *0xea975(%rip)        # 2081f0 <_DYNAMIC+0x298>
+  11d87b:	48 85 c0             	test   %rax,%rax
+  11d87e:	0f 84 36 14 00 00    	je     11ecba <<hyperreal::computable::node::Computable>::cheap_bound+0x150a>
+  11d884:	49 89 c7             	mov    %rax,%r15
+  11d887:	48 c7 44 24 08 10 00 	movq   $0x10,0x8(%rsp)
+  11d88e:	00 00 
+  11d890:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+  11d895:	48 c7 44 24 18 00 00 	movq   $0x0,0x18(%rsp)
+  11d89c:	00 00 
+  11d89e:	ff 15 44 a9 0e 00    	call   *0xea944(%rip)        # 2081e8 <_DYNAMIC+0x290>
+  11d8a4:	bf 60 00 00 00       	mov    $0x60,%edi
+  11d8a9:	be 04 00 00 00       	mov    $0x4,%esi
+  11d8ae:	ff 15 3c a9 0e 00    	call   *0xea93c(%rip)        # 2081f0 <_DYNAMIC+0x298>
+  11d8b4:	48 85 c0             	test   %rax,%rax
+  11d8b7:	0f 84 0d 14 00 00    	je     11ecca <<hyperreal::computable::node::Computable>::cheap_bound+0x151a>
+  11d8bd:	49 83 c6 38          	add    $0x38,%r14
+  11d8c1:	48 c7 44 24 20 08 00 	movq   $0x8,0x20(%rsp)
+  11d8c8:	00 00 
+  11d8ca:	48 89 44 24 28       	mov    %rax,0x28(%rsp)
+  11d8cf:	48 c7 44 24 30 00 00 	movq   $0x0,0x30(%rsp)
+  11d8d6:	00 00 
+  11d8d8:	41 c7 07 00 00 00 00 	movl   $0x0,(%r15)
+  11d8df:	4d 89 67 08          	mov    %r12,0x8(%r15)
+  11d8e3:	66 66 66 64 48 8b 04 	data16 data16 data16 mov %fs:0x0,%rax
+  11d8ea:	25 00 00 00 00 
+  11d8ef:	48 89 84 24 20 01 00 	mov    %rax,0x120(%rsp)
+  11d8f6:	00 
+  11d8f7:	4c 8d b8 e0 fe ff ff 	lea    -0x120(%rax),%r15
+  11d8fe:	41 bc 01 00 00 00    	mov    $0x1,%r12d
+  11d904:	48 8d 05 9d 74 0e 00 	lea    0xe749d(%rip),%rax        # 204da8 <anon.953f3db8f5a996f677fb6a53175227a4.23.llvm.5533634630175563929>
+  11d90b:	48 89 84 24 e0 00 00 	mov    %rax,0xe0(%rsp)
+  11d912:	00 
+  11d913:	48 8d 05 6e 61 0e 00 	lea    0xe616e(%rip),%rax        # 203a88 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x168>
+  11d91a:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+  11d91f:	48 8d 05 ec 25 f2 ff 	lea    -0xdda14(%rip),%rax        # 3ff12 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x254>
+  11d926:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11d92b:	89 44 24 70          	mov    %eax,0x70(%rsp)
+  11d92f:	48 89 84 24 b0 00 00 	mov    %rax,0xb0(%rsp)
+  11d936:	00 
+  11d937:	4c 89 3c 24          	mov    %r15,(%rsp)
+  11d93b:	49 ff cc             	dec    %r12
+  11d93e:	4c 89 64 24 18       	mov    %r12,0x18(%rsp)
+  11d943:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11d948:	49 c1 e4 04          	shl    $0x4,%r12
+  11d94c:	46 8b 2c 20          	mov    (%rax,%r12,1),%r13d
+  11d950:	42 8b 6c 20 04       	mov    0x4(%rax,%r12,1),%ebp
+  11d955:	4a 8b 44 20 08       	mov    0x8(%rax,%r12,1),%rax
+  11d95a:	48 89 44 24 38       	mov    %rax,0x38(%rsp)
+  11d95f:	41 0f b6 47 10       	movzbl 0x10(%r15),%eax
+  11d964:	85 c0                	test   %eax,%eax
+  11d966:	0f 85 fd 0b 00 00    	jne    11e569 <<hyperreal::computable::node::Computable>::cheap_bound+0xdb9>
+  11d96c:	4c 89 f9             	mov    %r15,%rcx
+  11d96f:	4d 8b 3f             	mov    (%r15),%r15
+  11d972:	48 b8 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rax
+  11d979:	ff ff 7f 
+  11d97c:	49 39 c7             	cmp    %rax,%r15
+  11d97f:	0f 83 2b 10 00 00    	jae    11e9b0 <<hyperreal::computable::node::Computable>::cheap_bound+0x1200>
+  11d985:	4d 8d 67 01          	lea    0x1(%r15),%r12
+  11d989:	4c 89 21             	mov    %r12,(%rcx)
+  11d98c:	48 8b 49 08          	mov    0x8(%rcx),%rcx
+  11d990:	48 85 c9             	test   %rcx,%rcx
+  11d993:	74 39                	je     11d9ce <<hyperreal::computable::node::Computable>::cheap_bound+0x21e>
+  11d995:	48 89 ca             	mov    %rcx,%rdx
+  11d998:	80 7a 20 00          	cmpb   $0x0,0x20(%rdx)
+  11d99c:	0f 85 2e 10 00 00    	jne    11e9d0 <<hyperreal::computable::node::Computable>::cheap_bound+0x1220>
+  11d9a2:	48 8b 72 10          	mov    0x10(%rdx),%rsi
+  11d9a6:	48 8b 46 18          	mov    0x18(%rsi),%rax
+  11d9aa:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+  11d9b0:	48 85 c0             	test   %rax,%rax
+  11d9b3:	0f 84 17 10 00 00    	je     11e9d0 <<hyperreal::computable::node::Computable>::cheap_bound+0x1220>
+  11d9b9:	48 8d 78 ff          	lea    -0x1(%rax),%rdi
+  11d9bd:	f0 48 0f b1 7e 18    	lock cmpxchg %rdi,0x18(%rsi)
+  11d9c3:	75 eb                	jne    11d9b0 <<hyperreal::computable::node::Computable>::cheap_bound+0x200>
+  11d9c5:	48 8b 52 18          	mov    0x18(%rdx),%rdx
+  11d9c9:	48 85 d2             	test   %rdx,%rdx
+  11d9cc:	75 ca                	jne    11d998 <<hyperreal::computable::node::Computable>::cheap_bound+0x1e8>
+  11d9ce:	48 8b 04 24          	mov    (%rsp),%rax
+  11d9d2:	4c 89 38             	mov    %r15,(%rax)
+  11d9d5:	44 89 e8             	mov    %r13d,%eax
+  11d9d8:	48 8d 0d e5 0b f2 ff 	lea    -0xdf41b(%rip),%rcx        # 3e5c4 <__gmpn_invert_limb_table+0x12a4>
+  11d9df:	48 63 04 81          	movslq (%rcx,%rax,4),%rax
+  11d9e3:	48 01 c8             	add    %rcx,%rax
+  11d9e6:	ff e0                	jmp    *%rax
+  11d9e8:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11d9ed:	4c 8b 38             	mov    (%rax),%r15
+  11d9f0:	49 8b 57 38          	mov    0x38(%r15),%rdx
+  11d9f4:	89 d0                	mov    %edx,%eax
+  11d9f6:	83 e0 03             	and    $0x3,%eax
+  11d9f9:	48 8d 0d e4 0b f2 ff 	lea    -0xdf41c(%rip),%rcx        # 3e5e4 <__gmpn_invert_limb_table+0x12c4>
+  11da00:	48 63 04 81          	movslq (%rcx,%rax,4),%rax
+  11da04:	48 01 c8             	add    %rcx,%rax
+  11da07:	ff e0                	jmp    *%rax
+  11da09:	c7 44 24 40 ff ff ff 	movl   $0xffffffff,0x40(%rsp)
+  11da10:	ff 
+  11da11:	41 0f b6 47 10       	movzbl 0x10(%r15),%eax
+  11da16:	48 83 f8 3b          	cmp    $0x3b,%rax
+  11da1a:	0f 87 c9 0a 00 00    	ja     11e4e9 <<hyperreal::computable::node::Computable>::cheap_bound+0xd39>
+  11da20:	48 8d 15 cd 0b f2 ff 	lea    -0xdf433(%rip),%rdx        # 3e5f4 <__gmpn_invert_limb_table+0x12d4>
+  11da27:	48 63 0c 82          	movslq (%rdx,%rax,4),%rcx
+  11da2b:	48 01 d1             	add    %rdx,%rcx
+  11da2e:	ff e1                	jmp    *%rcx
+  11da30:	49 83 c7 10          	add    $0x10,%r15
+  11da34:	4c 89 ff             	mov    %r15,%rdi
+  11da37:	e8 34 25 00 00       	call   11ff70 <<hyperreal::computable::node::Computable>::rational_kernel_sign>
+  11da3c:	31 c9                	xor    %ecx,%ecx
+  11da3e:	3c 01                	cmp    $0x1,%al
+  11da40:	0f 94 c1             	sete   %cl
+  11da43:	8d 0c 49             	lea    (%rcx,%rcx,2),%ecx
+  11da46:	3c ff                	cmp    $0xff,%al
+  11da48:	ba 02 00 00 00       	mov    $0x2,%edx
+  11da4d:	0f 44 ca             	cmove  %edx,%ecx
+  11da50:	89 4c 24 40          	mov    %ecx,0x40(%rsp)
+  11da54:	31 d2                	xor    %edx,%edx
+  11da56:	e9 14 06 00 00       	jmp    11e06f <<hyperreal::computable::node::Computable>::cheap_bound+0x8bf>
+  11da5b:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  11da60:	48 85 c9             	test   %rcx,%rcx
+  11da63:	0f 84 38 11 00 00    	je     11eba1 <<hyperreal::computable::node::Computable>::cheap_bound+0x13f1>
+  11da69:	48 ff c9             	dec    %rcx
+  11da6c:	48 89 4c 24 30       	mov    %rcx,0x30(%rsp)
+  11da71:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11da76:	48 8d 0c 49          	lea    (%rcx,%rcx,2),%rcx
+  11da7a:	8b 34 88             	mov    (%rax,%rcx,4),%esi
+  11da7d:	89 f2                	mov    %esi,%edx
+  11da7f:	83 ea 02             	sub    $0x2,%edx
+  11da82:	bf 02 00 00 00       	mov    $0x2,%edi
+  11da87:	0f 42 d7             	cmovb  %edi,%edx
+  11da8a:	85 d2                	test   %edx,%edx
+  11da8c:	0f 84 84 03 00 00    	je     11de16 <<hyperreal::computable::node::Computable>::cheap_bound+0x666>
+  11da92:	83 fa 01             	cmp    $0x1,%edx
+  11da95:	0f 85 88 03 00 00    	jne    11de23 <<hyperreal::computable::node::Computable>::cheap_bound+0x673>
+  11da9b:	c7 84 24 98 00 00 00 	movl   $0x3,0x98(%rsp)
+  11daa2:	03 00 00 00 
+  11daa6:	e9 b0 03 00 00       	jmp    11de5b <<hyperreal::computable::node::Computable>::cheap_bound+0x6ab>
+  11daab:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  11dab0:	48 85 c0             	test   %rax,%rax
+  11dab3:	0f 84 cb 10 00 00    	je     11eb84 <<hyperreal::computable::node::Computable>::cheap_bound+0x13d4>
+  11dab9:	48 ff c8             	dec    %rax
+  11dabc:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11dac1:	48 8b 74 24 28       	mov    0x28(%rsp),%rsi
+  11dac6:	4c 8d 04 40          	lea    (%rax,%rax,2),%r8
+  11daca:	42 8b 3c 86          	mov    (%rsi,%r8,4),%edi
+  11dace:	42 8b 4c 86 04       	mov    0x4(%rsi,%r8,4),%ecx
+  11dad3:	42 0f b6 44 86 08    	movzbl 0x8(%rsi,%r8,4),%eax
+  11dad9:	42 0f b6 54 86 09    	movzbl 0x9(%rsi,%r8,4),%edx
+  11dadf:	83 ff 01             	cmp    $0x1,%edi
+  11dae2:	0f 87 bc 02 00 00    	ja     11dda4 <<hyperreal::computable::node::Computable>::cheap_bound+0x5f4>
+  11dae8:	31 f6                	xor    %esi,%esi
+  11daea:	40 f6 c7 01          	test   $0x1,%dil
+  11daee:	74 08                	je     11daf8 <<hyperreal::computable::node::Computable>::cheap_bound+0x348>
+  11daf0:	31 f6                	xor    %esi,%esi
+  11daf2:	01 e9                	add    %ebp,%ecx
+  11daf4:	40 0f 91 c6          	setno  %sil
+  11daf8:	88 54 24 7d          	mov    %dl,0x7d(%rsp)
+  11dafc:	89 74 24 74          	mov    %esi,0x74(%rsp)
+  11db00:	89 4c 24 78          	mov    %ecx,0x78(%rsp)
+  11db04:	88 44 24 7c          	mov    %al,0x7c(%rsp)
+  11db08:	e9 b4 02 00 00       	jmp    11ddc1 <<hyperreal::computable::node::Computable>::cheap_bound+0x611>
+  11db0d:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  11db12:	48 85 c9             	test   %rcx,%rcx
+  11db15:	0f 84 d6 10 00 00    	je     11ebf1 <<hyperreal::computable::node::Computable>::cheap_bound+0x1441>
+  11db1b:	48 ff c9             	dec    %rcx
+  11db1e:	48 89 4c 24 30       	mov    %rcx,0x30(%rsp)
+  11db23:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11db28:	48 8d 0c 49          	lea    (%rcx,%rcx,2),%rcx
+  11db2c:	8b 34 88             	mov    (%rax,%rcx,4),%esi
+  11db2f:	83 fe 02             	cmp    $0x2,%esi
+  11db32:	0f 83 ce 02 00 00    	jae    11de06 <<hyperreal::computable::node::Computable>::cheap_bound+0x656>
+  11db38:	31 d2                	xor    %edx,%edx
+  11db3a:	83 fe 01             	cmp    $0x1,%esi
+  11db3d:	0f 85 d2 06 00 00    	jne    11e215 <<hyperreal::computable::node::Computable>::cheap_bound+0xa65>
+  11db43:	48 8d 34 88          	lea    (%rax,%rcx,4),%rsi
+  11db47:	f6 46 08 01          	testb  $0x1,0x8(%rsi)
+  11db4b:	0f 84 c4 06 00 00    	je     11e215 <<hyperreal::computable::node::Computable>::cheap_bound+0xa65>
+  11db51:	8b 74 88 04          	mov    0x4(%rax,%rcx,4),%esi
+  11db55:	31 d2                	xor    %edx,%edx
+  11db57:	f7 de                	neg    %esi
+  11db59:	0f 91 c2             	setno  %dl
+  11db5c:	e9 b4 06 00 00       	jmp    11e215 <<hyperreal::computable::node::Computable>::cheap_bound+0xa65>
+  11db61:	48 8b 4c 24 30       	mov    0x30(%rsp),%rcx
+  11db66:	be 1f 00 00 00       	mov    $0x1f,%esi
+  11db6b:	48 85 c9             	test   %rcx,%rcx
+  11db6e:	0f 84 f8 0f 00 00    	je     11eb6c <<hyperreal::computable::node::Computable>::cheap_bound+0x13bc>
+  11db74:	48 89 c8             	mov    %rcx,%rax
+  11db77:	48 ff c8             	dec    %rax
+  11db7a:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11db7f:	4c 8b 3c 24          	mov    (%rsp),%r15
+  11db83:	0f 84 97 10 00 00    	je     11ec20 <<hyperreal::computable::node::Computable>::cheap_bound+0x1470>
+  11db89:	48 8b 54 24 28       	mov    0x28(%rsp),%rdx
+  11db8e:	48 8d 3c 40          	lea    (%rax,%rax,2),%rdi
+  11db92:	8b 34 ba             	mov    (%rdx,%rdi,4),%esi
+  11db95:	48 63 44 ba 04       	movslq 0x4(%rdx,%rdi,4),%rax
+  11db9a:	44 0f b6 4c ba 09    	movzbl 0x9(%rdx,%rdi,4),%r9d
+  11dba0:	48 83 c1 fe          	add    $0xfffffffffffffffe,%rcx
+  11dba4:	48 89 4c 24 30       	mov    %rcx,0x30(%rsp)
+  11dba9:	48 8d 3c 49          	lea    (%rcx,%rcx,2),%rdi
+  11dbad:	44 8b 04 ba          	mov    (%rdx,%rdi,4),%r8d
+  11dbb1:	45 89 c2             	mov    %r8d,%r10d
+  11dbb4:	41 83 ea 02          	sub    $0x2,%r10d
+  11dbb8:	b9 02 00 00 00       	mov    $0x2,%ecx
+  11dbbd:	44 0f 42 d1          	cmovb  %ecx,%r10d
+  11dbc1:	41 83 fa 01          	cmp    $0x1,%r10d
+  11dbc5:	74 1e                	je     11dbe5 <<hyperreal::computable::node::Computable>::cheap_bound+0x435>
+  11dbc7:	41 89 f3             	mov    %esi,%r11d
+  11dbca:	41 83 eb 02          	sub    $0x2,%r11d
+  11dbce:	44 0f 42 d9          	cmovb  %ecx,%r11d
+  11dbd2:	45 85 db             	test   %r11d,%r11d
+  11dbd5:	0f 84 e2 05 00 00    	je     11e1bd <<hyperreal::computable::node::Computable>::cheap_bound+0xa0d>
+  11dbdb:	41 83 fb 01          	cmp    $0x1,%r11d
+  11dbdf:	0f 85 e2 05 00 00    	jne    11e1c7 <<hyperreal::computable::node::Computable>::cheap_bound+0xa17>
+  11dbe5:	48 c7 84 24 b8 00 00 	movq   $0x40,0xb8(%rsp)
+  11dbec:	00 40 00 00 00 
+  11dbf1:	48 8b 7c 24 38       	mov    0x38(%rsp),%rdi
+  11dbf6:	be 20 00 00 00       	mov    $0x20,%esi
+  11dbfb:	48 8d 94 24 b8 00 00 	lea    0xb8(%rsp),%rdx
+  11dc02:	00 
+  11dc03:	e8 18 1c 01 00       	call   12f820 <<hyperreal::computable::node::Computable>::has_finite_real_certificate_with_budget::visit>
+  11dc08:	b9 03 00 00 00       	mov    $0x3,%ecx
+  11dc0d:	84 c0                	test   %al,%al
+  11dc0f:	44 8b 54 24 70       	mov    0x70(%rsp),%r10d
+  11dc14:	0f 84 13 03 00 00    	je     11df2d <<hyperreal::computable::node::Computable>::cheap_bound+0x77d>
+  11dc1a:	4c 8b 3c 24          	mov    (%rsp),%r15
+  11dc1e:	e9 6d 07 00 00       	jmp    11e390 <<hyperreal::computable::node::Computable>::cheap_bound+0xbe0>
+  11dc23:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  11dc28:	48 85 c0             	test   %rax,%rax
+  11dc2b:	0f 84 8a 0f 00 00    	je     11ebbb <<hyperreal::computable::node::Computable>::cheap_bound+0x140b>
+  11dc31:	48 ff c8             	dec    %rax
+  11dc34:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11dc39:	48 8b 7c 24 28       	mov    0x28(%rsp),%rdi
+  11dc3e:	4c 8d 04 40          	lea    (%rax,%rax,2),%r8
+  11dc42:	42 8b 14 87          	mov    (%rdi,%r8,4),%edx
+  11dc46:	42 8b 4c 87 04       	mov    0x4(%rdi,%r8,4),%ecx
+  11dc4b:	42 0f b6 44 87 08    	movzbl 0x8(%rdi,%r8,4),%eax
+  11dc51:	42 0f b6 74 87 09    	movzbl 0x9(%rdi,%r8,4),%esi
+  11dc57:	42 0f b7 7c 87 0a    	movzwl 0xa(%rdi,%r8,4),%edi
+  11dc5d:	83 fa 01             	cmp    $0x1,%edx
+  11dc60:	0f 87 ca 04 00 00    	ja     11e130 <<hyperreal::computable::node::Computable>::cheap_bound+0x980>
+  11dc66:	44 0f b6 c6          	movzbl %sil,%r8d
+  11dc6a:	41 83 f8 01          	cmp    $0x1,%r8d
+  11dc6e:	0f 8f a3 04 00 00    	jg     11e117 <<hyperreal::computable::node::Computable>::cheap_bound+0x967>
+  11dc74:	45 85 c0             	test   %r8d,%r8d
+  11dc77:	0f 85 b3 04 00 00    	jne    11e130 <<hyperreal::computable::node::Computable>::cheap_bound+0x980>
+  11dc7d:	c6 44 24 6d 02       	movb   $0x2,0x6d(%rsp)
+  11dc82:	e9 9b 04 00 00       	jmp    11e122 <<hyperreal::computable::node::Computable>::cheap_bound+0x972>
+  11dc87:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  11dc8c:	48 85 c0             	test   %rax,%rax
+  11dc8f:	0f 84 2d 0f 00 00    	je     11ebc2 <<hyperreal::computable::node::Computable>::cheap_bound+0x1412>
+  11dc95:	48 ff c8             	dec    %rax
+  11dc98:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11dc9d:	48 8b 4c 24 28       	mov    0x28(%rsp),%rcx
+  11dca2:	48 8d 14 40          	lea    (%rax,%rax,2),%rdx
+  11dca6:	8b 04 91             	mov    (%rcx,%rdx,4),%eax
+  11dca9:	89 c6                	mov    %eax,%esi
+  11dcab:	83 ee 02             	sub    $0x2,%esi
+  11dcae:	bf 02 00 00 00       	mov    $0x2,%edi
+  11dcb3:	0f 42 f7             	cmovb  %edi,%esi
+  11dcb6:	85 f6                	test   %esi,%esi
+  11dcb8:	0f 84 1c 02 00 00    	je     11deda <<hyperreal::computable::node::Computable>::cheap_bound+0x72a>
+  11dcbe:	83 fe 01             	cmp    $0x1,%esi
+  11dcc1:	0f 85 dc 01 00 00    	jne    11dea3 <<hyperreal::computable::node::Computable>::cheap_bound+0x6f3>
+  11dcc7:	c7 84 24 80 00 00 00 	movl   $0x3,0x80(%rsp)
+  11dcce:	03 00 00 00 
+  11dcd2:	e9 0e 02 00 00       	jmp    11dee5 <<hyperreal::computable::node::Computable>::cheap_bound+0x735>
+  11dcd7:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  11dcdc:	be 1a 00 00 00       	mov    $0x1a,%esi
+  11dce1:	48 85 c0             	test   %rax,%rax
+  11dce4:	0f 84 f2 0e 00 00    	je     11ebdc <<hyperreal::computable::node::Computable>::cheap_bound+0x142c>
+  11dcea:	48 89 c2             	mov    %rax,%rdx
+  11dced:	48 ff ca             	dec    %rdx
+  11dcf0:	48 89 54 24 30       	mov    %rdx,0x30(%rsp)
+  11dcf5:	48 8b 4c 24 28       	mov    0x28(%rsp),%rcx
+  11dcfa:	48 8d 14 52          	lea    (%rdx,%rdx,2),%rdx
+  11dcfe:	48 8b 3c 91          	mov    (%rcx,%rdx,4),%rdi
+  11dd02:	48 89 bc 24 00 01 00 	mov    %rdi,0x100(%rsp)
+  11dd09:	00 
+  11dd0a:	8b 54 91 08          	mov    0x8(%rcx,%rdx,4),%edx
+  11dd0e:	89 94 24 08 01 00 00 	mov    %edx,0x108(%rsp)
+  11dd15:	0f 84 f0 0e 00 00    	je     11ec0b <<hyperreal::computable::node::Computable>::cheap_bound+0x145b>
+  11dd1b:	48 83 c0 fe          	add    $0xfffffffffffffffe,%rax
+  11dd1f:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11dd24:	48 8d 04 40          	lea    (%rax,%rax,2),%rax
+  11dd28:	48 8b 14 81          	mov    (%rcx,%rax,4),%rdx
+  11dd2c:	48 89 94 24 b8 00 00 	mov    %rdx,0xb8(%rsp)
+  11dd33:	00 
+  11dd34:	8b 44 81 08          	mov    0x8(%rcx,%rax,4),%eax
+  11dd38:	89 84 24 c0 00 00 00 	mov    %eax,0xc0(%rsp)
+  11dd3f:	48 8d bc 24 e8 00 00 	lea    0xe8(%rsp),%rdi
+  11dd46:	00 
+  11dd47:	48 8d b4 24 b8 00 00 	lea    0xb8(%rsp),%rsi
+  11dd4e:	00 
+  11dd4f:	48 8d 94 24 00 01 00 	lea    0x100(%rsp),%rdx
+  11dd56:	00 
+  11dd57:	e8 b4 21 fd ff       	call   eff10 <<hyperreal::computable::node::BoundInfo>::add>
+  11dd5c:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11dd61:	48 8b 38             	mov    (%rax),%rdi
+  11dd64:	48 8b 04 24          	mov    (%rsp),%rax
+  11dd68:	4c 89 20             	mov    %r12,(%rax)
+  11dd6b:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11dd6f:	48 85 c0             	test   %rax,%rax
+  11dd72:	74 13                	je     11dd87 <<hyperreal::computable::node::Computable>::cheap_bound+0x5d7>
+  11dd74:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11dd78:	0f 85 7a 02 00 00    	jne    11dff8 <<hyperreal::computable::node::Computable>::cheap_bound+0x848>
+  11dd7e:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11dd82:	48 85 c0             	test   %rax,%rax
+  11dd85:	75 ed                	jne    11dd74 <<hyperreal::computable::node::Computable>::cheap_bound+0x5c4>
+  11dd87:	48 8b 04 24          	mov    (%rsp),%rax
+  11dd8b:	4c 89 38             	mov    %r15,(%rax)
+  11dd8e:	48 83 c7 38          	add    $0x38,%rdi
+  11dd92:	48 8d b4 24 e8 00 00 	lea    0xe8(%rsp),%rsi
+  11dd99:	00 
+  11dd9a:	e8 e1 49 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11dd9f:	e9 5b 02 00 00       	jmp    11dfff <<hyperreal::computable::node::Computable>::cheap_bound+0x84f>
+  11dda4:	4a 8d 34 86          	lea    (%rsi,%r8,4),%rsi
+  11dda8:	0f b7 76 0a          	movzwl 0xa(%rsi),%esi
+  11ddac:	89 7c 24 74          	mov    %edi,0x74(%rsp)
+  11ddb0:	89 4c 24 78          	mov    %ecx,0x78(%rsp)
+  11ddb4:	88 44 24 7c          	mov    %al,0x7c(%rsp)
+  11ddb8:	88 54 24 7d          	mov    %dl,0x7d(%rsp)
+  11ddbc:	66 89 74 24 7e       	mov    %si,0x7e(%rsp)
+  11ddc1:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11ddc6:	48 8b 38             	mov    (%rax),%rdi
+  11ddc9:	48 8b 04 24          	mov    (%rsp),%rax
+  11ddcd:	4c 89 20             	mov    %r12,(%rax)
+  11ddd0:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11ddd4:	48 85 c0             	test   %rax,%rax
+  11ddd7:	74 13                	je     11ddec <<hyperreal::computable::node::Computable>::cheap_bound+0x63c>
+  11ddd9:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11dddd:	0f 85 9d 01 00 00    	jne    11df80 <<hyperreal::computable::node::Computable>::cheap_bound+0x7d0>
+  11dde3:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11dde7:	48 85 c0             	test   %rax,%rax
+  11ddea:	75 ed                	jne    11ddd9 <<hyperreal::computable::node::Computable>::cheap_bound+0x629>
+  11ddec:	48 8b 04 24          	mov    (%rsp),%rax
+  11ddf0:	4c 89 38             	mov    %r15,(%rax)
+  11ddf3:	48 83 c7 38          	add    $0x38,%rdi
+  11ddf7:	48 8d 74 24 74       	lea    0x74(%rsp),%rsi
+  11ddfc:	e8 7f 49 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11de01:	e9 81 01 00 00       	jmp    11df87 <<hyperreal::computable::node::Computable>::cheap_bound+0x7d7>
+  11de06:	c7 84 24 8c 00 00 00 	movl   $0x2,0x8c(%rsp)
+  11de0d:	02 00 00 00 
+  11de11:	e9 21 04 00 00       	jmp    11e237 <<hyperreal::computable::node::Computable>::cheap_bound+0xa87>
+  11de16:	c7 84 24 98 00 00 00 	movl   $0x2,0x98(%rsp)
+  11de1d:	02 00 00 00 
+  11de21:	eb 38                	jmp    11de5b <<hyperreal::computable::node::Computable>::cheap_bound+0x6ab>
+  11de23:	31 d2                	xor    %edx,%edx
+  11de25:	40 f6 c6 01          	test   $0x1,%sil
+  11de29:	74 18                	je     11de43 <<hyperreal::computable::node::Computable>::cheap_bound+0x693>
+  11de2b:	8b 54 88 04          	mov    0x4(%rax,%rcx,4),%edx
+  11de2f:	89 d0                	mov    %edx,%eax
+  11de31:	81 c2 00 00 00 40    	add    $0x40000000,%edx
+  11de37:	8d 3c 45 01 00 00 00 	lea    0x1(,%rax,2),%edi
+  11de3e:	f7 d2                	not    %edx
+  11de40:	c1 ea 1f             	shr    $0x1f,%edx
+  11de43:	89 94 24 98 00 00 00 	mov    %edx,0x98(%rsp)
+  11de4a:	89 bc 24 9c 00 00 00 	mov    %edi,0x9c(%rsp)
+  11de51:	66 c7 84 24 a0 00 00 	movw   $0x200,0xa0(%rsp)
+  11de58:	00 00 02 
+  11de5b:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11de60:	48 8b 38             	mov    (%rax),%rdi
+  11de63:	48 8b 04 24          	mov    (%rsp),%rax
+  11de67:	4c 89 20             	mov    %r12,(%rax)
+  11de6a:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11de6e:	48 85 c0             	test   %rax,%rax
+  11de71:	74 13                	je     11de86 <<hyperreal::computable::node::Computable>::cheap_bound+0x6d6>
+  11de73:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11de77:	0f 85 c4 00 00 00    	jne    11df41 <<hyperreal::computable::node::Computable>::cheap_bound+0x791>
+  11de7d:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11de81:	48 85 c0             	test   %rax,%rax
+  11de84:	75 ed                	jne    11de73 <<hyperreal::computable::node::Computable>::cheap_bound+0x6c3>
+  11de86:	48 8b 04 24          	mov    (%rsp),%rax
+  11de8a:	4c 89 38             	mov    %r15,(%rax)
+  11de8d:	48 83 c7 38          	add    $0x38,%rdi
+  11de91:	48 8d b4 24 98 00 00 	lea    0x98(%rsp),%rsi
+  11de98:	00 
+  11de99:	e8 e2 48 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11de9e:	e9 a5 00 00 00       	jmp    11df48 <<hyperreal::computable::node::Computable>::cheap_bound+0x798>
+  11dea3:	48 8d 34 91          	lea    (%rcx,%rdx,4),%rsi
+  11dea7:	80 7e 09 02          	cmpb   $0x2,0x9(%rsi)
+  11deab:	75 2d                	jne    11deda <<hyperreal::computable::node::Computable>::cheap_bound+0x72a>
+  11dead:	8b 74 91 04          	mov    0x4(%rcx,%rdx,4),%esi
+  11deb1:	0f b6 4c 91 08       	movzbl 0x8(%rcx,%rdx,4),%ecx
+  11deb6:	d1 fe                	sar    $1,%esi
+  11deb8:	83 e0 01             	and    $0x1,%eax
+  11debb:	c6 84 24 89 00 00 00 	movb   $0x2,0x89(%rsp)
+  11dec2:	02 
+  11dec3:	89 84 24 80 00 00 00 	mov    %eax,0x80(%rsp)
+  11deca:	89 b4 24 84 00 00 00 	mov    %esi,0x84(%rsp)
+  11ded1:	88 8c 24 88 00 00 00 	mov    %cl,0x88(%rsp)
+  11ded8:	eb 0b                	jmp    11dee5 <<hyperreal::computable::node::Computable>::cheap_bound+0x735>
+  11deda:	c7 84 24 80 00 00 00 	movl   $0x2,0x80(%rsp)
+  11dee1:	02 00 00 00 
+  11dee5:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11deea:	48 8b 38             	mov    (%rax),%rdi
+  11deed:	48 8b 04 24          	mov    (%rsp),%rax
+  11def1:	4c 89 20             	mov    %r12,(%rax)
+  11def4:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11def8:	48 85 c0             	test   %rax,%rax
+  11defb:	74 13                	je     11df10 <<hyperreal::computable::node::Computable>::cheap_bound+0x760>
+  11defd:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11df01:	0f 85 b2 00 00 00    	jne    11dfb9 <<hyperreal::computable::node::Computable>::cheap_bound+0x809>
+  11df07:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11df0b:	48 85 c0             	test   %rax,%rax
+  11df0e:	75 ed                	jne    11defd <<hyperreal::computable::node::Computable>::cheap_bound+0x74d>
+  11df10:	48 8b 04 24          	mov    (%rsp),%rax
+  11df14:	4c 89 38             	mov    %r15,(%rax)
+  11df17:	48 83 c7 38          	add    $0x38,%rdi
+  11df1b:	48 8d b4 24 80 00 00 	lea    0x80(%rsp),%rsi
+  11df22:	00 
+  11df23:	e8 58 48 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11df28:	e9 93 00 00 00       	jmp    11dfc0 <<hyperreal::computable::node::Computable>::cheap_bound+0x810>
+  11df2d:	c7 84 24 a4 00 00 00 	movl   $0x2,0xa4(%rsp)
+  11df34:	02 00 00 00 
+  11df38:	4c 8b 3c 24          	mov    (%rsp),%r15
+  11df3c:	e9 75 04 00 00       	jmp    11e3b6 <<hyperreal::computable::node::Computable>::cheap_bound+0xc06>
+  11df41:	48 8b 04 24          	mov    (%rsp),%rax
+  11df45:	4c 89 38             	mov    %r15,(%rax)
+  11df48:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11df4d:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11df52:	75 0b                	jne    11df5f <<hyperreal::computable::node::Computable>::cheap_bound+0x7af>
+  11df54:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11df59:	ff 15 f1 a8 0e 00    	call   *0xea8f1(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11df5f:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11df64:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11df68:	8b 94 24 a0 00 00 00 	mov    0xa0(%rsp),%edx
+  11df6f:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11df73:	48 8b 94 24 98 00 00 	mov    0x98(%rsp),%rdx
+  11df7a:	00 
+  11df7b:	e9 d1 04 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11df80:	48 8b 04 24          	mov    (%rsp),%rax
+  11df84:	4c 89 38             	mov    %r15,(%rax)
+  11df87:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11df8c:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11df91:	75 0b                	jne    11df9e <<hyperreal::computable::node::Computable>::cheap_bound+0x7ee>
+  11df93:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11df98:	ff 15 b2 a8 0e 00    	call   *0xea8b2(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11df9e:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11dfa3:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11dfa7:	8b 54 24 7c          	mov    0x7c(%rsp),%edx
+  11dfab:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11dfaf:	48 8b 54 24 74       	mov    0x74(%rsp),%rdx
+  11dfb4:	e9 98 04 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11dfb9:	48 8b 04 24          	mov    (%rsp),%rax
+  11dfbd:	4c 89 38             	mov    %r15,(%rax)
+  11dfc0:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11dfc5:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11dfca:	75 0b                	jne    11dfd7 <<hyperreal::computable::node::Computable>::cheap_bound+0x827>
+  11dfcc:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11dfd1:	ff 15 79 a8 0e 00    	call   *0xea879(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11dfd7:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11dfdc:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11dfe0:	8b 94 24 88 00 00 00 	mov    0x88(%rsp),%edx
+  11dfe7:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11dfeb:	48 8b 94 24 80 00 00 	mov    0x80(%rsp),%rdx
+  11dff2:	00 
+  11dff3:	e9 59 04 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11dff8:	48 8b 04 24          	mov    (%rsp),%rax
+  11dffc:	4c 89 38             	mov    %r15,(%rax)
+  11dfff:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11e004:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11e009:	75 0b                	jne    11e016 <<hyperreal::computable::node::Computable>::cheap_bound+0x866>
+  11e00b:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11e010:	ff 15 3a a8 0e 00    	call   *0xea83a(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11e016:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11e01b:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11e01f:	8b 94 24 f0 00 00 00 	mov    0xf0(%rsp),%edx
+  11e026:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11e02a:	48 8b 94 24 e8 00 00 	mov    0xe8(%rsp),%rdx
+  11e031:	00 
+  11e032:	e9 1a 04 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11e037:	b9 03 00 00 00       	mov    $0x3,%ecx
+  11e03c:	eb 29                	jmp    11e067 <<hyperreal::computable::node::Computable>::cheap_bound+0x8b7>
+  11e03e:	8d 0c 12             	lea    (%rdx,%rdx,1),%ecx
+  11e041:	80 e1 18             	and    $0x18,%cl
+  11e044:	b8 ff 02 00 01       	mov    $0x10002ff,%eax
+  11e049:	d3 e8                	shr    %cl,%eax
+  11e04b:	48 89 d6             	mov    %rdx,%rsi
+  11e04e:	48 c1 ee 20          	shr    $0x20,%rsi
+  11e052:	89 d1                	mov    %edx,%ecx
+  11e054:	c1 e9 04             	shr    $0x4,%ecx
+  11e057:	83 e1 01             	and    $0x1,%ecx
+  11e05a:	c0 ea 05             	shr    $0x5,%dl
+  11e05d:	80 e2 01             	and    $0x1,%dl
+  11e060:	eb 05                	jmp    11e067 <<hyperreal::computable::node::Computable>::cheap_bound+0x8b7>
+  11e062:	b9 02 00 00 00       	mov    $0x2,%ecx
+  11e067:	89 4c 24 40          	mov    %ecx,0x40(%rsp)
+  11e06b:	89 74 24 44          	mov    %esi,0x44(%rsp)
+  11e06f:	88 54 24 48          	mov    %dl,0x48(%rsp)
+  11e073:	88 44 24 49          	mov    %al,0x49(%rsp)
+  11e077:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11e07c:	4c 8b 38             	mov    (%rax),%r15
+  11e07f:	48 8b 14 24          	mov    (%rsp),%rdx
+  11e083:	0f b6 42 10          	movzbl 0x10(%rdx),%eax
+  11e087:	85 c0                	test   %eax,%eax
+  11e089:	0f 85 da 08 00 00    	jne    11e969 <<hyperreal::computable::node::Computable>::cheap_bound+0x11b9>
+  11e08f:	48 8b 02             	mov    (%rdx),%rax
+  11e092:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11e099:	ff ff 7f 
+  11e09c:	48 39 c8             	cmp    %rcx,%rax
+  11e09f:	0f 83 fc 08 00 00    	jae    11e9a1 <<hyperreal::computable::node::Computable>::cheap_bound+0x11f1>
+  11e0a5:	48 8d 48 01          	lea    0x1(%rax),%rcx
+  11e0a9:	48 89 0a             	mov    %rcx,(%rdx)
+  11e0ac:	48 8b 4a 08          	mov    0x8(%rdx),%rcx
+  11e0b0:	48 85 c9             	test   %rcx,%rcx
+  11e0b3:	74 0f                	je     11e0c4 <<hyperreal::computable::node::Computable>::cheap_bound+0x914>
+  11e0b5:	80 79 20 00          	cmpb   $0x0,0x20(%rcx)
+  11e0b9:	75 23                	jne    11e0de <<hyperreal::computable::node::Computable>::cheap_bound+0x92e>
+  11e0bb:	48 8b 49 18          	mov    0x18(%rcx),%rcx
+  11e0bf:	48 85 c9             	test   %rcx,%rcx
+  11e0c2:	75 f1                	jne    11e0b5 <<hyperreal::computable::node::Computable>::cheap_bound+0x905>
+  11e0c4:	48 8b 0c 24          	mov    (%rsp),%rcx
+  11e0c8:	48 89 01             	mov    %rax,(%rcx)
+  11e0cb:	49 83 c7 38          	add    $0x38,%r15
+  11e0cf:	4c 89 ff             	mov    %r15,%rdi
+  11e0d2:	48 8d 74 24 40       	lea    0x40(%rsp),%rsi
+  11e0d7:	e8 a4 46 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11e0dc:	eb 07                	jmp    11e0e5 <<hyperreal::computable::node::Computable>::cheap_bound+0x935>
+  11e0de:	48 8b 0c 24          	mov    (%rsp),%rcx
+  11e0e2:	48 89 01             	mov    %rax,(%rcx)
+  11e0e5:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11e0ea:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11e0ef:	75 0b                	jne    11e0fc <<hyperreal::computable::node::Computable>::cheap_bound+0x94c>
+  11e0f1:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11e0f6:	ff 15 54 a7 0e 00    	call   *0xea754(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11e0fc:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11e101:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11e105:	8b 54 24 48          	mov    0x48(%rsp),%edx
+  11e109:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11e10d:	48 8b 54 24 40       	mov    0x40(%rsp),%rdx
+  11e112:	e9 3a 03 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11e117:	41 83 f8 02          	cmp    $0x2,%r8d
+  11e11b:	75 13                	jne    11e130 <<hyperreal::computable::node::Computable>::cheap_bound+0x980>
+  11e11d:	c6 44 24 6d 00       	movb   $0x0,0x6d(%rsp)
+  11e122:	89 54 24 64          	mov    %edx,0x64(%rsp)
+  11e126:	89 4c 24 68          	mov    %ecx,0x68(%rsp)
+  11e12a:	88 44 24 6c          	mov    %al,0x6c(%rsp)
+  11e12e:	eb 16                	jmp    11e146 <<hyperreal::computable::node::Computable>::cheap_bound+0x996>
+  11e130:	89 54 24 64          	mov    %edx,0x64(%rsp)
+  11e134:	89 4c 24 68          	mov    %ecx,0x68(%rsp)
+  11e138:	88 44 24 6c          	mov    %al,0x6c(%rsp)
+  11e13c:	40 88 74 24 6d       	mov    %sil,0x6d(%rsp)
+  11e141:	66 89 7c 24 6e       	mov    %di,0x6e(%rsp)
+  11e146:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11e14b:	48 8b 38             	mov    (%rax),%rdi
+  11e14e:	48 8b 04 24          	mov    (%rsp),%rax
+  11e152:	4c 89 20             	mov    %r12,(%rax)
+  11e155:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11e159:	48 85 c0             	test   %rax,%rax
+  11e15c:	74 0f                	je     11e16d <<hyperreal::computable::node::Computable>::cheap_bound+0x9bd>
+  11e15e:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11e162:	75 20                	jne    11e184 <<hyperreal::computable::node::Computable>::cheap_bound+0x9d4>
+  11e164:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11e168:	48 85 c0             	test   %rax,%rax
+  11e16b:	75 f1                	jne    11e15e <<hyperreal::computable::node::Computable>::cheap_bound+0x9ae>
+  11e16d:	48 8b 04 24          	mov    (%rsp),%rax
+  11e171:	4c 89 38             	mov    %r15,(%rax)
+  11e174:	48 83 c7 38          	add    $0x38,%rdi
+  11e178:	48 8d 74 24 64       	lea    0x64(%rsp),%rsi
+  11e17d:	e8 fe 45 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11e182:	eb 07                	jmp    11e18b <<hyperreal::computable::node::Computable>::cheap_bound+0x9db>
+  11e184:	48 8b 04 24          	mov    (%rsp),%rax
+  11e188:	4c 89 38             	mov    %r15,(%rax)
+  11e18b:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11e190:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11e195:	75 0b                	jne    11e1a2 <<hyperreal::computable::node::Computable>::cheap_bound+0x9f2>
+  11e197:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11e19c:	ff 15 ae a6 0e 00    	call   *0xea6ae(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11e1a2:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11e1a7:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11e1ab:	8b 54 24 6c          	mov    0x6c(%rsp),%edx
+  11e1af:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11e1b3:	48 8b 54 24 64       	mov    0x64(%rsp),%rdx
+  11e1b8:	e9 94 02 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11e1bd:	44 8b 54 24 70       	mov    0x70(%rsp),%r10d
+  11e1c2:	e9 c9 01 00 00       	jmp    11e390 <<hyperreal::computable::node::Computable>::cheap_bound+0xbe0>
+  11e1c7:	41 83 fa 02          	cmp    $0x2,%r10d
+  11e1cb:	44 8b 54 24 70       	mov    0x70(%rsp),%r10d
+  11e1d0:	0f 85 ba 01 00 00    	jne    11e390 <<hyperreal::computable::node::Computable>::cheap_bound+0xbe0>
+  11e1d6:	41 b2 ff             	mov    $0xff,%r10b
+  11e1d9:	41 80 f9 ff          	cmp    $0xff,%r9b
+  11e1dd:	0f 84 67 01 00 00    	je     11e34a <<hyperreal::computable::node::Computable>::cheap_bound+0xb9a>
+  11e1e3:	0f b6 4c ba 09       	movzbl 0x9(%rdx,%rdi,4),%ecx
+  11e1e8:	80 f9 ff             	cmp    $0xff,%cl
+  11e1eb:	0f 84 59 01 00 00    	je     11e34a <<hyperreal::computable::node::Computable>::cheap_bound+0xb9a>
+  11e1f1:	83 f9 02             	cmp    $0x2,%ecx
+  11e1f4:	0f 84 40 01 00 00    	je     11e33a <<hyperreal::computable::node::Computable>::cheap_bound+0xb8a>
+  11e1fa:	83 f9 01             	cmp    $0x1,%ecx
+  11e1fd:	0f 84 47 01 00 00    	je     11e34a <<hyperreal::computable::node::Computable>::cheap_bound+0xb9a>
+  11e203:	41 0f b6 c9          	movzbl %r9b,%ecx
+  11e207:	c1 e1 03             	shl    $0x3,%ecx
+  11e20a:	41 ba 02 ff 00 00    	mov    $0xff02,%r10d
+  11e210:	e9 32 01 00 00       	jmp    11e347 <<hyperreal::computable::node::Computable>::cheap_bound+0xb97>
+  11e215:	0f b6 44 88 09       	movzbl 0x9(%rax,%rcx,4),%eax
+  11e21a:	88 84 24 95 00 00 00 	mov    %al,0x95(%rsp)
+  11e221:	89 94 24 8c 00 00 00 	mov    %edx,0x8c(%rsp)
+  11e228:	89 b4 24 90 00 00 00 	mov    %esi,0x90(%rsp)
+  11e22f:	c6 84 24 94 00 00 00 	movb   $0x0,0x94(%rsp)
+  11e236:	00 
+  11e237:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11e23c:	48 8b 38             	mov    (%rax),%rdi
+  11e23f:	48 8b 04 24          	mov    (%rsp),%rax
+  11e243:	4c 89 20             	mov    %r12,(%rax)
+  11e246:	48 8b 40 08          	mov    0x8(%rax),%rax
+  11e24a:	48 85 c0             	test   %rax,%rax
+  11e24d:	74 0f                	je     11e25e <<hyperreal::computable::node::Computable>::cheap_bound+0xaae>
+  11e24f:	80 78 20 00          	cmpb   $0x0,0x20(%rax)
+  11e253:	75 23                	jne    11e278 <<hyperreal::computable::node::Computable>::cheap_bound+0xac8>
+  11e255:	48 8b 40 18          	mov    0x18(%rax),%rax
+  11e259:	48 85 c0             	test   %rax,%rax
+  11e25c:	75 f1                	jne    11e24f <<hyperreal::computable::node::Computable>::cheap_bound+0xa9f>
+  11e25e:	48 8b 04 24          	mov    (%rsp),%rax
+  11e262:	4c 89 38             	mov    %r15,(%rax)
+  11e265:	48 83 c7 38          	add    $0x38,%rdi
+  11e269:	48 8d b4 24 8c 00 00 	lea    0x8c(%rsp),%rsi
+  11e270:	00 
+  11e271:	e8 0a 45 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11e276:	eb 07                	jmp    11e27f <<hyperreal::computable::node::Computable>::cheap_bound+0xacf>
+  11e278:	48 8b 04 24          	mov    (%rsp),%rax
+  11e27c:	4c 89 38             	mov    %r15,(%rax)
+  11e27f:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11e284:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11e289:	75 0b                	jne    11e296 <<hyperreal::computable::node::Computable>::cheap_bound+0xae6>
+  11e28b:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11e290:	ff 15 ba a5 0e 00    	call   *0xea5ba(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11e296:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11e29b:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11e29f:	8b 94 24 94 00 00 00 	mov    0x94(%rsp),%edx
+  11e2a6:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11e2aa:	48 8b 94 24 8c 00 00 	mov    0x8c(%rsp),%rdx
+  11e2b1:	00 
+  11e2b2:	e9 9a 01 00 00       	jmp    11e451 <<hyperreal::computable::node::Computable>::cheap_bound+0xca1>
+  11e2b7:	49 8b 47 18          	mov    0x18(%r15),%rax
+  11e2bb:	0f b6 40 64          	movzbl 0x64(%rax),%eax
+  11e2bf:	31 c9                	xor    %ecx,%ecx
+  11e2c1:	3c 01                	cmp    $0x1,%al
+  11e2c3:	0f 94 c1             	sete   %cl
+  11e2c6:	8d 0c 49             	lea    (%rcx,%rcx,2),%ecx
+  11e2c9:	e9 82 f7 ff ff       	jmp    11da50 <<hyperreal::computable::node::Computable>::cheap_bound+0x2a0>
+  11e2ce:	49 83 c7 18          	add    $0x18,%r15
+  11e2d2:	ba 08 00 00 00       	mov    $0x8,%edx
+  11e2d7:	48 8d bc 24 b8 00 00 	lea    0xb8(%rsp),%rdi
+  11e2de:	00 
+  11e2df:	4c 89 fe             	mov    %r15,%rsi
+  11e2e2:	e8 99 13 00 00       	call   11f680 <<hyperreal::computable::node::Computable>::cheap_bound_shallow>
+  11e2e7:	8b 94 24 b8 00 00 00 	mov    0xb8(%rsp),%edx
+  11e2ee:	83 fa ff             	cmp    $0xffffffff,%edx
+  11e2f1:	74 3b                	je     11e32e <<hyperreal::computable::node::Computable>::cheap_bound+0xb7e>
+  11e2f3:	89 d6                	mov    %edx,%esi
+  11e2f5:	83 ee 02             	sub    $0x2,%esi
+  11e2f8:	b8 02 00 00 00       	mov    $0x2,%eax
+  11e2fd:	0f 42 f0             	cmovb  %eax,%esi
+  11e300:	85 f6                	test   %esi,%esi
+  11e302:	74 2a                	je     11e32e <<hyperreal::computable::node::Computable>::cheap_bound+0xb7e>
+  11e304:	31 c9                	xor    %ecx,%ecx
+  11e306:	b0 02                	mov    $0x2,%al
+  11e308:	83 fe 01             	cmp    $0x1,%esi
+  11e30b:	0f 84 3f f7 ff ff    	je     11da50 <<hyperreal::computable::node::Computable>::cheap_bound+0x2a0>
+  11e311:	f6 c2 01             	test   $0x1,%dl
+  11e314:	74 18                	je     11e32e <<hyperreal::computable::node::Computable>::cheap_bound+0xb7e>
+  11e316:	f6 84 24 c0 00 00 00 	testb  $0x1,0xc0(%rsp)
+  11e31d:	01 
+  11e31e:	74 0e                	je     11e32e <<hyperreal::computable::node::Computable>::cheap_bound+0xb7e>
+  11e320:	83 bc 24 bc 00 00 00 	cmpl   $0x0,0xbc(%rsp)
+  11e327:	00 
+  11e328:	0f 88 22 f7 ff ff    	js     11da50 <<hyperreal::computable::node::Computable>::cheap_bound+0x2a0>
+  11e32e:	b9 02 00 00 00       	mov    $0x2,%ecx
+  11e333:	b0 ff                	mov    $0xff,%al
+  11e335:	e9 16 f7 ff ff       	jmp    11da50 <<hyperreal::computable::node::Computable>::cheap_bound+0x2a0>
+  11e33a:	41 0f b6 c9          	movzbl %r9b,%ecx
+  11e33e:	c1 e1 03             	shl    $0x3,%ecx
+  11e341:	41 ba 00 ff 02 00    	mov    $0x2ff00,%r10d
+  11e347:	41 d3 ea             	shr    %cl,%r10d
+  11e34a:	44 21 c6             	and    %r8d,%esi
+  11e34d:	31 c9                	xor    %ecx,%ecx
+  11e34f:	40 f6 c6 01          	test   $0x1,%sil
+  11e353:	74 1f                	je     11e374 <<hyperreal::computable::node::Computable>::cheap_bound+0xbc4>
+  11e355:	48 63 7c ba 04       	movslq 0x4(%rdx,%rdi,4),%rdi
+  11e35a:	48 8d 14 07          	lea    (%rdi,%rax,1),%rdx
+  11e35e:	48 81 c2 01 00 00 80 	add    $0xffffffff80000001,%rdx
+  11e365:	48 be 00 00 00 00 ff 	movabs $0xffffffff00000000,%rsi
+  11e36c:	ff ff ff 
+  11e36f:	48 39 f2             	cmp    %rsi,%rdx
+  11e372:	73 0a                	jae    11e37e <<hyperreal::computable::node::Computable>::cheap_bound+0xbce>
+  11e374:	48 89 84 24 b0 00 00 	mov    %rax,0xb0(%rsp)
+  11e37b:	00 
+  11e37c:	eb 12                	jmp    11e390 <<hyperreal::computable::node::Computable>::cheap_bound+0xbe0>
+  11e37e:	48 01 c7             	add    %rax,%rdi
+  11e381:	ff c7                	inc    %edi
+  11e383:	48 89 bc 24 b0 00 00 	mov    %rdi,0xb0(%rsp)
+  11e38a:	00 
+  11e38b:	b9 01 00 00 00       	mov    $0x1,%ecx
+  11e390:	89 8c 24 a4 00 00 00 	mov    %ecx,0xa4(%rsp)
+  11e397:	48 8b 84 24 b0 00 00 	mov    0xb0(%rsp),%rax
+  11e39e:	00 
+  11e39f:	89 84 24 a8 00 00 00 	mov    %eax,0xa8(%rsp)
+  11e3a6:	c6 84 24 ac 00 00 00 	movb   $0x0,0xac(%rsp)
+  11e3ad:	00 
+  11e3ae:	44 88 94 24 ad 00 00 	mov    %r10b,0xad(%rsp)
+  11e3b5:	00 
+  11e3b6:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11e3bb:	48 8b 38             	mov    (%rax),%rdi
+  11e3be:	41 0f b6 47 10       	movzbl 0x10(%r15),%eax
+  11e3c3:	85 c0                	test   %eax,%eax
+  11e3c5:	0f 85 55 05 00 00    	jne    11e920 <<hyperreal::computable::node::Computable>::cheap_bound+0x1170>
+  11e3cb:	49 8b 07             	mov    (%r15),%rax
+  11e3ce:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11e3d5:	ff ff 7f 
+  11e3d8:	48 39 c8             	cmp    %rcx,%rax
+  11e3db:	0f 83 c0 05 00 00    	jae    11e9a1 <<hyperreal::computable::node::Computable>::cheap_bound+0x11f1>
+  11e3e1:	48 8d 48 01          	lea    0x1(%rax),%rcx
+  11e3e5:	49 89 0f             	mov    %rcx,(%r15)
+  11e3e8:	49 8b 4f 08          	mov    0x8(%r15),%rcx
+  11e3ec:	48 85 c9             	test   %rcx,%rcx
+  11e3ef:	44 89 54 24 70       	mov    %r10d,0x70(%rsp)
+  11e3f4:	74 0f                	je     11e405 <<hyperreal::computable::node::Computable>::cheap_bound+0xc55>
+  11e3f6:	80 79 20 00          	cmpb   $0x0,0x20(%rcx)
+  11e3fa:	75 1f                	jne    11e41b <<hyperreal::computable::node::Computable>::cheap_bound+0xc6b>
+  11e3fc:	48 8b 49 18          	mov    0x18(%rcx),%rcx
+  11e400:	48 85 c9             	test   %rcx,%rcx
+  11e403:	75 f1                	jne    11e3f6 <<hyperreal::computable::node::Computable>::cheap_bound+0xc46>
+  11e405:	49 89 07             	mov    %rax,(%r15)
+  11e408:	48 83 c7 38          	add    $0x38,%rdi
+  11e40c:	48 8d b4 24 a4 00 00 	lea    0xa4(%rsp),%rsi
+  11e413:	00 
+  11e414:	e8 67 43 ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11e419:	eb 03                	jmp    11e41e <<hyperreal::computable::node::Computable>::cheap_bound+0xc6e>
+  11e41b:	49 89 07             	mov    %rax,(%r15)
+  11e41e:	4c 8b 7c 24 30       	mov    0x30(%rsp),%r15
+  11e423:	4c 3b 7c 24 20       	cmp    0x20(%rsp),%r15
+  11e428:	75 0b                	jne    11e435 <<hyperreal::computable::node::Computable>::cheap_bound+0xc85>
+  11e42a:	48 8d 7c 24 20       	lea    0x20(%rsp),%rdi
+  11e42f:	ff 15 1b a4 0e 00    	call   *0xea41b(%rip)        # 208850 <_DYNAMIC+0x8f8>
+  11e435:	48 8b 44 24 28       	mov    0x28(%rsp),%rax
+  11e43a:	4b 8d 0c 7f          	lea    (%r15,%r15,2),%rcx
+  11e43e:	8b 94 24 ac 00 00 00 	mov    0xac(%rsp),%edx
+  11e445:	89 54 88 08          	mov    %edx,0x8(%rax,%rcx,4)
+  11e449:	48 8b 94 24 a4 00 00 	mov    0xa4(%rsp),%rdx
+  11e450:	00 
+  11e451:	48 89 14 88          	mov    %rdx,(%rax,%rcx,4)
+  11e455:	49 ff c7             	inc    %r15
+  11e458:	4c 89 7c 24 30       	mov    %r15,0x30(%rsp)
+  11e45d:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e462:	4c 8b 3c 24          	mov    (%rsp),%r15
+  11e466:	4d 85 e4             	test   %r12,%r12
+  11e469:	0f 85 cc f4 ff ff    	jne    11d93b <<hyperreal::computable::node::Computable>::cheap_bound+0x18b>
+  11e46f:	e9 1d 06 00 00       	jmp    11ea91 <<hyperreal::computable::node::Computable>::cheap_bound+0x12e1>
+  11e474:	49 8b 77 18          	mov    0x18(%r15),%rsi
+  11e478:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+  11e47d:	e8 8e 19 fd ff       	call   efe10 <<hyperreal::computable::node::BoundInfo>::from_rational>
+  11e482:	e9 28 01 00 00       	jmp    11e5af <<hyperreal::computable::node::Computable>::cheap_bound+0xdff>
+  11e487:	41 0f b6 47 30       	movzbl 0x30(%r15),%eax
+  11e48c:	ba 03 00 00 00       	mov    $0x3,%edx
+  11e491:	3c 01                	cmp    $0x1,%al
+  11e493:	0f 84 78 04 00 00    	je     11e911 <<hyperreal::computable::node::Computable>::cheap_bound+0x1161>
+  11e499:	49 8b 4f 28          	mov    0x28(%r15),%rcx
+  11e49d:	48 85 c9             	test   %rcx,%rcx
+  11e4a0:	0f 84 5a 04 00 00    	je     11e900 <<hyperreal::computable::node::Computable>::cheap_bound+0x1150>
+  11e4a6:	49 8b 57 20          	mov    0x20(%r15),%rdx
+  11e4aa:	be 7f 00 00 00       	mov    $0x7f,%esi
+  11e4af:	48 0f bd 74 ca f8    	bsr    -0x8(%rdx,%rcx,8),%rsi
+  11e4b5:	48 83 f6 3f          	xor    $0x3f,%rsi
+  11e4b9:	48 c1 e1 06          	shl    $0x6,%rcx
+  11e4bd:	48 29 f1             	sub    %rsi,%rcx
+  11e4c0:	e9 3d 04 00 00       	jmp    11e902 <<hyperreal::computable::node::Computable>::cheap_bound+0x1152>
+  11e4c5:	41 0f b6 77 11       	movzbl 0x11(%r15),%esi
+  11e4ca:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+  11e4cf:	e8 2c ae 00 00       	call   129300 <<hyperreal::computable::approximation::SharedConstant>::bound_info>
+  11e4d4:	e9 d6 00 00 00       	jmp    11e5af <<hyperreal::computable::node::Computable>::cheap_bound+0xdff>
+  11e4d9:	48 c7 44 24 40 01 00 	movq   $0x1,0x40(%rsp)
+  11e4e0:	00 00 
+  11e4e2:	b0 02                	mov    $0x2,%al
+  11e4e4:	e9 30 04 00 00       	jmp    11e919 <<hyperreal::computable::node::Computable>::cheap_bound+0x1169>
+  11e4e9:	48 8d bc 24 b8 00 00 	lea    0xb8(%rsp),%rdi
+  11e4f0:	00 
+  11e4f1:	4c 89 fe             	mov    %r15,%rsi
+  11e4f4:	e8 b7 41 ff ff       	call   1126b0 <<hyperreal::computable::node::Computable>::cached>
+  11e4f9:	48 83 bc 24 c0 00 00 	cmpq   $0xffffffffffffffff,0xc0(%rsp)
+  11e500:	00 ff 
+  11e502:	0f 84 84 00 00 00    	je     11e58c <<hyperreal::computable::node::Computable>::cheap_bound+0xddc>
+  11e508:	8b b4 24 b8 00 00 00 	mov    0xb8(%rsp),%esi
+  11e50f:	48 8d 84 24 c0 00 00 	lea    0xc0(%rsp),%rax
+  11e516:	00 
+  11e517:	0f 10 00             	movups (%rax),%xmm0
+  11e51a:	0f 10 48 10          	movups 0x10(%rax),%xmm1
+  11e51e:	0f 29 8c 24 10 01 00 	movaps %xmm1,0x110(%rsp)
+  11e525:	00 
+  11e526:	0f 29 84 24 00 01 00 	movaps %xmm0,0x100(%rsp)
+  11e52d:	00 
+  11e52e:	48 8d bc 24 f4 00 00 	lea    0xf4(%rsp),%rdi
+  11e535:	00 
+  11e536:	48 8d 94 24 00 01 00 	lea    0x100(%rsp),%rdx
+  11e53d:	00 
+  11e53e:	e8 cd 09 00 00       	call   11ef10 <<hyperreal::computable::node::Computable>::bound_from_approx>
+  11e543:	48 8b b4 24 00 01 00 	mov    0x100(%rsp),%rsi
+  11e54a:	00 
+  11e54b:	48 85 f6             	test   %rsi,%rsi
+  11e54e:	74 47                	je     11e597 <<hyperreal::computable::node::Computable>::cheap_bound+0xde7>
+  11e550:	48 8b bc 24 08 01 00 	mov    0x108(%rsp),%rdi
+  11e557:	00 
+  11e558:	48 c1 e6 03          	shl    $0x3,%rsi
+  11e55c:	ba 08 00 00 00       	mov    $0x8,%edx
+  11e561:	ff 15 31 9c 0e 00    	call   *0xe9c31(%rip)        # 208198 <_DYNAMIC+0x240>
+  11e567:	eb 2e                	jmp    11e597 <<hyperreal::computable::node::Computable>::cheap_bound+0xde7>
+  11e569:	83 f8 02             	cmp    $0x2,%eax
+  11e56c:	0f 84 e8 05 00 00    	je     11eb5a <<hyperreal::computable::node::Computable>::cheap_bound+0x13aa>
+  11e572:	4c 89 ff             	mov    %r15,%rdi
+  11e575:	48 8d 35 f4 0e 08 00 	lea    0x80ef4(%rip),%rsi        # 19f470 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+  11e57c:	ff 15 4e a0 0e 00    	call   *0xea04e(%rip)        # 2085d0 <_DYNAMIC+0x678>
+  11e582:	41 c6 47 10 00       	movb   $0x0,0x10(%r15)
+  11e587:	e9 e0 f3 ff ff       	jmp    11d96c <<hyperreal::computable::node::Computable>::cheap_bound+0x1bc>
+  11e58c:	c7 84 24 f4 00 00 00 	movl   $0x2,0xf4(%rsp)
+  11e593:	02 00 00 00 
+  11e597:	8b 84 24 fc 00 00 00 	mov    0xfc(%rsp),%eax
+  11e59e:	89 44 24 48          	mov    %eax,0x48(%rsp)
+  11e5a2:	48 8b 84 24 f4 00 00 	mov    0xf4(%rsp),%rax
+  11e5a9:	00 
+  11e5aa:	48 89 44 24 40       	mov    %rax,0x40(%rsp)
+  11e5af:	83 7c 24 40 ff       	cmpl   $0xffffffff,0x40(%rsp)
+  11e5b4:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+  11e5b9:	4c 8b 38             	mov    (%rax),%r15
+  11e5bc:	0f 85 bd fa ff ff    	jne    11e07f <<hyperreal::computable::node::Computable>::cheap_bound+0x8cf>
+  11e5c2:	41 0f b6 47 10       	movzbl 0x10(%r15),%eax
+  11e5c7:	0f b6 c0             	movzbl %al,%eax
+  11e5ca:	83 c0 fd             	add    $0xfffffffd,%eax
+  11e5cd:	83 f8 0a             	cmp    $0xa,%eax
+  11e5d0:	0f 87 06 07 00 00    	ja     11ecdc <<hyperreal::computable::node::Computable>::cheap_bound+0x152c>
+  11e5d6:	48 8d 0d 07 01 f2 ff 	lea    -0xdfef9(%rip),%rcx        # 3e6e4 <__gmpn_invert_limb_table+0x13c4>
+  11e5dd:	48 63 04 81          	movslq (%rcx,%rax,4),%rax
+  11e5e1:	48 01 c8             	add    %rcx,%rax
+  11e5e4:	ff e0                	jmp    *%rax
+  11e5e6:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e5eb:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e5f0:	75 0b                	jne    11e5fd <<hyperreal::computable::node::Computable>::cheap_bound+0xe4d>
+  11e5f2:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e5f7:	ff 15 5b a2 0e 00    	call   *0xea25b(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e5fd:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e602:	4c 89 e1             	mov    %r12,%rcx
+  11e605:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e609:	c7 04 08 03 00 00 00 	movl   $0x3,(%rax,%rcx,1)
+  11e610:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e615:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e61a:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e61f:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e624:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e629:	0f 85 fb 01 00 00    	jne    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e62f:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e634:	ff 15 1e a2 0e 00    	call   *0xea21e(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e63a:	e9 eb 01 00 00       	jmp    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e63f:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e644:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e649:	75 0b                	jne    11e656 <<hyperreal::computable::node::Computable>::cheap_bound+0xea6>
+  11e64b:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e650:	ff 15 02 a2 0e 00    	call   *0xea202(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e656:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e65b:	4c 89 e1             	mov    %r12,%rcx
+  11e65e:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e662:	c7 04 08 07 00 00 00 	movl   $0x7,(%rax,%rcx,1)
+  11e669:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e66e:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e673:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e678:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e67d:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e682:	75 0b                	jne    11e68f <<hyperreal::computable::node::Computable>::cheap_bound+0xedf>
+  11e684:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e689:	ff 15 c9 a1 0e 00    	call   *0xea1c9(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e68f:	49 8d 47 28          	lea    0x28(%r15),%rax
+  11e693:	48 8b 4c 24 10       	mov    0x10(%rsp),%rcx
+  11e698:	49 c1 e5 04          	shl    $0x4,%r13
+  11e69c:	42 c7 04 29 00 00 00 	movl   $0x0,(%rcx,%r13,1)
+  11e6a3:	00 
+  11e6a4:	4a 89 44 29 08       	mov    %rax,0x8(%rcx,%r13,1)
+  11e6a9:	4d 8d 6c 24 02       	lea    0x2(%r12),%r13
+  11e6ae:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e6b3:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e6b8:	0f 85 1a 02 00 00    	jne    11e8d8 <<hyperreal::computable::node::Computable>::cheap_bound+0x1128>
+  11e6be:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e6c3:	ff 15 8f a1 0e 00    	call   *0xea18f(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e6c9:	e9 0a 02 00 00       	jmp    11e8d8 <<hyperreal::computable::node::Computable>::cheap_bound+0x1128>
+  11e6ce:	41 8b 6f 14          	mov    0x14(%r15),%ebp
+  11e6d2:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e6d7:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e6dc:	75 0b                	jne    11e6e9 <<hyperreal::computable::node::Computable>::cheap_bound+0xf39>
+  11e6de:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e6e3:	ff 15 6f a1 0e 00    	call   *0xea16f(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e6e9:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e6ee:	4c 89 e1             	mov    %r12,%rcx
+  11e6f1:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e6f5:	c7 04 08 02 00 00 00 	movl   $0x2,(%rax,%rcx,1)
+  11e6fc:	89 6c 08 04          	mov    %ebp,0x4(%rax,%rcx,1)
+  11e700:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e705:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e70a:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e70f:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e714:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e719:	0f 85 0b 01 00 00    	jne    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e71f:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e724:	ff 15 2e a1 0e 00    	call   *0xea12e(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e72a:	e9 fb 00 00 00       	jmp    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e72f:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e734:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e739:	75 0b                	jne    11e746 <<hyperreal::computable::node::Computable>::cheap_bound+0xf96>
+  11e73b:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e740:	ff 15 12 a1 0e 00    	call   *0xea112(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e746:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e74b:	4c 89 e1             	mov    %r12,%rcx
+  11e74e:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e752:	c7 04 08 04 00 00 00 	movl   $0x4,(%rax,%rcx,1)
+  11e759:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e75e:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e763:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e768:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e76d:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e772:	0f 85 b2 00 00 00    	jne    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e778:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e77d:	ff 15 d5 a0 0e 00    	call   *0xea0d5(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e783:	e9 a2 00 00 00       	jmp    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e788:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e78d:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e792:	75 0b                	jne    11e79f <<hyperreal::computable::node::Computable>::cheap_bound+0xfef>
+  11e794:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e799:	ff 15 b9 a0 0e 00    	call   *0xea0b9(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e79f:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e7a4:	4c 89 e1             	mov    %r12,%rcx
+  11e7a7:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e7ab:	c7 04 08 01 00 00 00 	movl   $0x1,(%rax,%rcx,1)
+  11e7b2:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e7b7:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e7bc:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e7c1:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e7c6:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e7cb:	75 5d                	jne    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e7cd:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e7d2:	ff 15 80 a0 0e 00    	call   *0xea080(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e7d8:	eb 50                	jmp    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e7da:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e7df:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e7e4:	75 0b                	jne    11e7f1 <<hyperreal::computable::node::Computable>::cheap_bound+0x1041>
+  11e7e6:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e7eb:	ff 15 67 a0 0e 00    	call   *0xea067(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e7f1:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e7f6:	4c 89 e1             	mov    %r12,%rcx
+  11e7f9:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e7fd:	c7 04 08 05 00 00 00 	movl   $0x5,(%rax,%rcx,1)
+  11e804:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e809:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e80e:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e813:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e818:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e81d:	75 0b                	jne    11e82a <<hyperreal::computable::node::Computable>::cheap_bound+0x107a>
+  11e81f:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e824:	ff 15 2e a0 0e 00    	call   *0xea02e(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e82a:	49 83 c7 18          	add    $0x18,%r15
+  11e82e:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e833:	49 c1 e5 04          	shl    $0x4,%r13
+  11e837:	42 c7 04 28 00 00 00 	movl   $0x0,(%rax,%r13,1)
+  11e83e:	00 
+  11e83f:	4e 89 7c 28 08       	mov    %r15,0x8(%rax,%r13,1)
+  11e844:	49 83 c4 02          	add    $0x2,%r12
+  11e848:	4c 89 64 24 18       	mov    %r12,0x18(%rsp)
+  11e84d:	e9 10 fc ff ff       	jmp    11e462 <<hyperreal::computable::node::Computable>::cheap_bound+0xcb2>
+  11e852:	4c 8b 64 24 18       	mov    0x18(%rsp),%r12
+  11e857:	4c 3b 64 24 08       	cmp    0x8(%rsp),%r12
+  11e85c:	75 0b                	jne    11e869 <<hyperreal::computable::node::Computable>::cheap_bound+0x10b9>
+  11e85e:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e863:	ff 15 ef 9f 0e 00    	call   *0xe9fef(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e869:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e86e:	4c 89 e1             	mov    %r12,%rcx
+  11e871:	48 c1 e1 04          	shl    $0x4,%rcx
+  11e875:	c7 04 08 06 00 00 00 	movl   $0x6,(%rax,%rcx,1)
+  11e87c:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+  11e881:	48 89 54 08 08       	mov    %rdx,0x8(%rax,%rcx,1)
+  11e886:	4d 8d 6c 24 01       	lea    0x1(%r12),%r13
+  11e88b:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e890:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e895:	75 0b                	jne    11e8a2 <<hyperreal::computable::node::Computable>::cheap_bound+0x10f2>
+  11e897:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e89c:	ff 15 b6 9f 0e 00    	call   *0xe9fb6(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e8a2:	49 8d 47 28          	lea    0x28(%r15),%rax
+  11e8a6:	48 8b 4c 24 10       	mov    0x10(%rsp),%rcx
+  11e8ab:	49 c1 e5 04          	shl    $0x4,%r13
+  11e8af:	42 c7 04 29 00 00 00 	movl   $0x0,(%rcx,%r13,1)
+  11e8b6:	00 
+  11e8b7:	4a 89 44 29 08       	mov    %rax,0x8(%rcx,%r13,1)
+  11e8bc:	4d 8d 6c 24 02       	lea    0x2(%r12),%r13
+  11e8c1:	4c 89 6c 24 18       	mov    %r13,0x18(%rsp)
+  11e8c6:	4c 3b 6c 24 08       	cmp    0x8(%rsp),%r13
+  11e8cb:	75 0b                	jne    11e8d8 <<hyperreal::computable::node::Computable>::cheap_bound+0x1128>
+  11e8cd:	48 8d 7c 24 08       	lea    0x8(%rsp),%rdi
+  11e8d2:	ff 15 80 9f 0e 00    	call   *0xe9f80(%rip)        # 208858 <_DYNAMIC+0x900>
+  11e8d8:	49 83 c7 18          	add    $0x18,%r15
+  11e8dc:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+  11e8e1:	49 c1 e5 04          	shl    $0x4,%r13
+  11e8e5:	42 c7 04 28 00 00 00 	movl   $0x0,(%rax,%r13,1)
+  11e8ec:	00 
+  11e8ed:	4e 89 7c 28 08       	mov    %r15,0x8(%rax,%r13,1)
+  11e8f2:	49 83 c4 03          	add    $0x3,%r12
+  11e8f6:	4c 89 64 24 18       	mov    %r12,0x18(%rsp)
+  11e8fb:	e9 62 fb ff ff       	jmp    11e462 <<hyperreal::computable::node::Computable>::cheap_bound+0xcb2>
+  11e900:	31 c9                	xor    %ecx,%ecx
+  11e902:	31 d2                	xor    %edx,%edx
+  11e904:	be 01 00 00 80       	mov    $0x80000001,%esi
+  11e909:	48 39 f1             	cmp    %rsi,%rcx
+  11e90c:	0f 92 c2             	setb   %dl
+  11e90f:	ff c9                	dec    %ecx
+  11e911:	89 54 24 40          	mov    %edx,0x40(%rsp)
+  11e915:	89 4c 24 44          	mov    %ecx,0x44(%rsp)
+  11e919:	b2 01                	mov    $0x1,%dl
+  11e91b:	e9 4f f7 ff ff       	jmp    11e06f <<hyperreal::computable::node::Computable>::cheap_bound+0x8bf>
+  11e920:	83 f8 02             	cmp    $0x2,%eax
+  11e923:	0f 84 31 02 00 00    	je     11eb5a <<hyperreal::computable::node::Computable>::cheap_bound+0x13aa>
+  11e929:	44 89 d5             	mov    %r10d,%ebp
+  11e92c:	49 89 ff             	mov    %rdi,%r15
+  11e92f:	48 8b 3c 24          	mov    (%rsp),%rdi
+  11e933:	48 8d 35 36 0b 08 00 	lea    0x80b36(%rip),%rsi        # 19f470 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+  11e93a:	ff 15 90 9c 0e 00    	call   *0xe9c90(%rip)        # 2085d0 <_DYNAMIC+0x678>
+  11e940:	48 8b 04 24          	mov    (%rsp),%rax
+  11e944:	c6 40 10 00          	movb   $0x0,0x10(%rax)
+  11e948:	4c 89 ff             	mov    %r15,%rdi
+  11e94b:	49 89 c7             	mov    %rax,%r15
+  11e94e:	41 89 ea             	mov    %ebp,%r10d
+  11e951:	49 8b 07             	mov    (%r15),%rax
+  11e954:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11e95b:	ff ff 7f 
+  11e95e:	48 39 c8             	cmp    %rcx,%rax
+  11e961:	0f 82 7a fa ff ff    	jb     11e3e1 <<hyperreal::computable::node::Computable>::cheap_bound+0xc31>
+  11e967:	eb 38                	jmp    11e9a1 <<hyperreal::computable::node::Computable>::cheap_bound+0x11f1>
+  11e969:	83 f8 02             	cmp    $0x2,%eax
+  11e96c:	0f 84 e8 01 00 00    	je     11eb5a <<hyperreal::computable::node::Computable>::cheap_bound+0x13aa>
+  11e972:	48 8b 3c 24          	mov    (%rsp),%rdi
+  11e976:	48 8d 35 f3 0a 08 00 	lea    0x80af3(%rip),%rsi        # 19f470 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+  11e97d:	ff 15 4d 9c 0e 00    	call   *0xe9c4d(%rip)        # 2085d0 <_DYNAMIC+0x678>
+  11e983:	48 8b 14 24          	mov    (%rsp),%rdx
+  11e987:	c6 42 10 00          	movb   $0x0,0x10(%rdx)
+  11e98b:	48 8b 02             	mov    (%rdx),%rax
+  11e98e:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11e995:	ff ff 7f 
+  11e998:	48 39 c8             	cmp    %rcx,%rax
+  11e99b:	0f 82 04 f7 ff ff    	jb     11e0a5 <<hyperreal::computable::node::Computable>::cheap_bound+0x8f5>
+  11e9a1:	48 8d 05 18 64 0e 00 	lea    0xe6418(%rip),%rax        # 204dc0 <anon.953f3db8f5a996f677fb6a53175227a4.24.llvm.5533634630175563929>
+  11e9a8:	48 89 84 24 e0 00 00 	mov    %rax,0xe0(%rsp)
+  11e9af:	00 
+  11e9b0:	48 8b bc 24 e0 00 00 	mov    0xe0(%rsp),%rdi
+  11e9b7:	00 
+  11e9b8:	ff 15 1a 9c 0e 00    	call   *0xe9c1a(%rip)        # 2085d8 <_DYNAMIC+0x680>
+  11e9be:	e9 32 03 00 00       	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11e9c3:	66 66 66 66 2e 0f 1f 	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+  11e9ca:	84 00 00 00 00 00 
+  11e9d0:	c6 41 20 01          	movb   $0x1,0x20(%rcx)
+  11e9d4:	48 8b 49 18          	mov    0x18(%rcx),%rcx
+  11e9d8:	48 85 c9             	test   %rcx,%rcx
+  11e9db:	75 f3                	jne    11e9d0 <<hyperreal::computable::node::Computable>::cheap_bound+0x1220>
+  11e9dd:	48 8b 04 24          	mov    (%rsp),%rax
+  11e9e1:	4c 89 38             	mov    %r15,(%rax)
+  11e9e4:	49 8b 06             	mov    (%r14),%rax
+  11e9e7:	89 c1                	mov    %eax,%ecx
+  11e9e9:	83 e1 03             	and    $0x3,%ecx
+  11e9ec:	48 8d 15 c1 fb f1 ff 	lea    -0xe043f(%rip),%rdx        # 3e5b4 <__gmpn_invert_limb_table+0x1294>
+  11e9f3:	48 63 0c 8a          	movslq (%rdx,%rcx,4),%rcx
+  11e9f7:	48 01 d1             	add    %rdx,%rcx
+  11e9fa:	ff e1                	jmp    *%rcx
+  11e9fc:	c7 03 02 00 00 00    	movl   $0x2,(%rbx)
+  11ea02:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  11ea07:	48 85 c0             	test   %rax,%rax
+  11ea0a:	75 46                	jne    11ea52 <<hyperreal::computable::node::Computable>::cheap_bound+0x12a2>
+  11ea0c:	eb 5c                	jmp    11ea6a <<hyperreal::computable::node::Computable>::cheap_bound+0x12ba>
+  11ea0e:	be 03 00 00 00       	mov    $0x3,%esi
+  11ea13:	eb 28                	jmp    11ea3d <<hyperreal::computable::node::Computable>::cheap_bound+0x128d>
+  11ea15:	8d 0c 00             	lea    (%rax,%rax,1),%ecx
+  11ea18:	80 e1 18             	and    $0x18,%cl
+  11ea1b:	ba ff 02 00 01       	mov    $0x10002ff,%edx
+  11ea20:	d3 ea                	shr    %cl,%edx
+  11ea22:	48 89 c1             	mov    %rax,%rcx
+  11ea25:	48 c1 e9 20          	shr    $0x20,%rcx
+  11ea29:	89 c6                	mov    %eax,%esi
+  11ea2b:	c1 ee 04             	shr    $0x4,%esi
+  11ea2e:	83 e6 01             	and    $0x1,%esi
+  11ea31:	c0 e8 05             	shr    $0x5,%al
+  11ea34:	24 01                	and    $0x1,%al
+  11ea36:	eb 05                	jmp    11ea3d <<hyperreal::computable::node::Computable>::cheap_bound+0x128d>
+  11ea38:	be 02 00 00 00       	mov    $0x2,%esi
+  11ea3d:	89 33                	mov    %esi,(%rbx)
+  11ea3f:	89 4b 04             	mov    %ecx,0x4(%rbx)
+  11ea42:	88 43 08             	mov    %al,0x8(%rbx)
+  11ea45:	88 53 09             	mov    %dl,0x9(%rbx)
+  11ea48:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  11ea4d:	48 85 c0             	test   %rax,%rax
+  11ea50:	74 18                	je     11ea6a <<hyperreal::computable::node::Computable>::cheap_bound+0x12ba>
+  11ea52:	48 8b 7c 24 28       	mov    0x28(%rsp),%rdi
+  11ea57:	48 c1 e0 02          	shl    $0x2,%rax
+  11ea5b:	48 8d 34 40          	lea    (%rax,%rax,2),%rsi
+  11ea5f:	ba 04 00 00 00       	mov    $0x4,%edx
+  11ea64:	ff 15 2e 97 0e 00    	call   *0xe972e(%rip)        # 208198 <_DYNAMIC+0x240>
+  11ea6a:	48 8b 74 24 08       	mov    0x8(%rsp),%rsi
+  11ea6f:	48 85 f6             	test   %rsi,%rsi
+  11ea72:	0f 84 d8 ed ff ff    	je     11d850 <<hyperreal::computable::node::Computable>::cheap_bound+0xa0>
+  11ea78:	48 8b 7c 24 10       	mov    0x10(%rsp),%rdi
+  11ea7d:	48 c1 e6 04          	shl    $0x4,%rsi
+  11ea81:	ba 08 00 00 00       	mov    $0x8,%edx
+  11ea86:	ff 15 0c 97 0e 00    	call   *0xe970c(%rip)        # 208198 <_DYNAMIC+0x240>
+  11ea8c:	e9 bf ed ff ff       	jmp    11d850 <<hyperreal::computable::node::Computable>::cheap_bound+0xa0>
+  11ea91:	48 8b 44 24 30       	mov    0x30(%rsp),%rax
+  11ea96:	48 85 c0             	test   %rax,%rax
+  11ea99:	0f 84 ae 01 00 00    	je     11ec4d <<hyperreal::computable::node::Computable>::cheap_bound+0x149d>
+  11ea9f:	48 ff c8             	dec    %rax
+  11eaa2:	48 89 44 24 30       	mov    %rax,0x30(%rsp)
+  11eaa7:	48 8b 4c 24 28       	mov    0x28(%rsp),%rcx
+  11eaac:	48 8d 04 40          	lea    (%rax,%rax,2),%rax
+  11eab0:	48 8b 14 81          	mov    (%rcx,%rax,4),%rdx
+  11eab4:	48 89 94 24 b8 00 00 	mov    %rdx,0xb8(%rsp)
+  11eabb:	00 
+  11eabc:	8b 44 81 08          	mov    0x8(%rcx,%rax,4),%eax
+  11eac0:	89 84 24 c0 00 00 00 	mov    %eax,0xc0(%rsp)
+  11eac7:	48 8b 84 24 20 01 00 	mov    0x120(%rsp),%rax
+  11eace:	00 
+  11eacf:	4c 8d b8 e0 fe ff ff 	lea    -0x120(%rax),%r15
+  11ead6:	0f b6 80 f0 fe ff ff 	movzbl -0x110(%rax),%eax
+  11eadd:	85 c0                	test   %eax,%eax
+  11eadf:	0f 85 87 01 00 00    	jne    11ec6c <<hyperreal::computable::node::Computable>::cheap_bound+0x14bc>
+  11eae5:	49 8b 07             	mov    (%r15),%rax
+  11eae8:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11eaef:	ff ff 7f 
+  11eaf2:	48 39 c8             	cmp    %rcx,%rax
+  11eaf5:	0f 83 b0 01 00 00    	jae    11ecab <<hyperreal::computable::node::Computable>::cheap_bound+0x14fb>
+  11eafb:	48 8d 48 01          	lea    0x1(%rax),%rcx
+  11eaff:	49 89 0f             	mov    %rcx,(%r15)
+  11eb02:	49 8b 4f 08          	mov    0x8(%r15),%rcx
+  11eb06:	48 85 c9             	test   %rcx,%rcx
+  11eb09:	74 0f                	je     11eb1a <<hyperreal::computable::node::Computable>::cheap_bound+0x136a>
+  11eb0b:	80 79 20 00          	cmpb   $0x0,0x20(%rcx)
+  11eb0f:	75 1e                	jne    11eb2f <<hyperreal::computable::node::Computable>::cheap_bound+0x137f>
+  11eb11:	48 8b 49 18          	mov    0x18(%rcx),%rcx
+  11eb15:	48 85 c9             	test   %rcx,%rcx
+  11eb18:	75 f1                	jne    11eb0b <<hyperreal::computable::node::Computable>::cheap_bound+0x135b>
+  11eb1a:	49 89 07             	mov    %rax,(%r15)
+  11eb1d:	48 8d b4 24 b8 00 00 	lea    0xb8(%rsp),%rsi
+  11eb24:	00 
+  11eb25:	4c 89 f7             	mov    %r14,%rdi
+  11eb28:	e8 53 3c ff ff       	call   112780 <<hyperreal::computable::node::AtomicFacts>::publish_bound>
+  11eb2d:	eb 03                	jmp    11eb32 <<hyperreal::computable::node::Computable>::cheap_bound+0x1382>
+  11eb2f:	49 89 07             	mov    %rax,(%r15)
+  11eb32:	8b 84 24 c0 00 00 00 	mov    0xc0(%rsp),%eax
+  11eb39:	89 43 08             	mov    %eax,0x8(%rbx)
+  11eb3c:	48 8b 84 24 b8 00 00 	mov    0xb8(%rsp),%rax
+  11eb43:	00 
+  11eb44:	48 89 03             	mov    %rax,(%rbx)
+  11eb47:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  11eb4c:	48 85 c0             	test   %rax,%rax
+  11eb4f:	0f 85 fd fe ff ff    	jne    11ea52 <<hyperreal::computable::node::Computable>::cheap_bound+0x12a2>
+  11eb55:	e9 10 ff ff ff       	jmp    11ea6a <<hyperreal::computable::node::Computable>::cheap_bound+0x12ba>
+  11eb5a:	48 8d 3d 67 61 0e 00 	lea    0xe6167(%rip),%rdi        # 204cc8 <anon.953f3db8f5a996f677fb6a53175227a4.4.llvm.5533634630175563929>
+  11eb61:	ff 15 79 9a 0e 00    	call   *0xe9a79(%rip)        # 2085e0 <_DYNAMIC+0x688>
+  11eb67:	e9 89 01 00 00       	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11eb6c:	48 8d 05 4f 14 f2 ff 	lea    -0xdebb1(%rip),%rax        # 3ffc2 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x304>
+  11eb73:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11eb78:	48 8d 05 b1 4f 0e 00 	lea    0xe4fb1(%rip),%rax        # 203b30 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x210>
+  11eb7f:	e9 af 00 00 00       	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11eb84:	be 19 00 00 00       	mov    $0x19,%esi
+  11eb89:	48 8d 05 9b 13 f2 ff 	lea    -0xdec65(%rip),%rax        # 3ff2b <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x26d>
+  11eb90:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11eb95:	48 8d 05 04 4f 0e 00 	lea    0xe4f04(%rip),%rax        # 203aa0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x180>
+  11eb9c:	e9 92 00 00 00       	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11eba1:	be 19 00 00 00       	mov    $0x19,%esi
+  11eba6:	48 8d 05 b1 13 f2 ff 	lea    -0xdec4f(%rip),%rax        # 3ff5e <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x2a0>
+  11ebad:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ebb2:	48 8d 05 17 4f 0e 00 	lea    0xe4f17(%rip),%rax        # 203ad0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x1b0>
+  11ebb9:	eb 78                	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11ebbb:	be 19 00 00 00       	mov    $0x19,%esi
+  11ebc0:	eb 76                	jmp    11ec38 <<hyperreal::computable::node::Computable>::cheap_bound+0x1488>
+  11ebc2:	be 17 00 00 00       	mov    $0x17,%esi
+  11ebc7:	48 8d 05 a9 13 f2 ff 	lea    -0xdec57(%rip),%rax        # 3ff77 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x2b9>
+  11ebce:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ebd3:	48 8d 05 0e 4f 0e 00 	lea    0xe4f0e(%rip),%rax        # 203ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x1c8>
+  11ebda:	eb 57                	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11ebdc:	48 8d 05 ab 13 f2 ff 	lea    -0xdec55(%rip),%rax        # 3ff8e <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x2d0>
+  11ebe3:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ebe8:	48 8d 05 11 4f 0e 00 	lea    0xe4f11(%rip),%rax        # 203b00 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x1e0>
+  11ebef:	eb 42                	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11ebf1:	be 1a 00 00 00       	mov    $0x1a,%esi
+  11ebf6:	48 8d 05 47 13 f2 ff 	lea    -0xdecb9(%rip),%rax        # 3ff44 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x286>
+  11ebfd:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ec02:	48 8d 05 af 4e 0e 00 	lea    0xe4eaf(%rip),%rax        # 203ab8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x198>
+  11ec09:	eb 28                	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11ec0b:	48 8d 05 96 13 f2 ff 	lea    -0xdec6a(%rip),%rax        # 3ffa8 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x2ea>
+  11ec12:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ec17:	48 8d 05 fa 4e 0e 00 	lea    0xe4efa(%rip),%rax        # 203b18 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x1f8>
+  11ec1e:	eb 13                	jmp    11ec33 <<hyperreal::computable::node::Computable>::cheap_bound+0x1483>
+  11ec20:	48 8d 05 ba 13 f2 ff 	lea    -0xdec46(%rip),%rax        # 3ffe1 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x323>
+  11ec27:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ec2c:	48 8d 05 15 4f 0e 00 	lea    0xe4f15(%rip),%rax        # 203b48 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x228>
+  11ec33:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+  11ec38:	48 8b 7c 24 58       	mov    0x58(%rsp),%rdi
+  11ec3d:	48 8b 54 24 50       	mov    0x50(%rsp),%rdx
+  11ec42:	ff 15 d8 98 0e 00    	call   *0xe98d8(%rip)        # 208520 <_DYNAMIC+0x5c8>
+  11ec48:	e9 a8 00 00 00       	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11ec4d:	48 8d 05 04 4e 0e 00 	lea    0xe4e04(%rip),%rax        # 203a58 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x138>
+  11ec54:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+  11ec59:	be 28 00 00 00       	mov    $0x28,%esi
+  11ec5e:	48 8d 05 2c 12 f2 ff 	lea    -0xdedd4(%rip),%rax        # 3fe91 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x1d3>
+  11ec65:	48 89 44 24 58       	mov    %rax,0x58(%rsp)
+  11ec6a:	eb cc                	jmp    11ec38 <<hyperreal::computable::node::Computable>::cheap_bound+0x1488>
+  11ec6c:	83 f8 02             	cmp    $0x2,%eax
+  11ec6f:	75 0f                	jne    11ec80 <<hyperreal::computable::node::Computable>::cheap_bound+0x14d0>
+  11ec71:	48 8d 3d 50 60 0e 00 	lea    0xe6050(%rip),%rdi        # 204cc8 <anon.953f3db8f5a996f677fb6a53175227a4.4.llvm.5533634630175563929>
+  11ec78:	ff 15 62 99 0e 00    	call   *0xe9962(%rip)        # 2085e0 <_DYNAMIC+0x688>
+  11ec7e:	eb 75                	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11ec80:	48 8d 35 e9 07 08 00 	lea    0x807e9(%rip),%rsi        # 19f470 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+  11ec87:	4c 89 ff             	mov    %r15,%rdi
+  11ec8a:	ff 15 40 99 0e 00    	call   *0xe9940(%rip)        # 2085d0 <_DYNAMIC+0x678>
+  11ec90:	41 c6 47 10 00       	movb   $0x0,0x10(%r15)
+  11ec95:	49 8b 07             	mov    (%r15),%rax
+  11ec98:	48 b9 ff ff ff ff ff 	movabs $0x7fffffffffffffff,%rcx
+  11ec9f:	ff ff 7f 
+  11eca2:	48 39 c8             	cmp    %rcx,%rax
+  11eca5:	0f 82 50 fe ff ff    	jb     11eafb <<hyperreal::computable::node::Computable>::cheap_bound+0x134b>
+  11ecab:	48 8d 3d 0e 61 0e 00 	lea    0xe610e(%rip),%rdi        # 204dc0 <anon.953f3db8f5a996f677fb6a53175227a4.24.llvm.5533634630175563929>
+  11ecb2:	ff 15 20 99 0e 00    	call   *0xe9920(%rip)        # 2085d8 <_DYNAMIC+0x680>
+  11ecb8:	eb 3b                	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11ecba:	bf 08 00 00 00       	mov    $0x8,%edi
+  11ecbf:	be 00 01 00 00       	mov    $0x100,%esi
+  11ecc4:	ff 15 46 95 0e 00    	call   *0xe9546(%rip)        # 208210 <_DYNAMIC+0x2b8>
+  11ecca:	bf 04 00 00 00       	mov    $0x4,%edi
+  11eccf:	be 60 00 00 00       	mov    $0x60,%esi
+  11ecd4:	ff 15 36 95 0e 00    	call   *0xe9536(%rip)        # 208210 <_DYNAMIC+0x2b8>
+  11ecda:	eb 19                	jmp    11ecf5 <<hyperreal::computable::node::Computable>::cheap_bound+0x1545>
+  11ecdc:	48 8d 3d d6 11 f2 ff 	lea    -0xdee2a(%rip),%rdi        # 3feb9 <anon.9023bb4654a08944d5043612f590d0ff.371.llvm.1768662447242434102+0x1fb>
+  11ece3:	48 8d 15 86 4d 0e 00 	lea    0xe4d86(%rip),%rdx        # 203a70 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102+0x150>
+  11ecea:	be b3 00 00 00       	mov    $0xb3,%esi
+  11ecef:	ff 15 e3 94 0e 00    	call   *0xe94e3(%rip)        # 2081d8 <_DYNAMIC+0x280>
+  11ecf5:	0f 0b                	ud2
+  11ecf7:	48 89 c3             	mov    %rax,%rbx
+  11ecfa:	48 8b b4 24 00 01 00 	mov    0x100(%rsp),%rsi
+  11ed01:	00 
+  11ed02:	48 85 f6             	test   %rsi,%rsi
+  11ed05:	74 25                	je     11ed2c <<hyperreal::computable::node::Computable>::cheap_bound+0x157c>
+  11ed07:	48 8b bc 24 08 01 00 	mov    0x108(%rsp),%rdi
+  11ed0e:	00 
+  11ed0f:	48 c1 e6 03          	shl    $0x3,%rsi
+  11ed13:	ba 08 00 00 00       	mov    $0x8,%edx
+  11ed18:	ff 15 7a 94 0e 00    	call   *0xe947a(%rip)        # 208198 <_DYNAMIC+0x240>
+  11ed1e:	eb 0c                	jmp    11ed2c <<hyperreal::computable::node::Computable>::cheap_bound+0x157c>
+  11ed20:	eb 07                	jmp    11ed29 <<hyperreal::computable::node::Computable>::cheap_bound+0x1579>
+  11ed22:	48 89 c3             	mov    %rax,%rbx
+  11ed25:	eb 27                	jmp    11ed4e <<hyperreal::computable::node::Computable>::cheap_bound+0x159e>
+  11ed27:	eb 00                	jmp    11ed29 <<hyperreal::computable::node::Computable>::cheap_bound+0x1579>
+  11ed29:	48 89 c3             	mov    %rax,%rbx
+  11ed2c:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+  11ed31:	48 85 c0             	test   %rax,%rax
+  11ed34:	74 18                	je     11ed4e <<hyperreal::computable::node::Computable>::cheap_bound+0x159e>
+  11ed36:	48 8b 7c 24 28       	mov    0x28(%rsp),%rdi
+  11ed3b:	48 c1 e0 02          	shl    $0x2,%rax
+  11ed3f:	48 8d 34 40          	lea    (%rax,%rax,2),%rsi
+  11ed43:	ba 04 00 00 00       	mov    $0x4,%edx
+  11ed48:	ff 15 4a 94 0e 00    	call   *0xe944a(%rip)        # 208198 <_DYNAMIC+0x240>
+  11ed4e:	48 8b 74 24 08       	mov    0x8(%rsp),%rsi
+  11ed53:	48 85 f6             	test   %rsi,%rsi
+  11ed56:	74 14                	je     11ed6c <<hyperreal::computable::node::Computable>::cheap_bound+0x15bc>
+  11ed58:	48 8b 7c 24 10       	mov    0x10(%rsp),%rdi
+  11ed5d:	48 c1 e6 04          	shl    $0x4,%rsi
+  11ed61:	ba 08 00 00 00       	mov    $0x8,%edx
+  11ed66:	ff 15 2c 94 0e 00    	call   *0xe942c(%rip)        # 208198 <_DYNAMIC+0x240>
+  11ed6c:	48 89 df             	mov    %rbx,%rdi
+  11ed6f:	e8 2c 19 0e 00       	call   2006a0 <_Unwind_Resume@plt>

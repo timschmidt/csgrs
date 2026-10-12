@@ -1,0 +1,9 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+    Finished `release` profile [optimized] target(s) in 17.68s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+inverse-trig DAG allocation kind=0, depth=6, allocations=Allocations { calls: 22, bytes: 2316, largest: 472 }
+inverse-trig DAG allocation kind=0, depth=12, allocations=Allocations { calls: 27, bytes: 3708, largest: 928 }
+inverse-trig DAG allocation kind=1, depth=6, allocations=Allocations { calls: 14, bytes: 1004, largest: 472 }
+inverse-trig DAG allocation kind=1, depth=12, allocations=Allocations { calls: 27, bytes: 2220, largest: 928 }
+inverse-trig DAG allocation kind=2, depth=6, allocations=Allocations { calls: 2, bytes: 716, largest: 472 }
+inverse-trig DAG allocation kind=2, depth=12, allocations=Allocations { calls: 3, bytes: 1644, largest: 928 }

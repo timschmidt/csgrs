@@ -1,0 +1,1336 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000087d80 <<hyperreal::computable::node::Computable>::certify_required_domain>:
+   87d80:	55                   	push   %rbp
+   87d81:	41 57                	push   %r15
+   87d83:	41 56                	push   %r14
+   87d85:	41 55                	push   %r13
+   87d87:	41 54                	push   %r12
+   87d89:	53                   	push   %rbx
+   87d8a:	48 81 ec 08 01 00 00 	sub    $0x108,%rsp
+   87d91:	89 4c 24 34          	mov    %ecx,0x34(%rsp)
+   87d95:	41 89 d5             	mov    %edx,%r13d
+   87d98:	49 89 f6             	mov    %rsi,%r14
+   87d9b:	49 89 ff             	mov    %rdi,%r15
+   87d9e:	48 8b 06             	mov    (%rsi),%rax
+   87da1:	48 85 c0             	test   %rax,%rax
+   87da4:	74 0e                	je     87db4 <<hyperreal::computable::node::Computable>::certify_required_domain+0x34>
+   87da6:	0f b6 40 10          	movzbl 0x10(%rax),%eax
+   87daa:	b3 0c                	mov    $0xc,%bl
+   87dac:	84 c0                	test   %al,%al
+   87dae:	0f 85 0f 01 00 00    	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87db4:	66 66 66 64 48 8b 04 	data16 data16 data16 mov %fs:0x0,%rax
+   87dbb:	25 00 00 00 00 
+   87dc0:	48 8d a8 e0 fe ff ff 	lea    -0x120(%rax),%rbp
+   87dc7:	0f b6 80 f0 fe ff ff 	movzbl -0x110(%rax),%eax
+   87dce:	85 c0                	test   %eax,%eax
+   87dd0:	0f 85 45 03 00 00    	jne    8811b <<hyperreal::computable::node::Computable>::certify_required_domain+0x39b>
+   87dd6:	49 bc ff ff ff ff ff 	movabs $0x7fffffffffffffff,%r12
+   87ddd:	ff ff 7f 
+   87de0:	48 8b 4d 00          	mov    0x0(%rbp),%rcx
+   87de4:	4c 39 e1             	cmp    %r12,%rcx
+   87de7:	0f 83 5e 03 00 00    	jae    8814b <<hyperreal::computable::node::Computable>::certify_required_domain+0x3cb>
+   87ded:	48 8d 41 01          	lea    0x1(%rcx),%rax
+   87df1:	48 89 45 00          	mov    %rax,0x0(%rbp)
+   87df5:	48 8b 55 08          	mov    0x8(%rbp),%rdx
+   87df9:	48 85 d2             	test   %rdx,%rdx
+   87dfc:	74 40                	je     87e3e <<hyperreal::computable::node::Computable>::certify_required_domain+0xbe>
+   87dfe:	48 89 d6             	mov    %rdx,%rsi
+   87e01:	80 7e 20 00          	cmpb   $0x0,0x20(%rsi)
+   87e05:	0f 85 a5 00 00 00    	jne    87eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x130>
+   87e0b:	48 8b 7e 10          	mov    0x10(%rsi),%rdi
+   87e0f:	48 8b 47 18          	mov    0x18(%rdi),%rax
+   87e13:	66 66 66 66 2e 0f 1f 	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   87e1a:	84 00 00 00 00 00 
+   87e20:	48 85 c0             	test   %rax,%rax
+   87e23:	0f 84 87 00 00 00    	je     87eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x130>
+   87e29:	4c 8d 40 ff          	lea    -0x1(%rax),%r8
+   87e2d:	f0 4c 0f b1 47 18    	lock cmpxchg %r8,0x18(%rdi)
+   87e33:	75 eb                	jne    87e20 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa0>
+   87e35:	48 8b 76 18          	mov    0x18(%rsi),%rsi
+   87e39:	48 85 f6             	test   %rsi,%rsi
+   87e3c:	75 c3                	jne    87e01 <<hyperreal::computable::node::Computable>::certify_required_domain+0x81>
+   87e3e:	48 89 4d 00          	mov    %rcx,0x0(%rbp)
+   87e42:	49 8b 3f             	mov    (%r15),%rdi
+   87e45:	41 80 fd 01          	cmp    $0x1,%r13b
+   87e49:	75 1c                	jne    87e67 <<hyperreal::computable::node::Computable>::certify_required_domain+0xe7>
+   87e4b:	0f b6 47 10          	movzbl 0x10(%rdi),%eax
+   87e4f:	48 83 f8 3b          	cmp    $0x3b,%rax
+   87e53:	77 12                	ja     87e67 <<hyperreal::computable::node::Computable>::certify_required_domain+0xe7>
+   87e55:	b3 ff                	mov    $0xff,%bl
+   87e57:	48 b9 00 29 00 1f 00 	movabs $0xa0c00001f002900,%rcx
+   87e5e:	00 0c 0a 
+   87e61:	48 0f a3 c1          	bt     %rax,%rcx
+   87e65:	72 5c                	jb     87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87e67:	48 89 3c 24          	mov    %rdi,(%rsp)
+   87e6b:	e8 90 ee 02 00       	call   b6d00 <<hyperreal::computable::node::Computable>::available_domain_sign>
+   87e70:	48 8b 34 24          	mov    (%rsp),%rsi
+   87e74:	41 0f b6 cd          	movzbl %r13b,%ecx
+   87e78:	48 89 4c 24 38       	mov    %rcx,0x38(%rsp)
+   87e7d:	3c ff                	cmp    $0xff,%al
+   87e7f:	0f 84 98 00 00 00    	je     87f1d <<hyperreal::computable::node::Computable>::certify_required_domain+0x19d>
+   87e85:	41 80 fd 07          	cmp    $0x7,%r13b
+   87e89:	77 74                	ja     87eff <<hyperreal::computable::node::Computable>::certify_required_domain+0x17f>
+   87e8b:	48 8d 0d 62 c4 fa ff 	lea    -0x53b9e(%rip),%rcx        # 342f4 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425+0xcd4>
+   87e92:	48 8b 54 24 38       	mov    0x38(%rsp),%rdx
+   87e97:	48 63 14 91          	movslq (%rcx,%rdx,4),%rdx
+   87e9b:	48 01 ca             	add    %rcx,%rdx
+   87e9e:	ff e2                	jmp    *%rdx
+   87ea0:	3c 02                	cmp    $0x2,%al
+   87ea2:	74 79                	je     87f1d <<hyperreal::computable::node::Computable>::certify_required_domain+0x19d>
+   87ea4:	8b 5c 24 34          	mov    0x34(%rsp),%ebx
+   87ea8:	eb 19                	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87eaa:	66 0f 1f 44 00 00    	nopw   0x0(%rax,%rax,1)
+   87eb0:	c6 42 20 01          	movb   $0x1,0x20(%rdx)
+   87eb4:	48 8b 52 18          	mov    0x18(%rdx),%rdx
+   87eb8:	48 85 d2             	test   %rdx,%rdx
+   87ebb:	75 f3                	jne    87eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x130>
+   87ebd:	48 89 4d 00          	mov    %rcx,0x0(%rbp)
+   87ec1:	b3 0c                	mov    $0xc,%bl
+   87ec3:	89 d8                	mov    %ebx,%eax
+   87ec5:	48 81 c4 08 01 00 00 	add    $0x108,%rsp
+   87ecc:	5b                   	pop    %rbx
+   87ecd:	41 5c                	pop    %r12
+   87ecf:	41 5d                	pop    %r13
+   87ed1:	41 5e                	pop    %r14
+   87ed3:	41 5f                	pop    %r15
+   87ed5:	5d                   	pop    %rbp
+   87ed6:	c3                   	ret
+   87ed7:	8b 5c 24 34          	mov    0x34(%rsp),%ebx
+   87edb:	3c 02                	cmp    $0x2,%al
+   87edd:	75 e4                	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87edf:	e9 a7 10 00 00       	jmp    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   87ee4:	8b 5c 24 34          	mov    0x34(%rsp),%ebx
+   87ee8:	3c 01                	cmp    $0x1,%al
+   87eea:	74 d7                	je     87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87eec:	e9 9a 10 00 00       	jmp    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   87ef1:	8b 5c 24 34          	mov    0x34(%rsp),%ebx
+   87ef5:	84 c0                	test   %al,%al
+   87ef7:	0f 85 8e 10 00 00    	jne    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   87efd:	eb c4                	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87eff:	3c 01                	cmp    $0x1,%al
+   87f01:	0f 94 c0             	sete   %al
+   87f04:	41 80 fd 07          	cmp    $0x7,%r13b
+   87f08:	0f 95 c1             	setne  %cl
+   87f0b:	84 c1                	test   %al,%cl
+   87f0d:	0f 85 78 10 00 00    	jne    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   87f13:	eb 08                	jmp    87f1d <<hyperreal::computable::node::Computable>::certify_required_domain+0x19d>
+   87f15:	84 c0                	test   %al,%al
+   87f17:	0f 85 6e 10 00 00    	jne    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   87f1d:	48 8b 76 38          	mov    0x38(%rsi),%rsi
+   87f21:	89 f0                	mov    %esi,%eax
+   87f23:	83 e0 03             	and    $0x3,%eax
+   87f26:	48 8d 0d e7 c3 fa ff 	lea    -0x53c19(%rip),%rcx        # 34314 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425+0xcf4>
+   87f2d:	48 63 04 81          	movslq (%rcx,%rax,4),%rax
+   87f31:	48 01 c8             	add    %rcx,%rax
+   87f34:	ff e0                	jmp    *%rax
+   87f36:	b9 02 00 00 00       	mov    $0x2,%ecx
+   87f3b:	eb 27                	jmp    87f64 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1e4>
+   87f3d:	b9 03 00 00 00       	mov    $0x3,%ecx
+   87f42:	eb 20                	jmp    87f64 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1e4>
+   87f44:	89 f0                	mov    %esi,%eax
+   87f46:	83 e0 0c             	and    $0xc,%eax
+   87f49:	83 f8 04             	cmp    $0x4,%eax
+   87f4c:	0f 94 c0             	sete   %al
+   87f4f:	89 f1                	mov    %esi,%ecx
+   87f51:	83 e1 10             	and    $0x10,%ecx
+   87f54:	48 89 f2             	mov    %rsi,%rdx
+   87f57:	48 c1 ea 20          	shr    $0x20,%rdx
+   87f5b:	c1 e9 04             	shr    $0x4,%ecx
+   87f5e:	83 e6 20             	and    $0x20,%esi
+   87f61:	c1 ee 05             	shr    $0x5,%esi
+   87f64:	bf e8 00 00 00       	mov    $0xe8,%edi
+   87f69:	4c 8b 44 24 38       	mov    0x38(%rsp),%r8
+   87f6e:	44 0f a3 c7          	bt     %r8d,%edi
+   87f72:	73 28                	jae    87f9c <<hyperreal::computable::node::Computable>::certify_required_domain+0x21c>
+   87f74:	89 cf                	mov    %ecx,%edi
+   87f76:	83 ef 02             	sub    $0x2,%edi
+   87f79:	be 02 00 00 00       	mov    $0x2,%esi
+   87f7e:	0f 43 f7             	cmovae %edi,%esi
+   87f81:	85 f6                	test   %esi,%esi
+   87f83:	74 26                	je     87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   87f85:	83 fe 01             	cmp    $0x1,%esi
+   87f88:	0f 85 cd 00 00 00    	jne    8805b <<hyperreal::computable::node::Computable>::certify_required_domain+0x2db>
+   87f8e:	b3 ff                	mov    $0xff,%bl
+   87f90:	41 80 fd 07          	cmp    $0x7,%r13b
+   87f94:	0f 85 29 ff ff ff    	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   87f9a:	eb 0f                	jmp    87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   87f9c:	bf 07 00 00 00       	mov    $0x7,%edi
+   87fa1:	44 0f a3 c7          	bt     %r8d,%edi
+   87fa5:	0f 83 df 00 00 00    	jae    8808a <<hyperreal::computable::node::Computable>::certify_required_domain+0x30a>
+   87fab:	c6 44 24 10 40       	movb   $0x40,0x10(%rsp)
+   87fb0:	0f b6 45 10          	movzbl 0x10(%rbp),%eax
+   87fb4:	85 c0                	test   %eax,%eax
+   87fb6:	0f 85 de 01 00 00    	jne    8819a <<hyperreal::computable::node::Computable>::certify_required_domain+0x41a>
+   87fbc:	4c 39 65 00          	cmp    %r12,0x0(%rbp)
+   87fc0:	0f 83 25 02 00 00    	jae    881eb <<hyperreal::computable::node::Computable>::certify_required_domain+0x46b>
+   87fc6:	31 c9                	xor    %ecx,%ecx
+   87fc8:	48 83 7d 08 00       	cmpq   $0x0,0x8(%rbp)
+   87fcd:	0f 95 c1             	setne  %cl
+   87fd0:	48 8d 54 24 10       	lea    0x10(%rsp),%rdx
+   87fd5:	4c 89 ff             	mov    %r15,%rdi
+   87fd8:	be 20 00 00 00       	mov    $0x20,%esi
+   87fdd:	e8 0e 78 03 00       	call   bf7f0 <<hyperreal::computable::node::Computable>::bounded_rational_value::visit>
+   87fe2:	48 85 c0             	test   %rax,%rax
+   87fe5:	74 36                	je     8801d <<hyperreal::computable::node::Computable>::certify_required_domain+0x29d>
+   87fe7:	49 89 c5             	mov    %rax,%r13
+   87fea:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+   87fef:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   87ff4:	48 8b 7c 24 38       	mov    0x38(%rsp),%rdi
+   87ff9:	e8 02 f2 ff ff       	call   87200 <<hyperreal::computable::node::RequiredRealDomain>::accepts_rational>
+   87ffe:	0f b6 4c 24 34       	movzbl 0x34(%rsp),%ecx
+   88003:	84 c0                	test   %al,%al
+   88005:	bb ff 00 00 00       	mov    $0xff,%ebx
+   8800a:	0f 44 d9             	cmove  %ecx,%ebx
+   8800d:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   88012:	0f 85 ab fe ff ff    	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   88018:	e9 09 07 00 00       	jmp    88726 <<hyperreal::computable::node::Computable>::certify_required_domain+0x9a6>
+   8801d:	48 8b 04 24          	mov    (%rsp),%rax
+   88021:	0f b6 48 10          	movzbl 0x10(%rax),%ecx
+   88025:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88029:	0f 87 59 07 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8802f:	b8 10 04 00 00       	mov    $0x410,%eax
+   88034:	48 0f a3 c8          	bt     %rcx,%rax
+   88038:	72 75                	jb     880af <<hyperreal::computable::node::Computable>::certify_required_domain+0x32f>
+   8803a:	b0 3f                	mov    $0x3f,%al
+   8803c:	b3 1f                	mov    $0x1f,%bl
+   8803e:	48 ba 00 00 00 00 00 	movabs $0x1000010000000000,%rdx
+   88045:	01 00 10 
+   88048:	48 0f a3 ca          	bt     %rcx,%rdx
+   8804c:	48 8b 2c 24          	mov    (%rsp),%rbp
+   88050:	0f 83 da 03 00 00    	jae    88430 <<hyperreal::computable::node::Computable>::certify_required_domain+0x6b0>
+   88056:	e9 e7 05 00 00       	jmp    88642 <<hyperreal::computable::node::Computable>::certify_required_domain+0x8c2>
+   8805b:	85 d2                	test   %edx,%edx
+   8805d:	0f 98 c2             	sets   %dl
+   88060:	20 ca                	and    %cl,%dl
+   88062:	80 fa 01             	cmp    $0x1,%dl
+   88065:	0f 85 40 ff ff ff    	jne    87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   8806b:	83 f9 02             	cmp    $0x2,%ecx
+   8806e:	0f 92 c1             	setb   %cl
+   88071:	b3 ff                	mov    $0xff,%bl
+   88073:	41 80 fd 07          	cmp    $0x7,%r13b
+   88077:	0f 85 46 fe ff ff    	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   8807d:	20 c1                	and    %al,%cl
+   8807f:	0f 84 26 ff ff ff    	je     87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   88085:	e9 39 fe ff ff       	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   8808a:	83 f9 01             	cmp    $0x1,%ecx
+   8808d:	0f 94 c1             	sete   %cl
+   88090:	40 20 c6             	and    %al,%sil
+   88093:	40 20 ce             	and    %cl,%sil
+   88096:	40 80 fe 01          	cmp    $0x1,%sil
+   8809a:	0f 85 0b ff ff ff    	jne    87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   880a0:	b3 ff                	mov    $0xff,%bl
+   880a2:	85 d2                	test   %edx,%edx
+   880a4:	0f 89 19 fe ff ff    	jns    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   880aa:	e9 fc fe ff ff       	jmp    87fab <<hyperreal::computable::node::Computable>::certify_required_domain+0x22b>
+   880af:	48 8b 04 24          	mov    (%rsp),%rax
+   880b3:	48 8b 68 18          	mov    0x18(%rax),%rbp
+   880b7:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   880bb:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   880bf:	0f 87 c3 06 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   880c5:	b8 10 04 00 00       	mov    $0x410,%eax
+   880ca:	48 0f a3 c8          	bt     %rcx,%rax
+   880ce:	72 09                	jb     880d9 <<hyperreal::computable::node::Computable>::certify_required_domain+0x359>
+   880d0:	b0 3e                	mov    $0x3e,%al
+   880d2:	b3 1e                	mov    $0x1e,%bl
+   880d4:	e9 43 03 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   880d9:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   880dd:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   880e1:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   880e5:	0f 87 9d 06 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   880eb:	48 0f a3 c8          	bt     %rcx,%rax
+   880ef:	72 09                	jb     880fa <<hyperreal::computable::node::Computable>::certify_required_domain+0x37a>
+   880f1:	b0 3d                	mov    $0x3d,%al
+   880f3:	b3 1d                	mov    $0x1d,%bl
+   880f5:	e9 22 03 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   880fa:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   880fe:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88102:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88106:	0f 87 7c 06 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8810c:	48 0f a3 c8          	bt     %rcx,%rax
+   88110:	72 46                	jb     88158 <<hyperreal::computable::node::Computable>::certify_required_domain+0x3d8>
+   88112:	b0 3c                	mov    $0x3c,%al
+   88114:	b3 1c                	mov    $0x1c,%bl
+   88116:	e9 01 03 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8811b:	83 f8 01             	cmp    $0x1,%eax
+   8811e:	75 7f                	jne    8819f <<hyperreal::computable::node::Computable>::certify_required_domain+0x41f>
+   88120:	48 8d 35 e9 3c 0a 00 	lea    0xa3ce9(%rip),%rsi        # 12be10 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+   88127:	48 89 ef             	mov    %rbp,%rdi
+   8812a:	ff 15 90 12 10 00    	call   *0x101290(%rip)        # 1893c0 <_DYNAMIC+0x3d0>
+   88130:	c6 45 10 00          	movb   $0x0,0x10(%rbp)
+   88134:	49 bc ff ff ff ff ff 	movabs $0x7fffffffffffffff,%r12
+   8813b:	ff ff 7f 
+   8813e:	48 8b 4d 00          	mov    0x0(%rbp),%rcx
+   88142:	4c 39 e1             	cmp    %r12,%rcx
+   88145:	0f 82 a2 fc ff ff    	jb     87ded <<hyperreal::computable::node::Computable>::certify_required_domain+0x6d>
+   8814b:	48 8d 3d 36 e4 0f 00 	lea    0xfe436(%rip),%rdi        # 186588 <anon.953f3db8f5a996f677fb6a53175227a4.23.llvm.5533634630175563929>
+   88152:	ff 15 70 12 10 00    	call   *0x101270(%rip)        # 1893c8 <_DYNAMIC+0x3d8>
+   88158:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8815c:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88160:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88164:	0f 87 1e 06 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8816a:	48 0f a3 c8          	bt     %rcx,%rax
+   8816e:	72 09                	jb     88179 <<hyperreal::computable::node::Computable>::certify_required_domain+0x3f9>
+   88170:	b0 3b                	mov    $0x3b,%al
+   88172:	b3 1b                	mov    $0x1b,%bl
+   88174:	e9 a3 02 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88179:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8817d:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88181:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88185:	0f 87 fd 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8818b:	48 0f a3 c8          	bt     %rcx,%rax
+   8818f:	72 1b                	jb     881ac <<hyperreal::computable::node::Computable>::certify_required_domain+0x42c>
+   88191:	b0 3a                	mov    $0x3a,%al
+   88193:	b3 1a                	mov    $0x1a,%bl
+   88195:	e9 82 02 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8819a:	83 f8 02             	cmp    $0x2,%eax
+   8819d:	75 2e                	jne    881cd <<hyperreal::computable::node::Computable>::certify_required_domain+0x44d>
+   8819f:	48 8d 3d 32 e3 0f 00 	lea    0xfe332(%rip),%rdi        # 1864d8 <anon.953f3db8f5a996f677fb6a53175227a4.4.llvm.5533634630175563929>
+   881a6:	ff 15 24 12 10 00    	call   *0x101224(%rip)        # 1893d0 <_DYNAMIC+0x3e0>
+   881ac:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   881b0:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   881b4:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   881b8:	0f 87 ca 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   881be:	48 0f a3 c8          	bt     %rcx,%rax
+   881c2:	72 34                	jb     881f8 <<hyperreal::computable::node::Computable>::certify_required_domain+0x478>
+   881c4:	b0 39                	mov    $0x39,%al
+   881c6:	b3 19                	mov    $0x19,%bl
+   881c8:	e9 4f 02 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   881cd:	48 8d 35 3c 3c 0a 00 	lea    0xa3c3c(%rip),%rsi        # 12be10 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+   881d4:	48 89 ef             	mov    %rbp,%rdi
+   881d7:	ff 15 e3 11 10 00    	call   *0x1011e3(%rip)        # 1893c0 <_DYNAMIC+0x3d0>
+   881dd:	c6 45 10 00          	movb   $0x0,0x10(%rbp)
+   881e1:	4c 39 65 00          	cmp    %r12,0x0(%rbp)
+   881e5:	0f 82 db fd ff ff    	jb     87fc6 <<hyperreal::computable::node::Computable>::certify_required_domain+0x246>
+   881eb:	48 8d 3d c6 e3 0f 00 	lea    0xfe3c6(%rip),%rdi        # 1865b8 <anon.953f3db8f5a996f677fb6a53175227a4.25.llvm.5533634630175563929>
+   881f2:	ff 15 d0 11 10 00    	call   *0x1011d0(%rip)        # 1893c8 <_DYNAMIC+0x3d8>
+   881f8:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   881fc:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88200:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88204:	0f 87 7e 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8820a:	48 0f a3 c8          	bt     %rcx,%rax
+   8820e:	72 09                	jb     88219 <<hyperreal::computable::node::Computable>::certify_required_domain+0x499>
+   88210:	b0 38                	mov    $0x38,%al
+   88212:	b3 18                	mov    $0x18,%bl
+   88214:	e9 03 02 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88219:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8821d:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88221:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88225:	0f 87 5d 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8822b:	48 0f a3 c8          	bt     %rcx,%rax
+   8822f:	72 09                	jb     8823a <<hyperreal::computable::node::Computable>::certify_required_domain+0x4ba>
+   88231:	b0 37                	mov    $0x37,%al
+   88233:	b3 17                	mov    $0x17,%bl
+   88235:	e9 e2 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8823a:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8823e:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88242:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88246:	0f 87 3c 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8824c:	48 0f a3 c8          	bt     %rcx,%rax
+   88250:	72 09                	jb     8825b <<hyperreal::computable::node::Computable>::certify_required_domain+0x4db>
+   88252:	b0 36                	mov    $0x36,%al
+   88254:	b3 16                	mov    $0x16,%bl
+   88256:	e9 c1 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8825b:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8825f:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88263:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88267:	0f 87 1b 05 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8826d:	48 0f a3 c8          	bt     %rcx,%rax
+   88271:	72 09                	jb     8827c <<hyperreal::computable::node::Computable>::certify_required_domain+0x4fc>
+   88273:	b0 35                	mov    $0x35,%al
+   88275:	b3 15                	mov    $0x15,%bl
+   88277:	e9 a0 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8827c:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88280:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88284:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88288:	0f 87 fa 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8828e:	48 0f a3 c8          	bt     %rcx,%rax
+   88292:	72 09                	jb     8829d <<hyperreal::computable::node::Computable>::certify_required_domain+0x51d>
+   88294:	b0 34                	mov    $0x34,%al
+   88296:	b3 14                	mov    $0x14,%bl
+   88298:	e9 7f 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8829d:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   882a1:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   882a5:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   882a9:	0f 87 d9 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   882af:	48 0f a3 c8          	bt     %rcx,%rax
+   882b3:	72 09                	jb     882be <<hyperreal::computable::node::Computable>::certify_required_domain+0x53e>
+   882b5:	b0 33                	mov    $0x33,%al
+   882b7:	b3 13                	mov    $0x13,%bl
+   882b9:	e9 5e 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   882be:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   882c2:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   882c6:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   882ca:	0f 87 b8 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   882d0:	48 0f a3 c8          	bt     %rcx,%rax
+   882d4:	72 09                	jb     882df <<hyperreal::computable::node::Computable>::certify_required_domain+0x55f>
+   882d6:	b0 32                	mov    $0x32,%al
+   882d8:	b3 12                	mov    $0x12,%bl
+   882da:	e9 3d 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   882df:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   882e3:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   882e7:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   882eb:	0f 87 97 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   882f1:	48 0f a3 c8          	bt     %rcx,%rax
+   882f5:	72 09                	jb     88300 <<hyperreal::computable::node::Computable>::certify_required_domain+0x580>
+   882f7:	b0 31                	mov    $0x31,%al
+   882f9:	b3 11                	mov    $0x11,%bl
+   882fb:	e9 1c 01 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88300:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88304:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88308:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   8830c:	0f 87 76 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88312:	48 0f a3 c8          	bt     %rcx,%rax
+   88316:	72 09                	jb     88321 <<hyperreal::computable::node::Computable>::certify_required_domain+0x5a1>
+   88318:	b0 30                	mov    $0x30,%al
+   8831a:	b3 10                	mov    $0x10,%bl
+   8831c:	e9 fb 00 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88321:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88325:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88329:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   8832d:	0f 87 55 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88333:	48 0f a3 c8          	bt     %rcx,%rax
+   88337:	72 09                	jb     88342 <<hyperreal::computable::node::Computable>::certify_required_domain+0x5c2>
+   88339:	b0 2f                	mov    $0x2f,%al
+   8833b:	b3 0f                	mov    $0xf,%bl
+   8833d:	e9 da 00 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88342:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88346:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8834a:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   8834e:	0f 87 34 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88354:	48 0f a3 c8          	bt     %rcx,%rax
+   88358:	72 09                	jb     88363 <<hyperreal::computable::node::Computable>::certify_required_domain+0x5e3>
+   8835a:	b0 2e                	mov    $0x2e,%al
+   8835c:	b3 0e                	mov    $0xe,%bl
+   8835e:	e9 b9 00 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88363:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88367:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8836b:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   8836f:	0f 87 13 04 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88375:	48 0f a3 c8          	bt     %rcx,%rax
+   88379:	72 09                	jb     88384 <<hyperreal::computable::node::Computable>::certify_required_domain+0x604>
+   8837b:	b0 2d                	mov    $0x2d,%al
+   8837d:	b3 0d                	mov    $0xd,%bl
+   8837f:	e9 98 00 00 00       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88384:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88388:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8838c:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88390:	0f 87 f2 03 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88396:	48 0f a3 c8          	bt     %rcx,%rax
+   8839a:	72 06                	jb     883a2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x622>
+   8839c:	b0 2c                	mov    $0x2c,%al
+   8839e:	b3 0c                	mov    $0xc,%bl
+   883a0:	eb 7a                	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   883a2:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   883a6:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   883aa:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   883ae:	0f 87 d4 03 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   883b4:	48 0f a3 c8          	bt     %rcx,%rax
+   883b8:	72 06                	jb     883c0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x640>
+   883ba:	b0 2b                	mov    $0x2b,%al
+   883bc:	b3 0b                	mov    $0xb,%bl
+   883be:	eb 5c                	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   883c0:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   883c4:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   883c8:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   883cc:	0f 87 b6 03 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   883d2:	48 0f a3 c8          	bt     %rcx,%rax
+   883d6:	72 06                	jb     883de <<hyperreal::computable::node::Computable>::certify_required_domain+0x65e>
+   883d8:	b0 2a                	mov    $0x2a,%al
+   883da:	b3 0a                	mov    $0xa,%bl
+   883dc:	eb 3e                	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   883de:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   883e2:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   883e6:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   883ea:	0f 87 98 03 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   883f0:	48 0f a3 c8          	bt     %rcx,%rax
+   883f4:	72 06                	jb     883fc <<hyperreal::computable::node::Computable>::certify_required_domain+0x67c>
+   883f6:	b0 29                	mov    $0x29,%al
+   883f8:	b3 09                	mov    $0x9,%bl
+   883fa:	eb 20                	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   883fc:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88400:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88404:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88408:	0f 87 7a 03 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8840e:	48 0f a3 c8          	bt     %rcx,%rax
+   88412:	0f 82 1b 01 00 00    	jb     88533 <<hyperreal::computable::node::Computable>::certify_required_domain+0x7b3>
+   88418:	b0 28                	mov    $0x28,%al
+   8841a:	b3 08                	mov    $0x8,%bl
+   8841c:	48 ba 00 00 00 00 00 	movabs $0x1000010000000000,%rdx
+   88423:	01 00 10 
+   88426:	48 0f a3 ca          	bt     %rcx,%rdx
+   8842a:	0f 82 12 02 00 00    	jb     88642 <<hyperreal::computable::node::Computable>::certify_required_domain+0x8c2>
+   88430:	48 ba 00 00 00 00 10 	movabs $0x2000001000000000,%rdx
+   88437:	00 00 20 
+   8843a:	48 0f a3 ca          	bt     %rcx,%rdx
+   8843e:	0f 83 44 03 00 00    	jae    88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88444:	88 84 24 98 00 00 00 	mov    %al,0x98(%rsp)
+   8844b:	48 83 c5 18          	add    $0x18,%rbp
+   8844f:	48 89 ef             	mov    %rbp,%rdi
+   88452:	e8 69 37 03 00       	call   bbbc0 <<hyperreal::computable::node::Computable>::half_pi_index_when_real>
+   88457:	20 c2                	and    %al,%dl
+   88459:	f6 c2 01             	test   $0x1,%dl
+   8845c:	0f 85 51 02 00 00    	jne    886b3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x933>
+   88462:	0f b6 f3             	movzbl %bl,%esi
+   88465:	48 8d 94 24 98 00 00 	lea    0x98(%rsp),%rdx
+   8846c:	00 
+   8846d:	48 89 ef             	mov    %rbp,%rdi
+   88470:	e8 cb 6a 03 00       	call   bef40 <<hyperreal::computable::node::Computable>::has_trig_zero_certificate_when_real::pi_coefficient>
+   88475:	48 85 c0             	test   %rax,%rax
+   88478:	0f 84 0a 03 00 00    	je     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8847e:	49 89 c5             	mov    %rax,%r13
+   88481:	48 89 44 24 40       	mov    %rax,0x40(%rsp)
+   88486:	be 02 00 00 00       	mov    $0x2,%esi
+   8848b:	bf 02 00 00 00       	mov    $0x2,%edi
+   88490:	31 d2                	xor    %edx,%edx
+   88492:	ff 15 b8 0f 10 00    	call   *0x100fb8(%rip)        # 189450 <_DYNAMIC+0x460>
+   88498:	4c 89 ef             	mov    %r13,%rdi
+   8849b:	48 89 c6             	mov    %rax,%rsi
+   8849e:	e8 7d e7 05 00       	call   e6c20 <<hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul>
+   884a3:	49 89 c5             	mov    %rax,%r13
+   884a6:	48 89 84 24 c0 00 00 	mov    %rax,0xc0(%rsp)
+   884ad:	00 
+   884ae:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   884b3:	48 8d b4 24 c0 00 00 	lea    0xc0(%rsp),%rsi
+   884ba:	00 
+   884bb:	ff 15 07 10 10 00    	call   *0x101007(%rip)        # 1894c8 <_DYNAMIC+0x4d8>
+   884c1:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   884c6:	75 0e                	jne    884d6 <<hyperreal::computable::node::Computable>::certify_required_domain+0x756>
+   884c8:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   884cf:	00 
+   884d0:	ff 15 0a 0f 10 00    	call   *0x100f0a(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   884d6:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   884db:	48 83 fe ff          	cmp    $0xffffffffffffffff,%rsi
+   884df:	0f 84 a3 02 00 00    	je     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   884e5:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   884ea:	48 83 7c 24 20 00    	cmpq   $0x0,0x20(%rsp)
+   884f0:	74 24                	je     88516 <<hyperreal::computable::node::Computable>::certify_required_domain+0x796>
+   884f2:	0f b6 1f             	movzbl (%rdi),%ebx
+   884f5:	48 85 f6             	test   %rsi,%rsi
+   884f8:	74 0f                	je     88509 <<hyperreal::computable::node::Computable>::certify_required_domain+0x789>
+   884fa:	48 c1 e6 03          	shl    $0x3,%rsi
+   884fe:	ba 08 00 00 00       	mov    $0x8,%edx
+   88503:	ff 15 6f 0d 10 00    	call   *0x100d6f(%rip)        # 189278 <_DYNAMIC+0x288>
+   88509:	f6 c3 01             	test   $0x1,%bl
+   8850c:	4c 8b 6c 24 38       	mov    0x38(%rsp),%r13
+   88511:	e9 66 02 00 00       	jmp    8877c <<hyperreal::computable::node::Computable>::certify_required_domain+0x9fc>
+   88516:	48 85 f6             	test   %rsi,%rsi
+   88519:	0f 84 69 02 00 00    	je     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8851f:	48 c1 e6 03          	shl    $0x3,%rsi
+   88523:	ba 08 00 00 00       	mov    $0x8,%edx
+   88528:	ff 15 4a 0d 10 00    	call   *0x100d4a(%rip)        # 189278 <_DYNAMIC+0x288>
+   8852e:	e9 55 02 00 00       	jmp    88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88533:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88537:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8853b:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   8853f:	0f 87 43 02 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88545:	48 0f a3 c8          	bt     %rcx,%rax
+   88549:	72 09                	jb     88554 <<hyperreal::computable::node::Computable>::certify_required_domain+0x7d4>
+   8854b:	b0 27                	mov    $0x27,%al
+   8854d:	b3 07                	mov    $0x7,%bl
+   8854f:	e9 c8 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88554:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88558:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8855c:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88560:	0f 87 22 02 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88566:	48 0f a3 c8          	bt     %rcx,%rax
+   8856a:	72 09                	jb     88575 <<hyperreal::computable::node::Computable>::certify_required_domain+0x7f5>
+   8856c:	b0 26                	mov    $0x26,%al
+   8856e:	b3 06                	mov    $0x6,%bl
+   88570:	e9 a7 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88575:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   88579:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8857d:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88581:	0f 87 01 02 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   88587:	48 0f a3 c8          	bt     %rcx,%rax
+   8858b:	72 09                	jb     88596 <<hyperreal::computable::node::Computable>::certify_required_domain+0x816>
+   8858d:	b0 25                	mov    $0x25,%al
+   8858f:	b3 05                	mov    $0x5,%bl
+   88591:	e9 86 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   88596:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8859a:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   8859e:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   885a2:	0f 87 e0 01 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   885a8:	48 0f a3 c8          	bt     %rcx,%rax
+   885ac:	72 09                	jb     885b7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x837>
+   885ae:	b0 24                	mov    $0x24,%al
+   885b0:	b3 04                	mov    $0x4,%bl
+   885b2:	e9 65 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   885b7:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   885bb:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   885bf:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   885c3:	0f 87 bf 01 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   885c9:	48 0f a3 c8          	bt     %rcx,%rax
+   885cd:	72 09                	jb     885d8 <<hyperreal::computable::node::Computable>::certify_required_domain+0x858>
+   885cf:	b0 23                	mov    $0x23,%al
+   885d1:	b3 03                	mov    $0x3,%bl
+   885d3:	e9 44 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   885d8:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   885dc:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   885e0:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   885e4:	0f 87 9e 01 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   885ea:	48 0f a3 c8          	bt     %rcx,%rax
+   885ee:	72 09                	jb     885f9 <<hyperreal::computable::node::Computable>::certify_required_domain+0x879>
+   885f0:	b0 22                	mov    $0x22,%al
+   885f2:	b3 02                	mov    $0x2,%bl
+   885f4:	e9 23 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   885f9:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   885fd:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88601:	48 83 f9 3d          	cmp    $0x3d,%rcx
+   88605:	0f 87 7d 01 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8860b:	48 0f a3 c8          	bt     %rcx,%rax
+   8860f:	72 09                	jb     8861a <<hyperreal::computable::node::Computable>::certify_required_domain+0x89a>
+   88611:	b0 21                	mov    $0x21,%al
+   88613:	b3 01                	mov    $0x1,%bl
+   88615:	e9 02 fe ff ff       	jmp    8841c <<hyperreal::computable::node::Computable>::certify_required_domain+0x69c>
+   8861a:	48 8b 6d 18          	mov    0x18(%rbp),%rbp
+   8861e:	0f b6 4d 10          	movzbl 0x10(%rbp),%ecx
+   88622:	83 c1 dc             	add    $0xffffffdc,%ecx
+   88625:	83 f9 19             	cmp    $0x19,%ecx
+   88628:	0f 87 5a 01 00 00    	ja     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8862e:	b0 20                	mov    $0x20,%al
+   88630:	31 db                	xor    %ebx,%ebx
+   88632:	48 8d 15 eb bc fa ff 	lea    -0x54315(%rip),%rdx        # 34324 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425+0xd04>
+   88639:	48 63 0c 8a          	movslq (%rdx,%rcx,4),%rcx
+   8863d:	48 01 d1             	add    %rdx,%rcx
+   88640:	ff e1                	jmp    *%rcx
+   88642:	88 84 24 98 00 00 00 	mov    %al,0x98(%rsp)
+   88649:	48 83 c5 18          	add    $0x18,%rbp
+   8864d:	48 89 ef             	mov    %rbp,%rdi
+   88650:	e8 6b 35 03 00       	call   bbbc0 <<hyperreal::computable::node::Computable>::half_pi_index_when_real>
+   88655:	f6 c2 01             	test   $0x1,%dl
+   88658:	0f 94 c1             	sete   %cl
+   8865b:	84 c8                	test   %cl,%al
+   8865d:	75 54                	jne    886b3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x933>
+   8865f:	c6 44 24 10 40       	movb   $0x40,0x10(%rsp)
+   88664:	48 8d 3d 2d c7 0f 00 	lea    0xfc72d(%rip),%rdi        # 184d98 <anon.9023bb4654a08944d5043612f590d0ff.17.llvm.4660732205840653425>
+   8866b:	e8 90 4a 0a 00       	call   12d100 <<std::thread::local::LocalKey<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>::with::<hyperreal::computable::budget::is_active::{closure#0}, bool>>
+   88670:	0f b6 c8             	movzbl %al,%ecx
+   88673:	48 8d 54 24 10       	lea    0x10(%rsp),%rdx
+   88678:	48 89 ef             	mov    %rbp,%rdi
+   8867b:	be 20 00 00 00       	mov    $0x20,%esi
+   88680:	e8 6b 71 03 00       	call   bf7f0 <<hyperreal::computable::node::Computable>::bounded_rational_value::visit>
+   88685:	48 85 c0             	test   %rax,%rax
+   88688:	0f 84 a8 00 00 00    	je     88736 <<hyperreal::computable::node::Computable>::certify_required_domain+0x9b6>
+   8868e:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+   88693:	44 0f b6 68 64       	movzbl 0x64(%rax),%r13d
+   88698:	f0 48 ff 08          	lock decq (%rax)
+   8869c:	75 0b                	jne    886a9 <<hyperreal::computable::node::Computable>::certify_required_domain+0x929>
+   8869e:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   886a3:	ff 15 37 0d 10 00    	call   *0x100d37(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   886a9:	41 80 fd 01          	cmp    $0x1,%r13b
+   886ad:	0f 85 83 00 00 00    	jne    88736 <<hyperreal::computable::node::Computable>::certify_required_domain+0x9b6>
+   886b3:	4c 8b 6c 24 38       	mov    0x38(%rsp),%r13
+   886b8:	48 8b 34 24          	mov    (%rsp),%rsi
+   886bc:	48 8b 46 38          	mov    0x38(%rsi),%rax
+   886c0:	89 c1                	mov    %eax,%ecx
+   886c2:	c1 e9 06             	shr    $0x6,%ecx
+   886c5:	83 e1 07             	and    $0x7,%ecx
+   886c8:	8d 51 fe             	lea    -0x2(%rcx),%edx
+   886cb:	83 fa 03             	cmp    $0x3,%edx
+   886ce:	72 22                	jb     886f2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x972>
+   886d0:	83 f9 02             	cmp    $0x2,%ecx
+   886d3:	0f 83 ab 09 00 00    	jae    89084 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1304>
+   886d9:	48 89 c1             	mov    %rax,%rcx
+   886dc:	48 81 e1 3f fe ff ff 	and    $0xfffffffffffffe3f,%rcx
+   886e3:	48 81 c9 c0 00 00 00 	or     $0xc0,%rcx
+   886ea:	f0 48 0f b1 4e 38    	lock cmpxchg %rcx,0x38(%rsi)
+   886f0:	75 ce                	jne    886c0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x940>
+   886f2:	ff 15 28 0d 10 00    	call   *0x100d28(%rip)        # 189420 <_DYNAMIC+0x430>
+   886f8:	49 89 c6             	mov    %rax,%r14
+   886fb:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+   88700:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88705:	44 89 ef             	mov    %r13d,%edi
+   88708:	e8 f3 ea ff ff       	call   87200 <<hyperreal::computable::node::RequiredRealDomain>::accepts_rational>
+   8870d:	0f b6 4c 24 34       	movzbl 0x34(%rsp),%ecx
+   88712:	84 c0                	test   %al,%al
+   88714:	bb ff 00 00 00       	mov    $0xff,%ebx
+   88719:	0f 44 d9             	cmove  %ecx,%ebx
+   8871c:	f0 49 ff 0e          	lock decq (%r14)
+   88720:	0f 85 9d f7 ff ff    	jne    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   88726:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   8872b:	ff 15 af 0c 10 00    	call   *0x100caf(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   88731:	e9 8d f7 ff ff       	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   88736:	0f b6 f3             	movzbl %bl,%esi
+   88739:	48 8d 94 24 98 00 00 	lea    0x98(%rsp),%rdx
+   88740:	00 
+   88741:	48 89 ef             	mov    %rbp,%rdi
+   88744:	e8 f7 67 03 00       	call   bef40 <<hyperreal::computable::node::Computable>::has_trig_zero_certificate_when_real::pi_coefficient>
+   88749:	48 85 c0             	test   %rax,%rax
+   8874c:	74 3a                	je     88788 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa08>
+   8874e:	49 89 c5             	mov    %rax,%r13
+   88751:	48 89 44 24 10       	mov    %rax,0x10(%rsp)
+   88756:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   8875b:	ff 15 6f 0d 10 00    	call   *0x100d6f(%rip)        # 1894d0 <_DYNAMIC+0x4e0>
+   88761:	89 c3                	mov    %eax,%ebx
+   88763:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   88768:	4c 8b 6c 24 38       	mov    0x38(%rsp),%r13
+   8876d:	75 0b                	jne    8877a <<hyperreal::computable::node::Computable>::certify_required_domain+0x9fa>
+   8876f:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   88774:	ff 15 66 0c 10 00    	call   *0x100c66(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   8877a:	84 db                	test   %bl,%bl
+   8877c:	48 8b 34 24          	mov    (%rsp),%rsi
+   88780:	0f 85 36 ff ff ff    	jne    886bc <<hyperreal::computable::node::Computable>::certify_required_domain+0x93c>
+   88786:	eb 05                	jmp    8878d <<hyperreal::computable::node::Computable>::certify_required_domain+0xa0d>
+   88788:	4c 8b 6c 24 38       	mov    0x38(%rsp),%r13
+   8878d:	4c 89 ff             	mov    %r15,%rdi
+   88790:	ff 15 f2 0c 10 00    	call   *0x100cf2(%rip)        # 189488 <_DYNAMIC+0x498>
+   88796:	3c ff                	cmp    $0xff,%al
+   88798:	74 1f                	je     887b9 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa39>
+   8879a:	0f b6 f0             	movzbl %al,%esi
+   8879d:	44 89 ef             	mov    %r13d,%edi
+   887a0:	e8 5b e1 ff ff       	call   86900 <<hyperreal::computable::node::Computable>::certify_required_domain::{closure#1}>
+   887a5:	84 c0                	test   %al,%al
+   887a7:	0f 84 f7 f6 ff ff    	je     87ea4 <<hyperreal::computable::node::Computable>::certify_required_domain+0x124>
+   887ad:	0f b6 c0             	movzbl %al,%eax
+   887b0:	83 f8 02             	cmp    $0x2,%eax
+   887b3:	0f 85 d2 07 00 00    	jne    88f8b <<hyperreal::computable::node::Computable>::certify_required_domain+0x120b>
+   887b9:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   887be:	bd f8 ff ff ff       	mov    $0xfffffff8,%ebp
+   887c3:	4c 89 fe             	mov    %r15,%rsi
+   887c6:	4c 89 f2             	mov    %r14,%rdx
+   887c9:	b9 f8 ff ff ff       	mov    $0xfffffff8,%ecx
+   887ce:	ff 15 04 0d 10 00    	call   *0x100d04(%rip)        # 1894d8 <_DYNAMIC+0x4e8>
+   887d4:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+   887d9:	0f b6 5c 24 18       	movzbl 0x18(%rsp),%ebx
+   887de:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   887e2:	0f 84 db f6 ff ff    	je     87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   887e8:	48 89 84 24 b8 00 00 	mov    %rax,0xb8(%rsp)
+   887ef:	00 
+   887f0:	48 8b 15 39 0a 10 00 	mov    0x100a39(%rip),%rdx        # 189230 <_DYNAMIC+0x240>
+   887f7:	4c 8b 2d 3a 0a 10 00 	mov    0x100a3a(%rip),%r13        # 189238 <_DYNAMIC+0x248>
+   887fe:	49 83 c4 f9          	add    $0xfffffffffffffff9,%r12
+   88802:	0f b6 44 24 1f       	movzbl 0x1f(%rsp),%eax
+   88807:	c1 e0 10             	shl    $0x10,%eax
+   8880a:	0f b7 4c 24 1d       	movzwl 0x1d(%rsp),%ecx
+   8880f:	09 c1                	or     %eax,%ecx
+   88811:	8b 44 24 19          	mov    0x19(%rsp),%eax
+   88815:	48 c1 e1 28          	shl    $0x28,%rcx
+   88819:	48 c1 e0 08          	shl    $0x8,%rax
+   8881d:	48 09 c8             	or     %rcx,%rax
+   88820:	48 8b 4c 24 20       	mov    0x20(%rsp),%rcx
+   88825:	48 89 0c 24          	mov    %rcx,(%rsp)
+   88829:	0f b6 4c 24 28       	movzbl 0x28(%rsp),%ecx
+   8882e:	88 4c 24 0f          	mov    %cl,0xf(%rsp)
+   88832:	0f b6 cb             	movzbl %bl,%ecx
+   88835:	48 09 c1             	or     %rax,%rcx
+   88838:	48 89 4c 24 68       	mov    %rcx,0x68(%rsp)
+   8883d:	ff d2                	call   *%rdx
+   8883f:	bf 08 00 00 00       	mov    $0x8,%edi
+   88844:	be 08 00 00 00       	mov    $0x8,%esi
+   88849:	41 ff d5             	call   *%r13
+   8884c:	48 85 c0             	test   %rax,%rax
+   8884f:	0f 84 1d 08 00 00    	je     89072 <<hyperreal::computable::node::Computable>::certify_required_domain+0x12f2>
+   88855:	89 ea                	mov    %ebp,%edx
+   88857:	f7 da                	neg    %edx
+   88859:	0f 48 d5             	cmovs  %ebp,%edx
+   8885c:	48 c7 00 01 00 00 00 	movq   $0x1,(%rax)
+   88863:	89 d1                	mov    %edx,%ecx
+   88865:	80 e1 38             	and    $0x38,%cl
+   88868:	c1 ea 06             	shr    $0x6,%edx
+   8886b:	48 c7 44 24 10 01 00 	movq   $0x1,0x10(%rsp)
+   88872:	00 00 
+   88874:	48 89 44 24 18       	mov    %rax,0x18(%rsp)
+   88879:	48 c7 44 24 20 01 00 	movq   $0x1,0x20(%rsp)
+   88880:	00 00 
+   88882:	0f b6 c9             	movzbl %cl,%ecx
+   88885:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   8888a:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   8888f:	ff 15 53 0a 10 00    	call   *0x100a53(%rip)        # 1892e8 <_DYNAMIC+0x2f8>
+   88895:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+   8889a:	48 83 f8 01          	cmp    $0x1,%rax
+   8889e:	41 b5 02             	mov    $0x2,%r13b
+   888a1:	41 80 dd 00          	sbb    $0x0,%r13b
+   888a5:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+   888aa:	0f 29 44 24 70       	movaps %xmm0,0x70(%rsp)
+   888af:	48 89 84 24 80 00 00 	mov    %rax,0x80(%rsp)
+   888b6:	00 
+   888b7:	44 88 ac 24 88 00 00 	mov    %r13b,0x88(%rsp)
+   888be:	00 
+   888bf:	48 8b 14 24          	mov    (%rsp),%rdx
+   888c3:	48 8d 1c d5 00 00 00 	lea    0x0(,%rdx,8),%rbx
+   888ca:	00 
+   888cb:	48 89 d0             	mov    %rdx,%rax
+   888ce:	48 c1 e8 3d          	shr    $0x3d,%rax
+   888d2:	0f 95 c0             	setne  %al
+   888d5:	4c 39 e3             	cmp    %r12,%rbx
+   888d8:	0f 97 c1             	seta   %cl
+   888db:	08 c1                	or     %al,%cl
+   888dd:	0f 85 af 06 00 00    	jne    88f92 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1212>
+   888e3:	89 ac 24 e4 00 00 00 	mov    %ebp,0xe4(%rsp)
+   888ea:	48 85 db             	test   %rbx,%rbx
+   888ed:	74 2b                	je     8891a <<hyperreal::computable::node::Computable>::certify_required_domain+0xb9a>
+   888ef:	ff 15 3b 09 10 00    	call   *0x10093b(%rip)        # 189230 <_DYNAMIC+0x240>
+   888f5:	bd 08 00 00 00       	mov    $0x8,%ebp
+   888fa:	be 08 00 00 00       	mov    $0x8,%esi
+   888ff:	48 89 df             	mov    %rbx,%rdi
+   88902:	ff 15 30 09 10 00    	call   *0x100930(%rip)        # 189238 <_DYNAMIC+0x248>
+   88908:	48 85 c0             	test   %rax,%rax
+   8890b:	0f 84 83 06 00 00    	je     88f94 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1214>
+   88911:	48 8b 14 24          	mov    (%rsp),%rdx
+   88915:	48 89 d1             	mov    %rdx,%rcx
+   88918:	eb 07                	jmp    88921 <<hyperreal::computable::node::Computable>::certify_required_domain+0xba1>
+   8891a:	b8 08 00 00 00       	mov    $0x8,%eax
+   8891f:	31 c9                	xor    %ecx,%ecx
+   88921:	48 85 d2             	test   %rdx,%rdx
+   88924:	74 2b                	je     88951 <<hyperreal::computable::node::Computable>::certify_required_domain+0xbd1>
+   88926:	48 89 c7             	mov    %rax,%rdi
+   88929:	48 8b 74 24 68       	mov    0x68(%rsp),%rsi
+   8892e:	48 89 da             	mov    %rbx,%rdx
+   88931:	48 89 c5             	mov    %rax,%rbp
+   88934:	48 89 8c 24 e8 00 00 	mov    %rcx,0xe8(%rsp)
+   8893b:	00 
+   8893c:	ff 15 0e 09 10 00    	call   *0x10090e(%rip)        # 189250 <memcpy@GLIBC_2.14>
+   88942:	48 8b 8c 24 e8 00 00 	mov    0xe8(%rsp),%rcx
+   88949:	00 
+   8894a:	48 89 e8             	mov    %rbp,%rax
+   8894d:	48 8b 14 24          	mov    (%rsp),%rdx
+   88951:	48 89 4c 24 10       	mov    %rcx,0x10(%rsp)
+   88956:	48 89 44 24 18       	mov    %rax,0x18(%rsp)
+   8895b:	48 89 54 24 20       	mov    %rdx,0x20(%rsp)
+   88960:	0f b6 44 24 0f       	movzbl 0xf(%rsp),%eax
+   88965:	88 44 24 28          	mov    %al,0x28(%rsp)
+   88969:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88970:	00 
+   88971:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88976:	e8 e5 a2 03 00       	call   c2c60 <<num_bigint::bigint::BigInt as core::ops::arith::Sub<u32>>::sub>
+   8897b:	48 85 db             	test   %rbx,%rbx
+   8897e:	74 29                	je     889a9 <<hyperreal::computable::node::Computable>::certify_required_domain+0xc29>
+   88980:	ff 15 aa 08 10 00    	call   *0x1008aa(%rip)        # 189230 <_DYNAMIC+0x240>
+   88986:	be 08 00 00 00       	mov    $0x8,%esi
+   8898b:	48 89 df             	mov    %rbx,%rdi
+   8898e:	ff 15 a4 08 10 00    	call   *0x1008a4(%rip)        # 189238 <_DYNAMIC+0x248>
+   88994:	48 85 c0             	test   %rax,%rax
+   88997:	0f 84 00 07 00 00    	je     8909d <<hyperreal::computable::node::Computable>::certify_required_domain+0x131d>
+   8899d:	48 89 c5             	mov    %rax,%rbp
+   889a0:	48 8b 04 24          	mov    (%rsp),%rax
+   889a4:	48 89 c1             	mov    %rax,%rcx
+   889a7:	eb 0b                	jmp    889b4 <<hyperreal::computable::node::Computable>::certify_required_domain+0xc34>
+   889a9:	bd 08 00 00 00       	mov    $0x8,%ebp
+   889ae:	31 c9                	xor    %ecx,%ecx
+   889b0:	48 8b 04 24          	mov    (%rsp),%rax
+   889b4:	48 85 c0             	test   %rax,%rax
+   889b7:	74 1b                	je     889d4 <<hyperreal::computable::node::Computable>::certify_required_domain+0xc54>
+   889b9:	48 89 ef             	mov    %rbp,%rdi
+   889bc:	48 8b 74 24 68       	mov    0x68(%rsp),%rsi
+   889c1:	48 89 da             	mov    %rbx,%rdx
+   889c4:	48 89 cb             	mov    %rcx,%rbx
+   889c7:	ff 15 83 08 10 00    	call   *0x100883(%rip)        # 189250 <memcpy@GLIBC_2.14>
+   889cd:	48 89 d9             	mov    %rbx,%rcx
+   889d0:	48 8b 04 24          	mov    (%rsp),%rax
+   889d4:	48 89 4c 24 10       	mov    %rcx,0x10(%rsp)
+   889d9:	48 89 6c 24 18       	mov    %rbp,0x18(%rsp)
+   889de:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   889e3:	0f b6 44 24 0f       	movzbl 0xf(%rsp),%eax
+   889e8:	88 44 24 28          	mov    %al,0x28(%rsp)
+   889ec:	48 8d 9c 24 c0 00 00 	lea    0xc0(%rsp),%rbx
+   889f3:	00 
+   889f4:	48 89 df             	mov    %rbx,%rdi
+   889f7:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   889fc:	e8 4f a6 03 00       	call   c3050 <<num_bigint::bigint::BigInt as core::ops::arith::Add<u32>>::add>
+   88a01:	48 8b 44 24 38       	mov    0x38(%rsp),%rax
+   88a06:	48 8d 0d 7f b9 fa ff 	lea    -0x54681(%rip),%rcx        # 3438c <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425+0xd6c>
+   88a0d:	48 63 04 81          	movslq (%rcx,%rax,4),%rax
+   88a11:	48 01 c8             	add    %rcx,%rax
+   88a14:	8b ac 24 e4 00 00 00 	mov    0xe4(%rsp),%ebp
+   88a1b:	ff e0                	jmp    *%rax
+   88a1d:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88a24:	00 
+   88a25:	4c 8d 2d f4 ab fa ff 	lea    -0x5540c(%rip),%r13        # 33620 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425>
+   88a2c:	4c 89 ee             	mov    %r13,%rsi
+   88a2f:	e8 dc ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88a34:	b3 ff                	mov    $0xff,%bl
+   88a36:	84 c0                	test   %al,%al
+   88a38:	0f 8f a4 05 00 00    	jg     88fe2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1262>
+   88a3e:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88a45:	00 
+   88a46:	4c 89 ee             	mov    %r13,%rsi
+   88a49:	e8 c2 ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88a4e:	84 c0                	test   %al,%al
+   88a50:	4c 8b 2d 21 08 10 00 	mov    0x100821(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88a57:	0f 89 63 04 00 00    	jns    88ec0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1140>
+   88a5d:	e9 80 05 00 00       	jmp    88fe2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1262>
+   88a62:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88a69:	00 
+   88a6a:	4c 8d 6c 24 70       	lea    0x70(%rsp),%r13
+   88a6f:	4c 89 ee             	mov    %r13,%rsi
+   88a72:	e8 99 ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88a77:	48 89 df             	mov    %rbx,%rdi
+   88a7a:	89 c3                	mov    %eax,%ebx
+   88a7c:	4c 89 ee             	mov    %r13,%rsi
+   88a7f:	e8 8c ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88a84:	f6 d3                	not    %bl
+   88a86:	c0 eb 07             	shr    $0x7,%bl
+   88a89:	e9 6a 01 00 00       	jmp    88bf8 <<hyperreal::computable::node::Computable>::certify_required_domain+0xe78>
+   88a8e:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88a95:	00 
+   88a96:	4c 8d 2d 83 ab fa ff 	lea    -0x5547d(%rip),%r13        # 33620 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425>
+   88a9d:	4c 89 ee             	mov    %r13,%rsi
+   88aa0:	e8 6b ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88aa5:	84 c0                	test   %al,%al
+   88aa7:	0f 9f c0             	setg   %al
+   88aaa:	48 89 df             	mov    %rbx,%rdi
+   88aad:	89 c3                	mov    %eax,%ebx
+   88aaf:	4c 89 ee             	mov    %r13,%rsi
+   88ab2:	e8 59 ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88ab7:	84 c0                	test   %al,%al
+   88ab9:	0f 9e c0             	setle  %al
+   88abc:	e9 3a 01 00 00       	jmp    88bfb <<hyperreal::computable::node::Computable>::certify_required_domain+0xe7b>
+   88ac1:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   88ac6:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88acb:	e8 b0 29 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88ad0:	48 8b 44 24 20       	mov    0x20(%rsp),%rax
+   88ad5:	48 89 44 24 50       	mov    %rax,0x50(%rsp)
+   88ada:	0f 10 44 24 10       	movups 0x10(%rsp),%xmm0
+   88adf:	0f 29 44 24 40       	movaps %xmm0,0x40(%rsp)
+   88ae4:	b3 02                	mov    $0x2,%bl
+   88ae6:	44 28 eb             	sub    %r13b,%bl
+   88ae9:	88 5c 24 58          	mov    %bl,0x58(%rsp)
+   88aed:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88af4:	00 
+   88af5:	48 8d 74 24 40       	lea    0x40(%rsp),%rsi
+   88afa:	e8 11 ab 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88aff:	84 c0                	test   %al,%al
+   88b01:	0f 9f c0             	setg   %al
+   88b04:	89 04 24             	mov    %eax,(%rsp)
+   88b07:	48 8d bc 24 f0 00 00 	lea    0xf0(%rsp),%rdi
+   88b0e:	00 
+   88b0f:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88b14:	e8 67 29 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88b19:	48 8b 84 24 00 01 00 	mov    0x100(%rsp),%rax
+   88b20:	00 
+   88b21:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   88b26:	0f 10 84 24 f0 00 00 	movups 0xf0(%rsp),%xmm0
+   88b2d:	00 
+   88b2e:	0f 29 44 24 10       	movaps %xmm0,0x10(%rsp)
+   88b33:	88 5c 24 28          	mov    %bl,0x28(%rsp)
+   88b37:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88b3e:	00 
+   88b3f:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88b44:	e8 c7 aa 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88b49:	84 c0                	test   %al,%al
+   88b4b:	0f 9e c0             	setle  %al
+   88b4e:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88b53:	48 85 f6             	test   %rsi,%rsi
+   88b56:	4c 8b 2d 1b 07 10 00 	mov    0x10071b(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88b5d:	74 15                	je     88b74 <<hyperreal::computable::node::Computable>::certify_required_domain+0xdf4>
+   88b5f:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88b64:	48 c1 e6 03          	shl    $0x3,%rsi
+   88b68:	ba 08 00 00 00       	mov    $0x8,%edx
+   88b6d:	89 c3                	mov    %eax,%ebx
+   88b6f:	41 ff d5             	call   *%r13
+   88b72:	89 d8                	mov    %ebx,%eax
+   88b74:	48 8b 74 24 40       	mov    0x40(%rsp),%rsi
+   88b79:	48 85 f6             	test   %rsi,%rsi
+   88b7c:	74 15                	je     88b93 <<hyperreal::computable::node::Computable>::certify_required_domain+0xe13>
+   88b7e:	48 8b 7c 24 48       	mov    0x48(%rsp),%rdi
+   88b83:	48 c1 e6 03          	shl    $0x3,%rsi
+   88b87:	ba 08 00 00 00       	mov    $0x8,%edx
+   88b8c:	89 c3                	mov    %eax,%ebx
+   88b8e:	41 ff d5             	call   *%r13
+   88b91:	89 d8                	mov    %ebx,%eax
+   88b93:	8b 1c 24             	mov    (%rsp),%ebx
+   88b96:	e9 15 03 00 00       	jmp    88eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1130>
+   88b9b:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88ba2:	00 
+   88ba3:	48 8d 35 76 aa fa ff 	lea    -0x5558a(%rip),%rsi        # 33620 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425>
+   88baa:	e8 61 aa 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88baf:	84 c0                	test   %al,%al
+   88bb1:	0f 8e 60 01 00 00    	jle    88d17 <<hyperreal::computable::node::Computable>::certify_required_domain+0xf97>
+   88bb7:	48 89 df             	mov    %rbx,%rdi
+   88bba:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88bbf:	e8 4c aa 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88bc4:	c0 e8 07             	shr    $0x7,%al
+   88bc7:	89 04 24             	mov    %eax,(%rsp)
+   88bca:	e9 4f 01 00 00       	jmp    88d1e <<hyperreal::computable::node::Computable>::certify_required_domain+0xf9e>
+   88bcf:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88bd6:	00 
+   88bd7:	4c 8d 2d 42 aa fa ff 	lea    -0x555be(%rip),%r13        # 33620 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425>
+   88bde:	4c 89 ee             	mov    %r13,%rsi
+   88be1:	e8 2a aa 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88be6:	f6 d0                	not    %al
+   88be8:	c0 e8 07             	shr    $0x7,%al
+   88beb:	48 89 df             	mov    %rbx,%rdi
+   88bee:	89 c3                	mov    %eax,%ebx
+   88bf0:	4c 89 ee             	mov    %r13,%rsi
+   88bf3:	e8 18 aa 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88bf8:	c0 e8 07             	shr    $0x7,%al
+   88bfb:	4c 8b 2d 76 06 10 00 	mov    0x100676(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88c02:	e9 a9 02 00 00       	jmp    88eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1130>
+   88c07:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   88c0c:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88c11:	e8 6a 28 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88c16:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+   88c1b:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   88c20:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+   88c25:	0f 29 44 24 10       	movaps %xmm0,0x10(%rsp)
+   88c2a:	b3 02                	mov    $0x2,%bl
+   88c2c:	44 28 eb             	sub    %r13b,%bl
+   88c2f:	88 5c 24 28          	mov    %bl,0x28(%rsp)
+   88c33:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88c3a:	00 
+   88c3b:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88c40:	e8 cb a9 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88c45:	84 c0                	test   %al,%al
+   88c47:	0f 88 0e 01 00 00    	js     88d5b <<hyperreal::computable::node::Computable>::certify_required_domain+0xfdb>
+   88c4d:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88c52:	48 85 f6             	test   %rsi,%rsi
+   88c55:	48 8b 05 1c 06 10 00 	mov    0x10061c(%rip),%rax        # 189278 <_DYNAMIC+0x288>
+   88c5c:	4c 8d 6c 24 70       	lea    0x70(%rsp),%r13
+   88c61:	74 10                	je     88c73 <<hyperreal::computable::node::Computable>::certify_required_domain+0xef3>
+   88c63:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88c68:	48 c1 e6 03          	shl    $0x3,%rsi
+   88c6c:	ba 08 00 00 00       	mov    $0x8,%edx
+   88c71:	ff d0                	call   *%rax
+   88c73:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88c7a:	00 
+   88c7b:	4c 89 ee             	mov    %r13,%rsi
+   88c7e:	e8 8d a9 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88c83:	84 c0                	test   %al,%al
+   88c85:	0f 9e c0             	setle  %al
+   88c88:	89 04 24             	mov    %eax,(%rsp)
+   88c8b:	e9 f8 00 00 00       	jmp    88d88 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1008>
+   88c90:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   88c95:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88c9a:	e8 e1 27 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88c9f:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+   88ca4:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   88ca9:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+   88cae:	0f 29 44 24 10       	movaps %xmm0,0x10(%rsp)
+   88cb3:	b3 02                	mov    $0x2,%bl
+   88cb5:	44 28 eb             	sub    %r13b,%bl
+   88cb8:	88 5c 24 28          	mov    %bl,0x28(%rsp)
+   88cbc:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88cc3:	00 
+   88cc4:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88cc9:	e8 42 a9 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88cce:	84 c0                	test   %al,%al
+   88cd0:	0f 8e 32 01 00 00    	jle    88e08 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1088>
+   88cd6:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88cdb:	48 85 f6             	test   %rsi,%rsi
+   88cde:	48 8b 05 93 05 10 00 	mov    0x100593(%rip),%rax        # 189278 <_DYNAMIC+0x288>
+   88ce5:	4c 8d 6c 24 70       	lea    0x70(%rsp),%r13
+   88cea:	74 10                	je     88cfc <<hyperreal::computable::node::Computable>::certify_required_domain+0xf7c>
+   88cec:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88cf1:	48 c1 e6 03          	shl    $0x3,%rsi
+   88cf5:	ba 08 00 00 00       	mov    $0x8,%edx
+   88cfa:	ff d0                	call   *%rax
+   88cfc:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88d03:	00 
+   88d04:	4c 89 ee             	mov    %r13,%rsi
+   88d07:	e8 04 a9 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88d0c:	c0 e8 07             	shr    $0x7,%al
+   88d0f:	89 04 24             	mov    %eax,(%rsp)
+   88d12:	e9 1e 01 00 00       	jmp    88e35 <<hyperreal::computable::node::Computable>::certify_required_domain+0x10b5>
+   88d17:	c7 04 24 00 00 00 00 	movl   $0x0,(%rsp)
+   88d1e:	4c 8b 2d 53 05 10 00 	mov    0x100553(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88d25:	48 89 df             	mov    %rbx,%rdi
+   88d28:	48 8d 35 f1 a8 fa ff 	lea    -0x5570f(%rip),%rsi        # 33620 <anon.9023bb4654a08944d5043612f590d0ff.85.llvm.4660732205840653425>
+   88d2f:	e8 dc a8 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88d34:	84 c0                	test   %al,%al
+   88d36:	0f 8e 95 02 00 00    	jle    88fd1 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1251>
+   88d3c:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88d43:	00 
+   88d44:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88d49:	e8 c2 a8 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88d4e:	f6 d0                	not    %al
+   88d50:	c0 e8 07             	shr    $0x7,%al
+   88d53:	8b 1c 24             	mov    (%rsp),%ebx
+   88d56:	e9 55 01 00 00       	jmp    88eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1130>
+   88d5b:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88d60:	48 85 f6             	test   %rsi,%rsi
+   88d63:	48 8b 05 0e 05 10 00 	mov    0x10050e(%rip),%rax        # 189278 <_DYNAMIC+0x288>
+   88d6a:	4c 8d 6c 24 70       	lea    0x70(%rsp),%r13
+   88d6f:	74 10                	je     88d81 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1001>
+   88d71:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88d76:	48 c1 e6 03          	shl    $0x3,%rsi
+   88d7a:	ba 08 00 00 00       	mov    $0x8,%edx
+   88d7f:	ff d0                	call   *%rax
+   88d81:	c7 04 24 00 00 00 00 	movl   $0x0,(%rsp)
+   88d88:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   88d8d:	4c 89 ee             	mov    %r13,%rsi
+   88d90:	e8 eb 26 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88d95:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+   88d9a:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   88d9f:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+   88da4:	0f 29 44 24 10       	movaps %xmm0,0x10(%rsp)
+   88da9:	88 5c 24 28          	mov    %bl,0x28(%rsp)
+   88dad:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88db4:	00 
+   88db5:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88dba:	e8 51 a8 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88dbf:	84 c0                	test   %al,%al
+   88dc1:	4c 8b 2d b0 04 10 00 	mov    0x1004b0(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88dc8:	0f 88 e5 01 00 00    	js     88fb3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1233>
+   88dce:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88dd3:	48 85 f6             	test   %rsi,%rsi
+   88dd6:	8b 1c 24             	mov    (%rsp),%ebx
+   88dd9:	74 11                	je     88dec <<hyperreal::computable::node::Computable>::certify_required_domain+0x106c>
+   88ddb:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88de0:	48 c1 e6 03          	shl    $0x3,%rsi
+   88de4:	ba 08 00 00 00       	mov    $0x8,%edx
+   88de9:	41 ff d5             	call   *%r13
+   88dec:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88df3:	00 
+   88df4:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88df9:	e8 12 a8 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88dfe:	84 c0                	test   %al,%al
+   88e00:	0f 9f c0             	setg   %al
+   88e03:	e9 a8 00 00 00       	jmp    88eb0 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1130>
+   88e08:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88e0d:	48 85 f6             	test   %rsi,%rsi
+   88e10:	48 8b 05 61 04 10 00 	mov    0x100461(%rip),%rax        # 189278 <_DYNAMIC+0x288>
+   88e17:	4c 8d 6c 24 70       	lea    0x70(%rsp),%r13
+   88e1c:	74 10                	je     88e2e <<hyperreal::computable::node::Computable>::certify_required_domain+0x10ae>
+   88e1e:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88e23:	48 c1 e6 03          	shl    $0x3,%rsi
+   88e27:	ba 08 00 00 00       	mov    $0x8,%edx
+   88e2c:	ff d0                	call   *%rax
+   88e2e:	c7 04 24 00 00 00 00 	movl   $0x0,(%rsp)
+   88e35:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   88e3a:	4c 89 ee             	mov    %r13,%rsi
+   88e3d:	e8 3e 26 0a 00       	call   12b480 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   88e42:	48 8b 44 24 50       	mov    0x50(%rsp),%rax
+   88e47:	48 89 44 24 20       	mov    %rax,0x20(%rsp)
+   88e4c:	0f 10 44 24 40       	movups 0x40(%rsp),%xmm0
+   88e51:	0f 29 44 24 10       	movaps %xmm0,0x10(%rsp)
+   88e56:	88 5c 24 28          	mov    %bl,0x28(%rsp)
+   88e5a:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   88e61:	00 
+   88e62:	48 8d 74 24 10       	lea    0x10(%rsp),%rsi
+   88e67:	e8 a4 a7 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88e6c:	84 c0                	test   %al,%al
+   88e6e:	4c 8b 2d 03 04 10 00 	mov    0x100403(%rip),%r13        # 189278 <_DYNAMIC+0x288>
+   88e75:	0f 8e 38 01 00 00    	jle    88fb3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1233>
+   88e7b:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88e80:	48 85 f6             	test   %rsi,%rsi
+   88e83:	8b 1c 24             	mov    (%rsp),%ebx
+   88e86:	74 11                	je     88e99 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1119>
+   88e88:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88e8d:	48 c1 e6 03          	shl    $0x3,%rsi
+   88e91:	ba 08 00 00 00       	mov    $0x8,%edx
+   88e96:	41 ff d5             	call   *%r13
+   88e99:	48 8d bc 24 98 00 00 	lea    0x98(%rsp),%rdi
+   88ea0:	00 
+   88ea1:	48 8d 74 24 70       	lea    0x70(%rsp),%rsi
+   88ea6:	e8 65 a7 03 00       	call   c3610 <<num_bigint::bigint::BigInt as core::cmp::Ord>::cmp>
+   88eab:	f6 d0                	not    %al
+   88ead:	c0 e8 07             	shr    $0x7,%al
+   88eb0:	84 db                	test   %bl,%bl
+   88eb2:	0f 85 f1 00 00 00    	jne    88fa9 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1229>
+   88eb8:	84 c0                	test   %al,%al
+   88eba:	0f 85 ed 00 00 00    	jne    88fad <<hyperreal::computable::node::Computable>::certify_required_domain+0x122d>
+   88ec0:	81 fd 01 00 f8 ff    	cmp    $0xfff80001,%ebp
+   88ec6:	0f 8c d9 00 00 00    	jl     88fa5 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1225>
+   88ecc:	48 8b b4 24 c0 00 00 	mov    0xc0(%rsp),%rsi
+   88ed3:	00 
+   88ed4:	48 85 f6             	test   %rsi,%rsi
+   88ed7:	74 14                	je     88eed <<hyperreal::computable::node::Computable>::certify_required_domain+0x116d>
+   88ed9:	48 8b bc 24 c8 00 00 	mov    0xc8(%rsp),%rdi
+   88ee0:	00 
+   88ee1:	48 c1 e6 03          	shl    $0x3,%rsi
+   88ee5:	ba 08 00 00 00       	mov    $0x8,%edx
+   88eea:	41 ff d5             	call   *%r13
+   88eed:	48 8b b4 24 98 00 00 	mov    0x98(%rsp),%rsi
+   88ef4:	00 
+   88ef5:	48 85 f6             	test   %rsi,%rsi
+   88ef8:	74 14                	je     88f0e <<hyperreal::computable::node::Computable>::certify_required_domain+0x118e>
+   88efa:	48 8b bc 24 a0 00 00 	mov    0xa0(%rsp),%rdi
+   88f01:	00 
+   88f02:	48 c1 e6 03          	shl    $0x3,%rsi
+   88f06:	ba 08 00 00 00       	mov    $0x8,%edx
+   88f0b:	41 ff d5             	call   *%r13
+   88f0e:	48 8b 74 24 70       	mov    0x70(%rsp),%rsi
+   88f13:	48 85 f6             	test   %rsi,%rsi
+   88f16:	74 11                	je     88f29 <<hyperreal::computable::node::Computable>::certify_required_domain+0x11a9>
+   88f18:	48 8b 7c 24 78       	mov    0x78(%rsp),%rdi
+   88f1d:	48 c1 e6 03          	shl    $0x3,%rsi
+   88f21:	ba 08 00 00 00       	mov    $0x8,%edx
+   88f26:	41 ff d5             	call   *%r13
+   88f29:	48 8b b4 24 b8 00 00 	mov    0xb8(%rsp),%rsi
+   88f30:	00 
+   88f31:	48 85 f6             	test   %rsi,%rsi
+   88f34:	74 11                	je     88f47 <<hyperreal::computable::node::Computable>::certify_required_domain+0x11c7>
+   88f36:	48 c1 e6 03          	shl    $0x3,%rsi
+   88f3a:	ba 08 00 00 00       	mov    $0x8,%edx
+   88f3f:	48 8b 7c 24 68       	mov    0x68(%rsp),%rdi
+   88f44:	41 ff d5             	call   *%r13
+   88f47:	01 ed                	add    %ebp,%ebp
+   88f49:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   88f4e:	4c 89 fe             	mov    %r15,%rsi
+   88f51:	4c 89 f2             	mov    %r14,%rdx
+   88f54:	89 e9                	mov    %ebp,%ecx
+   88f56:	ff 15 7c 05 10 00    	call   *0x10057c(%rip)        # 1894d8 <_DYNAMIC+0x4e8>
+   88f5c:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
+   88f61:	0f b6 5c 24 18       	movzbl 0x18(%rsp),%ebx
+   88f66:	48 89 84 24 b8 00 00 	mov    %rax,0xb8(%rsp)
+   88f6d:	00 
+   88f6e:	48 83 f8 ff          	cmp    $0xffffffffffffffff,%rax
+   88f72:	48 8b 15 b7 02 10 00 	mov    0x1002b7(%rip),%rdx        # 189230 <_DYNAMIC+0x240>
+   88f79:	4c 8b 2d b8 02 10 00 	mov    0x1002b8(%rip),%r13        # 189238 <_DYNAMIC+0x248>
+   88f80:	0f 85 7c f8 ff ff    	jne    88802 <<hyperreal::computable::node::Computable>::certify_required_domain+0xa82>
+   88f86:	e9 38 ef ff ff       	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   88f8b:	b3 ff                	mov    $0xff,%bl
+   88f8d:	e9 31 ef ff ff       	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   88f92:	31 ed                	xor    %ebp,%ebp
+   88f94:	48 89 ef             	mov    %rbp,%rdi
+   88f97:	48 89 de             	mov    %rbx,%rsi
+   88f9a:	ff 15 f8 02 10 00    	call   *0x1002f8(%rip)        # 189298 <_DYNAMIC+0x2a8>
+   88fa0:	e9 06 01 00 00       	jmp    890ab <<hyperreal::computable::node::Computable>::certify_required_domain+0x132b>
+   88fa5:	b3 0c                	mov    $0xc,%bl
+   88fa7:	eb 39                	jmp    88fe2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1262>
+   88fa9:	b3 ff                	mov    $0xff,%bl
+   88fab:	eb 35                	jmp    88fe2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1262>
+   88fad:	8b 5c 24 34          	mov    0x34(%rsp),%ebx
+   88fb1:	eb 2f                	jmp    88fe2 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1262>
+   88fb3:	48 8b 74 24 10       	mov    0x10(%rsp),%rsi
+   88fb8:	48 85 f6             	test   %rsi,%rsi
+   88fbb:	74 14                	je     88fd1 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1251>
+   88fbd:	48 8b 7c 24 18       	mov    0x18(%rsp),%rdi
+   88fc2:	48 c1 e6 03          	shl    $0x3,%rsi
+   88fc6:	ba 08 00 00 00       	mov    $0x8,%edx
+   88fcb:	ff 15 a7 02 10 00    	call   *0x1002a7(%rip)        # 189278 <_DYNAMIC+0x288>
+   88fd1:	0f b6 44 24 34       	movzbl 0x34(%rsp),%eax
+   88fd6:	80 3c 24 00          	cmpb   $0x0,(%rsp)
+   88fda:	bb ff 00 00 00       	mov    $0xff,%ebx
+   88fdf:	0f 44 d8             	cmove  %eax,%ebx
+   88fe2:	48 8b b4 24 c0 00 00 	mov    0xc0(%rsp),%rsi
+   88fe9:	00 
+   88fea:	48 85 f6             	test   %rsi,%rsi
+   88fed:	74 17                	je     89006 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1286>
+   88fef:	48 8b bc 24 c8 00 00 	mov    0xc8(%rsp),%rdi
+   88ff6:	00 
+   88ff7:	48 c1 e6 03          	shl    $0x3,%rsi
+   88ffb:	ba 08 00 00 00       	mov    $0x8,%edx
+   89000:	ff 15 72 02 10 00    	call   *0x100272(%rip)        # 189278 <_DYNAMIC+0x288>
+   89006:	48 8b b4 24 98 00 00 	mov    0x98(%rsp),%rsi
+   8900d:	00 
+   8900e:	48 85 f6             	test   %rsi,%rsi
+   89011:	74 17                	je     8902a <<hyperreal::computable::node::Computable>::certify_required_domain+0x12aa>
+   89013:	48 8b bc 24 a0 00 00 	mov    0xa0(%rsp),%rdi
+   8901a:	00 
+   8901b:	48 c1 e6 03          	shl    $0x3,%rsi
+   8901f:	ba 08 00 00 00       	mov    $0x8,%edx
+   89024:	ff 15 4e 02 10 00    	call   *0x10024e(%rip)        # 189278 <_DYNAMIC+0x288>
+   8902a:	48 8b 74 24 70       	mov    0x70(%rsp),%rsi
+   8902f:	48 85 f6             	test   %rsi,%rsi
+   89032:	74 14                	je     89048 <<hyperreal::computable::node::Computable>::certify_required_domain+0x12c8>
+   89034:	48 8b 7c 24 78       	mov    0x78(%rsp),%rdi
+   89039:	48 c1 e6 03          	shl    $0x3,%rsi
+   8903d:	ba 08 00 00 00       	mov    $0x8,%edx
+   89042:	ff 15 30 02 10 00    	call   *0x100230(%rip)        # 189278 <_DYNAMIC+0x288>
+   89048:	48 8b b4 24 b8 00 00 	mov    0xb8(%rsp),%rsi
+   8904f:	00 
+   89050:	48 85 f6             	test   %rsi,%rsi
+   89053:	0f 84 6a ee ff ff    	je     87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   89059:	48 c1 e6 03          	shl    $0x3,%rsi
+   8905d:	ba 08 00 00 00       	mov    $0x8,%edx
+   89062:	48 8b 7c 24 68       	mov    0x68(%rsp),%rdi
+   89067:	ff 15 0b 02 10 00    	call   *0x10020b(%rip)        # 189278 <_DYNAMIC+0x288>
+   8906d:	e9 51 ee ff ff       	jmp    87ec3 <<hyperreal::computable::node::Computable>::certify_required_domain+0x143>
+   89072:	bf 08 00 00 00       	mov    $0x8,%edi
+   89077:	be 08 00 00 00       	mov    $0x8,%esi
+   8907c:	ff 15 be 01 10 00    	call   *0x1001be(%rip)        # 189240 <_DYNAMIC+0x250>
+   89082:	eb 27                	jmp    890ab <<hyperreal::computable::node::Computable>::certify_required_domain+0x132b>
+   89084:	48 8d 3d 7f cb fa ff 	lea    -0x53481(%rip),%rdi        # 35c0a <anon.9023bb4654a08944d5043612f590d0ff.325.llvm.4660732205840653425>
+   8908b:	48 8d 15 0e c2 0f 00 	lea    0xfc20e(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.4660732205840653425>
+   89092:	be 9f 00 00 00       	mov    $0x9f,%esi
+   89097:	ff 15 ab 02 10 00    	call   *0x1002ab(%rip)        # 189348 <_DYNAMIC+0x358>
+   8909d:	bf 08 00 00 00       	mov    $0x8,%edi
+   890a2:	48 89 de             	mov    %rbx,%rsi
+   890a5:	ff 15 ed 01 10 00    	call   *0x1001ed(%rip)        # 189298 <_DYNAMIC+0x2a8>
+   890ab:	0f 0b                	ud2
+   890ad:	48 89 c3             	mov    %rax,%rbx
+   890b0:	48 8b 74 24 40       	mov    0x40(%rsp),%rsi
+   890b5:	48 85 f6             	test   %rsi,%rsi
+   890b8:	74 3d                	je     890f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1377>
+   890ba:	48 8b 7c 24 48       	mov    0x48(%rsp),%rdi
+   890bf:	48 c1 e6 03          	shl    $0x3,%rsi
+   890c3:	ba 08 00 00 00       	mov    $0x8,%edx
+   890c8:	ff 15 aa 01 10 00    	call   *0x1001aa(%rip)        # 189278 <_DYNAMIC+0x288>
+   890ce:	eb 27                	jmp    890f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1377>
+   890d0:	48 89 c3             	mov    %rax,%rbx
+   890d3:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   890d8:	0f 85 19 01 00 00    	jne    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   890de:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   890e3:	ff 15 f7 02 10 00    	call   *0x1002f7(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   890e9:	e9 09 01 00 00       	jmp    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   890ee:	ff 15 7c 01 10 00    	call   *0x10017c(%rip)        # 189270 <_DYNAMIC+0x280>
+   890f4:	48 89 c3             	mov    %rax,%rbx
+   890f7:	48 8b b4 24 c0 00 00 	mov    0xc0(%rsp),%rsi
+   890fe:	00 
+   890ff:	48 85 f6             	test   %rsi,%rsi
+   89102:	74 63                	je     89167 <<hyperreal::computable::node::Computable>::certify_required_domain+0x13e7>
+   89104:	48 8b bc 24 c8 00 00 	mov    0xc8(%rsp),%rdi
+   8910b:	00 
+   8910c:	48 c1 e6 03          	shl    $0x3,%rsi
+   89110:	ba 08 00 00 00       	mov    $0x8,%edx
+   89115:	ff 15 5d 01 10 00    	call   *0x10015d(%rip)        # 189278 <_DYNAMIC+0x288>
+   8911b:	eb 4a                	jmp    89167 <<hyperreal::computable::node::Computable>::certify_required_domain+0x13e7>
+   8911d:	eb 45                	jmp    89164 <<hyperreal::computable::node::Computable>::certify_required_domain+0x13e4>
+   8911f:	48 89 c3             	mov    %rax,%rbx
+   89122:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   89127:	0f 85 ca 00 00 00    	jne    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   8912d:	48 8d bc 24 c0 00 00 	lea    0xc0(%rsp),%rdi
+   89134:	00 
+   89135:	ff 15 a5 02 10 00    	call   *0x1002a5(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   8913b:	e9 b7 00 00 00       	jmp    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   89140:	48 89 c3             	mov    %rax,%rbx
+   89143:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   89148:	0f 85 a9 00 00 00    	jne    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   8914e:	48 8d 7c 24 40       	lea    0x40(%rsp),%rdi
+   89153:	ff 15 87 02 10 00    	call   *0x100287(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   89159:	e9 99 00 00 00       	jmp    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   8915e:	ff 15 0c 01 10 00    	call   *0x10010c(%rip)        # 189270 <_DYNAMIC+0x280>
+   89164:	48 89 c3             	mov    %rax,%rbx
+   89167:	48 8b b4 24 98 00 00 	mov    0x98(%rsp),%rsi
+   8916e:	00 
+   8916f:	48 85 f6             	test   %rsi,%rsi
+   89172:	74 58                	je     891cc <<hyperreal::computable::node::Computable>::certify_required_domain+0x144c>
+   89174:	48 8b bc 24 a0 00 00 	mov    0xa0(%rsp),%rdi
+   8917b:	00 
+   8917c:	48 c1 e6 03          	shl    $0x3,%rsi
+   89180:	ba 08 00 00 00       	mov    $0x8,%edx
+   89185:	ff 15 ed 00 10 00    	call   *0x1000ed(%rip)        # 189278 <_DYNAMIC+0x288>
+   8918b:	eb 3f                	jmp    891cc <<hyperreal::computable::node::Computable>::certify_required_domain+0x144c>
+   8918d:	eb 3a                	jmp    891c9 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1449>
+   8918f:	eb 33                	jmp    891c4 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1444>
+   89191:	48 89 c3             	mov    %rax,%rbx
+   89194:	f0 49 ff 0e          	lock decq (%r14)
+   89198:	75 5d                	jne    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   8919a:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   8919f:	ff 15 3b 02 10 00    	call   *0x10023b(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   891a5:	eb 50                	jmp    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   891a7:	48 89 c3             	mov    %rax,%rbx
+   891aa:	f0 49 ff 4d 00       	lock decq 0x0(%r13)
+   891af:	75 46                	jne    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   891b1:	48 8d 7c 24 10       	lea    0x10(%rsp),%rdi
+   891b6:	ff 15 24 02 10 00    	call   *0x100224(%rip)        # 1893e0 <_DYNAMIC+0x3f0>
+   891bc:	eb 39                	jmp    891f7 <<hyperreal::computable::node::Computable>::certify_required_domain+0x1477>
+   891be:	ff 15 ac 00 10 00    	call   *0x1000ac(%rip)        # 189270 <_DYNAMIC+0x280>
+   891c4:	48 89 c3             	mov    %rax,%rbx
+   891c7:	eb 21                	jmp    891ea <<hyperreal::computable::node::Computable>::certify_required_domain+0x146a>
+   891c9:	48 89 c3             	mov    %rax,%rbx
+   891cc:	48 8b 74 24 70       	mov    0x70(%rsp),%rsi
+   891d1:	48 85 f6             	test   %rsi,%rsi
+   891d4:	74 14                	je     891ea <<hyperreal::computable::node::Computable>::certify_required_domain+0x146a>
+   891d6:	48 8b 7c 24 78       	mov    0x78(%rsp),%rdi
+   891db:	48 c1 e6 03          	shl    $0x3,%rsi
+   891df:	ba 08 00 00 00       	mov    $0x8,%edx
+   891e4:	ff 15 8e 00 10 00    	call   *0x10008e(%rip)        # 189278 <_DYNAMIC+0x288>
+   891ea:	48 8b b4 24 b8 00 00 	mov    0xb8(%rsp),%rsi
+   891f1:	00 
+   891f2:	48 85 f6             	test   %rsi,%rsi
+   891f5:	75 08                	jne    891ff <<hyperreal::computable::node::Computable>::certify_required_domain+0x147f>
+   891f7:	48 89 df             	mov    %rbx,%rdi
+   891fa:	e8 f1 a3 0f 00       	call   1835f0 <_Unwind_Resume@plt>
+   891ff:	48 c1 e6 03          	shl    $0x3,%rsi
+   89203:	ba 08 00 00 00       	mov    $0x8,%edx
+   89208:	48 8b 7c 24 68       	mov    0x68(%rsp),%rdi
+   8920d:	ff 15 65 00 10 00    	call   *0x100065(%rip)        # 189278 <_DYNAMIC+0x288>
+   89213:	48 89 df             	mov    %rbx,%rdi
+   89216:	e8 d5 a3 0f 00       	call   1835f0 <_Unwind_Resume@plt>

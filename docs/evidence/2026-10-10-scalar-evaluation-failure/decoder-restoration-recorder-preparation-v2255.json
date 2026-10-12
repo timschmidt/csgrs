@@ -1,0 +1,10 @@
+{
+  "status": "Prepared audit; execution still validates every restoration result",
+  "predecessor": "record_scalar_retained_restoration.py",
+  "predecessor_sha256": "69866e90245ffbb42a5b5dc3680728e35be902e58cbb7f851b3fdb86d07f0241",
+  "recorder": "record_decoder_retained_restoration.py",
+  "recorder_sha256": "05c0ad7ddd8bc0c850082f18fd64b40f728e7728b8492e7f9d18855e0b36ddea",
+  "patch": "decoder-restoration-recorder-preparation-v2255.patch",
+  "patch_sha256": "75d4be39d332802b52c6971d68254cd654766cf74955e58f5dfe038f5dddd946",
+  "scope": "Retain the six fresh command, whole-source/main identity, conditional proof, acceptance and reused mutation/dependency checks. Update five-file restoration scope and preserve the decoder's failed cost gate explicitly."
+}

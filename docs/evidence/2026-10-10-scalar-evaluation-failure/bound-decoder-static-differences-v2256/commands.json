@@ -1,0 +1,674 @@
+[
+  {
+    "name": "atan-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=556416",
+      "--stop-address=561691",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=731120",
+      "--stop-address=733297",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=689184",
+      "--stop-address=689701",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=723232",
+      "--stop-address=728804",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=556416",
+      "--stop-address=561691",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=731120",
+      "--stop-address=733297",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=689184",
+      "--stop-address=689701",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "atan-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=723232",
+      "--stop-address=728804",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=547440",
+      "--stop-address=552715",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=722144",
+      "--stop-address=724321",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=680208",
+      "--stop-address=680725",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=714256",
+      "--stop-address=719828",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=547440",
+      "--stop-address=552715",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=722144",
+      "--stop-address=724321",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=680208",
+      "--stop-address=680725",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "acos-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=714256",
+      "--stop-address=719828",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=544400",
+      "--stop-address=549675",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=719104",
+      "--stop-address=721281",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=677168",
+      "--stop-address=677685",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=711216",
+      "--stop-address=716788",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=544400",
+      "--stop-address=549675",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=719104",
+      "--stop-address=721281",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=677168",
+      "--stop-address=677685",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "integer-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=711216",
+      "--stop-address=716788",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/integer"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=986288",
+      "--stop-address=991563",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1177216",
+      "--stop-address=1179393",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1124224",
+      "--stop-address=1124741",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1169328",
+      "--stop-address=1174900",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=986288",
+      "--stop-address=991563",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1177216",
+      "--stop-address=1179393",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1124224",
+      "--stop-address=1124741",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "inverse_trig-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1169328",
+      "--stop-address=1174900",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/inverse_trig"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=990768",
+      "--stop-address=996043",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1181696",
+      "--stop-address=1183873",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1128704",
+      "--stop-address=1129221",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1173808",
+      "--stop-address=1179380",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=990768",
+      "--stop-address=996043",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1181696",
+      "--stop-address=1183873",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1128704",
+      "--stop-address=1129221",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "normal_form-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1173808",
+      "--stop-address=1179380",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/normal_form"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=675264",
+      "--stop-address=680539",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=849968",
+      "--stop-address=852145",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=808032",
+      "--stop-address=808549",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=842080",
+      "--stop-address=847652",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=675264",
+      "--stop-address=680539",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=849968",
+      "--stop-address=852145",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=808032",
+      "--stop-address=808549",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "default-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=842080",
+      "--stop-address=847652",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/default"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-baseline-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=981168",
+      "--stop-address=986443",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-baseline-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1172096",
+      "--stop-address=1174273",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-baseline-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1119104",
+      "--stop-address=1119621",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-baseline-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1164208",
+      "--stop-address=1169780",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-candidate-function-1",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=981168",
+      "--stop-address=986443",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-candidate-function-2",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1172096",
+      "--stop-address=1174273",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-candidate-function-3",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1119104",
+      "--stop-address=1119621",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/algebraic"
+    ],
+    "exit_code": 0
+  },
+  {
+    "name": "algebraic-candidate-function-4",
+    "command": [
+      "/usr/bin/objdump",
+      "--demangle=rust",
+      "-d",
+      "--start-address=1164208",
+      "--stop-address=1169780",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/algebraic"
+    ],
+    "exit_code": 0
+  }
+]
