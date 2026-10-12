@@ -1,0 +1,72 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v1754-state.json",
+  "status": "Retain the isolated proved cached magnitude-domain predicate extraction; main admission remains open",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "evidence_commits": [
+    "520dcad721e1630e232c168e67e40894bdf4374e",
+    "96b45f3c20b935ad00a2354e78c3515f3aabd484",
+    "29dc377ac4f6ed7fe31a8bc3849f96f79f6a96ef"
+  ],
+  "retention_record": "domain-predicate-retention-v1836.json",
+  "production_patch": "domain-predicate-proposal-v1763.patch",
+  "production_patch_sha256": "91201b922c6683ed0e99fbc32e65c00eb673c613d5a1dff316fcb69a27c17b1f",
+  "fresh_validation_phases": {
+    "cargo_and_format": 9,
+    "separately_verified_capped_binary": 39
+  },
+  "cap_record_scope": "The retention record checks source identity, actual cap receipts and direct-binary nested counts for all 39 capped phases. Pass only the nine Cargo/format phases to the checkpoint Cargo parser.",
+  "fresh_stack_counts": {
+    "top_level_passed": 5858,
+    "child_process_passed": 3,
+    "ignored": 33
+  },
+  "fresh_scalar_counts": {
+    "top_level_passed": 1074,
+    "child_process_passed": 1
+  },
+  "fresh_replay_cases": {
+    "numerical": 4129,
+    "public": 648
+  },
+  "conditional_proof_scope": "domain-predicate-proof-validation-v1763.json",
+  "conditional_proof": {
+    "verified_units": 645,
+    "errors": 0,
+    "listed_production_contracts": 97,
+    "listed_model_theorems": 130,
+    "open_obligation_groups": 13,
+    "fresh_acceptance_tests": 10,
+    "fresh_rejected_mutants": 226,
+    "fresh_passing_guard_baselines": 4,
+    "reused_rejected_mutants": 0
+  },
+  "cost_record": "domain-predicate-cost-review-v1780.json",
+  "original_cost_guard_failures_preserved": true,
+  "coverage_limits": [
+    "The proof includes the actual production predicate body and establishes a real-domain consequence conditional on a valid incoming bound. Independent real existence, producer soundness, caller ordering, graph semantics and atomic publication remain separate obligations; all thirteen whole-crate groups remain open.",
+    "Ten acceptance/dependency tests and 226 rejected mutations plus four passing baselines do not satisfy the still-pending fixed pre-Verus acceptance report. The failed v1760 proof attempt and all earlier failed experiments remain immutable.",
+    "The nine broad commands cover scalar configurations and the five-crate consumer stack, not every workspace/CI job. Thirty-three ignored tests and fourteen inherited Cargo example-filename warnings remain; both strict Clippy configurations have zero warnings.",
+    "The 39 direct-binary caps and 648 public schedules retain 192 MiB, CPU 2/3-second and four-second wall limits. Numerical corpora preserve their individual original limits; the base and precision corpora use a three-second wall limit without the later CPU guard. The 78 private-kernel cases check result shapes, so 4129 is not a count of independent numerical oracle checks.",
+    "All deterministic observations remain identical, including samples, typed errors, work, facts and recorded allocations. Only duration fields and known executable phase paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts separately from schedule-dependent outcomes.",
+    "The public fact audit checks observed worker/root sequences and joined final snapshots. Thread stress is not exhaustive interleaving verification. Composed child snapshots start at the first serialized observation; the frozen Rust probe separately checks the initial child state. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "The 1584 domain queries include 453 successes and 1131 Exhausted answers, unchanged from v1754. The zero-Rust-allocation observation applies to 56 private certificate queries. The 48 endpoint/invalid/upper-only controls, 36 fine-retry schedules and 144 cached retry queries remain unchanged; these are nested in the nine domain cap phases, not additional executable processes.",
+    "All 1566 fresh cost processes and 1098 separate CPU preludes pass their original caps. The initial 5.0501 percent pi increase and prescribed 1.0191 percent repeat both remain recorded. Seven local probe executables shrink 48-152 bytes. These measurements establish neither causal attribution, a uniform speedup nor whole-board performance/size parity.",
+    "The local cost baseline remains v1754. Older original-cap failures at v1638/v1710, the earlier retained integer-control tradeoff and the fixed pre-Verus acceptance baseline are not erased or reset by this successful comparison.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered algebraic helpers. Construction and structural inspection are outside the public query allowances. Reconstructed graphs discard sharing/caches while process-global constants may already be warm.",
+    "This retains an isolated candidate only. Main retains its original scalar failure and all 49 preexisting worktree entries. Native combination, full-board admission, all 39 properties, 14 targets and crate future work remain in scope; no property/target status changes and no push follow from this checkpoint."
+  ],
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "remaining_source_review": "domain-bound-deferred-review-v1702.json",
+  "remaining_source_review_scope": "Historical review of v1754. Its public/concurrent/composed coverage gaps now have finite replay evidence and its cached-bound predicate has a conditional production proof; producer/existence/atomic/caller and resource obligations remain open.",
+  "remaining_requirements": [
+    "Continue implementation-connected review of bound producers, independent real existence and atomic publication, using the retained public and composed schedules as regression controls. Conditional predicate soundness does not discharge those prerequisites. Continue the remaining constructor/coefficient and exact-operation resource work before native combination and unchanged full-board admission.",
+    "Preserve the frozen public, composed, private, deterministic-publication and numerical corpora; their finite coverage does not replace producer/existence/atomic proofs or kernel interruption coverage.",
+    "Continue bounded-query constructors, lazy/scaled Laurent and quadratic-tower coefficient copies, unshared symbolic growth and construction-time comparison without changing ordinary exactness or the eight-term recognition limit. Both prior acos and both atan allocation variants remain rejected.",
+    "Trace direct Real inverse-trig/radical/tower reachability from public Computable allowances, keeping payload diagnostics distinct from native Real contracts. Measure smooth-prime logarithm factoring, power-of-two extraction, exact-operation CPU and native memory on unchanged full-size fixtures.",
+    "All thirteen whole-crate proof groups and the fixed pre-Verus acceptance baseline remain open. Native-prototype combination and unchanged full-board admission are required before main runtime changes.",
+    "Continue all 39 properties, 14 targets and crate future work. Preserve the original scalar failure, 49 preexisting worktree entries, older cost failures and retained integer tradeoff; no completion status changes at this checkpoint."
+  ],
+  "retention_record_sha256": "812959b732e6aca29e8c1a0e7d9b51014f997513c03ffd025689977ba1f5cfd0"
+}

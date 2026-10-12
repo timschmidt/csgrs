@@ -1,0 +1,2 @@
+domain bound upper-only kind=acosh, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }, answer=Err(NotANumber)
+domain bound upper-only kind=acosh-near, facts=RealStructuralFacts { sign: Some(Positive), zero: NonZero, exact_rational: false, magnitude: Some(MagnitudeBits { msd: 0, exact_msd: false }) }, answer=Err(NotANumber)

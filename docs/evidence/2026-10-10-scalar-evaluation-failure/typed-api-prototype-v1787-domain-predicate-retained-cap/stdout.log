@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1073 filtered out; finished in 0.03s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "7a54b6b6547c22019a8b744bd297a650097ceb193921e2e2e30e15f71203300e", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.043958673253655434}

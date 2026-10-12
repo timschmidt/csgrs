@@ -1,0 +1,17 @@
+{
+  "status": "All compared observations identical",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "protocol_sha256": "0ff1a0910336a1bfe0d2b9cd35c73aad15c960af32f4679623adc52aa4b47bdf",
+  "compared_cases": {
+    "numerical": 4129,
+    "public_deterministic": 570,
+    "concurrent_setup_only": 78
+  },
+  "ignored_timing_fields_across_both_sides": {
+    "wall_seconds": 8604,
+    "seconds": 120
+  },
+  "differences": [],
+  "scope": "Compare every retained numerical replay, all composed-root schedules and public sequential/prewarmed schedules. Only measured durations and known phase names in executable paths are normalized. Samples, work counters, typed errors, certificate observations, process limits and validity receipts remain compared.",
+  "limits": "For 72 mixed-thread and six invalid-thread schedules, compare setup/oracles/process contracts only. Their scheduling-dependent results require the separate monotonic-fact audit and the frozen Rust/Python oracle checks; this comparison alone does not establish concurrent correctness or runtime admission."
+}

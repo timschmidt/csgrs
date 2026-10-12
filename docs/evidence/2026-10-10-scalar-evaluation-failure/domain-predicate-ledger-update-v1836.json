@@ -1,0 +1,14 @@
+{
+  "before_sha256": "bdd2d0a74f5a383b0f576e8492c959d2a08dc6bd9f2ce9f0996c20f6df7eb148",
+  "after_sha256": "56d893b62e6b9d370118dc3cb1afac85e558238996af05764d07835cb1e546f5",
+  "changed_fields": [
+    "P4.evidence",
+    "P4.remaining",
+    "next_actions[0]"
+  ],
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "retention_record_sha256": "812959b732e6aca29e8c1a0e7d9b51014f997513c03ffd025689977ba1f5cfd0",
+  "metadata_sha256": "2822e7e2aa14a92c065c6b4b1d7f278d481eba2fcc194e8a24ccaef5933da687",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "main_runtime_admitted": false
+}

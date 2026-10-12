@@ -1,0 +1,38 @@
+leaf integer metadata bits=16, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=16, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=4096, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=4096, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=131073, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=131073, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 2, bytes: 776, largest: 768 }
+leaf integer metadata bits=131074, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf integer metadata bits=131074, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf integer metadata bits=1000001, negative=false, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf integer metadata bits=1000001, negative=true, control=Allocations { calls: 3, bytes: 784, largest: 768 }, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf interrupted copy bits=16, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf interrupted copy bits=256, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf interrupted copy bits=1024, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf interrupted copy bits=4096, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf dependency successful work=34
+leaf metadata ratio=false, successful work=5
+leaf metadata ratio=true, successful work=6
+leaf rejected base kind=oversized, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=negative, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=different_degree, bits=4097, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=oversized, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=negative, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=different_degree, bits=65537, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=oversized, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=negative, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejected base kind=different_degree, bits=1000001, control=Allocations { calls: 6, bytes: 168, largest: 104 }, allocations=Allocations { calls: 6, bytes: 168, largest: 104 }
+leaf rejection kind=oversized, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=negative, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=different_degree, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=ratio, bits=4097, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=oversized, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=negative, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=different_degree, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=ratio, bits=65537, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=oversized, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=negative, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=different_degree, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+leaf rejection kind=ratio, bits=1000001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
