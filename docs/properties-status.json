@@ -49,7 +49,7 @@
       "next_step": "Evaluate a narrow quadratic-coefficient consumer to reduce allocation in successful queries, preserving fallback, proof publication and ownership. Public recognition-budget wording and all prior runtime admission gates remain open."
     },
     "isolated_quadratic_consumer": {
-      "status": "first-consumer-rejected-on-scalar-cost",
+      "status": "both-direct-consumers-rejected-on-scalar-cost",
       "base_commit": "2026a0187e2d84f7cc2a3c3f716221b30fc5780e",
       "evidence": "docs/evidence/2026-10-12-quadratic-certificate-consumer/correctness-assessment-v2.json",
       "qualification": "868 all-feature scalar library tests, 28 doctests, strict release all-feature all-target Clippy, warning-denied documentation and formatting pass. The six new regressions and five prior cache regressions are included in the 868 library total. The initial compile failure and correction remain archived.",
@@ -62,7 +62,10 @@
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-12-quadratic-certificate-consumer/cost-assessment-v1.json",
       "cost_result": "All witnesses and representation inventories match. The direct consumer adds allocations and is slower in all five conjugate-then-affine warm/cloned pairs. This version is rejected and has not run native gates.",
-      "next_step": "Fork the rejected source, preserve all guards and probes, and evaluate a narrower temporary representation plus exact rational-root handling. Repeat complete scalar qualification and the same fixed cost matrix before considering consumer gates."
+      "next_step": "Evaluate existing canonical small-rational reuse at Computable::exact_rational integer leaves against the frozen persistent-cache baseline, without either rejected direct traversal. Include integer width controls and retain all original cache fallback tests before any native gate.",
+      "latest_evidence": "docs/evidence/2026-10-12-quadratic-certificate-consumer/cost-assessment-v2.json",
+      "latest_qualification": "869 all-feature scalar library results, 28 doctests, strict release all-feature all-target Clippy, warning-denied docs and formatting pass. All fixed cost processes succeed and all mathematical witnesses and representation inventories agree within each suite/mode.",
+      "latest_result": "Affine and pi-transport quadratic queries become faster and allocate less, but mixed-field declines are slower in all five pairs (median ratios about 1.582 first/warm and 1.349 cloned), with 18000 additional allocation calls per 1000 inputs. Conjugate-then-affine warm/cloned queries also regress in all five pairs. Native gates are not advanced for this rejected source."
     }
   },
   "status_meanings": {

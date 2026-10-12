@@ -1,0 +1,77 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 10.921948703937232,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "consumer-format",
+      "exit_code": 0,
+      "seconds": 0.4545523482374847,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "quadratic-regressions",
+      "exit_code": 0,
+      "seconds": 26.851809663698077,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "403a64194ca197212e2ac4d5f5b2b7b45ea0f5ea0a76aa13cf9f06deca4dbe7e",
+      "stderr_sha256": "d9187f8f3d31fc0a67578d6bbcf5d6609ccc40673f4a46a243ce1a6e257f2722"
+    },
+    {
+      "name": "cache-regressions",
+      "exit_code": 0,
+      "seconds": 0.5879805972799659,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "c1ff708885f4bf2648d292620b0ec16117422ddfd478e9676a311371710181ae",
+      "stderr_sha256": "7a7ace7b07cc1351fcb6aacd6b1b0e5a32820199a9cb5b1a52bb0a405e81830f"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 9.57883856119588,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5e58c57514c63a95c84b69a382f428b52ec91e66562fe0cb410b5c8c24624e8d"
+    },
+    {
+      "name": "scalar-library",
+      "exit_code": 0,
+      "seconds": 3.932656991761178,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "4c474e21aa138ea499f7bd3796dec6a2457c741fa3123bffbadf5b539b8af9e7",
+      "stderr_sha256": "610a02b04ae06bcfa4f1b9a7ce3038b43a3b82b656321a81c4243256ad7df40d"
+    },
+    {
+      "name": "scalar-doctests",
+      "exit_code": 0,
+      "seconds": 9.969054946675897,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "432878ce93e63715471d132170c1e508370ad081145f1e88464a0603c2a84de9",
+      "stderr_sha256": "1e5ee82c9fe8d5ee90bdd99c29303e5ad094748e15a929021b4e6e97bc198126"
+    },
+    {
+      "name": "scalar-docs",
+      "exit_code": 0,
+      "seconds": 6.362144496757537,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "dcfa1b839d1278bdb9bbf684cb60b910fb30d682e0d919f5c854a6adfa1b8816"
+    }
+  ],
+  "complete": true
+}

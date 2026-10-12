@@ -1,0 +1,76 @@
+{
+  "libraries": {
+    "baseline": {
+      "sha256": "c1e280c22e44f4c14af9525f5000eb64b3e9d42d86de4cc7c5977ae682684ad7",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "fresh": true,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal/Cargo.toml"
+    },
+    "candidate": {
+      "sha256": "712bf240f0d20a9a2015816dfc460e50fabc83bee8b9a01129bd070f1965535c",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/target/release/libhyperreal.rlib",
+      "fresh": false,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/source/crates/hyperreal/Cargo.toml"
+    }
+  },
+  "binaries": {
+    "baseline-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/baseline-rational-time",
+      "sha256": "ed78f92895d43143180bbfc7e3da0aad180196c513a20d6dac82e24a7f74f369",
+      "bytes": 6195976
+    },
+    "baseline-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/baseline-rational-memory",
+      "sha256": "a918896ce7c85d65b4f52477879fe324fd66fe9abfb993c6ebef6733222fdc2f",
+      "bytes": 6197880
+    },
+    "baseline-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/baseline-quadratic-time",
+      "sha256": "dc24a78eb5336ad89416e01bb99e54ee4a1d89a4a58c7ed623030ab56f26d09c",
+      "bytes": 6171000
+    },
+    "baseline-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/baseline-quadratic-memory",
+      "sha256": "6e2f6ecff43a8ec494e7eb06654444cf8d8421809883a124065f05337931f28f",
+      "bytes": 6174288
+    },
+    "candidate-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/candidate-rational-time",
+      "sha256": "36223afd7580d358cd7eadc882265a2dcea1a3548a9bc14cd1a804d598251648",
+      "bytes": 6205544
+    },
+    "candidate-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/candidate-rational-memory",
+      "sha256": "ddbf3f8eabcf45fa6d70f5efd7cbd0628d4cd427eb872b78f07a42477a5ca4d1",
+      "bytes": 6207440
+    },
+    "candidate-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/candidate-quadratic-time",
+      "sha256": "524714cfa9f6340958d6a77f5be82c131f1fc4bc18ab476760fce5264cef0843",
+      "bytes": 6180552
+    },
+    "candidate-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/cost-v2-binaries/candidate-quadratic-memory",
+      "sha256": "d371e60727fd1fc634a6a0c8d3960fea5ad5bab4312a7d993426021d7c4d7c2e",
+      "bytes": 6183824
+    }
+  }
+}

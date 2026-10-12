@@ -1,0 +1,12 @@
+{
+  "scope": "Clarify the source-inspection hypothesis after the rejected first trial; preserve measured results.",
+  "previous_assessment_sha256": "ca6307dfc53992619305c6c56a7ce7cb2bc501c23dc94034c0b4debff06a1489",
+  "correction": "Rational::zero() and Rational::one() clone shared static values. The unused zero field adds reference-count bookkeeping, not a fresh steady-state allocation. Its removal alone cannot explain the measured allocation increase. A failed traversal can additionally reconstruct rationals from Int leaves before the original recognizer repeats that work; this remains an attribution hypothesis until separately measured.",
+  "source_evidence": [
+    "crates/hyperreal/src/rational/arithmetic/construction.rs:Rational::zero and Rational::one",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs:Computable::exact_rational"
+  ],
+  "new_trial": "The v3 source adds optional radical storage and exact rational-root handling through the existing extract_square_reduced_retained routine. Its independent principal-root regression verifies nonnegative output and output squared equals input, including exact rational squares and a negative-input decline.",
+  "qualification": "All 869 all-feature scalar library results, 28 doctests, strict release all-feature all-target Clippy, docs and formatting pass. Seven new direct-consumer regressions and five original cache regressions are included in the library total.",
+  "runtime_admitted": false
+}

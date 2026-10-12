@@ -1,0 +1,11 @@
+{
+  "scope": "Fork the rejected consumer without changing any completed experimental input.",
+  "runner_sha256": "492a8570143b948a00b33bc66df144fba6d3fbcce7dbc23edeaf4d56d0e774ed",
+  "base_commit": "9543f334184b9512ffecfc927c05bcef43a89912",
+  "rejected_cost_assessment_sha256": "ca6307dfc53992619305c6c56a7ce7cb2bc501c23dc94034c0b4debff06a1489",
+  "previous_validation_protocol_sha256": "439361603bac1ead5e7b613d4f9e4042be997ae3db0206d8ca59836a11b77094",
+  "copied_files": 10129,
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/source",
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false
+}

@@ -1,0 +1,2114 @@
+{
+  "decision": "reject-v3-consumer-on-unsupported-and-warm-cost",
+  "scope": "Second fixed scalar cost experiment, using byte-identical probes and the same persistent-cache baseline as the first trial.",
+  "qualification": "869 all-feature scalar library results, 28 doctests, strict release all-feature all-target Clippy, warning-denied docs and formatting pass. All fixed cost processes succeed and all mathematical witnesses and representation inventories agree within each suite/mode.",
+  "result": "Affine and pi-transport quadratic queries become faster and allocate less, but mixed-field declines are slower in all five pairs (median ratios about 1.582 first/warm and 1.349 cloned), with 18000 additional allocation calls per 1000 inputs. Conjugate-then-affine warm/cloned queries also regress in all five pairs. Native gates are not advanced for this rejected source.",
+  "time_limits": "Several rational-suite timing pairs have large process-wide variation. All samples remain included; there is no selective resampling or statistical significance claim. The mixed-field allocation increase and consistent paired timing regression are sufficient to reject this version.",
+  "selected_cost_rows": [
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "affine_surd_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3496631,
+              3629022,
+              3431595,
+              3462292,
+              3646400
+            ],
+            "median": 3496631
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2739842,
+              2590513,
+              2727343,
+              3136705,
+              3094258
+            ],
+            "median": 2739842
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.7835662384735478,
+      "paired_ratios": [
+        0.7835662384735478,
+        0.7138322666547626,
+        0.7947741502129476,
+        0.9059620043601175,
+        0.8485788723124177
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "affine_surd_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2500899,
+              2423804,
+              2597672,
+              2456822,
+              2572324
+            ],
+            "median": 2500899
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1487698,
+              1475409,
+              1555933,
+              1550253,
+              1692394
+            ],
+            "median": 1550253
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.6198782917662808,
+      "paired_ratios": [
+        0.5948652864429951,
+        0.6087162988426457,
+        0.5989720796159023,
+        0.6309993153757171,
+        0.6579241184236512
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "affine_surd_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3706276,
+              3953649,
+              3557046,
+              4098819,
+              3733265
+            ],
+            "median": 3733265
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2266614,
+              2283214,
+              2254375,
+              2320491,
+              2319601
+            ],
+            "median": 2283214
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.6115863727862876,
+      "paired_ratios": [
+        0.6115610386274525,
+        0.5774953719968565,
+        0.6337772972292177,
+        0.5661364895595536,
+        0.6213330690427816
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5597197,
+              6162358,
+              5533281,
+              8556854,
+              5522132
+            ],
+            "median": 5597197
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              7215985,
+              6828503,
+              6833722,
+              10843287,
+              6926045
+            ],
+            "median": 6926045
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.2374131194596152,
+      "paired_ratios": [
+        1.2892140476742198,
+        1.1080990426067425,
+        1.2350216806267384,
+        1.2672048629087278,
+        1.2542338719900212
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "multiradical_square_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              1852053,
+              1597020,
+              1979575,
+              1628719,
+              1589441
+            ],
+            "median": 1628719
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1710433,
+              1688494,
+              1711072,
+              1711203,
+              1700023
+            ],
+            "median": 1710433
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.0501707169867853,
+      "paired_ratios": [
+        0.923533505790601,
+        1.057277930144895,
+        0.8643633103065052,
+        1.0506434811652594,
+        1.06957288757494
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "multiradical_square_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2604111,
+              2490609,
+              2587033,
+              2576943,
+              2626840
+            ],
+            "median": 2587033
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2848084,
+              2587313,
+              2569264,
+              2536336,
+              2562165
+            ],
+            "median": 2569264
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.9931315139775951,
+      "paired_ratios": [
+        1.0936876346668787,
+        1.0388274514385838,
+        0.9931315139775951,
+        0.9842421815305965,
+        0.9753791627963637
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "pi_transport_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              1956346,
+              1721672,
+              1737121,
+              1778259,
+              1753000
+            ],
+            "median": 1753000
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1111054,
+              1072716,
+              1057617,
+              1034909,
+              1038489
+            ],
+            "median": 1057617
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.6033183114660582,
+      "paired_ratios": [
+        0.5679230565554355,
+        0.6230664145086869,
+        0.6088332361418692,
+        0.5819787781194978,
+        0.592406731317741
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "pi_transport_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              1792667,
+              1714363,
+              2036921,
+              1723192,
+              1726112
+            ],
+            "median": 1726112
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1096855,
+              1061697,
+              1034269,
+              1032949,
+              1054738
+            ],
+            "median": 1054738
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.6110484140078976,
+      "paired_ratios": [
+        0.6118565243851758,
+        0.6192953301022013,
+        0.507760978457191,
+        0.5994392963755635,
+        0.6110484140078976
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "pi_transport_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2290153,
+              2289973,
+              2311321,
+              2351369,
+              2297442
+            ],
+            "median": 2297442
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              1258024,
+              1245815,
+              1247234,
+              1228306,
+              1230936
+            ],
+            "median": 1245815
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.542261785063562,
+      "paired_ratios": [
+        0.5493187573057345,
+        0.5440304317998509,
+        0.539619550897517,
+        0.5223790906488943,
+        0.5357854518198936
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "mixed_field_decline_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2608201,
+              2418784,
+              2492839,
+              2597362,
+              2610081
+            ],
+            "median": 2597362
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4146615,
+              3978137,
+              3978098,
+              4808821,
+              4108899
+            ],
+            "median": 4108899
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.5819508408916432,
+      "paired_ratios": [
+        1.589837209632233,
+        1.6446846845357006,
+        1.5958102388481568,
+        1.851425022773106,
+        1.5742419488130828
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "mixed_field_decline_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2498968,
+              2439193,
+              2795889,
+              2534527,
+              2459722
+            ],
+            "median": 2498968
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4251599,
+              3867145,
+              3953910,
+              4664270,
+              3818409
+            ],
+            "median": 3953910
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.5822171392350763,
+      "paired_ratios": [
+        1.7013419139420753,
+        1.5854198499257746,
+        1.4141870439062496,
+        1.8402920939488907,
+        1.552374211394621
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "mixed_field_decline_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              3495870,
+              3454824,
+              3367429,
+              3501840,
+              3375909
+            ],
+            "median": 3454824
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4746985,
+              4572827,
+              4712067,
+              4576486,
+              4659061
+            ],
+            "median": 4659061
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.3485668155599244,
+      "paired_ratios": [
+        1.3578837313744505,
+        1.3236063544771022,
+        1.3993070084031467,
+        1.3068803828844264,
+        1.3800908140592651
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "conjugate_then_affine_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              6460658,
+              6241712,
+              7021769,
+              6393572,
+              6372853
+            ],
+            "median": 6393572
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              6400532,
+              6335576,
+              6856330,
+              6387223,
+              6343746
+            ],
+            "median": 6387223
+          }
+        }
+      },
+      "candidate_over_baseline_median": 0.9990069713768767,
+      "paired_ratios": [
+        0.9906935175952666,
+        1.015038181832164,
+        0.9764391280886625,
+        0.9990069713768767,
+        0.9954326578692463
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "conjugate_then_affine_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              4458114,
+              4331553,
+              4289526,
+              4414218,
+              4334783
+            ],
+            "median": 4334783
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              5017846,
+              5006637,
+              4997558,
+              5735177,
+              5098050
+            ],
+            "median": 5017846
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.1575772074403725,
+      "paired_ratios": [
+        1.1255535412508517,
+        1.1558526468451384,
+        1.1650606617141381,
+        1.29925096585624,
+        1.176079633051989
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "name": "conjugate_then_affine_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5256270,
+              5144748,
+              5506163,
+              5307196,
+              5244491
+            ],
+            "median": 5256270
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              5986390,
+              5862338,
+              5913455,
+              5952742,
+              5855159
+            ],
+            "median": 5913455
+          }
+        }
+      },
+      "candidate_over_baseline_median": 1.1250287751580494,
+      "paired_ratios": [
+        1.138904584429643,
+        1.1394801067029912,
+        1.0739702039333017,
+        1.12163598254144,
+        1.1164398985525954
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "affine_surd_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              21137,
+              21137,
+              21137,
+              21137,
+              21137
+            ],
+            "median": 21137
+          },
+          "allocated_bytes": {
+            "samples": [
+              984712,
+              984712,
+              984712,
+              984712,
+              984712
+            ],
+            "median": 984712
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              338120,
+              338120,
+              338120,
+              338120,
+              338120
+            ],
+            "median": 338120
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              338568,
+              338568,
+              338568,
+              338568,
+              338568
+            ],
+            "median": 338568
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              13568,
+              13568,
+              13568,
+              13568,
+              13568
+            ],
+            "median": 13568
+          },
+          "allocated_bytes": {
+            "samples": [
+              605576,
+              605576,
+              605576,
+              605576,
+              605576
+            ],
+            "median": 605576
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              338120,
+              338120,
+              338120,
+              338120,
+              338120
+            ],
+            "median": 338120
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              338248,
+              338248,
+              338248,
+              338248,
+              338248
+            ],
+            "median": 338248
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "affine_surd_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              21137,
+              21137,
+              21137,
+              21137,
+              21137
+            ],
+            "median": 21137
+          },
+          "allocated_bytes": {
+            "samples": [
+              984712,
+              984712,
+              984712,
+              984712,
+              984712
+            ],
+            "median": 984712
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              338120,
+              338120,
+              338120,
+              338120,
+              338120
+            ],
+            "median": 338120
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              338568,
+              338568,
+              338568,
+              338568,
+              338568
+            ],
+            "median": 338568
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              13568,
+              13568,
+              13568,
+              13568,
+              13568
+            ],
+            "median": 13568
+          },
+          "allocated_bytes": {
+            "samples": [
+              605576,
+              605576,
+              605576,
+              605576,
+              605576
+            ],
+            "median": 605576
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              338120,
+              338120,
+              338120,
+              338120,
+              338120
+            ],
+            "median": 338120
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              338248,
+              338248,
+              338248,
+              338248,
+              338248
+            ],
+            "median": 338248
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "affine_surd_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              28137,
+              28137,
+              28137,
+              28137,
+              28137
+            ],
+            "median": 28137
+          },
+          "allocated_bytes": {
+            "samples": [
+              1480712,
+              1480712,
+              1480712,
+              1480712,
+              1480712
+            ],
+            "median": 1480712
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              532440,
+              532440,
+              532440,
+              532440,
+              532440
+            ],
+            "median": 532440
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              532904,
+              532904,
+              532904,
+              532904,
+              532904
+            ],
+            "median": 532904
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              17568,
+              17568,
+              17568,
+              17568,
+              17568
+            ],
+            "median": 17568
+          },
+          "allocated_bytes": {
+            "samples": [
+              765576,
+              765576,
+              765576,
+              765576,
+              765576
+            ],
+            "median": 765576
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              532440,
+              532440,
+              532440,
+              532440,
+              532440
+            ],
+            "median": 532440
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              532440,
+              532440,
+              532440,
+              532440,
+              532440
+            ],
+            "median": 532440
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              42024,
+              42024,
+              42024,
+              42024,
+              42024
+            ],
+            "median": 42024
+          },
+          "allocated_bytes": {
+            "samples": [
+              2264976,
+              2264976,
+              2264976,
+              2264976,
+              2264976
+            ],
+            "median": 2264976
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              856824,
+              856824,
+              856824,
+              856824,
+              856824
+            ],
+            "median": 856824
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              857656,
+              857656,
+              857656,
+              857656,
+              857656
+            ],
+            "median": 857656
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              60024,
+              60024,
+              60024,
+              60024,
+              60024
+            ],
+            "median": 60024
+          },
+          "allocated_bytes": {
+            "samples": [
+              2984976,
+              2984976,
+              2984976,
+              2984976,
+              2984976
+            ],
+            "median": 2984976
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              856824,
+              856824,
+              856824,
+              856824,
+              856824
+            ],
+            "median": 856824
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              857656,
+              857656,
+              857656,
+              857656,
+              857656
+            ],
+            "median": 857656
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "multiradical_square_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              6001,
+              6001,
+              6001,
+              6001,
+              6001
+            ],
+            "median": 6001
+          },
+          "allocated_bytes": {
+            "samples": [
+              536000,
+              536000,
+              536000,
+              536000,
+              536000
+            ],
+            "median": 536000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24480,
+              24480,
+              24480,
+              24480,
+              24480
+            ],
+            "median": 24480
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              6001,
+              6001,
+              6001,
+              6001,
+              6001
+            ],
+            "median": 6001
+          },
+          "allocated_bytes": {
+            "samples": [
+              536000,
+              536000,
+              536000,
+              536000,
+              536000
+            ],
+            "median": 536000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24480,
+              24480,
+              24480,
+              24480,
+              24480
+            ],
+            "median": 24480
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "multiradical_square_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              13001,
+              13001,
+              13001,
+              13001,
+              13001
+            ],
+            "median": 13001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1032000,
+              1032000,
+              1032000,
+              1032000,
+              1032000
+            ],
+            "median": 1032000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              184000,
+              184000,
+              184000,
+              184000,
+              184000
+            ],
+            "median": 184000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              184656,
+              184656,
+              184656,
+              184656,
+              184656
+            ],
+            "median": 184656
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              13001,
+              13001,
+              13001,
+              13001,
+              13001
+            ],
+            "median": 13001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1032000,
+              1032000,
+              1032000,
+              1032000,
+              1032000
+            ],
+            "median": 1032000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              184000,
+              184000,
+              184000,
+              184000,
+              184000
+            ],
+            "median": 184000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              184656,
+              184656,
+              184656,
+              184656,
+              184656
+            ],
+            "median": 184656
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "pi_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              17857,
+              17857,
+              17857,
+              17857,
+              17857
+            ],
+            "median": 17857
+          },
+          "allocated_bytes": {
+            "samples": [
+              739376,
+              739376,
+              739376,
+              739376,
+              739376
+            ],
+            "median": 739376
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              229680,
+              229680,
+              229680,
+              229680,
+              229680
+            ],
+            "median": 229680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              230128,
+              230128,
+              230128,
+              230128,
+              230128
+            ],
+            "median": 230128
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              11143,
+              11143,
+              11143,
+              11143,
+              11143
+            ],
+            "median": 11143
+          },
+          "allocated_bytes": {
+            "samples": [
+              469680,
+              469680,
+              469680,
+              469680,
+              469680
+            ],
+            "median": 469680
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              229680,
+              229680,
+              229680,
+              229680,
+              229680
+            ],
+            "median": 229680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              229808,
+              229808,
+              229808,
+              229808,
+              229808
+            ],
+            "median": 229808
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "pi_transport_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              17857,
+              17857,
+              17857,
+              17857,
+              17857
+            ],
+            "median": 17857
+          },
+          "allocated_bytes": {
+            "samples": [
+              739376,
+              739376,
+              739376,
+              739376,
+              739376
+            ],
+            "median": 739376
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              229680,
+              229680,
+              229680,
+              229680,
+              229680
+            ],
+            "median": 229680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              230128,
+              230128,
+              230128,
+              230128,
+              230128
+            ],
+            "median": 230128
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              11143,
+              11143,
+              11143,
+              11143,
+              11143
+            ],
+            "median": 11143
+          },
+          "allocated_bytes": {
+            "samples": [
+              469680,
+              469680,
+              469680,
+              469680,
+              469680
+            ],
+            "median": 469680
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              229680,
+              229680,
+              229680,
+              229680,
+              229680
+            ],
+            "median": 229680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              229808,
+              229808,
+              229808,
+              229808,
+              229808
+            ],
+            "median": 229808
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "pi_transport_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              24857,
+              24857,
+              24857,
+              24857,
+              24857
+            ],
+            "median": 24857
+          },
+          "allocated_bytes": {
+            "samples": [
+              1235376,
+              1235376,
+              1235376,
+              1235376,
+              1235376
+            ],
+            "median": 1235376
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              509680,
+              509680,
+              509680,
+              509680,
+              509680
+            ],
+            "median": 509680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              510144,
+              510144,
+              510144,
+              510144,
+              510144
+            ],
+            "median": 510144
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              15143,
+              15143,
+              15143,
+              15143,
+              15143
+            ],
+            "median": 15143
+          },
+          "allocated_bytes": {
+            "samples": [
+              629680,
+              629680,
+              629680,
+              629680,
+              629680
+            ],
+            "median": 629680
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              509680,
+              509680,
+              509680,
+              509680,
+              509680
+            ],
+            "median": 509680
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              509680,
+              509680,
+              509680,
+              509680,
+              509680
+            ],
+            "median": 509680
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "mixed_field_decline_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30001,
+              30001,
+              30001,
+              30001,
+              30001
+            ],
+            "median": 30001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1144000,
+              1144000,
+              1144000,
+              1144000,
+              1144000
+            ],
+            "median": 1144000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24824,
+              24824,
+              24824,
+              24824,
+              24824
+            ],
+            "median": 24824
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              48001,
+              48001,
+              48001,
+              48001,
+              48001
+            ],
+            "median": 48001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1864000,
+              1864000,
+              1864000,
+              1864000,
+              1864000
+            ],
+            "median": 1864000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24824,
+              24824,
+              24824,
+              24824,
+              24824
+            ],
+            "median": 24824
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "mixed_field_decline_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30001,
+              30001,
+              30001,
+              30001,
+              30001
+            ],
+            "median": 30001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1144000,
+              1144000,
+              1144000,
+              1144000,
+              1144000
+            ],
+            "median": 1144000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24824,
+              24824,
+              24824,
+              24824,
+              24824
+            ],
+            "median": 24824
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              48001,
+              48001,
+              48001,
+              48001,
+              48001
+            ],
+            "median": 48001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1864000,
+              1864000,
+              1864000,
+              1864000,
+              1864000
+            ],
+            "median": 1864000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              24000,
+              24000,
+              24000,
+              24000,
+              24000
+            ],
+            "median": 24000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              24824,
+              24824,
+              24824,
+              24824,
+              24824
+            ],
+            "median": 24824
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "mixed_field_decline_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              37001,
+              37001,
+              37001,
+              37001,
+              37001
+            ],
+            "median": 37001
+          },
+          "allocated_bytes": {
+            "samples": [
+              1672000,
+              1672000,
+              1672000,
+              1672000,
+              1672000
+            ],
+            "median": 1672000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              680000,
+              680000,
+              680000,
+              680000,
+              680000
+            ],
+            "median": 680000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              680480,
+              680480,
+              680480,
+              680480,
+              680480
+            ],
+            "median": 680480
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              55001,
+              55001,
+              55001,
+              55001,
+              55001
+            ],
+            "median": 55001
+          },
+          "allocated_bytes": {
+            "samples": [
+              2392000,
+              2392000,
+              2392000,
+              2392000,
+              2392000
+            ],
+            "median": 2392000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              680000,
+              680000,
+              680000,
+              680000,
+              680000
+            ],
+            "median": 680000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              680480,
+              680480,
+              680480,
+              680480,
+              680480
+            ],
+            "median": 680480
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "conjugate_then_affine_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              46270,
+              46270,
+              46270,
+              46270,
+              46270
+            ],
+            "median": 46270
+          },
+          "allocated_bytes": {
+            "samples": [
+              2857376,
+              2857376,
+              2857376,
+              2857376,
+              2857376
+            ],
+            "median": 2857376
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              967552,
+              967552,
+              967552,
+              967552,
+              967552
+            ],
+            "median": 967552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              968920,
+              968920,
+              968920,
+              968920,
+              968920
+            ],
+            "median": 968920
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              44267,
+              44267,
+              44267,
+              44267,
+              44267
+            ],
+            "median": 44267
+          },
+          "allocated_bytes": {
+            "samples": [
+              2612608,
+              2612608,
+              2612608,
+              2612608,
+              2612608
+            ],
+            "median": 2612608
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              967552,
+              967552,
+              967552,
+              967552,
+              967552
+            ],
+            "median": 967552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              968584,
+              968584,
+              968584,
+              968584,
+              968584
+            ],
+            "median": 968584
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "conjugate_then_affine_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              25688,
+              25688,
+              25688,
+              25688,
+              25688
+            ],
+            "median": 25688
+          },
+          "allocated_bytes": {
+            "samples": [
+              1649792,
+              1649792,
+              1649792,
+              1649792,
+              1649792
+            ],
+            "median": 1649792
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              219320,
+              219320,
+              219320,
+              219320,
+              219320
+            ],
+            "median": 219320
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              220352,
+              220352,
+              220352,
+              220352,
+              220352
+            ],
+            "median": 220352
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              28827,
+              28827,
+              28827,
+              28827,
+              28827
+            ],
+            "median": 28827
+          },
+          "allocated_bytes": {
+            "samples": [
+              1761536,
+              1761536,
+              1761536,
+              1761536,
+              1761536
+            ],
+            "median": 1761536
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              219320,
+              219320,
+              219320,
+              219320,
+              219320
+            ],
+            "median": 219320
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              220352,
+              220352,
+              220352,
+              220352,
+              220352
+            ],
+            "median": 220352
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "name": "conjugate_then_affine_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              32688,
+              32688,
+              32688,
+              32688,
+              32688
+            ],
+            "median": 32688
+          },
+          "allocated_bytes": {
+            "samples": [
+              2145792,
+              2145792,
+              2145792,
+              2145792,
+              2145792
+            ],
+            "median": 2145792
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              382200,
+              382200,
+              382200,
+              382200,
+              382200
+            ],
+            "median": 382200
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              383072,
+              383072,
+              383072,
+              383072,
+              383072
+            ],
+            "median": 383072
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              35398,
+              35398,
+              35398,
+              35398,
+              35398
+            ],
+            "median": 35398
+          },
+          "allocated_bytes": {
+            "samples": [
+              2209488,
+              2209488,
+              2209488,
+              2209488,
+              2209488
+            ],
+            "median": 2209488
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              382200,
+              382200,
+              382200,
+              382200,
+              382200
+            ],
+            "median": 382200
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              383072,
+              383072,
+              383072,
+              383072,
+              383072
+            ],
+            "median": 383072
+          }
+        }
+      }
+    }
+  ],
+  "inspection_correction": "v3-inspection-correction.json notes that the removed zero field shared a static Rational and did not itself allocate. Repeated exact Int-leaf conversion remains a separate optimization hypothesis.",
+  "next_step": "Evaluate existing canonical small-rational reuse at Computable::exact_rational integer leaves against the frozen persistent-cache baseline, without either rejected direct traversal. Include integer width controls and retain all original cache fallback tests before any native gate.",
+  "artifacts_sha256": {
+    "cost-v2/binaries.json": "6214cd3d933b56a25c63e1c22848768750e136cc25c6b381e2fe91204d71e03d",
+    "cost-v2/build-baseline.stderr": "0b5fe2277fd2b29cc111b76604c482f8ec516047dbc0954657203c5614f4e4db",
+    "cost-v2/build-baseline.stdout": "105d77bc2631cfb2096be357d683b17613285ef08deae033da165ac8b88f5509",
+    "cost-v2/build-candidate.stderr": "77fd173303290d5835a0f39410a74eb4b7b2e18054fe1c93e048c4fddd84a29a",
+    "cost-v2/build-candidate.stdout": "23b59c4c2fb2dc5bee73bdcb2ecfbcd12625939a2bae76e2b3e4aeda5f9f7480",
+    "cost-v2/commands.json": "d6abe559b9542fa22557675d871c8585de6b22fa5cd726a9b4f124bc97faf70f",
+    "cost-v2/link-baseline-quadratic-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-quadratic-memory.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-quadratic-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-quadratic-time.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-rational-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-rational-memory.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-rational-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-baseline-rational-time.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-quadratic-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-quadratic-memory.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-quadratic-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-quadratic-time.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-rational-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-rational-memory.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-rational-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/link-candidate-rational-time.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-baseline-quadratic-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-baseline-quadratic-memory.stdout": "16d4050422b3029a936e8d915e4986281746ecc7a38d71c19f028f0a475d3a1e",
+    "cost-v2/preflight-baseline-quadratic-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-baseline-quadratic-time.stdout": "e55d0d01a2dc5d01add1872037041de1e2c9009a8046e72d341fdf44c8163a20",
+    "cost-v2/preflight-baseline-rational-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-baseline-rational-memory.stdout": "b153d01c9b6e6eef53628909cc153f26956ef7e3de972acf3d31100283a1b4a0",
+    "cost-v2/preflight-baseline-rational-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-baseline-rational-time.stdout": "4e89f0a5b6c9db57deea31b9294033bfc32fe2f3889f86bf8c7fea4898e96b20",
+    "cost-v2/preflight-candidate-quadratic-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-candidate-quadratic-memory.stdout": "50b01a9c3e2883d02889b77ec9671f9d3415d6612b86181a36075f65902fc330",
+    "cost-v2/preflight-candidate-quadratic-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-candidate-quadratic-time.stdout": "2992f97676ce4cedbf5cac44fbeb0b3f0db014b9ab3d9b30caddee7aa8608050",
+    "cost-v2/preflight-candidate-rational-memory.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-candidate-rational-memory.stdout": "a481accd721f437628a7a604721f428f554ed0ca4d6e68f40eb751ae56d54c1e",
+    "cost-v2/preflight-candidate-rational-time.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/preflight-candidate-rational-time.stdout": "ff080f27703a61b3f38c378bf661c4c107a96f6ac3034b40a0fd6b561c6c5a28",
+    "cost-v2/protocol.json": "23056bde2de5cf5276bd1ab4bb78ce787d6f3e544dfcf82cde768bbfcd940ca2",
+    "cost-v2/quadratic-memory-1-baseline.stderr": "b847d2a3f57f45e58385567c0db65d2978d8186e41ea61ee8dc3b092860fbbc2",
+    "cost-v2/quadratic-memory-1-baseline.stdout": "2a8b99319f9e4485cafa9bd575a6acfd93a0a8a5f432924ea279f857f643afc1",
+    "cost-v2/quadratic-memory-1-candidate.stderr": "0c6289bf14a925121a6deaf1cfb3440c147c14cf91cfdd9a678b327f386cd7ad",
+    "cost-v2/quadratic-memory-1-candidate.stdout": "9d66a926c01b91186351d2f7ee67407403d85cae2a93d92e2326e2a97c663c13",
+    "cost-v2/quadratic-memory-2-baseline.stderr": "f7a4c333fb0531917b45889cc70f5ca53d9e652960d5b77632d4b5ab5c03e3fe",
+    "cost-v2/quadratic-memory-2-baseline.stdout": "d18ee03a2a2f0e589bdb44c18f1d14feae05f942ba98023f4405ac2f88601982",
+    "cost-v2/quadratic-memory-2-candidate.stderr": "4a446aa0ba23e48ce2d05c8a0a2ffd45dd4d2ae46a0493867098336e334d34c5",
+    "cost-v2/quadratic-memory-2-candidate.stdout": "7712edfff6830fb79ecc6777f73c0e35b6e4546496471d60b5e031ae4aeca325",
+    "cost-v2/quadratic-memory-3-baseline.stderr": "973ed0c0d86728e8937620cdeb1cc5624b3f76390ead6cc08267546da145e9a4",
+    "cost-v2/quadratic-memory-3-baseline.stdout": "59d8e471cafa289ae8ba785da1d1eebdac851a167dfb86b5c49547924767563c",
+    "cost-v2/quadratic-memory-3-candidate.stderr": "d84954d898505ab696c7864ab4a3c0c09f8d4b494217817600b710681994c6de",
+    "cost-v2/quadratic-memory-3-candidate.stdout": "7d80ca4246a1e9f103fcca9ee6844b941dc9d52113da85c9dbd3f55508db50e2",
+    "cost-v2/quadratic-memory-4-baseline.stderr": "fe33590e4a50ce1cecc067a9a5e804d7394b9ec477c739914fdf886fb313bd34",
+    "cost-v2/quadratic-memory-4-baseline.stdout": "fd6d23253d525064722eccd68d976bf0860611879a606a6cad3a6ae3e32fded2",
+    "cost-v2/quadratic-memory-4-candidate.stderr": "2dba641e80897338b2fdbb32fcad59ce3ce665f6f6497b6e1930f9bbc978e3b1",
+    "cost-v2/quadratic-memory-4-candidate.stdout": "2f8e43217f5cda7790cbbf3bb220f38be3879b5f783e6e05a8778a6c187fec39",
+    "cost-v2/quadratic-memory-5-baseline.stderr": "3c435769693f5c67176fd56d0066e5aa558be7af9507443147dfb5ff5735ff5d",
+    "cost-v2/quadratic-memory-5-baseline.stdout": "157c5244f0804e3fabcff8952ebd2537a9bcc15220cb64ce3037606f47b33b79",
+    "cost-v2/quadratic-memory-5-candidate.stderr": "91a8fdae183a14eddd21eba391d161eb983be109cdec91545e4d0f71dedf6d63",
+    "cost-v2/quadratic-memory-5-candidate.stdout": "dd42533504e6b673147e5976f1cf37266cbf772a00fb6a1fc502513ec0229714",
+    "cost-v2/quadratic-time-1-baseline.stderr": "eb3fca2b9528a87cdc95a72316d8addd13bb5aa8c7062c5c4e1017a08c589cd8",
+    "cost-v2/quadratic-time-1-baseline.stdout": "0e7c8dcc8b044d7ba1bf5415b70a91ba405244bff39f464c3d19149b13c730e1",
+    "cost-v2/quadratic-time-1-candidate.stderr": "4995fc3d23b830107b301fd7cab8506d0faebee7a79844be07990d27f5525344",
+    "cost-v2/quadratic-time-1-candidate.stdout": "ab950a8e67b25048df88b74f1c50f5a0addaf5ea489f62202a1f31d9bfc87f6d",
+    "cost-v2/quadratic-time-2-baseline.stderr": "16d15727db23002a373713ba66c341cbd5fa99b8b2f6383ea89369246105c53e",
+    "cost-v2/quadratic-time-2-baseline.stdout": "f79074ce7da7e5d7dac280ea2a457fc2b455f670e4e9380ea9738907977806ca",
+    "cost-v2/quadratic-time-2-candidate.stderr": "e1e982ceed8a0f9031efbe6baedf80c517bb2674bf0c90ec61661339c27caa29",
+    "cost-v2/quadratic-time-2-candidate.stdout": "b9d9f0205382bffd1b3140343af37dc1e5cdbd16685216159207c0ebb384cf7c",
+    "cost-v2/quadratic-time-3-baseline.stderr": "792a1e79fcddb16e3c96dc9b29e3ddfffbfc4c5c971890669ea90deb28c165ed",
+    "cost-v2/quadratic-time-3-baseline.stdout": "b260dbeb625660e7f780acf45bd8e96a7a2526fc5cb59645af7ce5888d51c792",
+    "cost-v2/quadratic-time-3-candidate.stderr": "403960c91065615c14bdba57f05618b622d37db3238951d422f273b047301324",
+    "cost-v2/quadratic-time-3-candidate.stdout": "5301653a0e9fbf1160242f4883e146ccb658c80740e89393aa8da975dc7a72e9",
+    "cost-v2/quadratic-time-4-baseline.stderr": "bfe0114a03217c7040087bd1beb6e6a1c5da6bad09d24c8fd8dc7d742018a77c",
+    "cost-v2/quadratic-time-4-baseline.stdout": "dffabc5a6448acf81070a94ce4ef63df07fe17a749e57bdf83e81df730672f05",
+    "cost-v2/quadratic-time-4-candidate.stderr": "f31180c67ba5efc2ab0143401a7a9aa34c9b70f83bc61892934896c0c6faf737",
+    "cost-v2/quadratic-time-4-candidate.stdout": "e883b72b2fb8c27a25021927fb4664a39da3c084cfe6148462ee4944bbe9b422",
+    "cost-v2/quadratic-time-5-baseline.stderr": "7da671880a1c396d3166142ea4addd197c324206b50f5dc84e8c1c0ce16bfe9e",
+    "cost-v2/quadratic-time-5-baseline.stdout": "4d351ecd39b05fccf4e79bd6c1a7a14f190a3e3ea1fc3e0679f8817031ee493c",
+    "cost-v2/quadratic-time-5-candidate.stderr": "2652ae86680daa6235146edb9dc49d383079ebb278ea9c0a757e5bf06fa04257",
+    "cost-v2/quadratic-time-5-candidate.stdout": "e363c5d65a44bf8331c0a7db77f4f3d4cdb68765d20cd1495e045c44a1c04055",
+    "cost-v2/quadratic_probe.rs": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60",
+    "cost-v2/rational-memory-1-baseline.stderr": "0964bbfa5f57fe11df1951c4e2666db79d9dd37eceb921c657d2806148bf2a8c",
+    "cost-v2/rational-memory-1-baseline.stdout": "3471fe6c595790bc04452b76dd00dab11ec0c591d519d21b7601ad7842b24954",
+    "cost-v2/rational-memory-1-candidate.stderr": "15d52f9c0de04561ff43e29ecd4db68deb73f3a774a5358ec035d5432fb6388a",
+    "cost-v2/rational-memory-1-candidate.stdout": "1a67c6b9ac8fbe07a93727d7df05bb638bd7acc0574b3d65503242e545ae01d0",
+    "cost-v2/rational-memory-2-baseline.stderr": "560508adceeabf8186ece5c24090291d59656e367aff4dd62fd2732b55d5fe0f",
+    "cost-v2/rational-memory-2-baseline.stdout": "d4810950928e2da2971517b5effdc1cfc0cdb7250878e082571a3a9685b35cc7",
+    "cost-v2/rational-memory-2-candidate.stderr": "7a645cede0dc32b3841872cd4335178899990bd0563d07c650e80e01ca63645c",
+    "cost-v2/rational-memory-2-candidate.stdout": "31adb769f5b7420c0d0e13bb4184d75a5d691aac90b8a2e0e96d8067a556218e",
+    "cost-v2/rational-memory-3-baseline.stderr": "5ab5fe14e0440c46d9684ed4921d4c9f023a7d4ed80d66f348484bedae77dd0c",
+    "cost-v2/rational-memory-3-baseline.stdout": "18750d728cc8a51edf27484432052012eaacaf4771cb308e2ea5d76b6dcb1cc0",
+    "cost-v2/rational-memory-3-candidate.stderr": "af858002f4c3ae02e82ebf025ccc702319d5df021e6dd93ee8af4a123f091e8e",
+    "cost-v2/rational-memory-3-candidate.stdout": "ea187107058898efac5e61cc484d46df46128264144c58f66cc2adca323df028",
+    "cost-v2/rational-memory-4-baseline.stderr": "0cd4636e52837408d495304a85cd48b13d416c0b10adb18bb40acbb0a5474697",
+    "cost-v2/rational-memory-4-baseline.stdout": "fd45fd8cc2dcf86f8eea1c75cc8587ec29ed7797861da913a1548e2f9567f6ec",
+    "cost-v2/rational-memory-4-candidate.stderr": "40a500601d5a4898cac9b003594546ed1403ebf0f2a28402d1f34877b51ba723",
+    "cost-v2/rational-memory-4-candidate.stdout": "6ee7d21e9c63cf74bc3ffd0abc021e1136a12ab94dc199fe3ede08a428357939",
+    "cost-v2/rational-memory-5-baseline.stderr": "f743e467b974e93548f901a3905d933b2d10e40b588a51a4cef3f0e762ec71b3",
+    "cost-v2/rational-memory-5-baseline.stdout": "74ac9fa573410e227ea9df631bae73d95bb3964e0a8f9f55310589e9f8ca611c",
+    "cost-v2/rational-memory-5-candidate.stderr": "b404b9f3babe771158855f0c4c89989d29e54e5709fb08ed1802c9c4e6d5edfd",
+    "cost-v2/rational-memory-5-candidate.stdout": "2d8a095f7dc23895b7fa1b9cbeb1da24fb769767feefc3c0323f1f89afa74d96",
+    "cost-v2/rational-time-1-baseline.stderr": "bd00bbbcc92abba652ff941ea39e2351c41b5157fee750d83af80b5b300c8c6d",
+    "cost-v2/rational-time-1-baseline.stdout": "60e832df3dd6c54afb64d355e85de69c93ac66417d1ea2e36439402589b23c18",
+    "cost-v2/rational-time-1-candidate.stderr": "fd096ad598c607e01382405fa5389369e9b17d7c9f553b0bff192e8bc0ec7245",
+    "cost-v2/rational-time-1-candidate.stdout": "c9f84345338f290b581ade7a706361e9b3661d495505079d9eeef3313e1b236f",
+    "cost-v2/rational-time-2-baseline.stderr": "ddd7e6cd29337ef6103dbe2927415e4b4fce692505238981c9e9a85e5fd08d95",
+    "cost-v2/rational-time-2-baseline.stdout": "641e1b3f710278dc5e293a8e02cf67582075c41a55324a5f71bfb07d7cb6aa47",
+    "cost-v2/rational-time-2-candidate.stderr": "4da206d2f568afb39dc3295fba9162b6f40792e36b15dd3a69ff521a4ea9908e",
+    "cost-v2/rational-time-2-candidate.stdout": "5957aba28b5ea6da6cbd80d248c818fbdaad4807a979afcdc05cb6fab5e97508",
+    "cost-v2/rational-time-3-baseline.stderr": "8d5662d1264781da627fc790b792df13266b5be24b1214795da1f73f31d39c50",
+    "cost-v2/rational-time-3-baseline.stdout": "4b485e9115cbed3783ab6bfd6d16332403662689182e96b6cef4504406ca40c7",
+    "cost-v2/rational-time-3-candidate.stderr": "60f83be0ae2cd10e7f14686122f866ccee4e1b9143d742e82b327788143091b0",
+    "cost-v2/rational-time-3-candidate.stdout": "fbff57cb08560a63ca716abad69f8837ef8d3eb25ed005eed7914cbf73aad770",
+    "cost-v2/rational-time-4-baseline.stderr": "abde3f4c92dfb62f72859037646a6f2e90b32e2d57a0cd75d068b20cd74601fc",
+    "cost-v2/rational-time-4-baseline.stdout": "76c86df2e3f04902b748f9d5582ff310a193d2c2e5b43dfefb324dbf18914315",
+    "cost-v2/rational-time-4-candidate.stderr": "df75ececcf946edb81dd704c8db9ef72612c1c1af6ccb589ec34e9c1315c82cb",
+    "cost-v2/rational-time-4-candidate.stdout": "29243bab886f22832c44c80c57978f2067835b5b8519651a21820645b962007f",
+    "cost-v2/rational-time-5-baseline.stderr": "92881b28b22aac7fe20ad40794cbe4ffbb37a6274749eb98ebbb276cdad51686",
+    "cost-v2/rational-time-5-baseline.stdout": "97a63b48979f2ecc7593b90790aa42bcd17213e937db529bc089e03dfd72510b",
+    "cost-v2/rational-time-5-candidate.stderr": "477882adcf88067c6342f87415c198cfd78fd9a040dee7c3869db71ff5c2ba3e",
+    "cost-v2/rational-time-5-candidate.stdout": "39a59e38f34833f333ea26b4927280c9c13aa3b75455352131a75d33d5b65f0f",
+    "cost-v2/rational_probe.rs": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+    "cost-v2/result.json": "239b2b17de30465319ead04eb3cf85b09790641f305a7ff60666bb04f9355121",
+    "measure_v2.py": "e1d579db5a1448806a5782ca09da950be71b6470ce54e894dd9e62ede99969dd",
+    "preparation-v3/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparation-v3/result.json": "de26b62bc3a4282886f089c1d2dcd0868da5f8244fd91e2d0db3b0da8fffb09d",
+    "prepare_v3.py": "492a8570143b948a00b33bc66df144fba6d3fbcce7dbc23edeaf4d56d0e774ed",
+    "v3-inspection-correction.json": "5ca487199e2e4412b20df25a2e1b0f83bee034cc1acb665c636a68eb15190c3b",
+    "validate_v3.py": "a47a7157a84e72642895fcb3ad2196bb19e2d05465034fe0ef11e54b2bed085c",
+    "validation-v3/cache-regressions.stderr": "7a7ace7b07cc1351fcb6aacd6b1b0e5a32820199a9cb5b1a52bb0a405e81830f",
+    "validation-v3/cache-regressions.stdout": "c1ff708885f4bf2648d292620b0ec16117422ddfd478e9676a311371710181ae",
+    "validation-v3/candidate-delta.tar.gz": "c18a57724235c7dd3c27313ad920aadf4cd785355a34f88d1f00806bde866986",
+    "validation-v3/candidate.patch": "54f9bc5d769111477a28d70cedd4ae7f68f0ff88c465d98d323bbe625ff5aee5",
+    "validation-v3/consumer-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v3/consumer-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v3/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v3/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v3/protocol.json": "f783314119ba711ab72b6ccd2b886aecf1b2899b7a82ac36d135fcf5a8ed6e8e",
+    "validation-v3/quadratic-regressions.stderr": "d9187f8f3d31fc0a67578d6bbcf5d6609ccc40673f4a46a243ce1a6e257f2722",
+    "validation-v3/quadratic-regressions.stdout": "403a64194ca197212e2ac4d5f5b2b7b45ea0f5ea0a76aa13cf9f06deca4dbe7e",
+    "validation-v3/result.json": "40f77d4e54f81b03ad76f422aa9cac05d4e9fa71e72b459b8870bf33cfe563c2",
+    "validation-v3/scalar-docs.stderr": "dcfa1b839d1278bdb9bbf684cb60b910fb30d682e0d919f5c854a6adfa1b8816",
+    "validation-v3/scalar-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v3/scalar-doctests.stderr": "1e5ee82c9fe8d5ee90bdd99c29303e5ad094748e15a929021b4e6e97bc198126",
+    "validation-v3/scalar-doctests.stdout": "432878ce93e63715471d132170c1e508370ad081145f1e88464a0603c2a84de9",
+    "validation-v3/scalar-library.stderr": "610a02b04ae06bcfa4f1b9a7ce3038b43a3b82b656321a81c4243256ad7df40d",
+    "validation-v3/scalar-library.stdout": "4c474e21aa138ea499f7bd3796dec6a2457c741fa3123bffbadf5b539b8af9e7",
+    "validation-v3/strict-clippy.stderr": "5e58c57514c63a95c84b69a382f428b52ec91e66562fe0cb410b5c8c24624e8d",
+    "validation-v3/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,134 @@
+{
+  "runner_sha256": "a47a7157a84e72642895fcb3ad2196bb19e2d05465034fe0ef11e54b2bed085c",
+  "preparation_sha256": "27f18a81e26c6cd8d0263e0461667ad9929969c92b4265219e37d54946496249",
+  "v3_preparation_sha256": "de26b62bc3a4282886f089c1d2dcd0868da5f8244fd91e2d0db3b0da8fffb09d",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "60bd01cddcbbc424776f95ddb96d2013471999d13efc74e21fb4aa63a9da4f90",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c4ba8bc3a2b51b1504e2083ec3a01732317fed5949304ec585ee4ceca5ad4b82",
+    "crates/hyperreal/src/computable/node/cached_quadratic.rs": "753a43c1cf4e990dd781797074feceebb74bd299bb0bd808537f8e12f69aeabd",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "821426e3b910a6b54155355b7170b5c0979cd9dd5c3079ec2dd0104b13ad2de1",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "4c6ed142fc207a965919ad8506a6074d4f482e93ed061ec470e6d6ff74e804da"
+  },
+  "candidate_archive_sha256": "c18a57724235c7dd3c27313ad920aadf4cd785355a34f88d1f00806bde866986",
+  "candidate_patch_sha256": "54f9bc5d769111477a28d70cedd4ae7f68f0ff88c465d98d323bbe625ff5aee5",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "consumer-format",
+      [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "crates/hyperreal/src/computable/node/cached_quadratic.rs"
+      ]
+    ],
+    [
+      "quadratic-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "cached_quadratic::tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "cache-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "scalar-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "scalar-doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ]
+    ],
+    [
+      "scalar-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/v3/target",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "scope": "Freeze the direct quadratic consumer and run its initial correctness gates.\n\nThe eight-node consumer retains exact coefficients and uses the existing\nexact rational-square-root reduction, then uses the\nexisting bounded recognizer on every decline. No original fallback, fixture,\nterm limit, or runtime assertion is removed. This is an isolated prototype,\nnot an admission of either the scalar cache or the pending native geometry.\n",
+  "runtime_admitted": false
+}

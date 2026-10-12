@@ -1,0 +1,12 @@
+
+running 7 tests
+test computable::node::cached_quadratic::tests::affine_identities_match_independent_coefficients ... ok
+test computable::node::cached_quadratic::tests::cancellation_publishes_a_rational_proof_for_zero_work_queries ... ok
+test computable::node::cached_quadratic::tests::rational_publication_supersedes_a_nonreduced_single_radical ... ok
+test computable::node::cached_quadratic::tests::rational_roots_keep_principal_sign_and_exact_square_reduction ... ok
+test computable::node::cached_quadratic::tests::stronger_quadratic_publication_preserves_existing_certificates ... ok
+test computable::node::cached_quadratic::tests::traversal_limit_does_not_weaken_the_full_recognizer ... ok
+test computable::node::cached_quadratic::tests::unsupported_fields_and_opaque_atoms_keep_the_original_fallback ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.00s
+
