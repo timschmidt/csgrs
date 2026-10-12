@@ -1,0 +1,36 @@
+note: verifying module computable_bounds (selected functions)
+
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/missing-normalization/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:40:5
+   |
+40 |     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: precondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/missing-normalization/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:44:30
+   |
+44 |         let magnitude_bits = magnitude.bits();
+   |                              ^^^^^^^^^^^^^^^^
+   |
+  ::: /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/vendor/num-bigint/src/biguint/metadata_impl.rs:31:18
+   |
+31 |         requires self.metadata_normalized(), self.metadata_storage_bits() <= u64::MAX,
+   |                  -------------------------- failed precondition
+
+error: precondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/missing-normalization/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:119:21
+    |
+119 | /                     approximation_metadata_produces_valid_bound(
+120 | |                         value, appr.metadata_value(), magnitude.metadata_value(), magnitude_bits,
+121 | |                         prec, reaches_next_binade,
+122 | |                         magnitude.metadata_value() == pow2((magnitude_bits - 1) as nat),
+123 | |                         sign, msd, exact_msd, result);
+    | |_____________________________________________________^
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/bound_denotation.rs:190:9
+    |
+190 |           magnitude as int == if approximation < 0 { -approximation } else { approximation },
+    |           ---------------------------------------------------------------------------------- failed precondition
+
+error: aborting due to 2 previous errors
+

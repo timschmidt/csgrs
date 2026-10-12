@@ -1,0 +1,13 @@
+note: verifying module computable_bounds (selected functions)
+
+error: assertion failed
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/exact-all-ones-reversed/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:97:24
+   |
+97 |                   assert(exact_msd == (msd.is_some()
+   |  ________________________^
+98 | |                     && magnitude.metadata_value() != pow2((magnitude_bits - 1) as nat)
+99 | |                     && !reaches_next_binade));
+   | |____________________________________________^ assertion failed
+
+error: aborting due to 1 previous error
+

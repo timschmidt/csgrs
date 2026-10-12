@@ -1,0 +1,41 @@
+note: verifying module computable_bounds (selected functions)
+
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/discard-certified-result/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:40:5
+   |
+40 |     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/discard-certified-result/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:31:17
+    |
+ 31 |           ensures result == BoundInfo::Unknown <==> appr.metadata_magnitude() <= 1,
+    |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+ 51 | /         if magnitude_bits <= 1 {
+ 52 | |             proof! {
+ 53 | |                 assert(magnitude.metadata_value() <= 1);
+...   |
+126 | |             BoundInfo::Unknown
+127 | |         }
+    | |_________- at the end of the function body
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/discard-certified-result/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:32:13
+    |
+ 32 | /             forall|bits: u64| #[trigger] crate::magnitude_model::has_bit_length(
+ 33 | |                 appr.metadata_magnitude(), bits as nat)
+ 34 | |                 ==> result == approximation_bound_expected(
+ 35 | |                     appr.metadata_magnitude(), bits, prec, appr.metadata_sign()),
+    | |________________________________________________________________________________^ failed this postcondition
+...
+ 51 | /         if magnitude_bits <= 1 {
+ 52 | |             proof! {
+ 53 | |                 assert(magnitude.metadata_value() <= 1);
+...   |
+126 | |             BoundInfo::Unknown
+127 | |         }
+    | |_________- at the end of the function body
+
+error: aborting due to 2 previous errors
+

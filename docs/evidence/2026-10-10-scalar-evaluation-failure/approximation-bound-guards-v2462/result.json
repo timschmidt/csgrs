@@ -1,0 +1,25 @@
+{
+  "protocol_sha256": "e0ec0601ecdf550a77dd19d61ed7f80a3efd437e98207e42ab2c8bdcabb9b2e4",
+  "runs": [
+    {
+      "name": "baseline",
+      "kind": "baseline",
+      "exit_code": 255,
+      "seconds": 0.02146775694563985,
+      "verification_results": {},
+      "gate_passed": false,
+      "real_proof_failure": false,
+      "informational_stderr_only": false,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "33d07f984505cfcf16b7af847c9f849dc8db5e37d16afe6d59fdd04fa86f0bfc"
+    }
+  ],
+  "complete": false,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "dependency_inputs_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

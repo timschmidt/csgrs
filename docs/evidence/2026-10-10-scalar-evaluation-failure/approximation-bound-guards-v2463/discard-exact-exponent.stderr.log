@@ -1,0 +1,12 @@
+note: verifying module computable_bounds (selected functions)
+
+error: assertion failed
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/discard-exact-exponent/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:100:24
+    |
+100 |                   assert(result == approximation_bound_expected(
+    |  ________________________^
+101 | |                     magnitude.metadata_value(), magnitude_bits, prec, sign));
+    | |___________________________________________________________________________^ assertion failed
+
+error: aborting due to 1 previous error
+

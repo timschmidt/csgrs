@@ -1,0 +1,91 @@
+error: unexpected `cfg` condition name: `test`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/bounds.rs:788:7
+    |
+788 | #[cfg(test)]
+    |       ^^^^
+    |
+    = help: expected names are: `verus_keep_ghost` and `verus_keep_ghost_body` and 32 more
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+    = note: `-D unexpected-cfgs` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(unexpected_cfgs)]`
+
+error: unexpected `cfg` condition name: `feature`
+ --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:7:12
+  |
+7 | #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+  |            ^^^^^^^^^^^^^^^^^
+  |
+  = help: to expect this configuration use `--check-cfg=cfg(feature, values("serde"))`
+  = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `feature`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:19:12
+   |
+19 | #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(transparent))]
+   |            ^^^^^^^^^^^^^^^^^
+   |
+   = help: to expect this configuration use `--check-cfg=cfg(feature, values("serde"))`
+   = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:597:11
+    |
+597 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:609:11
+    |
+609 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:630:11
+    |
+630 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error: unexpected `cfg` condition name: `test`
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/../src/computable/node/representation.rs:747:11
+    |
+747 |     #[cfg(test)]
+    |           ^^^^
+    |
+    = help: to expect this configuration use `--check-cfg=cfg(test)`
+    = note: see <https://doc.rust-lang.org/nightly/rustc/check-cfg.html> for more information about checking conditional configuration
+
+error[E0277]: the trait bound `std::option::Option<u64>: vstd::prelude::SpecEq<std::option::Option<vstd::prelude::int>>` is not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/approximation-bound-candidate-v2458/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:88:33
+   |
+88 |                         assert((trailing_zeros == Some(magnitude_bits - 1))
+   |                                 ^^^^^^^^^^^^^^----------------------------
+   |                                 |
+   |                                 the trait `vstd::prelude::SpecEq<std::option::Option<vstd::prelude::int>>` is not implemented for `std::option::Option<u64>`
+   |                                 required by a bound introduced by this call
+   |
+   = help: the following other types implement trait `vstd::prelude::SpecEq<Rhs>`:
+             `&A` implements `vstd::prelude::SpecEq<A>`
+             `&char` implements `vstd::prelude::SpecEq<i128>`
+             `&char` implements `vstd::prelude::SpecEq<i16>`
+             `&char` implements `vstd::prelude::SpecEq<i32>`
+             `&char` implements `vstd::prelude::SpecEq<i64>`
+             `&char` implements `vstd::prelude::SpecEq<i8>`
+             `&char` implements `vstd::prelude::SpecEq<isize>`
+             `&char` implements `vstd::prelude::SpecEq<u128>`
+           and 1048 others
+note: required by a bound in `vstd::prelude::spec_eq`
+  --> /home/runner/work/verus/verus/source/builtin/src/lib.rs:1249:0
+
+error: aborting due to 8 previous errors
+
+For more information about this error, try `rustc --explain E0277`.

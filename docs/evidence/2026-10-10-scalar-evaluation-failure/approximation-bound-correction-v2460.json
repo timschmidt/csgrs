@@ -1,0 +1,14 @@
+{
+  "previous_proposal_sha256": "5d16563b0bc01caee8a67795b96bce64d4a341c0b3fd11673329601292b8eb79",
+  "proposal_sha256": "c289588b060b3e4e02dfb9a7a4381097a8e8f8602b0ad7cbcf83196cb9d86d7a",
+  "preparation_runner_sha256": "bc3f62558033788ca172206b174256c935c43e5b6edf3b1c2c1bc37afd1406bb",
+  "proof_runner_sha256": "12035135381929d1c539c0a5ca50e69365e404073bfbeee922601c59f3197409",
+  "failed_result_sha256": "feb1e7a460fce16be990d5a2c7ab490da5c39a697b3f03b43d86ad669bb9620b",
+  "changes": [
+    "Cast the ghost Option payload back to u64; ghost subtraction is mathematical int while the actual result is Option<u64>.",
+    "Declare test and serde cfg names for strict direct compilation of the existing full proof input; neither configuration is enabled."
+  ],
+  "runtime_expression_changes": 0,
+  "source_changed": false,
+  "prior_phase_proof_credit": 0
+}

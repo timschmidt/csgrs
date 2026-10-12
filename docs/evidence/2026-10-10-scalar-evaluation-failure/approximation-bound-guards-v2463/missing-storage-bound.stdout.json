@@ -1,0 +1,541 @@
+{
+  "func-details": {
+    "approximation_bound_preview::computable_bounds::Computable::bound_from_approx": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::separated_approximation_yields_a_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%7::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::ExactSignCache::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::clamped_upper_exponent_preserves_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%0::and_then": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::real_approximation_model::binary_unit_composes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::negation_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::approximation_metadata_produces_valid_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%30::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::square": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::addition_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::magnitude_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::sqrt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::certified_sign_and_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::lemma_pow0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::magnitude_model::has_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::product_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::constructor_preserves_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::known_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::distinct_real_binades_order_magnitudes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::FnWithRequiresEnsures::ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::Clone::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::map_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::real_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::verified::word::floor_half": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::magnitude_model::has_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::public_sign_preserves_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::absolute": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%42::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::spec_unwrap": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::binary_offset_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%25::sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%2::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::negate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::structural::MagnitudeBits::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_some": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::bound_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%0::is_some": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%25::magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%0::map": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::negate_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::pow2": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::sign_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::queried_magnitude_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::impl&%0::requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::inverse": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::verified::word::bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::real_domain_holds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%9::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::exported_magnitude_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::magnitude_model::binary_numerator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::positive_root_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%0::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::bit_length_model::trailing_zeros_determine_power_of_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::OptionAdditionalFns::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::strictly_cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::accepted_bound_proves_real_domain": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%35::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::squared_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::bit_length_model::trailing_ones_determine_all_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::approximation_bound_expected": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::inverse_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::binary_unit_successor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::known_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::binary_scaling_preserves_real_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%28::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::magnitude_upper_bound_is_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::squaring_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::real_approximation_model::separated_approximation_certifies_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::verified::word::checked_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::FnWithRequiresEnsures::requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::proves_domain": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::verified::word::upper_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::with_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::queried_sign_is_a_certificate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::public_sign_denotes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_strictly_increases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::planning_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::structural::RealSign::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::magnitude_upper_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%18::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::private_sign_preserves_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::real_approximation_model::binary_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%2::checked_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::real_approximation_model::binary_unit_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::precision_facts_are_certificates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::pow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::multiplication_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::positive_binade_proves_at_least_one": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::private_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::multiply": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::binary_scaling_preserves_magnitude_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "alloc::boxed::impl&%15::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundInfo::with_sign_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_none": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::approximation_bit_pattern_endpoints": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma2_to64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::positive_root_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::RequiredRealDomain::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::impl&%0::ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::bit_length_model::bit_lengths_determine_order": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::sum_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::magnitude_upper_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::real_approximation_model::approximates": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::checked_metadata_exponent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::magnitude_model::binary_denominator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::BoundCache::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::magnitude_upper_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::upper_magnitude_proves_open_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::public_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "approximation_bound_preview::computable_bounds::square_root_preserves_bound_denotation": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    }
+  },
+  "verification-results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "verified": 0,
+    "errors": 1,
+    "is-verifying-entire-crate": false
+  },
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  }
+}

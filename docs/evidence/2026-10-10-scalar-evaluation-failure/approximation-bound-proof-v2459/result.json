@@ -1,0 +1,22 @@
+{
+  "exit_code": 1,
+  "seconds": 3.6404488780535758,
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 0,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "protocol_sha256": "76a52092c5843f4339bfcbe339c91f32e7fb7aca27a27de3fe22ba2bb4d224fd",
+  "stdout_sha256": "567483c5d683262264958fc4011863f265e1d49b8d452dade00942743ddd2c4e",
+  "stderr_sha256": "5b6a040b5447fd7427f7a86e14d44db551746e252673c85e63c66526ebc81854",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "dependency_inputs_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

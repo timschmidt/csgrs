@@ -1,0 +1,14 @@
+note: verifying module computable_bounds (selected functions)
+
+error: precondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/early-threshold-too-small/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:58:17
+   |
+58 |                 lemma_pow2_strictly_increases(0, (magnitude_bits - 1) as nat);
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+  --> arithmetic/power2.rs:180:8
+   |
+   = note: failed precondition
+
+error: aborting due to 1 previous error
+

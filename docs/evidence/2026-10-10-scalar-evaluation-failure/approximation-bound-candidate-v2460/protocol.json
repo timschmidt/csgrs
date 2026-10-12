@@ -1,0 +1,27 @@
+{
+  "status": "Shared producer preview frozen before proof or runtime execution",
+  "runner_sha256": "bc3f62558033788ca172206b174256c935c43e5b6edf3b1c2c1bc37afd1406bb",
+  "proposal_sha256": "c289588b060b3e4e02dfb9a7a4381097a8e8f8602b0ad7cbcf83196cb9d86d7a",
+  "retained_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "preview_files_sha256": {
+    "candidate/crates/hyperreal/src/computable/node/approximation_bound.rs": "c289588b060b3e4e02dfb9a7a4381097a8e8f8602b0ad7cbcf83196cb9d86d7a",
+    "candidate/crates/hyperreal/src/computable/node/structural_analysis.rs": "4736bb508d59e83df5d99e481ea5ec6f1b2d55d96303fc6be547c29ed15d0bf4",
+    "candidate/crates/hyperreal/src/computable/node.rs": "e920d79c7bd2eecd6d90e5c0eeae8bd64910ed6c28f283b5eec26c61607f267c",
+    "candidate.patch": "f01df3af9cb28ae70725e991a6d8e9ab51d4b734a8d6cf6a878635f9cb86c34c",
+    "computable_bounds.rs": "4825f63417c6c96c1a6e7bc9e4c8ea427ac7a4e1d5d83b855016627364fa3071",
+    "original/crates/hyperreal/src/computable/node/structural_analysis.rs": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+    "original/crates/hyperreal/src/computable/node.rs": "faf381222f9cfecd9bd5fd631dd936580ededb9e6275c7ea27684e2c53c9f042",
+    "original-method.rs": "042c58893d6f1066dec2b51ec767fed07647e51460d3f3092da0a5302b437506",
+    "proof.rs": "f851f7c3c84b07ed6adf8858fbd6c3c2431bb2d2db7913403125caad60c00af7"
+  },
+  "candidate_source_paths": [
+    "crates/hyperreal/src/computable/node.rs",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs",
+    "crates/hyperreal/src/computable/node/approximation_bound.rs"
+  ],
+  "original_method_sha256": "042c58893d6f1066dec2b51ec767fed07647e51460d3f3092da0a5302b437506",
+  "source_changed": false,
+  "main_changed": false,
+  "scope": "Prepare the actual three-file extraction: a node include, removal from structural_analysis and the new shared associated-function file. The proof target includes that exact proposed file, with a fieldless owner because this static method never reads graph fields. All bound/model/kernel bodies remain the existing SOURCE files. Remove only the redundant external Sign type declaration because the imported dependency now proves its actual enum. The new annotations require normalized sign/magnitude and a u64 storage count, prove exact metadata output and all real values satisfying the one-unit error contract. Statement bindings expose results to ghost proofs; the trailing-zero scan remains inside the successful-exponent short circuit. No SOURCE edit, runtime admission, whole-node proof or retained count increase occurs in this preparation."
+}

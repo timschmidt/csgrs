@@ -1,0 +1,65 @@
+{
+  "status": "The shared approximation-bound producer passes conditional proof, twelve mutation controls and an independent native oracle in isolated previews",
+  "runner_sha256": "38a63c1a2f768e0f75bbfac1fa17c0636fd5e94a742ec3927553cf87141cc1fe",
+  "retained_checkpoint": "typed-api-prototype-v2440-state.json",
+  "retained_checkpoint_sha256": "1647e9f980a5d12f117bcecb2a5ccc3c561018e342fce83b15f6ead13c550ef0",
+  "retained_source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "previous_support_frontier_sha256": "84e63a914c81951aeb4984a681d0b158c153177cd545c7884f1f349beb036d17",
+  "previous_support_artifacts_rechecked": 194,
+  "source_files_rechecked": 24751,
+  "main_files_rechecked": 1167,
+  "candidate_sources_changed": false,
+  "source_catalog_unchanged": true,
+  "main_runtime_admitted": false,
+  "retained_verified_units": 736,
+  "new_retained_proof_units": 0,
+  "whole_crate_obligation_groups_open": 13,
+  "preview_full_verified_units": 737,
+  "preview_new_producer_bodies": 1,
+  "preview_new_specifications": 1,
+  "existing_scalar_proof_functions_and_views_preserved": 472,
+  "producer_positive_baselines": 1,
+  "producer_negative_controls_reconstructed": 12,
+  "producer_wrong_behavior_controls": 7,
+  "producer_weakened_output_controls": 3,
+  "producer_missing_premise_controls": 2,
+  "actual_cargo_dependency_export_units_including_existing_models": 453,
+  "native_corpus": {
+    "fixtures": "198258",
+    "queries": "2775612",
+    "plain_values": "5551224",
+    "counted_values": "5551224",
+    "unknown": "925372",
+    "overflow": "396474",
+    "exact": "1450504",
+    "inexact": "3262",
+    "diagnostic_checksum": "83aad051019b1358"
+  },
+  "fresh_isolated_producer_corpus_executions": 1,
+  "fresh_scalar_runtime_tests": 0,
+  "shared_proof_and_native_source_sha256": "c289588b060b3e4e02dfb9a7a4381097a8e8f8602b0ad7cbcf83196cb9d86d7a",
+  "native_source_excerpts_reconstructed": true,
+  "result_records_sha256": {
+    "approximation-bound-proof-v2459/result.json": "feb1e7a460fce16be990d5a2c7ab490da5c39a697b3f03b43d86ad669bb9620b",
+    "approximation-bound-proof-v2461/result.json": "9cee48e7a7863eb70da45f295fd8fbb71986694173b1b887035dac421bbe8ec8",
+    "approximation-bound-guards-v2462/result.json": "ce1d909851692825972108f45cee36c666a7cc69c9a3cef58ba77596edcc934f",
+    "approximation-bound-guards-v2463/result.json": "f165e9724f285dadd151e10ea6ab2bd867a35756293fd6e7a260ff8a9691c113",
+    "approximation-bound-native-v2464/result.json": "fa52d078ac2b8a1ad6289b9e0143d0a9df0cbecbe2a7cec9641648b74ada0932"
+  },
+  "failures_preserved": [
+    "approximation-bound-proof-v2459/result.json",
+    "approximation-bound-guards-v2462/result.json"
+  ],
+  "corrections": [
+    "approximation-bound-correction-v2460.json",
+    "approximation-bound-guards-v2463/protocol.json"
+  ],
+  "scope": "The prepared three-file extraction shares one associated-function body between the node facade preview and full scalar proof wrapper. Actual Cargo-imported BigInt sign/magnitude and BigUint bit metadata connect to the retained interval lemmas. Under explicit normalized representation and u64 count-range premises, the proof fixes every returned bound field and establishes soundness for every real satisfying the approximation's one-unit error contract. Returning Unknown or discarding an available exact exponent is rejected. Independent native endpoint arithmetic agrees with the original and proposed producers; separate counted adapters preserve metadata call selection, including the lazy zero scan. This does not prove approximation truth, caller premises, whole-node representation, atomic publication or scalar runtime admission. Imported and local verified counts are separate and not added to retained coverage.",
+  "remaining": [
+    "Prepare repository-appropriate dependency model placement and Cargo/Verus import wiring for the complete candidate, including publication, MSRV and supported targets. Production/proof dependencies must resolve to the same physical package; the preview export cannot substitute silently for the retained registry dependency.",
+    "Discharge or explicitly enforce normalization, sign consistency and aggregate count-range premises at actual constructors, arithmetic and producer callers, and establish the original approximation's truth independently of its cached bound.",
+    "Qualify any candidate dependency/runtime change under the original correctness, resource, cost, memory and size gates before retention; the focused native producer corpus supplies no substitute timing or full scalar gate.",
+    "Continue independent existence, atomic publication and exact-operation resource work. Both baseline CPU failures, thirteen whole-crate groups, all 39 properties, 14 targets, crate future work, main/native/full-board admission and complete pre-push verification remain open."
+  ],
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true
+}

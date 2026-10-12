@@ -1,0 +1,33 @@
+note: verifying module computable_bounds (selected functions)
+
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/force-positive-sign/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:40:5
+   |
+40 |     fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: assertion failed
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/force-positive-sign/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:104:29
+    |
+104 |                       implies result == approximation_bound_expected(
+    |  _____________________________^
+105 | |                         appr.metadata_magnitude(), bits, prec, appr.metadata_sign()) by {
+    | |____________________________________________________________________________________^ assertion failed
+
+error: precondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/approximation-bound-guards-v2462/force-positive-sign/candidate/crates/hyperreal/src/computable/node/approximation_bound.rs:119:21
+    |
+119 | /                     approximation_metadata_produces_valid_bound(
+120 | |                         value, appr.metadata_value(), magnitude.metadata_value(), magnitude_bits,
+121 | |                         prec, reaches_next_binade,
+122 | |                         magnitude.metadata_value() == pow2((magnitude_bits - 1) as nat),
+123 | |                         sign, msd, exact_msd, result);
+    | |_____________________________________________________^
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/bound_denotation.rs:194:9
+    |
+194 |           sign == if approximation > 0 { Sign::Plus } else { Sign::Minus },
+    |           ---------------------------------------------------------------- failed precondition
+
+error: aborting due to 2 previous errors
+
