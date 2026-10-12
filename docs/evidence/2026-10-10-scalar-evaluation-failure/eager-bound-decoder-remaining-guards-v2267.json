@@ -1,0 +1,14 @@
+{
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "protocol_sha256": "2c15a9cf4af51637b9d503495d2138d3d72d072ed1cc65878d71f4baa9c79549",
+  "phase": "typed-api-prototype-v2267-eager-bound-decoder-non-cache-rejections",
+  "result": {
+    "exit_code": 0,
+    "seconds": 813.339382044971,
+    "source_unchanged": true,
+    "main_unchanged": true,
+    "status": "isolated prototype validation; not runtime admission"
+  },
+  "complete": true,
+  "separately_completed_cache_phase": "typed-api-prototype-v2265-eager-bound-decoder-cache-rejections"
+}

@@ -1,0 +1,9 @@
+{
+  "original_entrypoint": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/test_rejections.py",
+  "original_entrypoint_sha256": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+  "selected_entrypoint_sha256": "6f736b52645a96217b537ce71d1145afac252a9a837421e269b96d111e6d5e0b",
+  "only_removed_call": "    reject_cache_mutations()\n",
+  "separately_completed_cache_phase": "typed-api-prototype-v2265-eager-bound-decoder-cache-rejections",
+  "cache_tooling_sha256": "e3228a7e0111e2d583bc1ae62d9b2d6dd05d84650ca9c51cba4bc103d3efb7d1",
+  "scope": "Run every other mutation and positive baseline unchanged. The cache group already ran on these exact source/verifier identities; it is combined explicitly, not rerun or omitted from total coverage."
+}

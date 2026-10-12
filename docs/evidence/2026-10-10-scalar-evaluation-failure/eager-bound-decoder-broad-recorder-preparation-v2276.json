@@ -1,0 +1,19 @@
+{
+  "predecessor": "record_bound_decoder_validation.py",
+  "predecessor_sha256": "80957a456a15737973656db6e7478629c4e75d5fbdcc3d8cec141ef903b60ca6",
+  "runner": "record_eager_decoder_validation.py",
+  "runner_sha256": "60123675ba4e28c18e70b9c84dd9427320bc707a79a1b077d83adc54e5b94dca",
+  "literal_replacements": {
+    "typed-api-prototype-v2169-bound-decoder-verus": "typed-api-prototype-v2260-eager-bound-decoder-verus",
+    "bound-decoder-candidate-validation-v2180.json": "eager-bound-decoder-candidate-validation-v2276.json",
+    "bound-decoder-broad-validation-v2180.json": "eager-bound-decoder-broad-validation-v2276.json",
+    "typed-api-prototype-v2172-bound-decoder-scalar-tests": "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+    "typed-api-prototype-v2173-bound-decoder-clippy": "typed-api-prototype-v2269-eager-bound-decoder-clippy",
+    "typed-api-prototype-v2176-bound-decoder-included-fmt": "typed-api-prototype-v2259-eager-bound-decoder-included-fmt",
+    "typed-api-prototype-v2177-bound-decoder-stack-tests": "typed-api-prototype-v2273-eager-bound-decoder-stack-tests",
+    "typed-api-prototype-v2178-bound-decoder-default-tests": "typed-api-prototype-v2274-eager-bound-decoder-default-tests",
+    "typed-api-prototype-v2179-bound-decoder-debug-tests": "typed-api-prototype-v2275-eager-bound-decoder-debug-tests",
+    "typed-api-prototype-v2180-bound-decoder-minimal-clippy": "typed-api-prototype-v2276-eager-bound-decoder-minimal-clippy"
+  },
+  "scope": "Same terminal-result, test-count, child-count, inherited-warning, ignored-case and strict-Clippy checks; only phase and output identities differ. The nine current-source commands comprise three early executions and six remaining executions. This parser does not run tests or decide cost/retention."
+}

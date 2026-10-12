@@ -1,0 +1,65 @@
+{
+  "status": "All nine current-source runtime commands and all proof guards pass; unchanged replay gates are next",
+  "source_record": "typed-api-prototype-v2260-eager-bound-decoder-verus/source-hashes.json.gz",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "changed_sources_sha256": {
+    "crates/hyperreal/src/computable/node/representation.rs": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+    "crates/hyperreal/verification/README.md": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a",
+    "crates/hyperreal/verification/cache_encoding_model.rs": "7b5f309ffc5767d532431a4cf78b0910040e1631e234291900367ca573d32d9c",
+    "crates/hyperreal/verification/scope.json": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+    "crates/hyperreal/verification/test_cache_rejections.py": "cf7452723fff8b1442f47e3c7bf6846a64fe5be7de35f0a53e23d7b510b34950"
+  },
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "inputs_sha256": {
+    "eager-bound-decoder-early-milestone-v2265.json": "d7e76a62fea62d3c68cf0be55fc8078b95b70c92262047f8e3bbddaf82a9bab1",
+    "eager-bound-decoder-broad-validation-v2276.json": "55a7cf4f0dc6ad5f8d6ec124290948d9db616221e1aa5b984a1ff230b8fb7115",
+    "eager-bound-decoder-candidate-validation-v2276.json": "408aa6537fb5441fdc0b241bb556ba0c43926efdb65ee6d20052523b75a49ee5",
+    "eager-bound-decoder-remaining-guards-v2267.json": "82c7baf8c8e2acd2a1edd938ac69172bebdd946cb11015b7815abbbacf526b4c",
+    "eager-bound-decoder-computation-review-v2279.json": "5d84ead73ac283ecbc3c349649335737e90e0d3c39068b7f2a28104f0010df2e",
+    "eager-bound-decoder-replay-protocol-v2280.json": "e4732b693f0992329324681444696b062976d68c6e71704614cbadd65b6aed9b"
+  },
+  "verified_units": 655,
+  "listed_production_contracts": 98,
+  "listed_model_theorems": 135,
+  "open_obligation_groups": 13,
+  "fresh_acceptance_tests": 10,
+  "fresh_rejected_mutations": 245,
+  "fresh_passing_guard_baselines": 4,
+  "guard_groups": [
+    {
+      "phase": "typed-api-prototype-v2265-eager-bound-decoder-cache-rejections",
+      "tooling_sha256": "e3228a7e0111e2d583bc1ae62d9b2d6dd05d84650ca9c51cba4bc103d3efb7d1",
+      "invocation_log_sha256": "4550fe50e8c510458083388540ef68c68bb3bc9fafbd52d8d87b0a3e7600cf61",
+      "rejected_mutations": 41,
+      "passing_baselines": 1
+    },
+    {
+      "phase": "typed-api-prototype-v2267-eager-bound-decoder-non-cache-rejections",
+      "tooling_sha256": "68b65cafbc72d929b4d937b651117940a508c4867c96979ff396c5ea035129a4",
+      "invocation_log_sha256": "735c738a5b190471f318ddfeddefb3710c375c67b248f30d1e37da4a90a35000",
+      "rejected_mutations": 204,
+      "passing_baselines": 3
+    }
+  ],
+  "runtime_commands_passed": 9,
+  "early_runtime_commands": 3,
+  "remaining_runtime_commands": 6,
+  "identical_instruction_probe_families": 7,
+  "identical_complete_executables": 0,
+  "cost_evidence_method": "unchanged-computation-with-reviewed-diagnostic-metadata",
+  "historical_matching_successful_processes": 1017,
+  "later_baseline_cpu_failures_preserved": 2,
+  "fresh_timing_processes": 0,
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "next_priority": "The eager decoder's complete proof/guard/runtime checks and separately frozen unchanged-computation review now pass. Run the frozen 39 capped commands, 4129 numerical cases and 648 public schedules, then compare receipts and audit every retained fact before deciding isolated retention. Whole-file identity remains false; historical timings remain historical and both later baseline CPU failures remain unresolved. Preserve all original limits, the fixed pre-Verus baseline and open producer/existence/atomic, resource and main/native/full-board obligations.",
+  "limits": [
+    "The five-crate suite passes 5858 top-level tests and three children, with 33 ignored cases and 14 inherited example-name warnings. All-feature scalar and debug suites each pass 1074 plus one child; default features pass 1059 plus three. Both strict Clippy configurations, release build, workspace fmt and 108 included-file format checks pass. This is not complete repository CI.",
+    "The 655-unit conditional proof covers the actual all-word decoder and connected field lemmas; no new whole-crate group is closed. All 245 negative guards, four baselines and ten acceptance checks executed on this candidate. Cache guards ran separately; only their already completed call was omitted from the other-groups entrypoint.",
+    "Static instruction/layout identity and a 194-reference diagnostic audit support the scoped differential-cost method. The 1017 older matching successes keep their original identities. The two later same-baseline SIGXCPU failures remain failed; no fresh timing pass, absolute cap guarantee, uniform performance claim or full executable equivalence is inferred.",
+    "Replays and fact audits are prepared but unexecuted. Runtime stays v1836. All 39 properties, 14 targets, future work, producer/existence/atomic obligations and fixed-baseline/native/full-board requirements remain unchanged."
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "status": "Prospective qualification method; no replay or new cost workload started",
+  "predecessor_protocol": "eager-bound-decoder-computation-protocol-v2278.json",
+  "predecessor_protocol_sha256": "8a2c26033b77921784fafee7c154cf7817bb4591b4af6dc0ecbdc43f41dc483b",
+  "reader_failure": "eager-bound-decoder-computation-reader-failure-v2278.json",
+  "reader_failure_sha256": "e40c22ad357f0987016c4cab86420107e015abcb256885b8e76b6a65017ca0c0",
+  "schema_correction": "Use the preserved paired provenance binding each original summary hash to its executable hash; additionally check direct summary hashes where present. No fixture, cap, historical result, static condition or qualification criterion changes.",
+  "source_record": "typed-api-prototype-v2260-eager-bound-decoder-verus/source-hashes.json.gz",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "runner_sha256": "409fc1dd5cd839ffc5be07d742a264135c825cce8494d2bd342520862fd322af",
+  "inputs_sha256": {
+    "eager-bound-decoder-load-image-review-v2263.json": "f3aa2c760e277709a4c8c58258b8c547ca2e8d59a3c3b9ed3cd87e8bf6ece7c7",
+    "eager-bound-decoder-location-uses-v2277/summary.json": "032c0f4806d3a65bab3808da74e69407f135287fb3a537983fedf177061180c4",
+    "eager-bound-decoder-binary-comparison-v2262/summary.json": "4727d6d08016fe50f31d493641f752d55fb1f17a163e12db378d69ae643c6ea3",
+    "eager-bound-decoder-early-milestone-v2265.json": "d7e76a62fea62d3c68cf0be55fc8078b95b70c92262047f8e3bbddaf82a9bab1",
+    "domain-predicate-cost-review-v1780.json": "ba66b633d83eda8440ae1df167cb6fd4abaa9c36766c8e5a78a770a648ed057d",
+    "integer-coarse-zero-cost-rejection-v2100.json": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+    "bound-decoder-cost-rejection-v2247.json": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813"
+  },
+  "method": "unchanged-computation-with-reviewed-diagnostic-metadata",
+  "reason": "The source change extends proof coverage and restores the retained instruction bytes in all seven original cost probes. Proportionate differential cost evidence can therefore be static, provided all remaining loaded differences are explicitly accounted for and diagnostic use is reviewed. This is a new method, not a pass under the earlier complete-file identity rule.",
+  "required_static_evidence": [
+    "All seven frozen probe hashes, complete executable sections and executable load segments match the retained computation; program headers and dynamic relocation payloads are identical.",
+    "Loaded differences are restricted to section-table offset metadata, build-id and six source-line fields at unchanged statements. Full files may differ; no binary is rewritten for execution.",
+    "All detected direct references to changed location records feed resolved panic routines. Preserve the reference-analysis limits and the possible diagnostic line-number change.",
+    "Probe file sizes do not grow. The complete source change, proof scope and library-size change remain explicit; this does not prove code-generation identity for other compilers, targets or build options."
+  ],
+  "historical_evidence_rule": "Verify and reference the retained candidate side of all seven v1780 standalone families and both paired campaigns. Keep the other side distinct. Historical timing, allocation and output receipts keep their original binary/source identities; they are supporting observations, never measurements of this candidate or universal timing guarantees.",
+  "failure_rule": "Both later v1836 baseline SIGXCPU results at v2100 and v2247 remain failed under the original 192 MiB, CPU 2/3-second and four-second wall caps. Include their exact binary identities and commands. Earlier failures, unresolved changes for rejected variants and the fixed pre-Verus baseline remain unchanged. Do not rerun or loosen a failed cap to obtain approval.",
+  "decision": "If static and historical integrity checks pass, permit fresh unchanged correctness/replay/fact gates under this scoped differential-cost method. Runtime retention additionally requires all nine broad commands, the full conditional proof, every mutation/acceptance guard, all 39 capped commands, 4129 numerical cases and 648 public schedules, with their original comparisons. The method makes no absolute resource-cap claim and does not repair baseline failures.",
+  "original_full_file_identity_rule_satisfied": false,
+  "planned_new_timing_processes": 0,
+  "runtime_retained": false
+}

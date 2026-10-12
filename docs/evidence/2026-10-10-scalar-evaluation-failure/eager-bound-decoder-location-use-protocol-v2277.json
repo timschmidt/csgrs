@@ -1,0 +1,19 @@
+{
+  "status": "Frozen before the seven-family diagnostic-reference audit",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "runner_sha256": "017a37a1ab9f8a1e227a536b1c34ffc92bcf549f88281529cd4e511fbfbd5b36",
+  "load_image_review": "eager-bound-decoder-load-image-review-v2263.json",
+  "load_image_review_sha256": "f3aa2c760e277709a4c8c58258b8c547ca2e8d59a3c3b9ed3cd87e8bf6ece7c7",
+  "objdump": "/usr/bin/objdump",
+  "objdump_sha256": "6dbdfd807e927bf573827638ff3702b196d733bb388ac596b5f787eae6917773",
+  "known_before_execution": "A preliminary atan disassembly in /tmp identified direct record-address loads before panic_fmt and unwrap_failed calls. This audit checks all seven probes and preserves the complete disassemblies.",
+  "checks": [
+    "Verify frozen whole-binary hashes and identical executable section payloads before using one disassembly per pair.",
+    "Collect every objdump RIP-relative reference into each changed 24-byte record; require an address load of the record base into the expected panic-location argument register.",
+    "Follow each reference through a short straight-line instruction sequence to a call; resolve its GOT slot through the unchanged RELATIVE relocation and function symbol, requiring panic_fmt or unwrap_failed.",
+    "Reject intervening branches or writes to the location register and reject data relocations pointing into the changed records.",
+    "Archive source excerpts for the exact-sign decoding, rational constants and fraction constructor. Do not infer whole-program dataflow or absence of possible panics from reference scanning."
+  ],
+  "cost_qualification": "None. The frozen full-file identity condition is still false; no timing receipt is reused and no runtime is retained by this audit.",
+  "limits": "This is compiler-output/source inspection, not formal noninterference, exhaustive indirect-pointer analysis, a cost measurement or an absolute resource guarantee. Panic diagnostics may show different line numbers. All earlier failed gates remain failed."
+}

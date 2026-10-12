@@ -1,0 +1,20 @@
+{
+  "status": "v2278 review exited one before producing any qualification",
+  "runner": "qualify_eager_decoder_computation.py",
+  "runner_sha256": "30a1b759fd7a0ad6c9b45b7b91b8830f1d8d76009a4cf3c3b94b84de636bb9bf",
+  "protocol": "eager-bound-decoder-computation-protocol-v2278.json",
+  "protocol_sha256": "8a2c26033b77921784fafee7c154cf7817bb4591b4af6dc0ecbdc43f41dc483b",
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-10-scalar-evaluation-failure/qualify_eager_decoder_computation.py",
+    "review"
+  ],
+  "exit_code": 1,
+  "exception": "KeyError: 'binary_sha256'",
+  "location": "qualify_eager_decoder_computation.py line 94, standalone inverse_trig summary",
+  "reason": "Four older family summaries lack a direct binary_sha256 field. Their already retained paired provenance stores the summary hash and executable hash together.",
+  "new_timing_processes": 0,
+  "source_changed": false,
+  "qualification_created": false,
+  "successor_runner": "qualify_eager_decoder_computation_v2.py"
+}

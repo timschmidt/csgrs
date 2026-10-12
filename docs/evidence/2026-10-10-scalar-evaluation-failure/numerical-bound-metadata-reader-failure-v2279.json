@@ -1,0 +1,12 @@
+{
+  "status": "Read-only metadata review stopped before producing a record",
+  "runner": "review_numerical_bound_metadata.py",
+  "runner_sha256": "7951b5faabb0010ae9af992f1ac18a67c70b81222fa9b5ab76f19594d39f6da5",
+  "exit_code": 1,
+  "exception": "FileNotFoundError: extracted num-bigint 0.4.6 has no .cargo-checksum.json",
+  "location": "review_numerical_bound_metadata.py line 34",
+  "source_changed": false,
+  "new_test_or_cost_processes": 0,
+  "successor": "review_numerical_bound_metadata_v2.py",
+  "correction": "Use Cargo.lock's archive checksum and compare the selected extracted source files directly with that archive; also preserve the dependency's MIT license alongside quoted sections."
+}

@@ -1,0 +1,233 @@
+Rejected incorrect word.rs: (false, precision as u32)
+Rejected incorrect word.rs: (true, precision as u32)
+Rejected incorrect float.rs: exponent: -148,
+Rejected incorrect float.rs: exponent: -1073,
+Rejected incorrect word.rs: Some(right.cmp(&left))
+Rejected incorrect word.rs: Some((false, 1))
+Rejected incorrect word.rs: value.checked_add(1_u128 << shift)
+Rejected incorrect word.rs:     value / 2
+}
+Rejected incorrect word.rs:     ((value as u32) >> 1) as i32
+}
+Rejected incorrect word.rs: (if below { 0_i128 } else { 0_i128 })
+Rejected incorrect word.rs: + 0_i128;
+Rejected incorrect word.rs: difference <= i32::MIN as i128 || difference > i32::MAX as i128
+Rejected incorrect word.rs: difference < i32::MIN as i128 || difference >= i32::MAX as i128
+Rejected incorrect word.rs: Some((i32::MIN, true))
+Rejected incorrect word.rs: None if numerator_bits >= denominator_bits =>
+Rejected incorrect word.rs: Some((i32::MAX, false))
+Rejected incorrect word.rs: None if numerator_bits <= denominator_bits => None,
+Rejected incorrect word.rs: None => Some((i32::MAX, false)),
+    }
+}
+Rejected incorrect division.rs: return 0;
+Rejected incorrect division.rs: smaller = 0;
+Rejected incorrect gcd.rs: 63 + ((value >> 64) as u64).trailing_zeros()
+Rejected incorrect gcd.rs: table[start] = 0;
+Rejected incorrect gcd.rs: return left;
+Rejected incorrect gcd.rs: return 1_u128;
+Rejected incorrect gcd.rs: divisor
+
+Rejected incorrect fraction.rs: (numerator, denominator)
+Rejected incorrect fraction.rs: (0, denominator / divisor)
+Rejected incorrect fraction.rs: (numerator / divisor, 1)
+Rejected incorrect fraction.rs: let mut value = 0_u128;
+Rejected incorrect fraction.rs: value.checked_add(factors[index])
+Rejected incorrect fraction.rs: None
+Rejected incorrect fraction.rs: Some((denominator, magnitude))
+Rejected incorrect limbs.rs: return Ordering::Equal;
+Rejected incorrect limbs.rs: first_borrow && second_borrow
+Rejected incorrect limbs.rs: words[index] = 0;
+        index += 1;
+Rejected incorrect limbs.rs: return word.trailing_zeros();
+Rejected incorrect limbs.rs: words[index] = 0;
+    }
+    proof! {
+        let source = word_left_shifted
+Rejected incorrect limbs.rs: Some(words[0] as u128)
+Rejected incorrect fixed_gcd.rs: shift: 0,
+Rejected incorrect lehmer.rs: value >= -(u64::MAX as i128) && value < u64::MAX as i128
+Rejected incorrect lehmer.rs: Some(0)
+Rejected incorrect lehmer.rs: Some((left_magnitude, right_magnitude, (left < 0) != (right < 0)))
+Rejected incorrect lehmer.rs: Some([a, b, c, 0])
+Rejected incorrect lehmer.rs: None
+Rejected incorrect lehmer.rs:         a = d;
+Rejected incorrect product.rs: addend as u128 + left as u128 * right as u128;
+Rejected incorrect product.rs:     [0_u64; O]
+}
+Rejected incorrect product.rs: let limbs = [word as u64, (word >> 63) as u64];
+Rejected incorrect product.rs: multiply(&split_u128(left), &split_u128(left))
+Rejected incorrect accumulate.rs: return None;
+Rejected incorrect accumulate.rs:     0
+}
+Rejected incorrect accumulate.rs: first_carry && second_carry
+Rejected incorrect accumulate.rs: return None;
+Rejected incorrect accumulate.rs:     None
+}
+Rejected incorrect accumulate.rs: let product = super::product::multiply_u128(left, right);
+    add_shifted(accumulator, &product, 0)
+Rejected incorrect accumulate.rs: return add_shifted(accumulator, &product, 0);
+Rejected incorrect limbs.rs:     Some([0_u64; O])
+}
+Rejected incorrect limbs.rs:     None
+}
+Rejected incorrect dyadic.rs: Some((true, magnitude))
+Rejected incorrect dyadic.rs:     denominator_shift
+}
+Rejected incorrect dyadic.rs:     None
+}
+Rejected incorrect dyadic.rs:     Some((minus, magnitude, denominator_shift))
+}
+Rejected incorrect aggregate.rs: maximum = shift;
+Rejected incorrect aggregate.rs: shifts[index] = 0;
+Rejected incorrect aggregate.rs: .checked_sub(products[index].right_shift)?
+Rejected incorrect aggregate.rs: if !product.active {
+            let shift
+Rejected incorrect aggregate.rs: if !product.negative {
+Rejected incorrect aggregate.rs: super::accumulate::add_product(accumulator, left, 0, shift)
+Rejected incorrect aggregate.rs: super::accumulate::add_wide_product(accumulator, &left, 0, shift)
+Rejected incorrect aggregate.rs: super::dyadic::finish(negative, positive, maximum)
+Rejected incorrect aggregate.rs: Some(result) => None
+Rejected incorrect aggregate.rs: Some((true, zero, 0))
+Rejected incorrect word.rs: checked_shift_left(value, (shift % 64) as u32)
+Rejected incorrect dyadic.rs:             negative: true,
+            magnitude: 0,
+Rejected incorrect dyadic.rs:         magnitude: magnitude,
+Rejected incorrect dyadic.rs:         magnitude: reduced,
+        shift: denominator_shift,
+Rejected incorrect dyadic.rs: None
+Rejected incorrect dyadic.rs: Some(normalize_word(!negative, magnitude, scale))
+Rejected incorrect dyadic.rs:         right.negative,
+        right_magnitude,
+Rejected incorrect aggregate.rs: if product.active {
+        return Some((false, 0));
+Rejected incorrect aggregate.rs: let magnitude = left.checked_add(product.right)?;
+Rejected incorrect aggregate.rs: Some((!product.negative && scaled != 0, scaled))
+Rejected incorrect aggregate.rs: None
+Rejected incorrect aggregate.rs: Some(super::dyadic::normalize_word(negative, magnitude, 0))
+Rejected incorrect real_approximation_model.rs: && rounded_after_shift(approximation, 1) == -(-value).floor()
+Rejected incorrect real_approximation_model.rs: ensures approximation >= 1 ==> value > 0real,
+Rejected incorrect integer_approximation_model.rs: (value / pow2(preliminary_bits) as int - 1) / 2
+Rejected incorrect integer_approximation_model.rs: requires denominator > 0, gap >= 0,
+Rejected incorrect magnitude_model.rs: + if below_aligned(numerator, denominator, numerator_bits, denominator_bits)
+Rejected incorrect magnitude_model.rs: && numerator * binary_denominator(exponent) <= 2 * binary_numerator(exponent) * denominator
+Rejected incorrect real_approximation_model.rs: if shift >= 0 { value * pow2(shift as nat + 1) }
+Rejected incorrect real_approximation_model.rs: else { rounded_after_shift(value, (-shift - 1) as nat) + 1 }
+Rejected incorrect real_approximation_model.rs: -(pow2(bits) as int) <= approximation <= pow2(bits),
+Rejected incorrect real_approximation_model.rs: -3real * left_bound <= left <= 3real * left_bound,
+Rejected incorrect real_approximation_model.rs: ensures -unit / 4real <= (a * b) as real * (left_unit * right_unit) - left * right
+Rejected incorrect real_approximation_model.rs: ensures approximates(left * right,
+        scaled_integer(a * b, precision - left_magnitude - right_magnitude - 5),
+Rejected incorrect real_approximation_model.rs: requires approximates(right, 8, binary_unit(precision - left_magnitude - 3)),
+Rejected incorrect real_approximation_model.rs: requires approximates(left, a, unit), approximates(right, b, unit),
+Rejected incorrect real_approximation_model.rs: ensures a >= b + 1 ==> left > right,
+Rejected incorrect real_approximation_model.rs: (-2real * right_bound <= b as real * right_unit <= 2real * right_bound)
+            ==> -unit / 2real <
+Rejected incorrect real_approximation_model.rs: new_unit <= old_unit,
+    ensures cached > 1
+Rejected incorrect real_approximation_model.rs: ensures cached >= 1 ==> refined > 0,
+Rejected attempted assumption bypass
+Rejected incorrect BoundInfo::with_sign: Self::with_sign_msd(sign, msd, false)
+Rejected incorrect BoundInfo::with_sign_msd: Sign::NoSign => Self::Unknown,
+Rejected incorrect BoundInfo::with_sign_msd: sign: Some(Sign::NoSign),
+Rejected incorrect BoundInfo::with_sign_msd:                 msd: None,
+Rejected incorrect BoundInfo::map_msd: msd: None,
+Rejected incorrect BoundInfo::map_msd: msd: msd.and_then(f),
+                exact_msd: false,
+Rejected incorrect BoundInfo::map_msd: other => Self::Unknown,
+Rejected incorrect BoundInfo::negate: } => Self::NonZero {
+                sign: Some(Sign::Plus),
+Rejected incorrect BoundInfo::inverse: 0_i32.checked_add(value)
+Rejected incorrect BoundInfo::square: msd: match None::<i32>
+Rejected incorrect BoundInfo::square: 3 * (value as i64) + 1
+Rejected incorrect BoundInfo::square: sign: Some(Sign::Minus),
+Rejected incorrect BoundInfo::multiply: match (None::<i32>, right_msd)
+Rejected incorrect BoundInfo::multiply: match (left_msd, None::<i32>)
+Rejected incorrect BoundInfo::multiply: left as i64 - right as i64 + 1
+Rejected incorrect BoundInfo::multiply: | (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Minus),
+Rejected incorrect BoundInfo::add: | (Some(Sign::NoSign), Some(Sign::NoSign)) => None,
+Rejected incorrect BoundInfo::add: if true
+Rejected incorrect BoundInfo::add: (Some(left), Some(right)) if left >= right => left_sign,
+Rejected incorrect BoundInfo::add: (Some(left), Some(right)) if right > left => left_sign,
+Rejected incorrect BoundInfo::add: exact_msd: true,
+Rejected incorrect BoundInfo::sqrt: msd.map(|value| value / 2)
+Rejected incorrect BoundInfo::known_msd: Self::NonZero { .. } => Some(None),
+Rejected incorrect BoundInfo::known_msd: } => None,
+Rejected incorrect BoundInfo::planning_msd: Self::NonZero { msd: None, .. } => Some(None),
+Rejected incorrect BoundInfo::planning_msd: Self::NonZero { msd: Some(_msd), .. } => None,
+Rejected incorrect BoundInfo::known_sign: Self::Zero => Some(Sign::Plus),
+Rejected incorrect BoundInfo::certified_sign_and_msd: (self.known_sign(), self.planning_msd())
+Rejected incorrect BoundInfo::certified_sign_and_msd: (None, self.known_msd())
+Rejected incorrect BoundInfo::certified_sign_and_msd: (self.known_sign(), None)
+Rejected incorrect BoundInfo::negate_sign: Sign::Plus => Sign::Plus,
+Rejected incorrect BoundInfo::magnitude_bits: msd: 0,
+Rejected incorrect BoundInfo::magnitude_bits: exact_msd: true,
+Rejected incorrect BoundInfo::magnitude_bits: _ => Some(MagnitudeBits { msd: 0, exact_msd: true }),
+Rejected incorrect BoundInfo::public_sign: Sign::Minus => RealSign::Positive,
+Rejected incorrect BoundInfo::public_sign: Sign::NoSign => RealSign::Positive,
+Rejected incorrect BoundInfo::private_sign: RealSign::Positive => Sign::Minus,
+Rejected incorrect BoundInfo::private_sign: RealSign::Zero => Sign::Plus,
+Rejected incorrect BoundInfo::square: 2 * (value as i64)
+Rejected incorrect BoundInfo::multiply: left as i64 + right as i64
+Rejected incorrect BoundInfo::add: _ => 0,
+Rejected incorrect BoundInfo::inverse: if true {
+Rejected incorrect BoundInfo::proves_domain: Some(Some(msd)) => msd <= 0,
+Rejected incorrect BoundInfo::proves_domain: Some(Some(msd)) => msd < -1,
+Rejected incorrect BoundInfo::proves_domain: Some(None) => false,
+Rejected incorrect BoundInfo::proves_domain: None => true,
+Rejected incorrect BoundInfo::proves_domain: Probability => matches!(self.known_sign(), Some(Sign::Plus | Sign::NoSign)),
+Rejected incorrect BoundInfo::proves_domain: match self.planning_msd()
+Rejected incorrect BoundInfo::proves_domain: Some(Some(msd)) => msd <= 0,
+Rejected incorrect BoundInfo::proves_domain: Some(Some(msd)) => msd > 0,
+Rejected incorrect BoundInfo::proves_domain: true
+                    && match self.known_msd()
+Rejected incorrect bound denotation: sign certificate
+Rejected incorrect bound denotation: approximation separation
+Rejected incorrect bound denotation: negation denotation
+Rejected incorrect bound denotation: reciprocal sign
+Rejected incorrect bound denotation: square sign
+Rejected incorrect bound denotation: product sign
+Rejected incorrect bound denotation: sum sign
+Rejected incorrect bound denotation: binade separation
+Rejected incorrect bound denotation: square-root binade
+Rejected incorrect bound denotation: zero certificate
+Rejected incorrect bound denotation: binary scaling exponent
+Rejected incorrect bound denotation: mapped offset direction
+Rejected incorrect bound denotation: mapping callback
+Rejected incorrect bound denotation: public positive sign
+Rejected incorrect bound denotation: exported magnitude nonzero
+Rejected incorrect bound denotation: inexact magnitude
+Rejected incorrect bound denotation: upper exponent monotonicity
+Rejected incorrect bound denotation: clamped exponent exactness
+Rejected incorrect bound denotation: clamped upper certificate
+Rejected incorrect bound denotation: product upper carry
+Rejected incorrect bound denotation: sum upper carry
+Rejected incorrect bound denotation: square-root upper exponent
+Rejected incorrect bound denotation: upper binary scaling direction
+Rejected incorrect bound denotation: closed upper endpoint
+Rejected incorrect bound denotation: closed exact lower endpoint
+Rejected incorrect bound denotation: unit-domain strict upper exponent
+Rejected incorrect bound denotation: at-least-one needs a lower binade
+Rejected incorrect bound denotation: domain requires a valid incoming bound
+Rejected incorrect bound denotation: domain requires an accepted certificate
+Rejected incorrect public carrier: CertifiedRealSign::sign
+Rejected incorrect public carrier: CertifiedRealSign::sign
+Rejected incorrect public carrier: CertifiedRealSign::is_known
+Rejected incorrect public carrier: CertifiedRealOrdering::ordering
+Rejected incorrect public carrier: CertifiedRealOrdering::ordering
+Rejected incorrect public carrier: CertifiedRealOrdering::is_known
+Rejected incorrect public carrier: CertifiedRealEquality::as_bool
+Rejected incorrect public carrier: CertifiedRealEquality::as_bool
+Rejected incorrect public carrier: CertifiedRealEquality::is_known
+Rejected incorrect public carrier: SymbolicDependencyMask::from_bits
+Rejected incorrect public carrier: SymbolicDependencyMask::bits
+Rejected incorrect public carrier: SymbolicDependencyMask::contains
+Rejected incorrect public carrier: SymbolicDependencyMask::is_empty
+Rejected incorrect public carrier: SymbolicDependencyMask::union
+Rejected incorrect public carrier: SymbolicDependencyMask::NONE
+Rejected incorrect public carrier: SymbolicDependencyMask::PI
+Rejected incorrect public carrier: SymbolicDependencyMask::EXP
+Rejected incorrect public carrier: SymbolicDependencyMask::SQRT
+Rejected incorrect public carrier: SymbolicDependencyMask::LOG
+Rejected incorrect public carrier: SymbolicDependencyMask::TRIG
+Rejected incorrect public carrier: SymbolicDependencyMask::OPAQUE

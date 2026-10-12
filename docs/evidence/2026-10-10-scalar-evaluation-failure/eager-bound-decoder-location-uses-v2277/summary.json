@@ -1,0 +1,4025 @@
+{
+  "status": "Every detected direct reference supplies diagnostic location metadata to a panic routine",
+  "protocol": "eager-bound-decoder-location-use-protocol-v2277.json",
+  "protocol_sha256": "fbb614e51b9fb3bfc81acc9204e959bc0ae5aa6fbafcc2e08386703c84eedb16",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "families": [
+    {
+      "family": "atan",
+      "binary_sha256": {
+        "baseline": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+        "candidate": "56bfa3f48cb50c21bebf1f3e31d59569c398e864ecd0cab87ca42ea06f09d3a8"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "65d8656e07df7ef0442762cd8285ff6051f882b099a3058b57ca8fb1ae348c40",
+      "stdout_archive": "atan.objdump.stdout.gz",
+      "stdout_archive_sha256": "bb8c319b8da02f43ed3d15a21f3199bafc4980ad27f798718089765a4e86594d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 26,
+      "direct_references": [
+        {
+          "address": 404835,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   62d63:\tlea    0x122536(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   62d6a:\tmov    $0x9f,%esi",
+            "   62d6f:\tcall   *0x1265d3(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 460064,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   70520:\tlea    0x114d79(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   70527:\tmov    $0x9f,%esi",
+            "   7052c:\tcall   *0x118e16(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 469480,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   729e8:\tlea    0x1128b1(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   729ef:\tmov    $0x9f,%esi",
+            "   729f4:\tcall   *0x11694e(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 471049,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   73009:\tlea    0x112290(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   73010:\tmov    $0x9f,%esi",
+            "   73015:\tcall   *0x11632d(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 471733,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   732b5:\tlea    0x111fe4(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   732bc:\tmov    $0x9f,%esi",
+            "   732c1:\tcall   *0x116081(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 472567,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   735f7:\tlea    0x111ca2(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   735fe:\tmov    $0x9f,%esi",
+            "   73603:\tcall   *0x115d3f(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 561291,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   8908b:\tlea    0xfc20e(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   89092:\tmov    $0x9f,%esi",
+            "   89097:\tcall   *0x1002ab(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 651349,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   9f055:\tlea    0xe6244(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9f05c:\tmov    $0x9f,%esi",
+            "   9f061:\tcall   *0xea2e1(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 656225,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a0361:\tlea    0xe4f38(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a0368:\tmov    $0x9f,%esi",
+            "   a036d:\tcall   *0xe8fd5(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 667187,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a2e33:\tlea    0xe2466(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a2e3a:\tmov    $0x9f,%esi",
+            "   a2e3f:\tcall   *0xe6503(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 670815,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a3c5f:\tlea    0xe163a(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a3c66:\tmov    $0x9f,%esi",
+            "   a3c6b:\tcall   *0xe56d7(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 675454,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a4e7e:\tlea    0xe041b(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a4e85:\tmov    $0x9f,%esi",
+            "   a4e8a:\tmov    $0x1,%bl",
+            "   a4e8c:\tcall   *0xe44b6(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 685641,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a7649:\tlea    0xddc50(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a7650:\tmov    $0x9f,%esi",
+            "   a7655:\tcall   *0xe1ced(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 689159,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a8407:\tlea    0xdce92(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a840e:\tmov    $0x9f,%esi",
+            "   a8413:\tcall   *0xe0f2f(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 689777,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   a8671:\tlea    0xdcc28(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a8678:\tmov    $0x9f,%esi",
+            "   a867d:\tcall   *0xe0cc5(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 719544,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   afab8:\tlea    0xd57e1(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   afabf:\tmov    $0x9f,%esi",
+            "   afac4:\tcall   *0xd987e(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 720152,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   afd18:\tlea    0xd5581(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   afd1f:\tmov    $0x9f,%esi",
+            "   afd24:\tcall   *0xd961e(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 720292,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   afda4:\tlea    0xd54f5(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   afdab:\tmov    $0x9f,%esi",
+            "   afdb0:\tcall   *0xd9592(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 721139,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   b00f3:\tlea    0xd51a6(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   b00fa:\tmov    $0x9f,%esi",
+            "   b00ff:\tcall   *0xd9243(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 749103,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "   b6e2f:\tlea    0xce46a(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   b6e36:\tmov    $0x9f,%esi",
+            "   b6e3b:\tcall   *0xd2507(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        },
+        {
+          "address": 804129,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1593104,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1610544,
+            8,
+            1568528
+          ],
+          "straight_line_instructions": [
+            "   c4521:\tlea    0xc09e8(%rip),%r8        # 184f10 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "   c4528:\tlea    0x7(%rsp),%rdx",
+            "   c452d:\tmov    $0x2b,%esi",
+            "   c4532:\tcall   *0xc4df8(%rip)        # 189330 <_DYNAMIC+0x340>"
+          ]
+        },
+        {
+          "address": 804225,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1593128,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1610544,
+            8,
+            1568528
+          ],
+          "straight_line_instructions": [
+            "   c4581:\tlea    0xc09a0(%rip),%r8        # 184f28 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "   c4588:\tlea    0x7(%rsp),%rdx",
+            "   c458d:\tmov    $0x2b,%esi",
+            "   c4592:\tcall   *0xc4d98(%rip)        # 189330 <_DYNAMIC+0x340>"
+          ]
+        },
+        {
+          "address": 804369,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1593152,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1610544,
+            8,
+            1568528
+          ],
+          "straight_line_instructions": [
+            "   c4611:\tlea    0xc0928(%rip),%r8        # 184f40 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "   c4618:\tlea    0x7(%rsp),%rdx",
+            "   c461d:\tmov    $0x2b,%esi",
+            "   c4622:\tcall   *0xc4d08(%rip)        # 189330 <_DYNAMIC+0x340>"
+          ]
+        },
+        {
+          "address": 804465,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1593176,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1610544,
+            8,
+            1568528
+          ],
+          "straight_line_instructions": [
+            "   c4671:\tlea    0xc08e0(%rip),%r8        # 184f58 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "   c4678:\tlea    0x7(%rsp),%rdx",
+            "   c467d:\tmov    $0x2b,%esi",
+            "   c4682:\tcall   *0xc4ca8(%rip)        # 189330 <_DYNAMIC+0x340>"
+          ]
+        },
+        {
+          "address": 804561,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1593200,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1610544,
+            8,
+            1568528
+          ],
+          "straight_line_instructions": [
+            "   c46d1:\tlea    0xc0898(%rip),%r8        # 184f70 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "   c46d8:\tlea    0x7(%rsp),%rdx",
+            "   c46dd:\tmov    $0x2b,%esi",
+            "   c46e2:\tcall   *0xc4c48(%rip)        # 189330 <_DYNAMIC+0x340>"
+          ]
+        },
+        {
+          "address": 1160870,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 1594016,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1610568,
+            8,
+            1569120
+          ],
+          "straight_line_instructions": [
+            "  11b6a6:\tlea    0x69bf3(%rip),%rdx        # 1852a0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11b6ad:\tmov    $0x9f,%esi",
+            "  11b6b2:\tcall   *0x6dc90(%rip)        # 189348 <_DYNAMIC+0x358>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "acos",
+      "binary_sha256": {
+        "baseline": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+        "candidate": "3d3a422dd5b3f2742d7e503d030229575625cec20178dbcc231d49f3754b4595"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "56e02cd5ede3ae659ef0adf1018ee344ef6f37adf0c08a14844ed3c2d8a8e3f4",
+      "stdout_archive": "acos.objdump.stdout.gz",
+      "stdout_archive_sha256": "8f6b38193b0b3e1175641a3fd1db12ff46c9526a2abe56796ea2068a9fa8bd0d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 26,
+      "direct_references": [
+        {
+          "address": 395859,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   60a53:\tlea    0x121a76(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   60a5a:\tmov    $0x9f,%esi",
+            "   60a5f:\tcall   *0x1259b3(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 451088,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   6e210:\tlea    0x1142b9(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   6e217:\tmov    $0x9f,%esi",
+            "   6e21c:\tcall   *0x1181f6(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 460504,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   706d8:\tlea    0x111df1(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   706df:\tmov    $0x9f,%esi",
+            "   706e4:\tcall   *0x115d2e(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 462073,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   70cf9:\tlea    0x1117d0(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   70d00:\tmov    $0x9f,%esi",
+            "   70d05:\tcall   *0x11570d(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 462757,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   70fa5:\tlea    0x111524(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   70fac:\tmov    $0x9f,%esi",
+            "   70fb1:\tcall   *0x115461(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 463591,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   712e7:\tlea    0x1111e2(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   712ee:\tmov    $0x9f,%esi",
+            "   712f3:\tcall   *0x11511f(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 552315,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   86d7b:\tlea    0xfb74e(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   86d82:\tmov    $0x9f,%esi",
+            "   86d87:\tcall   *0xff68b(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 642373,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   9cd45:\tlea    0xe5784(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9cd4c:\tmov    $0x9f,%esi",
+            "   9cd51:\tcall   *0xe96c1(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 647249,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   9e051:\tlea    0xe4478(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9e058:\tmov    $0x9f,%esi",
+            "   9e05d:\tcall   *0xe83b5(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 658211,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a0b23:\tlea    0xe19a6(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a0b2a:\tmov    $0x9f,%esi",
+            "   a0b2f:\tcall   *0xe58e3(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 661839,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a194f:\tlea    0xe0b7a(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a1956:\tmov    $0x9f,%esi",
+            "   a195b:\tcall   *0xe4ab7(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 666478,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a2b6e:\tlea    0xdf95b(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a2b75:\tmov    $0x9f,%esi",
+            "   a2b7a:\tmov    $0x1,%bl",
+            "   a2b7c:\tcall   *0xe3896(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 676665,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a5339:\tlea    0xdd190(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a5340:\tmov    $0x9f,%esi",
+            "   a5345:\tcall   *0xe10cd(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 680183,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a60f7:\tlea    0xdc3d2(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a60fe:\tmov    $0x9f,%esi",
+            "   a6103:\tcall   *0xe030f(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 680801,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   a6361:\tlea    0xdc168(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a6368:\tmov    $0x9f,%esi",
+            "   a636d:\tcall   *0xe00a5(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 710568,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   ad7a8:\tlea    0xd4d21(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ad7af:\tmov    $0x9f,%esi",
+            "   ad7b4:\tcall   *0xd8c5e(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 711176,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   ada08:\tlea    0xd4ac1(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ada0f:\tmov    $0x9f,%esi",
+            "   ada14:\tcall   *0xd89fe(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 711316,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   ada94:\tlea    0xd4a35(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ada9b:\tmov    $0x9f,%esi",
+            "   adaa0:\tcall   *0xd8972(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 712163,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   adde3:\tlea    0xd46e6(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   addea:\tmov    $0x9f,%esi",
+            "   addef:\tcall   *0xd8623(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 740127,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "   b4b1f:\tlea    0xcd9aa(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   b4b26:\tmov    $0x9f,%esi",
+            "   b4b2b:\tcall   *0xd18e7(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 795153,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1581376,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1598464,
+            8,
+            1557040
+          ],
+          "straight_line_instructions": [
+            "   c2211:\tlea    0xbff28(%rip),%r8        # 182140 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "   c2218:\tlea    0x7(%rsp),%rdx",
+            "   c221d:\tmov    $0x2b,%esi",
+            "   c2222:\tcall   *0xc41d8(%rip)        # 186400 <_DYNAMIC+0x278>"
+          ]
+        },
+        {
+          "address": 795249,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1581400,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1598464,
+            8,
+            1557040
+          ],
+          "straight_line_instructions": [
+            "   c2271:\tlea    0xbfee0(%rip),%r8        # 182158 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "   c2278:\tlea    0x7(%rsp),%rdx",
+            "   c227d:\tmov    $0x2b,%esi",
+            "   c2282:\tcall   *0xc4178(%rip)        # 186400 <_DYNAMIC+0x278>"
+          ]
+        },
+        {
+          "address": 795393,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1581424,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1598464,
+            8,
+            1557040
+          ],
+          "straight_line_instructions": [
+            "   c2301:\tlea    0xbfe68(%rip),%r8        # 182170 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "   c2308:\tlea    0x7(%rsp),%rdx",
+            "   c230d:\tmov    $0x2b,%esi",
+            "   c2312:\tcall   *0xc40e8(%rip)        # 186400 <_DYNAMIC+0x278>"
+          ]
+        },
+        {
+          "address": 795489,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1581448,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1598464,
+            8,
+            1557040
+          ],
+          "straight_line_instructions": [
+            "   c2361:\tlea    0xbfe20(%rip),%r8        # 182188 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "   c2368:\tlea    0x7(%rsp),%rdx",
+            "   c236d:\tmov    $0x2b,%esi",
+            "   c2372:\tcall   *0xc4088(%rip)        # 186400 <_DYNAMIC+0x278>"
+          ]
+        },
+        {
+          "address": 795585,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1581472,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1598464,
+            8,
+            1557040
+          ],
+          "straight_line_instructions": [
+            "   c23c1:\tlea    0xbfdd8(%rip),%r8        # 1821a0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "   c23c8:\tlea    0x7(%rsp),%rdx",
+            "   c23cd:\tmov    $0x2b,%esi",
+            "   c23d2:\tcall   *0xc4028(%rip)        # 186400 <_DYNAMIC+0x278>"
+          ]
+        },
+        {
+          "address": 1151894,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 1582288,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1598488,
+            8,
+            1557632
+          ],
+          "straight_line_instructions": [
+            "  119396:\tlea    0x69133(%rip),%rdx        # 1824d0 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11939d:\tmov    $0x9f,%esi",
+            "  1193a2:\tcall   *0x6d070(%rip)        # 186418 <_DYNAMIC+0x290>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "integer",
+      "binary_sha256": {
+        "baseline": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+        "candidate": "29b220fe98231963281a9cbe6f84e42e8f2bcf1dce4c2a8dac255e5b775ae65b"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "475b6cc7950bc373e2dbc4790b6ed3adccca1b17dbc071d3c2b867c0f528a256",
+      "stdout_archive": "integer.objdump.stdout.gz",
+      "stdout_archive_sha256": "b0b6968561af863bed994b9a0f37f8f1e458044fa814dfb7841d700115cdf2dd",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 26,
+      "direct_references": [
+        {
+          "address": 392819,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   5fe73:\tlea    0x12161e(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   5fe7a:\tmov    $0x9f,%esi",
+            "   5fe7f:\tcall   *0x1255f3(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 448048,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   6d630:\tlea    0x113e61(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   6d637:\tmov    $0x9f,%esi",
+            "   6d63c:\tcall   *0x117e36(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 457464,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   6faf8:\tlea    0x111999(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   6faff:\tmov    $0x9f,%esi",
+            "   6fb04:\tcall   *0x11596e(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 459033,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   70119:\tlea    0x111378(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   70120:\tmov    $0x9f,%esi",
+            "   70125:\tcall   *0x11534d(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 459717,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   703c5:\tlea    0x1110cc(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   703cc:\tmov    $0x9f,%esi",
+            "   703d1:\tcall   *0x1150a1(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 460551,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   70707:\tlea    0x110d8a(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   7070e:\tmov    $0x9f,%esi",
+            "   70713:\tcall   *0x114d5f(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 549275,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   8619b:\tlea    0xfb2f6(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   861a2:\tmov    $0x9f,%esi",
+            "   861a7:\tcall   *0xff2cb(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 639333,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   9c165:\tlea    0xe532c(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9c16c:\tmov    $0x9f,%esi",
+            "   9c171:\tcall   *0xe9301(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 644209,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   9d471:\tlea    0xe4020(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9d478:\tmov    $0x9f,%esi",
+            "   9d47d:\tcall   *0xe7ff5(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 655171,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   9ff43:\tlea    0xe154e(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9ff4a:\tmov    $0x9f,%esi",
+            "   9ff4f:\tcall   *0xe5523(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 658799,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   a0d6f:\tlea    0xe0722(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a0d76:\tmov    $0x9f,%esi",
+            "   a0d7b:\tcall   *0xe46f7(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 663438,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   a1f8e:\tlea    0xdf503(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a1f95:\tmov    $0x9f,%esi",
+            "   a1f9a:\tmov    $0x1,%bl",
+            "   a1f9c:\tcall   *0xe34d6(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 673625,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   a4759:\tlea    0xdcd38(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a4760:\tmov    $0x9f,%esi",
+            "   a4765:\tcall   *0xe0d0d(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 677143,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   a5517:\tlea    0xdbf7a(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a551e:\tmov    $0x9f,%esi",
+            "   a5523:\tcall   *0xdff4f(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 677761,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   a5781:\tlea    0xdbd10(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a5788:\tmov    $0x9f,%esi",
+            "   a578d:\tcall   *0xdfce5(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 707528,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   acbc8:\tlea    0xd48c9(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   acbcf:\tmov    $0x9f,%esi",
+            "   acbd4:\tcall   *0xd889e(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 708136,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   ace28:\tlea    0xd4669(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ace2f:\tmov    $0x9f,%esi",
+            "   ace34:\tcall   *0xd863e(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 708276,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   aceb4:\tlea    0xd45dd(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   acebb:\tmov    $0x9f,%esi",
+            "   acec0:\tcall   *0xd85b2(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 709123,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   ad203:\tlea    0xd428e(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ad20a:\tmov    $0x9f,%esi",
+            "   ad20f:\tcall   *0xd8263(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 737087,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "   b3f3f:\tlea    0xcd552(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   b3f46:\tmov    $0x9f,%esi",
+            "   b3f4b:\tcall   *0xd1527(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        },
+        {
+          "address": 792113,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1577224,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1594472,
+            8,
+            1553008
+          ],
+          "straight_line_instructions": [
+            "   c1631:\tlea    0xbfad0(%rip),%r8        # 181108 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "   c1638:\tlea    0x7(%rsp),%rdx",
+            "   c163d:\tmov    $0x2b,%esi",
+            "   c1642:\tcall   *0xc3e20(%rip)        # 185468 <_DYNAMIC+0x338>"
+          ]
+        },
+        {
+          "address": 792209,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1577248,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1594472,
+            8,
+            1553008
+          ],
+          "straight_line_instructions": [
+            "   c1691:\tlea    0xbfa88(%rip),%r8        # 181120 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "   c1698:\tlea    0x7(%rsp),%rdx",
+            "   c169d:\tmov    $0x2b,%esi",
+            "   c16a2:\tcall   *0xc3dc0(%rip)        # 185468 <_DYNAMIC+0x338>"
+          ]
+        },
+        {
+          "address": 792353,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1577272,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1594472,
+            8,
+            1553008
+          ],
+          "straight_line_instructions": [
+            "   c1721:\tlea    0xbfa10(%rip),%r8        # 181138 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "   c1728:\tlea    0x7(%rsp),%rdx",
+            "   c172d:\tmov    $0x2b,%esi",
+            "   c1732:\tcall   *0xc3d30(%rip)        # 185468 <_DYNAMIC+0x338>"
+          ]
+        },
+        {
+          "address": 792449,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1577296,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1594472,
+            8,
+            1553008
+          ],
+          "straight_line_instructions": [
+            "   c1781:\tlea    0xbf9c8(%rip),%r8        # 181150 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "   c1788:\tlea    0x7(%rsp),%rdx",
+            "   c178d:\tmov    $0x2b,%esi",
+            "   c1792:\tcall   *0xc3cd0(%rip)        # 185468 <_DYNAMIC+0x338>"
+          ]
+        },
+        {
+          "address": 792545,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1577320,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1594472,
+            8,
+            1553008
+          ],
+          "straight_line_instructions": [
+            "   c17e1:\tlea    0xbf980(%rip),%r8        # 181168 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "   c17e8:\tlea    0x7(%rsp),%rdx",
+            "   c17ed:\tmov    $0x2b,%esi",
+            "   c17f2:\tcall   *0xc3c70(%rip)        # 185468 <_DYNAMIC+0x338>"
+          ]
+        },
+        {
+          "address": 1148854,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 1578136,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1594488,
+            8,
+            1553600
+          ],
+          "straight_line_instructions": [
+            "  1187b6:\tlea    0x68cdb(%rip),%rdx        # 181498 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1187bd:\tmov    $0x9f,%esi",
+            "  1187c2:\tcall   *0x6ccb0(%rip)        # 185478 <_DYNAMIC+0x348>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "inverse_trig",
+      "binary_sha256": {
+        "baseline": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+        "candidate": "84c4fb417eebadf4b0a5fe93239713eb7d78b0892384e51d958fc9822d1e71ed"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "bbbd412b07982b133cd377106317f86ccedd8e9d0ee235a34ae13e1fa5473dc5",
+      "stdout_archive": "inverse_trig.objdump.stdout.gz",
+      "stdout_archive_sha256": "378bc598a45ca5002d50887e8ed55a845c1635c905c32825013f8646a82adb3b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 30,
+      "direct_references": [
+        {
+          "address": 833779,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   cb8f3:\tlea    0x138026(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   cb8fa:\tmov    $0x9f,%esi",
+            "   cb8ff:\tcall   *0x13c8d3(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 889008,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   d90b0:\tlea    0x12a869(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   d90b7:\tmov    $0x9f,%esi",
+            "   d90bc:\tcall   *0x12f116(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 898424,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   db578:\tlea    0x1283a1(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   db57f:\tmov    $0x9f,%esi",
+            "   db584:\tcall   *0x12cc4e(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 899993,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   dbb99:\tlea    0x127d80(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dbba0:\tmov    $0x9f,%esi",
+            "   dbba5:\tcall   *0x12c62d(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 900677,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   dbe45:\tlea    0x127ad4(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dbe4c:\tmov    $0x9f,%esi",
+            "   dbe51:\tcall   *0x12c381(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 901511,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   dc187:\tlea    0x127792(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dc18e:\tmov    $0x9f,%esi",
+            "   dc193:\tcall   *0x12c03f(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 991163,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "   f1fbb:\tlea    0x11195e(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   f1fc2:\tmov    $0x9f,%esi",
+            "   f1fc7:\tcall   *0x11620b(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1081221,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  107f85:\tlea    0xfb994(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  107f8c:\tmov    $0x9f,%esi",
+            "  107f91:\tcall   *0x100241(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1086097,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  109291:\tlea    0xfa688(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  109298:\tmov    $0x9f,%esi",
+            "  10929d:\tcall   *0xfef35(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1097059,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  10bd63:\tlea    0xf7bb6(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10bd6a:\tmov    $0x9f,%esi",
+            "  10bd6f:\tcall   *0xfc463(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1100687,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  10cb8f:\tlea    0xf6d8a(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10cb96:\tmov    $0x9f,%esi",
+            "  10cb9b:\tcall   *0xfb637(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1105326,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  10ddae:\tlea    0xf5b6b(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10ddb5:\tmov    $0x9f,%esi",
+            "  10ddba:\tmov    $0x1,%bl",
+            "  10ddbc:\tcall   *0xfa416(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1114346,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  1100ea:\tlea    0xf382f(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1100f1:\tmov    $0x9f,%esi",
+            "  1100f6:\tcall   *0xf80dc(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1114386,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  110112:\tlea    0xf3807(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  110119:\tmov    $0x9f,%esi",
+            "  11011e:\tcall   *0xf80b4(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1120681,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  1119a9:\tlea    0xf1f70(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1119b0:\tmov    $0x9f,%esi",
+            "  1119b5:\tcall   *0xf681d(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1124199,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  112767:\tlea    0xf11b2(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11276e:\tmov    $0x9f,%esi",
+            "  112773:\tcall   *0xf5a5f(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1124817,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  1129d1:\tlea    0xf0f48(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1129d8:\tmov    $0x9f,%esi",
+            "  1129dd:\tcall   *0xf57f5(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1165640,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  11c948:\tlea    0xe6fd1(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11c94f:\tmov    $0x9f,%esi",
+            "  11c954:\tcall   *0xeb87e(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1166248,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  11cba8:\tlea    0xe6d71(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11cbaf:\tmov    $0x9f,%esi",
+            "  11cbb4:\tcall   *0xeb61e(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1166388,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  11cc34:\tlea    0xe6ce5(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11cc3b:\tmov    $0x9f,%esi",
+            "  11cc40:\tcall   *0xeb592(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1167235,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  11cf83:\tlea    0xe6996(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11cf8a:\tmov    $0x9f,%esi",
+            "  11cf8f:\tcall   *0xeb243(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1197231,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  1244af:\tlea    0xdf46a(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1244b6:\tmov    $0x9f,%esi",
+            "  1244bb:\tcall   *0xe3d17(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1218358,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  129736:\tlea    0xda1e3(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  12973d:\tmov    $0x9f,%esi",
+            "  129742:\tcall   *0xdea90(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1218461,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  12979d:\tlea    0xda17c(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1297a4:\tmov    $0x9f,%esi",
+            "  1297a9:\tcall   *0xdea29(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1257521,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2110864,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2130432,
+            8,
+            2066976
+          ],
+          "straight_line_instructions": [
+            "  133031:\tlea    0xd0558(%rip),%r8        # 203590 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "  133038:\tlea    0x7(%rsp),%rdx",
+            "  13303d:\tmov    $0x2b,%esi",
+            "  133042:\tcall   *0xd51b8(%rip)        # 208200 <_DYNAMIC+0x2a8>"
+          ]
+        },
+        {
+          "address": 1257617,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2110888,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2130432,
+            8,
+            2066976
+          ],
+          "straight_line_instructions": [
+            "  133091:\tlea    0xd0510(%rip),%r8        # 2035a8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "  133098:\tlea    0x7(%rsp),%rdx",
+            "  13309d:\tmov    $0x2b,%esi",
+            "  1330a2:\tcall   *0xd5158(%rip)        # 208200 <_DYNAMIC+0x2a8>"
+          ]
+        },
+        {
+          "address": 1257761,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2110912,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2130432,
+            8,
+            2066976
+          ],
+          "straight_line_instructions": [
+            "  133121:\tlea    0xd0498(%rip),%r8        # 2035c0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "  133128:\tlea    0x7(%rsp),%rdx",
+            "  13312d:\tmov    $0x2b,%esi",
+            "  133132:\tcall   *0xd50c8(%rip)        # 208200 <_DYNAMIC+0x2a8>"
+          ]
+        },
+        {
+          "address": 1257857,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2110936,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2130432,
+            8,
+            2066976
+          ],
+          "straight_line_instructions": [
+            "  133181:\tlea    0xd0450(%rip),%r8        # 2035d8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "  133188:\tlea    0x7(%rsp),%rdx",
+            "  13318d:\tmov    $0x2b,%esi",
+            "  133192:\tcall   *0xd5068(%rip)        # 208200 <_DYNAMIC+0x2a8>"
+          ]
+        },
+        {
+          "address": 1257953,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2110960,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2130432,
+            8,
+            2066976
+          ],
+          "straight_line_instructions": [
+            "  1331e1:\tlea    0xd0408(%rip),%r8        # 2035f0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "  1331e8:\tlea    0x7(%rsp),%rdx",
+            "  1331ed:\tmov    $0x2b,%esi",
+            "  1331f2:\tcall   *0xd5008(%rip)        # 208200 <_DYNAMIC+0x2a8>"
+          ]
+        },
+        {
+          "address": 1627878,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 2111776,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2130392,
+            8,
+            2067568
+          ],
+          "straight_line_instructions": [
+            "  18d6e6:\tlea    0x76233(%rip),%rdx        # 203920 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  18d6ed:\tmov    $0x9f,%esi",
+            "  18d6f2:\tcall   *0x7aae0(%rip)        # 2081d8 <_DYNAMIC+0x280>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "normal_form",
+      "binary_sha256": {
+        "baseline": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+        "candidate": "923345bafce7a96a75bc500327afa7ad54c9819c17bb5230576882145e410d87"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "6b82e60abc6db24b7e17736876c97e02c84788410017243cefbf5b94acfea736",
+      "stdout_archive": "normal_form.objdump.stdout.gz",
+      "stdout_archive_sha256": "2060c58150b1ed71bb867a7f9076050026a4c2cd31d74a39d9767057f15da198",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 30,
+      "direct_references": [
+        {
+          "address": 838259,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   cca73:\tlea    0x13806e(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   cca7a:\tmov    $0x9f,%esi",
+            "   cca7f:\tcall   *0x13ca7b(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 893488,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   da230:\tlea    0x12a8b1(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   da237:\tmov    $0x9f,%esi",
+            "   da23c:\tcall   *0x12f2be(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 902904,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   dc6f8:\tlea    0x1283e9(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dc6ff:\tmov    $0x9f,%esi",
+            "   dc704:\tcall   *0x12cdf6(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 904473,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   dcd19:\tlea    0x127dc8(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dcd20:\tmov    $0x9f,%esi",
+            "   dcd25:\tcall   *0x12c7d5(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 905157,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   dcfc5:\tlea    0x127b1c(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dcfcc:\tmov    $0x9f,%esi",
+            "   dcfd1:\tcall   *0x12c529(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 905991,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   dd307:\tlea    0x1277da(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dd30e:\tmov    $0x9f,%esi",
+            "   dd313:\tcall   *0x12c1e7(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 995643,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "   f313b:\tlea    0x1119a6(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   f3142:\tmov    $0x9f,%esi",
+            "   f3147:\tcall   *0x1163b3(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1085701,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  109105:\tlea    0xfb9dc(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10910c:\tmov    $0x9f,%esi",
+            "  109111:\tcall   *0x1003e9(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1090577,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  10a411:\tlea    0xfa6d0(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10a418:\tmov    $0x9f,%esi",
+            "  10a41d:\tcall   *0xff0dd(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1101539,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  10cee3:\tlea    0xf7bfe(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10ceea:\tmov    $0x9f,%esi",
+            "  10ceef:\tcall   *0xfc60b(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1105167,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  10dd0f:\tlea    0xf6dd2(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10dd16:\tmov    $0x9f,%esi",
+            "  10dd1b:\tcall   *0xfb7df(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1109806,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  10ef2e:\tlea    0xf5bb3(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10ef35:\tmov    $0x9f,%esi",
+            "  10ef3a:\tmov    $0x1,%bl",
+            "  10ef3c:\tcall   *0xfa5be(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1118826,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  11126a:\tlea    0xf3877(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  111271:\tmov    $0x9f,%esi",
+            "  111276:\tcall   *0xf8284(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1118866,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  111292:\tlea    0xf384f(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  111299:\tmov    $0x9f,%esi",
+            "  11129e:\tcall   *0xf825c(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1125161,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  112b29:\tlea    0xf1fb8(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  112b30:\tmov    $0x9f,%esi",
+            "  112b35:\tcall   *0xf69c5(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1128679,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  1138e7:\tlea    0xf11fa(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1138ee:\tmov    $0x9f,%esi",
+            "  1138f3:\tcall   *0xf5c07(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1129297,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  113b51:\tlea    0xf0f90(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  113b58:\tmov    $0x9f,%esi",
+            "  113b5d:\tcall   *0xf599d(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1170120,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  11dac8:\tlea    0xe7019(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11dacf:\tmov    $0x9f,%esi",
+            "  11dad4:\tcall   *0xeba26(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1170728,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  11dd28:\tlea    0xe6db9(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11dd2f:\tmov    $0x9f,%esi",
+            "  11dd34:\tcall   *0xeb7c6(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1170868,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  11ddb4:\tlea    0xe6d2d(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11ddbb:\tmov    $0x9f,%esi",
+            "  11ddc0:\tcall   *0xeb73a(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1171715,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  11e103:\tlea    0xe69de(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11e10a:\tmov    $0x9f,%esi",
+            "  11e10f:\tcall   *0xeb3eb(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1201711,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  12562f:\tlea    0xdf4b2(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  125636:\tmov    $0x9f,%esi",
+            "  12563b:\tcall   *0xe3ebf(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1222838,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  12a8b6:\tlea    0xda22b(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  12a8bd:\tmov    $0x9f,%esi",
+            "  12a8c2:\tcall   *0xdec38(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1222941,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  12a91d:\tlea    0xda1c4(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  12a924:\tmov    $0x9f,%esi",
+            "  12a929:\tcall   *0xdebd1(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        },
+        {
+          "address": 1262001,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2115416,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2134960,
+            8,
+            2071456
+          ],
+          "straight_line_instructions": [
+            "  1341b1:\tlea    0xd05a0(%rip),%r8        # 204758 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "  1341b8:\tlea    0x7(%rsp),%rdx",
+            "  1341bd:\tmov    $0x2b,%esi",
+            "  1341c2:\tcall   *0xd51e8(%rip)        # 2093b0 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 1262097,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2115440,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2134960,
+            8,
+            2071456
+          ],
+          "straight_line_instructions": [
+            "  134211:\tlea    0xd0558(%rip),%r8        # 204770 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "  134218:\tlea    0x7(%rsp),%rdx",
+            "  13421d:\tmov    $0x2b,%esi",
+            "  134222:\tcall   *0xd5188(%rip)        # 2093b0 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 1262241,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2115464,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2134960,
+            8,
+            2071456
+          ],
+          "straight_line_instructions": [
+            "  1342a1:\tlea    0xd04e0(%rip),%r8        # 204788 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "  1342a8:\tlea    0x7(%rsp),%rdx",
+            "  1342ad:\tmov    $0x2b,%esi",
+            "  1342b2:\tcall   *0xd50f8(%rip)        # 2093b0 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 1262337,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2115488,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2134960,
+            8,
+            2071456
+          ],
+          "straight_line_instructions": [
+            "  134301:\tlea    0xd0498(%rip),%r8        # 2047a0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "  134308:\tlea    0x7(%rsp),%rdx",
+            "  13430d:\tmov    $0x2b,%esi",
+            "  134312:\tcall   *0xd5098(%rip)        # 2093b0 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 1262433,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2115512,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2134960,
+            8,
+            2071456
+          ],
+          "straight_line_instructions": [
+            "  134361:\tlea    0xd0450(%rip),%r8        # 2047b8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "  134368:\tlea    0x7(%rsp),%rdx",
+            "  13436d:\tmov    $0x2b,%esi",
+            "  134372:\tcall   *0xd5038(%rip)        # 2093b0 <_DYNAMIC+0x290>"
+          ]
+        },
+        {
+          "address": 1632358,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 2116328,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2135296,
+            8,
+            2072048
+          ],
+          "straight_line_instructions": [
+            "  18e866:\tlea    0x7627b(%rip),%rdx        # 204ae8 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  18e86d:\tmov    $0x9f,%esi",
+            "  18e872:\tcall   *0x7ac88(%rip)        # 209500 <_DYNAMIC+0x3e0>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "default",
+      "binary_sha256": {
+        "baseline": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+        "candidate": "8c0d6c1e78b04fa60cebbb72632fb6ebe4b492d6c35f135759ad3a4f3f60f31e"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "276d8dc2c57bebbf40e0a3186264b0bf8df83190265aac0daa87b9b6d7e0b09f",
+      "stdout_archive": "default.objdump.stdout.gz",
+      "stdout_archive_sha256": "4414f3457e5892e0462d34c9c9ad9271e4cdac76299604fe0e923aaf4be50b39",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 26,
+      "direct_references": [
+        {
+          "address": 523683,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   7fda3:\tlea    0x12b9be(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   7fdaa:\tmov    $0x9f,%esi",
+            "   7fdaf:\tcall   *0x1301fb(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 578912,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   8d560:\tlea    0x11e201(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   8d567:\tmov    $0x9f,%esi",
+            "   8d56c:\tcall   *0x122a3e(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 588328,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   8fa28:\tlea    0x11bd39(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   8fa2f:\tmov    $0x9f,%esi",
+            "   8fa34:\tcall   *0x120576(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 589897,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   90049:\tlea    0x11b718(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   90050:\tmov    $0x9f,%esi",
+            "   90055:\tcall   *0x11ff55(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 590581,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   902f5:\tlea    0x11b46c(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   902fc:\tmov    $0x9f,%esi",
+            "   90301:\tcall   *0x11fca9(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 591415,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   90637:\tlea    0x11b12a(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   9063e:\tmov    $0x9f,%esi",
+            "   90643:\tcall   *0x11f967(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 680139,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   a60cb:\tlea    0x105696(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   a60d2:\tmov    $0x9f,%esi",
+            "   a60d7:\tcall   *0x109ed3(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 770197,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   bc095:\tlea    0xef6cc(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   bc09c:\tmov    $0x9f,%esi",
+            "   bc0a1:\tcall   *0xf3f09(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 775073,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   bd3a1:\tlea    0xee3c0(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   bd3a8:\tmov    $0x9f,%esi",
+            "   bd3ad:\tcall   *0xf2bfd(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 786035,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   bfe73:\tlea    0xeb8ee(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   bfe7a:\tmov    $0x9f,%esi",
+            "   bfe7f:\tcall   *0xf012b(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 789663,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   c0c9f:\tlea    0xeaac2(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   c0ca6:\tmov    $0x9f,%esi",
+            "   c0cab:\tcall   *0xef2ff(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 794302,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   c1ebe:\tlea    0xe98a3(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   c1ec5:\tmov    $0x9f,%esi",
+            "   c1eca:\tmov    $0x1,%bl",
+            "   c1ecc:\tcall   *0xee0de(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 804489,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   c4689:\tlea    0xe70d8(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   c4690:\tmov    $0x9f,%esi",
+            "   c4695:\tcall   *0xeb915(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 808007,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   c5447:\tlea    0xe631a(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   c544e:\tmov    $0x9f,%esi",
+            "   c5453:\tcall   *0xeab57(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 808625,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   c56b1:\tlea    0xe60b0(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   c56b8:\tmov    $0x9f,%esi",
+            "   c56bd:\tcall   *0xea8ed(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 838392,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   ccaf8:\tlea    0xdec69(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ccaff:\tmov    $0x9f,%esi",
+            "   ccb04:\tcall   *0xe34a6(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 839000,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   ccd58:\tlea    0xdea09(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ccd5f:\tmov    $0x9f,%esi",
+            "   ccd64:\tcall   *0xe3246(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 839140,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   ccde4:\tlea    0xde97d(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ccdeb:\tmov    $0x9f,%esi",
+            "   ccdf0:\tcall   *0xe31ba(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 839987,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   cd133:\tlea    0xde62e(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   cd13a:\tmov    $0x9f,%esi",
+            "   cd13f:\tcall   *0xe2e6b(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 867951,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "   d3e6f:\tlea    0xd78f2(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   d3e76:\tmov    $0x9f,%esi",
+            "   d3e7b:\tcall   *0xdc12f(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        },
+        {
+          "address": 923009,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1749976,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1769240,
+            8,
+            1707664
+          ],
+          "straight_line_instructions": [
+            "   e1581:\tlea    0xc9e50(%rip),%r8        # 1ab3d8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "   e1588:\tlea    0x7(%rsp),%rdx",
+            "   e158d:\tmov    $0x2b,%esi",
+            "   e1592:\tcall   *0xce980(%rip)        # 1aff18 <_DYNAMIC+0x390>"
+          ]
+        },
+        {
+          "address": 923105,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1750000,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1769240,
+            8,
+            1707664
+          ],
+          "straight_line_instructions": [
+            "   e15e1:\tlea    0xc9e08(%rip),%r8        # 1ab3f0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "   e15e8:\tlea    0x7(%rsp),%rdx",
+            "   e15ed:\tmov    $0x2b,%esi",
+            "   e15f2:\tcall   *0xce920(%rip)        # 1aff18 <_DYNAMIC+0x390>"
+          ]
+        },
+        {
+          "address": 923249,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1750024,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1769240,
+            8,
+            1707664
+          ],
+          "straight_line_instructions": [
+            "   e1671:\tlea    0xc9d90(%rip),%r8        # 1ab408 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "   e1678:\tlea    0x7(%rsp),%rdx",
+            "   e167d:\tmov    $0x2b,%esi",
+            "   e1682:\tcall   *0xce890(%rip)        # 1aff18 <_DYNAMIC+0x390>"
+          ]
+        },
+        {
+          "address": 923345,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1750048,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1769240,
+            8,
+            1707664
+          ],
+          "straight_line_instructions": [
+            "   e16d1:\tlea    0xc9d48(%rip),%r8        # 1ab420 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "   e16d8:\tlea    0x7(%rsp),%rdx",
+            "   e16dd:\tmov    $0x2b,%esi",
+            "   e16e2:\tcall   *0xce830(%rip)        # 1aff18 <_DYNAMIC+0x390>"
+          ]
+        },
+        {
+          "address": 923441,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 1750072,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            1769240,
+            8,
+            1707664
+          ],
+          "straight_line_instructions": [
+            "   e1731:\tlea    0xc9d00(%rip),%r8        # 1ab438 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "   e1738:\tlea    0x7(%rsp),%rdx",
+            "   e173d:\tmov    $0x2b,%esi",
+            "   e1742:\tcall   *0xce7d0(%rip)        # 1aff18 <_DYNAMIC+0x390>"
+          ]
+        },
+        {
+          "address": 1279782,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 1750888,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            1769392,
+            8,
+            1708256
+          ],
+          "straight_line_instructions": [
+            "  138726:\tlea    0x7303b(%rip),%rdx        # 1ab768 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  13872d:\tmov    $0x9f,%esi",
+            "  138732:\tcall   *0x77878(%rip)        # 1affb0 <_DYNAMIC+0x428>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    },
+    {
+      "family": "algebraic",
+      "binary_sha256": {
+        "baseline": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "candidate": "b090c2221934ebb7a5fcb76e69a93c2402b17b7a85f953691a123ca3246cb4cb"
+      },
+      "command": [
+        "/usr/bin/objdump",
+        "--demangle=rust",
+        "--no-show-raw-insn",
+        "-d",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "9b31b0f4f39c621071704200bc72094f3ded23ede94704c0a6378c1de3d4f10f",
+      "stdout_archive": "algebraic.objdump.stdout.gz",
+      "stdout_archive_sha256": "0f2d909375af1ab4f19ab38755db67ef074d6dae8c82fb829f79ae59f79c87c8",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "direct_reference_count": 30,
+      "direct_references": [
+        {
+          "address": 828659,
+          "function": "<core::option::Option<num_bigint::bigint::Sign>>::or_else::<<hyperreal::computable::node::Computable>::add_with_work<true>::{closure#0}>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   ca4f3:\tlea    0x13803e(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   ca4fa:\tmov    $0x9f,%esi",
+            "   ca4ff:\tcall   *0x13cadb(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 883888,
+          "function": "<hyperreal::computable::node::Computable>::add_with_work::<false>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   d7cb0:\tlea    0x12a881(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   d7cb7:\tmov    $0x9f,%esi",
+            "   d7cbc:\tcall   *0x12f31e(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 893304,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<false>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   da178:\tlea    0x1283b9(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   da17f:\tmov    $0x9f,%esi",
+            "   da184:\tcall   *0x12ce56(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 894873,
+          "function": "<hyperreal::computable::node::Computable>::negate_with_work::<true>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   da799:\tlea    0x127d98(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   da7a0:\tmov    $0x9f,%esi",
+            "   da7a5:\tcall   *0x12c835(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 895557,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<false>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   daa45:\tlea    0x127aec(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   daa4c:\tmov    $0x9f,%esi",
+            "   daa51:\tcall   *0x12c589(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 896391,
+          "function": "<hyperreal::computable::node::Computable>::shift_left_with_work::<true>",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   dad87:\tlea    0x1277aa(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   dad8e:\tmov    $0x9f,%esi",
+            "   dad93:\tcall   *0x12c247(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 986043,
+          "function": "<hyperreal::computable::node::Computable>::certify_required_domain",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "   f0bbb:\tlea    0x111976(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "   f0bc2:\tmov    $0x9f,%esi",
+            "   f0bc7:\tcall   *0x116413(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1076101,
+          "function": "<hyperreal::computable::node::Computable>::sqrt",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  106b85:\tlea    0xfb9ac(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  106b8c:\tmov    $0x9f,%esi",
+            "  106b91:\tcall   *0x100449(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1080977,
+          "function": "<hyperreal::computable::node::Computable>::bounded_laurent_rational",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  107e91:\tlea    0xfa6a0(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  107e98:\tmov    $0x9f,%esi",
+            "  107e9d:\tcall   *0xff13d(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1091939,
+          "function": "<hyperreal::computable::node::Computable>::square",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  10a963:\tlea    0xf7bce(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10a96a:\tmov    $0x9f,%esi",
+            "  10a96f:\tcall   *0xfc66b(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1095567,
+          "function": "<hyperreal::computable::node::Computable>::inverse",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  10b78f:\tlea    0xf6da2(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10b796:\tmov    $0x9f,%esi",
+            "  10b79b:\tcall   *0xfb83f(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1100206,
+          "function": "<hyperreal::computable::node::Computable>::multiply",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  10c9ae:\tlea    0xf5b83(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10c9b5:\tmov    $0x9f,%esi",
+            "  10c9ba:\tmov    $0x1,%bl",
+            "  10c9bc:\tcall   *0xfa61e(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1109226,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  10ecea:\tlea    0xf3847(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10ecf1:\tmov    $0x9f,%esi",
+            "  10ecf6:\tcall   *0xf82e4(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1109266,
+          "function": "<hyperreal::computable::node::Computable>::sign_until",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  10ed12:\tlea    0xf381f(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  10ed19:\tmov    $0x9f,%esi",
+            "  10ed1e:\tcall   *0xf82bc(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1115561,
+          "function": "<hyperreal::computable::node::Computable>::immediate_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  1105a9:\tlea    0xf1f88(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1105b0:\tmov    $0x9f,%esi",
+            "  1105b5:\tcall   *0xf6a25(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1119079,
+          "function": "<hyperreal::computable::node::AtomicFacts>::exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  111367:\tlea    0xf11ca(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11136e:\tmov    $0x9f,%esi",
+            "  111373:\tcall   *0xf5c67(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1119697,
+          "function": "<hyperreal::computable::node::AtomicFacts>::publish_exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  1115d1:\tlea    0xf0f60(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1115d8:\tmov    $0x9f,%esi",
+            "  1115dd:\tcall   *0xf59fd(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1160520,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  11b548:\tlea    0xe6fe9(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11b54f:\tmov    $0x9f,%esi",
+            "  11b554:\tcall   *0xeba86(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1161128,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  11b7a8:\tlea    0xe6d89(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11b7af:\tmov    $0x9f,%esi",
+            "  11b7b4:\tcall   *0xeb826(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1161268,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  11b834:\tlea    0xe6cfd(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11b83b:\tmov    $0x9f,%esi",
+            "  11b840:\tcall   *0xeb79a(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1162115,
+          "function": "<hyperreal::computable::node::Computable>::exact_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  11bb83:\tlea    0xe69ae(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  11bb8a:\tmov    $0x9f,%esi",
+            "  11bb8f:\tcall   *0xeb44b(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1192111,
+          "function": "<hyperreal::computable::node::Computable>::available_domain_sign",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  1230af:\tlea    0xdf482(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1230b6:\tmov    $0x9f,%esi",
+            "  1230bb:\tcall   *0xe3f1f(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1213238,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  128336:\tlea    0xda1fb(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  12833d:\tmov    $0x9f,%esi",
+            "  128342:\tcall   *0xdec98(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1213341,
+          "function": "<hyperreal::computable::node::Computable>::sign_until_with_budget",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  12839d:\tlea    0xda194(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  1283a4:\tmov    $0x9f,%esi",
+            "  1283a9:\tcall   *0xdec31(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        },
+        {
+          "address": 1252401,
+          "function": "<hyperreal::computable::node::HALF_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2105768,
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2125296,
+            8,
+            2061856
+          ],
+          "straight_line_instructions": [
+            "  131c31:\tlea    0xd0570(%rip),%r8        # 2021a8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x30>",
+            "  131c38:\tlea    0x7(%rsp),%rdx",
+            "  131c3d:\tmov    $0x2b,%esi",
+            "  131c42:\tcall   *0xd51a8(%rip)        # 206df0 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1252497,
+          "function": "<hyperreal::computable::node::THREE_HALVES_RATIONAL::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2105792,
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2125296,
+            8,
+            2061856
+          ],
+          "straight_line_instructions": [
+            "  131c91:\tlea    0xd0528(%rip),%r8        # 2021c0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x48>",
+            "  131c98:\tlea    0x7(%rsp),%rdx",
+            "  131c9d:\tmov    $0x2b,%esi",
+            "  131ca2:\tcall   *0xd5148(%rip)        # 206df0 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1252641,
+          "function": "<hyperreal::computable::node::HALF_PI_SHORTCUT_RATIONAL_LIMIT::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2105816,
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2125296,
+            8,
+            2061856
+          ],
+          "straight_line_instructions": [
+            "  131d21:\tlea    0xd04b0(%rip),%r8        # 2021d8 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x60>",
+            "  131d28:\tlea    0x7(%rsp),%rdx",
+            "  131d2d:\tmov    $0x2b,%esi",
+            "  131d32:\tcall   *0xd50b8(%rip)        # 206df0 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1252737,
+          "function": "<hyperreal::computable::node::NEAR_LARGE_RATIONAL_TRIG_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2105840,
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2125296,
+            8,
+            2061856
+          ],
+          "straight_line_instructions": [
+            "  131d81:\tlea    0xd0468(%rip),%r8        # 2021f0 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x78>",
+            "  131d88:\tlea    0x7(%rsp),%rdx",
+            "  131d8d:\tmov    $0x2b,%esi",
+            "  131d92:\tcall   *0xd5058(%rip)        # 206df0 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1252833,
+          "function": "<hyperreal::computable::node::INVERSE_ENDPOINT_RATIONAL_THRESHOLD::{closure#0} as core::ops::function::FnOnce<()>>::call_once",
+          "record_address": 2105864,
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "location_register": "%r8",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core6result13unwrap_failed",
+          "call_relocation": [
+            2125296,
+            8,
+            2061856
+          ],
+          "straight_line_instructions": [
+            "  131de1:\tlea    0xd0420(%rip),%r8        # 202208 <anon.9023bb4654a08944d5043612f590d0ff.55.llvm.1768662447242434102+0x90>",
+            "  131de8:\tlea    0x7(%rsp),%rdx",
+            "  131ded:\tmov    $0x2b,%esi",
+            "  131df2:\tcall   *0xd4ff8(%rip)        # 206df0 <_DYNAMIC+0x280>"
+          ]
+        },
+        {
+          "address": 1622758,
+          "function": "hyperreal::computable::approximation::expm1",
+          "record_address": 2106680,
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "location_register": "%rdx",
+          "call_symbol": "_RNvNtCsgxBkk5gSRhY_4core9panicking9panic_fmt",
+          "call_relocation": [
+            2125792,
+            8,
+            2062448
+          ],
+          "straight_line_instructions": [
+            "  18c2e6:\tlea    0x7624b(%rip),%rdx        # 202538 <anon.9023bb4654a08944d5043612f590d0ff.326.llvm.1768662447242434102>",
+            "  18c2ed:\tmov    $0x9f,%esi",
+            "  18c2f2:\tcall   *0x7ace8(%rip)        # 206fe0 <_DYNAMIC+0x470>"
+          ]
+        }
+      ],
+      "data_relocations_into_records": []
+    }
+  ],
+  "source_excerpts": [
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+      "first_line": 673,
+      "last_line": 706,
+      "lines": [
+        "        encoded << Self::EXACT_SIGN_SHIFT",
+        "    }",
+        "",
+        "    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]",
+        "    #[cfg_attr(verus_keep_ghost, verus_spec(result =>",
+        "        requires ((value >> 6) & 7) <= 4,",
+        "        ensures result == exact_sign_denotation(value),",
+        "    ))]",
+        "    fn decode_exact_sign(value: u64) -> ExactSignCache {",
+        "        #[cfg(verus_keep_ghost)]",
+        "        proof! {",
+        "            assert(Self::EXACT_SIGN_MASK == 0x1c0u64) by (bit_vector);",
+        "            assert((value & 0x1c0u64) >> 6u32 == (value >> 6u32) & 7u64) by (bit_vector);",
+        "        }",
+        "        match (value & Self::EXACT_SIGN_MASK) >> Self::EXACT_SIGN_SHIFT {",
+        "            0 => ExactSignCache::Invalid,",
+        "            1 => ExactSignCache::Unknown,",
+        "            2 => ExactSignCache::Valid(Sign::Minus),",
+        "            3 => ExactSignCache::Valid(Sign::NoSign),",
+        "            4 => ExactSignCache::Valid(Sign::Plus),",
+        "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+        "        }",
+        "    }",
+        "",
+        "    #[cfg(not(verus_keep_ghost))]",
+        "    fn exact_sign(&self) -> ExactSignCache {",
+        "        Self::decode_exact_sign(self.0.load(std::sync::atomic::Ordering::Relaxed))",
+        "    }",
+        "",
+        "    #[cfg(not(verus_keep_ghost))]",
+        "    fn finite_real(&self) -> bool {",
+        "        self.0.load(std::sync::atomic::Ordering::Relaxed) & Self::FINITE_REAL != 0",
+        "    }",
+        ""
+      ]
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+      "first_line": 789,
+      "last_line": 808,
+      "lines": [
+        "    pub(crate) static SIX: LazyLock<BigUint> = LazyLock::new(|| BigUint::from(6_u8));",
+        "}",
+        "",
+        "#[cfg(not(verus_keep_ghost))]",
+        "static HALF_PI_SHORTCUT_RATIONAL_LIMIT: LazyLock<Rational> =",
+        "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+        "#[cfg(not(verus_keep_ghost))]",
+        "static NEAR_LARGE_RATIONAL_TRIG_THRESHOLD: LazyLock<Rational> =",
+        "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+        "#[cfg(not(verus_keep_ghost))]",
+        "static INVERSE_ENDPOINT_RATIONAL_THRESHOLD: LazyLock<Rational> =",
+        "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+        "#[cfg(not(verus_keep_ghost))]",
+        "static THREE_HALVES_RATIONAL: LazyLock<Rational> =",
+        "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+        "#[cfg(not(verus_keep_ghost))]",
+        "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());"
+      ]
+    },
+    {
+      "path": "crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "first_line": 307,
+      "last_line": 350,
+      "lines": [
+        "        }",
+        "        if let Some(value) = Self::small_integer(sign, magnitude) {",
+        "            return value;",
+        "        }",
+        "        Self::from_integer_magnitude(sign, BigUint::from(magnitude))",
+        "    }",
+        "",
+        "    /// The Rational corresponding to the provided [`BigInt`].",
+        "    pub fn from_bigint(n: BigInt) -> Self {",
+        "        Self::from_bigint_fraction(n, BigUint::one()).unwrap()",
+        "    }",
+        "",
+        "    /// The non-negative Rational corresponding to the provided [`i64`]",
+        "    /// numerator and [`u64`] denominator as a fraction.",
+        "    pub fn fraction(n: i64, d: u64) -> Result<Self, Problem> {",
+        "        if d == 0 {",
+        "            return Err(Problem::DivideByZero);",
+        "        }",
+        "        let sign = if n < 0 { Minus } else { Plus };",
+        "        // The storage type is already Sign+BigUint, so unsigned_abs gives the",
+        "        // exact magnitude type and avoids a temporary signed BigInt.",
+        "        let numerator = BigUint::from(n.unsigned_abs());",
+        "        let denominator = BigUint::from(d);",
+        "        Ok(Self::from_fraction_parts_reduced(",
+        "            sign,",
+        "            numerator,",
+        "            denominator,",
+        "        ))",
+        "    }",
+        "",
+        "    /// The Rational corresponding to the provided [`BigInt`]",
+        "    /// numerator and [`BigUint`] denominator as a fraction.",
+        "    pub fn from_bigint_fraction(n: BigInt, denominator: BigUint) -> Result<Self, Problem> {",
+        "        if denominator == BigUint::ZERO {",
+        "            return Err(Problem::DivideByZero);",
+        "        }",
+        "        let (sign, numerator) = n.into_parts();",
+        "        Ok(Self::from_fraction_parts_reduced(",
+        "            sign,",
+        "            numerator,",
+        "            denominator,",
+        "        ))",
+        "    }",
+        ""
+      ]
+    }
+  ],
+  "scope": "All seven complete disassemblies were parsed; direct RIP-relative references into the six records were traced to resolved panic routines. Only the archived instruction sequences and source excerpts support the use classification. This is not exhaustive dynamic dataflow or a whole-program equivalence theorem.",
+  "diagnostic_change": "Panic reports at these six source statements may use line numbers increased by fourteen. The statements, columns, filenames, call instructions and call-target relocations are unchanged.",
+  "cost_receipts_reused": 0,
+  "workload_processes": 0,
+  "runtime_retained": false,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167
+}

@@ -1,0 +1,112 @@
+{
+  "status": "Read-only next-proof design review; no implementation or formal coverage added",
+  "reader_failure": "numerical-bound-metadata-reader-failure-v2279.json",
+  "reader_failure_sha256": "ebd58546c0dc57592a1601e2446c9c3dace42f9799721fcb75fd4035a922a25b",
+  "schema_correction": "Compare source bytes directly to the locked, hash-verified crate archive because this extraction has no checksum sidecar. No source, test, proof or admission claim changes.",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "runner_sha256": "bc2557f6b365e18f1334117e318f91c5d5360003f375cfd391ad1be208814dbc",
+  "predecessor_review": "numerical-bound-producer-next-review-v2180.json",
+  "predecessor_review_sha256": "0fdad6be187ac82c426d31bbc4d8132c38ef87bc06196e30591f6cdd22d8b372",
+  "lock_sha256": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+  "dependency": {
+    "name": "num-bigint",
+    "version": "0.4.6",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "checksum": "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9",
+    "dependencies": [
+      "num-integer",
+      "num-traits 0.2.19",
+      "serde"
+    ]
+  },
+  "dependency_archive_sha256": "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9",
+  "dependency_files_match_locked_archive": true,
+  "dependency_license": "Copyright (c) 2014 The Rust Project Developers\n\nPermission is hereby granted, free of charge, to any\nperson obtaining a copy of this software and associated\ndocumentation files (the \"Software\"), to deal in the\nSoftware without restriction, including without\nlimitation the rights to use, copy, modify, merge,\npublish, distribute, sublicense, and/or sell copies of\nthe Software, and to permit persons to whom the Software\nis furnished to do so, subject to the following\nconditions:\n\nThe above copyright notice and this permission notice\nshall be included in all copies or substantial portions\nof the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF\nANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED\nTO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A\nPARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT\nSHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY\nCLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION\nOF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR\nIN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER\nDEALINGS IN THE SOFTWARE.\n",
+  "dependency_sections_read": [
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint.rs",
+      "sha256": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+      "first_line": 31,
+      "last_line": 36,
+      "text": "pub use self::iter::{U32Digits, U64Digits};\n\n/// A big unsigned integer type.\npub struct BigUint {\n    data: Vec<BigDigit>,\n}"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint.rs",
+      "sha256": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+      "first_line": 848,
+      "last_line": 873,
+      "text": "    /// Determines the fewest bits necessary to express the [`BigUint`].\n    #[inline]\n    pub fn bits(&self) -> u64 {\n        if self.is_zero() {\n            return 0;\n        }\n        let zeros: u64 = self.data.last().unwrap().leading_zeros().into();\n        self.data.len() as u64 * u64::from(big_digit::BITS) - zeros\n    }\n\n    /// Strips off trailing zero bigdigits - comparisons require the last element in the vector to\n    /// be nonzero.\n    #[inline]\n    fn normalize(&mut self) {\n        if let Some(&0) = self.data.last() {\n            let len = self.data.iter().rposition(|&d| d != 0).map_or(0, |i| i + 1);\n            self.data.truncate(len);\n        }\n        if self.data.len() < self.data.capacity() / 4 {\n            self.data.shrink_to_fit();\n        }\n    }\n\n    /// Returns a normalized [`BigUint`].\n    #[inline]\n    fn normalized(mut self) -> BigUint {"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint.rs",
+      "sha256": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+      "first_line": 988,
+      "last_line": 1004,
+      "text": "    /// Returns the number of least-significant bits that are zero,\n    /// or `None` if the entire number is zero.\n    pub fn trailing_zeros(&self) -> Option<u64> {\n        let i = self.data.iter().position(|&digit| digit != 0)?;\n        let zeros: u64 = self.data[i].trailing_zeros().into();\n        Some(i as u64 * u64::from(big_digit::BITS) + zeros)\n    }\n\n    /// Returns the number of least-significant bits that are ones.\n    pub fn trailing_ones(&self) -> u64 {\n        if let Some(i) = self.data.iter().position(|&digit| !digit != 0) {\n            let ones: u64 = self.data[i].trailing_ones().into();\n            i as u64 * u64::from(big_digit::BITS) + ones\n        } else {\n            self.data.len() as u64 * u64::from(big_digit::BITS)\n        }\n    }"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs",
+      "sha256": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+      "first_line": 541,
+      "last_line": 546,
+      "text": "    fn normalize(&mut self) {\n        self.data.normalize();\n        if self.data.is_zero() {\n            self.sign = NoSign;\n        }\n    }"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs",
+      "sha256": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+      "first_line": 932,
+      "last_line": 935,
+      "text": "    #[inline]\n    pub fn sign(&self) -> Sign {\n        self.sign\n    }"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs",
+      "sha256": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+      "first_line": 949,
+      "last_line": 952,
+      "text": "    #[inline]\n    pub fn magnitude(&self) -> &BigUint {\n        &self.data\n    }"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs",
+      "sha256": "70493e8293b769076d6a16df962a4913b74aa1925fe8bd448865da097ee2dbe1",
+      "first_line": 225,
+      "last_line": 242,
+      "text": "pub use crate::bigrand::{RandBigInt, RandomBits, UniformBigInt, UniformBigUint};\n\nmod big_digit {\n    // A [`BigDigit`] is a [`BigUint`]'s composing element.\n    cfg_digit!(\n        pub(crate) type BigDigit = u32;\n        pub(crate) type BigDigit = u64;\n    );\n\n    // A [`DoubleBigDigit`] is the internal type used to do the computations.  Its\n    // size is the double of the size of [`BigDigit`].\n    cfg_digit!(\n        pub(crate) type DoubleBigDigit = u64;\n        pub(crate) type DoubleBigDigit = u128;\n    );\n\n    pub(crate) const BITS: u8 = BigDigit::BITS as u8;\n    pub(crate) const HALF_BITS: u8 = BITS / 2;"
+    }
+  ],
+  "production_section_read": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/structural_analysis.rs",
+    "sha256": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+    "first_line": 785,
+    "last_line": 812,
+    "text": "    fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {\n        // Approximation values with magnitude <= 1 are within the allowed error\n        // band, so they cannot certify sign or nonzero status.\n        let magnitude = appr.magnitude();\n        let magnitude_bits = magnitude.bits();\n        if magnitude_bits <= 1 {\n            BoundInfo::Unknown\n        } else {\n            let reaches_next_binade = magnitude.trailing_ones() == magnitude_bits;\n            let msd = crate::verified::word::checked_bit_length_msd(\n                magnitude_bits,\n                if reaches_next_binade { 0 } else { 1 },\n                false,\n                prec,\n            );\n            // The closed one-unit interval [|a|-1, |a|+1] has one binary\n            // exponent unless a is a power of two or one below the next power.\n            // Inspect trailing bits instead of allocating endpoint integers.\n            let exact_msd = msd.is_some()\n                && magnitude.trailing_zeros() != Some(magnitude_bits - 1)\n                && !reaches_next_binade;\n            BoundInfo::with_sign_msd(appr.sign(), msd, exact_msd)\n        }\n    }\n\n    fn rational_kernel_sign(kind: &Approximation) -> Option<Sign> {\n        use Approximation::*;\n        // Stored kernel names do not prove their private argument ranges."
+  },
+  "supporting_source_sha256": {
+    "crates/hyperreal/src/verified/word.rs": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+    "crates/hyperreal/src/computable/node/bounds.rs": "553c144d56bf0690fb05244fc61ede2f136c36587967356d738b88d3863d1f09",
+    "crates/hyperreal/verification/bound_denotation.rs": "5e13ccdad986919f9bb91ce0e4d49f5fbd88bed13a69ff12ee4cff5e9954aa70",
+    "crates/hyperreal/verification/real_approximation_model.rs": "b9163eabf67b9e80cb5b2cf363318cb440263699753c7037702776d9d5eba9bf",
+    "crates/hyperreal/verification/magnitude_model.rs": "65a429965050ada682c4c0a8bfaaee6bd47f47a5a58fdf64a9698dbd81e948f8",
+    "crates/hyperreal/verification/bit_length_model.rs": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+    "crates/hyperreal/verification/computable_bounds.rs": "cfb073ac994c56830967f78d4a37b0ffc78210cbbb0e0f60f056fa9af5fbe578"
+  },
+  "findings": [
+    "The locked dependency is num-bigint 0.4.6. BigUint stores a Vec of target-selected u32/u64 digits. bits reads the last digit's leading zeros, while trailing_zeros and trailing_ones search from the low end. BigInt sign and magnitude are field accessors. These inspected bodies do not establish all constructors' normalization or a Verus refinement of dependency storage.",
+    "The production path returns Unknown at zero/one magnitude without the trailing-bit searches. Above that threshold it computes trailing ones, then a checked exponent, and only calls trailing_zeros when that exponent is representable. Moving a power-of-two flag to an eagerly evaluated helper argument could add a low-limb scan when the exponent is absent. Any later extraction must preserve this short-circuit behavior or measure its cost explicitly.",
+    "For magnitude m with b bits, the candidate upper exponent is p+b when m is all ones, otherwise p+b-1. The closed error interval uses m+1: an all-ones magnitude reaches the next power exactly, so a strict upper certificate requires the raised exponent. For an exact binade, excluding m=2^(b-1) ensures m-1 is at least that lower power; excluding all ones keeps m+1 strictly below 2^b. These are mathematical derivations for a future checked lemma, not newly verified claims.",
+    "With b>1, p in i32 and a subtraction of at most one, the mathematical exponent is at least i32::MIN+1. The producer's absent exponent therefore comes from the upper range limit. It retains a separated sign even when magnitude metadata is absent. The general checked_bit_length_msd helper still handles both range limits for other callers.",
+    "Existing separated_approximation_yields_a_bound requires endpoint inequalities; checked_bit_length_msd and with_sign_msd provide actual production contracts. A useful next proof can connect bit-length/all-ones/power-of-two premises, the checked exponent and constructor contract to those endpoint inequalities. A model bridge alone must remain labeled conditional; it does not put bound_from_approx or BigInt methods inside the verification target."
+  ],
+  "suggested_order_after_decoder_retention": [
+    "Prove the endpoint inequalities from explicit integer bit-pattern premises and the existing production exponent/constructor contracts, with mutations for every boundary and sign obligation.",
+    "Connect actual dependency bit metadata and normalized storage to those premises without assuming new method specifications. Account for both target digit widths and range conversions.",
+    "If runtime extraction is required, freeze a separate candidate and preserve metadata short-circuiting, unchanged public/full-size fixtures, generated code and original resource limits before evaluating it.",
+    "Keep valid approximations, independent real existence, structural-before-numeric publication and concurrent atomic ordering as distinct caller/invariant obligations."
+  ],
+  "source_changed": false,
+  "new_formal_units": 0,
+  "new_test_or_cost_processes": 0,
+  "runtime_retained": false,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "limits": "Only the listed sections and previously named model/contract definitions were read. Hashing other files does not credit a whole-file audit. This review changes no gate, status, runtime or proof obligation; completing the eager decoder's pending broad/replay/fact checks remains first."
+}
