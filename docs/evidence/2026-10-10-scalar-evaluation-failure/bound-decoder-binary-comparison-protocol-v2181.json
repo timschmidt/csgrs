@@ -1,0 +1,234 @@
+{
+  "status": "Frozen before compiling the decoder's runtime libraries or consumer probes",
+  "source_record": "typed-api-prototype-v2169-bound-decoder-verus/source-hashes.json.gz",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "retained_source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "baseline_protocol": "bound-decoder-baseline-v2168/protocol.json",
+  "baseline_protocol_sha256": "fb6485af2f58e3141d5d41c622841118e199459f199d6ded92bd0f722975ced4",
+  "baseline_summary": "bound-decoder-baseline-v2168/summary.json",
+  "baseline_summary_sha256": "b5f59b9fdb3ee5ae0ea6abc8c9628a1b21fb684d50cdab81aff2a4506612c4ca",
+  "generator_sha256": "98db1eec267b763cd77404ca872bdd1cde71e3a1b67b84bbfe2ec23ed45749ee",
+  "retained_library": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+  "retained_library_sha256": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+  "retained_library_archive": "bound-decoder-retained-library-v2181.rlib.gz",
+  "retained_library_archive_sha256": "af49c7860bc423040ca87dcddc44633183b838c9571b0344b70c4d740e413a8d",
+  "retained_library_bytes": 12450394,
+  "build_commands": [
+    {
+      "family": "atan",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1773-domain-predicate-atan-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/atan"
+      ],
+      "probe": "typed-api-prototype-v1773-domain-predicate-atan-cost/probe.rs",
+      "probe_sha256": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan",
+      "baseline_binary_sha256": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe",
+      "original_binary_sha256": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+      }
+    },
+    {
+      "family": "acos",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1779-domain-predicate-acos-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/acos"
+      ],
+      "probe": "typed-api-prototype-v1779-domain-predicate-acos-cost/probe.rs",
+      "probe_sha256": "5684b96a1b77c55e4cd0769ff6ebca3d88835355016ad8c48b297f710fd56527",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos",
+      "baseline_binary_sha256": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1779-domain-predicate-acos-cost/probe",
+      "original_binary_sha256": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+      }
+    },
+    {
+      "family": "integer",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1774-domain-predicate-integer-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/integer"
+      ],
+      "probe": "typed-api-prototype-v1774-domain-predicate-integer-cost/probe.rs",
+      "probe_sha256": "e7eb93152d7a7e3f121176cef8505ced7586b17ae91e2bad408fad456bbb06ea",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer",
+      "baseline_binary_sha256": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1774-domain-predicate-integer-cost/probe",
+      "original_binary_sha256": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+      }
+    },
+    {
+      "family": "inverse_trig",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "--extern",
+        "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/inverse_trig"
+      ],
+      "probe": "typed-api-prototype-v1775-domain-predicate-inverse-cost/probe.rs",
+      "probe_sha256": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig",
+      "baseline_binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "original_binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06"
+      }
+    },
+    {
+      "family": "normal_form",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1776-domain-predicate-normal-form-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "--extern",
+        "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/normal_form"
+      ],
+      "probe": "typed-api-prototype-v1776-domain-predicate-normal-form-cost/probe.rs",
+      "probe_sha256": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form",
+      "baseline_binary_sha256": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1776-domain-predicate-normal-form-cost/probe",
+      "original_binary_sha256": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06"
+      }
+    },
+    {
+      "family": "default",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1777-domain-predicate-default-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/default"
+      ],
+      "probe": "typed-api-prototype-v1777-domain-predicate-default-cost/probe.rs",
+      "probe_sha256": "dde22067eed3e9b89f7c7a6977e5d9559e618b1bbd6850089f8dc322e0482516",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default",
+      "baseline_binary_sha256": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1777-domain-predicate-default-cost/probe",
+      "original_binary_sha256": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+      }
+    },
+    {
+      "family": "algebraic",
+      "command": [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe.rs",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+        "--extern",
+        "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+        "--extern",
+        "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "--extern",
+        "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-binary-comparison-v2181/algebraic"
+      ],
+      "probe": "typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe.rs",
+      "probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+      "baseline_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic",
+      "baseline_binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "original_binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+      "original_binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "baseline_libraries_sha256": {
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06"
+      }
+    }
+  ],
+  "prerequisite": "All nine bound-decoder runtime commands must complete on the exact proof source before the candidate probe builds.",
+  "decision": "Compare complete executable bytes, libraries and sizes. Exact probe binary identity permits reuse of the existing immutable fixture receipts for that executable; a changed executable requires fresh original-cap cost controls. Report any rlib mismatch separately. Historical failures remain failed, and binary identity does not establish whole-crate proof, resource bounds, native/full-board admission or the fixed pre-Verus acceptance gate.",
+  "timing_processes_planned": 0,
+  "runtime_retained": false
+}

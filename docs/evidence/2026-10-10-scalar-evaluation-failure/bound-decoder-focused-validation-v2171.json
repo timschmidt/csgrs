@@ -1,0 +1,39 @@
+{
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "runner_sha256": "f32e792f796b92ec5f0d44751d5a8fb714af3b21efdda0cecdafd28d980e4d7a",
+  "complete": true,
+  "phases": [
+    {
+      "phase": "typed-api-prototype-v2170-bound-decoder-acceptance",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py",
+        "typed-api-prototype-v2170-bound-decoder-acceptance",
+        "test_acceptance.py"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.5178929301910102,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2171-bound-decoder-rejections",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py",
+        "typed-api-prototype-v2171-bound-decoder-rejections",
+        "test_rejections.py"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 951.8047339073382,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  ]
+}

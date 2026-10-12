@@ -1,0 +1,26 @@
+{
+  "predecessor": "record_integer_coarse_zero_validation.py",
+  "predecessor_sha256": "d9905c4f753957aa5830c381f96a6ff53103eefee27d564646667180dc9d8146",
+  "fork": "record_bound_decoder_validation.py",
+  "fork_sha256": "80957a456a15737973656db6e7478629c4e75d5fbdcc3d8cec141ef903b60ca6",
+  "patch": "bound-decoder-validation-recorder-preparation-v2180.patch",
+  "patch_sha256": "de412b90896ccf83ab1ad6f46bfdefa98003ccd39f9c55c6d00dc7cc96113ee0",
+  "generator_sha256": "51ca407a96ec1f73fe7772512ec3b978693d1f0dc8e9f6bc92d8b90277087595",
+  "changes": "Only phase names, baseline-matching counts and the scope sentence change. The existing test parser, ignored-case check, inherited warning comparison and zero-warning Clippy requirement remain unchanged.",
+  "expected_counts": {
+    "scalar": 1074,
+    "stack": 5858,
+    "default": 1059,
+    "debug": 1074,
+    "children": [
+      1,
+      3,
+      3,
+      1
+    ],
+    "ignored_stack": 33,
+    "inherited_warnings": 14,
+    "included_format_paths": 108
+  },
+  "executed": false
+}
