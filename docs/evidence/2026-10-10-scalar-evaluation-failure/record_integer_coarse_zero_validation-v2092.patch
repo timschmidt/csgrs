@@ -1,0 +1,31 @@
+--- record_nth_root_enclosure_validation.py
++++ record_integer_coarse_zero_validation.py
+@@ -12,2 +12,2 @@
+-source = sha(E / 'typed-api-prototype-v2003-nth-root-enclosure-verus/source-hashes.json.gz')
+-validation = read(E / 'nth-root-enclosure-candidate-validation-v2013.json')
++source = sha(E / 'typed-api-prototype-v2082-integer-coarse-zero-verus/source-hashes.json.gz')
++validation = read(E / 'integer-coarse-zero-candidate-validation-v2092.json')
+@@ -23,4 +23,4 @@
+-    'typed-api-prototype-v2005-nth-root-enclosure-scalar-tests': (1076, 1, 0),
+-    'typed-api-prototype-v2010-nth-root-enclosure-stack-tests': (5860, 3, 33),
+-    'typed-api-prototype-v2011-nth-root-enclosure-default-tests': (1061, 3, 0),
+-    'typed-api-prototype-v2012-nth-root-enclosure-debug-tests': (1076, 1, 0),
++    'typed-api-prototype-v2084-integer-coarse-zero-scalar-tests': (1076, 1, 0),
++    'typed-api-prototype-v2089-integer-coarse-zero-stack-tests': (5860, 3, 33),
++    'typed-api-prototype-v2090-integer-coarse-zero-default-tests': (1061, 3, 0),
++    'typed-api-prototype-v2091-integer-coarse-zero-debug-tests': (1076, 1, 0),
+@@ -32 +32 @@
+-stack = E / 'typed-api-prototype-v2010-nth-root-enclosure-stack-tests'
++stack = E / 'typed-api-prototype-v2089-integer-coarse-zero-stack-tests'
+@@ -38 +38 @@
+-for name in ['typed-api-prototype-v2006-nth-root-enclosure-clippy','typed-api-prototype-v2013-nth-root-enclosure-minimal-clippy']:
++for name in ['typed-api-prototype-v2085-integer-coarse-zero-clippy','typed-api-prototype-v2092-integer-coarse-zero-minimal-clippy']:
+@@ -40 +40 @@
+-format_command = read(E / 'typed-api-prototype-v2009-nth-root-enclosure-included-fmt/command.json')['command']
++format_command = read(E / 'typed-api-prototype-v2088-integer-coarse-zero-included-fmt/command.json')['command']
+@@ -42 +42 @@
+-out = E / 'nth-root-enclosure-broad-validation-v2013.json'
++out = E / 'integer-coarse-zero-broad-validation-v2092.json'
+@@ -46 +46 @@
+-    'source_record_sha256':source,'orchestration_record':'nth-root-enclosure-candidate-validation-v2013.json',
++    'source_record_sha256':source,'orchestration_record':'integer-coarse-zero-candidate-validation-v2092.json',

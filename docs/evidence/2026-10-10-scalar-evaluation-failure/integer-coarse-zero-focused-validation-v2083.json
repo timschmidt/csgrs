@@ -1,0 +1,82 @@
+{
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "changed_since_rejected_source_sha256": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "9880bb3dfc4cc30eb087c80617f5b79e45da9b1646794ce32b1accdc4dcc65f7"
+  },
+  "runner_sha256": "578b7ca60de4d9ca4e0d5bedb5317f76d1283e743aa469c5bc070b6100bdade1",
+  "phases": {
+    "typed-api-prototype-v2080-integer-coarse-zero-focused": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--all-features",
+        "integer_scale_",
+        "--",
+        "--nocapture"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 19.47587511688471,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v2081-integer-coarse-zero-root-controls": {
+      "command": [
+        "cargo",
+        "test",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--all-features",
+        "direct_nth_root_",
+        "--",
+        "--nocapture"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.3147374410182238,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v2082-integer-coarse-zero-verus": {
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_verus.py",
+        "typed-api-prototype-v2082-integer-coarse-zero-verus"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 10.909734739921987,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    },
+    "typed-api-prototype-v2083-integer-coarse-zero-acceptance": {
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py",
+        "typed-api-prototype-v2083-integer-coarse-zero-acceptance",
+        "test_acceptance.py"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.4959911410696805,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      }
+    }
+  },
+  "complete": true,
+  "scope": "Existing five integer tests and three direct-root controls, refreshed conditional verification and acceptance tests. The changed integer branch remains outside the Verus target. Mutation guards are not rerun by this helper; reuse must be audited separately. Broad/cost/replay admission is still pending."
+}

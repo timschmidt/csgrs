@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_nth_root_enclosure_proof.py",
+  "predecessor_sha256": "012c81730116aa42191bdef57f146ce4e61eb8b817b5c53ad52654b7928000ad",
+  "recorder": "record_integer_coarse_zero_proof.py",
+  "recorder_sha256": "b413008d54f0372de02f0297bc75d6e8b72aa6c291a7b9739091d977eadb1bfb",
+  "patch": "integer-coarse-zero-proof-recorder-preparation-v2083.patch",
+  "patch_sha256": "b43ce7d1579ec590d660d6d58d45002aa2efb49a610a6a8b7056f3a19da13fdd",
+  "preparer_sha256": "76b9e027667a06f8198e8e67180c1c8cb8e68947c05e6f401bd3fd22efb2696a",
+  "scope": "Bind the one changed integer branch and unchanged integer/root controls to fresh conditional verification. Audit unchanged proof/guard/tool identities before reusing the v1926 negative controls. Preserve the failed predecessor and all retention gates; change no property/target status."
+}

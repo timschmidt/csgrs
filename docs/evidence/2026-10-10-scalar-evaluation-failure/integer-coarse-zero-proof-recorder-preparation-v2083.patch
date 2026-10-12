@@ -1,0 +1,136 @@
+--- record_nth_root_enclosure_proof.py
++++ record_integer_coarse_zero_proof.py
+@@ -19,3 +19,3 @@
+-    output = E / "nth-root-enclosure-proof-validation-v2004.json"
+-    patch = E / "nth-root-enclosure-proposal-v2004.patch"
+-    ledger_record = E / "nth-root-enclosure-proof-ledger-v2004.json"
++    output = E / "integer-coarse-zero-proof-validation-v2083.json"
++    patch = E / "integer-coarse-zero-proposal-v2083.patch"
++    ledger_record = E / "integer-coarse-zero-proof-ledger-v2083.json"
+@@ -23 +23 @@
+-    baseline_dir = E / "nth-root-enclosure-baseline-v2001"
++    baseline_dir = E / "integer-coarse-zero-baseline-v2079"
+@@ -25 +25 @@
+-    prior_path = E / "cache-state-merge-proof-validation-v1926.json"
++    prior_path = E / "nth-root-enclosure-proof-validation-v2004.json"
+@@ -27,5 +27,6 @@
+-    expected = "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3"
+-    focused = E / "typed-api-prototype-v2002-nth-root-enclosure-focused"
+-    proof = E / "typed-api-prototype-v2003-nth-root-enclosure-verus"
+-    acceptance = E / "typed-api-prototype-v2004-nth-root-enclosure-acceptance"
+-    for phase in [focused, proof, acceptance]:
++    expected = "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
++    focused = E / "typed-api-prototype-v2080-integer-coarse-zero-focused"
++    proof = E / "typed-api-prototype-v2082-integer-coarse-zero-verus"
++    acceptance = E / "typed-api-prototype-v2083-integer-coarse-zero-acceptance"
++    root_controls = E / "typed-api-prototype-v2081-integer-coarse-zero-root-controls"
++    for phase in [focused, root_controls, proof, acceptance]:
+@@ -35 +36,2 @@
+-    assert "test result: ok. 3 passed; 0 failed; 0 ignored;" in (focused / "stdout.log").read_text()
++    assert "test result: ok. 5 passed; 0 failed; 0 ignored;" in (focused / "stdout.log").read_text()
++    assert "test result: ok. 3 passed; 0 failed; 0 ignored;" in (root_controls / "stdout.log").read_text()
+@@ -45 +47 @@
+-    assert root_changes == set(baseline["planned_changed_files"]) and len(changes) == 8
++    assert root_changes == set(baseline["planned_changed_files"]) and len(changes) == 9
+@@ -51,2 +53,2 @@
+-    for name, digest in baseline["inputs_sha256"].items():
+-        assert sha(E / name) == digest
++    for key in ["prior_rejection", "static_review", "prior_proof_record"]:
++        assert sha(E / baseline[key]) == baseline[key + "_sha256"]
+@@ -77 +79 @@
+-    rejection = E / prior["fresh_rejection_phase"]
++    rejection = E / prior["reused_rejection_phase"]
+@@ -91,9 +93,14 @@
+-    kernel_name = "crates/hyperreal/src/computable/approximation/exp_sqrt.rs"
+-    tests_name = "crates/hyperreal/src/computable/approximation/precision_tests.rs"
+-    old_kernel = (baseline_dir / "inputs" / kernel_name).read_text()
+-    new_kernel = (SOURCE / kernel_name).read_text()
+-    assert old_kernel.split("        let lower_power =", 1)[0] == new_kernel.split("        let (lower, upper) = integer_nth_root_bounds", 1)[0]
+-    assert old_kernel.split("        let rounding =", 1)[1].split("// Compute cosine", 1)[0] == new_kernel.split("        let rounding =", 1)[1].split("/// Return the floor root", 1)[0]
+-    assert old_kernel.split("// Compute cosine", 1)[1] == new_kernel.split("// Compute cosine", 1)[1]
+-    assert (SOURCE / tests_name).read_text().startswith((baseline_dir / "inputs" / tests_name).read_text())
+-    assert (SOURCE / tests_name).read_text().count("#[test]") == (baseline_dir / "inputs" / tests_name).read_text().count("#[test]") + 2
++    query_name = "crates/hyperreal/src/computable/node/approximation_queries.rs"
++    old_query = (baseline_dir / "inputs" / query_name).read_text()
++    new_query = (SOURCE / query_name).read_text()
++    inserted = (
++        "                // A gap beyond the integer's bit length rounds to zero for\n"
++        "                // either sign. Resolve the scaling helper's same shortcut\n"
++        "                // here, after the precision checks and work charge.\n"
++        "                if p > 0 && u64::from(p as u32) > value.bits() {\n"
++        "                    return Ok(BigInt::zero());\n"
++        "                }\n")
++    assert new_query.count(inserted) == 1 and new_query.replace(inserted, "", 1) == old_query
++    prefix = new_query.split(inserted, 1)[0]
++    assert prefix.endswith('                if !charge_evaluation_work() {\n                    return Err(Problem::Exhausted);\n                }\n')
++    assert old_query.count('let p = checked_approximation_precision(p)?;') == 1
+@@ -102,2 +109,5 @@
+-        original_file = (baseline_dir if name in root_changes else E / "bound-merge-baseline-v1837") / "inputs" / name
+-        assert sha(original_file) == original[name]
++        candidates = [directory / "inputs" / name for directory in
++            [baseline_dir, E / "nth-root-enclosure-baseline-v2001", E / "bound-merge-baseline-v1837"]]
++        matches = [path for path in candidates if path.is_file() and sha(path) == original[name]]
++        assert matches, name
++        original_file = matches[0]
+@@ -107 +117 @@
+-        "status": "One-root enclosure proposal passes focused tests and the unchanged conditional proof target; runtime gates pending",
++        "status": "Charged integer coarse-zero proposal passes existing focused tests and unchanged conditional verification; runtime gates pending",
+@@ -114,3 +124,3 @@
+-        "changed_since_rejected_selector": sorted(root_changes), "proposal_patch": patch.name,
+-        "focused_phase": focused.name, "focused_tests": 3,
+-        "new_test_cases": {"small_integer_enclosures": 7161, "wide_perfect_power_neighbors": 1120},
++        "changed_since_rejected_proposal": sorted(root_changes), "proposal_patch": patch.name,
++        "focused_phase": focused.name, "focused_tests": 5,
++        "root_control_phase": root_controls.name, "root_control_tests": 3, "new_tests_added": 0,
+@@ -122,2 +132,3 @@
+-        "reused_rejection_phase": rejection.name, "reused_proof_record": prior_path.name,
+-        "reused_proof_record_sha256": sha(prior_path),
++        "reused_rejection_phase": rejection.name, "reused_proof_record": prior["reused_proof_record"],
++        "reused_proof_record_sha256": prior["reused_proof_record_sha256"],
++        "prior_proposal_proof_record": prior_path.name, "prior_proposal_proof_record_sha256": sha(prior_path),
+@@ -127,3 +138,3 @@
+-        "prior_failure": "cache-state-merge-cost-rejection-v1943.json",
+-        "prior_failure_sha256": sha(E / "cache-state-merge-cost-rejection-v1943.json"),
+-        "implementation": "The direct kernel derives floor_root(A - 1) and ceil_root(A + 1) from one floor_root(A + 1) and its power. The prior domain/range/precision/small-sample guards, extreme-precision fallback and final rounding are byte-identical. Two new tests check exact endpoint inequalities and differential endpoint equality; the existing MPFR oracle test is unchanged.",
++        "prior_failure": "nth-root-enclosure-cost-rejection-v2021.json",
++        "prior_failure_sha256": sha(E / "nth-root-enclosure-cost-rejection-v2021.json"),
++        "implementation": "The exact Int branch returns zero for p > 0 and u64(p) > value.bits() after the existing precision checks and successful evaluation-work charge. This is the called scaling helper's identical strict predicate and result. All other evaluator bytes, five existing integer tests, root code/tests and proof/guard inputs remain unchanged.",
+@@ -131 +142 @@
+-            "The bigint nth-root kernel and its new helper are outside the Verus target. The 651 verified units refresh the existing 98 contracts and 135 model theorems; they do not formally prove this kernel change or complete any of the thirteen open groups.",
++            "The changed integer evaluator branch and bigint nth-root helper are outside Verus coverage. The 651 verified units refresh the existing 98 contracts and 135 model theorems; they do not formally prove either runtime change or complete any open group.",
+@@ -133,2 +144,2 @@
+-            "The combined proposal includes the unretained outlined selector. The v1943 CPU-limit failure, v1857 timing rejection, earlier original-cap failures, integer-control tradeoff and fixed baseline remain explicit. New runtime, cost and replay gates are still required against retained v1836.",
+-            "Exact integer endpoint equality and the existing MPFR cases provide focused finite evidence; all original full-size corpora remain required. No timing, allocation or size improvement is claimed from the source change alone.",
++            "The combined proposal includes the unretained outlined selector and one-root kernel. The v2021 wide_gap timing rejection, v1943 CPU-limit failure, v1857 timing rejection, earlier failures/tradeoff and fixed baseline remain unchanged. Fresh broad, cost and replay qualification is required against retained v1836.",
++            "Five unchanged integer tests cover signed rounding, million-bit allocation controls, work allowances/retries, retained signs, precision limits and cancellation precedence. Three unchanged root controls pass. This is finite evidence; no performance or size improvement is inferred from the new branch alone. The earlier copied-root allocation study retains only its original extracted-helper scope.",
+@@ -151,9 +162,9 @@
+-        "The v2001-v2004 isolated proposal replaces two neighboring integer-root computations "
+-        "with one root and its power, retaining exactly the same enclosure endpoints and all "
+-        "existing guards. Three focused tests pass, including 7161 small enclosures, 1120 wide "
+-        "perfect-power neighbors and the unchanged public MPFR oracle cases. The full conditional "
+-        "Verus target again reports 651 units with zero errors, and ten acceptance tests pass. "
+-        "The 247 negative mutations and four positive baselines are reused under unchanged proof, "
+-        "guard, dependency and verifier hashes. This is not a formal proof of the bigint kernel. "
+-        "The outlined-selector CPU failure remains failed; the combined proposal is unretained "
+-        "pending fresh broad, original-cap cost and replay gates against v1836."
++        "The v2079-v2083 isolated proposal handles the scaling helper's strict coarse-zero case "
++        "directly in the exact-integer evaluator, after the original precision and work checks. "
++        "Five unchanged integer tests and three unchanged root controls pass. The other evaluator "
++        "bytes, root kernel and test sources are unchanged. Refreshed conditional verification "
++        "reports 651 units with zero errors, and ten acceptance tests pass. The 247 negative "
++        "guards and four positive baselines are reused under unchanged proof/guard/dependency/tool "
++        "identities; the integer branch and bigint root kernel remain outside formal coverage. "
++        "The v2021 timing rejection remains failed, and retained runtime stays v1836 pending "
++        "fresh broad commands, all original-cap cost controls and replays."
+@@ -162 +173 @@
+-    old = read(E / "cache-state-algebraic-stage-review-v2000.json")["next_priority"]
++    old = read(E / "nth-root-enclosure-cost-rejection-v2021.json")["next_priority"]
+@@ -165 +176 @@
+-        "The one-root enclosure prototype passes focused tests and refreshed conditional verification. "
++        "The charged integer coarse-zero prototype passes existing focused tests and refreshed conditional verification. "
+@@ -187 +198 @@
+-    print(json.dumps({"focused_tests": 3, "verified_units": 651, "acceptance_tests": 10,
++    print(json.dumps({"focused_tests": 5, "root_control_tests": 3, "verified_units": 651, "acceptance_tests": 10,
+@@ -189 +200 @@
+-        "changed_sources_since_retained": 8, "runtime_retained": False}))
++        "changed_sources_since_retained": 9, "runtime_retained": False}))

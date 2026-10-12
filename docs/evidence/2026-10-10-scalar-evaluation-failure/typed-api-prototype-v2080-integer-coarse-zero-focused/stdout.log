@@ -1,0 +1,10 @@
+
+running 5 tests
+test computable::node::integer_scale_tests::integer_scale_precision_and_cancellation_precedence ... ok
+test computable::node::integer_scale_tests::integer_scale_signed_limb_boundaries_and_halfway_rounding ... ok
+test computable::node::integer_scale_tests::integer_scale_dispatch_coarse_allocations ... ok
+test computable::node::integer_scale_tests::integer_scale_public_coarse_allocations ... ok
+test computable::node::integer_scale_tests::integer_scale_allowances_retries_and_retained_signs ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1071 filtered out; finished in 0.00s
+

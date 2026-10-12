@@ -1,0 +1,517 @@
+--- a/crates/hyperreal/src/computable/approximation/exp_sqrt.rs
++++ b/crates/hyperreal/src/computable/approximation/exp_sqrt.rs
+@@ -312,18 +312,39 @@
+             return Ok(BigInt::zero());
+         }
+ 
+-        let lower_power = approximation.magnitude() - BigUint::one();
+-        let upper_power = approximation.magnitude() + BigUint::one();
+-        let lower = lower_power.nth_root(degree);
+-        let mut upper = upper_power.nth_root(degree);
+-        if upper.pow(degree) < upper_power {
+-            upper += BigUint::one();
+-        }
++        let (lower, upper) = integer_nth_root_bounds(approximation.magnitude(), degree);
+ 
+         let rounding = BigUint::one() << usize::try_from(GUARD_BITS).unwrap();
+         BigInt::from((lower + upper + rounding) >> usize::try_from(GUARD_BITS + 1).unwrap())
+     })
+ }
+ 
++/// Return the floor root of `A - 1` and the ceiling root of `A + 1` for sample `A`.
++/// The caller has already established `approximation > 1` and `degree >= 3`.
++fn integer_nth_root_bounds(approximation: &BigUint, degree: u32) -> (BigUint, BigUint) {
++    debug_assert!(approximation.bits() > 1);
++    debug_assert!(degree >= 3);
++
++    let upper_power = approximation + BigUint::one();
++    let root = upper_power.nth_root(degree);
++    let power = root.pow(degree);
++
++    // If root^degree is below A, it is also at most A - 1. Otherwise root >= 2,
++    // and neighboring degree-th powers differ by at least three, so root - 1
++    // is the floor root of A - 1. This recovers exactly the same lower endpoint
++    // without a second integer-root computation.
++    let lower = if &power >= approximation {
++        &root - BigUint::one()
++    } else {
++        root.clone()
++    };
++    let upper = if power < upper_power {
++        root + BigUint::one()
++    } else {
++        root
++    };
++    (lower, upper)
++}
++
+ // Compute cosine of |c| < 1
+ // uses a Taylor series expansion.
+--- a/crates/hyperreal/src/computable/approximation/precision_tests.rs
++++ b/crates/hyperreal/src/computable/approximation/precision_tests.rs
+@@ -33,3 +33,71 @@
+         assert_eq!(msd_from_appr(i32::MAX, &input), Err(Problem::OutOfRange));
+     }
+ }
++
++#[test]
++fn direct_nth_root_bounds_preserve_small_enclosures() {
++    for degree in 3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
++        for sample in 2_u32..=1_024 {
++            let sample = BigUint::from(sample);
++            let (lower, upper) = integer_nth_root_bounds(&sample, degree);
++            let low = &sample - BigUint::one();
++            let high = &sample + BigUint::one();
++            // Check the defining floor/ceiling inequalities independently of
++            // the branch used to recover the lower endpoint.
++            assert!(lower.pow(degree) <= low);
++            assert!((&lower + BigUint::one()).pow(degree) > low);
++            assert!(upper.pow(degree) >= high);
++            assert!((&upper - BigUint::one()).pow(degree) < high);
++        }
++    }
++}
++
++#[test]
++fn direct_nth_root_bounds_preserve_wide_power_neighbors() {
++    for degree in 3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
++        let full_size_root_bits = 65_568_u32.div_ceil(degree) as usize;
++        for root_bits in [
++            1_usize,
++            2,
++            7,
++            8,
++            15,
++            16,
++            31,
++            32,
++            63,
++            64,
++            127,
++            128,
++            511,
++            1_024,
++            4_096,
++            full_size_root_bits,
++        ] {
++            for low_bits in [7_u32, 8] {
++                let root = (BigUint::one() << root_bits) + BigUint::from(low_bits);
++                let perfect_power = root.pow(degree);
++                for delta in -2_i32..=2 {
++                    let sample = if delta < 0 {
++                        &perfect_power - BigUint::from(delta.unsigned_abs())
++                    } else {
++                        &perfect_power + BigUint::from(delta as u32)
++                    };
++                    let (lower, upper) = integer_nth_root_bounds(&sample, degree);
++                    // Retain the previous two-root construction as a
++                    // differential oracle for both exact integer endpoints.
++                    let reference_lower = (&sample - BigUint::one()).nth_root(degree);
++                    let high = &sample + BigUint::one();
++                    let mut reference_upper = high.nth_root(degree);
++                    if reference_upper.pow(degree) < high {
++                        reference_upper += BigUint::one();
++                    }
++                    assert!(
++                        lower == reference_lower && upper == reference_upper,
++                        "degree {degree}, root bits {root_bits}, low bits {low_bits}, delta {delta}"
++                    );
++                }
++            }
++        }
++    }
++}
+--- a/crates/hyperreal/src/computable/node/approximation_queries.rs
++++ b/crates/hyperreal/src/computable/node/approximation_queries.rs
+@@ -174,6 +174,12 @@
+             Approximation::Int(value) => {
+                 if !charge_evaluation_work() {
+                     return Err(Problem::Exhausted);
++                }
++                // A gap beyond the integer's bit length rounds to zero for
++                // either sign. Resolve the scaling helper's same shortcut
++                // here, after the precision checks and work charge.
++                if p > 0 && u64::from(p as u32) > value.bits() {
++                    return Ok(BigInt::zero());
+                 }
+                 return Ok(scale_at_precision_ref(value, p));
+             }
+--- a/crates/hyperreal/src/computable/node/bounds.rs
++++ b/crates/hyperreal/src/computable/node/bounds.rs
+@@ -134,6 +134,79 @@
+         _ => BoundInfo::Unknown,
+     }
+ }
++
++pub(crate) open spec fn merged_bound(retained: BoundInfo, incoming: BoundInfo) -> BoundInfo {
++    match (retained, incoming) {
++        (BoundInfo::Unknown, other) => other,
++        (other, BoundInfo::Unknown) => other,
++        (BoundInfo::NonZero { sign: ls, msd: lm, exact_msd: le },
++         BoundInfo::NonZero { sign: rs, msd: rm, exact_msd: re }) => {
++            let magnitude = match (lm, le, rm, re) {
++                (Some(l), true, _, _) => (Some(l), true),
++                (_, _, Some(r), true) => (Some(r), true),
++                (Some(l), false, Some(r), false) => (Some(if l < r { l } else { r }), false),
++                (Some(l), false, None, _) => (Some(l), false),
++                (None, _, r, _) => (r, false),
++            };
++            BoundInfo::NonZero {
++                sign: match ls { Some(_) => ls, None => rs },
++                msd: magnitude.0, exact_msd: magnitude.1,
++            }
++        },
++        (other, _) => other,
++    }
++}
++}
++
++impl BoundCache {
++    // Publication checks compatibility separately. This selection is total;
++    // retaining both certificates requires that they describe the same real.
++    #[inline(never)]
++    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
++    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
++        ensures result == match self {
++            Self::Invalid => incoming,
++            Self::Valid(retained) => merged_bound(retained, incoming),
++        },
++    ))]
++    fn merge(self, incoming: BoundInfo) -> BoundInfo {
++        match (self, incoming) {
++            (Self::Invalid | Self::Valid(BoundInfo::Unknown), other) => other,
++            (Self::Valid(other), BoundInfo::Unknown) => other,
++            (Self::Valid(BoundInfo::Zero), BoundInfo::Zero) => BoundInfo::Zero,
++            (
++                Self::Valid(BoundInfo::NonZero {
++                    sign,
++                    msd,
++                    exact_msd,
++                }),
++                BoundInfo::NonZero {
++                    sign: proved_sign,
++                    msd: proved_msd,
++                    exact_msd: proved_exact,
++                },
++            ) => {
++                let (msd, exact_msd) = match (msd, exact_msd, proved_msd, proved_exact) {
++                    (Some(known), true, _, _) => (Some(known), true),
++                    (_, _, Some(proved), true) => (Some(proved), true),
++                    (Some(known), false, Some(proved), false) => {
++                        (Some(if known < proved { known } else { proved }), false)
++                    }
++                    (Some(known), false, None, _) => (Some(known), false),
++                    (None, _, proved, _) => (proved, false),
++                };
++                BoundInfo::NonZero {
++                    sign: match sign {
++                        Some(_) => sign,
++                        None => proved_sign,
++                    },
++                    msd,
++                    exact_msd,
++                }
++            }
++            (Self::Valid(retained), _) => retained,
++        }
++    }
+ }
+ 
+ impl BoundInfo {
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -496,12 +496,14 @@
+         #[cfg(test)]
+         cache_publication_tests::before_bound_publication(self, BoundCache::Valid(value));
+         loop {
+-            // Combine independent sign and magnitude evidence. Smaller upper
+-            // bounds are stronger; an exact binade also supplies a lower bound.
+-            let combined = match (Self::decode_bound(current), value) {
+-                (BoundCache::Invalid | BoundCache::Valid(BoundInfo::Unknown), proof) => proof,
+-                (BoundCache::Valid(retained), BoundInfo::Unknown) => retained,
+-                (BoundCache::Valid(BoundInfo::Zero), BoundInfo::Zero) => BoundInfo::Zero,
++            let retained = Self::decode_bound(current);
++            // Diagnose incompatible producers before selecting the combined
++            // certificate. Keep the diagnostics outside the pure selection.
++            #[cfg(debug_assertions)]
++            match (retained, value) {
++                (BoundCache::Invalid | BoundCache::Valid(BoundInfo::Unknown), _)
++                | (_, BoundInfo::Unknown)
++                | (BoundCache::Valid(BoundInfo::Zero), BoundInfo::Zero) => {}
+                 (
+                     BoundCache::Valid(BoundInfo::NonZero {
+                         sign,
+@@ -539,29 +541,17 @@
+                             "proved exact magnitude exceeds a retained upper bound"
+                         );
+                     }
+-                    let (msd, exact_msd) = match (msd, exact_msd, proved_msd, proved_exact) {
+-                        (Some(known), true, _, _) => (Some(known), true),
+-                        (_, _, Some(proved), true) => (Some(proved), true),
+-                        (Some(known), false, Some(proved), false) => {
+-                            (Some(known.min(proved)), false)
+-                        }
+-                        (Some(known), false, None, _) => (Some(known), false),
+-                        (None, _, proved, _) => (proved, false),
+-                    };
+-                    BoundInfo::NonZero {
+-                        sign: sign.or(proved_sign),
+-                        msd,
+-                        exact_msd,
+-                    }
+                 }
+                 (BoundCache::Valid(retained), proof) => {
+                     debug_assert_eq!(
+                         retained, proof,
+                         "immutable real has conflicting zero proofs"
+                     );
+-                    retained
+                 }
+-            };
++            }
++            // Smaller upper bounds are stronger; an exact binade also carries
++            // a lower bound. The included method preserves this selection.
++            let combined = retained.merge(value);
+             let encoded = Self::encode_bound(BoundCache::Valid(combined));
+             let updated = (current & Self::NON_BOUND_MASK) | encoded;
+             if updated == current {
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -1,8 +1,8 @@
+ # Verus verification of Hyperreal
+ 
+ The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
+-The current proof target verifies ninety-seven production contracts (eighty-eight
+-functions and nine constants) and one hundred thirty arithmetic model theorems. The rest
++The current proof target verifies ninety-eight production contracts (eighty-nine
++functions and nine constants) and one hundred thirty-five arithmetic model theorems. The rest
+ of the crate is still awaiting implementation refinement proofs. A passing
+ Verus job must not be described as 100% verification of Hyperreal.
+ 
+@@ -80,9 +80,9 @@
+ [attribute syntax guide](https://verus-lang.github.io/verus/guide/exec_attr.html).
+ 
+ The proof target also includes the production `computable/node/bounds.rs`
+-directly. Eighteen constructor, transformation and query contracts preserve the
++directly. Nineteen constructor, transformation and query contracts preserve the
+ typed bound state, exponent calculations and the distinction between zero and
+-an unavailable exponent. Twenty-eight denotation lemmas connect these checked
++an unavailable exponent. Thirty-three denotation lemmas connect these checked
+ contracts to sign, nonzero, upper-magnitude and exact real-binade certificates,
+ conditional on valid input bounds. Every available exponent bounds the magnitude
+ strictly below `2^(msd + 1)`; an exact exponent also proves `2^msd <= abs(value)`.
+@@ -105,6 +105,19 @@
+ does not establish that caller ordering, operand existence, bound production,
+ or concurrent atomic publication. A declined certificate means this particular
+ proof is unavailable, not that the operand is outside its domain.
++
++The included `BoundCache::merge` body selects the combined bound used by
++`AtomicFacts::publish_bound`, including an uninitialized cache. Invalid and
++Unknown cache states select the incoming bound. It retains signs, zero/nonzero
++facts, tighter upper bounds and available exact binades from both compatible inputs. Bounds valid for
++the same real are compatible; their selected result still denotes that real.
++Every sufficient domain certificate accepted from either input remains accepted
++from the result. Combining independently available sign and magnitude evidence
++may also establish a new domain certificate. The exact typed selection contract
++covers unavailable exponents and conflicting typed states, but retention of both
++inputs requires compatibility. The publication site's debug conflict checks,
++input producers, atomic storage invariant and compare-exchange loop remain outside
++this proof. The runtime keeps its existing diagnostics and atomic retry order.
+ 
+ The production `computable/node/representation.rs` file also supplies three
+ pure cache codecs. Bound packing preserves every typed state, sign, optional
+@@ -148,6 +161,7 @@
+ | `BoundInfo::magnitude_bits`, `public_sign`, `private_sign` | Complete public magnitude export with the exactness flag preserved, and lossless conversion of negative, zero and positive signs. Conditional denotation lemmas certify every exported upper bound and the additional lower bound of an exact magnitude. | Public structural facts and private sign import |
+ | `BoundInfo::certified_sign_and_msd` | Preserves every known sign and exact magnitude while declining upper bounds without a matching lower bound. Returned zero and binade certificates are sound conditional on valid incoming bounds. | Precision selection in reciprocal, addition, multiplication and square root; graph and approximation-kernel proofs remain open |
+ | `BoundInfo::proves_domain` | Exact sufficient-certificate decisions for cached magnitude domains. Accepted decisions imply the real domain conditional on a valid bound for an independently established real; false does not prove invalidity. | Cached-domain validation after independent operand existence; callers, bound producers and atomics remain open |
++| `BoundCache::merge` | Exact typed selection including an uninitialized cache, and retention of both compatible inputs' signs, zero/nonzero status, upper and exact magnitudes, and sufficient domain certificates. Valid inputs for the same real are compatible and the result denotes that real. | Pure selection inside atomic bound publication; conflict diagnostics, producer soundness and the CAS loop remain open |
+ | `AtomicFacts::encode_bound` | Exact wire layout; the round-trip theorem recovers every typed bound, including both signed exponent limits and unavailable magnitudes. | Atomic bound-cache publication |
+ | `AtomicFacts::encode_exact_sign`, `AtomicFacts::decode_exact_sign` | Lossless exact-sign encoding, zero unused bits, valid encoded tags, and exact decoding for every valid sign tag. | Atomic exact-sign cache |
+ | Public certificate accessors | Exact extraction of known sign, ordering and equality answers; unknown stays `None`, and knownness matches the variant. | Predicate and solver certificate consumers |
+--- a/crates/hyperreal/verification/bound_denotation.rs
++++ b/crates/hyperreal/verification/bound_denotation.rs
+@@ -82,6 +82,94 @@
+                 None => true,
+             },
+     }
++}
++
++// Compatibility is a premise about two certificates for one immutable real.
++// It is not established merely by storing them in the same cache slot.
++pub(crate) open spec fn compatible_bounds(left: BoundInfo, right: BoundInfo) -> bool {
++    match (left, right) {
++        (BoundInfo::Unknown, _) | (_, BoundInfo::Unknown) => true,
++        (BoundInfo::Zero, BoundInfo::Zero) => true,
++        (BoundInfo::NonZero { sign: ls, msd: lm, exact_msd: le },
++         BoundInfo::NonZero { sign: rs, msd: rm, exact_msd: re }) =>
++            (match (ls, rs) { (Some(l), Some(r)) => l == r, _ => true })
++            && (match (lm, rm) {
++                (Some(l), Some(r)) => (le ==> l <= r) && (re ==> r <= l),
++                _ => true,
++            }),
++        _ => false,
++    }
++}
++
++// An unavailable exponent conveys no magnitude, even if exact_msd is set.
++// Every available sign, zero/nonzero fact and lower/upper bound must survive.
++pub(crate) open spec fn retains_bound(before: BoundInfo, after: BoundInfo) -> bool {
++    match (before, after) {
++        (BoundInfo::Unknown, _) => true,
++        (BoundInfo::Zero, BoundInfo::Zero) => true,
++        (BoundInfo::NonZero { sign: bs, msd: bm, exact_msd: be },
++         BoundInfo::NonZero { sign: as_, msd: am, exact_msd: ae }) =>
++            (bs.is_some() ==> as_ == bs)
++            && (match bm {
++                Some(b) => match am {
++                    Some(a) => a <= b && (be ==> ae && a == b),
++                    None => false,
++                },
++                None => true,
++            }),
++        _ => false,
++    }
++}
++
++proof fn exact_binade_cannot_exceed_upper(value: real, exact: int, upper: int)
++    requires real_binade(value, exact), magnitude_upper_bound(value, upper),
++    ensures exact <= upper,
++{
++    if upper < exact {
++        magnitude_upper_bound_is_monotone(value, upper, exact - 1);
++        binary_unit_successor(exact - 1);
++    }
++}
++
++proof fn bounds_for_one_real_are_compatible(left: BoundInfo, right: BoundInfo, value: real)
++    requires bound_denotes(left, value), bound_denotes(right, value),
++    ensures compatible_bounds(left, right),
++{
++    if let (BoundInfo::NonZero { msd: Some(l), exact_msd: le, .. },
++            BoundInfo::NonZero { msd: Some(r), exact_msd: re, .. }) = (left, right) {
++        if le { exact_binade_cannot_exceed_upper(value, l as int, r as int); }
++        if re { exact_binade_cannot_exceed_upper(value, r as int, l as int); }
++    }
++}
++
++proof fn merged_bound_preserves_denotation(
++    retained: BoundInfo, incoming: BoundInfo, value: real, result: BoundInfo,
++)
++    requires bound_denotes(retained, value), bound_denotes(incoming, value),
++        call_ensures(BoundCache::merge, (BoundCache::Valid(retained), incoming), result),
++    ensures bound_denotes(result, value),
++{}
++
++proof fn merged_bound_retains_compatible_certificates(
++    retained: BoundInfo, incoming: BoundInfo, result: BoundInfo,
++)
++    requires compatible_bounds(retained, incoming),
++        call_ensures(BoundCache::merge, (BoundCache::Valid(retained), incoming), result),
++    ensures retains_bound(retained, result), retains_bound(incoming, result),
++{}
++
++proof fn merged_bound_preserves_domain_certificates(
++    retained: &BoundInfo, incoming: &BoundInfo, merged: &BoundInfo, domain: RequiredRealDomain,
++    retained_answer: bool, incoming_answer: bool, merged_answer: bool,
++)
++    requires compatible_bounds(*retained, *incoming),
++        call_ensures(BoundCache::merge, (BoundCache::Valid(*retained), *incoming), *merged),
++        call_ensures(BoundInfo::proves_domain, (retained, domain), retained_answer),
++        call_ensures(BoundInfo::proves_domain, (incoming, domain), incoming_answer),
++        call_ensures(BoundInfo::proves_domain, (merged, domain), merged_answer),
++    ensures (retained_answer || incoming_answer) ==> merged_answer,
++{
++    merged_bound_retains_compatible_certificates(*retained, *incoming, *merged);
+ }
+ 
+ proof fn constructor_preserves_certificates(
+--- a/crates/hyperreal/verification/scope.json
++++ b/crates/hyperreal/verification/scope.json
+@@ -97,7 +97,8 @@
+     "computable_bounds::BoundInfo::add",
+     "computable_cache::impl&%0::FINITE_REAL",
+     "verified::word::upper_bit_length_msd",
+-    "computable_bounds::BoundInfo::proves_domain"
++    "computable_bounds::BoundInfo::proves_domain",
++    "computable_bounds::BoundCache::merge"
+   ],
+   "verified_model_theorems": [
+     "verified::division::gcd_preserves_common_divisors",
+@@ -229,7 +230,12 @@
+     "computable_bounds::clamped_upper_exponent_preserves_certificates",
+     "computable_bounds::upper_magnitude_proves_open_unit",
+     "computable_bounds::positive_binade_proves_at_least_one",
+-    "computable_bounds::accepted_bound_proves_real_domain"
++    "computable_bounds::accepted_bound_proves_real_domain",
++    "computable_bounds::exact_binade_cannot_exceed_upper",
++    "computable_bounds::bounds_for_one_real_are_compatible",
++    "computable_bounds::merged_bound_preserves_denotation",
++    "computable_bounds::merged_bound_retains_compatible_certificates",
++    "computable_bounds::merged_bound_preserves_domain_certificates"
+   ],
+   "obligations": [
+     {
+--- a/crates/hyperreal/verification/test_bound_rejections.py
++++ b/crates/hyperreal/verification/test_bound_rejections.py
+@@ -171,6 +171,61 @@
+ ]
+ 
+ 
++# Selection must retain both inputs when compatible. The production wrapper's
++# diagnostics and atomic loop remain separate from this included pure method.
++MUTATIONS += [
++    ('merge', '(Self::Invalid | Self::Valid(BoundInfo::Unknown), other) => other,',
++     '(Self::Invalid | Self::Valid(BoundInfo::Unknown), other) => BoundInfo::Unknown,'),
++    ('merge', '(Self::Valid(other), BoundInfo::Unknown) => other,',
++     '(Self::Valid(other), BoundInfo::Unknown) => BoundInfo::Unknown,'),
++    ('merge', '(Some(known), true, _, _) => (Some(known), true),',
++     '(Some(known), true, _, _) => (Some(known), false),'),
++    ('merge', '(_, _, Some(proved), true) => (Some(proved), true),',
++     '(_, _, Some(proved), true) => (Some(proved), false),'),
++    ('merge', 'if known < proved { known } else { proved }',
++     'if known > proved { known } else { proved }'),
++    ('merge', '(Some(known), false, None, _) => (Some(known), false),',
++     '(Some(known), false, None, _) => (None, false),'),
++    ('merge', '(None, _, proved, _) => (proved, false),',
++     '(None, _, proved, _) => (None, false),'),
++    ('merge', '(None, _, proved, _) => (proved, false),',
++     '(None, _, proved, _) => (proved, true),'),
++    ('merge', 'Some(_) => sign,', 'Some(_) => None,'),
++    ('merge', 'None => proved_sign,', 'None => None,'),
++    ('merge', '(Self::Valid(retained), _) => retained,',
++     '(Self::Valid(retained), _) => BoundInfo::Unknown,'),
++    ('merge', '(Self::Invalid | Self::Valid(BoundInfo::Unknown), other) => other,',
++     '(Self::Invalid, _) => BoundInfo::Unknown,\n'
++     '            (Self::Valid(BoundInfo::Unknown), other) => other,'),
++]
++
++MODEL_MUTATIONS += [
++    ('exact binade permits equal upper exponent', 'ensures exact <= upper,', 'ensures exact < upper,'),
++    ('compatible bounds require the retained denotation',
++     'requires bound_denotes(left, value), bound_denotes(right, value),',
++     'requires bound_denotes(right, value),'),
++    ('compatible bounds require the incoming denotation',
++     'requires bound_denotes(left, value), bound_denotes(right, value),',
++     'requires bound_denotes(left, value),'),
++    ('merge requires the retained denotation',
++     'requires bound_denotes(retained, value), bound_denotes(incoming, value),',
++     'requires bound_denotes(incoming, value),'),
++    ('merge requires the incoming denotation',
++     'requires bound_denotes(retained, value), bound_denotes(incoming, value),',
++     'requires bound_denotes(retained, value),'),
++    ('merge retention requires compatibility',
++     'requires compatible_bounds(retained, incoming),', 'requires true,'),
++    ('merged domain retention requires compatibility',
++     'requires compatible_bounds(*retained, *incoming),', 'requires true,'),
++    ('retained upper bounds may only tighten',
++     'Some(a) => a <= b && (be ==> ae && a == b),',
++     'Some(a) => a >= b && (be ==> ae && a == b),'),
++    ('combined evidence may add a domain certificate',
++     'ensures (retained_answer || incoming_answer) ==> merged_answer,',
++     'ensures (retained_answer || incoming_answer) == merged_answer,'),
++]
++
++
+ def mutate_body(source, method, before, after):
+     anchor = 'fn ' + method + '('
+     if source.count(anchor) != 1:

@@ -1,0 +1,20 @@
+--- validate_nth_root_enclosure_candidate.py
++++ validate_integer_coarse_zero_candidate.py
+@@ -16 +16 @@
+-    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
++    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
+@@ -18 +18 @@
+-    assert expected == "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3"
++    assert expected == "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
+@@ -41 +41 @@
+-    out = E / "nth-root-enclosure-candidate-validation-v2013.json"
++    out = E / "integer-coarse-zero-candidate-validation-v2092.json"
+@@ -44 +44 @@
+-    for version, (prior, item) in zip(range(2005, 2014), baseline["phases"].items()):
++    for version, (prior, item) in zip(range(2084, 2093), baseline["phases"].items()):
+@@ -46 +46 @@
+-        phase = f"typed-api-prototype-v{version}-nth-root-enclosure-{suffix}"
++        phase = f"typed-api-prototype-v{version}-integer-coarse-zero-{suffix}"
+@@ -58 +58 @@
+-            "scope": "Unchanged nine runtime commands from the v1836 retained candidate; the combined kernel/selector proposal remains unretained pending cost and replay gates.",
++            "scope": "Unchanged nine runtime commands from the v1836 retained candidate; the combined integer/kernel/selector proposal remains unretained pending cost and replay gates.",

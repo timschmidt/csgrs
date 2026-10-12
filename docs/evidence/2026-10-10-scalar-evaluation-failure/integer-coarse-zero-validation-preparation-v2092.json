@@ -1,0 +1,58 @@
+{
+  "status": "Prepared before running the nine broad commands on the charged integer shortcut",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "proof_record": "integer-coarse-zero-proof-validation-v2083.json",
+  "proof_record_sha256": "897f481c4d917c4b035e8c082825464ab0e7ed5840ce9a3d5a4dff382db3364b",
+  "runner_forks": {
+    "validate_integer_coarse_zero_candidate.py": {
+      "predecessor": "validate_nth_root_enclosure_candidate.py",
+      "predecessor_sha256": "a3c5643407f9f912767f72863eaaef95575dd44a6cb4d6c8b439cb5dd28e5a62",
+      "fork_sha256": "c67b8f6399da671768d245ff0612d3508d6723bfc5f1181192c634a87c3a6eee",
+      "patch": "validate_integer_coarse_zero_candidate-v2092.patch",
+      "patch_sha256": "70db11692515274cbba4e08ed0bc60787a721ec474e56d7e80d264145a37be8f"
+    },
+    "record_integer_coarse_zero_validation.py": {
+      "predecessor": "record_nth_root_enclosure_validation.py",
+      "predecessor_sha256": "4746c6c0269d45ab7c7e8407b6502505397e01a76087427e7fb7c64e2edb3a2f",
+      "fork_sha256": "d9905c4f753957aa5830c381f96a6ff53103eefee27d564646667180dc9d8146",
+      "patch": "record_integer_coarse_zero_validation-v2092.patch",
+      "patch_sha256": "cc1de295175e668d87133a2ad189bea595d4fc5ff5476e4e396020a51c7b169d"
+    }
+  },
+  "preparer_sha256": "53eb4776dd6a56a45ecc5d085043de86d9e04215da7ed3d5aa584c57bae6c258",
+  "baseline_commands": "domain-predicate-candidate-validation-v1772.json",
+  "phases": [
+    2084,
+    2085,
+    2086,
+    2087,
+    2088,
+    2089,
+    2090,
+    2091,
+    2092
+  ],
+  "expected_tests": {
+    "scalar": [
+      1076,
+      1,
+      0
+    ],
+    "stack": [
+      5860,
+      3,
+      33
+    ],
+    "default": [
+      1061,
+      3,
+      0
+    ],
+    "debug": [
+      1076,
+      1,
+      0
+    ]
+  },
+  "limits": "No command, fixture, test, test count, warning allowance or ignored case changes. Retain all 108 included formatting paths and both strict Clippy configurations. Source identity and phase names change; broad success does not pass the separate frozen cost/replay gates."
+}
