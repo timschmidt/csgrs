@@ -1,0 +1,25 @@
+{
+  "status": "Baseline protocol frozen before running new tests; production runtime unchanged from v1672",
+  "previous_checkpoint": "typed-api-prototype-v1672-state.json",
+  "previous_source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "source_changes": [
+    "crates/hyperreal/src/computable/node.rs",
+    "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+    "crates/hyperreal/src/computable/node/domain_bound_tests.rs"
+  ],
+  "old_test_change": "Only the known misleading shared-constant warmup comment is corrected. The log test expressions, setup order, measurements and assertions are unchanged; all earlier source versions remain archived.",
+  "new_cases": {
+    "private_unit_domain_proofs": 36,
+    "private_at_least_one_domain_proofs": 6,
+    "private_required_domain_proofs": 14,
+    "upper_bound_is_not_lower_bound_controls": 2,
+    "domain_endpoints": 28,
+    "invalid_descendants": 18,
+    "public_budget_queries": 1584,
+    "public_fine_retries": 36,
+    "zero_work_cached_retry_queries": 144
+  },
+  "oracle": "256-bit directed MPFR pi endpoints; exact rational binary scaling, squaring and negation; monotone directed asin/atanh and reversed acos endpoints; both enclosing endpoints must fit the one-unit result interval.",
+  "scope": "The three one-unit proof tests are expected to demonstrate avoidable exhaustion. Public construction/reconstruction surveys accept only valid numerical samples or typed Exhausted, preserve prior definite signs and require failed roots not to publish numeric caches. Private diagnostic roots are explicitly distinct from public routes.",
+  "limits": "Public survey pi cache is explicitly warmed at -512; other shared constants may evolve in exact process order. Rust allocations exclude native memory and fixture setup. EvaluationBudget gives no byte/time bound. No production change is made before freezing the baseline and invalid-domain controls."
+}

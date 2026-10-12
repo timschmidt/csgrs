@@ -1,0 +1,86 @@
+{
+  "status": "Production unchanged from v1672; measured domain-bound proof-order exhaustion and all negative controls frozen before repair",
+  "previous_checkpoint": "typed-api-prototype-v1672-state.json",
+  "source_record": "typed-api-prototype-v1673-domain-bound-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "cb6c5b61b3c9631d6eae161e3d5869c2ca8e0d76c672998e11368ad49bf7e5be",
+  "changed_sources_sha256": {
+    "crates/hyperreal/src/computable/node.rs": "faf381222f9cfecd9bd5fd631dd936580ededb9e6275c7ea27684e2c53c9f042",
+    "crates/hyperreal/src/computable/node/domain_bound_tests.rs": "2addba8a5cbb3efc5f47dc07639890789a2a5f19f24b3ed1af794f3c20965d45",
+    "crates/hyperreal/src/computable/node/log_range_probe_tests.rs": "b320d97b6f7357201f0cb40f1f2711da84a32c1dcc2ea8a6ac3569f02d521f6a"
+  },
+  "old_test_behavior_unchanged": true,
+  "comment_correction": "Only the misleading log shared-constant warmup comment changed. Every old test expression, ordering and assertion is preserved.",
+  "cap_record": "domain-bound-baseline-caps-v1682.json",
+  "observations_record": "domain-bound-baseline-observations-v1683.json",
+  "observations_sha256": "52132491366974315ad3348c3d30df6f4d3c64dcfa8f826aafeba6bda89d659f",
+  "private_domain_observations": 56,
+  "private_cheap_completions": 4,
+  "private_avoidable_exhaustions": 52,
+  "invalid_and_endpoint_controls": 48,
+  "public_queries": 1584,
+  "public_successes": 415,
+  "public_exhaustions": 1169,
+  "public_counts_by_kind": {
+    "asin": {
+      "exhausted": 379,
+      "success": 149
+    },
+    "acos": {
+      "exhausted": 434,
+      "success": 94
+    },
+    "atanh": {
+      "exhausted": 356,
+      "success": 172
+    }
+  },
+  "unlimited_fine_retries": 36,
+  "zero_work_retry_queries": 144,
+  "baseline_units": {
+    "top_level_batches": 1,
+    "top_level_passed": 1071,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1071,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1071,
+        "status": "ok",
+        "passed": 1071,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "proposed_change": "Consult only existing root magnitude facts before bounded rational recognition, preserving independent existence proofs and all cold fallbacks. An upper magnitude below zero proves the open unit interval; a positive exact binade at or above zero proves at least one. An upper estimate never supplies that lower bound.",
+  "limits": [
+    "Private finite/domain helpers are diagnostics; the public survey uses ordinary asin/acos/atanh construction, public approximation budgets and public serialization round-trips.",
+    "The lower-bound diagnostic explicitly establishes child existence through the internal validator; no native public domain-certification API is claimed.",
+    "Survey cases run in fixed order with pi prewarmed to -512. Other shared constants may evolve; these are not globally cold-process comparisons.",
+    "MPFR supplies independent directed enclosures for every successful public result and fine retry. Exhaustions are not numerical correctness observations.",
+    "No production method changed. No byte/time budget, universal completeness or main-runtime admission claim follows. All original hard fixtures remain unchanged.",
+    "Main runtime and all 49 preexisting changes remain preserved. All 39 properties, 14 targets and crate future work remain in scope."
+  ]
+}
