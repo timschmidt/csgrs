@@ -1,0 +1,8 @@
+atan zero-term dispatch bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }
+atan zero-term dispatch bits=65, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=4097, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=65537, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }
+atan zero-term dispatch bits=1000001, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }

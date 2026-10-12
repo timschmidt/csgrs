@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::atan_numeric_probe_tests::atan_numeric_internal_deferred ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1062 filtered out; finished in 0.01s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::atan_numeric_probe_tests::atan_numeric_internal_deferred", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "65b67ca0f3710818edbbfb66f89147ab2dfca48aa6d93f7f868d915f7ed25058", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.02862151013687253}

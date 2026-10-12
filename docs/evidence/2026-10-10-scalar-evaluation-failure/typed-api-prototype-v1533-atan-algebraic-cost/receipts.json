@@ -1,0 +1,1622 @@
+[
+  {
+    "name": "square_roots-0",
+    "command": {
+      "name": "square_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034398873802274466,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "122092",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-1",
+    "command": {
+      "name": "square_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03355983179062605,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "104803",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-2",
+    "command": {
+      "name": "square_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033463327679783106,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "106442",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-3",
+    "command": {
+      "name": "square_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03350153611972928,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "138891",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-4",
+    "command": {
+      "name": "square_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033803665079176426,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "133011",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-5",
+    "command": {
+      "name": "square_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03395285410806537,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109692",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-6",
+    "command": {
+      "name": "square_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034206656739115715,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109063",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-7",
+    "command": {
+      "name": "square_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03431152971461415,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107852",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "square_roots-8",
+    "command": {
+      "name": "square_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033737748861312866,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "104542",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-0",
+    "command": {
+      "name": "cube_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8169186632148921,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1127562",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-1",
+    "command": {
+      "name": "cube_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.818056105170399,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1158650",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-2",
+    "command": {
+      "name": "cube_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7682859138585627,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1148111",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-3",
+    "command": {
+      "name": "cube_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8183058579452336,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1217687",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-4",
+    "command": {
+      "name": "cube_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8184601282700896,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1177139",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-5",
+    "command": {
+      "name": "cube_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.8187110610306263,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1207287",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-6",
+    "command": {
+      "name": "cube_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7679589567705989,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1129092",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-7",
+    "command": {
+      "name": "cube_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7676588469184935,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1136573",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "cube_roots-8",
+    "command": {
+      "name": "cube_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "3",
+        "3",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.7677511107176542,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "1148591",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-0",
+    "command": {
+      "name": "fourth_roots-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8691493719816208,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11406619",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-1",
+    "command": {
+      "name": "fourth_roots-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8189808670431376,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "12173666",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-2",
+    "command": {
+      "name": "fourth_roots-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8698210562579334,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11446246",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-3",
+    "command": {
+      "name": "fourth_roots-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.870431813877076,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11662782",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-4",
+    "command": {
+      "name": "fourth_roots-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8193947789259255,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11383350",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-5",
+    "command": {
+      "name": "fourth_roots-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.869685335084796,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11721017",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-6",
+    "command": {
+      "name": "fourth_roots-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.870029821060598,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11688529",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-7",
+    "command": {
+      "name": "fourth_roots-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.8701847302727401,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11588566",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "fourth_roots-8",
+    "command": {
+      "name": "fourth_roots-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 1.870209479238838,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11489853",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-0",
+    "command": {
+      "name": "reciprocals-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06708126608282328,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "190567",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-1",
+    "command": {
+      "name": "reciprocals-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06657593976706266,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "208176",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-2",
+    "command": {
+      "name": "reciprocals-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06663136603310704,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "191617",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-3",
+    "command": {
+      "name": "reciprocals-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06623982265591621,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "188917",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-4",
+    "command": {
+      "name": "reciprocals-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06585411028936505,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "186907",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-5",
+    "command": {
+      "name": "reciprocals-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06592225516214967,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "190987",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-6",
+    "command": {
+      "name": "reciprocals-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06591845490038395,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "187857",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-7",
+    "command": {
+      "name": "reciprocals-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06577178463339806,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "185817",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "reciprocals-8",
+    "command": {
+      "name": "reciprocals-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "3",
+        "0",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0658925580792129,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "193056",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-0",
+    "command": {
+      "name": "wide_256-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03381113475188613,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "267031",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-1",
+    "command": {
+      "name": "wide_256-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033659165259450674,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "261743",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-2",
+    "command": {
+      "name": "wide_256-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03358653001487255,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "272941",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-3",
+    "command": {
+      "name": "wide_256-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03356044227257371,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "261352",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-4",
+    "command": {
+      "name": "wide_256-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0337204709649086,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "273132",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-5",
+    "command": {
+      "name": "wide_256-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033829142805188894,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "284020",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-6",
+    "command": {
+      "name": "wide_256-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03367065405473113,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "260502",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-7",
+    "command": {
+      "name": "wide_256-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033578949980437756,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "280810",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_256-8",
+    "command": {
+      "name": "wide_256-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "256",
+        "false",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03376380819827318,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "261862",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-0",
+    "command": {
+      "name": "wide_1024_inverse-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03380489535629749,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "358065",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-1",
+    "command": {
+      "name": "wide_1024_inverse-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03367857402190566,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "375234",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-2",
+    "command": {
+      "name": "wide_1024_inverse-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0335912499576807,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "356335",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-3",
+    "command": {
+      "name": "wide_1024_inverse-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0335253537632525,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "351176",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-4",
+    "command": {
+      "name": "wide_1024_inverse-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03363594692200422,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "345647",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-5",
+    "command": {
+      "name": "wide_1024_inverse-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033624387346208096,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "348046",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-6",
+    "command": {
+      "name": "wide_1024_inverse-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033662864938378334,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "360726",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-7",
+    "command": {
+      "name": "wide_1024_inverse-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03390930825844407,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "352836",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "wide_1024_inverse-8",
+    "command": {
+      "name": "wide_1024_inverse-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1533-atan-algebraic-cost/probe",
+        "cost",
+        "2",
+        "2",
+        "1024",
+        "true",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03408027580007911,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "444319",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

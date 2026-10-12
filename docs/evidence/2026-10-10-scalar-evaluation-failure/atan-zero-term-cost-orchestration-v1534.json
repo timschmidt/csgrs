@@ -1,0 +1,118 @@
+{
+  "source_record_sha256": "f904a928c9c10f8865a31148ab29671bb275a5cd83d6d86c3c7b43844c5303ff",
+  "runner_sha256": "1e582f60d4cace58d23c16fe9200c7951df36f77f9a289e486e1561f34f484da",
+  "completed": true,
+  "results": [
+    {
+      "family": "atan",
+      "phase": "typed-api-prototype-v1528-atan-zero-term-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_atan_zero_term_cost.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1528-atan-zero-term-cost"
+      ],
+      "helper_sha256": "617489543d16bf8fd45d235e82de08f92caeee93818c3540caa9647307c462c2",
+      "exit_code": 0,
+      "seconds": 4.490888542961329,
+      "processes": 108,
+      "summary_sha256": "79bc70898b0793e41218b96c4c14eca7c50e5f6eb6098bb68cba3edb569e7561"
+    },
+    {
+      "family": "integer",
+      "phase": "typed-api-prototype-v1529-atan-integer-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_integer_scale_cost.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1529-atan-integer-cost"
+      ],
+      "helper_sha256": "ace8a426540d960c9cd5a19b2eb8cd2c841effa475bad8177b53eb84c391741a",
+      "exit_code": 0,
+      "seconds": 3.660074620973319,
+      "processes": 72,
+      "summary_sha256": "0546e9ed9099ba36adf13301d08863c135082f5698ebb2529672b5e6d62d36b9"
+    },
+    {
+      "family": "inverse_trig",
+      "phase": "typed-api-prototype-v1530-atan-inverse-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1530-atan-inverse-cost",
+        "typed-api-prototype-v1526-atan-zero-term-unit-tests",
+        "cost"
+      ],
+      "helper_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "exit_code": 0,
+      "seconds": 6.047593701630831,
+      "processes": 54,
+      "summary_sha256": "17eb3df241d67382991b575b20cd91ccc834ce32ad4fa6ee11d5895805f7825f"
+    },
+    {
+      "family": "normal_form",
+      "phase": "typed-api-prototype-v1531-atan-normal-form-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1531-atan-normal-form-cost",
+        "typed-api-prototype-v1526-atan-zero-term-unit-tests",
+        "cost"
+      ],
+      "helper_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "exit_code": 0,
+      "seconds": 4.697678700089455,
+      "processes": 54,
+      "summary_sha256": "445f3d3683abfd49b4e249356c950e2a2515814f4ed57789de10f0fda40b10a9"
+    },
+    {
+      "family": "default",
+      "phase": "typed-api-prototype-v1532-atan-default-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget_cost.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1532-atan-default-cost"
+      ],
+      "helper_sha256": "6e49bf9de05354c03164686fc3308ac7190553767f7a624473bf138f309473af",
+      "exit_code": 0,
+      "seconds": 10.528123783878982,
+      "processes": 54,
+      "summary_sha256": "04ccbf0d0359f42a5a617d53941b261676f026379ecfa13815014b45ede6a470"
+    },
+    {
+      "family": "algebraic",
+      "phase": "typed-api-prototype-v1533-atan-algebraic-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1533-atan-algebraic-cost",
+        "typed-api-prototype-v1526-atan-zero-term-unit-tests",
+        "cost"
+      ],
+      "helper_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "exit_code": 0,
+      "seconds": 29.475915079005063,
+      "processes": 54,
+      "summary_sha256": "4cfd1568203ca6b5d4792d606060a275a73ba84a965e3970a8fa1c5f0838e449"
+    },
+    {
+      "family": "acos",
+      "phase": "typed-api-prototype-v1534-atan-acos-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_acos_warm_cost_v2.py",
+        "typed-api-prototype-v1527-atan-zero-term-release-build",
+        "typed-api-prototype-v1534-atan-acos-cost"
+      ],
+      "helper_sha256": "4d1d880b36efbbad0fd7a2b32962a5e18861f8dcd865f2de227ebd6a7e94fbad",
+      "exit_code": 0,
+      "seconds": 33.284735463093966,
+      "processes": 72,
+      "summary_sha256": "9a43fd6d56dae224874c073184e76253ed9b5a5f1be43add924b88be72502957"
+    }
+  ]
+}

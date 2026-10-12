@@ -1,0 +1,1838 @@
+[
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "12943593",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "11851298",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "475958",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "311958",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "232164",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "189687",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "18779",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "13199",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "6689562",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4413398",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "7467539",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4650801",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 0
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "12839500",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "13694682",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "512375",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "208445",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "326917",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "404743",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "12109",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "13190",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "6771296",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3521699",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "6798694",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3562836",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 1
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "13012599",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "11951312",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "486557",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "160059",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "314418",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "228824",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "15109",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "15899",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7205077",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3742763",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "6506985",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3547647",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 2
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "12885587",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "12123390",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "335477",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "191857",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "205506",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "410052",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "12599",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "19739",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7192637",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4367811",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "7604019",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3771262",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 3
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "13706551",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "13229054",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "549043",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "225035",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "331327",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "390034",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "16329",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "12489",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7309150",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4035733",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "6418120",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3478322",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 4
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "13112172",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "13534643",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "324288",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "152240",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "200297",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "213575",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "23878",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "15219",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7034388",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4075621",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "7059566",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4331043",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 5
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "14844814",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "13333477",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "545643",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "360735",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "296820",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "233344",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "15949",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "12269",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "6895957",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3982168",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "7018789",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3550787",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 6
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "14197178",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "13350685",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "334557",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "186087",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "359295",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "279481",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "14739",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "16389",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7447810",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3804869",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "6973662",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "3442904",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 7
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_integer",
+    "checksum": 5767488156499607552,
+    "dense": false,
+    "elapsed_ns": "12813183",
+    "iterations": 4096,
+    "output_bytes": 161792,
+    "precision": -128,
+    "reciprocal": false,
+    "references": [
+      "467344063707082181071163562541907080498",
+      "-467344063707082181071163562541907080498"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 3,
+    "cached_roots": 0,
+    "case": "small_reciprocal",
+    "checksum": 12196652506430668800,
+    "dense": false,
+    "elapsed_ns": "12278129",
+    "iterations": 4096,
+    "output_bytes": 157696,
+    "precision": -128,
+    "reciprocal": true,
+    "references": [
+      "67170228325401192858676624039028311153",
+      "-67170228325401192858676624039028311153"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_integer",
+    "checksum": 17735618227665768448,
+    "dense": false,
+    "elapsed_ns": "432720",
+    "iterations": 512,
+    "output_bytes": 768,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 65537,
+    "cached_roots": 0,
+    "case": "medium_reciprocal",
+    "checksum": 17929487241888226816,
+    "dense": false,
+    "elapsed_ns": "217435",
+    "iterations": 512,
+    "output_bytes": 512,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_integer",
+    "checksum": 14005786568699855360,
+    "dense": false,
+    "elapsed_ns": "240153",
+    "iterations": 64,
+    "output_bytes": 96,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 0,
+    "case": "wide_reciprocal",
+    "checksum": 17266854238393641920,
+    "dense": false,
+    "elapsed_ns": "241524",
+    "iterations": 64,
+    "output_bytes": 64,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_integer",
+    "checksum": 1540758119651360,
+    "dense": true,
+    "elapsed_ns": "16399",
+    "iterations": 4,
+    "output_bytes": 6,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000000,
+    "cached_roots": 0,
+    "case": "dense_reciprocal",
+    "checksum": 1548530289852,
+    "dense": true,
+    "elapsed_ns": "13199",
+    "iterations": 4,
+    "output_bytes": 4,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_integer_one",
+    "checksum": 6538784449528302592,
+    "dense": false,
+    "elapsed_ns": "7977583",
+    "iterations": 100000,
+    "output_bytes": 200000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "-2",
+      "-2"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 1,
+    "case": "cached_reciprocal_one",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4376390",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_integer_many",
+    "checksum": 11270986196675597568,
+    "dense": false,
+    "elapsed_ns": "7516435",
+    "iterations": 100000,
+    "output_bytes": 150000,
+    "precision": 0,
+    "reciprocal": false,
+    "references": [
+      "2",
+      "-2"
+    ],
+    "repeat": 8
+  },
+  {
+    "bits": 1000001,
+    "cached_roots": 64,
+    "case": "cached_reciprocal_many",
+    "checksum": 3170163568771254112,
+    "dense": false,
+    "elapsed_ns": "4313995",
+    "iterations": 100000,
+    "output_bytes": 100000,
+    "precision": 0,
+    "reciprocal": true,
+    "references": [
+      "0",
+      "0"
+    ],
+    "repeat": 8
+  }
+]

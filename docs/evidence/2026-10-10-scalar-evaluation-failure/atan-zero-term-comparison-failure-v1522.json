@@ -1,0 +1,15 @@
+{
+  "helper": "validate_atan_zero_term.py",
+  "helper_sha256": "d213068927999370a4b4d29baa8a1089b8f4b970a494a8adf6c54de406abe9b2",
+  "exit_code": 1,
+  "terminal_passing_phases": [
+    1517,
+    1518,
+    1519,
+    1520,
+    1521,
+    1522
+  ],
+  "reason": "The broad atan prefix also selected the expected baseline panic message after its sixteen allocation rows; the repaired test has no panic. All selected test processes passed.",
+  "correction": "Fork v2 selects the three structured observation prefixes and verifies/reuses terminal passing phases before running the remaining three tests. Frozen source, tests and earlier outputs unchanged."
+}

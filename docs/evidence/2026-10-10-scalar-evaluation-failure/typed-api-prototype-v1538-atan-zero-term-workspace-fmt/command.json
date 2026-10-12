@@ -1,0 +1,17 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "f904a928c9c10f8865a31148ab29671bb275a5cd83d6d86c3c7b43844c5303ff",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}

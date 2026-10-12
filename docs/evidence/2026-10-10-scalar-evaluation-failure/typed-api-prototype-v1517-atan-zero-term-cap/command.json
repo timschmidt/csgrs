@@ -1,0 +1,20 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_limited_unit_test.py",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "65b67ca0f3710818edbbfb66f89147ab2dfca48aa6d93f7f868d915f7ed25058",
+    "computable::node::atan_numeric_probe_tests::atan_numeric_public_integer",
+    "--exact",
+    "--nocapture",
+    "--test-threads=1"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "f904a928c9c10f8865a31148ab29671bb275a5cd83d6d86c3c7b43844c5303ff",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}
