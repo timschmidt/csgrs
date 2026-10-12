@@ -32,7 +32,17 @@
       "runtime_admitted": false,
       "next_step": "Evaluate reusable closed symbolic certificates in shared subexpressions, with cold/warm fact preservation, allocation/size evidence, unchanged fixtures and original runtime limits."
     },
-    "plan_complete": false
+    "plan_complete": false,
+    "isolated_recursive_certificate_cache": {
+      "status": "experimental-native-gates-in-progress",
+      "source_baseline_commit": "69fbaf049f24ed4d8adfc3c86a791cc74732e85f",
+      "evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/early-assessment-v1.json",
+      "qualification": "Five new cache regressions, 862 all-feature scalar library results, strict all-target Clippy and formatting pass. Corrected five-pair scalar timing/allocation measurements preserve all mathematical witnesses and representation inventories within each mode.",
+      "tradeoffs": "Several warm queries improve while first queries and opaque controls cost more; retained memory increases. Failed cached projections may use a second original 512-node recognition pass to preserve cold facts.",
+      "invalid_evidence": "The initial shared-target cost run linked identical binaries and is explicitly invalidated in cost-v1-binding-audit.json; none of its candidate cost claims are credited.",
+      "remaining": "Original native full-board gates are running separately. Full consumer/default/integration suites, independent cache frontiers and original-report replay remain required; no general proof, application speedup or runtime admission is claimed.",
+      "runtime_admitted": false
+    }
   },
   "status_meanings": {
     "unverified": "The requirement has not been audited to its full scope.",
