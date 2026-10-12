@@ -1,0 +1,36 @@
+{
+  "source_record": "typed-api-prototype-v1590-domain-sign-public-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "c32deca26d3f07a89c1b7c2693930ef493beaf3f95d458c9f446ccbf9143b445",
+  "tests": {
+    "typed-api-prototype-v1591-domain-sign-public-baseline-cap": {
+      "test": "domain_sign_public_queries_reuse_cheap_leaf_domains",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1117353872396052,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "3029b0e71792f703ef95fd6f905fc9c6ac270c8308c73da77b74203f6471fb31",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.020629756152629852
+      }
+    }
+  }
+}

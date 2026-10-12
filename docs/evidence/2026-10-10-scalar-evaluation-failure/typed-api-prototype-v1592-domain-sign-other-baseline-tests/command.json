@@ -1,0 +1,26 @@
+{
+  "command": [
+    "cargo",
+    "test",
+    "--release",
+    "-p",
+    "hyperreal",
+    "--lib",
+    "--all-features",
+    "--",
+    "--skip",
+    "domain_sign_canonical_leaves_need_no_coefficient_copy",
+    "--skip",
+    "domain_sign_retained_child_proof_precedes_recognition",
+    "--skip",
+    "domain_sign_public_queries_reuse_cheap_leaf_domains"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "c32deca26d3f07a89c1b7c2693930ef493beaf3f95d458c9f446ccbf9143b445",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}

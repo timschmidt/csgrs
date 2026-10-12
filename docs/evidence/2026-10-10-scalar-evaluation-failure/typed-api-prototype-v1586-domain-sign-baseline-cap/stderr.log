@@ -1,0 +1,32 @@
+domain sign leaf bits=1, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=65, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=65, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=65, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=65, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=516, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=516, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=516, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=516, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=2050, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=2050, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=2050, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=2050, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4096, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4096, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4096, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4096, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4097, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4097, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4097, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=4097, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1000001, kind=Inverse, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1000001, kind=Sqrt, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1000001, kind=LnDeferred, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign leaf bits=1000001, kind=PrescaledLn, answer=false, exhausted=true, consumed=2, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+
+thread 'computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy' (12) panicked at crates/hyperreal/src/computable/node/domain_sign_tests.rs:41:9:
+[(1, "Inverse"), (1, "Sqrt"), (1, "LnDeferred"), (1, "PrescaledLn"), (65, "Inverse"), (65, "Sqrt"), (65, "LnDeferred"), (65, "PrescaledLn"), (516, "Inverse"), (516, "Sqrt"), (516, "LnDeferred"), (516, "PrescaledLn"), (2050, "Inverse"), (2050, "Sqrt"), (2050, "LnDeferred"), (2050, "PrescaledLn"), (4096, "Inverse"), (4096, "Sqrt"), (4096, "LnDeferred"), (4096, "PrescaledLn"), (4097, "Inverse"), (4097, "Sqrt"), (4097, "LnDeferred"), (4097, "PrescaledLn"), (1000001, "Inverse"), (1000001, "Sqrt"), (1000001, "LnDeferred"), (1000001, "PrescaledLn")]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

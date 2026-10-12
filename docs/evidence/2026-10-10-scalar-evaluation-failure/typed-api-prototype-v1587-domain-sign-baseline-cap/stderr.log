@@ -1,0 +1,8 @@
+domain sign retained kind=Inverse, answer=true, exhausted=true, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=Sqrt, answer=true, exhausted=true, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=LnDeferred, answer=true, exhausted=true, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=PrescaledLn, answer=true, exhausted=true, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+
+thread 'computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition' (16) panicked at crates/hyperreal/src/computable/node/domain_sign_tests.rs:77:9:
+["Inverse", "Sqrt", "LnDeferred", "PrescaledLn"]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

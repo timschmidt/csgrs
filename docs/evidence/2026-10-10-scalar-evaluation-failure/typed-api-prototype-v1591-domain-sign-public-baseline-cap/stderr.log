@@ -1,0 +1,16 @@
+domain sign public bits=65, kind=Sqrt, answer=Ok(0), consumed=8, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=65, kind=PrescaledLn, answer=Err(Exhausted), consumed=8, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+domain sign public bits=516, kind=Sqrt, answer=Err(Exhausted), consumed=3, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+domain sign public bits=516, kind=PrescaledLn, answer=Err(Exhausted), consumed=3, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+domain sign public bits=2050, kind=Sqrt, answer=Err(Exhausted), consumed=3, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+domain sign public bits=2050, kind=PrescaledLn, answer=Err(Exhausted), consumed=3, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }
+domain sign public bits=4096, kind=Sqrt, answer=Ok(0), consumed=6, allocations=Allocations { calls: 4, bytes: 376, largest: 256 }
+domain sign public bits=4096, kind=PrescaledLn, answer=Err(Exhausted), consumed=8, allocations=Allocations { calls: 11, bytes: 3280, largest: 1040 }
+domain sign public bits=4097, kind=Sqrt, answer=Ok(0), consumed=6, allocations=Allocations { calls: 4, bytes: 376, largest: 256 }
+domain sign public bits=4097, kind=PrescaledLn, answer=Err(Exhausted), consumed=8, allocations=Allocations { calls: 12, bytes: 4296, largest: 1040 }
+domain sign public bits=1000001, kind=Sqrt, answer=Ok(0), consumed=6, allocations=Allocations { calls: 4, bytes: 376, largest: 256 }
+domain sign public bits=1000001, kind=PrescaledLn, answer=Err(Exhausted), consumed=8, allocations=Allocations { calls: 12, bytes: 875712, largest: 250016 }
+
+thread 'computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains' (12) panicked at crates/hyperreal/src/computable/node/domain_sign_tests.rs:172:9:
+[(65, "PrescaledLn"), (516, "Sqrt"), (516, "PrescaledLn"), (2050, "Sqrt"), (2050, "PrescaledLn"), (4096, "PrescaledLn"), (4097, "PrescaledLn"), (1000001, "PrescaledLn")]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

@@ -1,0 +1,14 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal)
+error[E0599]: no method named `subtract` found for struct `node::Computable` in the current scope
+  --> crates/hyperreal/src/computable/node/domain_sign_tests.rs:53:42
+   |
+53 |             let child = Computable::pi().subtract(Computable::integer(3.into()));
+   |                                          ^^^^^^^^ method not found in `node::Computable`
+   |
+  ::: crates/hyperreal/src/computable/node/representation.rs:9:1
+   |
+ 9 | pub struct Computable {
+   | --------------------- method `subtract` not found for this struct
+
+For more information about this error, try `rustc --explain E0599`.
+error: could not compile `hyperreal` (lib test) due to 1 previous error
