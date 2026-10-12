@@ -1,0 +1,10 @@
+{
+  "status": "Prepared only; all cost execution and audit gates remain mandatory",
+  "predecessor": "record_integer_coarse_zero_cost_milestone.py",
+  "predecessor_sha256": "1da09d3331f403951f05b2d142b0dae783183ce8d45bb7d4329e880a34c8f592",
+  "recorder": "record_bound_decoder_cost_milestone.py",
+  "recorder_sha256": "dd9bec91d38817ff912397bf954b33e411052c9d4e943d37fff20e1f4229a421",
+  "patch": "bound-decoder-cost-milestone-preparation-v2247.patch",
+  "patch_sha256": "2372d2f6660a243bc70d485983eda8af63a0828ae848d90f83df8d1a52c49c7e",
+  "scope": "Only candidate/protocol/ledger identities change. Preserve every cost count, cap, non-timing receipt, prescribed repeat and failure check. The helper neither runs measurements nor records a pass before their completion."
+}

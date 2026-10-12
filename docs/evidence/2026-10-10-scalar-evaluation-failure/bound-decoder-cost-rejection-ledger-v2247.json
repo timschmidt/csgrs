@@ -1,0 +1,12 @@
+{
+  "before_sha256": "db85ca2336f3b6f5c3b3ac0c5946f9421ef670300725ed7435a66d1bceea3a5c",
+  "after_sha256": "1847af5b96a5e5d04bca30778e391c4678614fd75d8faa7ab641d7044ea66239",
+  "changed_fields": [
+    "P4.evidence",
+    "P4.remaining",
+    "next_actions[0]"
+  ],
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "rejection_record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+  "runtime_retained": false
+}

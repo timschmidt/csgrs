@@ -1,0 +1,61 @@
+{
+  "status": "Do not retain the bound-decoder proposal after a baseline capped failure",
+  "source_record": "typed-api-prototype-v2169-bound-decoder-verus/source-hashes.json.gz",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "proposal_patch": "bound-decoder-proposal-v2171.patch",
+  "proposal_patch_sha256": "ab6b9a49a2416b58a7f9ab7959a9df3fc2cc9787405f272f3f155382d35e03b3",
+  "partial_cost_record": "bound-decoder-partial-cost-review-v2247.json",
+  "cost_controller": "bound-decoder-cost-validation-v2247.json",
+  "cost_controller_sha256": "aaa0f88c6b3ae269818891fce6d039ea900551916f971217012c5f8e6e2dae33",
+  "failure": {
+    "name": "algebraic-18-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": -24,
+    "wall_timeout": false,
+    "wall_seconds": 2.1235316330567002,
+    "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "successful_cost_processes": 1332,
+  "failed_capped_cost_processes": 1,
+  "separate_cpu_preludes": 865,
+  "cost_gate_passed": false,
+  "runtime_retained": false,
+  "replays_started": false,
+  "main_runtime_admitted": false,
+  "passing_evidence": {
+    "verified_units": 655,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 135,
+    "fresh_rejected_mutations": 245,
+    "reused_rejected_mutations": 0,
+    "fresh_passing_baselines": 4,
+    "fresh_acceptance_tests": 10,
+    "broad_commands": 9
+  },
+  "proof_record": "bound-decoder-proof-validation-v2171.json",
+  "proof_record_sha256": "44113d1e9485622d1a815cb4f8f47d5d9e33f8d74fbaacc9b367112f29892482",
+  "limits": [
+    "The failure is in the hash-identical retained v1836 baseline executable, not the new candidate. This identifies the failing binary, not an internal stage or a reason for the CPU consumption.",
+    "All successful processes preserve non-timing output fields and original caps. Forty-eight fixtures are complete; the failing fixture has no successful paired sample and three further fixtures were never attempted. Four complete fixtures have increases above five percent; they remain unresolved because the original run did not complete. No timing observation passes the failed process gate.",
+    "The frozen timing-repeat rule cannot turn an original capped failure into a pass. No family repeats, replays or retention steps were started. Earlier baseline and candidate failures remain unchanged; a diagnostic or larger-cap run cannot replace this failure.",
+    "The archived conditional proof verifies the actual decoder and five connected field lemmas, but the implementation remains unretained. Producer truth, existence, atomic/caller ordering, all thirteen whole-crate groups, the fixed pre-Verus acceptance baseline and main/native/full-board admission remain open."
+  ],
+  "next_priority": "Restore the exact retained v1836 source after archiving the decoder's failed cost gate. Inspect the frozen baseline/candidate executable differences before choosing a next proof-compatible implementation experiment. Preserve the full-size algebraic CPU failure and every original fixture/cap; do not repeat unchanged timing runs until one passes. Producer/existence/atomic, resource and main/native/full-board work remain open.",
+  "partial_cost_record_sha256": "dd74b2efa2b373d39a76bd40f0e5954d07da5710941797720fe3415ccebe7453"
+}

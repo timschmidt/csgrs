@@ -1,0 +1,40 @@
+--- record_integer_coarse_zero_cost_milestone.py
++++ record_bound_decoder_cost_milestone.py
+@@ -15 +15 @@
+-    costs_path = E / "integer-coarse-zero-cost-review-v2100.json"
++    costs_path = E / "bound-decoder-cost-review-v2247.json"
+@@ -19,2 +19,2 @@
+-    broad = read(E / "integer-coarse-zero-broad-milestone-v2092.json")
+-    controller_path = E / "integer-coarse-zero-cost-validation-v2100.json"
++    broad = read(E / "bound-decoder-binary-milestone-v2247.json")
++    controller_path = E / "bound-decoder-cost-validation-v2247.json"
+@@ -44,2 +44,2 @@
+-    out = E / "integer-coarse-zero-cost-milestone-v2100.json"
+-    ledger_record = E / "integer-coarse-zero-cost-ledger-v2100.json"
++    out = E / "bound-decoder-cost-milestone-v2247.json"
++    ledger_record = E / "bound-decoder-cost-ledger-v2247.json"
+@@ -59,2 +59,2 @@
+-        "next_replay_protocol": "integer-coarse-zero-replay-protocol-v2101.json",
+-        "next_replay_runner": "run_integer_zero_replays.py",
++        "next_replay_protocol": "bound-decoder-measured-replay-protocol-v2247.json",
++        "next_replay_runner": "run_bound_decoder_replays_v2.py",
+@@ -65 +65 @@
+-            "The combined proposal remains unretained pending all 39 capped phases, 4129 numerical cases, 648 public reuse schedules and their receipt/fact audits. Main/native/full-board admission and all thirteen whole-crate proof groups remain open.",
++            "The decoder proposal remains unretained pending all 39 capped phases, 4129 numerical cases, 648 public reuse schedules and their receipt/fact audits. Main/native/full-board admission and all thirteen whole-crate proof groups remain open.",
+@@ -86 +86 @@
+-        "The v2093-v2100 local cost gates pass on the unchanged combined integer/kernel/selector source: "
++        "The v2240-v2247 local cost gates pass on the unchanged proved bound-decoder source: "
+@@ -97,2 +97 @@
+-    old = ("Next run the frozen cost controls, capped/numerical/public replays and receipt audits "
+-           "before deciding retention.")
++    old = broad["next_priority"]
+@@ -100,3 +99,6 @@
+-    after["next_actions"][0] = after["next_actions"][0].replace(old,
+-        "The frozen local cost controls and prescribed repeat rule pass. Next run all "
+-        "capped/numerical/public replays and receipt/fact audits before deciding retention.", 1)
++    record["next_priority"] = ("The frozen local decoder cost controls and prescribed "
++        "repeat rule pass. Next run all unchanged capped/numerical/public replays and "
++        "receipt/fact audits before deciding retention. Preserve all earlier failures, "
++        "the fixed pre-Verus baseline and open producer/existence/atomic and "
++        "main/native/full-board requirements.")
++    after["next_actions"][0] = after["next_actions"][0].replace(old, record["next_priority"], 1)

@@ -1,0 +1,118 @@
+{
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "runner_sha256": "707ad5c548c21834150e72d87d934bc25c0d2b217c510378527c1e76b8931996",
+  "completed": true,
+  "results": [
+    {
+      "family": "atan",
+      "phase": "typed-api-prototype-v2240-bound-decoder-atan-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_atan_zero_term_cost.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2240-bound-decoder-atan-cost"
+      ],
+      "helper_sha256": "617489543d16bf8fd45d235e82de08f92caeee93818c3540caa9647307c462c2",
+      "exit_code": 0,
+      "seconds": 8.332535822875798,
+      "processes": 108,
+      "summary_sha256": "fbcce05bec9dee732511d875812bdba2b97347fb4b934b2d56cdd23f169f915b"
+    },
+    {
+      "family": "integer",
+      "phase": "typed-api-prototype-v2241-bound-decoder-integer-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_integer_scale_cost.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2241-bound-decoder-integer-cost"
+      ],
+      "helper_sha256": "ace8a426540d960c9cd5a19b2eb8cd2c841effa475bad8177b53eb84c391741a",
+      "exit_code": 0,
+      "seconds": 3.7163683329708874,
+      "processes": 72,
+      "summary_sha256": "761b487e6e5a417f04decfdfebaf53d9c1aedcb38e859a6249f37380029c80a0"
+    },
+    {
+      "family": "inverse_trig",
+      "phase": "typed-api-prototype-v2242-bound-decoder-inverse-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2242-bound-decoder-inverse-cost",
+        "typed-api-prototype-v2172-bound-decoder-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "exit_code": 0,
+      "seconds": 5.971066298894584,
+      "processes": 54,
+      "summary_sha256": "ba2d9f8f392535285cc3eac762c828a8fcde2db0e27234cfb287dc8217c49528"
+    },
+    {
+      "family": "normal_form",
+      "phase": "typed-api-prototype-v2243-bound-decoder-normal-form-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2243-bound-decoder-normal-form-cost",
+        "typed-api-prototype-v2172-bound-decoder-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "exit_code": 0,
+      "seconds": 4.856190085876733,
+      "processes": 54,
+      "summary_sha256": "4241f9a99caf6f7933d87d58c130e4244d5708db3ce445f100a942e6659ca120"
+    },
+    {
+      "family": "default",
+      "phase": "typed-api-prototype-v2244-bound-decoder-default-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget_cost.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2244-bound-decoder-default-cost"
+      ],
+      "helper_sha256": "6e49bf9de05354c03164686fc3308ac7190553767f7a624473bf138f309473af",
+      "exit_code": 0,
+      "seconds": 10.643955727107823,
+      "processes": 54,
+      "summary_sha256": "3aff1a4287b1004e95dd152423f5ddf85ff9a6a553f1aed32a841b7400b4994c"
+    },
+    {
+      "family": "algebraic",
+      "phase": "typed-api-prototype-v2245-bound-decoder-algebraic-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2245-bound-decoder-algebraic-cost",
+        "typed-api-prototype-v2172-bound-decoder-scalar-tests",
+        "cost"
+      ],
+      "helper_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "exit_code": 0,
+      "seconds": 29.176089122891426,
+      "processes": 54,
+      "summary_sha256": "bbd28a8485b69f98574c2b7d432ba25554068d3b53c3719f82b9e4e214a449f3"
+    },
+    {
+      "family": "acos",
+      "phase": "typed-api-prototype-v2246-bound-decoder-acos-cost",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_acos_warm_cost_v2.py",
+        "typed-api-prototype-v2174-bound-decoder-release-build",
+        "typed-api-prototype-v2246-bound-decoder-acos-cost"
+      ],
+      "helper_sha256": "4d1d880b36efbbad0fd7a2b32962a5e18861f8dcd865f2de227ebd6a7e94fbad",
+      "exit_code": 0,
+      "seconds": 32.74600643105805,
+      "processes": 72,
+      "summary_sha256": "be4b5a335c6f4691df66b762afdb0f181a91b826bc23af1d1a9f773d6c0071a7"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": "Prepared exact order/receipt audit for the observed failed decoder gate",
+  "predecessor": "record_integer_coarse_zero_capped_failure.py",
+  "predecessor_sha256": "b43fa6f33d94327775dc1fe4bfa9623a1a7b3a5789ae882748132fc3462ca37a",
+  "recorder": "record_bound_decoder_capped_failure.py",
+  "recorder_sha256": "42ec5f2e7ee8600e438bf2465a817aae6ce65585548a988f10c8680228106a61",
+  "patch": "bound-decoder-failure-review-preparation-v2247.patch",
+  "patch_sha256": "5ab4cc88381e879b22233c5ffd8397134cdd3aa64cf0cd1aa182617d96688938",
+  "scope": "Retain the original pair-order, executable, receipt, cap, CPU-prelude and source guards. Update the actual interruption point and distinguish a fixture attempted without success from fixtures never attempted. Preserve all unresolved timing increases and prohibit retries/replays/retention."
+}

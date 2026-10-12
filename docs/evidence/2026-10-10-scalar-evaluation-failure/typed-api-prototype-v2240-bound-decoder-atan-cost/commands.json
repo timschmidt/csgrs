@@ -1,0 +1,1769 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2240-bound-decoder-atan-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03196884831413627,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2240-bound-decoder-atan-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.31432863092049956,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "repeat-0-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034736497327685356,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03451114287599921,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03389060636982322,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033934112172573805,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06602510204538703,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06599724385887384,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03450632281601429,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03391476394608617,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018029653001576662,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017805029172450304,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11607690760865808,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11695569893345237,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034631455317139626,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03376128524541855,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03366142092272639,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03378987172618508,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06594464695081115,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06648974865674973,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03469879040494561,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03400389710441232,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017951618880033493,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01783293578773737,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11607660772278905,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1167632807046175,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03509426303207874,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03476429497823119,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03416433744132519,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03434743406251073,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06658723298460245,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06649553868919611,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03450332395732403,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06585424300283194,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0187496948055923,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017947849351912737,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11649566004052758,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11905121430754662,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03513403097167611,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034811672288924456,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03455555019900203,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03492055460810661,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06747591216117144,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06700182426720858,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03476734505966306,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03391659306362271,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01801771391183138,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01768927602097392,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11582763586193323,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11675128201022744,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03479143371805549,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033901003655046225,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033681729808449745,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033768423832952976,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.065887451171875,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06661775102838874,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034734837245196104,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0353618748486042,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01816694438457489,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009494299069046974,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11562595935538411,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11571166291832924,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03418767498806119,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03346610488370061,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033751584123820066,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03413538867607713,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06643796293064952,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06678849924355745,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033916203770786524,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033571307081729174,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017465211916714907,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009532906115055084,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1157272020354867,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11621097987517715,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03359001595526934,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033739186357706785,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033680029679089785,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03353405976668,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06557453190907836,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06550521729514003,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033585436176508665,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03343796683475375,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017534567043185234,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01740562589839101,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11556128365918994,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11582449590787292,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03478146530687809,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03411565022543073,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03368093026801944,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0336828101426363,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06565035739913583,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06580687686800957,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03346452536061406,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033617894165217876,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017603312619030476,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017537727020680904,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11579562816768885,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.1156027908436954,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_integer",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03363930294290185,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-small_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "small_reciprocal",
+      "4096"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03361725388094783,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-medium_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_integer",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034471176099032164,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-medium_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "medium_reciprocal",
+      "512"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033858498092740774,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_integer",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06594948703423142,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-wide_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "wide_reciprocal",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06683085579425097,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-dense_integer",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_integer",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034005967900156975,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-dense_reciprocal",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "dense_reciprocal",
+      "4"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03364985203370452,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_integer_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01738830702379346,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_reciprocal_one",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_one",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017478011082857847,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_integer_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_integer_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11552596697583795,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cached_reciprocal_many",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2240-bound-decoder-atan-cost/probe",
+      "cached_reciprocal_many",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.11638105800375342,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

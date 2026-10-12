@@ -1,0 +1,51 @@
+{
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "runner_sha256": "87029e2ff81bace5e512b97cb7db80be4ad1b3deb842373395170c211c518056",
+  "followup_strategy_sha256": "6d130f40e00b99da3555119e17e66284dedf76f7d112c57ef565001e1001a8bd",
+  "complete": false,
+  "steps": [
+    {
+      "label": "standalone",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_bound_decoder_costs.py"
+      ],
+      "helper_sha256": "707ad5c548c21834150e72d87d934bc25c0d2b217c510378527c1e76b8931996",
+      "exit_code": 0,
+      "seconds": 95.48197866417468,
+      "stdout": "bound-decoder-cost-controller-v2247/standalone.stdout",
+      "stdout_sha256": "7c6517c82d9c10a70b9c9e827afddc89dd36b79eb9b3d6c498374a70d23cae77",
+      "stderr": "bound-decoder-cost-controller-v2247/standalone.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "paired",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_bound_decoder_cost.py"
+      ],
+      "helper_sha256": "75a19aa807f3e24963ea0368a3bedf025c1559fc77b4a9fd5b98fd784f35d664",
+      "exit_code": 1,
+      "seconds": 179.46004521194845,
+      "stdout": "bound-decoder-cost-controller-v2247/paired.stdout",
+      "stdout_sha256": "398fa134f1d078e6dbf6fd18ad569998f5011413640e2975679a3308d23834a8",
+      "stderr": "bound-decoder-cost-controller-v2247/paired.stderr",
+      "stderr_sha256": "64e03e5383d457036d248a0a692c71ae81da9ac144f6a57678afeeb903057633"
+    },
+    {
+      "label": "initial-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_bound_decoder_initial_costs.py"
+      ],
+      "helper_sha256": "5dd209611546302026aff5d7685c58b687bd6eb382fd5cce993c23ddbfc2a140",
+      "exit_code": 0,
+      "seconds": 1.6118843550793827,
+      "stdout": "bound-decoder-cost-controller-v2247/initial-review.stdout",
+      "stdout_sha256": "cfd01c02bec47b8b541b57040a910c890a27621ad8ef61ab50628a7d041d2912",
+      "stderr": "bound-decoder-cost-controller-v2247/initial-review.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Sequential standalone and paired original-cap costs, original receipt audit, predeclared family repeats when needed, and final cost audit. No concurrent builds/tests/measurements or source edits; all unsuccessful steps remain recorded."
+}

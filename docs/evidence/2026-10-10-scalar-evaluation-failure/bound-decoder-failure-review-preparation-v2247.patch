@@ -1,0 +1,136 @@
+--- record_integer_coarse_zero_capped_failure.py
++++ record_bound_decoder_capped_failure.py
+@@ -21,2 +21,2 @@
+-    outputs = [E / name for name in ["integer-coarse-zero-partial-cost-review-v2100.json",
+-        "integer-coarse-zero-cost-rejection-v2100.json", "integer-coarse-zero-cost-rejection-ledger-v2100.json"]]
++    outputs = [E / name for name in ["bound-decoder-partial-cost-review-v2247.json",
++        "bound-decoder-cost-rejection-v2247.json", "bound-decoder-cost-rejection-ledger-v2247.json"]]
+@@ -24 +24 @@
+-    initial_path = E / "integer-coarse-zero-initial-cost-review-v2100.json"
++    initial_path = E / "bound-decoder-initial-cost-review-v2247.json"
+@@ -26 +26 @@
+-    controller_path = E / "integer-coarse-zero-cost-validation-v2100.json"
++    controller_path = E / "bound-decoder-cost-validation-v2247.json"
+@@ -28,3 +28,3 @@
+-    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
+-    broad = read(E / "integer-coarse-zero-broad-milestone-v2092.json")
+-    protocol_path = E / "integer-coarse-zero-cost-protocol-v2093.json"
++    proof = read(E / "bound-decoder-proof-validation-v2171.json")
++    broad = read(E / "bound-decoder-binary-milestone-v2247.json")
++    protocol_path = E / "bound-decoder-cost-protocol-v2240.json"
+@@ -32 +32 @@
+-    strategy_path = E / "integer-coarse-zero-cost-followup-strategy-v2100.json"
++    strategy_path = E / "bound-decoder-cost-followup-strategy-v2247.json"
+@@ -35 +35 @@
+-    assert expected_source == "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
++    assert expected_source == "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162"
+@@ -38,2 +38,2 @@
+-    assert initial["standalone_successful_processes"] == 468 and initial["successful_paired_processes"] == 880
+-    assert initial["complete_fixtures"] == 48 and initial["prelude_processes"] == 881
++    assert initial["standalone_successful_processes"] == 468 and initial["successful_paired_processes"] == 864
++    assert initial["complete_fixtures"] == 48 and initial["prelude_processes"] == 865
+@@ -51 +51 @@
+-    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_integer_coarse_zero_cost.py"]["fork_sha256"]
++    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_bound_decoder_cost.py"]["fork_sha256"]
+@@ -84 +84 @@
+-    assert len(rows) == 880 and failure == initial["failed_attempt"]
++    assert len(rows) == 864 and failure == initial["failed_attempt"]
+@@ -96 +96 @@
+-    assert next_expected["which"] == "baseline" and failure["name"] == "algebraic-26-baseline"
++    assert next_expected["which"] == "baseline" and failure["name"] == "algebraic-18-baseline"
+@@ -103 +103 @@
+-    assert len(preludes) == 881 and [row["before"] for row in preludes] == [row["name"] for row in planned[:881]]
++    assert len(preludes) == 865 and [row["before"] for row in preludes] == [row["name"] for row in planned[:865]]
+@@ -119,2 +119,2 @@
+-    assert (len(cases), len(complete), len(partial), len(unstarted)) == (52, 48, 1, 3)
+-    assert partial[0]["successful_samples"] == {"baseline": 8, "candidate": 8}
++    assert (len(cases), len(complete), len(partial), len(unstarted)) == (52, 48, 0, 4)
++    assert not partial
+@@ -123 +123,3 @@
+-    assert [(row["family"], row["arguments"]) for row in increases] == [("integer", ["small_coarse", "200000"])]
++    assert [(row["family"], row["arguments"]) for row in increases] == [
++        ("integer", ["wide_gap", "10000"]), ("integer", ["wide_fine", "10000"]),
++        ("integer", ["wide_identity", "10000"]), ("default", ["structural_cancel", "500"])]
+@@ -130 +132 @@
+-    replay = read(E / "integer-coarse-zero-replay-protocol-v2101.json")
++    replay = read(E / "bound-decoder-measured-replay-protocol-v2247.json")
+@@ -132,2 +134,2 @@
+-    for name in ["integer-coarse-zero-cost-followup-protocol-v2100.json", "integer-coarse-zero-cost-review-v2100.json",
+-                 "integer-coarse-zero-cost-milestone-v2100.json", "integer-coarse-zero-replay-validation-v2154.json", "typed-api-prototype-v2156-state.json"]:
++    for name in ["bound-decoder-cost-followup-protocol-v2247.json", "bound-decoder-cost-review-v2247.json",
++                 "bound-decoder-cost-milestone-v2247.json", "bound-decoder-replay-validation-v2235.json", "typed-api-prototype-v2248-state.json"]:
+@@ -140,4 +142,5 @@
+-        "planned_paired_processes": 936, "successful_paired_processes": 880, "failed_paired_processes": 1,
+-        "unstarted_paired_processes": 55, "successful_standalone_processes": 468,
+-        "successful_cost_processes": 1348, "attempted_cost_processes": 1349, "separate_cpu_preludes": 881,
+-        "complete_fixtures": 48, "observed_partial_fixtures": 1, "unstarted_fixtures": 3, "cases": cases,
++        "planned_paired_processes": 936, "successful_paired_processes": 864, "failed_paired_processes": 1,
++        "unstarted_paired_processes": 71, "successful_standalone_processes": 468,
++        "successful_cost_processes": 1332, "attempted_cost_processes": 1333, "separate_cpu_preludes": 865,
++        "complete_fixtures": 48, "observed_partial_fixtures": 0, "fixtures_without_successful_samples": 4,
++        "failed_before_first_success_fixtures": 1, "wholly_unattempted_fixtures": 3, "cases": cases,
+@@ -151 +154 @@
+-            "All successful processes preserve non-timing output fields and original caps. Partial and unstarted fixtures remain incomplete. A completed wide_gap median improvement does not pass the comparison, and the small_coarse increase remains unresolved because the original run did not complete.",
++            "All successful processes preserve non-timing output fields and original caps. Forty-eight fixtures are complete; the failing fixture has no successful paired sample and three further fixtures were never attempted. Four complete fixtures have increases above five percent; they remain unresolved because the original run did not complete. No timing observation passes the failed process gate.",
+@@ -156,5 +159,6 @@
+-        "Diagnose the retained baseline's full-size algebraic CPU failure and its execution environment "
+-        "from preserved evidence before proposing a controlled next experiment. Keep every original "
+-        "fixture and cap, and preserve this failed comparison; do not rerun unchanged timings until "
+-        "a favorable result appears. The coarse-zero proposal remains unretained and the decoder, "
+-        "producer/existence/atomic and native/full-board obligations remain open."
++        "Restore the exact retained v1836 source after archiving the decoder's failed cost gate. "
++        "Inspect the frozen baseline/candidate executable differences before choosing a next "
++        "proof-compatible implementation experiment. Preserve the full-size algebraic CPU "
++        "failure and every original fixture/cap; do not repeat unchanged timing runs until "
++        "one passes. Producer/existence/atomic, resource and main/native/full-board work "
++        "remain open."
+@@ -163 +167 @@
+-        "status": "Do not retain the combined integer/root/cache proposal after a baseline capped failure",
++        "status": "Do not retain the bound-decoder proposal after a baseline capped failure",
+@@ -170 +174 @@
+-        "successful_cost_processes": 1348, "failed_capped_cost_processes": 1, "separate_cpu_preludes": 881,
++        "successful_cost_processes": 1332, "failed_capped_cost_processes": 1, "separate_cpu_preludes": 865,
+@@ -172,5 +176,7 @@
+-        "passing_evidence": {"focused_integer_tests": 5, "root_controls": 3, "verified_units": 651,
+-            "fresh_rejected_mutations": 0, "reused_rejected_mutations": 247, "reused_passing_baselines": 4,
+-            "fresh_acceptance_tests": 10, "broad_commands": 9, "fresh_integer_allocation_cases": 64},
+-        "allocation_review": "integer-coarse-zero-allocation-review-v2092.json",
+-        "limits": review["limits"] + ["The integer shortcut and bigint root helper remain outside Verus coverage. All thirteen whole-crate groups, the fixed pre-Verus acceptance baseline and main/native/full-board admission remain open."],
++        "passing_evidence": {"verified_units": 655, "listed_production_contracts": 98,
++            "listed_model_theorems": 135, "fresh_rejected_mutations": 245,
++            "reused_rejected_mutations": 0, "fresh_passing_baselines": 4,
++            "fresh_acceptance_tests": 10, "broad_commands": 9},
++        "proof_record": "bound-decoder-proof-validation-v2171.json",
++        "proof_record_sha256": sha(E / "bound-decoder-proof-validation-v2171.json"),
++        "limits": review["limits"] + ["The archived conditional proof verifies the actual decoder and five connected field lemmas, but the implementation remains unretained. Producer truth, existence, atomic/caller ordering, all thirteen whole-crate groups, the fixed pre-Verus acceptance baseline and main/native/full-board admission remain open."],
+@@ -190,10 +196,10 @@
+-        "The v2093-v2100 cost comparison stops at baseline algebraic-26-baseline: the retained "
+-        "v1836 binary hits SIGXCPU under the original 192 MiB, CPU 2/3-second and four-second "
+-        "wall limits, with no intermediate output. All 468 standalone and 880 paired processes "
+-        "before that failure pass, as do 881 preludes. Forty-eight fixtures have all nine pairs; "
+-        "one is partial and three unstarted, leaving 55 processes unstarted. The completed "
+-        "wide_gap median changes -23.0894 percent, while small_coarse changes +5.3966 percent. "
+-        "Neither observation resolves the failed process gate; no prescribed repeats or replays "
+-        "were started. All raw results, the baseline failure and earlier rejections remain "
+-        "preserved. The nine broad checks, focused tests, scoped proof and allocation evidence "
+-        "do not admit the runtime. Retained candidate stays v1836 and every property/target "
++        "The v2240-v2247 decoder cost comparison stops at algebraic-18-baseline: the "
++        "retained v1836 executable hits SIGXCPU under the original 192 MiB, CPU 2/3-second "
++        "and four-second wall limits, with no intermediate output. All 468 standalone and "
++        "864 paired processes before the failure pass, as do 865 preludes. Forty-eight "
++        "fixtures have all nine pairs; the failed fixture has no successful paired sample "
++        "and three later fixtures are unattempted. Seventy-one paired processes remain "
++        "unstarted. Four complete fixtures exceed the five-percent repeat threshold, but "
++        "the incomplete original run prevents repeats. The 655-unit conditional proof, "
++        "245 fresh negative guards and nine broad checks remain archived; no replay or "
++        "runtime retention follows. The candidate stays v1836 and every property/target "
+@@ -203 +209 @@
+-    old = "Next run the frozen cost controls, capped/numerical/public replays and receipt audits before deciding retention."
++    old = broad["next_priority"]
+@@ -222,3 +228,3 @@
+-    print(json.dumps({"failed_binary": "retained baseline", "successful_cost_processes": 1348,
+-        "complete_fixtures": 48, "partial_fixtures": 1, "unstarted_fixtures": 3,
+-        "unstarted_processes": 55, "runtime_retained": False}))
++    print(json.dumps({"failed_binary": "retained baseline", "successful_cost_processes": 1332,
++        "complete_fixtures": 48, "partial_fixtures": 0, "fixtures_without_successful_samples": 4,
++        "wholly_unattempted_fixtures": 3, "unstarted_processes": 71, "runtime_retained": False}))

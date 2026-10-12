@@ -1,0 +1,1071 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01584334298968315,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4645237703807652,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "pi_small-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010430033784359694,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009590572211891413,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009649967774748802,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009572393260896206,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00965458806604147,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009593171998858452,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009579493198543787,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009685285855084658,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_small-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009645247831940651,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01762512093409896,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017637320794165134,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01765994867309928,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01793951913714409,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0178424259647727,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0179314399138093,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017856555059552193,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01786990463733673,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017732874024659395,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009747200645506382,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009760189801454544,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009749331045895815,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010040021035820246,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009840785060077906,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009861613623797894,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017994876019656658,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.019091071095317602,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "inverse_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "inverse",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010351029690355062,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03408368304371834,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.035062954761087894,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03571881027892232,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03410767111927271,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03395430091768503,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03425886109471321,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01858028629794717,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0180121841840446,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "rational_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "rational",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01789092319086194,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009590581990778446,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009621739853173494,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009612441062927246,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.00959522183984518,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0095902718603611,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009718934074044228,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009488328825682402,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009596111718565226,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_small-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009572133887559175,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017605512868613005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017698036041110754,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017661118879914284,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017634651158005,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01763736130669713,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017678297590464354,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01765383966267109,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01771879382431507,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atom_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2243-bound-decoder-normal-form-cost/probe",
+      "cost",
+      "atom",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017673048190772533,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

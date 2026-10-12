@@ -1,0 +1,905 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2244-bound-decoder-default-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01587154110893607,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2244-bound-decoder-default-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.41445255372673273,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "repeat-0-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010316242929548025,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03358778590336442,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01757532497867942,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6663598171435297,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06669696466997266,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-0-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06591476919129491,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009746680967509747,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03373879520222545,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017624080646783113,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6667046123184264,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06655877409502864,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-1-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06625865492969751,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009644517675042152,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017460983246564865,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017441014293581247,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6664151423610747,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06674598203971982,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-2-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0658337539061904,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.009441081900149584,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01744373282417655,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017481431365013123,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6666033300571144,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06663236021995544,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-3-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06598920421674848,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010315741878002882,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017714905086904764,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01752587826922536,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7168375537730753,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06672209408134222,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-4-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06650979816913605,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010697867255657911,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034000427927821875,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018112358171492815,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6669593648985028,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0668856231495738,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-5-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06639870582148433,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01049635000526905,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033816530369222164,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018008125014603138,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.7168179247528315,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06685755401849747,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-6-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06676210090517998,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010638529900461435,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03392102289944887,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017782531213015318,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6667119022458792,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0667493618093431,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-7-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06645278306677938,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cold_sin",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_sin",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.010077829007059336,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-cold_opaque",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "cold_opaque",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756747579202056,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-shared_hot",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "shared_hot",
+      "100000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01756400614976883,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-structural_cancel",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "structural_cancel",
+      "500"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.6666665845550597,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-domain_tree",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "domain_tree",
+      "32"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06728086480870843,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "repeat-8-nested_exp",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2244-bound-decoder-default-cost/probe",
+      "nested_exp",
+      "1000"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06712982524186373,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]

@@ -1,0 +1,1071 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe.rs"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.031979805789887905,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--extern",
+      "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.4645063909702003,
+    "wall_timeout": false,
+    "timeout_seconds": 120,
+    "address_space_cap_mib": null,
+    "cpu_seconds": null
+  },
+  {
+    "name": "atan_small-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.018417077139019966,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.01759884273633361,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017601903062313795,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017425573896616697,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017619912046939135,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017643139231950045,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017674157861620188,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017585784196853638,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_small-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0175058888271451,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033589365892112255,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033501531928777695,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033655231818556786,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03385571809485555,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03396217105910182,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033785002771764994,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03374942624941468,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033639282919466496,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "atan_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033562217839062214,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06573959114030004,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06592024909332395,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06624149717390537,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06594760669395328,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06605364987626672,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06582945492118597,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06564669776707888,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06578507786616683,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "acos_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06602383079007268,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03378281323239207,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017717784736305475,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033533900044858456,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017568314913660288,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017410776112228632,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.034000548068434,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.03385847667232156,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.017578763887286186,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_small-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "0",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.033490522764623165,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06613510381430387,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06597503460943699,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0662050792016089,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06580766709521413,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06569009507074952,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06566899595782161,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06570619391277432,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.06589288031682372,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "terms_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "terms",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0655789920128882,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-0",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005424187984317541,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-1",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005411589052528143,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-2",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005337252747267485,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-3",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005325555335730314,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-4",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005327505059540272,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-5",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.0057618748396635056,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-6",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005275758448988199,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-7",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005444666370749474,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  },
+  {
+    "name": "pi_wide-8",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2242-bound-decoder-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_seconds": 0.005385060794651508,
+    "wall_timeout": false,
+    "timeout_seconds": 4,
+    "address_space_cap_mib": 192,
+    "cpu_seconds": [
+      2,
+      3
+    ]
+  }
+]
