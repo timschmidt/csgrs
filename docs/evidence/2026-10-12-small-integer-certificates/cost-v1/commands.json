@@ -1,0 +1,1606 @@
+[
+  {
+    "name": "build-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.2828580206260085,
+    "stdout_sha256": "4e4a07c39e4290ee50a99c85eb8d7ed0e87c1a13ccbd09f9c06b624867a09a7f",
+    "stderr_sha256": "2d5694fb348541fae3d68a033b004800c9c79f8f6edb468d5763b1d8f389597a"
+  },
+  {
+    "name": "link-baseline-rational-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8564035780727863,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-rational-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8545169872231781,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-quadratic-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7261933479458094,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-quadratic-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7197775579988956,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-integer-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.48549120780080557,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-integer-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.49276308063417673,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target"
+    },
+    "exit_code": 0,
+    "seconds": 10.380299452226609,
+    "stdout_sha256": "11fbdfe500c595fa54074ddc0fe5baeef0fb3e46353550c021248d06c4554264",
+    "stderr_sha256": "e0d4985a1dc8f2a0f2439279029d0cbf1a8de47b421047f6c58e69ef8732dc6b"
+  },
+  {
+    "name": "link-candidate-rational-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8061995273455977,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-rational-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8222509170882404,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-quadratic-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.6865349151194096,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-quadratic-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7185012148693204,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-integer-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.48094129003584385,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-integer-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-small-integer-certificates/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.4995692437514663,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-rational-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15613585291430354,
+    "stdout_sha256": "07860da5362751ac2e5228312b775ccb4b0100b7bcac65d0d5cfb39d90b062a2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-rational-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.14944839105010033,
+    "stdout_sha256": "73065aef78fc14500477d1edd576442bee12d34a5b1755970bf19db5c505f2f3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-quadratic-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1481493399478495,
+    "stdout_sha256": "f7bbf0984e7de4b3b7e9eed695aeea4a3774cf490b0c2b4104ef3deb9b812ba6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-quadratic-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1546921618282795,
+    "stdout_sha256": "2b7bd17738595f04e40dfeea063a2bff7c2d66cf72ae90bc73831ab3263e60bb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-integer-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15049652894958854,
+    "stdout_sha256": "3c4f18f2adf995ecc08cfe1ed32854493ae4989962ec9bb86c6cd136bb139436",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-integer-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15603781025856733,
+    "stdout_sha256": "14a15eca7db7b7eb65311e10d5d146911393be5311bc6bcc9e93080a4d27bc3a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-rational-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1543898619711399,
+    "stdout_sha256": "36847795e253c3712962e79c24a77c8de276d0437a296e5c1e5b45b032bce8aa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-rational-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1585653773508966,
+    "stdout_sha256": "aa64892a3b2a57b43688baef9d3081287543b4babf20d6ace6257183d54cfba2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-quadratic-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15320681408047676,
+    "stdout_sha256": "1aae3f8da468573398c81d98fee596d01d72a3455632bacfcf904f47cecaba62",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-quadratic-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.157856535166502,
+    "stdout_sha256": "b85a8544636b1ec408737a015c788d345c758739844670743e2a8f53ff3bbc24",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-integer-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1585723557509482,
+    "stdout_sha256": "6f2878825134d69e559f86bf2ae2b31abddd9a14d55c84125940dc5c57d01f03",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-integer-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.14955957373604178,
+    "stdout_sha256": "d55f03238534daa206fd6fb920f2740699bfbc268bdf5f50931ae20c0cb4eaa3",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "rational-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3262598882429302,
+    "stdout_sha256": "2fda4d87f2b935d958246c052e3de80345c6cf3ca851ad484a86f03f2f1b7d61",
+    "stderr_sha256": "b4c31b08f01871a75b1499b3db802913607068f67248e2bed703a7c3ac34f531"
+  },
+  {
+    "name": "rational-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30970614217221737,
+    "stdout_sha256": "1a97a93060b83ec7e098b1c00433880f4f0d55c82174594f79680c8734129e79",
+    "stderr_sha256": "29c7447c0d15f5f77689ec31c8335814198f7b1bd682809fd6218f2c5291c70e"
+  },
+  {
+    "name": "rational-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.29348604287952185,
+    "stdout_sha256": "db2f4e09ae7684bf6152d020f75e5eb2f69bb4be5540e2fe31e8c6cb5d081dbf",
+    "stderr_sha256": "25728e57f79906bec6dd731a1c65aefde67e066876fbfbf56722450d2fc88185"
+  },
+  {
+    "name": "rational-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3365265540778637,
+    "stdout_sha256": "d11ed2dc95c05f17d0557f22e92172536ee2221e275df65101bd9b0fd7be05b2",
+    "stderr_sha256": "c3c745946daa1f63c58cad5fd948e5dbdde1c16337d918a131b383674875b2f3"
+  },
+  {
+    "name": "rational-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.32817028695717454,
+    "stdout_sha256": "436491e2a1a0e4e8310ee2aea56bf890cf884710f2f72d46299b42429dd2a1e3",
+    "stderr_sha256": "4934adb8ad336fc7f216d730b7b31c45d7231589b45b9505d8519ab860363c8f"
+  },
+  {
+    "name": "rational-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30349945835769176,
+    "stdout_sha256": "2fd7dce8872713d9667255096445707f76775ac3ee4a5135019c817213125daa",
+    "stderr_sha256": "dd0441c4a73452487de9b15f27dc36b1f775d50bb94421055020da2433043fa5"
+  },
+  {
+    "name": "rational-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30470095528289676,
+    "stdout_sha256": "b360528b281d028221f4bd8237689bf899a192517b2d5d9b98bbda49473d6d72",
+    "stderr_sha256": "70ed2d24e45087506532e84eb87b757eacaa8806527820800d42b1fce9388206"
+  },
+  {
+    "name": "rational-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3281126907095313,
+    "stdout_sha256": "b0996bdcb4e0395e5ca7c929fd2430874039916857f2d9ad3e9846d9c24bc289",
+    "stderr_sha256": "520abe4e9810995240488656c7ed2fd6d88746b1aba4abeae2015c43f6e9ccea"
+  },
+  {
+    "name": "rational-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3355524009093642,
+    "stdout_sha256": "d941b936d2bd7d05c20979aebe58352ed00f85da9ab2d532e7b5dee7bd65f899",
+    "stderr_sha256": "c7724f7b9c31b680acfdfaff32fc36e3bbf555a01b3ce39e952be7e98798370b"
+  },
+  {
+    "name": "rational-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.31347000412642956,
+    "stdout_sha256": "b5fe2ebb3acba4510a1df76c6f1b37b5fe0949d247f46daf8b28464559d3b95e",
+    "stderr_sha256": "4eda3038b66c6da03f9c90f2cd9bc302923c08be39c3274f2593e5a47b8fe844"
+  },
+  {
+    "name": "rational-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20278470730409026,
+    "stdout_sha256": "bceb5c5e5155b054efcedd7010071478acd5bd3cc0a21ec6e739b6e8c90d97fc",
+    "stderr_sha256": "2d43004340743de8e9d94a2518ef390fec595f192b744e7d4ff32fd09e60bc9e"
+  },
+  {
+    "name": "rational-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19125613709911704,
+    "stdout_sha256": "e1f1f9d487fcd3e7dddb25cba690965b33fffbfbcbe5ae9bd57b22c93def2787",
+    "stderr_sha256": "89ed2a197179bd93d970f53942a87108d93fe38775ea112f48fa6ba28c51afe1"
+  },
+  {
+    "name": "rational-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18964077811688185,
+    "stdout_sha256": "3515a5c046ef50ea4bc56745004d2cfd94cf86fa93736aee5049c327d9974873",
+    "stderr_sha256": "248f9527afaf080f593cd271523ea0a88d71dd449723b0c1ab94182ce2f4aca7"
+  },
+  {
+    "name": "rational-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1929037137888372,
+    "stdout_sha256": "4ee88de146efac3595d9d02c751c9cb7689ff376f70e7567930949002df0f430",
+    "stderr_sha256": "c83d10309a300d7093cec4a05c20ec90eac5711b3940aa24fa4400115ceac766"
+  },
+  {
+    "name": "rational-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2326885680668056,
+    "stdout_sha256": "c980d49c3051223f0d14bb866f3cd4d71878e45eb12f4c40f2cab939ead45d97",
+    "stderr_sha256": "1ccfaef9f82ef2603f17c9dc88c74ce2c9261937c8dac8653de5a3b4be483ea0"
+  },
+  {
+    "name": "rational-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1956647946499288,
+    "stdout_sha256": "46856793c8ea54c0cf18250d533b7630b03794b8ba39033d0a95010b056f41d9",
+    "stderr_sha256": "093c3252c4e3a16fdd8548d4866e6acf77a5a881251466d816807582e064fa44"
+  },
+  {
+    "name": "rational-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1950328480452299,
+    "stdout_sha256": "0a1adc2e87a1eae6b5cd7255f0c214dc14b42ee900ede8b78e664df6fdc715bb",
+    "stderr_sha256": "7f7b50fc9d7b2862ee1aa3dae730d905021fee56dff7e455cb3f89435b8b6451"
+  },
+  {
+    "name": "rational-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2046731081791222,
+    "stdout_sha256": "dbe80657e1cc6116adf8e87b887a24e20eb069d51e6cba04a354df0c0d1cf150",
+    "stderr_sha256": "c2ec487645c03462a3c93f3a64a9b7c37ed33c4470fcd4f8b0feae2cc367b52d"
+  },
+  {
+    "name": "rational-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19991249311715364,
+    "stdout_sha256": "321a9b388fe440875be8da3e9760b8b7937787e86a0e2f7430e6f4a1731cc607",
+    "stderr_sha256": "fefd424f44f3348150ffa36df5a5b743902dfca7baf979eef305e0a72700d498"
+  },
+  {
+    "name": "rational-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19034195924177766,
+    "stdout_sha256": "305a84188e586189da0055db15e43e15f3474b7453cc7082a0c3f3d3a6dfd933",
+    "stderr_sha256": "ef1e4def8cba88c09db468965fa6be4889e37bfb8fe6ca42dd1023cc38da67c1"
+  },
+  {
+    "name": "quadratic-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3162580830976367,
+    "stdout_sha256": "1bd97ef7c260f1033c15d75accbed261095b0a384312fefce542084a841bc1f1",
+    "stderr_sha256": "63ade5ee6bdb5c7e716677f5d1e6d05a7124547976cb937f49573039c9480884"
+  },
+  {
+    "name": "quadratic-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2885242532938719,
+    "stdout_sha256": "57df9380af6cb7f30e928c7bd0d17d66edf040b10be05067232003f4eddb3be4",
+    "stderr_sha256": "1185104c43184ce7d508f72865eb2c325c68a021ea106d09737c405cb1c30f20"
+  },
+  {
+    "name": "quadratic-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.28222735365852714,
+    "stdout_sha256": "1e25705719057ad7ec8ba68fc91b46dccac9db9780938d9261e23b61830e1c62",
+    "stderr_sha256": "62d63c0a85c8327e307c369e5f79e36ca2e01deac8548f1eadf567efbd67695a"
+  },
+  {
+    "name": "quadratic-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30689850402995944,
+    "stdout_sha256": "d48ff4b6cd5b49e448904d3e582ed73c147effc41aeb9b32c3a4bb34f0b7028c",
+    "stderr_sha256": "de29f6606d608e4ad0f80f2a82f836b9cfb691206e0044c334fc31045df2f021"
+  },
+  {
+    "name": "quadratic-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3034158139489591,
+    "stdout_sha256": "5716043fb46f96c8b5bc2a13588ef7533db475464eb2cde084de0ea8e47b0cd8",
+    "stderr_sha256": "7d4ec1a214e2e895bea9b0392e6a93169bb45873918e44508e477726e3e3f498"
+  },
+  {
+    "name": "quadratic-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.28656687680631876,
+    "stdout_sha256": "3fc95736187e75c032dc4232903f1b71704957d4415b674ee274ae2e0013a139",
+    "stderr_sha256": "429b3e7d306e9188ac9dd4dc9163b0d536301441c5cb6d97507850c9736a0e92"
+  },
+  {
+    "name": "quadratic-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2791807930916548,
+    "stdout_sha256": "70cf29b9eab8291cf02044ce0f05e9b4b8f85d4921a39d3afb66acf9845cc04c",
+    "stderr_sha256": "176336e9e08b52cc043c6c91f183845a6883c9e67474acb18f0598000e8c31cc"
+  },
+  {
+    "name": "quadratic-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3035901407711208,
+    "stdout_sha256": "e1326fb7a6934e296220a94b7475e5da9512e5457579cd9f5fa60432b89ab05b",
+    "stderr_sha256": "098460591ecf4b996fc74841326e06b0f3ed17308898315910c580e2d33270d3"
+  },
+  {
+    "name": "quadratic-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3131510163657367,
+    "stdout_sha256": "4dc4b4944b87fab0121b7cf207a44a27e542fb1fd6b1056e2f74e8b99c11cf4e",
+    "stderr_sha256": "32d768bc7b214331a938b159914d7670126ae571beabc338c1e1c90fa0da5629"
+  },
+  {
+    "name": "quadratic-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.28401015186682343,
+    "stdout_sha256": "4df3cf7b5e812fd9276059ace5c758db81123932924f7968aa5ceb1d3b351133",
+    "stderr_sha256": "550798bb762f2e6d930cd0ad90660991f2b99860adeab2f197c2f2b6c3a01de4"
+  },
+  {
+    "name": "quadratic-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19695758586749434,
+    "stdout_sha256": "9f581373875dc22739035be856ae13a208a71573e4033d8aa9f8a6cd279f9c92",
+    "stderr_sha256": "8c9b104a9b8f9e9f0f0aeb6d07de96f8690168b870c89eac28f41209b2eb8294"
+  },
+  {
+    "name": "quadratic-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18219932820647955,
+    "stdout_sha256": "41ef1f6430e2e42901e29401556e5f802cf72e8e0d558e3eedddb206634c41fb",
+    "stderr_sha256": "bc5ced4478d93d11d264e9b2ccc51b16518a47dfa9516f529da09d840887702c"
+  },
+  {
+    "name": "quadratic-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18944128090515733,
+    "stdout_sha256": "29eeea16ac5832eae43a61aed648cef0110c2dd2890adb6cdcda3491aa1f1978",
+    "stderr_sha256": "4834150f80055623a9977ffdcec314f6f9d592a1c7e3f25b29e1553f7824ca1a"
+  },
+  {
+    "name": "quadratic-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2042451067827642,
+    "stdout_sha256": "7d894e07f2297111a72ec70a3528885111fcf0298f7b51333d757497373f4223",
+    "stderr_sha256": "a271d2d8136096fbbacd7184eb024518a78415caee194e7544a3f8744ebcd415"
+  },
+  {
+    "name": "quadratic-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19257645634934306,
+    "stdout_sha256": "931878c6cb006a8d78dab2241e222afc09faf37be614e5c434c6a95b29da5fdf",
+    "stderr_sha256": "600bf8fc42c7374b0ce51d5fd5f4dc4043850e4fa8cdeb347191388b0a456922"
+  },
+  {
+    "name": "quadratic-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20153959328308702,
+    "stdout_sha256": "6ba9753b748fce51643d8e60218f85630adc88a1515c47d86454d8daf3f47922",
+    "stderr_sha256": "0239825c9746e6dc57f12e8e6b47651b52f1113adb9149ab150a8f180db51407"
+  },
+  {
+    "name": "quadratic-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18804067699238658,
+    "stdout_sha256": "c35bd65877c82cfeaecf64531b75957ef54645eebfdf2113a6d0f3983b26d308",
+    "stderr_sha256": "0a230513da6c6dfee5acd4ebfbbd1557a2022460c23113902ee035e89b88057f"
+  },
+  {
+    "name": "quadratic-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19628605199977756,
+    "stdout_sha256": "2d09106ad745488a1793fd2fc3e26a50439b26df0787927ceb6cc03fff4e9b42",
+    "stderr_sha256": "1fcfcdd3bc1f49c42d37d33568de15f719a6b782fef76e076935b01d5923f431"
+  },
+  {
+    "name": "quadratic-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19270335789769888,
+    "stdout_sha256": "20f2a3d56f6eb82c7e040d1ed9c4b9f7cbb6c155633eeb8b913119501e4037ba",
+    "stderr_sha256": "5cea19cfcd7eeb871c11cdbc6b7efa15913913d143d992acf8a52bfcf60dc75d"
+  },
+  {
+    "name": "quadratic-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18994335690513253,
+    "stdout_sha256": "04754fa6faead34d8e507484d42befafc104e45958c9df87c0dfe03ef92b143c",
+    "stderr_sha256": "7231b1d35d03bd17720cdaf283d6d86f9e3f2fb0bba0446aa3d9cdda74afa38a"
+  },
+  {
+    "name": "integer-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22431075293570757,
+    "stdout_sha256": "05d3638cd69e8982bd5e1eaae45722b21d4a00a59b7e2fe1ca70c3089983cf9f",
+    "stderr_sha256": "da05a30da462ceafee069e2abcd88d0e1cf8fa2a234bbbd8225571d4495992cd"
+  },
+  {
+    "name": "integer-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20579992095008492,
+    "stdout_sha256": "1cf22d216774a74c6cd76b05a0672233419e8391154dfaca966d75223a36e042",
+    "stderr_sha256": "7e7e340263e86c6fb88e856904062d907e898f8533347f12361fa27e67aeca83"
+  },
+  {
+    "name": "integer-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20395522704347968,
+    "stdout_sha256": "4c8956fb2006552639feb6e460ce2b9676e0379e2496afd0708a235f541368af",
+    "stderr_sha256": "708d67b55293b5cbcdf0f77568cd7f721835da335c006d5a296fdf70ce4806a3"
+  },
+  {
+    "name": "integer-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20748751517385244,
+    "stdout_sha256": "c0310f6bbdde0ad92f68b52f15bf22fc7ba34431ab8457dad22119e26693fe37",
+    "stderr_sha256": "1ead0eef31eedcd542d264d289f1062312ea5a02dc8bb2b24dd8a12bf92d4404"
+  },
+  {
+    "name": "integer-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22270167293027043,
+    "stdout_sha256": "df7c2465736bb816d6fa87c31971dea61a9c67d412af0636c0d79ae63e8b8c29",
+    "stderr_sha256": "f10828479cf03296b3a0432109b76253e65e10abc94a0043dc5613bd51faea77"
+  },
+  {
+    "name": "integer-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20071763824671507,
+    "stdout_sha256": "a0afd1433c9c9ebc94d2996c8e15575ba2df01431b9afcda5fc688d0d2c406e5",
+    "stderr_sha256": "f185472271659385032b2b4a6374a42ea4dff0eb04c3a3ba5e6c8d3660bce8a2"
+  },
+  {
+    "name": "integer-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20919426763430238,
+    "stdout_sha256": "65b5635e8c6c1e1aa4b6c945d03ddced1428da75d4de9c4963c2ff67a994b904",
+    "stderr_sha256": "d6a1bfeb35f9832bf5b0ec31472b4e1acb4d6e4139ed133a75edbabae429d610"
+  },
+  {
+    "name": "integer-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.23124329699203372,
+    "stdout_sha256": "9be4f16e354c82a52444baf2a2bee626b82eda5b3fc992766a6fe2760a1bb938",
+    "stderr_sha256": "cea3d81453b002559994cceaa602548b35597da80741e48647475182358332cf"
+  },
+  {
+    "name": "integer-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22095669200643897,
+    "stdout_sha256": "874515502537c556ff9a7b90b06e748217e4c42926d14346824f6a098099ffe4",
+    "stderr_sha256": "9eae866bc284e1803f08fb18602f95ea3160b74c2460ea0951252c9688d060cb"
+  },
+  {
+    "name": "integer-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20405546994879842,
+    "stdout_sha256": "d715c0708891f6f4f5ddfe54d69691b03145aa195065ef500f80f783d7139278",
+    "stderr_sha256": "9113e0be2b7b5746166c95fc8bcf59a22ded0d2576108839c74095b6dd2c7444"
+  },
+  {
+    "name": "integer-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16503144381567836,
+    "stdout_sha256": "dc8be3e1cc521d2617aba820796262a1edbebeb674ce1897d471cb039381c977",
+    "stderr_sha256": "6995da2572220d26b0eeb05ad5191432e773f501dd950399a9439e011d713f75"
+  },
+  {
+    "name": "integer-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16464680014178157,
+    "stdout_sha256": "5dfc9722732fdd62f79d3d491196da73757c882b7a5a202109b23afdcd5b02f3",
+    "stderr_sha256": "950f07f62ccf4bfd62ab5590880be36a46272ac5fe7fb2913a6d9c45452212a0"
+  },
+  {
+    "name": "integer-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15936015220358968,
+    "stdout_sha256": "ec811a5f147a031e469afa2a458a2975b5562525df7a751af34bed8895efe3ff",
+    "stderr_sha256": "9efb7e48412f1179dabfb6f5f1b1d9a42e4ac6ab2b3d2c67ca7ef4b99d69bee4"
+  },
+  {
+    "name": "integer-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17768322676420212,
+    "stdout_sha256": "22d2b3b4e6bf83cd6edfab57eaa1d65c37ecb8fc92ce0f35b80b94c187680656",
+    "stderr_sha256": "ecd4d8261d62bb658271067eb54c215f0844dac71a11cca76fc7585cfb4f4403"
+  },
+  {
+    "name": "integer-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1667163181118667,
+    "stdout_sha256": "b814964673766d6c31fccf60e66b61f5a9729f2dca98f795a34dea3f87f2b94f",
+    "stderr_sha256": "d4f100e57fa71b917b82ce912c4fee8da18f94367d1fe572745cc841b2dd55e5"
+  },
+  {
+    "name": "integer-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16921964706853032,
+    "stdout_sha256": "d8b9be815a8088cb03a4182fcd7cf9d2b5f8204a01f3fd111d240df9225a8497",
+    "stderr_sha256": "84aa0b13675254511c8fb207e289475929abc2148ed4fc0a16b64fd696b776bc"
+  },
+  {
+    "name": "integer-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17075904132798314,
+    "stdout_sha256": "03628fb5e5c0722ca7d694934096bd5da2b5c9545327a2c8159b5a74c3798e3d",
+    "stderr_sha256": "8cf022ce552b8da5ff4478460d9f93e36bbaa43ca48fad60477a516fa22f17db"
+  },
+  {
+    "name": "integer-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17272038711234927,
+    "stdout_sha256": "94c02ee21f8959160705afd39ecd3d072012152afd22989d042748027f673ef8",
+    "stderr_sha256": "226ad5fb4659876105506f3871f7edc97c0b9b155c6fa3225911dfbe7eb8453f"
+  },
+  {
+    "name": "integer-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17023737588897347,
+    "stdout_sha256": "8b4d73be7f3dd2b5a8d27f4f22abf4ba93e7bb87317ea693577b2c15557a3841",
+    "stderr_sha256": "6c1fbd6cb77ff33830f296659e76f55f2c5991b272e9682b70ac53d9e308f7fe"
+  },
+  {
+    "name": "integer-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17150961002334952,
+    "stdout_sha256": "2526f9c04ff77332dd51b688cf905f8883b54452d8fe43d52c4874917338daa8",
+    "stderr_sha256": "7ef74aff04e9c92685447640e223dc8af96cdf84895f2bd4bbfbba201b0a43d9"
+  }
+]

@@ -1,0 +1,53 @@
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1353,7 +1353,12 @@
+         // composite just to discover that it is not rational.
+         match &self.internal.approximation {
+             Approximation::One => Some(Rational::one()),
+-            Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),
++            // Reuse Rational's existing bounded canonical small-integer table.
++            // Wider integers retain the exact arbitrary-precision conversion.
++            Approximation::Int(n) => Some(num::ToPrimitive::to_i64(n).map_or_else(
++                || Rational::from_bigint(n.clone()),
++                Rational::new,
++            )),
+             Approximation::Ratio(r) => Some(r.clone()),
+             _ => None,
+         }
+--- a/crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs
++++ b/crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs
+@@ -184,3 +184,34 @@
+     drop(value);
+     assert!(weak.upgrade().is_none());
+ }
++
++#[test]
++fn integer_leaf_values_survive_word_boundaries_warming_and_cloning() {
++    let mut integers = [-65_i64, -64, -2, -1, 0, 1, 2, 64, 65]
++        .into_iter()
++        .map(BigInt::from)
++        .collect::<Vec<_>>();
++    for bits in [7_usize, 63, 64, 127, 255, 1024] {
++        for offset in [-1_i32, 0, 1] {
++            let magnitude = (BigInt::one() << bits) + offset;
++            integers.push(magnitude.clone());
++            integers.push(-magnitude);
++        }
++    }
++    for integer in integers {
++        let value = raw(Approximation::Int(integer.clone()));
++        let clone = value.clone();
++        for query in [&value, &clone, &value] {
++            let exact = query.exact_rational().unwrap();
++            // Compare the independent integer payload, including values
++            // immediately outside signed conversion and canonical-table bounds.
++            assert_eq!(exact.to_big_integer().as_ref(), Some(&integer));
++            assert_eq!(query.bounded_laurent_rational(2).unwrap(), exact);
++        }
++        assert!(value.cached().is_none());
++        let weak = Arc::downgrade(&value.internal);
++        drop(clone);
++        drop(value);
++        assert!(weak.upgrade().is_none());
++    }
++}

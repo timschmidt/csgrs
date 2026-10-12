@@ -1,0 +1,6 @@
+
+running 1 test
+test computable::node::persistent_laurent_cache_tests::integer_leaf_values_survive_word_boundaries_warming_and_cloning ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.00s
+

@@ -1,0 +1,68 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 10.965484080370516,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "integer-regression",
+      "exit_code": 0,
+      "seconds": 27.156860585324466,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "f52a2a23e58419cede27b183ec11d7b8a418bd832e19e52d5e96bc88c03a9679",
+      "stderr_sha256": "315d216cb4aa648edabb85705d62997d52f56d1b68112823938d85d6c6bd05e2"
+    },
+    {
+      "name": "cache-regressions",
+      "exit_code": 0,
+      "seconds": 0.5949323098175228,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "b3a79fe678b864d678ba55ee8b339fb03ea859193675dc414c0ea27f5af75be8",
+      "stderr_sha256": "300fb44a65ddee99cae10416ff035a4a757f7fd9a8e4634fc9704b641539a145"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 9.680907438043505,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "9f5d16fd80ffebf3a0a973ea5c7e9242506ab8667c6929b706307774dbc68eab"
+    },
+    {
+      "name": "scalar-library",
+      "exit_code": 0,
+      "seconds": 3.938669729977846,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "126aa85d39458bd324a41d56084f88535a90928a144406e4ffff78cdb7eaab95",
+      "stderr_sha256": "a43450b8c00f05788b25c5c35b71831d728a5c284e7fffcdfa001deef05db72f"
+    },
+    {
+      "name": "scalar-doctests",
+      "exit_code": 0,
+      "seconds": 9.716458712238818,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "b6781886961fcf18fc46d0c450b37108024b8e766e109e64d205791e5d871044",
+      "stderr_sha256": "d8e402766a666ca6a41713bfc31106a44642f0522c65ca53a31cd5107fab8282"
+    },
+    {
+      "name": "scalar-docs",
+      "exit_code": 0,
+      "seconds": 6.619783316273242,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "f6a9d831c5343339986b1e4dde24258827bea11338721029330f8de3479e5f77"
+    }
+  ],
+  "complete": true
+}

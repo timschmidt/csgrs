@@ -1,0 +1,121 @@
+{
+  "runner_sha256": "aeea19403dd66e6094873d695e506e97e731010ba17063bb17a83a3e1384f87b",
+  "preparation_sha256": "50b27f8d53d95c13339fff7287c006a0ff908db14e5e4451d0ad9d39894ae02b",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d"
+  },
+  "candidate_archive_sha256": "66e448f5f82a637d18521c42d76f59a23cd9d3525bf7c8febaed1363ff751a09",
+  "candidate_patch_sha256": "793dffa48136a6a90d6c10921aa753bf30975bfcc1968474def7f7d6af675fec",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "integer-regression",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "computable::node::persistent_laurent_cache_tests::integer_leaf_values_survive_word_boundaries_warming_and_cloning",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "cache-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "scalar-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "scalar-doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ]
+    ],
+    [
+      "scalar-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "scope": "Freeze integer-leaf canonical reuse and run scalar correctness gates.\n\nOnly exact integer-leaf conversion changes. The original normalizer, expansion\nbudget, fallback, and retained closed-form cache stay unchanged.\n",
+  "runtime_admitted": false
+}

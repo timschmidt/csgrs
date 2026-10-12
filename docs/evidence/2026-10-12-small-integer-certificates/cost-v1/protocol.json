@@ -1,0 +1,38 @@
+{
+  "scope": "Fixed paired scalar costs for existing canonical integer-leaf reuse.\n\nThe rational and quadratic probes are byte-identical to the rejected direct\nconsumer experiments. A third public probe exercises canonical-table limits,\nsigned-word boundaries and integers up to 1025 bits. Every query verifies\nindependently specified exact coefficients, including signs. Each suite uses\nfive fixed alternating pairs per mode; build directories remain source-specific.\nThis scalar trial does not admit the persistent cache or native runtime.\n",
+  "runner_sha256": "dde1695848fd216988cf34de63d8236c3d9c36c97661b4ea4490fe77a2690fcf",
+  "probes_sha256": {
+    "rational": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+    "quadratic": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60",
+    "integer": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294"
+  },
+  "predecessor_validation_sha256": "1fb6807bb8574f8a53c282d7712bb5aafb9048cd45ffc2ae8462bbb1ff7a6554",
+  "preparation_sha256": "50b27f8d53d95c13339fff7287c006a0ff908db14e5e4451d0ad9d39894ae02b",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "pinned_cpu": 0,
+  "time_iterations": 4096,
+  "memory_iterations": 1000,
+  "pairs_each_suite_and_mode": 5,
+  "preflight_iterations": 42,
+  "all_builds_finish_before_measurements": true,
+  "runtime_admitted": false
+}

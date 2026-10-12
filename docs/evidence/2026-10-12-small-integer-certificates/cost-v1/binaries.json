@@ -1,0 +1,96 @@
+{
+  "libraries": {
+    "baseline": {
+      "sha256": "c1e280c22e44f4c14af9525f5000eb64b3e9d42d86de4cc7c5977ae682684ad7",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "fresh": true,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal/Cargo.toml"
+    },
+    "candidate": {
+      "sha256": "47a7799ce5aa8f7c565359b2c5aed1030712a75209ef799084d4aee5906a7321",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "fresh": false,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperreal/Cargo.toml"
+    }
+  },
+  "binaries": {
+    "baseline-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-time",
+      "sha256": "4b085a19103bab42648d44acf6bcf29ed37b357bb675454c521d72ab4a537c38",
+      "bytes": 6195976
+    },
+    "baseline-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-rational-memory",
+      "sha256": "c184882e03e653d32f3beac9219aa82b7148a7f83b17dd815583d89a44c4184c",
+      "bytes": 6197880
+    },
+    "baseline-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-time",
+      "sha256": "3a50973456a21e793e37c5cf2af2efa493c9bf4af94040b29cddc0e43572f0b9",
+      "bytes": 6171000
+    },
+    "baseline-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-quadratic-memory",
+      "sha256": "ef9ce291d2c1d4b3880b530f284f623d1977d0b0457883489586c1dc891a9b65",
+      "bytes": 6174288
+    },
+    "baseline-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-time",
+      "sha256": "77036c1fec520e3e3e94b0fbd47c0e5726c9f4363e06e9bf5acc2f82c34f56f1",
+      "bytes": 6066656
+    },
+    "baseline-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/baseline-integer-memory",
+      "sha256": "abbac42ee54a4a3990d1fe12a26569d1eb5e53dfde2d9bb7b6c3e4ece75f73fd",
+      "bytes": 6069600
+    },
+    "candidate-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-time",
+      "sha256": "a5d5a507cb4cd5d5ca37829a2b0af06bb6e3e330330b01d30f23e34a8e0f85aa",
+      "bytes": 6178704
+    },
+    "candidate-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-rational-memory",
+      "sha256": "62bdd9ac6fdc85e2bbaebbae520686d62a3c3087ec9ebe9ed212f5cdd344bbad",
+      "bytes": 6180616
+    },
+    "candidate-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-time",
+      "sha256": "303d0758ad1b096c5711d611f6c9d83b5236060dbfcd0c922ceee52675dfb906",
+      "bytes": 6153728
+    },
+    "candidate-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-quadratic-memory",
+      "sha256": "9b681e8e5d55041cd4f2de0ca20913c47f6d517abaa380976923c9e2647ac437",
+      "bytes": 6157000
+    },
+    "candidate-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-time",
+      "sha256": "fd5b42aeb9d0545aebabbb380307b96edd39882002caf5a54f2cdcaac056e23f",
+      "bytes": 6049392
+    },
+    "candidate-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/cost-v1-binaries/candidate-integer-memory",
+      "sha256": "ef846a6c65fcc03a8965913af9d3df28da1bc8136ecae613404a3e72a9770c04",
+      "bytes": 6052312
+    }
+  }
+}
