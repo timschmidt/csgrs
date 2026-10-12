@@ -1,0 +1,20 @@
+{
+  "predecessor": "record_domain_bound_validation.py",
+  "predecessor_sha256": "dd916381f1d5ac35f743d9954cfab3c887a40f9787bb99ba18211738464c365e",
+  "fork": "record_domain_predicate_validation.py",
+  "fork_sha256": "3d492761b8d4c35588ed9612901af28c09815d967fd4f8de20ffc81f57793962",
+  "replacements": {
+    "read(E / 'domain-bound-candidate-caps-v1693.json')['source_record_sha256']": "sha(E / 'typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz')",
+    "domain-bound-candidate-validation-v1702.json": "domain-predicate-candidate-validation-v1772.json",
+    "domain-bound-broad-validation-v1702.json": "domain-predicate-broad-validation-v1772.json",
+    "typed-api-prototype-v1627-domain-sign-stack-tests": "typed-api-prototype-v1699-domain-bound-stack-tests",
+    "typed-api-prototype-v1694-domain-bound-scalar-tests": "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+    "typed-api-prototype-v1695-domain-bound-clippy": "typed-api-prototype-v1765-domain-predicate-clippy",
+    "typed-api-prototype-v1698-domain-bound-included-fmt": "typed-api-prototype-v1768-domain-predicate-included-fmt",
+    "typed-api-prototype-v1699-domain-bound-stack-tests": "typed-api-prototype-v1769-domain-predicate-stack-tests",
+    "typed-api-prototype-v1700-domain-bound-default-tests": "typed-api-prototype-v1770-domain-predicate-default-tests",
+    "typed-api-prototype-v1701-domain-bound-debug-tests": "typed-api-prototype-v1771-domain-predicate-debug-tests",
+    "typed-api-prototype-v1702-domain-bound-minimal-clippy": "typed-api-prototype-v1772-domain-predicate-minimal-clippy"
+  },
+  "scope": "Prepared recorder only; runtime validation has not yet run. Preserve all expected test counts, ignored cases, warning lines and included rustfmt file count."
+}

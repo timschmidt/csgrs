@@ -1,0 +1,683 @@
+{
+  "status": "Frozen before runtime builds and replay execution",
+  "source_record": "typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "build_phase": "typed-api-prototype-v1766-domain-predicate-release-build",
+  "unit_phase": "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+  "caps": [
+    {
+      "phase": "typed-api-prototype-v1781-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1685-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1782-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1686-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1783-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1687-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1784-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1688-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1785-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1689-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1786-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1690-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1787-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1691-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1788-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1692-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1789-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1693-domain-bound-candidate-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1790-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1711-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1791-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1712-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1792-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1713-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1793-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1714-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1794-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1715-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1795-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1716-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1796-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1717-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1797-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1718-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1798-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1719-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1799-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1720-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1800-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1721-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1801-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1722-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1802-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1723-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1803-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1724-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1804-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1725-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1805-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1726-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1806-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1727-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1807-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1728-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1808-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1729-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1809-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1730-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1810-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1731-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1811-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1732-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1812-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1733-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1813-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1734-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1814-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1735-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_leaf_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1815-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1736-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_dag_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1816-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1737-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::structural_comparison_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1817-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1738-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1818-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1739-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::rational_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1819-domain-predicate-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1740-domain-bound-retained-cap",
+      "arguments": [
+        "computable::node::inverse_constructor_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    }
+  ],
+  "numerical_replays": [
+    {
+      "phase": "typed-api-prototype-v1820-domain-predicate-inverse-replay",
+      "baseline_phase": "typed-api-prototype-v1741-domain-bound-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1820-domain-predicate-inverse-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1821-domain-predicate-evaluation-replay",
+      "baseline_phase": "typed-api-prototype-v1742-domain-bound-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1821-domain-predicate-evaluation-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests"
+      ],
+      "runner_sha256": "6ade8892ec7680242f343538e4920e58c68cc1c2c31f6b571aaf1046e609e922",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a20fb8d400bb79ea26896a7c4f8f524a60ca21fab8f9ed4befc03e7ef49d6b2e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1822-domain-predicate-algebraic-replay",
+      "baseline_phase": "typed-api-prototype-v1743-domain-bound-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1822-domain-predicate-algebraic-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "expected_cases": 288,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1823-domain-predicate-algebraic-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1744-domain-bound-algebraic-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1823-domain-predicate-algebraic-wide-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+      "expected_cases": 144,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1824-domain-predicate-normal-form-replay",
+      "baseline_phase": "typed-api-prototype-v1745-domain-bound-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1824-domain-predicate-normal-form-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1825-domain-predicate-replay",
+      "baseline_phase": "typed-api-prototype-v1746-domain-bound-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_candidate.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1825-domain-predicate-replay"
+      ],
+      "runner_sha256": "375eacc23ff4c3338c8e24f5417c8164edb5a4f08dd2b6c39dbd9f6528ab64db",
+      "expected_cases": 415,
+      "baseline_rust_inputs_sha256": {
+        "cache_candidate_probe.rs": "bfab65e1d36a562e6594cc46c35269eebb14b9f7cee55d8309e9fa034a7db356",
+        "candidate_probe.rs": "58da4d66c59675a08a250bb6d711f1a40df16d46f914b59f4dc2dd9f0fd9c72c"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1826-domain-predicate-precision-replay",
+      "baseline_phase": "typed-api-prototype-v1747-domain-bound-precision-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_precision.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1825-domain-predicate-replay",
+        "typed-api-prototype-v1826-domain-predicate-precision-replay"
+      ],
+      "runner_sha256": "3d7202561daca829b9515fd603303956856fc29a6410b580aaac9be4d92444b8",
+      "expected_cases": 60,
+      "baseline_rust_inputs_sha256": {}
+    },
+    {
+      "phase": "typed-api-prototype-v1827-domain-predicate-private-kernel-replay",
+      "baseline_phase": "typed-api-prototype-v1748-domain-bound-private-kernel-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_kernel.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1827-domain-predicate-private-kernel-replay"
+      ],
+      "runner_sha256": "26c6ea11ed1469772d085529499edea4eb21cfa5eb1f668ada257ce4d3f56d55",
+      "expected_cases": 78,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3caaba77889d086cf0ede744b6d4838f24a7165200fece4d35eee167f5882312"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1828-domain-predicate-private-trig-replay",
+      "baseline_phase": "typed-api-prototype-v1749-domain-bound-private-trig-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1828-domain-predicate-private-trig-replay"
+      ],
+      "runner_sha256": "461ab611fb3a9429090a55e9cfd461accf35776942f0cc6651eb0de72d3a8740",
+      "expected_cases": 600,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a53880fc287fab1837f87fa43c8517cdd0b20401b4b2153e207c69a87ee31c3e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1829-domain-predicate-private-trig-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1750-domain-bound-private-trig-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig_wide.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1829-domain-predicate-private-trig-wide-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests"
+      ],
+      "runner_sha256": "491e7ca414d01796c86e745fe9df81fe8fccd75caf79736f23168449a6bee2f0",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "471a955e4ae073bf5d47f1ee6ad3e083dc04f474c35dd1e0385ddc3b89c2053d"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1830-domain-predicate-trig-scale-replay",
+      "baseline_phase": "typed-api-prototype-v1751-domain-bound-trig-scale-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_scales.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1830-domain-predicate-trig-scale-replay"
+      ],
+      "runner_sha256": "adc962f16ed927ed6e382836fc01d02f87092f29f71ecc6f48727866729fe70d",
+      "expected_cases": 168,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3e9c2fa21dbb9a4b1c4840dee03aa168b2f19009c60528bbc6d71ab112725931"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1831-domain-predicate-trig-residual-replay",
+      "baseline_phase": "typed-api-prototype-v1752-domain-bound-trig-residual-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_residuals.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1831-domain-predicate-trig-residual-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests"
+      ],
+      "runner_sha256": "537915f6d67a04620d8616e2d010fa5197a6d575d6c37bc085b0c4ffbb322c58",
+      "expected_cases": 456,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ff314e0337338b6599647d484c11341977c5a303f90b363e144a159bc9547753"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1832-domain-predicate-trig-nonrational-replay",
+      "baseline_phase": "typed-api-prototype-v1753-domain-bound-trig-nonrational-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_nonrational.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1832-domain-predicate-trig-nonrational-replay",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests"
+      ],
+      "runner_sha256": "9b0884722c5ad52b303f9832409a7cfedb90a49abb5d3399654760b051ba80f2",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a83ae3dd69db7aebf94fc9041f3d3e000aa15dee460c478659deedb9d83aff25"
+      }
+    }
+  ],
+  "public_replays": [
+    {
+      "phase": "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+      "protocol": "domain-predicate-public-proof-reuse-protocol-v1833.json",
+      "protocol_sha256": "ae4d22a454f9739a97e3fe16bc1188afff8fe756b24ae58d01ebcf100c981672",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_public_proof_reuse_v2.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "domain-predicate-public-proof-reuse-protocol-v1833.json"
+      ],
+      "expected_cases": 126,
+      "runner": "reproduce_public_proof_reuse_v2.py",
+      "runner_sha256": "abad82e39559c81394227ae9a9e4b6c044cf23c1fee6b303ada9f2ce2547b681",
+      "predecessor_runner": "reproduce_public_proof_reuse.py",
+      "predecessor_runner_sha256": "4c8533d2828073c7c6b46036fd3e88e843fd5e5d75aaaf253d89705d9c3160b1",
+      "runner_change": {
+        "before": "typed-api-prototype-v1703-domain-bound-atan-cost/summary.json",
+        "after": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json"
+      },
+      "probe_sha256": "054dccf922561bcf8586aa08501af3c2b17915c6a4769930d6cab6259dcbd013"
+    },
+    {
+      "phase": "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse",
+      "protocol": "domain-predicate-composed-proof-reuse-protocol-v1834.json",
+      "protocol_sha256": "37ae6e5d62bb5443c7fbc54518be433c63b5e76afc7653251b9be699837d3d0c",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_composed_proof_reuse_v2.py",
+        "typed-api-prototype-v1766-domain-predicate-release-build",
+        "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse",
+        "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "domain-predicate-composed-proof-reuse-protocol-v1834.json"
+      ],
+      "expected_cases": 522,
+      "runner": "reproduce_composed_proof_reuse_v2.py",
+      "runner_sha256": "ba913ff90d3542032362c8a90e562c0c11344d9fa038bcc8e1898ecc8665f0e1",
+      "predecessor_runner": "reproduce_composed_proof_reuse.py",
+      "predecessor_runner_sha256": "7fda06490c91cc1d06842764d3cc2ea3a33772872050f1bb71b5410429766204",
+      "runner_change": {
+        "before": "typed-api-prototype-v1703-domain-bound-atan-cost/summary.json",
+        "after": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json"
+      },
+      "probe_sha256": "edf0f540ce527da0bec073776e379041d5eff9dc7173f51f4dccb2117e2dd5e2"
+    }
+  ],
+  "requirements": [
+    "Preserve all 39 capped test commands, 4129 numerical cases and 648 public reuse schedules; no runtime test body, probe or oracle is changed.",
+    "Keep the original process limits and full-size inputs. Validate each terminal result and hash; preserve failures under their original phase names.",
+    "Compare all deterministic non-timing observations with the retained runtime. Public thread schedules may change Unknown/Exhausted counts; require each observed sample/fact to satisfy its oracle and every published fact to persist.",
+    "Check all successful numerical enclosures, typed errors, work accounting and serialized bytes. Public constructors and structural inspections remain outside query allowances.",
+    "No builds, source edits or other validation/measurement workloads overlap a capped phase. Main admission and whole-crate proof remain separate gates."
+  ]
+}

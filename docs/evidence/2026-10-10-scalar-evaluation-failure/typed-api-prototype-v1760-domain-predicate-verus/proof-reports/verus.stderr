@@ -1,0 +1,8 @@
+error: function is marked `open` but not marked `pub`; for the body of a function to be visible, the function symbol must also be visible
+   --> verification/bound_denotation.rs:217:11
+    |
+217 | open spec fn real_domain_holds(domain: RequiredRealDomain, value: real) -> bool {
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: aborting due to 1 previous error
+

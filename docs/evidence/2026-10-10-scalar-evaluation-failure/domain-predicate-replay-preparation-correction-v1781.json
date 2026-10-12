@@ -1,0 +1,11 @@
+{
+  "failed_helper": "prepare_domain_predicate_replays.py",
+  "failed_helper_sha256": "e65a206536ac94d61ca6e168652f8787e1865b178f9f42f7d487f71d60920f35",
+  "exit_code": 1,
+  "failure": "FileNotFoundError for typed-api-prototype-v1746-domain-bound-replay/probe.rs; its actual inputs are candidate_probe.rs and cache_candidate_probe.rs. The precision replay reuses the earlier executable and has no independent Rust source.",
+  "new_helper": "prepare_domain_predicate_replays_v2.py",
+  "new_helper_sha256": "efa1eb0818d9d9bd0a2bb556c4603f42c1481c8a3540488c31c84f4f8c349032",
+  "correction": "Record every actual Rust input file from each predecessor phase. Preserve the inherited helper and dependency phase mapping; do not invent or replace probes.",
+  "protocol_or_runner_outputs_created_by_failed_attempt": false,
+  "runtime_or_replay_workloads_executed": false
+}

@@ -1,0 +1,317 @@
+--- a/crates/hyperreal/src/computable/node/bounds.rs
++++ b/crates/hyperreal/src/computable/node/bounds.rs
+@@ -14,6 +14,20 @@
+ pub type Precision = i32;
+ const ATAN2_SIGN_REFINEMENT_FLOOR: Precision = -4096;
+ const DEFAULT_COMPARE_REFINEMENT_FLOOR: Precision = -4096;
++
++// A domain requirement is meaningful only after independent operand existence.
++#[derive(Clone, Copy)]
++#[cfg_attr(verus_keep_ghost, verus_verify)]
++enum RequiredRealDomain {
++    Nonzero,
++    Nonnegative,
++    Positive,
++    AboveMinusOne,
++    AtLeastOne,
++    ClosedUnit,
++    OpenUnit,
++    Probability,
++}
+ 
+ #[derive(Clone, Copy, Debug, PartialEq, Default)]
+ #[cfg_attr(verus_keep_ghost, verus_verify)]
+@@ -123,6 +137,51 @@
+ }
+ 
+ impl BoundInfo {
++    // This is a sufficient certificate, not a complete domain decision. The
++    // caller supplies a valid bound for an independently established real.
++    #[inline]
++    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
++    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
++        ensures result == match (domain, *self) {
++            (RequiredRealDomain::AboveMinusOne | RequiredRealDomain::ClosedUnit
++                | RequiredRealDomain::OpenUnit, Self::Zero) => true,
++            (RequiredRealDomain::AboveMinusOne | RequiredRealDomain::ClosedUnit
++                | RequiredRealDomain::OpenUnit, Self::NonZero { msd: Some(e), .. }) => e < 0,
++            (RequiredRealDomain::Probability,
++                Self::NonZero { sign: Some(Sign::Plus), msd: Some(e), .. }) => e < 0,
++            (RequiredRealDomain::AtLeastOne,
++                Self::NonZero { sign: Some(Sign::Plus), msd: Some(e), exact_msd: true }) => e >= 0,
++            _ => false,
++        },
++    ))]
++    fn proves_domain(&self, domain: RequiredRealDomain) -> bool {
++        use RequiredRealDomain::*;
++        match domain {
++            AboveMinusOne | ClosedUnit | OpenUnit | Probability => {
++                // An upper MSD e < 0 proves |x| < 2^(e+1) <= 1.
++                let in_unit = match self.planning_msd() {
++                    Some(None) => true,
++                    Some(Some(msd)) => msd < 0,
++                    None => false,
++                };
++                in_unit
++                    && match domain {
++                        Probability => matches!(self.known_sign(), Some(Sign::Plus)),
++                        _ => true,
++                    }
++            }
++            AtLeastOne => {
++                // Only an exact binade supplies the lower magnitude bound.
++                matches!(self.known_sign(), Some(Sign::Plus))
++                    && match self.known_msd() {
++                        Some(Some(msd)) => msd >= 0,
++                        _ => false,
++                    }
++            }
++            Nonzero | Nonnegative | Positive => false,
++        }
++    }
++
+     #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
+     #[cfg_attr(verus_keep_ghost, verus_spec(result =>
+         ensures match sign {
+--- a/crates/hyperreal/src/computable/node/domain_certificates.rs
++++ b/crates/hyperreal/src/computable/node/domain_certificates.rs
+@@ -23,24 +23,7 @@
+         let Some(bound) = self.cached_bound() else {
+             return false;
+         };
+-        use RequiredRealDomain::*;
+-        match domain {
+-            AboveMinusOne | ClosedUnit | OpenUnit | Probability => {
+-                // An upper MSD e < 0 proves |x| < 2^(e+1) <= 1;
+-                // an exact binade is unnecessary for this upper bound.
+-                bound
+-                    .planning_msd()
+-                    .is_some_and(|msd| msd.is_none_or(|msd| msd < 0))
+-                    && (!matches!(domain, Probability) || bound.known_sign() == Some(Sign::Plus))
+-            }
+-            AtLeastOne => {
+-                // Here a lower bound is essential: only an exact binade
+-                // supplies |x| >= 2^e. An upper estimate cannot prove it.
+-                bound.known_sign() == Some(Sign::Plus)
+-                    && bound.known_msd().flatten().is_some_and(|msd| msd >= 0)
+-            }
+-            Nonzero | Nonnegative | Positive => false,
+-        }
++        bound.proves_domain(domain)
+     }
+ 
+     // These range theorems require existence, which callers establish first.
+--- a/crates/hyperreal/src/computable/node/domain_validation.rs
++++ b/crates/hyperreal/src/computable/node/domain_validation.rs
+@@ -1,15 +1,3 @@
+-#[derive(Clone, Copy)]
+-enum RequiredRealDomain {
+-    Nonzero,
+-    Nonnegative,
+-    Positive,
+-    AboveMinusOne,
+-    AtLeastOne,
+-    ClosedUnit,
+-    OpenUnit,
+-    Probability,
+-}
+-
+ impl RequiredRealDomain {
+     fn accepts_rational(self, value: &Rational) -> bool {
+         use RequiredRealDomain::*;
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -1,8 +1,8 @@
+ # Verus verification of Hyperreal
+ 
+ The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
+-The current proof target verifies ninety-six production contracts (eighty-seven
+-functions and nine constants) and one hundred twenty-seven arithmetic model theorems. The rest
++The current proof target verifies ninety-seven production contracts (eighty-eight
++functions and nine constants) and one hundred thirty arithmetic model theorems. The rest
+ of the crate is still awaiting implementation refinement proofs. A passing
+ Verus job must not be described as 100% verification of Hyperreal.
+ 
+@@ -80,9 +80,9 @@
+ [attribute syntax guide](https://verus-lang.github.io/verus/guide/exec_attr.html).
+ 
+ The proof target also includes the production `computable/node/bounds.rs`
+-directly. Seventeen constructor, transformation and query contracts preserve the
++directly. Eighteen constructor, transformation and query contracts preserve the
+ typed bound state, exponent calculations and the distinction between zero and
+-an unavailable exponent. Twenty-five denotation lemmas connect these checked
++an unavailable exponent. Twenty-eight denotation lemmas connect these checked
+ contracts to sign, nonzero, upper-magnitude and exact real-binade certificates,
+ conditional on valid input bounds. Every available exponent bounds the magnitude
+ strictly below `2^(msd + 1)`; an exact exponent also proves `2^msd <= abs(value)`.
+@@ -94,6 +94,17 @@
+ production mapping callbacks, incoming graph/domain invariants, constants and
+ concurrent caches remain outside this added boundary. Normal builds retain every
+ operation.
++
++The included `BoundInfo::proves_domain` body checks sufficient cached magnitude
++certificates. Its exact typed contract preserves every accepted and declined
++case; a conditional denotation theorem proves that each accepted case satisfies
++the requested real domain. Strict upper bounds prove the open unit interval,
++probability also requires a positive sign, and a positive exact binade supplies
++the lower bound for values at least one. The runtime wrapper calls this same
++method after independently establishing the operand's existence. The proof
++does not establish that caller ordering, operand existence, bound production,
++or concurrent atomic publication. A declined certificate means this particular
++proof is unavailable, not that the operand is outside its domain.
+ 
+ The production `computable/node/representation.rs` file also supplies three
+ pure cache codecs. Bound packing preserves every typed state, sign, optional
+@@ -136,6 +147,7 @@
+ | `BoundInfo::known_msd`, `BoundInfo::planning_msd`, `BoundInfo::known_sign` | Zero sentinel iff the bound is `Zero`, and returned exponents/signs match the stored metadata. | Computable magnitude/sign queries |
+ | `BoundInfo::magnitude_bits`, `public_sign`, `private_sign` | Complete public magnitude export with the exactness flag preserved, and lossless conversion of negative, zero and positive signs. Conditional denotation lemmas certify every exported upper bound and the additional lower bound of an exact magnitude. | Public structural facts and private sign import |
+ | `BoundInfo::certified_sign_and_msd` | Preserves every known sign and exact magnitude while declining upper bounds without a matching lower bound. Returned zero and binade certificates are sound conditional on valid incoming bounds. | Precision selection in reciprocal, addition, multiplication and square root; graph and approximation-kernel proofs remain open |
++| `BoundInfo::proves_domain` | Exact sufficient-certificate decisions for cached magnitude domains. Accepted decisions imply the real domain conditional on a valid bound for an independently established real; false does not prove invalidity. | Cached-domain validation after independent operand existence; callers, bound producers and atomics remain open |
+ | `AtomicFacts::encode_bound` | Exact wire layout; the round-trip theorem recovers every typed bound, including both signed exponent limits and unavailable magnitudes. | Atomic bound-cache publication |
+ | `AtomicFacts::encode_exact_sign`, `AtomicFacts::decode_exact_sign` | Lossless exact-sign encoding, zero unused bits, valid encoded tags, and exact decoding for every valid sign tag. | Atomic exact-sign cache |
+ | Public certificate accessors | Exact extraction of known sign, ordering and equality answers; unknown stays `None`, and knownness matches the variant. | Predicate and solver certificate consumers |
+--- a/crates/hyperreal/verification/bound_denotation.rs
++++ b/crates/hyperreal/verification/bound_denotation.rs
+@@ -208,6 +208,69 @@
+         distinct_real_binades_order_magnitudes(
+             binary_unit(exponent), binary_unit(upper), exponent, upper,
+         );
++    }
++}
++
++// These are real-domain conditions, not convergence ranges for a series.
++// A real denotation and the validity of its incoming bound are premises;
++// graph existence, cache producers and callers remain separate obligations.
++spec fn real_domain_holds(domain: RequiredRealDomain, value: real) -> bool {
++    match domain {
++        RequiredRealDomain::Nonzero => value != 0real,
++        RequiredRealDomain::Nonnegative => value >= 0real,
++        RequiredRealDomain::Positive => value > 0real,
++        RequiredRealDomain::AboveMinusOne => value > -1real,
++        RequiredRealDomain::AtLeastOne => value >= 1real,
++        RequiredRealDomain::ClosedUnit => -1real <= value <= 1real,
++        RequiredRealDomain::OpenUnit => -1real < value < 1real,
++        RequiredRealDomain::Probability => 0real < value < 1real,
++    }
++}
++
++proof fn upper_magnitude_proves_open_unit(value: real, exponent: i32)
++    requires magnitude_upper_bound(value, exponent as int), exponent < 0,
++    ensures -1real < value < 1real,
++{
++    magnitude_upper_bound_is_monotone(value, exponent as int, -1);
++    binary_unit_successor(-1);
++    lemma2_to64();
++    assert(binary_unit(0) == 1real) by (nonlinear_arith)
++        requires vstd::arithmetic::power2::pow2(0) == 1;
++    assert(absolute(value) < 1real);
++}
++
++proof fn positive_binade_proves_at_least_one(value: real, exponent: i32)
++    requires value > 0real, real_binade(value, exponent as int), exponent >= 0,
++    ensures value >= 1real,
++{
++    lemma2_to64();
++    assert(binary_unit(0) == 1real) by (nonlinear_arith)
++        requires vstd::arithmetic::power2::pow2(0) == 1;
++    if exponent > 0 {
++        distinct_real_binades_order_magnitudes(1real, value, 0, exponent as int);
++    }
++}
++
++// call_ensures refers to the included production body, not a duplicate model
++// implementation. False remains lack of this particular sufficient proof.
++proof fn accepted_bound_proves_real_domain(
++    bound: &BoundInfo, domain: RequiredRealDomain, value: real, result: bool,
++)
++    requires bound_denotes(*bound, value),
++        call_ensures(BoundInfo::proves_domain, (bound, domain), result), result,
++    ensures real_domain_holds(domain, value),
++{
++    if let BoundInfo::NonZero { msd: Some(exponent), .. } = *bound {
++        match domain {
++            RequiredRealDomain::AtLeastOne => {
++                positive_binade_proves_at_least_one(value, exponent);
++            },
++            RequiredRealDomain::AboveMinusOne | RequiredRealDomain::ClosedUnit
++                | RequiredRealDomain::OpenUnit | RequiredRealDomain::Probability => {
++                upper_magnitude_proves_open_unit(value, exponent);
++            },
++            _ => {},
++        }
+     }
+ }
+ 
+--- a/crates/hyperreal/verification/scope.json
++++ b/crates/hyperreal/verification/scope.json
+@@ -96,7 +96,8 @@
+     "computable_bounds::BoundInfo::multiply",
+     "computable_bounds::BoundInfo::add",
+     "computable_cache::impl&%0::FINITE_REAL",
+-    "verified::word::upper_bit_length_msd"
++    "verified::word::upper_bit_length_msd",
++    "computable_bounds::BoundInfo::proves_domain"
+   ],
+   "verified_model_theorems": [
+     "verified::division::gcd_preserves_common_divisors",
+@@ -225,7 +226,10 @@
+     "computable_bounds::positive_root_upper_bound",
+     "computable_bounds::binary_scaling_preserves_magnitude_upper_bound",
+     "computable_bounds::magnitude_upper_bound_is_monotone",
+-    "computable_bounds::clamped_upper_exponent_preserves_certificates"
++    "computable_bounds::clamped_upper_exponent_preserves_certificates",
++    "computable_bounds::upper_magnitude_proves_open_unit",
++    "computable_bounds::positive_binade_proves_at_least_one",
++    "computable_bounds::accepted_bound_proves_real_domain"
+   ],
+   "obligations": [
+     {
+--- a/crates/hyperreal/verification/test_bound_rejections.py
++++ b/crates/hyperreal/verification/test_bound_rejections.py
+@@ -71,6 +71,24 @@
+     ('inverse', 'if exact_msd {', 'if true {'),
+ ]
+ 
++# The production domain predicate must preserve every sufficient certificate,
++# including zero/unit boundaries and the distinction between upper and lower
++# magnitudes. These edits change the actual included executable body.
++MUTATIONS += [
++    ('proves_domain', 'Some(Some(msd)) => msd < 0,', 'Some(Some(msd)) => msd <= 0,'),
++    ('proves_domain', 'Some(Some(msd)) => msd < 0,', 'Some(Some(msd)) => msd < -1,'),
++    ('proves_domain', 'Some(None) => true,', 'Some(None) => false,'),
++    ('proves_domain', 'None => false,', 'None => true,'),
++    ('proves_domain', 'Probability => matches!(self.known_sign(), Some(Sign::Plus)),',
++     'Probability => matches!(self.known_sign(), Some(Sign::Plus | Sign::NoSign)),'),
++    ('proves_domain', 'match self.known_msd()', 'match self.planning_msd()'),
++    ('proves_domain', 'Some(Some(msd)) => msd >= 0,', 'Some(Some(msd)) => msd <= 0,'),
++    ('proves_domain', 'Some(Some(msd)) => msd >= 0,', 'Some(Some(msd)) => msd > 0,'),
++    ('proves_domain',
++     'matches!(self.known_sign(), Some(Sign::Plus))\n                    && match self.known_msd()',
++     'true\n                    && match self.known_msd()'),
++]
++
+ MODEL_MUTATIONS = [
+     ('sign certificate', 'Some(Sign::Plus) => value > 0real,',
+      'Some(Sign::Plus) => value >= 0real,'),
+@@ -135,6 +153,21 @@
+     ('closed exact lower endpoint',
+      '&& (exact_msd ==> binary_unit(e as int) <= (absolute(approximation as real) - 1real) * unit),',
+      '&& (exact_msd ==> binary_unit(e as int) <= (absolute(approximation as real) + 1real) * unit),'),
++]
++
++MODEL_MUTATIONS += [
++    ('unit-domain strict upper exponent',
++     'requires magnitude_upper_bound(value, exponent as int), exponent < 0,',
++     'requires magnitude_upper_bound(value, exponent as int), exponent <= 0,'),
++    ('at-least-one needs a lower binade',
++     'requires value > 0real, real_binade(value, exponent as int), exponent >= 0,',
++     'requires value > 0real, magnitude_upper_bound(value, exponent as int), exponent >= 0,'),
++    ('domain requires a valid incoming bound',
++     'requires bound_denotes(*bound, value),\n        call_ensures(BoundInfo::proves_domain,',
++     'requires true,\n        call_ensures(BoundInfo::proves_domain,'),
++    ('domain requires an accepted certificate',
++     'call_ensures(BoundInfo::proves_domain, (bound, domain), result), result,',
++     'call_ensures(BoundInfo::proves_domain, (bound, domain), result), !result,'),
+ ]
+ 
+ 

@@ -1,0 +1,131 @@
+{
+  "status": "Frozen before building or measuring the runtime extraction",
+  "source_record": "typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1754-state.json",
+  "retained_runtime_checkpoint_sha256": "869debcfc73df34c47cec7ce84ce7f57a30507a0201083773e8d05f576dcac71",
+  "retained_cost_record": "domain-bound-cost-review-v1710.json",
+  "retained_cost_record_sha256": "5b6de6184d700ff3bda26cbb729559193cd10bc01390b860930edba2c6e1afbc",
+  "runner_forks": {
+    "run_domain_predicate_costs.py": {
+      "predecessor": "run_domain_bound_costs.py",
+      "predecessor_sha256": "b71e0d59edbf6c39aa622e5aaca1c8be3421241cfea0441782ea1cf5e931f168",
+      "fork_sha256": "4acb9fa298bc998b89f2dbf397c0f6527939a7d42a22112bc9627facbbdd7ce0",
+      "literal_replacements": {
+        "typed-api-prototype-v1696-domain-bound-release-build": "typed-api-prototype-v1766-domain-predicate-release-build",
+        "read(E/'domain-bound-candidate-caps-v1693.json')['source_record_sha256']": "sha(E/'typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz')",
+        "typed-api-prototype-v1703-domain-bound-atan-cost": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+        "typed-api-prototype-v1704-domain-bound-integer-cost": "typed-api-prototype-v1774-domain-predicate-integer-cost",
+        "typed-api-prototype-v1705-domain-bound-inverse-cost": "typed-api-prototype-v1775-domain-predicate-inverse-cost",
+        "typed-api-prototype-v1706-domain-bound-normal-form-cost": "typed-api-prototype-v1776-domain-predicate-normal-form-cost",
+        "typed-api-prototype-v1707-domain-bound-default-cost": "typed-api-prototype-v1777-domain-predicate-default-cost",
+        "typed-api-prototype-v1708-domain-bound-algebraic-cost": "typed-api-prototype-v1778-domain-predicate-algebraic-cost",
+        "typed-api-prototype-v1709-domain-bound-acos-cost": "typed-api-prototype-v1779-domain-predicate-acos-cost",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests": "typed-api-prototype-v1764-domain-predicate-scalar-tests",
+        "domain-bound-cost-orchestration-v1709.json": "domain-predicate-cost-orchestration-v1779.json",
+        "magnitude-domain extension": "conditional domain-predicate extraction"
+      }
+    },
+    "replay_domain_predicate_cost.py": {
+      "predecessor": "replay_domain_bound_cost.py",
+      "predecessor_sha256": "225e88a47320ec91aba914f72961bd9a7f8dac5326c67e901efa0d5b8cc4af6e",
+      "fork_sha256": "848533140d4885cb8d1abaf511a8eec5bce4db5fe0000dafb348a4d76519a9ae",
+      "literal_replacements": {
+        "typed-api-prototype-v1696-domain-bound-release-build": "typed-api-prototype-v1766-domain-predicate-release-build",
+        "read(E/'domain-bound-candidate-caps-v1693.json')['source_record_sha256']": "sha(E/'typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz')",
+        "typed-api-prototype-v1703-domain-bound-atan-cost": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+        "typed-api-prototype-v1704-domain-bound-integer-cost": "typed-api-prototype-v1774-domain-predicate-integer-cost",
+        "typed-api-prototype-v1705-domain-bound-inverse-cost": "typed-api-prototype-v1775-domain-predicate-inverse-cost",
+        "typed-api-prototype-v1706-domain-bound-normal-form-cost": "typed-api-prototype-v1776-domain-predicate-normal-form-cost",
+        "typed-api-prototype-v1707-domain-bound-default-cost": "typed-api-prototype-v1777-domain-predicate-default-cost",
+        "typed-api-prototype-v1708-domain-bound-algebraic-cost": "typed-api-prototype-v1778-domain-predicate-algebraic-cost",
+        "typed-api-prototype-v1709-domain-bound-acos-cost": "typed-api-prototype-v1779-domain-predicate-acos-cost",
+        "typed-api-prototype-v1631-domain-sign-atan-cost": "typed-api-prototype-v1703-domain-bound-atan-cost",
+        "typed-api-prototype-v1632-domain-sign-integer-cost": "typed-api-prototype-v1704-domain-bound-integer-cost",
+        "typed-api-prototype-v1633-domain-sign-inverse-cost": "typed-api-prototype-v1705-domain-bound-inverse-cost",
+        "typed-api-prototype-v1634-domain-sign-normal-form-cost": "typed-api-prototype-v1706-domain-bound-normal-form-cost",
+        "typed-api-prototype-v1635-domain-sign-default-cost": "typed-api-prototype-v1707-domain-bound-default-cost",
+        "typed-api-prototype-v1636-domain-sign-algebraic-cost": "typed-api-prototype-v1708-domain-bound-algebraic-cost",
+        "typed-api-prototype-v1637-domain-sign-acos-cost": "typed-api-prototype-v1709-domain-bound-acos-cost",
+        "domain-bound-preconditioned-cost-v1710": "domain-predicate-preconditioned-cost-v1780",
+        "domain-bound-cost-cpu-prelude-v1710": "domain-predicate-cost-cpu-prelude-v1780",
+        "typed-api-prototype-v1672-state.json": "typed-api-prototype-v1754-state.json",
+        "domain-sign-cost-review-v1639.json": "domain-bound-cost-review-v1710.json",
+        "Baseline is the retained v1672 domain-sign candidate, checked against its committed checkpoint and binary provenance. Its earlier narrow integer cost tradeoff and failed v1638 baseline guard remain separate retained evidence.": "Baseline is the retained v1754 magnitude-domain candidate, checked against its committed checkpoint and binary provenance. Earlier original-cap failures at v1638 and v1710 and the narrow integer cost tradeoff remain separate retained evidence. This proof-only extraction has no new completeness benefit to justify a runtime regression."
+      }
+    }
+  },
+  "families": {
+    "atan": {
+      "baseline_phase": "typed-api-prototype-v1703-domain-bound-atan-cost",
+      "candidate_phase": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1703-domain-bound-atan-cost/probe",
+      "binary_sha256": "4ce86b7461851b5b428b2a0fce803390c3d07b69dd5f0c0453464674546e9701",
+      "original_processes": 108,
+      "probe_sha256": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+      "runner_sha256": "617489543d16bf8fd45d235e82de08f92caeee93818c3540caa9647307c462c2"
+    },
+    "integer": {
+      "baseline_phase": "typed-api-prototype-v1704-domain-bound-integer-cost",
+      "candidate_phase": "typed-api-prototype-v1774-domain-predicate-integer-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1704-domain-bound-integer-cost/probe",
+      "binary_sha256": "1ec817243fdf54e7aed0bc51a832b1f8170167cb44e67848afea3458f2122801",
+      "original_processes": 72,
+      "probe_sha256": "e7eb93152d7a7e3f121176cef8505ced7586b17ae91e2bad408fad456bbb06ea",
+      "runner_sha256": "ace8a426540d960c9cd5a19b2eb8cd2c841effa475bad8177b53eb84c391741a"
+    },
+    "inverse_trig": {
+      "baseline_phase": "typed-api-prototype-v1705-domain-bound-inverse-cost",
+      "candidate_phase": "typed-api-prototype-v1775-domain-predicate-inverse-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48",
+      "original_processes": 54,
+      "probe_sha256": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff",
+      "runner_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8"
+    },
+    "normal_form": {
+      "baseline_phase": "typed-api-prototype-v1706-domain-bound-normal-form-cost",
+      "candidate_phase": "typed-api-prototype-v1776-domain-predicate-normal-form-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1706-domain-bound-normal-form-cost/probe",
+      "binary_sha256": "b7c6fae8ef298e77be21cc5c08d8702a270f50e4679fd4cff7bbc13ae598f1bf",
+      "original_processes": 54,
+      "probe_sha256": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb",
+      "runner_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180"
+    },
+    "default": {
+      "baseline_phase": "typed-api-prototype-v1707-domain-bound-default-cost",
+      "candidate_phase": "typed-api-prototype-v1777-domain-predicate-default-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1707-domain-bound-default-cost/probe",
+      "binary_sha256": "40a90c81266a8ce888edfa0f381d2c8e50501e235d2ccf1a7ba5a65902b208aa",
+      "original_processes": 54,
+      "probe_sha256": "dde22067eed3e9b89f7c7a6977e5d9559e618b1bbd6850089f8dc322e0482516",
+      "runner_sha256": "6e49bf9de05354c03164686fc3308ac7190553767f7a624473bf138f309473af"
+    },
+    "algebraic": {
+      "baseline_phase": "typed-api-prototype-v1708-domain-bound-algebraic-cost",
+      "candidate_phase": "typed-api-prototype-v1778-domain-predicate-algebraic-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1708-domain-bound-algebraic-cost/probe",
+      "binary_sha256": "66d14e9213b8cc469a56feda880d9928c049c30f60a5e692a3d1bc89ff631763",
+      "original_processes": 54,
+      "probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+      "runner_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518"
+    },
+    "acos": {
+      "baseline_phase": "typed-api-prototype-v1709-domain-bound-acos-cost",
+      "candidate_phase": "typed-api-prototype-v1779-domain-predicate-acos-cost",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1709-domain-bound-acos-cost/probe",
+      "binary_sha256": "30038ea2279f380c97b1b3f344be5b5ee05a07380119dc5b1eeb5daf708e5514",
+      "original_processes": 72,
+      "probe_sha256": "5684b96a1b77c55e4cd0769ff6ebca3d88835355016ad8c48b297f710fd56527",
+      "runner_sha256": "4d1d880b36efbbad0fd7a2b32962a5e18861f8dcd865f2de227ebd6a7e94fbad"
+    }
+  },
+  "protocol": [
+    "Keep all seven probes and their 52 full-size fixtures unchanged. Run all 468 standalone trials and all 936 paired processes, unless a real failure stops a phase; preserve every failed attempt.",
+    "Use original 192 MiB address-space, CPU 2/3-second and four-second wall caps. Pair retained baseline and candidate binaries in alternating order after the identical 50-million-step CPU prelude; do not overlap builds, source edits or other measurement workloads.",
+    "Preserve every non-timing output, allocation count, consumed-unit field, sample and checksum. Compare elapsed times separately and report executable sizes; no uniform speedup claim follows.",
+    "Investigate any observed median timing regression above five percent with the same full-size fixture, original caps, both binaries, at least 27 alternating pairs and unchanged controls. Preserve the original observation regardless of the follow-up.",
+    "An original-cap failure stays failed. Larger-cap diagnosis may be retained separately and cannot turn that failure into a pass or silently substitute for the frozen workload.",
+    "Proof coverage alone provides no completeness or performance benefit that can excuse a runtime regression. The pre-Verus acceptance baseline and all older failures/tradeoffs remain unchanged; these local controls do not admit the full stack."
+  ]
+}
