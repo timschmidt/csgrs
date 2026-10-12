@@ -1,0 +1,98 @@
+{
+  "status": "Compiled static diagnostic only; no runtime or cost admission",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "changed_since_forced_inline_match_sha256": {
+    "crates/hyperreal/src/computable/node/bounds.rs": "e4bffb6bafc6d88c7437bd21f33271d1ba2760cdb9915919f4d73a48a9a601dd"
+  },
+  "only_merge_outlining_attribute_changed": true,
+  "baseline": "cache-merge-outlining-baseline-v1922/baseline.json",
+  "baseline_sha256": "b5fe884e11bf884d768eac8e0f95ffe8d96a2afb6d30f57049e5207a84a5d9c8",
+  "probe_sha256": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe",
+  "binary_sha256": "63aeddb0b097b3ff00e60c2aff853857cdffaec35d6bc6b4dbff4eba3ff26533",
+  "binary_bytes": 6261248,
+  "libraries": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "sha256": "290519f04e447c36e2a7a9acbd27ae39be36d24ee6f7db1cb89d0e7994dd6b5e"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "sha256": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+    }
+  },
+  "functions": {
+    "publish": {
+      "symbol": "<hyperreal::computable::node::AtomicFacts>::publish_bound",
+      "address": "00000000000a8240",
+      "bytes": 292,
+      "address_mod_64": 0,
+      "retained_bytes": 517,
+      "rejected_bytes": 860,
+      "direct_match_bytes": 1684
+    },
+    "approx": {
+      "symbol": "<hyperreal::computable::node::Computable>::approx_signal",
+      "address": "00000000000a6040",
+      "bytes": 4982,
+      "address_mod_64": 0,
+      "retained_bytes": 4982,
+      "rejected_bytes": 4982,
+      "direct_match_bytes": 4982
+    },
+    "cache": {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision",
+      "address": "00000000000bd1b0",
+      "bytes": 1113,
+      "address_mod_64": 48,
+      "retained_bytes": 1113,
+      "rejected_bytes": 1113,
+      "direct_match_bytes": 1113
+    },
+    "main": {
+      "symbol": "probe::main",
+      "address": "000000000005ec30",
+      "bytes": 8659,
+      "address_mod_64": 48,
+      "retained_bytes": 8659,
+      "rejected_bytes": 8659,
+      "direct_match_bytes": 8659
+    },
+    "merge_helper": {
+      "symbol": "<hyperreal::computable::node::BoundCache>::merge",
+      "address": "0000000000086f10",
+      "bytes": 228,
+      "address_mod_64": 16,
+      "retained_bytes": 0,
+      "rejected_bytes": 0,
+      "direct_match_bytes": 0
+    }
+  },
+  "publication_plus_selector_bytes": 520,
+  "timed_processes": 0,
+  "limits": "Static function sizes/layout can motivate a new frozen validation run but cannot override the v1857 rejection or establish timing, semantics, or whole-board parity.",
+  "artifacts_sha256": {
+    "approx-assembly.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "approx-assembly.stdout": "040b4970ac50f8e84f182b69c0482c558b12f5d0f7b33c7d5b0f68d69f973b59",
+    "cache-assembly.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cache-assembly.stdout": "02e62ad9e88c1e6ad9407d32d42c2d28e44387c440dc7b2785d62a20683ea8d7",
+    "commands.json": "1c1c3707825c160a71e73f7e2979aaf0c47b81c1e35bbc318707a91cd9af0ca6",
+    "included-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "included-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "main-assembly.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "main-assembly.stdout": "44fbc913afc48b4f09429bb362b17a7552e57b77ae2b325b9e5c7c8c661e6ae7",
+    "merge_helper-assembly.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "merge_helper-assembly.stdout": "b697edc5747b932acc37767b458e1c200028522e82be57cb39a064f88ea20da0",
+    "probe-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "probe.rs": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+    "publish-assembly.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "publish-assembly.stdout": "e043922cc3f9c8450c22386b45388dc454868c8c70edc5bcd2115f8d4a34f585",
+    "release-build.stderr": "fca88b8cbeca9edae06ef6e0fbe00e6fb7da87ee0c1a4a9418d7990a0af9d772",
+    "release-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "reproduce.py": "dedd023d5f14affa6116c1024c3d3b7c8d6569275985ac31ae08edbacadcbe05",
+    "symbols.txt.gz": "92a7db8fed8c8eb38a03984e6b8788c5347abaa99450df87f8f5562e63fdb249",
+    "workspace-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "workspace-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

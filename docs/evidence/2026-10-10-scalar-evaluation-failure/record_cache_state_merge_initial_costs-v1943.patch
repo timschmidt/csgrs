@@ -1,0 +1,16 @@
+--- record_bound_merge_initial_costs.py
++++ record_cache_state_merge_initial_costs.py
+@@ -17 +17 @@
+-    out = E / "bound-merge-initial-cost-review-v1857.json"
++    out = E / "cache-state-merge-initial-cost-review-v1943.json"
+@@ -19 +19 @@
+-    protocol_path = E / "bound-merge-cost-protocol-v1850.json"
++    protocol_path = E / "cache-state-merge-cost-protocol-v1936.json"
+@@ -28 +28 @@
+-    standalone = read(E / "bound-merge-cost-orchestration-v1856.json")
++    standalone = read(E / "cache-state-merge-cost-orchestration-v1942.json")
+@@ -68,2 +68,2 @@
+-    phase = E / "bound-merge-preconditioned-cost-v1857"
+-    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_bound_merge_cost.py"]["fork_sha256"]
++    phase = E / "cache-state-merge-preconditioned-cost-v1943"
++    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_cache_state_merge_cost.py"]["fork_sha256"]

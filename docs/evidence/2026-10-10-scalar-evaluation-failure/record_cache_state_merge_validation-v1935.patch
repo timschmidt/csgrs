@@ -1,0 +1,31 @@
+--- record_bound_merge_validation.py
++++ record_cache_state_merge_validation.py
+@@ -12,2 +12,2 @@
+-source = sha(E / 'typed-api-prototype-v1838-bound-merge-verus/source-hashes.json.gz')
+-validation = read(E / 'bound-merge-candidate-validation-v1849.json')
++source = sha(E / 'typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz')
++validation = read(E / 'cache-state-merge-candidate-validation-v1935.json')
+@@ -23,4 +23,4 @@
+-    'typed-api-prototype-v1841-bound-merge-scalar-tests': (1074, 1, 0),
+-    'typed-api-prototype-v1846-bound-merge-stack-tests': (5858, 3, 33),
+-    'typed-api-prototype-v1847-bound-merge-default-tests': (1059, 3, 0),
+-    'typed-api-prototype-v1848-bound-merge-debug-tests': (1074, 1, 0),
++    'typed-api-prototype-v1927-cache-state-merge-scalar-tests': (1074, 1, 0),
++    'typed-api-prototype-v1932-cache-state-merge-stack-tests': (5858, 3, 33),
++    'typed-api-prototype-v1933-cache-state-merge-default-tests': (1059, 3, 0),
++    'typed-api-prototype-v1934-cache-state-merge-debug-tests': (1074, 1, 0),
+@@ -32 +32 @@
+-stack = E / 'typed-api-prototype-v1846-bound-merge-stack-tests'
++stack = E / 'typed-api-prototype-v1932-cache-state-merge-stack-tests'
+@@ -38 +38 @@
+-for name in ['typed-api-prototype-v1842-bound-merge-clippy','typed-api-prototype-v1849-bound-merge-minimal-clippy']:
++for name in ['typed-api-prototype-v1928-cache-state-merge-clippy','typed-api-prototype-v1935-cache-state-merge-minimal-clippy']:
+@@ -40 +40 @@
+-format_command = read(E / 'typed-api-prototype-v1845-bound-merge-included-fmt/command.json')['command']
++format_command = read(E / 'typed-api-prototype-v1931-cache-state-merge-included-fmt/command.json')['command']
+@@ -42 +42 @@
+-out = E / 'bound-merge-broad-validation-v1849.json'
++out = E / 'cache-state-merge-broad-validation-v1935.json'
+@@ -46 +46 @@
+-    'source_record_sha256':source,'orchestration_record':'bound-merge-candidate-validation-v1849.json',
++    'source_record_sha256':source,'orchestration_record':'cache-state-merge-candidate-validation-v1935.json',

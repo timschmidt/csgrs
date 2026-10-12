@@ -1,0 +1,46 @@
+--- inspect_flat_merge_codegen.py
++++ inspect_cache_state_codegen.py
+@@ -1 +1 @@
+-"""Build the frozen caller variant and inspect code without timing the probe."""
++"""Build the direct cache-state merge and inspect code without timing the probe."""
+@@ -12 +12 @@
+-PHASE = E / "typed-api-prototype-v1916-flat-merge-codegen"
++PHASE = E / "typed-api-prototype-v1919-cache-state-merge-codegen"
+@@ -18,2 +18,2 @@
+-    out = E / "flat-merge-generated-code-v1916"
+-    binary = ROOT / "target/flat-merge-generated-code-v1916/probe"
++    out = E / "cache-state-merge-generated-code-v1919"
++    binary = ROOT / "target/cache-state-merge-generated-code-v1919/probe"
+@@ -21,2 +21,2 @@
+-    baseline = read(E / "flat-merge-baseline-v1915/baseline.json")
+-    before = json.loads(gzip.decompress((E / baseline["rejected_source_record"]).read_bytes()))
++    baseline = read(E / "cache-state-merge-baseline-v1918/baseline.json")
++    before = json.loads(gzip.decompress((E / baseline["previous_diagnostic_source_record"]).read_bytes()))
+@@ -26,7 +26,4 @@
+-    assert set(changed) == {name} and len(current) == len(before) == 24746
+-    old = (E / "flat-merge-baseline-v1915/inputs" / name).read_text()
+-    previous = """            let combined = match retained {
+-                BoundCache::Invalid => value,
+-                BoundCache::Valid(bound) => bound.merge(value),
+-"""
+-    replacement = """            let combined = match (retained, value) {
++    assert set(changed) == set(baseline["archived_sources_sha256"]) and len(changed) == 6
++    assert len(current) == len(before) == 24746
++    old = (E / "cache-state-merge-baseline-v1918/inputs" / name).read_text()
++    previous = """            let combined = match (retained, value) {
+@@ -34,0 +32,3 @@
++            };
++"""
++    replacement = """            let combined = retained.merge(value);
+@@ -54 +54 @@
+-    run("included-format", ["rustfmt", "--edition", "2024", "--check", str(SOURCE / name)])
++    run("included-format", ["rustfmt", "--edition", "2024", "--check", str(SOURCE / name), str(SOURCE / "crates/hyperreal/src/computable/node/bounds.rs")])
+@@ -81,4 +81,4 @@
+-        "changed_since_rejected_proposal_sha256": changed,
+-        "single_selection_expression_change_verified": True,
+-        "baseline": "flat-merge-baseline-v1915/baseline.json",
+-        "baseline_sha256": sha(E / "flat-merge-baseline-v1915/baseline.json"),
++        "changed_since_caller_only_diagnostic_sha256": changed,
++        "declared_source_set_and_publication_expression_verified": True,
++        "baseline": "cache-state-merge-baseline-v1918/baseline.json",
++        "baseline_sha256": sha(E / "cache-state-merge-baseline-v1918/baseline.json"),

@@ -1,0 +1,748 @@
+{
+  "status": "Frozen before the nine runtime qualification commands and replay execution; earlier compile-only diagnostics remain separate",
+  "source_record": "typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "build_phase": "typed-api-prototype-v1929-cache-state-merge-release-build",
+  "unit_phase": "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+  "caps": [
+    {
+      "phase": "typed-api-prototype-v1944-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1781-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1945-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1782-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1946-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1783-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1947-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1784-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1948-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1785-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1949-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1786-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1950-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1787-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1951-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1788-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1952-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1789-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1953-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1790-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1954-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1791-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1955-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1792-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1956-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1793-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1957-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1794-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1958-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1795-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1959-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1796-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1960-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1797-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1961-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1798-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1962-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1799-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1963-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1800-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1964-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1801-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1965-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1802-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1966-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1803-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1967-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1804-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1968-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1805-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1969-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1806-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1970-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1807-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1971-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1808-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1972-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1809-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1973-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1810-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1974-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1811-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1975-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1812-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1976-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1813-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1977-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1814-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_leaf_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1978-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1815-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_dag_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1979-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1816-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::structural_comparison_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1980-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1817-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1981-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1818-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::rational_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v1982-cache-state-merge-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1819-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_constructor_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    }
+  ],
+  "numerical_replays": [
+    {
+      "phase": "typed-api-prototype-v1983-cache-state-merge-inverse-replay",
+      "baseline_phase": "typed-api-prototype-v1820-domain-predicate-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1983-cache-state-merge-inverse-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1984-cache-state-merge-evaluation-replay",
+      "baseline_phase": "typed-api-prototype-v1821-domain-predicate-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1984-cache-state-merge-evaluation-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
+      ],
+      "runner_sha256": "6ade8892ec7680242f343538e4920e58c68cc1c2c31f6b571aaf1046e609e922",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a20fb8d400bb79ea26896a7c4f8f524a60ca21fab8f9ed4befc03e7ef49d6b2e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1985-cache-state-merge-algebraic-replay",
+      "baseline_phase": "typed-api-prototype-v1822-domain-predicate-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1985-cache-state-merge-algebraic-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "expected_cases": 288,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1986-cache-state-merge-algebraic-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1823-domain-predicate-algebraic-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1986-cache-state-merge-algebraic-wide-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+      "expected_cases": 144,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1987-cache-state-merge-normal-form-replay",
+      "baseline_phase": "typed-api-prototype-v1824-domain-predicate-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1987-cache-state-merge-normal-form-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1988-cache-state-merge-replay",
+      "baseline_phase": "typed-api-prototype-v1825-domain-predicate-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_candidate.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1988-cache-state-merge-replay"
+      ],
+      "runner_sha256": "375eacc23ff4c3338c8e24f5417c8164edb5a4f08dd2b6c39dbd9f6528ab64db",
+      "expected_cases": 415,
+      "baseline_rust_inputs_sha256": {
+        "cache_candidate_probe.rs": "bfab65e1d36a562e6594cc46c35269eebb14b9f7cee55d8309e9fa034a7db356",
+        "candidate_probe.rs": "58da4d66c59675a08a250bb6d711f1a40df16d46f914b59f4dc2dd9f0fd9c72c"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1989-cache-state-merge-precision-replay",
+      "baseline_phase": "typed-api-prototype-v1826-domain-predicate-precision-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_precision.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1988-cache-state-merge-replay",
+        "typed-api-prototype-v1989-cache-state-merge-precision-replay"
+      ],
+      "runner_sha256": "3d7202561daca829b9515fd603303956856fc29a6410b580aaac9be4d92444b8",
+      "expected_cases": 60,
+      "baseline_rust_inputs_sha256": {}
+    },
+    {
+      "phase": "typed-api-prototype-v1990-cache-state-merge-private-kernel-replay",
+      "baseline_phase": "typed-api-prototype-v1827-domain-predicate-private-kernel-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_kernel.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1990-cache-state-merge-private-kernel-replay"
+      ],
+      "runner_sha256": "26c6ea11ed1469772d085529499edea4eb21cfa5eb1f668ada257ce4d3f56d55",
+      "expected_cases": 78,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3caaba77889d086cf0ede744b6d4838f24a7165200fece4d35eee167f5882312"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1991-cache-state-merge-private-trig-replay",
+      "baseline_phase": "typed-api-prototype-v1828-domain-predicate-private-trig-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1991-cache-state-merge-private-trig-replay"
+      ],
+      "runner_sha256": "461ab611fb3a9429090a55e9cfd461accf35776942f0cc6651eb0de72d3a8740",
+      "expected_cases": 600,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a53880fc287fab1837f87fa43c8517cdd0b20401b4b2153e207c69a87ee31c3e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1992-cache-state-merge-private-trig-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1829-domain-predicate-private-trig-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig_wide.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1992-cache-state-merge-private-trig-wide-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
+      ],
+      "runner_sha256": "491e7ca414d01796c86e745fe9df81fe8fccd75caf79736f23168449a6bee2f0",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "471a955e4ae073bf5d47f1ee6ad3e083dc04f474c35dd1e0385ddc3b89c2053d"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1993-cache-state-merge-trig-scale-replay",
+      "baseline_phase": "typed-api-prototype-v1830-domain-predicate-trig-scale-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_scales.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1993-cache-state-merge-trig-scale-replay"
+      ],
+      "runner_sha256": "adc962f16ed927ed6e382836fc01d02f87092f29f71ecc6f48727866729fe70d",
+      "expected_cases": 168,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3e9c2fa21dbb9a4b1c4840dee03aa168b2f19009c60528bbc6d71ab112725931"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1994-cache-state-merge-trig-residual-replay",
+      "baseline_phase": "typed-api-prototype-v1831-domain-predicate-trig-residual-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_residuals.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1994-cache-state-merge-trig-residual-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
+      ],
+      "runner_sha256": "537915f6d67a04620d8616e2d010fa5197a6d575d6c37bc085b0c4ffbb322c58",
+      "expected_cases": 456,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ff314e0337338b6599647d484c11341977c5a303f90b363e144a159bc9547753"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v1995-cache-state-merge-trig-nonrational-replay",
+      "baseline_phase": "typed-api-prototype-v1832-domain-predicate-trig-nonrational-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_nonrational.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1995-cache-state-merge-trig-nonrational-replay",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
+      ],
+      "runner_sha256": "9b0884722c5ad52b303f9832409a7cfedb90a49abb5d3399654760b051ba80f2",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a83ae3dd69db7aebf94fc9041f3d3e000aa15dee460c478659deedb9d83aff25"
+      }
+    }
+  ],
+  "public_replays": [
+    {
+      "phase": "typed-api-prototype-v1996-cache-state-merge-public-proof-reuse",
+      "baseline_phase": "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+      "protocol": "cache-state-merge-public-proof-reuse-protocol-v1996.json",
+      "protocol_sha256": "92835af8a98212a94cb5642d1b7ab43083ea22fd36e658199506f58e5fe2c4a8",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_cache_state_public_reuse.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1996-cache-state-merge-public-proof-reuse",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "cache-state-merge-public-proof-reuse-protocol-v1996.json"
+      ],
+      "expected_cases": 126,
+      "runner": "reproduce_cache_state_public_reuse.py",
+      "runner_sha256": "cdf9c044eef6be0bd9426f2d94c561e826a5d69833290a78d11b273d76094551",
+      "predecessor_runner": "reproduce_public_proof_reuse_v2.py",
+      "predecessor_runner_sha256": "abad82e39559c81394227ae9a9e4b6c044cf23c1fee6b303ada9f2ce2547b681",
+      "runner_change": {
+        "before": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json",
+        "after": "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
+      },
+      "probe_sha256": "054dccf922561bcf8586aa08501af3c2b17915c6a4769930d6cab6259dcbd013"
+    },
+    {
+      "phase": "typed-api-prototype-v1997-cache-state-merge-composed-proof-reuse",
+      "baseline_phase": "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse",
+      "protocol": "cache-state-merge-composed-proof-reuse-protocol-v1997.json",
+      "protocol_sha256": "6cd523a74822564c879d30a8a0bc41aff889c55d8887d9f2ea8e1bb9b7b3f320",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_cache_state_composed_reuse.py",
+        "typed-api-prototype-v1929-cache-state-merge-release-build",
+        "typed-api-prototype-v1997-cache-state-merge-composed-proof-reuse",
+        "typed-api-prototype-v1927-cache-state-merge-scalar-tests",
+        "cache-state-merge-composed-proof-reuse-protocol-v1997.json"
+      ],
+      "expected_cases": 522,
+      "runner": "reproduce_cache_state_composed_reuse.py",
+      "runner_sha256": "1a35765ddee5e2fefdbc45eeea696bbbacd4e8f15f9c31223d1d17663508ff3a",
+      "predecessor_runner": "reproduce_composed_proof_reuse_v2.py",
+      "predecessor_runner_sha256": "ba913ff90d3542032362c8a90e562c0c11344d9fa038bcc8e1898ecc8665f0e1",
+      "runner_change": {
+        "before": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json",
+        "after": "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
+      },
+      "probe_sha256": "edf0f540ce527da0bec073776e379041d5eff9dc7173f51f4dccb2117e2dd5e2"
+    }
+  ],
+  "requirements": [
+    "Preserve all 39 capped test commands, 4129 numerical cases and 648 public reuse schedules; no runtime test body, probe or oracle is changed.",
+    "Keep the original process limits and full-size inputs. Validate each terminal result and hash; preserve failures under their original phase names.",
+    "Compare all deterministic non-timing observations with the retained runtime. Public thread schedules may change Unknown/Exhausted counts; require each observed sample/fact to satisfy its oracle and every published fact to persist.",
+    "Check all successful numerical enclosures, typed errors, work accounting and serialized bytes. Public constructors and structural inspections remain outside query allowances.",
+    "No builds, source edits or other validation/measurement workloads overlap a capped phase. Main admission and whole-crate proof remain separate gates."
+  ],
+  "runner_forks": {
+    "reproduce_cache_state_public_reuse.py": {
+      "predecessor": "reproduce_public_proof_reuse_v2.py",
+      "predecessor_sha256": "abad82e39559c81394227ae9a9e4b6c044cf23c1fee6b303ada9f2ce2547b681",
+      "fork_sha256": "cdf9c044eef6be0bd9426f2d94c561e826a5d69833290a78d11b273d76094551",
+      "literal_replacements": {
+        "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json": "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
+      }
+    },
+    "reproduce_cache_state_composed_reuse.py": {
+      "predecessor": "reproduce_composed_proof_reuse_v2.py",
+      "predecessor_sha256": "ba913ff90d3542032362c8a90e562c0c11344d9fa038bcc8e1898ecc8665f0e1",
+      "fork_sha256": "1a35765ddee5e2fefdbc45eeea696bbbacd4e8f15f9c31223d1d17663508ff3a",
+      "literal_replacements": {
+        "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json": "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
+      }
+    },
+    "run_cache_state_replays.py": {
+      "predecessor": "run_domain_predicate_replays.py",
+      "predecessor_sha256": "cffc7956dfacf0261864877ecaab50c0c6c7415e70bafb9ba85780a41938243e",
+      "fork_sha256": "4276c383a895aa7e7b6094f069ae48bfcbacc506e12da9d7cad3403130fc6d0c",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "cache-state-merge-replay-protocol-v1944.json",
+        "domain-predicate-replay-validation-v1834.json": "cache-state-merge-replay-validation-v1997.json",
+        "domain-predicate-candidate-validation-v1772.json": "cache-state-merge-candidate-validation-v1935.json",
+        "domain-predicate-cost-orchestration-v1779.json": "cache-state-merge-cost-orchestration-v1942.json"
+      }
+    },
+    "compare_cache_state_queries.py": {
+      "predecessor": "compare_domain_predicate_queries.py",
+      "predecessor_sha256": "fe186dbfc245047e6dfe3a6dd2c7150c0a1242eb1255a6813c6707565fe42376",
+      "fork_sha256": "5734b6bc6b30e9cc3159bc061eee093b44212fddaa89cbbdbb713d390ed5011c",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "cache-state-merge-replay-protocol-v1944.json",
+        "domain-predicate-domain-query-comparison-v1819.json": "cache-state-merge-domain-query-comparison-v1982.json"
+      }
+    },
+    "compare_cache_state_replays.py": {
+      "predecessor": "compare_domain_predicate_replays.py",
+      "predecessor_sha256": "a45c78a2682ee0b4103178006a8876d9d5386d986177592f9713a8e7e6433c45",
+      "fork_sha256": "00fe4c27a450df97577fc28186031d9416dc37e14f7631a9b8b68a8292ec93f9",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "cache-state-merge-replay-protocol-v1944.json",
+        "domain-predicate-replay-validation-v1834.json": "cache-state-merge-replay-validation-v1997.json",
+        "domain-predicate-deterministic-replay-comparison-v1835.json": "cache-state-merge-deterministic-replay-comparison-v1998.json",
+        "typed-api-prototype-v1755-public-proof-reuse": "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+        "typed-api-prototype-v1757-composed-proof-reuse": "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse"
+      }
+    },
+    "audit_cache_state_fact_retention.py": {
+      "predecessor": "audit_domain_predicate_fact_retention.py",
+      "predecessor_sha256": "ac1f80338a982d9153b384b325acd0d8cf80a6f8f26fff72de0c5522cddffc96",
+      "fork_sha256": "0c1fef031cb9eeb70fbccfb7523f7e374a5e1f8cd2eb3ae5fc7ded4cf0051c6e",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "cache-state-merge-replay-protocol-v1944.json",
+        "domain-predicate-replay-validation-v1834.json": "cache-state-merge-replay-validation-v1997.json",
+        "domain-predicate-public-fact-audit-v1835.json": "cache-state-merge-public-fact-audit-v1998.json"
+      }
+    }
+  },
+  "protocol_predecessor": "domain-predicate-replay-protocol-v1781.json",
+  "protocol_predecessor_sha256": "0ff1a0910336a1bfe0d2b9cd35c73aad15c960af32f4679623adc52aa4b47bdf",
+  "audit_scope": "Only frozen identity literals change in the replay, comparison and fact-audit helpers. The public/composed fact-retention audit loops, numerical oracles, work comparisons and full-size cases are unchanged."
+}

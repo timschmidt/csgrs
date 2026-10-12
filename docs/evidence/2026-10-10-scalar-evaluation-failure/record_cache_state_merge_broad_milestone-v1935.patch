@@ -1,0 +1,39 @@
+--- record_bound_merge_broad_milestone.py
++++ record_cache_state_merge_broad_milestone.py
+@@ -15 +15 @@
+-    broad = E / "bound-merge-broad-validation-v1849.json"
++    broad = E / "cache-state-merge-broad-validation-v1935.json"
+@@ -17,2 +17,2 @@
+-    validation = read(E / "bound-merge-candidate-validation-v1849.json")
+-    proof = read(E / "bound-merge-proof-validation-v1840.json")
++    validation = read(E / "cache-state-merge-candidate-validation-v1935.json")
++    proof = read(E / "cache-state-merge-proof-validation-v1926.json")
+@@ -25,2 +25,2 @@
+-    out = E / "bound-merge-broad-milestone-v1849.json"
+-    ledger_record = E / "bound-merge-broad-ledger-v1849.json"
++    out = E / "cache-state-merge-broad-milestone-v1935.json"
++    ledger_record = E / "cache-state-merge-broad-ledger-v1935.json"
+@@ -30 +30 @@
+-        "source_record": "typed-api-prototype-v1843-bound-merge-release-build/source-hashes.json.gz",
++        "source_record": "typed-api-prototype-v1929-cache-state-merge-release-build/source-hashes.json.gz",
+@@ -33,2 +33,2 @@
+-        "proof_record": "bound-merge-proof-validation-v1840.json",
+-        "proof_record_sha256": sha(E / "bound-merge-proof-validation-v1840.json"),
++        "proof_record": "cache-state-merge-proof-validation-v1926.json",
++        "proof_record_sha256": sha(E / "cache-state-merge-proof-validation-v1926.json"),
+@@ -37,2 +37,2 @@
+-        "next_cost_protocol": "bound-merge-cost-protocol-v1850.json",
+-        "next_replay_protocol": "bound-merge-replay-protocol-v1858.json",
++        "next_cost_protocol": "cache-state-merge-cost-protocol-v1936.json",
++        "next_replay_protocol": "cache-state-merge-replay-protocol-v1944.json",
+@@ -40,2 +40,2 @@
+-            "compare_bound_merge_queries.py", "compare_bound_merge_replays.py",
+-            "audit_bound_merge_fact_retention.py", "bound-merge-replay-protocol-v1858.json"]},
++            "compare_cache_state_queries.py", "compare_cache_state_replays.py",
++            "audit_cache_state_fact_retention.py", "cache-state-merge-replay-protocol-v1944.json"]},
+@@ -44 +44 @@
+-            "Source hashes match the fresh conditional proof exactly, so its 651 verified units, 246 rejected mutations, four passing guard baselines and ten acceptance tests still apply only to their declared scope. All thirteen whole-crate groups remain open.",
++            "Source hashes match the fresh conditional proof exactly, so its 651 verified units, 247 rejected mutations, four passing guard baselines and ten acceptance tests still apply only to their declared scope. All thirteen whole-crate groups remain open.",
+@@ -61 +61 @@
+-        "The v1841-v1849 extraction checks pass on the exact v1838 proof source: "
++        "The v1927-v1935 extraction checks pass on the exact v1924 proof source: "

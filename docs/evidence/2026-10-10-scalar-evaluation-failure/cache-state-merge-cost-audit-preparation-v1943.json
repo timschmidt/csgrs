@@ -1,0 +1,45 @@
+{
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "runner_forks": {
+    "record_cache_state_merge_initial_costs.py": {
+      "predecessor": "record_bound_merge_initial_costs.py",
+      "predecessor_sha256": "d51a3080a64e3bb234d48fca99389cc6152162ebed9d85a9f2dce3cd1c6c62b3",
+      "runner_sha256": "865849afc695056b120ff64a620c73682a6ed8913c48e5fca006975721f718dd",
+      "fork_patch": "record_cache_state_merge_initial_costs-v1943.patch",
+      "fork_patch_sha256": "030bc0a7807434d6524996295d025b1ad54acafef2a671a5e676ce3f912c5eab"
+    },
+    "prepare_cache_state_merge_cost_followup.py": {
+      "predecessor": "prepare_bound_merge_cost_followup.py",
+      "predecessor_sha256": "b8b9de944ff3b7607dc294e4ab1082394f172213db53bbfcb9f593b905ba3889",
+      "runner_sha256": "b6e81e289b57bc21c0e85a2f3520b19c56e72acb7221ba38a6f47f063fc473a4",
+      "fork_patch": "prepare_cache_state_merge_cost_followup-v1943.patch",
+      "fork_patch_sha256": "4dd750d14d4e48569a16cb5a7f1a9e8cfe0f3bc02a8f4d92093f2dc736e4e1fe"
+    },
+    "record_cache_state_merge_costs.py": {
+      "predecessor": "record_bound_merge_costs.py",
+      "predecessor_sha256": "f58e93e67b0a80a49423db3b81ed9ef57a6e1f92365fd5abfe8eb26f7363074f",
+      "runner_sha256": "de93dbd765235616f71e759906328f7b8f24a01a3398591cfb17d0c23f6dfe28",
+      "fork_patch": "record_cache_state_merge_costs-v1943.patch",
+      "fork_patch_sha256": "8979b00b8ca2d8bfd68482ac8b8265bde11348ad634f0bcb3d24ce753d54beaf"
+    },
+    "run_cache_state_merge_cost_validation.py": {
+      "predecessor": "run_bound_merge_cost_validation.py",
+      "predecessor_sha256": "48f04c3c91fd0773d26ad0c9515dd9bd2ac8b6569c6089c8d278609eb14cb81b",
+      "runner_sha256": "eff11ff3727b89fa204c579f78214d1f1f61f301eb4642bd3b0888b340b98044",
+      "fork_patch": "run_cache_state_merge_cost_validation-v1943.patch",
+      "fork_patch_sha256": "0c643943e2e12eecb74450dbf707132fc4739fc35cf7512e3ea756b06b0cf053"
+    },
+    "record_cache_state_merge_cost_milestone.py": {
+      "predecessor": "record_bound_merge_cost_milestone.py",
+      "predecessor_sha256": "0d725e917846c57e1bc2b6850a1367a8ccd707478123e8abd1381002f178d3b4",
+      "runner_sha256": "86482972e140b1d0eb5c912f7e69506c3fc2b9fb8442ce0df135044c99f8ff6d",
+      "fork_patch": "record_cache_state_merge_cost_milestone-v1943.patch",
+      "fork_patch_sha256": "d073dc01b13ecec10c08ee5585c7d835bc4534c1c6fb321780c44d90788be143"
+    }
+  },
+  "strategy": "cache-state-merge-cost-followup-strategy-v1943.json",
+  "strategy_sha256": "5bc85aad8ceb0dff1a2d72c52ef9fb8708be53db4c5bddf949fb55806d9e06a3",
+  "strategy_predecessor": "bound-merge-cost-followup-strategy-v1857.json",
+  "strategy_predecessor_sha256": "d8327cd99eb9ab8616a65e362782125196fa9375350f7f332e6a7383a4e5cbc7",
+  "scope": "Only source/candidate identities change. Preserve every original receipt audit, all 52 full-size fixtures, original caps, 9 initial pairs, 27 family-wide repeat pairs, all non-timing fields and original failures. The failed v1857 comparison remains a failed experiment for its own source; it is not overwritten or qualified by these new measurements."
+}

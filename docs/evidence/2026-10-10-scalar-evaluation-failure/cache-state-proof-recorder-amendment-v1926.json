@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_cache_state_merge_proof.py",
+  "predecessor_sha256": "359dd4ef1876b6d184e63fb6470cb2089d1f5a09280bf037d262a46b0d9b1404",
+  "runner": "record_cache_state_merge_proof_v2.py",
+  "runner_sha256": "3677163f58db84214dd6472c664bc4ab18d1667f18223bb141b6d400c34d4318",
+  "fork_patch": "cache-state-proof-recorder-amendment-v1926.patch",
+  "fork_patch_sha256": "0ec5dab8b74cc60a9ac3d242653c68c029cf3371d8a799ec3906df6ffc42f782",
+  "status": "Preparation correction before either recorder executed",
+  "reason": "The original v1837 baseline remains the primary retained-runtime comparison and is already in P4 evidence. Add the new v1918 experiment baseline to the evidence list instead of asserting that the old baseline is absent. All source, proof, guard, diagnostic, patch and retained-baseline checks are unchanged."
+}

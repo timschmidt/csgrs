@@ -1,0 +1,47 @@
+--- inspect_inlined_cache_merge.py
++++ inspect_outlined_cache_merge.py
+@@ -1 +1 @@
+-"""Inspect the one-attribute pure-merge inlining variant without timing it."""
++"""Inspect the outlined selector and its wrapper without timing them."""
+@@ -12 +12 @@
+-PHASE = E / "typed-api-prototype-v1921-inlined-cache-merge-codegen"
++PHASE = E / "typed-api-prototype-v1923-outlined-cache-merge-codegen"
+@@ -18,2 +18,2 @@
+-    out = E / "inlined-cache-merge-generated-code-v1921"
+-    binary = ROOT / "target/inlined-cache-merge-generated-code-v1921/probe"
++    out = E / "outlined-cache-merge-generated-code-v1923"
++    binary = ROOT / "target/outlined-cache-merge-generated-code-v1923/probe"
+@@ -21 +21 @@
+-    baseline = read(E / "cache-merge-inlining-baseline-v1920/baseline.json")
++    baseline = read(E / "cache-merge-outlining-baseline-v1922/baseline.json")
+@@ -28 +28 @@
+-    old = (E / "cache-merge-inlining-baseline-v1920/inputs" / name).read_text()
++    old = (E / "cache-merge-outlining-baseline-v1922/inputs" / name).read_text()
+@@ -32,2 +32,2 @@
+-    assert method.count("#[inline]") == 1
+-    assert (SOURCE / name).read_text() == old[:start] + method.replace("#[inline]", "#[inline(always)]", 1) + old[end:]
++    assert method.count("#[inline(always)]") == 1
++    assert (SOURCE / name).read_text() == old[:start] + method.replace("#[inline(always)]", "#[inline(never)]", 1) + old[end:]
+@@ -63,0 +64,4 @@
++    # Earlier variants inline this code; zero here means no standalone symbol.
++    for which in ["baseline", "candidate"]:
++        reference["functions"][which]["merge_helper"] = {
++            "symbol": "<hyperreal::computable::node::BoundCache>::merge", "bytes": 0}
+@@ -76 +80 @@
+-            "direct_match_bytes": read(E / baseline["previous_codegen"])["functions"][label]["bytes"]}
++            "direct_match_bytes": read(E / baseline["previous_codegen"])["functions"].get(label, {"bytes": 0})["bytes"]}
+@@ -79,4 +83,4 @@
+-        "changed_since_direct_cache_match_sha256": changed,
+-        "only_merge_inlining_attribute_changed": True,
+-        "baseline": "cache-merge-inlining-baseline-v1920/baseline.json",
+-        "baseline_sha256": sha(E / "cache-merge-inlining-baseline-v1920/baseline.json"),
++        "changed_since_forced_inline_match_sha256": changed,
++        "only_merge_outlining_attribute_changed": True,
++        "baseline": "cache-merge-outlining-baseline-v1922/baseline.json",
++        "baseline_sha256": sha(E / "cache-merge-outlining-baseline-v1922/baseline.json"),
+@@ -86 +90 @@
+-        "functions": functions, "timed_processes": 0,
++        "functions": functions, "publication_plus_selector_bytes": functions["publish"]["bytes"] + functions["merge_helper"]["bytes"], "timed_processes": 0,
+@@ -90 +94 @@
+-    print(json.dumps({"functions": functions, "binary_bytes": summary["binary_bytes"], "timed_processes": 0}))
++    print(json.dumps({"functions": functions, "binary_bytes": summary["binary_bytes"], "publication_plus_selector_bytes": summary["publication_plus_selector_bytes"], "timed_processes": 0}))

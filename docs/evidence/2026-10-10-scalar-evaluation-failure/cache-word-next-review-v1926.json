@@ -1,0 +1,17 @@
+{
+  "status": "Read-only review of a remaining production/model gap; no source changes or new verification claim",
+  "source_record": "typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "inputs_sha256": {
+    "crates/hyperreal/src/computable/node/representation.rs": "02487f2620c2d8aca2e3bade2234391bc75a8ea5cf63760906167dfd8de6d116",
+    "crates/hyperreal/verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+    "crates/hyperreal/verification/scope.json": "997552e7a94b39f9ae7cf18b238b6fbc8bb67ef82c652826808703826c6291fb"
+  },
+  "reviewed_production_function": "    #[cfg(not(verus_keep_ghost))]\n    fn decode_bound(value: u64) -> BoundCache {\n        match value & 0b11 {\n            Self::TAG_INVALID => BoundCache::Invalid,\n            Self::TAG_UNKNOWN => BoundCache::Valid(BoundInfo::Unknown),\n            Self::TAG_ZERO => BoundCache::Valid(BoundInfo::Zero),\n            Self::TAG_NONZERO => {\n                let sign = match (value >> Self::SIGN_SHIFT) & 0b11 {\n                    0 => None,\n                    1 => Some(Sign::Plus),\n                    2 => Some(Sign::Minus),\n                    3 => Some(Sign::NoSign),\n                    _ => unreachable!(),\n                };\n                let msd = (value & Self::MSD_PRESENT != 0)\n                    .then_some(((value >> Self::MSD_SHIFT) as u32) as i32);\n                BoundCache::Valid(BoundInfo::NonZero {\n                    sign,\n                    msd,\n                    exact_msd: value & Self::EXACT_MSD != 0,\n                })\n            }\n            _ => unreachable!(),\n        }\n    }\n\n",
+  "observations": [
+    "AtomicFacts::decode_bound remains excluded from the actual Verus target by cfg(not(verus_keep_ghost)). The production registry includes bound encoding and exact-sign codecs, but not this decoder.",
+    "The existing round-trip and field-preservation lemmas use the ghost bound_word decoder. They do not establish equivalence of the actual decode_bound body with that specification.",
+    "After the current merge admission gates, connect the actual decoder to bound_word, including every input word, unrelated bits, all signs, both signed exponent limits, absent magnitudes, exactness flags and unreachable masked-tag arms. Check support for bool::then_some without adding an assumed specification. Preserve source/compiler behavior and all existing runtime/negative controls."
+  ],
+  "limits": "This inspection is not a decoder proof, a new retained candidate, a substitute for the current cost/replay gates, or completion of producer/existence/atomic/caller obligations. All 39 properties, 14 targets and crate future work remain in scope."
+}

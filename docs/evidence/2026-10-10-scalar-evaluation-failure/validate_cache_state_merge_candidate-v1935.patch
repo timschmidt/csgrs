@@ -1,0 +1,17 @@
+--- validate_bound_merge_candidate.py
++++ validate_cache_state_merge_candidate.py
+@@ -16 +16 @@
+-    proof = read(E / "bound-merge-proof-validation-v1840.json")
++    proof = read(E / "cache-state-merge-proof-validation-v1926.json")
+@@ -18 +18 @@
+-    assert expected == "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9"
++    assert expected == "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59"
+@@ -35 +35 @@
+-    out = E / "bound-merge-candidate-validation-v1849.json"
++    out = E / "cache-state-merge-candidate-validation-v1935.json"
+@@ -38 +38 @@
+-    for version, (prior, item) in zip(range(1841, 1850), baseline["phases"].items()):
++    for version, (prior, item) in zip(range(1927, 1936), baseline["phases"].items()):
+@@ -40 +40 @@
+-        phase = f"typed-api-prototype-v{version}-bound-merge-{suffix}"
++        phase = f"typed-api-prototype-v{version}-cache-state-merge-{suffix}"

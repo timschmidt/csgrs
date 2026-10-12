@@ -1,0 +1,86 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+0000000000086f10 <<hyperreal::computable::node::BoundCache>::merge>:
+   86f10:	mov    (%rsi),%r9d
+   86f13:	cmp    $0xffffffff,%r9d
+   86f17:	je     86f51 <<hyperreal::computable::node::BoundCache>::merge+0x41>
+   86f19:	mov    %r9d,%ecx
+   86f1c:	sub    $0x2,%ecx
+   86f1f:	mov    $0x2,%r8d
+   86f25:	cmovb  %r8d,%ecx
+   86f29:	test   %ecx,%ecx
+   86f2b:	je     86f51 <<hyperreal::computable::node::BoundCache>::merge+0x41>
+   86f2d:	mov    (%rdx),%eax
+   86f2f:	mov    %eax,%r10d
+   86f32:	sub    $0x2,%r10d
+   86f36:	cmovb  %r8d,%r10d
+   86f3a:	test   %r10d,%r10d
+   86f3d:	je     86f90 <<hyperreal::computable::node::BoundCache>::merge+0x80>
+   86f3f:	cmp    $0x1,%r10d
+   86f43:	jne    86f5e <<hyperreal::computable::node::BoundCache>::merge+0x4e>
+   86f45:	cmp    $0x1,%ecx
+   86f48:	jne    86f90 <<hyperreal::computable::node::BoundCache>::merge+0x80>
+   86f4a:	movl   $0x3,(%rdi)
+   86f50:	ret
+   86f51:	mov    0x8(%rdx),%eax
+   86f54:	mov    %eax,0x8(%rdi)
+   86f57:	mov    (%rdx),%rax
+   86f5a:	mov    %rax,(%rdi)
+   86f5d:	ret
+   86f5e:	cmp    $0x2,%ecx
+   86f61:	jne    86f90 <<hyperreal::computable::node::BoundCache>::merge+0x80>
+   86f63:	push   %rbp
+   86f64:	push   %rbx
+   86f65:	movzbl 0x9(%rsi),%ecx
+   86f69:	movzbl 0x9(%rdx),%r8d
+   86f6e:	mov    0x4(%rdx),%r10d
+   86f72:	movzbl 0x8(%rdx),%ebx
+   86f76:	test   $0x1,%r9b
+   86f7a:	je     86f9d <<hyperreal::computable::node::BoundCache>::merge+0x8d>
+   86f7c:	mov    0x4(%rsi),%r11d
+   86f80:	mov    $0x1,%dl
+   86f82:	cmpb   $0x0,0x8(%rsi)
+   86f86:	je     86fc6 <<hyperreal::computable::node::BoundCache>::merge+0xb6>
+   86f88:	mov    %r9d,%eax
+   86f8b:	mov    %r11d,%esi
+   86f8e:	jmp    86faa <<hyperreal::computable::node::BoundCache>::merge+0x9a>
+   86f90:	mov    0x8(%rsi),%eax
+   86f93:	mov    %eax,0x8(%rdi)
+   86f96:	mov    (%rsi),%rax
+   86f99:	mov    %rax,(%rdi)
+   86f9c:	ret
+   86f9d:	movzbl %bl,%esi
+   86fa0:	xor    %edx,%edx
+   86fa2:	test   $0x1,%al
+   86fa4:	cmovne %esi,%edx
+   86fa7:	mov    %r10d,%esi
+   86faa:	cmp    $0xff,%cl
+   86fad:	movzbl %r8b,%r8d
+   86fb1:	movzbl %cl,%ecx
+   86fb4:	cmove  %r8d,%ecx
+   86fb8:	mov    %cl,0x9(%rdi)
+   86fbb:	mov    %eax,(%rdi)
+   86fbd:	mov    %esi,0x4(%rdi)
+   86fc0:	mov    %dl,0x8(%rdi)
+   86fc3:	pop    %rbx
+   86fc4:	pop    %rbp
+   86fc5:	ret
+   86fc6:	mov    %eax,%ebp
+   86fc8:	not    %bpl
+   86fcb:	or     %bl,%bpl
+   86fce:	mov    %eax,%edx
+   86fd0:	and    $0x1,%dl
+   86fd3:	cmove  %r9d,%eax
+   86fd7:	mov    %r11d,%esi
+   86fda:	cmovne %r10d,%esi
+   86fde:	test   $0x1,%bpl
+   86fe2:	jne    86faa <<hyperreal::computable::node::BoundCache>::merge+0x9a>
+   86fe4:	cmp    %r10d,%r11d
+   86fe7:	cmovl  %r11d,%r10d
+   86feb:	mov    $0x1,%eax
+   86ff0:	xor    %edx,%edx
+   86ff2:	jmp    86fa7 <<hyperreal::computable::node::BoundCache>::merge+0x97>

@@ -1,0 +1,119 @@
+[
+  {
+    "name": "included-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/representation.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/bounds.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.03266737889498472
+  },
+  {
+    "name": "workspace-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 10.508166548795998
+  },
+  {
+    "name": "release-build",
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "--all-features"
+    ],
+    "exit_code": 0,
+    "seconds": 69.78296785475686
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-state-merge-generated-code-v1919/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.2885109600611031
+  },
+  {
+    "name": "publish-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=688416",
+      "--stop-address=690100",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008448169566690922
+  },
+  {
+    "name": "approx-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=679712",
+      "--stop-address=684694",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.00820342730730772
+  },
+  {
+    "name": "cache-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=775680",
+      "--stop-address=776793",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.006558250170201063
+  },
+  {
+    "name": "main-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=388096",
+      "--stop-address=396755",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008071976248174906
+  }
+]

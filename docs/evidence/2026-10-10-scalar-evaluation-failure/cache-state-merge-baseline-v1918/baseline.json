@@ -1,0 +1,38 @@
+{
+  "status": "Frozen before source changes for the direct cache-state merge proposal",
+  "base_commit": "bdcc071b9d3b196ebe7bb74d4d031bbba3ee0bf2",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "previous_diagnostic_source_record": "typed-api-prototype-v1916-flat-merge-codegen/source-hashes.json.gz",
+  "previous_diagnostic_source_record_sha256": "fc96b8cdb9c43d83e9a64969a213586c933b7f2d93c04aa51a5458a17d93cad6",
+  "source_files_verified": 24746,
+  "main_guarded_files_verified": 1167,
+  "archived_sources_sha256": {
+    "crates/hyperreal/src/computable/node/bounds.rs": "1a18497fb0d76b8f6178ced99c2602c050070c3c0c871457040518d0e97bda18",
+    "crates/hyperreal/src/computable/node/representation.rs": "367eb22392e9b71fcd4d6dad8e38c6ed8aa131e585864aa5c5e2846b750fbe39",
+    "crates/hyperreal/verification/README.md": "5ac706de7b08a7c8a1e85a96d9d9533a7c5cea9b6c5e4ee80701aa9653fa1b5c",
+    "crates/hyperreal/verification/bound_denotation.rs": "34a66c33ea2925f28a1e7c288203c799643534eed20549124fc6aa3d924be815",
+    "crates/hyperreal/verification/scope.json": "f230034943c978650b463aed032e70026315efe58280f1acbf84775c8be40a6f",
+    "crates/hyperreal/verification/test_bound_rejections.py": "478b1888cac6d02a39244afa7e22312957b624bb7d42085f230ae2ef815653c7"
+  },
+  "inputs_sha256": {
+    "bound-merge-proof-validation-v1840.json": "a598dafea7388e3b84565ab3373b23ac8d27a47c52bd39e6a31cce7748190f9a",
+    "bound-merge-broad-validation-v1849.json": "124b1598e7eba46f0a165d3d821fbbd30ac15d8749ddebc7d42e70eaf94d1e08",
+    "bound-merge-cost-rejection-v1857.json": "7ceea1fbcbb4390ab789f88a6a498ddde7fb5eec96a4a32f23823e6ad890e6b5",
+    "bound-merge-cost-review-v1857.json": "da887d953dc9fc2ec8802d8d335014713a03597c6ade8b81f537546ae1b46918",
+    "bound-merge-cost-followup-strategy-v1857.json": "d8327cd99eb9ab8616a65e362782125196fa9375350f7f332e6a7383a4e5cbc7",
+    "bound-merge-cost-protocol-v1850.json": "16527190a2766d83bfc73bb0bef5c1d136ad811789f17725c775b23cd8547130",
+    "bound-merge-replay-protocol-v1858.json": "1bbb02f88f9417eed3ff7f10828c3d3de4e155e0e7a27a3dba9ec74120982f53",
+    "bound-merge-static-review-v1917.json": "539ab1bb033606f0456a0369c53fc1336957cb055ed45eb6a5701d27a15620d7",
+    "bound-merge-static-diagnosis-v1914/summary.json": "43359ac10e0387e00570a54d5329c65fb5e31f4edd913f19ebaed94ab4db391a",
+    "flat-merge-generated-code-v1916/summary.json": "0271ad7cf47ba124633c42ab469ce3d98f3a390315e4b93e3bfbbcb1484faae5",
+    "merge-expression-support-v1917/result.json": "1acdcf530d681495ab355928ee8b0e551dfd6aa79fc5e4fc26e90125b4d8dd09",
+    "merge-expression-support-v1917/stderr.log": "15ebd5a5570a3ce534dce2f5b99bf869be3471afa22610cc383f9c0346e04680"
+  },
+  "proposal": "Move the included pure merge method to BoundCache and match (retained cache state, incoming bound) directly. Invalid or Unknown retains the incoming value; other cases preserve the existing total selection. AtomicFacts::publish_bound calls that method after the unchanged diagnostics. Preserve the initial load/test hook and encode/mask/CAS suffix exactly.",
+  "proof_boundary": "Connect the existing denotation, compatibility, certificate-retention and domain-retention lemmas to the actual BoundCache::merge contract for Valid inputs. The executable contract also specifies Invalid inputs exactly. Adapt existing production mutations to their new syntax and add an independent invalid-cache mutation. Do not add assume_specification, axioms, external bodies or other bypasses for Option::or. Producer validity, real existence, diagnostics, atomics and callers remain outside this conditional proof.",
+  "initial_gate": "Format and release-build the new source; compile the same unchanged atan probe without timing it and inspect publication code against retained v1836 and both prior variants. If useful, refresh the full no-cheating proof and acceptance/rejection suite before runtime qualification.",
+  "retention_gates": "Preserve all nine runtime commands, seven cost families with all 52 original full-size fixtures, 468 standalone processes, 936 alternating paired processes, original process caps and the frozen family-wide 27-pair repeat rule. The cost baseline stays v1836. Then preserve all 39 capped phases, 4129 numerical cases, 648 public schedules, deterministic receipt comparisons and observed-fact audits. No prior failed comparison, fixed baseline, threshold, fixture or process cap is reset.",
+  "main_runtime_admitted": false,
+  "scope": "An isolated proposal within the unchanged 39 properties, 14 targets and crate future work; all thirteen whole-crate proof groups remain open."
+}

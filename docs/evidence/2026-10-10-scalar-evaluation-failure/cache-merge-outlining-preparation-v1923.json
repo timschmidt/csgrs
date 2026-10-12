@@ -1,0 +1,12 @@
+{
+  "predecessor": "inspect_inlined_cache_merge.py",
+  "predecessor_sha256": "7ffd6f3e47c26c31d16dabb57bb6eaa6ac9bc1140e42d68bb0d1a698ff511821",
+  "runner": "inspect_outlined_cache_merge.py",
+  "runner_sha256": "dedd023d5f14affa6116c1024c3d3b7c8d6569275985ac31ae08edbacadcbe05",
+  "fork_patch": "cache-merge-outlining-runner-v1923.patch",
+  "fork_patch_sha256": "cb7146470e735cee93ccbbd7ddd5f8578268bbc1e64f5cbbe9888ffa50bcac83",
+  "baseline": "cache-merge-outlining-baseline-v1922/baseline.json",
+  "baseline_sha256": "b5fe884e11bf884d768eac8e0f95ffe8d96a2afb6d30f57049e5207a84a5d9c8",
+  "timing_processes_permitted": 0,
+  "scope": "Preserve all compiler and fixture settings; update phase identities and one-attribute source checks, and inspect the standalone selector so total selection code is visible."
+}

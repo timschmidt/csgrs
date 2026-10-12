@@ -1,0 +1,5 @@
+--- record_cache_state_merge_proof.py
++++ record_cache_state_merge_proof_v2.py
+@@ -174 +174 @@
+-    for name in [record["baseline"], out.name, patch.name, proof.name + "/proof-reports/evidence.json", rejection.name + "/proof-checks/tooling.json"]:
++    for name in ["cache-state-merge-baseline-v1918/baseline.json", out.name, patch.name, proof.name + "/proof-reports/evidence.json", rejection.name + "/proof-checks/tooling.json"]:

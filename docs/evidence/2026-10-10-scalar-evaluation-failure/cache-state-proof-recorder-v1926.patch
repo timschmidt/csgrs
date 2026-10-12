@@ -1,0 +1,84 @@
+--- record_bound_merge_proof.py
++++ record_cache_state_merge_proof.py
+@@ -29,3 +29,3 @@
+-    out = E / "bound-merge-proof-validation-v1840.json"
+-    patch = E / "bound-merge-proposal-v1840.patch"
+-    ledger_record = E / "bound-merge-proof-ledger-v1840.json"
++    out = E / "cache-state-merge-proof-validation-v1926.json"
++    patch = E / "cache-state-merge-proposal-v1926.patch"
++    ledger_record = E / "cache-state-merge-proof-ledger-v1926.json"
+@@ -35,3 +35,3 @@
+-    proof = E / "typed-api-prototype-v1838-bound-merge-verus"
+-    acceptance = E / "typed-api-prototype-v1839-bound-merge-acceptance"
+-    rejection = E / "typed-api-prototype-v1840-bound-merge-rejections"
++    proof = E / "typed-api-prototype-v1924-cache-state-merge-verus"
++    acceptance = E / "typed-api-prototype-v1925-cache-state-merge-acceptance"
++    rejection = E / "typed-api-prototype-v1926-cache-state-merge-rejections"
+@@ -39 +39 @@
+-    expected = "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9"
++    expected = "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59"
+@@ -81 +81 @@
+-    assert tooling["verus_invocations"] == len(calls) == 250
++    assert tooling["verus_invocations"] == len(calls) == 251
+@@ -83 +83 @@
+-    assert tooling["rejected_invocations"] == sum(call["exit_code"] != 0 for call in calls) == 246
++    assert tooling["rejected_invocations"] == sum(call["exit_code"] != 0 for call in calls) == 247
+@@ -90 +90 @@
+-    for name, count in [("MUTATIONS", 11), ("MODEL_MUTATIONS", 9)]:
++    for name, count in [("MUTATIONS", 12), ("MODEL_MUTATIONS", 9)]:
+@@ -108,0 +109,20 @@
++    diagnostics = {}
++    for name in ["cache-state-merge-generated-code-v1919", "inlined-cache-merge-generated-code-v1921",
++                 "outlined-cache-merge-generated-code-v1923"]:
++        path = E / name / "summary.json"
++        item = read(path)
++        assert item["timed_processes"] == 0
++        assert all(sha(path.parent / artifact) == digest for artifact, digest in item["artifacts_sha256"].items())
++        diagnostics[name] = {"summary_sha256": sha(path), "source_record_sha256": item["source_record_sha256"],
++            "binary_bytes": item["binary_bytes"], "functions": item["functions"], "timed_processes": 0}
++    final_codegen = read(E / "outlined-cache-merge-generated-code-v1923/summary.json")
++    assert final_codegen["source_record_sha256"] == expected
++    assert final_codegen["only_merge_outlining_attribute_changed"]
++    assert final_codegen["publication_plus_selector_bytes"] == 520
++    assert diagnostics["cache-state-merge-generated-code-v1919"]["functions"]["publish"]["bytes"] == 1684
++    assert diagnostics["inlined-cache-merge-generated-code-v1921"]["functions"]["publish"]["bytes"] == 1684
++    experiments = ["bound-merge-cost-rejection-v1857.json", "bound-merge-static-review-v1917.json",
++        "cache-state-merge-baseline-v1918/baseline.json", "cache-merge-inlining-baseline-v1920/baseline.json",
++        "cache-merge-outlining-baseline-v1922/baseline.json"]
++    assert not read(E / experiments[0])["cost_gate_passed"]
++    assert not read(E / experiments[1])["runtime_retained"]
+@@ -123 +143 @@
+-        "fresh_acceptance_tests": 10, "fresh_rejected_mutants": 246,
++        "fresh_acceptance_tests": 10, "fresh_rejected_mutants": 247,
+@@ -134 +154,5 @@
+-        "semantics": "The actual included BoundInfo::merge body implements the frozen typed selection. Five lemmas prove exact-binade/upper compatibility, compatibility of bounds for one real, merged real denotation, retention of both compatible bounds and preservation of either input's accepted domain certificates. Combining independent sign and magnitude evidence can establish an additional domain certificate.",
++        "prior_experiments_sha256": {name: sha(E / name) for name in experiments},
++        "compile_only_diagnostics": diagnostics,
++        "outlined_publication_plus_selector_bytes": 520,
++        "codegen_interpretation": "The direct-match and forced-inline variants each produce 1684 publication bytes. Outlining produces 292 wrapper bytes plus 228 selector bytes, compared with 517 publication bytes in retained v1836. The probe executable is 232 bytes larger than that baseline. No timings were measured for these variants; the extra call and complete runtime behavior still require all frozen gates.",
++        "semantics": "The actual included BoundCache::merge body implements the frozen total cache-state selection, including Invalid and Unknown states. The outlined helper uses the same proved body in ordinary Rust. Five lemmas prove exact-binade/upper compatibility, compatibility of bounds for one real, merged real denotation, retention of both compatible bounds and preservation of either input's accepted domain certificates. Combining independent sign and magnitude evidence can establish an additional domain certificate.",
+@@ -155 +179 @@
+-        "The v1838/v1840 bound-merge proposal passes the full conditional proof target with "
++        "The v1924/v1926 cache-state merge proposal passes the full conditional proof target with "
+@@ -161 +185 @@
+-        "All 246 negative mutations (226 existing and 20 new), four positive guard baselines "
++        "All 247 negative mutations (226 original and 21 merge checks), four positive guard baselines "
+@@ -168,0 +193,7 @@
++    update += (
++        " The full cache-state selection now includes Invalid inputs, with an independent "
++        "negative mutation for losing incoming evidence there. Direct matching and forced "
++        "inlining both generated 1684 publication bytes; outlining yields 520 combined wrapper/"
++        "selector bytes versus 517 retained bytes. This is static evidence only. The earlier "
++        "v1857 timing rejection remains failed, and none of the new sources has a timing pass."
++    )
+@@ -170,3 +201 @@
+-    old = ("Continue implementation-connected review of bound producers, independent real existence "
+-        "and atomic publication, using the retained public and composed schedules as regression "
+-        "controls. Conditional predicate soundness does not discharge those prerequisites.")
++    old = read(E / "bound-merge-static-review-v1917.json")["next_priority"]
+@@ -175 +204 @@
+-        "The included bound merge now passes conditional Verus and all mutation/acceptance guards. "
++        "The outlined cache-state merge now passes conditional Verus and all mutation/acceptance guards. "
+@@ -198 +227 @@
+-    print(json.dumps({"verified_units": 651, "negative_mutations": 246,
++    print(json.dumps({"verified_units": 651, "negative_mutations": 247,

@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_bound_merge_proof.py",
+  "predecessor_sha256": "e5534ab3653091be487d23e29ca18647cf4e46486761c613959d059a9556aa1c",
+  "runner": "record_cache_state_merge_proof.py",
+  "runner_sha256": "359dd4ef1876b6d184e63fb6470cb2089d1f5a09280bf037d262a46b0d9b1404",
+  "fork_patch": "cache-state-proof-recorder-v1926.patch",
+  "fork_patch_sha256": "e9fef8fd8b4d714bc3b454d3f2d6b209d08e31d19f2d859c714a89733bcca3e3",
+  "status": "Prepared; the full fresh rejection suite must finish before execution",
+  "scope": "Keep the original v1836 runtime baseline, source/atomic/diagnostic checks and all scope limits. Update actual proof identities and add the invalid-cache mutant, static code-generation evidence and explicit preservation of the failed v1857 timings."
+}

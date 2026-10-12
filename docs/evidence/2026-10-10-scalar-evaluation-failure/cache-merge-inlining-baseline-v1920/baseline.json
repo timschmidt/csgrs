@@ -1,0 +1,17 @@
+{
+  "status": "Direct cache-state extraction grows publication code; freeze it before testing an inlining attribute",
+  "previous_diagnostic_source_record": "typed-api-prototype-v1919-cache-state-merge-codegen/source-hashes.json.gz",
+  "previous_diagnostic_source_record_sha256": "ebacd8c6b2863e0532ee53faee5bf4c29efaee01d2ddb239cc9b05a92b359024",
+  "source_files_verified": 24746,
+  "archived_sources_sha256": {
+    "crates/hyperreal/src/computable/node/bounds.rs": "fd20ab2f25f20aca907b8ccb91e3c5afcd2a47d243b088296cbbb6856c8ff1f0"
+  },
+  "previous_codegen": "cache-state-merge-generated-code-v1919/summary.json",
+  "previous_codegen_sha256": "6d0af2f069945cc7a5a0927ad987109258b567bc5784183f68d38745a1d6dfa5",
+  "previous_publication_bytes": 1684,
+  "first_rejected_publication_bytes": 860,
+  "retained_publication_bytes": 517,
+  "timed_processes": 0,
+  "change_boundary": "Only change #[inline] to #[inline(always)] on the included pure BoundCache::merge method. Keep the match body, contract, all other source files, mutation guards, atomic wrapper, fixtures and compiler flags unchanged.",
+  "limits": "The direct-match hypothesis failed to reduce generated code. No timing or fresh proof claim follows from that build. Explicit inlining is a compiler experiment; only the unchanged full proof/runtime/cost/replay gates can qualify any resulting source. Retained v1836, both static variants, the v1857 timing rejection and all older failures/baselines remain unchanged."
+}

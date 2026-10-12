@@ -1,0 +1,10 @@
+{
+  "predecessor": "prepare_bound_merge_costs.py",
+  "predecessor_sha256": "2d9606a1855126510695e246dbbd10b2e286609378adc349fa4b63b9dcd9b88c",
+  "prepared_generator": "prepare_cache_state_merge_costs.py",
+  "prepared_generator_sha256": "3019de3b95d2a263d4c56c01f83165dcb8b7e532afaae7e8556dfd464ae1316b",
+  "fork_patch": "cache-state-cost-preparer-v1936.patch",
+  "fork_patch_sha256": "b3495351a93516deec9c8b9cf51c14f36400cea90231253448d1dbd2f600bf8c",
+  "status": "Prepared only; run after the complete fresh proof record exists",
+  "scope": "Update only candidate identities and the freeze-status wording. Preserve all original retained-v1836 binaries, fixtures, runner code, process counts and resource limits; earlier diagnostics did not execute the probe."
+}

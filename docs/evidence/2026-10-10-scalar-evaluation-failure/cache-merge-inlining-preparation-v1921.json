@@ -1,0 +1,12 @@
+{
+  "predecessor": "inspect_cache_state_codegen.py",
+  "predecessor_sha256": "c10788d72423fbf759b0c9f4f1ab056a1dc37e40a2940a09a66ff51642542dd7",
+  "runner": "inspect_inlined_cache_merge.py",
+  "runner_sha256": "7ffd6f3e47c26c31d16dabb57bb6eaa6ac9bc1140e42d68bb0d1a698ff511821",
+  "fork_patch": "cache-merge-inlining-runner-v1921.patch",
+  "fork_patch_sha256": "c020ffda6087aee1b8b654351d3a833ebc0acb50eee4aa2d8078efd7b0900879",
+  "baseline": "cache-merge-inlining-baseline-v1920/baseline.json",
+  "baseline_sha256": "8e6aa433e64c27bea318065ac3bfb841054e445f3f5a54e7549a2925d1e35d37",
+  "timing_processes_permitted": 0,
+  "scope": "Identical format/build/probe/disassembly commands and compiler flags. Only phase identities and checks for the single inlining attribute differ."
+}

@@ -1,0 +1,39 @@
+{
+  "status": "Prepared only; the fresh proof and complete mutation/acceptance checks must pass first",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "runner_forks": {
+    "validate_cache_state_merge_candidate.py": {
+      "predecessor": "validate_bound_merge_candidate.py",
+      "predecessor_sha256": "eb9c24f867e5ad981bd67ccba725e29368e62fed4b4598fd02b3fe17c5f532c2",
+      "runner_sha256": "fcaf5f0df511d67d8069bf3ab6c1c95d5dacd9f908960bbc90d1be7498b69227",
+      "fork_patch": "validate_cache_state_merge_candidate-v1935.patch",
+      "fork_patch_sha256": "545ab3615d55a027ec2167134975ed4560c7163b20f9b21d6da189f7e5642ec2"
+    },
+    "record_cache_state_merge_validation.py": {
+      "predecessor": "record_bound_merge_validation.py",
+      "predecessor_sha256": "9648bfbe3dfe6f9fabdad5628e45da55a66c010e56eba98fe09ec6272e1d6091",
+      "runner_sha256": "9ce681b62516e8ce5476f47946fc2bfd4d8322f7b2c3832041160620f147b764",
+      "fork_patch": "record_cache_state_merge_validation-v1935.patch",
+      "fork_patch_sha256": "be79f7c6bd1ae2f2153d4e981321735d6f41d5b2e53746282c5b213acf9b7f0a"
+    },
+    "record_cache_state_merge_broad_milestone.py": {
+      "predecessor": "record_bound_merge_broad_milestone.py",
+      "predecessor_sha256": "edf0cf9c58c4c9a31d2c9e0b62bebc4ce1fc2777ab6cced0d0ee303b4198c1ae",
+      "runner_sha256": "540ca596fa09bb66c0bda6d009e656c175e42e56b8a63d4043dd288a22d6b646",
+      "fork_patch": "record_cache_state_merge_broad_milestone-v1935.patch",
+      "fork_patch_sha256": "62f3bddd6a19bf897b53a0fdc542b3498a953d10c26f074474e2d33e8da98922"
+    }
+  },
+  "phases": [
+    1927,
+    1928,
+    1929,
+    1930,
+    1931,
+    1932,
+    1933,
+    1934,
+    1935
+  ],
+  "scope": "The runtime runner still reads byte-identical commands from retained v1836's nine checks. Preserve counts, ignored names, inherited warnings, strict Clippy, formatting, all source guards and all admission limits. Only source/phase/proof identities and the added invalid-cache mutation count change."
+}

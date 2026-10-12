@@ -1,0 +1,23 @@
+--- prepare_bound_merge_cost_followup.py
++++ prepare_cache_state_merge_cost_followup.py
+@@ -13 +13 @@
+-    original_path = E / "bound-merge-initial-cost-review-v1857.json"
++    original_path = E / "cache-state-merge-initial-cost-review-v1943.json"
+@@ -18 +18 @@
+-    strategy_path = E / "bound-merge-cost-followup-strategy-v1857.json"
++    strategy_path = E / "cache-state-merge-cost-followup-strategy-v1943.json"
+@@ -27,3 +27,3 @@
+-    protocol = E / "bound-merge-cost-followup-protocol-v1857.json"
+-    runner = E / "replay_bound_merge_followup.py"
+-    provenance = E / "bound-merge-cost-followup-preparation-v1857.json"
++    protocol = E / "cache-state-merge-cost-followup-protocol-v1943.json"
++    runner = E / "replay_cache_state_merge_followup.py"
++    provenance = E / "cache-state-merge-cost-followup-preparation-v1943.json"
+@@ -32,2 +32,2 @@
+-        "output": "bound-merge-focused-cost-v1857",
+-        "prelude": "bound-merge-focused-cpu-prelude-v1857",
++        "output": "cache-state-merge-focused-cost-v1943",
++        "prelude": "cache-state-merge-focused-cpu-prelude-v1943",
+@@ -51 +51 @@
+-    prepared = read(E / "bound-merge-cost-protocol-v1850.json")["runner_forks"]["replay_bound_merge_cost.py"]
++    prepared = read(E / "cache-state-merge-cost-protocol-v1936.json")["runner_forks"]["replay_cache_state_merge_cost.py"]

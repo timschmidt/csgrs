@@ -1,0 +1,1805 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/inlined-cache-merge-generated-code-v1921/probe:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+000000000005ec00 <probe::main>:
+   5ec00:	push   %rbp
+   5ec01:	push   %r15
+   5ec03:	push   %r14
+   5ec05:	push   %r13
+   5ec07:	push   %r12
+   5ec09:	push   %rbx
+   5ec0a:	sub    $0x1a8,%rsp
+   5ec11:	mov    %rsp,%rbx
+   5ec14:	mov    %rbx,%rdi
+   5ec17:	call   *0x12ab3b(%rip)        # 189758 <_DYNAMIC+0x2d8>
+   5ec1d:	movq   $0x1,0x20(%rsp)
+   5ec26:	lea    0x138(%rsp),%rdi
+   5ec2e:	mov    %rbx,%rsi
+   5ec31:	call   5e230 <<alloc::vec::Vec<alloc::string::String> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<alloc::string::String, core::iter::adapters::skip::Skip<std::env::Args>>>::from_iter>
+   5ec36:	mov    0x148(%rsp),%rdi
+   5ec3e:	test   %rdi,%rdi
+   5ec41:	je     6096e <probe::main+0x1d6e>
+   5ec47:	cmp    $0x1,%rdi
+   5ec4b:	je     60977 <probe::main+0x1d77>
+   5ec51:	mov    0x140(%rsp),%r9
+   5ec59:	mov    0x20(%r9),%rcx
+   5ec5d:	mov    0x28(%r9),%rsi
+   5ec61:	cmp    $0x1,%rsi
+   5ec65:	je     5ec75 <probe::main+0x75>
+   5ec67:	test   %rsi,%rsi
+   5ec6a:	je     609c5 <probe::main+0x1dc5>
+   5ec70:	movzbl (%rcx),%edx
+   5ec73:	jmp    5ec8c <probe::main+0x8c>
+   5ec75:	movzbl (%rcx),%edx
+   5ec78:	mov    $0x1,%al
+   5ec7a:	cmp    $0x2b,%edx
+   5ec7d:	je     6070f <probe::main+0x1b0f>
+   5ec83:	cmp    $0x2d,%edx
+   5ec86:	je     6070f <probe::main+0x1b0f>
+   5ec8c:	xor    %eax,%eax
+   5ec8e:	cmp    $0x2b,%dl
+   5ec91:	sete   %al
+   5ec94:	mov    %rsi,%rdx
+   5ec97:	sub    %rax,%rdx
+   5ec9a:	add    %rax,%rcx
+   5ec9d:	neg    %rax
+   5eca0:	cmp    $0x11,%rdx
+   5eca4:	jae    5ece7 <probe::main+0xe7>
+   5eca6:	test   %rdx,%rdx
+   5eca9:	je     5ed39 <probe::main+0x139>
+   5ecaf:	add    %rax,%rsi
+   5ecb2:	neg    %rsi
+   5ecb5:	xor    %r15d,%r15d
+   5ecb8:	xor    %eax,%eax
+   5ecba:	nopw   0x0(%rax,%rax,1)
+   5ecc0:	movzbl (%rcx,%rax,1),%edx
+   5ecc4:	add    $0xffffffd0,%edx
+   5ecc7:	cmp    $0x9,%edx
+   5ecca:	ja     60948 <probe::main+0x1d48>
+   5ecd0:	lea    (%r15,%r15,4),%rdi
+   5ecd4:	mov    %edx,%edx
+   5ecd6:	lea    (%rdx,%rdi,2),%r15
+   5ecda:	inc    %rax
+   5ecdd:	mov    %rsi,%rdx
+   5ece0:	add    %rax,%rdx
+   5ece3:	jne    5ecc0 <probe::main+0xc0>
+   5ece5:	jmp    5ed3c <probe::main+0x13c>
+   5ece7:	add    %rax,%rsi
+   5ecea:	neg    %rsi
+   5eced:	xor    %r15d,%r15d
+   5ecf0:	mov    $0xa,%edi
+   5ecf5:	xor    %r8d,%r8d
+   5ecf8:	nopl   0x0(%rax,%rax,1)
+   5ed00:	mov    %rsi,%rax
+   5ed03:	add    %r8,%rax
+   5ed06:	je     5ed3c <probe::main+0x13c>
+   5ed08:	mov    %r15,%rax
+   5ed0b:	mul    %rdi
+   5ed0e:	movzbl (%rcx,%r8,1),%edx
+   5ed13:	jo     60705 <probe::main+0x1b05>
+   5ed19:	add    $0xffffffd0,%edx
+   5ed1c:	cmp    $0xa,%edx
+   5ed1f:	jae    60948 <probe::main+0x1d48>
+   5ed25:	mov    %rax,%r15
+   5ed28:	mov    %edx,%eax
+   5ed2a:	inc    %r8
+   5ed2d:	add    %rax,%r15
+   5ed30:	jae    5ed00 <probe::main+0x100>
+   5ed32:	mov    $0x2,%al
+   5ed34:	jmp    6070f <probe::main+0x1b0f>
+   5ed39:	xor    %r15d,%r15d
+   5ed3c:	mov    0x10(%r9),%rax
+   5ed40:	add    $0xfffffffffffffff4,%rax
+   5ed44:	cmp    $0xa,%rax
+   5ed48:	ja     6092a <probe::main+0x1d2a>
+   5ed4e:	mov    0x8(%r9),%rcx
+   5ed52:	lea    -0x2bae9(%rip),%rdx        # 33270 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x110>
+   5ed59:	movslq (%rdx,%rax,4),%rax
+   5ed5d:	add    %rdx,%rax
+   5ed60:	mov    %r9,0x190(%rsp)
+   5ed68:	jmp    *%rax
+   5ed6a:	movabs $0x746e695f65646977,%rax
+   5ed74:	xor    (%rcx),%rax
+   5ed77:	mov    0x8(%rcx),%ecx
+   5ed7a:	xor    $0x72656765,%rcx
+   5ed81:	or     %rax,%rcx
+   5ed84:	jne    6092a <probe::main+0x1d2a>
+   5ed8a:	xor    %ecx,%ecx
+   5ed8c:	mov    $0xf4241,%eax
+   5ed91:	jmp    5eefb <probe::main+0x2fb>
+   5ed96:	movdqu (%rcx),%xmm0
+   5ed9a:	movdqu 0x5(%rcx),%xmm1
+   5ed9f:	pcmpeqb -0x2bed7(%rip),%xmm1        # 32ed0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x220>
+   5eda7:	pcmpeqb -0x2bdef(%rip),%xmm0        # 32fc0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x310>
+   5edaf:	pand   %xmm1,%xmm0
+   5edb3:	pmovmskb %xmm0,%eax
+   5edb7:	cmp    $0xffff,%eax
+   5edbc:	jne    6092a <probe::main+0x1d2a>
+   5edc2:	mov    $0x1,%eax
+   5edc7:	jmp    5efdf <probe::main+0x3df>
+   5edcc:	movdqu (%rcx),%xmm0
+   5edd0:	movzwl 0x10(%rcx),%eax
+   5edd4:	movd   %eax,%xmm1
+   5edd8:	pcmpeqb -0x2be10(%rip),%xmm0        # 32fd0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x320>
+   5ede0:	pcmpeqb -0x2bd28(%rip),%xmm1        # 330c0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x410>
+   5ede8:	pand   %xmm0,%xmm1
+   5edec:	pmovmskb %xmm1,%eax
+   5edf0:	cmp    $0xffff,%eax
+   5edf5:	jne    6092a <probe::main+0x1d2a>
+   5edfb:	mov    $0x1,%eax
+   5ee00:	jmp    5eebd <probe::main+0x2bd>
+   5ee05:	movdqu (%rcx),%xmm0
+   5ee09:	pcmpeqb -0x2bd41(%rip),%xmm0        # 330d0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x420>
+   5ee11:	pmovmskb %xmm0,%edx
+   5ee15:	xor    %eax,%eax
+   5ee17:	cmp    $0xffff,%edx
+   5ee1d:	je     60501 <probe::main+0x1901>
+   5ee23:	movdqu (%rcx),%xmm0
+   5ee27:	pcmpeqb -0x2bebf(%rip),%xmm0        # 32f70 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x2c0>
+   5ee2f:	pmovmskb %xmm0,%ecx
+   5ee33:	cmp    $0xffff,%ecx
+   5ee39:	jne    6092a <probe::main+0x1d2a>
+   5ee3f:	mov    $0x1,%dl
+   5ee41:	mov    $0xf4240,%ecx
+   5ee46:	mov    %rcx,0x70(%rsp)
+   5ee4b:	xor    %ecx,%ecx
+   5ee4d:	mov    $0x1,%sil
+   5ee50:	mov    %rsi,0x78(%rsp)
+   5ee55:	jmp    5eff6 <probe::main+0x3f6>
+   5ee5a:	movabs $0x6365725f65646977,%rax
+   5ee64:	xor    (%rcx),%rax
+   5ee67:	movabs $0x6c61636f72706963,%rdx
+   5ee71:	xor    0x7(%rcx),%rdx
+   5ee75:	or     %rax,%rdx
+   5ee78:	jne    6092a <probe::main+0x1d2a>
+   5ee7e:	mov    $0x1,%dl
+   5ee80:	xor    %ecx,%ecx
+   5ee82:	mov    $0xf4241,%eax
+   5ee87:	jmp    5ef9c <probe::main+0x39c>
+   5ee8c:	movdqu (%rcx),%xmm0
+   5ee90:	movdqu 0x3(%rcx),%xmm1
+   5ee95:	pcmpeqb -0x2bfad(%rip),%xmm1        # 32ef0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x240>
+   5ee9d:	pcmpeqb -0x2bd65(%rip),%xmm0        # 33140 <anon.f651f877c5f1b0c83bd435f3f6e617b1.344.llvm.6182544693238746767+0x60>
+   5eea5:	pand   %xmm1,%xmm0
+   5eea9:	pmovmskb %xmm0,%eax
+   5eead:	cmp    $0xffff,%eax
+   5eeb2:	jne    6092a <probe::main+0x1d2a>
+   5eeb8:	mov    $0x40,%eax
+   5eebd:	xor    %ecx,%ecx
+   5eebf:	mov    $0xf4241,%edx
+   5eec4:	mov    %rdx,0x70(%rsp)
+   5eec9:	xor    %edx,%edx
+   5eecb:	jmp    5efed <probe::main+0x3ed>
+   5eed0:	movabs $0x695f6d756964656d,%rax
+   5eeda:	xor    (%rcx),%rax
+   5eedd:	movabs $0x72656765746e695f,%rdx
+   5eee7:	xor    0x6(%rcx),%rdx
+   5eeeb:	or     %rax,%rdx
+   5eeee:	jne    6092a <probe::main+0x1d2a>
+   5eef4:	xor    %ecx,%ecx
+   5eef6:	mov    $0x10001,%eax
+   5eefb:	mov    %rax,0x70(%rsp)
+   5ef00:	xor    %edx,%edx
+   5ef02:	jmp    5efa1 <probe::main+0x3a1>
+   5ef07:	movabs $0x72656765746e695f,%rdx
+   5ef11:	movabs $0x6e695f6c6c616d73,%rsi
+   5ef1b:	xor    (%rcx),%rsi
+   5ef1e:	mov    0x5(%rcx),%rdi
+   5ef22:	xor    %rdx,%rdi
+   5ef25:	xor    %eax,%eax
+   5ef27:	or     %rsi,%rdi
+   5ef2a:	je     60512 <probe::main+0x1912>
+   5ef30:	movabs $0x6e695f65736e6564,%rsi
+   5ef3a:	xor    (%rcx),%rsi
+   5ef3d:	xor    0x5(%rcx),%rdx
+   5ef41:	or     %rsi,%rdx
+   5ef44:	jne    6092a <probe::main+0x1d2a>
+   5ef4a:	mov    $0x1,%cl
+   5ef4c:	mov    %rcx,0x78(%rsp)
+   5ef51:	mov    $0xf4240,%ecx
+   5ef56:	mov    %rcx,0x70(%rsp)
+   5ef5b:	xor    %ecx,%ecx
+   5ef5d:	xor    %edx,%edx
+   5ef5f:	jmp    5eff6 <probe::main+0x3f6>
+   5ef64:	movdqu (%rcx),%xmm0
+   5ef68:	movzbl 0x10(%rcx),%eax
+   5ef6c:	movd   %eax,%xmm1
+   5ef70:	pcmpeqb -0x2bd28(%rip),%xmm0        # 33250 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0xf0>
+   5ef78:	pcmpeqb -0x2c020(%rip),%xmm1        # 32f60 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x2b0>
+   5ef80:	pand   %xmm0,%xmm1
+   5ef84:	pmovmskb %xmm1,%eax
+   5ef88:	cmp    $0xffff,%eax
+   5ef8d:	jne    6092a <probe::main+0x1d2a>
+   5ef93:	mov    $0x1,%dl
+   5ef95:	xor    %ecx,%ecx
+   5ef97:	mov    $0x10001,%eax
+   5ef9c:	mov    %rax,0x70(%rsp)
+   5efa1:	movq   $0x0,0x78(%rsp)
+   5efaa:	xor    %eax,%eax
+   5efac:	jmp    5eff6 <probe::main+0x3f6>
+   5efae:	movdqu (%rcx),%xmm0
+   5efb2:	movdqu 0x6(%rcx),%xmm1
+   5efb7:	pcmpeqb -0x2bf6f(%rip),%xmm1        # 33050 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x3a0>
+   5efbf:	pcmpeqb -0x2c007(%rip),%xmm0        # 32fc0 <anon.971d68e3f146e1126e2465ffbb582c25.36.llvm.5842521001722572826+0x310>
+   5efc7:	pand   %xmm1,%xmm0
+   5efcb:	pmovmskb %xmm0,%eax
+   5efcf:	cmp    $0xffff,%eax
+   5efd4:	jne    6092a <probe::main+0x1d2a>
+   5efda:	mov    $0x40,%eax
+   5efdf:	mov    $0x1,%dl
+   5efe1:	xor    %ecx,%ecx
+   5efe3:	mov    $0xf4241,%esi
+   5efe8:	mov    %rsi,0x70(%rsp)
+   5efed:	movq   $0x0,0x78(%rsp)
+   5eff6:	mov    %ecx,0xa0(%rsp)
+   5effd:	mov    %dl,0x57(%rsp)
+   5f001:	mov    %rax,0xf0(%rsp)
+   5f009:	call   *0x12a751(%rip)        # 189760 <_DYNAMIC+0x2e0>
+   5f00f:	mov    %rax,0x30(%rsp)
+   5f014:	mov    %rdx,0x38(%rsp)
+   5f019:	mov    %rsp,%rdi
+   5f01c:	lea    0x30(%rsp),%rsi
+   5f021:	mov    $0xffffff40,%edx
+   5f026:	call   *0x12a73c(%rip)        # 189768 <_DYNAMIC+0x2e8>
+   5f02c:	mov    (%rsp),%rsi
+   5f030:	cmp    $0xffffffffffffffff,%rsi
+   5f034:	je     60838 <probe::main+0x1c38>
+   5f03a:	test   %rsi,%rsi
+   5f03d:	je     5f053 <probe::main+0x453>
+   5f03f:	mov    0x8(%rsp),%rdi
+   5f044:	shl    $0x3,%rsi
+   5f048:	mov    $0x8,%edx
+   5f04d:	call   *0x12a6b5(%rip)        # 189708 <_DYNAMIC+0x288>
+   5f053:	lea    0x38(%rsp),%r14
+   5f058:	mov    0x30(%rsp),%rax
+   5f05d:	lock decq (%rax)
+   5f061:	jne    5f06e <probe::main+0x46e>
+   5f063:	lea    0x30(%rsp),%rdi
+   5f068:	call   *0x12a6c2(%rip)        # 189730 <_DYNAMIC+0x2b0>
+   5f06e:	mov    0x38(%rsp),%rax
+   5f073:	test   %rax,%rax
+   5f076:	je     5f087 <probe::main+0x487>
+   5f078:	lock decq (%rax)
+   5f07c:	jne    5f087 <probe::main+0x487>
+   5f07e:	mov    %r14,%rdi
+   5f081:	call   *0x12a6b1(%rip)        # 189738 <_DYNAMIC+0x2b8>
+   5f087:	call   *0x12a6e3(%rip)        # 189770 <_DYNAMIC+0x2f0>
+   5f08d:	mov    %rax,0x30(%rsp)
+   5f092:	mov    %rdx,0x38(%rsp)
+   5f097:	mov    %rsp,%rdi
+   5f09a:	lea    0x30(%rsp),%rsi
+   5f09f:	xor    %edx,%edx
+   5f0a1:	call   *0x12a6c1(%rip)        # 189768 <_DYNAMIC+0x2e8>
+   5f0a7:	cmpq   $0xffffffffffffffff,(%rsp)
+   5f0ac:	je     60871 <probe::main+0x1c71>
+   5f0b2:	lea    0x38(%rsp),%r14
+   5f0b7:	movdqu (%rsp),%xmm0
+   5f0bc:	movdqu 0x10(%rsp),%xmm1
+   5f0c2:	movdqa %xmm1,0x120(%rsp)
+   5f0cb:	movdqa %xmm0,0x110(%rsp)
+   5f0d4:	mov    0x30(%rsp),%rax
+   5f0d9:	lock decq (%rax)
+   5f0dd:	jne    5f0ea <probe::main+0x4ea>
+   5f0df:	lea    0x30(%rsp),%rdi
+   5f0e4:	call   *0x12a646(%rip)        # 189730 <_DYNAMIC+0x2b0>
+   5f0ea:	mov    0x38(%rsp),%rax
+   5f0ef:	test   %rax,%rax
+   5f0f2:	je     5f103 <probe::main+0x503>
+   5f0f4:	lock decq (%rax)
+   5f0f8:	jne    5f103 <probe::main+0x503>
+   5f0fa:	mov    %r14,%rdi
+   5f0fd:	call   *0x12a635(%rip)        # 189738 <_DYNAMIC+0x2b8>
+   5f103:	movzbl 0x128(%rsp),%ebx
+   5f10b:	cmpb   $0x0,0x78(%rsp)
+   5f110:	mov    %r15,0xc0(%rsp)
+   5f118:	je     5f1a4 <probe::main+0x5a4>
+   5f11e:	cmpq   $0x0,0x120(%rsp)
+   5f127:	je     5f22f <probe::main+0x62f>
+   5f12d:	mov    0x70(%rsp),%rdx
+   5f132:	mov    %edx,%eax
+   5f134:	and    $0x3,%al
+   5f136:	shr    $0x6,%edx
+   5f139:	movq   $0xffffffffffffffff,(%rsp)
+   5f141:	lea    0x110(%rsp),%rcx
+   5f149:	mov    %rcx,0x8(%rsp)
+   5f14e:	movzbl %al,%ecx
+   5f151:	lea    0x30(%rsp),%rdi
+   5f156:	mov    %rsp,%rsi
+   5f159:	call   *0x12a619(%rip)        # 189778 <_DYNAMIC+0x2f8>
+   5f15f:	lea    0x8(%rsp),%r12
+   5f164:	cmp    $0x1,%ebx
+   5f167:	jne    5f258 <probe::main+0x658>
+   5f16d:	mov    0x30(%rsp),%r15
+   5f172:	cmp    $0x4,%r15
+   5f176:	jb     5f333 <probe::main+0x733>
+   5f17c:	mov    0x38(%rsp),%rdi
+   5f181:	shl    $0x3,%r15
+   5f185:	mov    $0x8,%edx
+   5f18a:	mov    %r15,%rsi
+   5f18d:	call   *0x12a575(%rip)        # 189708 <_DYNAMIC+0x288>
+   5f193:	movq   $0x8,0x38(%rsp)
+   5f19c:	xor    %r15d,%r15d
+   5f19f:	jmp    5f333 <probe::main+0x733>
+   5f1a4:	cmpq   $0x0,0x120(%rsp)
+   5f1ad:	je     5f38a <probe::main+0x78a>
+   5f1b3:	mov    0x70(%rsp),%rax
+   5f1b8:	lea    -0x1(%rax),%rdx
+   5f1bc:	mov    %edx,%eax
+   5f1be:	and    $0x3f,%al
+   5f1c0:	shr    $0x6,%rdx
+   5f1c4:	movq   $0xffffffffffffffff,(%rsp)
+   5f1cc:	lea    0x110(%rsp),%rcx
+   5f1d4:	mov    %rcx,0x8(%rsp)
+   5f1d9:	movzbl %al,%ecx
+   5f1dc:	lea    0x30(%rsp),%rdi
+   5f1e1:	mov    %rsp,%rsi
+   5f1e4:	call   *0x12a58e(%rip)        # 189778 <_DYNAMIC+0x2f8>
+   5f1ea:	lea    0x8(%rsp),%r12
+   5f1ef:	cmp    $0x1,%ebx
+   5f1f2:	jne    5f3b3 <probe::main+0x7b3>
+   5f1f8:	mov    0x30(%rsp),%r15
+   5f1fd:	cmp    $0x4,%r15
+   5f201:	jb     5f452 <probe::main+0x852>
+   5f207:	mov    0x38(%rsp),%rdi
+   5f20c:	shl    $0x3,%r15
+   5f210:	mov    $0x8,%edx
+   5f215:	mov    %r15,%rsi
+   5f218:	call   *0x12a4ea(%rip)        # 189708 <_DYNAMIC+0x288>
+   5f21e:	movq   $0x8,0x38(%rsp)
+   5f227:	xor    %r15d,%r15d
+   5f22a:	jmp    5f452 <probe::main+0x852>
+   5f22f:	movq   $0x0,0x30(%rsp)
+   5f238:	movq   $0x8,0x38(%rsp)
+   5f241:	movq   $0x0,0x40(%rsp)
+   5f24a:	lea    0x8(%rsp),%r12
+   5f24f:	cmp    $0x1,%ebx
+   5f252:	je     5f16d <probe::main+0x56d>
+   5f258:	mov    0x30(%rsp),%r15
+   5f25d:	mov    0x40(%rsp),%rbp
+   5f262:	test   %rbp,%rbp
+   5f265:	je     5f333 <probe::main+0x733>
+   5f26b:	mov    0x38(%rsp),%r14
+   5f270:	test   %ebx,%ebx
+   5f272:	je     60394 <probe::main+0x1794>
+   5f278:	cmp    $0x1,%ebx
+   5f27b:	je     5f338 <probe::main+0x738>
+   5f281:	movdqu -0x2bf99(%rip),%xmm0        # 332f0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x190>
+   5f289:	movdqa %xmm0,(%rsp)
+   5f28e:	movq   $0x0,0x10(%rsp)
+   5f297:	mov    %rsp,%rdi
+   5f29a:	call   *0x12a4e0(%rip)        # 189780 <_DYNAMIC+0x300>
+   5f2a0:	mov    0x8(%rsp),%rax
+   5f2a5:	movq   $0x1,(%rax)
+   5f2ac:	mov    (%rsp),%r12
+   5f2b0:	mov    0x8(%rsp),%r13
+   5f2b5:	mov    $0x1,%al
+   5f2b7:	cmp    $0x1,%rbp
+   5f2bb:	jne    5f2cf <probe::main+0x6cf>
+   5f2bd:	mov    0x0(%r13),%rax
+   5f2c1:	cmp    %rax,(%r14)
+   5f2c4:	je     604be <probe::main+0x18be>
+   5f2ca:	seta   %al
+   5f2cd:	sbb    $0x0,%al
+   5f2cf:	test   %al,%al
+   5f2d1:	je     604be <probe::main+0x18be>
+   5f2d7:	movzbl %al,%eax
+   5f2da:	cmp    $0x1,%eax
+   5f2dd:	jne    6065b <probe::main+0x1a5b>
+   5f2e3:	mov    %r15,(%rsp)
+   5f2e7:	mov    %r14,0x8(%rsp)
+   5f2ec:	mov    %rbp,0x10(%rsp)
+   5f2f1:	mov    %rsp,%rdi
+   5f2f4:	mov    $0x1,%esi
+   5f2f9:	call   *0x12a489(%rip)        # 189788 <_DYNAMIC+0x308>
+   5f2ff:	mov    (%rsp),%rsi
+   5f303:	mov    0x8(%rsp),%rdi
+   5f308:	mov    0x10(%rsp),%rax
+   5f30d:	test   %rax,%rax
+   5f310:	je     6076a <probe::main+0x1b6a>
+   5f316:	mov    %rsi,0x80(%rsp)
+   5f31e:	mov    %rdi,0x88(%rsp)
+   5f326:	mov    %rax,0x90(%rsp)
+   5f32e:	jmp    6064e <probe::main+0x1a4e>
+   5f333:	mov    0x38(%rsp),%r14
+   5f338:	movdqu -0x2c050(%rip),%xmm0        # 332f0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x190>
+   5f340:	movdqa %xmm0,(%rsp)
+   5f345:	movq   $0x0,0x10(%rsp)
+   5f34e:	mov    %rsp,%rdi
+   5f351:	call   *0x12a429(%rip)        # 189780 <_DYNAMIC+0x300>
+   5f357:	mov    0x8(%rsp),%rax
+   5f35c:	movq   $0x1,(%rax)
+   5f363:	movdqa (%rsp),%xmm0
+   5f368:	movdqa %xmm0,0x80(%rsp)
+   5f371:	movq   $0x1,0x90(%rsp)
+   5f37d:	movb   $0x0,0x98(%rsp)
+   5f385:	jmp    5f4a4 <probe::main+0x8a4>
+   5f38a:	movq   $0x0,0x30(%rsp)
+   5f393:	movq   $0x8,0x38(%rsp)
+   5f39c:	movq   $0x0,0x40(%rsp)
+   5f3a5:	lea    0x8(%rsp),%r12
+   5f3aa:	cmp    $0x1,%ebx
+   5f3ad:	je     5f1f8 <probe::main+0x5f8>
+   5f3b3:	mov    0x30(%rsp),%r15
+   5f3b8:	mov    0x40(%rsp),%rbp
+   5f3bd:	test   %rbp,%rbp
+   5f3c0:	je     5f452 <probe::main+0x852>
+   5f3c6:	mov    0x38(%rsp),%r14
+   5f3cb:	test   %ebx,%ebx
+   5f3cd:	je     60412 <probe::main+0x1812>
+   5f3d3:	cmp    $0x1,%ebx
+   5f3d6:	je     5f457 <probe::main+0x857>
+   5f3d8:	mov    %r15,(%rsp)
+   5f3dc:	mov    %r14,0x8(%rsp)
+   5f3e1:	mov    %rbp,0x10(%rsp)
+   5f3e6:	incq   (%r14)
+   5f3e9:	jne    6055a <probe::main+0x195a>
+   5f3ef:	mov    $0x1,%r15d
+   5f3f5:	cmp    $0x1,%rbp
+   5f3f9:	je     5f42d <probe::main+0x82d>
+   5f3fb:	shl    $0x3,%rbp
+   5f3ff:	mov    $0x1,%al
+   5f401:	mov    $0x8,%ecx
+   5f406:	cs nopw 0x0(%rax,%rax,1)
+   5f410:	add    $0xff,%al
+   5f412:	adcq   $0x0,(%r14,%rcx,1)
+   5f417:	setb   %al
+   5f41a:	jae    6055a <probe::main+0x195a>
+   5f420:	add    $0x8,%rcx
+   5f424:	cmp    %rcx,%rbp
+   5f427:	jne    5f410 <probe::main+0x810>
+   5f429:	movzbl %al,%r15d
+   5f42d:	mov    0x10(%rsp),%rbx
+   5f432:	cmp    (%rsp),%rbx
+   5f436:	jne    5f441 <probe::main+0x841>
+   5f438:	mov    %rsp,%rdi
+   5f43b:	call   *0x12a33f(%rip)        # 189780 <_DYNAMIC+0x300>
+   5f441:	mov    0x8(%rsp),%rax
+   5f446:	mov    %r15,(%rax,%rbx,8)
+   5f44a:	inc    %rbx
+   5f44d:	jmp    6055f <probe::main+0x195f>
+   5f452:	mov    0x38(%rsp),%r14
+   5f457:	movdqu -0x2c16f(%rip),%xmm0        # 332f0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x190>
+   5f45f:	movdqa %xmm0,(%rsp)
+   5f464:	movq   $0x0,0x10(%rsp)
+   5f46d:	mov    %rsp,%rdi
+   5f470:	call   *0x12a30a(%rip)        # 189780 <_DYNAMIC+0x300>
+   5f476:	mov    0x8(%rsp),%rax
+   5f47b:	movq   $0x1,(%rax)
+   5f482:	movdqa (%rsp),%xmm0
+   5f487:	movdqa %xmm0,0x80(%rsp)
+   5f490:	movq   $0x1,0x90(%rsp)
+   5f49c:	movb   $0x2,0x98(%rsp)
+   5f4a4:	test   %r15,%r15
+   5f4a7:	je     5f4be <probe::main+0x8be>
+   5f4a9:	shl    $0x3,%r15
+   5f4ad:	mov    $0x8,%edx
+   5f4b2:	mov    %r14,%rdi
+   5f4b5:	mov    %r15,%rsi
+   5f4b8:	call   *0x12a24a(%rip)        # 189708 <_DYNAMIC+0x288>
+   5f4be:	mov    0x90(%rsp),%rax
+   5f4c6:	test   %rax,%rax
+   5f4c9:	je     60989 <probe::main+0x1d89>
+   5f4cf:	mov    0x88(%rsp),%rcx
+   5f4d7:	mov    $0x7f,%edx
+   5f4dc:	bsr    -0x8(%rcx,%rax,8),%rdx
+   5f4e2:	xor    $0x3f,%rdx
+   5f4e6:	shl    $0x6,%rax
+   5f4ea:	sub    %rdx,%rax
+   5f4ed:	mov    %rax,0x30(%rsp)
+   5f4f2:	mov    0x70(%rsp),%rcx
+   5f4f7:	mov    %rcx,(%rsp)
+   5f4fb:	cmp    %rcx,%rax
+   5f4fe:	mov    0xc0(%rsp),%r12
+   5f506:	jne    6099b <probe::main+0x1d9b>
+   5f50c:	lea    0xf0(%rsp),%rbx
+   5f514:	mov    %rbx,0x170(%rsp)
+   5f51c:	lea    0x57(%rsp),%rax
+   5f521:	mov    %rax,0x178(%rsp)
+   5f529:	lea    0x110(%rsp),%rax
+   5f531:	mov    %rax,0x180(%rsp)
+   5f539:	lea    0x80(%rsp),%rax
+   5f541:	mov    %rax,0x188(%rsp)
+   5f549:	movq   $0x0,0x10(%rsp)
+   5f552:	movq   $0x2,0x18(%rsp)
+   5f55b:	lea    0x170(%rsp),%r14
+   5f563:	mov    %r14,(%rsp)
+   5f567:	lea    0xa0(%rsp),%r15
+   5f56f:	mov    %r15,0x8(%rsp)
+   5f574:	lea    0xf8(%rsp),%rdi
+   5f57c:	mov    %rsp,%rsi
+   5f57f:	call   5e630 <<alloc::vec::Vec<alloc::string::String> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<alloc::string::String, core::iter::adapters::map::Map<core::ops::range::Range<usize>, probe::main::{closure#1}>>>::from_iter>
+   5f584:	movq   $0x0,0x150(%rsp)
+   5f590:	movq   $0x0,0x158(%rsp)
+   5f59c:	mov    0xf0(%rsp),%rax
+   5f5a4:	test   %r12,%r12
+   5f5a7:	je     5f741 <probe::main+0xb41>
+   5f5ad:	mov    0x100(%rsp),%rcx
+   5f5b5:	mov    0x108(%rsp),%rsi
+   5f5bd:	xor    %r13d,%r13d
+   5f5c0:	xor    %edx,%edx
+   5f5c2:	xor    %ebp,%ebp
+   5f5c4:	jmp    5f60b <probe::main+0xa0b>
+   5f5c6:	cs nopw 0x0(%rax,%rax,1)
+   5f5d0:	mov    %r13,%r10
+   5f5d3:	inc    %rdx
+   5f5d6:	mov    %r10,%r13
+   5f5d9:	shl    $0x5,%r13
+   5f5dd:	sub    %r10,%r13
+   5f5e0:	add    $0xff,%r13
+   5f5e7:	mov    %r13,0x150(%rsp)
+   5f5ef:	add    %rdi,%rbp
+   5f5f2:	mov    %rbp,0x158(%rsp)
+   5f5fa:	mov    0xc0(%rsp),%r12
+   5f602:	cmp    %r12,%rdx
+   5f605:	je     5f746 <probe::main+0xb46>
+   5f60b:	mov    %edx,%r8d
+   5f60e:	and    $0x1,%r8d
+   5f612:	cmp    $0x1,%rax
+   5f616:	mov    $0x0,%edi
+   5f61b:	cmovne %r8,%rdi
+   5f61f:	cmp    %rsi,%rdi
+   5f622:	jae    6094f <probe::main+0x1d4f>
+   5f628:	lea    (%rdi,%rdi,2),%r8
+   5f62c:	mov    0x10(%rcx,%r8,8),%rdi
+   5f631:	test   %rdi,%rdi
+   5f634:	je     5f5d0 <probe::main+0x9d0>
+   5f636:	mov    0x8(%rcx,%r8,8),%r8
+   5f63b:	mov    %rdi,%r11
+   5f63e:	and    $0x7,%r11
+   5f642:	je     5f680 <probe::main+0xa80>
+   5f644:	mov    %r8,%r9
+   5f647:	mov    %r13,%r10
+   5f64a:	nopw   0x0(%rax,%rax,1)
+   5f650:	movzbl (%r9),%r12d
+   5f654:	inc    %r9
+   5f657:	shl    $0x5,%r10
+   5f65b:	sub    %r13,%r10
+   5f65e:	add    %r12,%r10
+   5f661:	mov    %r10,%r13
+   5f664:	dec    %r11
+   5f667:	jne    5f650 <probe::main+0xa50>
+   5f669:	cmp    $0x8,%rdi
+   5f66d:	jb     5f5d3 <probe::main+0x9d3>
+   5f673:	jmp    5f690 <probe::main+0xa90>
+   5f675:	data16 cs nopw 0x0(%rax,%rax,1)
+   5f680:	mov    %r13,%r10
+   5f683:	mov    %r8,%r9
+   5f686:	cmp    $0x8,%rdi
+   5f68a:	jb     5f5d3 <probe::main+0x9d3>
+   5f690:	add    %rdi,%r8
+   5f693:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   5f6a0:	movzbl (%r9),%r11d
+   5f6a4:	mov    %r10,%r12
+   5f6a7:	shl    $0x5,%r12
+   5f6ab:	sub    %r10,%r12
+   5f6ae:	add    %r11,%r12
+   5f6b1:	movzbl 0x1(%r9),%r10d
+   5f6b6:	mov    %r12,%r11
+   5f6b9:	shl    $0x5,%r11
+   5f6bd:	sub    %r12,%r11
+   5f6c0:	add    %r10,%r11
+   5f6c3:	movzbl 0x2(%r9),%r10d
+   5f6c8:	mov    %r11,%r12
+   5f6cb:	shl    $0x5,%r12
+   5f6cf:	sub    %r11,%r12
+   5f6d2:	add    %r10,%r12
+   5f6d5:	movzbl 0x3(%r9),%r10d
+   5f6da:	mov    %r12,%r11
+   5f6dd:	shl    $0x5,%r11
+   5f6e1:	sub    %r12,%r11
+   5f6e4:	add    %r10,%r11
+   5f6e7:	movzbl 0x4(%r9),%r10d
+   5f6ec:	mov    %r11,%r12
+   5f6ef:	shl    $0x5,%r12
+   5f6f3:	sub    %r11,%r12
+   5f6f6:	add    %r10,%r12
+   5f6f9:	movzbl 0x5(%r9),%r10d
+   5f6fe:	mov    %r12,%r11
+   5f701:	shl    $0x5,%r11
+   5f705:	sub    %r12,%r11
+   5f708:	add    %r10,%r11
+   5f70b:	movzbl 0x6(%r9),%r10d
+   5f710:	mov    %r11,%r12
+   5f713:	shl    $0x5,%r12
+   5f717:	sub    %r11,%r12
+   5f71a:	add    %r10,%r12
+   5f71d:	movzbl 0x7(%r9),%r11d
+   5f722:	add    $0x8,%r9
+   5f726:	mov    %r12,%r10
+   5f729:	shl    $0x5,%r10
+   5f72d:	sub    %r12,%r10
+   5f730:	add    %r11,%r10
+   5f733:	cmp    %r8,%r9
+   5f736:	jne    5f6a0 <probe::main+0xaa0>
+   5f73c:	jmp    5f5d3 <probe::main+0x9d3>
+   5f741:	xor    %ebp,%ebp
+   5f743:	xor    %r13d,%r13d
+   5f746:	mov    %rbp,0xe0(%rsp)
+   5f74e:	test   %rax,%rax
+   5f751:	cmove  %r12,%rax
+   5f755:	movq   $0x0,0x18(%rsp)
+   5f75e:	mov    %rax,0x20(%rsp)
+   5f763:	mov    %r14,(%rsp)
+   5f767:	mov    %rbx,0x8(%rsp)
+   5f76c:	mov    %r15,0x10(%rsp)
+   5f771:	lea    0xc8(%rsp),%rdi
+   5f779:	mov    %rsp,%rsi
+   5f77c:	call   5e720 <<alloc::vec::Vec<hyperreal::computable::node::Computable> as alloc::vec::spec_from_iter_nested::SpecFromIterNested<hyperreal::computable::node::Computable, core::iter::adapters::map::Map<core::ops::range::Range<usize>, probe::main::{closure#2}>>>::from_iter>
+   5f781:	movq   $0x0,0x160(%rsp)
+   5f78d:	movq   $0x0,0x168(%rsp)
+   5f799:	call   *0x129ff1(%rip)        # 189790 <_DYNAMIC+0x310>
+   5f79f:	mov    %rax,0x198(%rsp)
+   5f7a7:	mov    %edx,0x1a0(%rsp)
+   5f7ae:	test   %r12,%r12
+   5f7b1:	je     5fa36 <probe::main+0xe36>
+   5f7b7:	mov    0xd8(%rsp),%r15
+   5f7bf:	test   %r15,%r15
+   5f7c2:	je     609b6 <probe::main+0x1db6>
+   5f7c8:	mov    0xd0(%rsp),%rax
+   5f7d0:	mov    %rax,0xe8(%rsp)
+   5f7d8:	xor    %ebp,%ebp
+   5f7da:	xor    %r14d,%r14d
+   5f7dd:	xor    %esi,%esi
+   5f7df:	xor    %r12d,%r12d
+   5f7e2:	jmp    5f804 <probe::main+0xc04>
+   5f7e4:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   5f7f0:	inc    %r12
+   5f7f3:	mov    %rbx,%rsi
+   5f7f6:	cmp    0xc0(%rsp),%r12
+   5f7fe:	je     5fa3b <probe::main+0xe3b>
+   5f804:	lea    0x1(%rsi),%rax
+   5f808:	cmp    %r15,%rax
+   5f80b:	mov    $0x0,%ebx
+   5f810:	cmovne %rax,%rbx
+   5f814:	mov    %r12,%rax
+   5f817:	or     %r15,%rax
+   5f81a:	shr    $0x20,%rax
+   5f81e:	jne    5f82a <probe::main+0xc2a>
+   5f820:	mov    %r12d,%eax
+   5f823:	xor    %edx,%edx
+   5f825:	div    %r15d
+   5f828:	mov    %edx,%esi
+   5f82a:	shl    $0x4,%rsi
+   5f82e:	add    0xe8(%rsp),%rsi
+   5f836:	mov    0xa0(%rsp),%edx
+   5f83d:	mov    %rsp,%rdi
+   5f840:	call   *0x129f22(%rip)        # 189768 <_DYNAMIC+0x2e8>
+   5f846:	cmpq   $0xffffffffffffffff,(%rsp)
+   5f84b:	je     606a5 <probe::main+0x1aa5>
+   5f851:	movdqu (%rsp),%xmm0
+   5f856:	movdqu 0x10(%rsp),%xmm1
+   5f85c:	movdqa %xmm1,0x40(%rsp)
+   5f862:	movdqa %xmm0,0x30(%rsp)
+   5f868:	lea    0x30(%rsp),%rdi
+   5f86d:	movq   $0x0,0x58(%rsp)
+   5f876:	movq   $0x1,0x60(%rsp)
+   5f87f:	movq   $0x0,0x68(%rsp)
+   5f888:	movq   $0x60000020,0x10(%rsp)
+   5f891:	lea    0x58(%rsp),%rax
+   5f896:	mov    %rax,(%rsp)
+   5f89a:	lea    0x125677(%rip),%rax        # 184f18 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x260>
+   5f8a1:	mov    %rax,0x8(%rsp)
+   5f8a6:	mov    %rsp,%rsi
+   5f8a9:	call   *0x129ee9(%rip)        # 189798 <_DYNAMIC+0x318>
+   5f8af:	test   %al,%al
+   5f8b1:	jne    606d8 <probe::main+0x1ad8>
+   5f8b7:	mov    0x58(%rsp),%rsi
+   5f8bc:	mov    0x60(%rsp),%rdi
+   5f8c1:	mov    0x68(%rsp),%rax
+   5f8c6:	add    %rax,%r14
+   5f8c9:	mov    %r14,0x168(%rsp)
+   5f8d1:	test   %rax,%rax
+   5f8d4:	je     5f920 <probe::main+0xd20>
+   5f8d6:	mov    %rax,%r8
+   5f8d9:	and    $0x7,%r8
+   5f8dd:	je     5f930 <probe::main+0xd30>
+   5f8df:	mov    %rdi,%rcx
+   5f8e2:	mov    %rbp,%rdx
+   5f8e5:	data16 cs nopw 0x0(%rax,%rax,1)
+   5f8f0:	movzbl (%rcx),%r9d
+   5f8f4:	inc    %rcx
+   5f8f7:	shl    $0x5,%rdx
+   5f8fb:	sub    %rbp,%rdx
+   5f8fe:	add    %r9,%rdx
+   5f901:	mov    %rdx,%rbp
+   5f904:	dec    %r8
+   5f907:	jne    5f8f0 <probe::main+0xcf0>
+   5f909:	cmp    $0x8,%rax
+   5f90d:	jae    5f940 <probe::main+0xd40>
+   5f90f:	jmp    5f9e6 <probe::main+0xde6>
+   5f914:	data16 data16 cs nopw 0x0(%rax,%rax,1)
+   5f920:	mov    %rbp,%rdx
+   5f923:	jmp    5f9e6 <probe::main+0xde6>
+   5f928:	nopl   0x0(%rax,%rax,1)
+   5f930:	mov    %rbp,%rdx
+   5f933:	mov    %rdi,%rcx
+   5f936:	cmp    $0x8,%rax
+   5f93a:	jb     5f9e6 <probe::main+0xde6>
+   5f940:	add    %rdi,%rax
+   5f943:	data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   5f950:	movzbl (%rcx),%r8d
+   5f954:	mov    %rdx,%r9
+   5f957:	shl    $0x5,%r9
+   5f95b:	sub    %rdx,%r9
+   5f95e:	add    %r8,%r9
+   5f961:	movzbl 0x1(%rcx),%edx
+   5f965:	mov    %r9,%r8
+   5f968:	shl    $0x5,%r8
+   5f96c:	sub    %r9,%r8
+   5f96f:	add    %rdx,%r8
+   5f972:	movzbl 0x2(%rcx),%edx
+   5f976:	mov    %r8,%r9
+   5f979:	shl    $0x5,%r9
+   5f97d:	sub    %r8,%r9
+   5f980:	add    %rdx,%r9
+   5f983:	movzbl 0x3(%rcx),%edx
+   5f987:	mov    %r9,%r8
+   5f98a:	shl    $0x5,%r8
+   5f98e:	sub    %r9,%r8
+   5f991:	add    %rdx,%r8
+   5f994:	movzbl 0x4(%rcx),%edx
+   5f998:	mov    %r8,%r9
+   5f99b:	shl    $0x5,%r9
+   5f99f:	sub    %r8,%r9
+   5f9a2:	add    %rdx,%r9
+   5f9a5:	movzbl 0x5(%rcx),%edx
+   5f9a9:	mov    %r9,%r8
+   5f9ac:	shl    $0x5,%r8
+   5f9b0:	sub    %r9,%r8
+   5f9b3:	add    %rdx,%r8
+   5f9b6:	movzbl 0x6(%rcx),%edx
+   5f9ba:	mov    %r8,%r9
+   5f9bd:	shl    $0x5,%r9
+   5f9c1:	sub    %r8,%r9
+   5f9c4:	add    %rdx,%r9
+   5f9c7:	movzbl 0x7(%rcx),%r8d
+   5f9cc:	add    $0x8,%rcx
+   5f9d0:	mov    %r9,%rdx
+   5f9d3:	shl    $0x5,%rdx
+   5f9d7:	sub    %r9,%rdx
+   5f9da:	add    %r8,%rdx
+   5f9dd:	cmp    %rax,%rcx
+   5f9e0:	jne    5f950 <probe::main+0xd50>
+   5f9e6:	mov    %rdx,%rbp
+   5f9e9:	shl    $0x5,%rbp
+   5f9ed:	sub    %rdx,%rbp
+   5f9f0:	add    $0xff,%rbp
+   5f9f7:	mov    %rbp,0x160(%rsp)
+   5f9ff:	test   %rsi,%rsi
+   5fa02:	je     5fa0f <probe::main+0xe0f>
+   5fa04:	mov    $0x1,%edx
+   5fa09:	call   *0x129cf9(%rip)        # 189708 <_DYNAMIC+0x288>
+   5fa0f:	mov    0x30(%rsp),%rsi
+   5fa14:	test   %rsi,%rsi
+   5fa17:	je     5f7f0 <probe::main+0xbf0>
+   5fa1d:	mov    0x38(%rsp),%rdi
+   5fa22:	shl    $0x3,%rsi
+   5fa26:	mov    $0x8,%edx
+   5fa2b:	call   *0x129cd7(%rip)        # 189708 <_DYNAMIC+0x288>
+   5fa31:	jmp    5f7f0 <probe::main+0xbf0>
+   5fa36:	xor    %r14d,%r14d
+   5fa39:	xor    %ebp,%ebp
+   5fa3b:	lea    0x198(%rsp),%rdi
+   5fa43:	call   *0x129d57(%rip)        # 1897a0 <_DYNAMIC+0x320>
+   5fa49:	mov    %edx,%ecx
+   5fa4b:	mov    $0x3b9aca00,%edx
+   5fa50:	mul    %rdx
+   5fa53:	mov    %rdx,%rbx
+   5fa56:	mov    %ecx,%ecx
+   5fa58:	add    %rax,%rcx
+   5fa5b:	adc    $0x0,%rbx
+   5fa5f:	cmp    %r13,%rbp
+   5fa62:	jne    608aa <probe::main+0x1caa>
+   5fa68:	cmp    0xe0(%rsp),%r14
+   5fa70:	jne    608d0 <probe::main+0x1cd0>
+   5fa76:	mov    %rcx,%rbp
+   5fa79:	movq   $0x0,0xa8(%rsp)
+   5fa85:	movq   $0x0,0xb8(%rsp)
+   5fa91:	call   *0x129c29(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fa97:	mov    $0x4,%r15d
+   5fa9d:	mov    $0x4,%edi
+   5faa2:	mov    $0x1,%esi
+   5faa7:	call   *0x129c1b(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5faad:	test   %rax,%rax
+   5fab0:	je     6095e <probe::main+0x1d5e>
+   5fab6:	mov    %rax,%r12
+   5fab9:	movl   $0x65736163,(%rax)
+   5fabf:	movq   $0x4,0x58(%rsp)
+   5fac8:	mov    %rax,0x60(%rsp)
+   5facd:	movq   $0x4,0x68(%rsp)
+   5fad6:	mov    0x190(%rsp),%rax
+   5fade:	mov    0x10(%rax),%r15
+   5fae2:	test   %r15,%r15
+   5fae5:	jns    5faf7 <probe::main+0xef7>
+   5fae7:	xor    %edi,%edi
+   5fae9:	mov    %r15,%rsi
+   5faec:	call   *0x129c36(%rip)        # 189728 <_DYNAMIC+0x2a8>
+   5faf2:	jmp    609da <probe::main+0x1dda>
+   5faf7:	je     5fb3c <probe::main+0xf3c>
+   5faf9:	mov    0x8(%rax),%rax
+   5fafd:	mov    %rax,0xe8(%rsp)
+   5fb05:	call   *0x129bb5(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fb0b:	mov    $0x1,%esi
+   5fb10:	mov    %r15,%rdi
+   5fb13:	call   *0x129baf(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fb19:	mov    $0x1,%edi
+   5fb1e:	test   %rax,%rax
+   5fb21:	je     5fae9 <probe::main+0xee9>
+   5fb23:	mov    %rax,%r14
+   5fb26:	mov    %rax,%rdi
+   5fb29:	mov    0xe8(%rsp),%rsi
+   5fb31:	mov    %r15,%rdx
+   5fb34:	call   *0x129ba6(%rip)        # 1896e0 <memcpy@GLIBC_2.14>
+   5fb3a:	jmp    5fb42 <probe::main+0xf42>
+   5fb3c:	mov    $0x1,%r14d
+   5fb42:	movb   $0x3,(%rsp)
+   5fb46:	mov    %r15,0x8(%rsp)
+   5fb4b:	mov    %r14,0x10(%rsp)
+   5fb50:	mov    %r15,0x18(%rsp)
+   5fb55:	lea    0x30(%rsp),%rdi
+   5fb5a:	lea    0xa8(%rsp),%rsi
+   5fb62:	lea    0x58(%rsp),%rdx
+   5fb67:	mov    %rsp,%rcx
+   5fb6a:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fb6f:	cmpb   $0xff,0x30(%rsp)
+   5fb74:	je     5fb80 <probe::main+0xf80>
+   5fb76:	lea    0x30(%rsp),%rdi
+   5fb7b:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fb80:	call   *0x129b3a(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fb86:	mov    $0xa,%r15d
+   5fb8c:	mov    $0xa,%edi
+   5fb91:	mov    $0x1,%esi
+   5fb96:	call   *0x129b2c(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fb9c:	test   %rax,%rax
+   5fb9f:	je     6095e <probe::main+0x1d5e>
+   5fba5:	movabs $0x6f69746172657469,%rcx
+   5fbaf:	mov    %rcx,(%rax)
+   5fbb2:	movw   $0x736e,0x8(%rax)
+   5fbb8:	movq   $0xa,0x58(%rsp)
+   5fbc1:	mov    %rax,0x60(%rsp)
+   5fbc6:	movq   $0xa,0x68(%rsp)
+   5fbcf:	movb   $0x2,(%rsp)
+   5fbd3:	movq   $0x0,0x8(%rsp)
+   5fbdc:	mov    0xc0(%rsp),%rax
+   5fbe4:	mov    %rax,0x10(%rsp)
+   5fbe9:	lea    0x30(%rsp),%rdi
+   5fbee:	lea    0xa8(%rsp),%rsi
+   5fbf6:	lea    0x58(%rsp),%rdx
+   5fbfb:	mov    %rsp,%rcx
+   5fbfe:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fc03:	cmpb   $0xff,0x30(%rsp)
+   5fc08:	je     5fc14 <probe::main+0x1014>
+   5fc0a:	lea    0x30(%rsp),%rdi
+   5fc0f:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fc14:	call   *0x129aa6(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fc1a:	mov    $0x4,%r15d
+   5fc20:	mov    $0x4,%edi
+   5fc25:	mov    $0x1,%esi
+   5fc2a:	call   *0x129a98(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fc30:	test   %rax,%rax
+   5fc33:	je     6095e <probe::main+0x1d5e>
+   5fc39:	movl   $0x73746962,(%rax)
+   5fc3f:	movq   $0x4,0x58(%rsp)
+   5fc48:	mov    %rax,0x60(%rsp)
+   5fc4d:	movq   $0x4,0x68(%rsp)
+   5fc56:	movb   $0x2,(%rsp)
+   5fc5a:	movq   $0x0,0x8(%rsp)
+   5fc63:	mov    0x70(%rsp),%rax
+   5fc68:	mov    %rax,0x10(%rsp)
+   5fc6d:	lea    0x30(%rsp),%rdi
+   5fc72:	lea    0xa8(%rsp),%rsi
+   5fc7a:	lea    0x58(%rsp),%rdx
+   5fc7f:	mov    %rsp,%rcx
+   5fc82:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fc87:	cmpb   $0xff,0x30(%rsp)
+   5fc8c:	je     5fc98 <probe::main+0x1098>
+   5fc8e:	lea    0x30(%rsp),%rdi
+   5fc93:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fc98:	call   *0x129a22(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fc9e:	mov    $0x9,%r15d
+   5fca4:	mov    $0x9,%edi
+   5fca9:	mov    $0x1,%esi
+   5fcae:	call   *0x129a14(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fcb4:	test   %rax,%rax
+   5fcb7:	je     6095e <probe::main+0x1d5e>
+   5fcbd:	movabs $0x6f69736963657270,%rcx
+   5fcc7:	mov    %rcx,(%rax)
+   5fcca:	movb   $0x6e,0x8(%rax)
+   5fcce:	movq   $0x9,0x58(%rsp)
+   5fcd7:	mov    %rax,0x60(%rsp)
+   5fcdc:	movq   $0x9,0x68(%rsp)
+   5fce5:	movslq 0xa0(%rsp),%rax
+   5fced:	mov    %rax,%rcx
+   5fcf0:	shr    $0x3f,%rcx
+   5fcf4:	movb   $0x2,(%rsp)
+   5fcf8:	mov    %rcx,0x8(%rsp)
+   5fcfd:	mov    %rax,0x10(%rsp)
+   5fd02:	lea    0x30(%rsp),%rdi
+   5fd07:	lea    0xa8(%rsp),%rsi
+   5fd0f:	lea    0x58(%rsp),%rdx
+   5fd14:	mov    %rsp,%rcx
+   5fd17:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fd1c:	cmpb   $0xff,0x30(%rsp)
+   5fd21:	je     5fd2d <probe::main+0x112d>
+   5fd23:	lea    0x30(%rsp),%rdi
+   5fd28:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fd2d:	call   *0x12998d(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fd33:	mov    $0xa,%r15d
+   5fd39:	mov    $0xa,%edi
+   5fd3e:	mov    $0x1,%esi
+   5fd43:	call   *0x12997f(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fd49:	test   %rax,%rax
+   5fd4c:	je     6095e <probe::main+0x1d5e>
+   5fd52:	movabs $0x636f727069636572,%rcx
+   5fd5c:	mov    %rcx,(%rax)
+   5fd5f:	movw   $0x6c61,0x8(%rax)
+   5fd65:	movq   $0xa,0x58(%rsp)
+   5fd6e:	mov    %rax,0x60(%rsp)
+   5fd73:	movq   $0xa,0x68(%rsp)
+   5fd7c:	movzbl 0x57(%rsp),%eax
+   5fd81:	movb   $0x1,(%rsp)
+   5fd85:	mov    %al,0x1(%rsp)
+   5fd89:	lea    0x30(%rsp),%rdi
+   5fd8e:	lea    0xa8(%rsp),%rsi
+   5fd96:	lea    0x58(%rsp),%rdx
+   5fd9b:	mov    %rsp,%rcx
+   5fd9e:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fda3:	cmpb   $0xff,0x30(%rsp)
+   5fda8:	je     5fdb4 <probe::main+0x11b4>
+   5fdaa:	lea    0x30(%rsp),%rdi
+   5fdaf:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fdb4:	call   *0x129906(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fdba:	mov    $0x5,%r15d
+   5fdc0:	mov    $0x5,%edi
+   5fdc5:	mov    $0x1,%esi
+   5fdca:	call   *0x1298f8(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fdd0:	test   %rax,%rax
+   5fdd3:	je     6095e <probe::main+0x1d5e>
+   5fdd9:	movb   $0x65,0x4(%rax)
+   5fddd:	movl   $0x736e6564,(%rax)
+   5fde3:	movq   $0x5,0x58(%rsp)
+   5fdec:	mov    %rax,0x60(%rsp)
+   5fdf1:	movq   $0x5,0x68(%rsp)
+   5fdfa:	movb   $0x1,(%rsp)
+   5fdfe:	mov    0x78(%rsp),%rax
+   5fe03:	mov    %al,0x1(%rsp)
+   5fe07:	lea    0x30(%rsp),%rdi
+   5fe0c:	lea    0xa8(%rsp),%rsi
+   5fe14:	lea    0x58(%rsp),%rdx
+   5fe19:	mov    %rsp,%rcx
+   5fe1c:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fe21:	cmpb   $0xff,0x30(%rsp)
+   5fe26:	je     5fe32 <probe::main+0x1232>
+   5fe28:	lea    0x30(%rsp),%rdi
+   5fe2d:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fe32:	call   *0x129888(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fe38:	mov    $0xc,%r15d
+   5fe3e:	mov    $0xc,%edi
+   5fe43:	mov    $0x1,%esi
+   5fe48:	call   *0x12987a(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fe4e:	test   %rax,%rax
+   5fe51:	je     6095e <probe::main+0x1d5e>
+   5fe57:	movabs $0x725f646568636163,%rcx
+   5fe61:	mov    %rcx,(%rax)
+   5fe64:	movl   $0x73746f6f,0x8(%rax)
+   5fe6b:	movq   $0xc,0x58(%rsp)
+   5fe74:	mov    %rax,0x60(%rsp)
+   5fe79:	movq   $0xc,0x68(%rsp)
+   5fe82:	mov    0xf0(%rsp),%rax
+   5fe8a:	movb   $0x2,(%rsp)
+   5fe8e:	movq   $0x0,0x8(%rsp)
+   5fe97:	mov    %rax,0x10(%rsp)
+   5fe9c:	lea    0x30(%rsp),%rdi
+   5fea1:	lea    0xa8(%rsp),%rsi
+   5fea9:	lea    0x58(%rsp),%rdx
+   5feae:	mov    %rsp,%rcx
+   5feb1:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5feb6:	cmpb   $0xff,0x30(%rsp)
+   5febb:	je     5fec7 <probe::main+0x12c7>
+   5febd:	lea    0x30(%rsp),%rdi
+   5fec2:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   5fec7:	call   *0x1297f3(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5fecd:	mov    $0xa,%r15d
+   5fed3:	mov    $0xa,%edi
+   5fed8:	mov    $0x1,%esi
+   5fedd:	call   *0x1297e5(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5fee3:	test   %rax,%rax
+   5fee6:	je     6095e <probe::main+0x1d5e>
+   5feec:	mov    %rax,%r12
+   5feef:	movabs $0x5f64657370616c65,%rax
+   5fef9:	mov    %rax,(%r12)
+   5fefd:	movw   $0x736e,0x8(%r12)
+   5ff05:	movq   $0xa,0x58(%rsp)
+   5ff0e:	mov    %r12,0x60(%rsp)
+   5ff13:	movq   $0xa,0x68(%rsp)
+   5ff1c:	mov    %rsp,%rdx
+   5ff1f:	mov    $0x27,%ecx
+   5ff24:	mov    %rbp,%rdi
+   5ff27:	mov    %rbx,%rsi
+   5ff2a:	call   *0x129878(%rip)        # 1897a8 <_DYNAMIC+0x328>
+   5ff30:	mov    %rdx,%r14
+   5ff33:	test   %rdx,%rdx
+   5ff36:	jns    5ff4c <probe::main+0x134c>
+   5ff38:	xor    %r15d,%r15d
+   5ff3b:	mov    %r15,%rdi
+   5ff3e:	mov    %r14,%rsi
+   5ff41:	call   *0x1297e1(%rip)        # 189728 <_DYNAMIC+0x2a8>
+   5ff47:	jmp    609da <probe::main+0x1dda>
+   5ff4c:	test   %r14,%r14
+   5ff4f:	je     5ffb6 <probe::main+0x13b6>
+   5ff51:	mov    %rax,%rbx
+   5ff54:	call   *0x129766(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5ff5a:	mov    $0x1,%r15d
+   5ff60:	mov    $0x1,%esi
+   5ff65:	mov    %r14,%rdi
+   5ff68:	call   *0x12975a(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5ff6e:	test   %rax,%rax
+   5ff71:	je     5ff3b <probe::main+0x133b>
+   5ff73:	mov    %rax,%rbp
+   5ff76:	mov    %rax,%rdi
+   5ff79:	mov    %rbx,%rsi
+   5ff7c:	mov    %r14,%rdx
+   5ff7f:	call   *0x12975b(%rip)        # 1896e0 <memcpy@GLIBC_2.14>
+   5ff85:	call   *0x129735(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   5ff8b:	mov    $0x1,%esi
+   5ff90:	mov    %r14,%rdi
+   5ff93:	call   *0x12972f(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   5ff99:	test   %rax,%rax
+   5ff9c:	je     609cc <probe::main+0x1dcc>
+   5ffa2:	mov    %rax,%rbx
+   5ffa5:	mov    %rax,%rdi
+   5ffa8:	mov    %rbp,%rsi
+   5ffab:	mov    %r14,%rdx
+   5ffae:	call   *0x12972c(%rip)        # 1896e0 <memcpy@GLIBC_2.14>
+   5ffb4:	jmp    5ffc0 <probe::main+0x13c0>
+   5ffb6:	mov    $0x1,%ebp
+   5ffbb:	mov    $0x1,%ebx
+   5ffc0:	mov    0xe0(%rsp),%r12
+   5ffc8:	movb   $0x3,(%rsp)
+   5ffcc:	mov    %r14,0x8(%rsp)
+   5ffd1:	mov    %rbx,0x10(%rsp)
+   5ffd6:	mov    %r14,0x18(%rsp)
+   5ffdb:	lea    0x30(%rsp),%rdi
+   5ffe0:	lea    0xa8(%rsp),%rsi
+   5ffe8:	lea    0x58(%rsp),%rdx
+   5ffed:	mov    %rsp,%rcx
+   5fff0:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   5fff5:	cmpb   $0xff,0x30(%rsp)
+   5fffa:	je     60006 <probe::main+0x1406>
+   5fffc:	lea    0x30(%rsp),%rdi
+   60001:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   60006:	test   %r14,%r14
+   60009:	je     6001c <probe::main+0x141c>
+   6000b:	mov    $0x1,%edx
+   60010:	mov    %rbp,%rdi
+   60013:	mov    %r14,%rsi
+   60016:	call   *0x1296ec(%rip)        # 189708 <_DYNAMIC+0x288>
+   6001c:	call   *0x12969e(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   60022:	mov    $0x8,%r15d
+   60028:	mov    $0x8,%edi
+   6002d:	mov    $0x1,%esi
+   60032:	call   *0x129690(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   60038:	test   %rax,%rax
+   6003b:	je     6095e <probe::main+0x1d5e>
+   60041:	movabs $0x6d75736b63656863,%rcx
+   6004b:	mov    %rcx,(%rax)
+   6004e:	movq   $0x8,0x58(%rsp)
+   60057:	mov    %rax,0x60(%rsp)
+   6005c:	movq   $0x8,0x68(%rsp)
+   60065:	movb   $0x2,(%rsp)
+   60069:	movq   $0x0,0x8(%rsp)
+   60072:	mov    %r13,0x10(%rsp)
+   60077:	lea    0x30(%rsp),%rdi
+   6007c:	lea    0xa8(%rsp),%rsi
+   60084:	lea    0x58(%rsp),%rdx
+   60089:	mov    %rsp,%rcx
+   6008c:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   60091:	cmpb   $0xff,0x30(%rsp)
+   60096:	je     600a2 <probe::main+0x14a2>
+   60098:	lea    0x30(%rsp),%rdi
+   6009d:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   600a2:	call   *0x129618(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   600a8:	mov    $0xc,%r15d
+   600ae:	mov    $0xc,%edi
+   600b3:	mov    $0x1,%esi
+   600b8:	call   *0x12960a(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   600be:	test   %rax,%rax
+   600c1:	je     6095e <probe::main+0x1d5e>
+   600c7:	movabs $0x625f74757074756f,%rcx
+   600d1:	mov    %rcx,(%rax)
+   600d4:	movl   $0x73657479,0x8(%rax)
+   600db:	movq   $0xc,0x58(%rsp)
+   600e4:	mov    %rax,0x60(%rsp)
+   600e9:	movq   $0xc,0x68(%rsp)
+   600f2:	movb   $0x2,(%rsp)
+   600f6:	movq   $0x0,0x8(%rsp)
+   600ff:	mov    %r12,0x10(%rsp)
+   60104:	lea    0x30(%rsp),%rdi
+   60109:	lea    0xa8(%rsp),%rsi
+   60111:	lea    0x58(%rsp),%rdx
+   60116:	mov    %rsp,%rcx
+   60119:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   6011e:	cmpb   $0xff,0x30(%rsp)
+   60123:	je     6012f <probe::main+0x152f>
+   60125:	lea    0x30(%rsp),%rdi
+   6012a:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   6012f:	call   *0x12958b(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   60135:	mov    $0xa,%r15d
+   6013b:	mov    $0xa,%edi
+   60140:	mov    $0x1,%esi
+   60145:	call   *0x12957d(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   6014b:	test   %rax,%rax
+   6014e:	je     6095e <probe::main+0x1d5e>
+   60154:	mov    %rax,%r14
+   60157:	movabs $0x636e657265666572,%rax
+   60161:	mov    %rax,(%r14)
+   60164:	movw   $0x7365,0x8(%r14)
+   6016b:	movq   $0xa,0x58(%rsp)
+   60174:	mov    %r14,0x60(%rsp)
+   60179:	movq   $0xa,0x68(%rsp)
+   60182:	mov    %rsp,%rdi
+   60185:	lea    0xf8(%rsp),%rsi
+   6018d:	call   61be0 <<serde_json::value::ser::Serializer as serde_core::ser::Serializer>::collect_seq::<&alloc::vec::Vec<alloc::string::String>>>
+   60192:	cmpb   $0xff,(%rsp)
+   60196:	je     608f6 <probe::main+0x1cf6>
+   6019c:	movdqu (%rsp),%xmm0
+   601a1:	movdqu 0x10(%rsp),%xmm1
+   601a7:	movdqa %xmm1,0x40(%rsp)
+   601ad:	movdqa %xmm0,0x30(%rsp)
+   601b3:	mov    %rsp,%rbx
+   601b6:	lea    0xa8(%rsp),%rsi
+   601be:	lea    0x58(%rsp),%rdx
+   601c3:	lea    0x30(%rsp),%rcx
+   601c8:	mov    %rbx,%rdi
+   601cb:	call   62330 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value>>::insert>
+   601d0:	cmpb   $0xff,(%rsp)
+   601d4:	je     601de <probe::main+0x15de>
+   601d6:	mov    %rsp,%rdi
+   601d9:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   601de:	movdqu 0xa8(%rsp),%xmm0
+   601e7:	movdqu %xmm0,0x8(%rsp)
+   601ed:	mov    0xb8(%rsp),%rax
+   601f5:	mov    %rax,0x18(%rsp)
+   601fa:	movb   $0x5,(%rsp)
+   601fe:	mov    %rbx,0x30(%rsp)
+   60203:	mov    0x1295a6(%rip),%rax        # 1897b0 <_DYNAMIC+0x330>
+   6020a:	mov    %rax,0x38(%rsp)
+   6020f:	lea    -0x3005b(%rip),%rdi        # 301bb <GCC_except_table0+0x34f>
+   60216:	lea    0x30(%rsp),%rsi
+   6021b:	call   *0x129597(%rip)        # 1897b8 <_DYNAMIC+0x338>
+   60221:	mov    %rsp,%rdi
+   60224:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   60229:	lea    0xc8(%rsp),%rdi
+   60231:	call   5e820 <<alloc::vec::Vec<hyperreal::computable::node::Computable> as core::ops::drop::Drop>::drop>
+   60236:	mov    0xc8(%rsp),%rsi
+   6023e:	test   %rsi,%rsi
+   60241:	je     6025a <probe::main+0x165a>
+   60243:	mov    0xd0(%rsp),%rdi
+   6024b:	shl    $0x4,%rsi
+   6024f:	mov    $0x8,%edx
+   60254:	call   *0x1294ae(%rip)        # 189708 <_DYNAMIC+0x288>
+   6025a:	mov    0x108(%rsp),%rbx
+   60262:	test   %rbx,%rbx
+   60265:	je     6029f <probe::main+0x169f>
+   60267:	mov    0x100(%rsp),%r14
+   6026f:	add    $0x8,%r14
+   60273:	mov    0x12948e(%rip),%r15        # 189708 <_DYNAMIC+0x288>
+   6027a:	jmp    60289 <probe::main+0x1689>
+   6027c:	nopl   0x0(%rax)
+   60280:	add    $0x18,%r14
+   60284:	dec    %rbx
+   60287:	je     6029f <probe::main+0x169f>
+   60289:	mov    -0x8(%r14),%rsi
+   6028d:	test   %rsi,%rsi
+   60290:	je     60280 <probe::main+0x1680>
+   60292:	mov    (%r14),%rdi
+   60295:	mov    $0x1,%edx
+   6029a:	call   *%r15
+   6029d:	jmp    60280 <probe::main+0x1680>
+   6029f:	mov    0xf8(%rsp),%rax
+   602a7:	test   %rax,%rax
+   602aa:	je     602c7 <probe::main+0x16c7>
+   602ac:	mov    0x100(%rsp),%rdi
+   602b4:	shl    $0x3,%rax
+   602b8:	lea    (%rax,%rax,2),%rsi
+   602bc:	mov    $0x8,%edx
+   602c1:	call   *0x129441(%rip)        # 189708 <_DYNAMIC+0x288>
+   602c7:	mov    0x80(%rsp),%rsi
+   602cf:	test   %rsi,%rsi
+   602d2:	je     602eb <probe::main+0x16eb>
+   602d4:	mov    0x88(%rsp),%rdi
+   602dc:	shl    $0x3,%rsi
+   602e0:	mov    $0x8,%edx
+   602e5:	call   *0x12941d(%rip)        # 189708 <_DYNAMIC+0x288>
+   602eb:	mov    0x110(%rsp),%rsi
+   602f3:	test   %rsi,%rsi
+   602f6:	je     6030f <probe::main+0x170f>
+   602f8:	mov    0x118(%rsp),%rdi
+   60300:	shl    $0x3,%rsi
+   60304:	mov    $0x8,%edx
+   60309:	call   *0x1293f9(%rip)        # 189708 <_DYNAMIC+0x288>
+   6030f:	mov    0x140(%rsp),%rbx
+   60317:	mov    0x148(%rsp),%r14
+   6031f:	test   %r14,%r14
+   60322:	je     6035f <probe::main+0x175f>
+   60324:	lea    0x8(%rbx),%r15
+   60328:	mov    0x1293d9(%rip),%r12        # 189708 <_DYNAMIC+0x288>
+   6032f:	jmp    60349 <probe::main+0x1749>
+   60331:	data16 data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   60340:	add    $0x18,%r15
+   60344:	dec    %r14
+   60347:	je     6035f <probe::main+0x175f>
+   60349:	mov    -0x8(%r15),%rsi
+   6034d:	test   %rsi,%rsi
+   60350:	je     60340 <probe::main+0x1740>
+   60352:	mov    (%r15),%rdi
+   60355:	mov    $0x1,%edx
+   6035a:	call   *%r12
+   6035d:	jmp    60340 <probe::main+0x1740>
+   6035f:	mov    0x138(%rsp),%rax
+   60367:	test   %rax,%rax
+   6036a:	je     60382 <probe::main+0x1782>
+   6036c:	shl    $0x3,%rax
+   60370:	lea    (%rax,%rax,2),%rsi
+   60374:	mov    $0x8,%edx
+   60379:	mov    %rbx,%rdi
+   6037c:	call   *0x129386(%rip)        # 189708 <_DYNAMIC+0x288>
+   60382:	add    $0x1a8,%rsp
+   60389:	pop    %rbx
+   6038a:	pop    %r12
+   6038c:	pop    %r13
+   6038e:	pop    %r14
+   60390:	pop    %r15
+   60392:	pop    %rbp
+   60393:	ret
+   60394:	mov    %r15,(%rsp)
+   60398:	mov    %r14,0x8(%rsp)
+   6039d:	mov    %rbp,0x10(%rsp)
+   603a2:	incq   (%r14)
+   603a5:	jne    60521 <probe::main+0x1921>
+   603ab:	mov    $0x1,%r15d
+   603b1:	cmp    $0x1,%rbp
+   603b5:	je     603ed <probe::main+0x17ed>
+   603b7:	shl    $0x3,%rbp
+   603bb:	mov    $0x1,%al
+   603bd:	mov    $0x8,%ecx
+   603c2:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   603d0:	add    $0xff,%al
+   603d2:	adcq   $0x0,(%r14,%rcx,1)
+   603d7:	setb   %al
+   603da:	jae    60521 <probe::main+0x1921>
+   603e0:	add    $0x8,%rcx
+   603e4:	cmp    %rcx,%rbp
+   603e7:	jne    603d0 <probe::main+0x17d0>
+   603e9:	movzbl %al,%r15d
+   603ed:	mov    0x10(%rsp),%rbx
+   603f2:	cmp    (%rsp),%rbx
+   603f6:	jne    60401 <probe::main+0x1801>
+   603f8:	mov    %rsp,%rdi
+   603fb:	call   *0x12937f(%rip)        # 189780 <_DYNAMIC+0x300>
+   60401:	mov    0x8(%rsp),%rax
+   60406:	mov    %r15,(%rax,%rbx,8)
+   6040a:	inc    %rbx
+   6040d:	jmp    60526 <probe::main+0x1926>
+   60412:	movdqu -0x2d12a(%rip),%xmm0        # 332f0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x190>
+   6041a:	movdqa %xmm0,(%rsp)
+   6041f:	movq   $0x0,0x10(%rsp)
+   60428:	mov    %rsp,%rdi
+   6042b:	call   *0x12934f(%rip)        # 189780 <_DYNAMIC+0x300>
+   60431:	mov    0x8(%rsp),%rax
+   60436:	movq   $0x1,(%rax)
+   6043d:	mov    (%rsp),%r12
+   60441:	mov    0x8(%rsp),%r13
+   60446:	mov    $0x1,%al
+   60448:	cmp    $0x1,%rbp
+   6044c:	jne    6045c <probe::main+0x185c>
+   6044e:	mov    0x0(%r13),%rax
+   60452:	cmp    %rax,(%r14)
+   60455:	je     604be <probe::main+0x18be>
+   60457:	seta   %al
+   6045a:	sbb    $0x0,%al
+   6045c:	test   %al,%al
+   6045e:	je     604be <probe::main+0x18be>
+   60460:	movzbl %al,%eax
+   60463:	cmp    $0x1,%eax
+   60466:	jne    6060b <probe::main+0x1a0b>
+   6046c:	mov    %r15,(%rsp)
+   60470:	mov    %r14,0x8(%rsp)
+   60475:	mov    %rbp,0x10(%rsp)
+   6047a:	mov    %rsp,%rdi
+   6047d:	mov    $0x1,%esi
+   60482:	call   *0x129300(%rip)        # 189788 <_DYNAMIC+0x308>
+   60488:	mov    (%rsp),%rsi
+   6048c:	mov    0x8(%rsp),%rdi
+   60491:	mov    0x10(%rsp),%rax
+   60496:	test   %rax,%rax
+   60499:	je     6073a <probe::main+0x1b3a>
+   6049f:	mov    %rsi,0x80(%rsp)
+   604a7:	mov    %rdi,0x88(%rsp)
+   604af:	mov    %rax,0x90(%rsp)
+   604b7:	xor    %ebx,%ebx
+   604b9:	jmp    60814 <probe::main+0x1c14>
+   604be:	movups -0x2ce95(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   604c5:	movaps %xmm0,0x90(%rsp)
+   604cd:	movdqu -0x2ceb5(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   604d5:	movdqa %xmm0,0x80(%rsp)
+   604de:	test   %r12,%r12
+   604e1:	je     5f4a4 <probe::main+0x8a4>
+   604e7:	shl    $0x3,%r12
+   604eb:	mov    $0x8,%edx
+   604f0:	mov    %r13,%rdi
+   604f3:	mov    %r12,%rsi
+   604f6:	call   *0x12920c(%rip)        # 189708 <_DYNAMIC+0x288>
+   604fc:	jmp    5f4a4 <probe::main+0x8a4>
+   60501:	mov    $0x1,%dl
+   60503:	mov    $0xffffff80,%ecx
+   60508:	mov    $0x3,%esi
+   6050d:	jmp    5efe8 <probe::main+0x3e8>
+   60512:	mov    $0xffffff80,%ecx
+   60517:	mov    $0x3,%edx
+   6051c:	jmp    5eec4 <probe::main+0x2c4>
+   60521:	mov    0x10(%rsp),%rbx
+   60526:	mov    (%rsp),%rsi
+   6052a:	mov    0x8(%rsp),%rdi
+   6052f:	test   %rbx,%rbx
+   60532:	je     60592 <probe::main+0x1992>
+   60534:	mov    %rsi,0x80(%rsp)
+   6053c:	mov    %rdi,0x88(%rsp)
+   60544:	mov    %rbx,0x90(%rsp)
+   6054c:	xor    %ebx,%ebx
+   6054e:	mov    %bl,0x98(%rsp)
+   60555:	jmp    5f4be <probe::main+0x8be>
+   6055a:	mov    0x10(%rsp),%rbx
+   6055f:	mov    (%rsp),%rsi
+   60563:	mov    0x8(%rsp),%rdi
+   60568:	test   %rbx,%rbx
+   6056b:	je     605d4 <probe::main+0x19d4>
+   6056d:	mov    %rsi,0x80(%rsp)
+   60575:	mov    %rdi,0x88(%rsp)
+   6057d:	mov    %rbx,0x90(%rsp)
+   60585:	movb   $0x2,0x98(%rsp)
+   6058d:	jmp    5f4be <probe::main+0x8be>
+   60592:	movups -0x2cf69(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   60599:	movaps %xmm0,0x90(%rsp)
+   605a1:	movdqu -0x2cf89(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   605a9:	movdqa %xmm0,0x80(%rsp)
+   605b2:	mov    $0x1,%bl
+   605b4:	test   %rsi,%rsi
+   605b7:	je     6054e <probe::main+0x194e>
+   605b9:	shl    $0x3,%rsi
+   605bd:	mov    $0x8,%edx
+   605c2:	call   *0x129140(%rip)        # 189708 <_DYNAMIC+0x288>
+   605c8:	mov    %bl,0x98(%rsp)
+   605cf:	jmp    5f4be <probe::main+0x8be>
+   605d4:	movups -0x2cfab(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   605db:	movaps %xmm0,0x90(%rsp)
+   605e3:	movdqu -0x2cfcb(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   605eb:	movdqa %xmm0,0x80(%rsp)
+   605f4:	test   %rsi,%rsi
+   605f7:	je     5f4be <probe::main+0x8be>
+   605fd:	shl    $0x3,%rsi
+   60601:	mov    $0x8,%edx
+   60606:	jmp    5f4b8 <probe::main+0x8b8>
+   6060b:	mov    %r15,(%rsp)
+   6060f:	mov    %r14,0x8(%rsp)
+   60614:	mov    %rbp,0x10(%rsp)
+   60619:	lea    0x30(%rsp),%rdi
+   6061e:	mov    %rsp,%rsi
+   60621:	call   60e10 <<u32 as core::ops::arith::Sub<num_bigint::biguint::BigUint>>::sub>
+   60626:	cmpq   $0x0,0x40(%rsp)
+   6062c:	je     60794 <probe::main+0x1b94>
+   60632:	mov    0x40(%rsp),%rax
+   60637:	mov    %rax,0x90(%rsp)
+   6063f:	movdqu 0x30(%rsp),%xmm0
+   60645:	movdqa %xmm0,0x80(%rsp)
+   6064e:	movb   $0x2,0x98(%rsp)
+   60656:	jmp    6081b <probe::main+0x1c1b>
+   6065b:	mov    %r15,(%rsp)
+   6065f:	mov    %r14,0x8(%rsp)
+   60664:	mov    %rbp,0x10(%rsp)
+   60669:	lea    0x30(%rsp),%rdi
+   6066e:	mov    %rsp,%rsi
+   60671:	call   60e10 <<u32 as core::ops::arith::Sub<num_bigint::biguint::BigUint>>::sub>
+   60676:	cmpq   $0x0,0x40(%rsp)
+   6067c:	je     607d4 <probe::main+0x1bd4>
+   60682:	mov    0x40(%rsp),%rax
+   60687:	mov    %rax,0x90(%rsp)
+   6068f:	movdqu 0x30(%rsp),%xmm0
+   60695:	movdqa %xmm0,0x80(%rsp)
+   6069e:	xor    %ebx,%ebx
+   606a0:	jmp    60814 <probe::main+0x1c14>
+   606a5:	movzbl 0x8(%rsp),%eax
+   606aa:	mov    %al,0x58(%rsp)
+   606ae:	lea    -0x2d419(%rip),%rdi        # 3329c <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x13c>
+   606b5:	lea    0x1247c4(%rip),%rcx        # 184e80 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x1c8>
+   606bc:	lea    0x12478d(%rip),%r8        # 184e50 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x198>
+   606c3:	lea    0x58(%rsp),%rdx
+   606c8:	mov    $0x2b,%esi
+   606cd:	call   *0x1290ed(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   606d3:	jmp    609da <probe::main+0x1dda>
+   606d8:	lea    -0x2d05f(%rip),%rdi        # 33680 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x60>
+   606df:	lea    0x1247fa(%rip),%rcx        # 184ee0 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x228>
+   606e6:	lea    0x12485b(%rip),%r8        # 184f48 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x290>
+   606ed:	lea    0xa7(%rsp),%rdx
+   606f5:	mov    $0x37,%esi
+   606fa:	call   *0x1290c0(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   60700:	jmp    609da <probe::main+0x1dda>
+   60705:	add    $0xd0,%dl
+   60708:	xor    %eax,%eax
+   6070a:	cmp    $0xa,%dl
+   6070d:	adc    $0x1,%al
+   6070f:	mov    %al,(%rsp)
+   60712:	lea    -0x2d47d(%rip),%rdi        # 3329c <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x13c>
+   60719:	lea    0x1247a0(%rip),%rcx        # 184ec0 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x208>
+   60720:	lea    0x124651(%rip),%r8        # 184d78 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0xc0>
+   60727:	mov    %rsp,%rdx
+   6072a:	mov    $0x2b,%esi
+   6072f:	call   *0x12908b(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   60735:	jmp    609da <probe::main+0x1dda>
+   6073a:	movups -0x2d111(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   60741:	movaps %xmm0,0x90(%rsp)
+   60749:	movdqu -0x2d131(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   60751:	movdqa %xmm0,0x80(%rsp)
+   6075a:	mov    $0x1,%bl
+   6075c:	test   %rsi,%rsi
+   6075f:	jne    60805 <probe::main+0x1c05>
+   60765:	jmp    60814 <probe::main+0x1c14>
+   6076a:	movups -0x2d141(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   60771:	movaps %xmm0,0x90(%rsp)
+   60779:	movdqu -0x2d161(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   60781:	movdqa %xmm0,0x80(%rsp)
+   6078a:	test   %rsi,%rsi
+   6078d:	jne    607c3 <probe::main+0x1bc3>
+   6078f:	jmp    6081b <probe::main+0x1c1b>
+   60794:	movups -0x2d16b(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   6079b:	movaps %xmm0,0x90(%rsp)
+   607a3:	movdqu -0x2d18b(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   607ab:	movdqa %xmm0,0x80(%rsp)
+   607b4:	mov    0x30(%rsp),%rsi
+   607b9:	test   %rsi,%rsi
+   607bc:	je     6081b <probe::main+0x1c1b>
+   607be:	mov    0x38(%rsp),%rdi
+   607c3:	shl    $0x3,%rsi
+   607c7:	mov    $0x8,%edx
+   607cc:	call   *0x128f36(%rip)        # 189708 <_DYNAMIC+0x288>
+   607d2:	jmp    6081b <probe::main+0x1c1b>
+   607d4:	movups -0x2d1ab(%rip),%xmm0        # 33630 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392+0x10>
+   607db:	movaps %xmm0,0x90(%rsp)
+   607e3:	movdqu -0x2d1cb(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.4638234597168769392>
+   607eb:	movdqa %xmm0,0x80(%rsp)
+   607f4:	mov    0x30(%rsp),%rsi
+   607f9:	mov    $0x1,%bl
+   607fb:	test   %rsi,%rsi
+   607fe:	je     60814 <probe::main+0x1c14>
+   60800:	mov    0x38(%rsp),%rdi
+   60805:	shl    $0x3,%rsi
+   60809:	mov    $0x8,%edx
+   6080e:	call   *0x128ef4(%rip)        # 189708 <_DYNAMIC+0x288>
+   60814:	mov    %bl,0x98(%rsp)
+   6081b:	test   %r12,%r12
+   6081e:	je     5f4be <probe::main+0x8be>
+   60824:	shl    $0x3,%r12
+   60828:	mov    $0x8,%edx
+   6082d:	mov    %r13,%rdi
+   60830:	mov    %r12,%rsi
+   60833:	jmp    5f4b8 <probe::main+0x8b8>
+   60838:	movzbl 0x8(%rsp),%eax
+   6083d:	mov    %al,0x170(%rsp)
+   60844:	lea    -0x2d5af(%rip),%rdi        # 3329c <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x13c>
+   6084b:	lea    0x12462e(%rip),%rcx        # 184e80 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x1c8>
+   60852:	lea    0x12454f(%rip),%r8        # 184da8 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0xf0>
+   60859:	lea    0x170(%rsp),%rdx
+   60861:	mov    $0x2b,%esi
+   60866:	call   *0x128f54(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   6086c:	jmp    609da <probe::main+0x1dda>
+   60871:	movzbl 0x8(%rsp),%eax
+   60876:	mov    %al,0x170(%rsp)
+   6087d:	lea    -0x2d5e8(%rip),%rdi        # 3329c <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x13c>
+   60884:	lea    0x1245f5(%rip),%rcx        # 184e80 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x1c8>
+   6088b:	lea    0x12452e(%rip),%r8        # 184dc0 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x108>
+   60892:	lea    0x170(%rsp),%rdx
+   6089a:	mov    $0x2b,%esi
+   6089f:	call   *0x128f1b(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   608a5:	jmp    609da <probe::main+0x1dda>
+   608aa:	lea    0x12453f(%rip),%r9        # 184df0 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x138>
+   608b1:	lea    0x160(%rsp),%rsi
+   608b9:	lea    0x150(%rsp),%rdx
+   608c1:	xor    %edi,%edi
+   608c3:	xor    %ecx,%ecx
+   608c5:	call   *0x128efd(%rip)        # 1897c8 <_DYNAMIC+0x348>
+   608cb:	jmp    609da <probe::main+0x1dda>
+   608d0:	lea    0x124531(%rip),%r9        # 184e08 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x150>
+   608d7:	lea    0x168(%rsp),%rsi
+   608df:	lea    0x158(%rsp),%rdx
+   608e7:	xor    %edi,%edi
+   608e9:	xor    %ecx,%ecx
+   608eb:	call   *0x128edf(%rip)        # 1897d0 <_DYNAMIC+0x350>
+   608f1:	jmp    609da <probe::main+0x1dda>
+   608f6:	mov    0x8(%rsp),%rax
+   608fb:	mov    %rax,0x30(%rsp)
+   60900:	lea    -0x2d66b(%rip),%rdi        # 3329c <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x13c>
+   60907:	lea    0x124592(%rip),%rcx        # 184ea0 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x1e8>
+   6090e:	lea    0x12450b(%rip),%r8        # 184e20 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x168>
+   60915:	lea    0x30(%rsp),%rdx
+   6091a:	mov    $0x2b,%esi
+   6091f:	call   *0x128e9b(%rip)        # 1897c0 <_DYNAMIC+0x340>
+   60925:	jmp    609da <probe::main+0x1dda>
+   6092a:	lea    -0x2d6d1(%rip),%rdi        # 33260 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.6182544693238746767+0x100>
+   60931:	lea    0x124458(%rip),%rdx        # 184d90 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0xd8>
+   60938:	mov    $0x21,%esi
+   6093d:	call   *0x128e95(%rip)        # 1897d8 <_DYNAMIC+0x358>
+   60943:	jmp    609da <probe::main+0x1dda>
+   60948:	mov    $0x1,%al
+   6094a:	jmp    6070f <probe::main+0x1b0f>
+   6094f:	lea    0x124512(%rip),%rdx        # 184e68 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x1b0>
+   60956:	call   *0x128e84(%rip)        # 1897e0 <_DYNAMIC+0x360>
+   6095c:	jmp    609da <probe::main+0x1dda>
+   6095e:	mov    $0x1,%edi
+   60963:	mov    %r15,%rsi
+   60966:	call   *0x128dbc(%rip)        # 189728 <_DYNAMIC+0x2a8>
+   6096c:	jmp    609da <probe::main+0x1dda>
+   6096e:	lea    0x1243d3(%rip),%rdx        # 184d48 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x90>
+   60975:	jmp    6097e <probe::main+0x1d7e>
+   60977:	lea    0x1243e2(%rip),%rdx        # 184d60 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0xa8>
+   6097e:	mov    %rdi,%rsi
+   60981:	call   *0x128e59(%rip)        # 1897e0 <_DYNAMIC+0x360>
+   60987:	jmp    609da <probe::main+0x1dda>
+   60989:	movq   $0x0,0x30(%rsp)
+   60992:	mov    0x70(%rsp),%rax
+   60997:	mov    %rax,(%rsp)
+   6099b:	lea    0x124436(%rip),%r9        # 184dd8 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x120>
+   609a2:	lea    0x30(%rsp),%rsi
+   609a7:	mov    %rsp,%rdx
+   609aa:	xor    %edi,%edi
+   609ac:	xor    %ecx,%ecx
+   609ae:	call   *0x128e14(%rip)        # 1897c8 <_DYNAMIC+0x348>
+   609b4:	jmp    609da <probe::main+0x1dda>
+   609b6:	lea    0x12447b(%rip),%rdi        # 184e38 <anon.650effda27756233549fe4650fad983e.5.llvm.3527033185240374034+0x180>
+   609bd:	call   *0x128e25(%rip)        # 1897e8 <_DYNAMIC+0x368>
+   609c3:	jmp    609da <probe::main+0x1dda>
+   609c5:	xor    %eax,%eax
+   609c7:	jmp    6070f <probe::main+0x1b0f>
+   609cc:	mov    $0x1,%edi
+   609d1:	mov    %r14,%rsi
+   609d4:	call   *0x128d4e(%rip)        # 189728 <_DYNAMIC+0x2a8>
+   609da:	ud2
+   609dc:	jmp    609de <probe::main+0x1dde>
+   609de:	mov    %rax,%rbx
+   609e1:	mov    (%rsp),%rsi
+   609e5:	test   %rsi,%rsi
+   609e8:	je     60cc6 <probe::main+0x20c6>
+   609ee:	mov    0x8(%rsp),%rdi
+   609f3:	jmp    60cb7 <probe::main+0x20b7>
+   609f8:	jmp    609fa <probe::main+0x1dfa>
+   609fa:	mov    %rax,%rbx
+   609fd:	jmp    60a21 <probe::main+0x1e21>
+   609ff:	jmp    60a01 <probe::main+0x1e01>
+   60a01:	mov    %rax,%rbx
+   60a04:	mov    (%rsp),%rsi
+   60a08:	test   %rsi,%rsi
+   60a0b:	je     60a21 <probe::main+0x1e21>
+   60a0d:	mov    0x8(%rsp),%rdi
+   60a12:	shl    $0x3,%rsi
+   60a16:	mov    $0x8,%edx
+   60a1b:	call   *0x128ce7(%rip)        # 189708 <_DYNAMIC+0x288>
+   60a21:	test   %r12,%r12
+   60a24:	je     60cc6 <probe::main+0x20c6>
+   60a2a:	shl    $0x3,%r12
+   60a2e:	mov    $0x8,%edx
+   60a33:	mov    %r13,%rdi
+   60a36:	mov    %r12,%rsi
+   60a39:	jmp    60cc0 <probe::main+0x20c0>
+   60a3e:	jmp    60aa9 <probe::main+0x1ea9>
+   60a40:	jmp    60aa9 <probe::main+0x1ea9>
+   60a42:	mov    %rax,%rbx
+   60a45:	mov    $0xa,%esi
+   60a4a:	mov    $0x1,%edx
+   60a4f:	mov    %r12,%rdi
+   60a52:	call   *0x128cb0(%rip)        # 189708 <_DYNAMIC+0x288>
+   60a58:	jmp    60a97 <probe::main+0x1e97>
+   60a5a:	jmp    60a8b <probe::main+0x1e8b>
+   60a5c:	mov    %rax,%rbx
+   60a5f:	jmp    60c45 <probe::main+0x2045>
+   60a64:	mov    %rax,%rbx
+   60a67:	mov    %rsp,%rdi
+   60a6a:	call   5ea30 <core::ptr::drop_glue::<serde_json::value::Value>>
+   60a6f:	jmp    60c38 <probe::main+0x2038>
+   60a74:	jmp    60b61 <probe::main+0x1f61>
+   60a79:	mov    %rax,%rbx
+   60a7c:	jmp    60b85 <probe::main+0x1f85>
+   60a81:	jmp    60b61 <probe::main+0x1f61>
+   60a86:	jmp    60b61 <probe::main+0x1f61>
+   60a8b:	mov    %rax,%rbx
+   60a8e:	test   %r14,%r14
+   60a91:	je     60c2b <probe::main+0x202b>
+   60a97:	mov    $0x1,%edx
+   60a9c:	mov    %rbp,%rdi
+   60a9f:	mov    %r14,%rsi
+   60aa2:	jmp    60c25 <probe::main+0x2025>
+   60aa7:	jmp    60aa9 <probe::main+0x1ea9>
+   60aa9:	mov    %rax,%rbx
+   60aac:	mov    (%rsp),%rsi
+   60ab0:	test   %rsi,%rsi
+   60ab3:	je     60ac8 <probe::main+0x1ec8>
+   60ab5:	mov    (%r12),%rdi
+   60ab9:	shl    $0x3,%rsi
+   60abd:	mov    $0x8,%edx
+   60ac2:	call   *0x128c40(%rip)        # 189708 <_DYNAMIC+0x288>
+   60ac8:	test   %r15,%r15
+   60acb:	je     60cc6 <probe::main+0x20c6>
+   60ad1:	shl    $0x3,%r15
+   60ad5:	mov    $0x8,%edx
+   60ada:	mov    %r14,%rdi
+   60add:	mov    %r15,%rsi
+   60ae0:	jmp    60cc0 <probe::main+0x20c0>
+   60ae5:	jmp    60b61 <probe::main+0x1f61>
+   60ae7:	jmp    60b61 <probe::main+0x1f61>
+   60ae9:	jmp    60b61 <probe::main+0x1f61>
+   60aeb:	jmp    60b61 <probe::main+0x1f61>
+   60aed:	jmp    60b61 <probe::main+0x1f61>
+   60aef:	jmp    60b61 <probe::main+0x1f61>
+   60af1:	jmp    60b61 <probe::main+0x1f61>
+   60af3:	mov    %rax,%rbx
+   60af6:	mov    0x38(%rsp),%rax
+   60afb:	test   %rax,%rax
+   60afe:	je     60cc6 <probe::main+0x20c6>
+   60b04:	lock decq (%rax)
+   60b08:	jne    60cc6 <probe::main+0x20c6>
+   60b0e:	mov    %r14,%rdi
+   60b11:	call   *0x128c21(%rip)        # 189738 <_DYNAMIC+0x2b8>
+   60b17:	jmp    60cc6 <probe::main+0x20c6>
+   60b1c:	call   *0x128bde(%rip)        # 189700 <_DYNAMIC+0x280>
+   60b22:	mov    %rax,%rbx
+   60b25:	mov    0x38(%rsp),%rax
+   60b2a:	test   %rax,%rax
+   60b2d:	je     60cea <probe::main+0x20ea>
+   60b33:	lock decq (%rax)
+   60b37:	jne    60cea <probe::main+0x20ea>
+   60b3d:	mov    %r14,%rdi
+   60b40:	call   *0x128bf2(%rip)        # 189738 <_DYNAMIC+0x2b8>
+   60b46:	jmp    60cea <probe::main+0x20ea>
+   60b4b:	call   *0x128baf(%rip)        # 189700 <_DYNAMIC+0x280>
+   60b51:	mov    %rax,%rbx
+   60b54:	jmp    60cc6 <probe::main+0x20c6>
+   60b59:	mov    %rax,%rbx
+   60b5c:	jmp    60ca2 <probe::main+0x20a2>
+   60b61:	mov    %rax,%rbx
+   60b64:	jmp    60c2b <probe::main+0x202b>
+   60b69:	jmp    60bc1 <probe::main+0x1fc1>
+   60b6b:	jmp    60bfe <probe::main+0x1ffe>
+   60b70:	mov    %rax,%rbx
+   60b73:	jmp    60c69 <probe::main+0x2069>
+   60b78:	mov    %rax,%rbx
+   60b7b:	lea    0x30(%rsp),%rdi
+   60b80:	call   5e990 <core::ptr::drop_glue::<serde_json::error::Error>>
+   60b85:	mov    $0xa,%esi
+   60b8a:	mov    $0x1,%edx
+   60b8f:	mov    %r14,%rdi
+   60b92:	jmp    60c25 <probe::main+0x2025>
+   60b97:	call   *0x128b63(%rip)        # 189700 <_DYNAMIC+0x280>
+   60b9d:	mov    %rax,%rbx
+   60ba0:	lea    0x30(%rsp),%rdi
+   60ba5:	call   5eb80 <core::ptr::drop_glue::<hyperreal::computable::node::Computable>>
+   60baa:	jmp    60cea <probe::main+0x20ea>
+   60baf:	mov    %rax,%rbx
+   60bb2:	lea    0x30(%rsp),%rdi
+   60bb7:	call   5eb80 <core::ptr::drop_glue::<hyperreal::computable::node::Computable>>
+   60bbc:	jmp    60cea <probe::main+0x20ea>
+   60bc1:	mov    %rax,%rbx
+   60bc4:	mov    0x58(%rsp),%rsi
+   60bc9:	test   %rsi,%rsi
+   60bcc:	je     60bde <probe::main+0x1fde>
+   60bce:	mov    0x60(%rsp),%rdi
+   60bd3:	mov    $0x1,%edx
+   60bd8:	call   *0x128b2a(%rip)        # 189708 <_DYNAMIC+0x288>
+   60bde:	mov    0x30(%rsp),%rsi
+   60be3:	test   %rsi,%rsi
+   60be6:	je     60c38 <probe::main+0x2038>
+   60be8:	mov    0x38(%rsp),%rdi
+   60bed:	shl    $0x3,%rsi
+   60bf1:	mov    $0x8,%edx
+   60bf6:	call   *0x128b0c(%rip)        # 189708 <_DYNAMIC+0x288>
+   60bfc:	jmp    60c38 <probe::main+0x2038>
+   60bfe:	mov    %rax,%rbx
+   60c01:	jmp    60c38 <probe::main+0x2038>
+   60c03:	mov    %rax,%rbx
+   60c06:	jmp    60cea <probe::main+0x20ea>
+   60c0b:	mov    %rax,%rbx
+   60c0e:	mov    $0xa,%esi
+   60c13:	jmp    60c1d <probe::main+0x201d>
+   60c15:	mov    %rax,%rbx
+   60c18:	mov    $0x4,%esi
+   60c1d:	mov    $0x1,%edx
+   60c22:	mov    %r12,%rdi
+   60c25:	call   *0x128add(%rip)        # 189708 <_DYNAMIC+0x288>
+   60c2b:	lea    0xa8(%rsp),%rdi
+   60c33:	call   62a10 <<alloc::collections::btree::map::BTreeMap<alloc::string::String, serde_json::value::Value> as core::ops::drop::Drop>::drop>
+   60c38:	lea    0xc8(%rsp),%rdi
+   60c40:	call   5e820 <<alloc::vec::Vec<hyperreal::computable::node::Computable> as core::ops::drop::Drop>::drop>
+   60c45:	mov    0xc8(%rsp),%rsi
+   60c4d:	test   %rsi,%rsi
+   60c50:	je     60c69 <probe::main+0x2069>
+   60c52:	mov    0xd0(%rsp),%rdi
+   60c5a:	shl    $0x4,%rsi
+   60c5e:	mov    $0x8,%edx
+   60c63:	call   *0x128a9f(%rip)        # 189708 <_DYNAMIC+0x288>
+   60c69:	mov    0x108(%rsp),%r14
+   60c71:	test   %r14,%r14
+   60c74:	jne    60d61 <probe::main+0x2161>
+   60c7a:	mov    0xf8(%rsp),%rax
+   60c82:	test   %rax,%rax
+   60c85:	je     60ca2 <probe::main+0x20a2>
+   60c87:	mov    0x100(%rsp),%rdi
+   60c8f:	shl    $0x3,%rax
+   60c93:	lea    (%rax,%rax,2),%rsi
+   60c97:	mov    $0x8,%edx
+   60c9c:	call   *0x128a66(%rip)        # 189708 <_DYNAMIC+0x288>
+   60ca2:	mov    0x80(%rsp),%rsi
+   60caa:	test   %rsi,%rsi
+   60cad:	je     60cc6 <probe::main+0x20c6>
+   60caf:	mov    0x88(%rsp),%rdi
+   60cb7:	shl    $0x3,%rsi
+   60cbb:	mov    $0x8,%edx
+   60cc0:	call   *0x128a42(%rip)        # 189708 <_DYNAMIC+0x288>
+   60cc6:	mov    0x110(%rsp),%rsi
+   60cce:	test   %rsi,%rsi
+   60cd1:	je     60cea <probe::main+0x20ea>
+   60cd3:	mov    0x118(%rsp),%rdi
+   60cdb:	shl    $0x3,%rsi
+   60cdf:	mov    $0x8,%edx
+   60ce4:	call   *0x128a1e(%rip)        # 189708 <_DYNAMIC+0x288>
+   60cea:	mov    0x140(%rsp),%r14
+   60cf2:	mov    0x148(%rsp),%r15
+   60cfa:	test   %r15,%r15
+   60cfd:	jne    60d2a <probe::main+0x212a>
+   60cff:	mov    0x138(%rsp),%rax
+   60d07:	test   %rax,%rax
+   60d0a:	je     60d22 <probe::main+0x2122>
+   60d0c:	shl    $0x3,%rax
+   60d10:	lea    (%rax,%rax,2),%rsi
+   60d14:	mov    $0x8,%edx
+   60d19:	mov    %r14,%rdi
+   60d1c:	call   *0x1289e6(%rip)        # 189708 <_DYNAMIC+0x288>
+   60d22:	mov    %rbx,%rdi
+   60d25:	call   183a80 <_Unwind_Resume@plt>
+   60d2a:	lea    0x8(%r14),%r12
+   60d2e:	mov    0x1289d3(%rip),%r13        # 189708 <_DYNAMIC+0x288>
+   60d35:	jmp    60d49 <probe::main+0x2149>
+   60d37:	nopw   0x0(%rax,%rax,1)
+   60d40:	add    $0x18,%r12
+   60d44:	dec    %r15
+   60d47:	je     60cff <probe::main+0x20ff>
+   60d49:	mov    -0x8(%r12),%rsi
+   60d4e:	test   %rsi,%rsi
+   60d51:	je     60d40 <probe::main+0x2140>
+   60d53:	mov    (%r12),%rdi
+   60d57:	mov    $0x1,%edx
+   60d5c:	call   *%r13
+   60d5f:	jmp    60d40 <probe::main+0x2140>
+   60d61:	mov    0x100(%rsp),%r15
+   60d69:	add    $0x8,%r15
+   60d6d:	mov    0x128994(%rip),%r12        # 189708 <_DYNAMIC+0x288>
+   60d74:	jmp    60d8d <probe::main+0x218d>
+   60d76:	cs nopw 0x0(%rax,%rax,1)
+   60d80:	add    $0x18,%r15
+   60d84:	dec    %r14
+   60d87:	je     60c7a <probe::main+0x207a>
+   60d8d:	mov    -0x8(%r15),%rsi
+   60d91:	test   %rsi,%rsi
+   60d94:	je     60d80 <probe::main+0x2180>
+   60d96:	mov    (%r15),%rdi
+   60d99:	mov    $0x1,%edx
+   60d9e:	call   *%r12
+   60da1:	jmp    60d80 <probe::main+0x2180>
+   60da3:	mov    0xc8(%rsp),%rsi
+   60dab:	test   %rsi,%rsi
+   60dae:	je     60dcd <probe::main+0x21cd>
+   60db0:	mov    0xd0(%rsp),%rdi
+   60db8:	shl    $0x4,%rsi
+   60dbc:	mov    $0x8,%edx
+   60dc1:	call   *0x128941(%rip)        # 189708 <_DYNAMIC+0x288>
+   60dc7:	call   *0x128933(%rip)        # 189700 <_DYNAMIC+0x280>
+   60dcd:	call   *0x12892d(%rip)        # 189700 <_DYNAMIC+0x280>

@@ -1,0 +1,993 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000a5f20 <<hyperreal::computable::node::Computable>::approx_signal>:
+   a5f20:	push   %rbp
+   a5f21:	push   %r15
+   a5f23:	push   %r14
+   a5f25:	push   %r13
+   a5f27:	push   %r12
+   a5f29:	push   %rbx
+   a5f2a:	sub    $0x3a8,%rsp
+   a5f31:	mov    %ecx,%ebp
+   a5f33:	mov    %rsi,%r13
+   a5f36:	mov    %rdi,%rbx
+   a5f39:	mov    (%rdx),%r14
+   a5f3c:	test   %r14,%r14
+   a5f3f:	je     a5f4e <<hyperreal::computable::node::Computable>::approx_signal+0x2e>
+   a5f41:	movzbl 0x10(%r14),%eax
+   a5f46:	test   %al,%al
+   a5f48:	jne    a60f0 <<hyperreal::computable::node::Computable>::approx_signal+0x1d0>
+   a5f4e:	mov    %rdx,0x40(%rsp)
+   a5f53:	data16 data16 data16 mov %fs:0x0,%rax
+   a5f5f:	lea    -0x120(%rax),%r15
+   a5f66:	movzbl -0x110(%rax),%eax
+   a5f6d:	test   %eax,%eax
+   a5f6f:	jne    a6ef0 <<hyperreal::computable::node::Computable>::approx_signal+0xfd0>
+   a5f75:	movabs $0x7fffffffffffffff,%rax
+   a5f7f:	mov    (%r15),%rcx
+   a5f82:	cmp    %rax,%rcx
+   a5f85:	jae    a6f20 <<hyperreal::computable::node::Computable>::approx_signal+0x1000>
+   a5f8b:	lea    0x1(%rcx),%rax
+   a5f8f:	mov    %rax,(%r15)
+   a5f92:	mov    0x8(%r15),%rdx
+   a5f96:	test   %rdx,%rdx
+   a5f99:	je     a5fb3 <<hyperreal::computable::node::Computable>::approx_signal+0x93>
+   a5f9b:	nopl   0x0(%rax,%rax,1)
+   a5fa0:	cmpb   $0x0,0x20(%rdx)
+   a5fa4:	jne    a60ed <<hyperreal::computable::node::Computable>::approx_signal+0x1cd>
+   a5faa:	mov    0x18(%rdx),%rdx
+   a5fae:	test   %rdx,%rdx
+   a5fb1:	jne    a5fa0 <<hyperreal::computable::node::Computable>::approx_signal+0x80>
+   a5fb3:	mov    %rcx,(%r15)
+   a5fb6:	mov    0x0(%r13),%r12
+   a5fba:	movzbl 0x10(%r12),%edx
+   a5fc0:	test   %edx,%edx
+   a5fc2:	jne    a5fe3 <<hyperreal::computable::node::Computable>::approx_signal+0xc3>
+   a5fc4:	cmpb   $0x1,0x30(%r12)
+   a5fca:	jne    a5fe3 <<hyperreal::computable::node::Computable>::approx_signal+0xc3>
+   a5fcc:	movups -0x729b3(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351+0x10>
+   a5fd3:	movups %xmm0,0x10(%rbx)
+   a5fd7:	movups -0x729ce(%rip),%xmm0        # 33610 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351>
+   a5fde:	jmp    a618e <<hyperreal::computable::node::Computable>::approx_signal+0x26e>
+   a5fe3:	cmp    $0xfff00000,%ebp
+   a5fe9:	jge    a5ffc <<hyperreal::computable::node::Computable>::approx_signal+0xdc>
+   a5feb:	neg    %ebp
+   a5fed:	setno  %al
+   a5ff0:	add    %al,%al
+   a5ff2:	add    $0xa,%al
+   a5ff4:	mov    %al,0x8(%rbx)
+   a5ff7:	jmp    a60f4 <<hyperreal::computable::node::Computable>::approx_signal+0x1d4>
+   a5ffc:	cmp    $0x2,%edx
+   a5fff:	je     a6110 <<hyperreal::computable::node::Computable>::approx_signal+0x1f0>
+   a6005:	cmp    $0x1,%edx
+   a6008:	je     a606f <<hyperreal::computable::node::Computable>::approx_signal+0x14f>
+   a600a:	test   %edx,%edx
+   a600c:	jne    a613a <<hyperreal::computable::node::Computable>::approx_signal+0x21a>
+   a6012:	mov    %rax,(%r15)
+   a6015:	mov    0x8(%r15),%rdx
+   a6019:	test   %rdx,%rdx
+   a601c:	je     a604a <<hyperreal::computable::node::Computable>::approx_signal+0x12a>
+   a601e:	mov    %rdx,%rsi
+   a6021:	cmpb   $0x0,0x20(%rsi)
+   a6025:	jne    a6060 <<hyperreal::computable::node::Computable>::approx_signal+0x140>
+   a6027:	mov    0x10(%rsi),%rdi
+   a602b:	mov    0x18(%rdi),%rax
+   a602f:	nop
+   a6030:	test   %rax,%rax
+   a6033:	je     a6060 <<hyperreal::computable::node::Computable>::approx_signal+0x140>
+   a6035:	lea    -0x1(%rax),%r8
+   a6039:	lock cmpxchg %r8,0x18(%rdi)
+   a603f:	jne    a6030 <<hyperreal::computable::node::Computable>::approx_signal+0x110>
+   a6041:	mov    0x18(%rsi),%rsi
+   a6045:	test   %rsi,%rsi
+   a6048:	jne    a6021 <<hyperreal::computable::node::Computable>::approx_signal+0x101>
+   a604a:	mov    %rcx,(%r15)
+   a604d:	add    $0x18,%r12
+   a6051:	mov    %rbx,%rdi
+   a6054:	mov    %r12,%rsi
+   a6057:	jmp    a60c9 <<hyperreal::computable::node::Computable>::approx_signal+0x1a9>
+   a6059:	nopl   0x0(%rax)
+   a6060:	movb   $0x1,0x20(%rdx)
+   a6064:	mov    0x18(%rdx),%rdx
+   a6068:	test   %rdx,%rdx
+   a606b:	jne    a6060 <<hyperreal::computable::node::Computable>::approx_signal+0x140>
+   a606d:	jmp    a60ed <<hyperreal::computable::node::Computable>::approx_signal+0x1cd>
+   a606f:	mov    %rax,(%r15)
+   a6072:	mov    0x8(%r15),%rdx
+   a6076:	test   %rdx,%rdx
+   a6079:	je     a60aa <<hyperreal::computable::node::Computable>::approx_signal+0x18a>
+   a607b:	mov    %rdx,%rsi
+   a607e:	cmpb   $0x0,0x20(%rsi)
+   a6082:	jne    a60e0 <<hyperreal::computable::node::Computable>::approx_signal+0x1c0>
+   a6084:	mov    0x10(%rsi),%rdi
+   a6088:	mov    0x18(%rdi),%rax
+   a608c:	nopl   0x0(%rax)
+   a6090:	test   %rax,%rax
+   a6093:	je     a60e0 <<hyperreal::computable::node::Computable>::approx_signal+0x1c0>
+   a6095:	lea    -0x1(%rax),%r8
+   a6099:	lock cmpxchg %r8,0x18(%rdi)
+   a609f:	jne    a6090 <<hyperreal::computable::node::Computable>::approx_signal+0x170>
+   a60a1:	mov    0x18(%rsi),%rsi
+   a60a5:	test   %rsi,%rsi
+   a60a8:	jne    a607e <<hyperreal::computable::node::Computable>::approx_signal+0x15e>
+   a60aa:	mov    %rcx,(%r15)
+   a60ad:	lea    0x114c5c(%rip),%rdi        # 1bad10 <hyperreal::computable::node::signed::ONE+0x20>
+   a60b4:	lea    0x114c35(%rip),%r14        # 1bacf0 <hyperreal::computable::node::signed::ONE>
+   a60bb:	mov    %r14,%rsi
+   a60be:	call   63030 <<std::sync::once::Once>::call_once_force::<<std::sync::lazy_lock::LazyLock<num_bigint::bigint::BigInt>>::force::{closure#0}>>
+   a60c3:	mov    %rbx,%rdi
+   a60c6:	mov    %r14,%rsi
+   a60c9:	mov    %ebp,%edx
+   a60cb:	call   beae0 <hyperreal::computable::node::scale_at_precision_ref>
+   a60d0:	jmp    a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a60d2:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   a60e0:	movb   $0x1,0x20(%rdx)
+   a60e4:	mov    0x18(%rdx),%rdx
+   a60e8:	test   %rdx,%rdx
+   a60eb:	jne    a60e0 <<hyperreal::computable::node::Computable>::approx_signal+0x1c0>
+   a60ed:	mov    %rcx,(%r15)
+   a60f0:	movb   $0xc,0x8(%rbx)
+   a60f4:	movq   $0xffffffffffffffff,(%rbx)
+   a60fb:	mov    %rbx,%rax
+   a60fe:	add    $0x3a8,%rsp
+   a6105:	pop    %rbx
+   a6106:	pop    %r12
+   a6108:	pop    %r13
+   a610a:	pop    %r14
+   a610c:	pop    %r15
+   a610e:	pop    %rbp
+   a610f:	ret
+   a6110:	movzbl 0x11(%r12),%esi
+   a6116:	lea    0x210(%rsp),%rdi
+   a611e:	mov    %ebp,%edx
+   a6120:	call   b4f40 <<hyperreal::computable::node::Computable>::cached_constant_at_precision>
+   a6125:	cmpq   $0xffffffffffffffff,0x210(%rsp)
+   a612e:	jne    a617a <<hyperreal::computable::node::Computable>::approx_signal+0x25a>
+   a6130:	movl   $0x0,0xc(%rsp)
+   a6138:	jmp    a619c <<hyperreal::computable::node::Computable>::approx_signal+0x27c>
+   a613a:	mov    0x38(%r12),%rax
+   a613f:	test   $0x800,%eax
+   a6144:	jne    a615b <<hyperreal::computable::node::Computable>::approx_signal+0x23b>
+   a6146:	mov    %r13,%rdi
+   a6149:	mov    0x40(%rsp),%rsi
+   a614e:	call   872c0 <<hyperreal::computable::node::Computable>::ensure_finite_real>
+   a6153:	cmp    $0xff,%al
+   a6155:	jne    a5ff4 <<hyperreal::computable::node::Computable>::approx_signal+0xd4>
+   a615b:	lea    0x40(%r12),%rsi
+   a6160:	lea    0x210(%rsp),%rdi
+   a6168:	mov    %ebp,%edx
+   a616a:	call   bd600 <<hyperreal::computable::node::EvaluationCache>::at_precision>
+   a616f:	cmpq   $0xffffffffffffffff,0x210(%rsp)
+   a6178:	je     a6196 <<hyperreal::computable::node::Computable>::approx_signal+0x276>
+   a617a:	movups 0x210(%rsp),%xmm0
+   a6182:	movups 0x220(%rsp),%xmm1
+   a618a:	movups %xmm1,0x10(%rbx)
+   a618e:	movups %xmm0,(%rbx)
+   a6191:	jmp    a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6196:	mov    $0x1,%al
+   a6198:	mov    %eax,0xc(%rsp)
+   a619c:	lea    0x10(%r12),%rax
+   a61a1:	mov    %rax,0x38(%rsp)
+   a61a6:	movzbl (%rax),%eax
+   a61a9:	add    $0xffffffdc,%eax
+   a61ac:	cmp    $0x1a,%eax
+   a61af:	ja     a624b <<hyperreal::computable::node::Computable>::approx_signal+0x32b>
+   a61b5:	lea    -0x71c74(%rip),%rcx        # 34548 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351+0xf38>
+   a61bc:	movslq (%rcx,%rax,4),%rax
+   a61c0:	add    %rcx,%rax
+   a61c3:	jmp    *%rax
+   a61c5:	movl   $0x1,0x30(%rsp)
+   a61cd:	jmp    a61eb <<hyperreal::computable::node::Computable>::approx_signal+0x2cb>
+   a61cf:	movl   $0x0,0x30(%rsp)
+   a61d7:	jmp    a61eb <<hyperreal::computable::node::Computable>::approx_signal+0x2cb>
+   a61d9:	movl   $0x2,0x30(%rsp)
+   a61e1:	jmp    a61eb <<hyperreal::computable::node::Computable>::approx_signal+0x2cb>
+   a61e3:	movl   $0x3,0x30(%rsp)
+   a61eb:	lea    0x18(%r12),%rdi
+   a61f0:	call   bbd50 <<hyperreal::computable::node::Computable>::half_pi_index_when_real>
+   a61f5:	test   $0x1,%al
+   a61f7:	je     a624b <<hyperreal::computable::node::Computable>::approx_signal+0x32b>
+   a61f9:	movzbl %dl,%edi
+   a61fc:	movl   $0xff000100,0x210(%rsp)
+   a6207:	cmp    $0x3,%dil
+   a620b:	ja     a70d4 <<hyperreal::computable::node::Computable>::approx_signal+0x11b4>
+   a6211:	movzbl 0x210(%rsp,%rdi,1),%ecx
+   a6219:	movl   $0xff0001,0x210(%rsp)
+   a6224:	movzbl 0x210(%rsp,%rdi,1),%eax
+   a622c:	mov    0x30(%rsp),%edx
+   a6230:	lea    -0x71c83(%rip),%rsi        # 345b4 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351+0xfa4>
+   a6237:	movslq (%rsi,%rdx,4),%rdx
+   a623b:	add    %rsi,%rdx
+   a623e:	jmp    *%rdx
+   a6240:	mov    %ecx,%eax
+   a6242:	movsbq %al,%rsi
+   a6246:	jmp    a6c24 <<hyperreal::computable::node::Computable>::approx_signal+0xd04>
+   a624b:	cmpb   $0x0,0xc(%rsp)
+   a6250:	je     a6285 <<hyperreal::computable::node::Computable>::approx_signal+0x365>
+   a6252:	lea    0x210(%rsp),%rdi
+   a625a:	mov    %r13,%rsi
+   a625d:	mov    0x40(%rsp),%rdx
+   a6262:	mov    %ebp,%ecx
+   a6264:	call   a5240 <<hyperreal::computable::node::Computable>::cached_quadratic_tower_approximation>
+   a6269:	mov    0x210(%rsp),%r12
+   a6271:	cmp    $0xffffffffffffffff,%r12
+   a6275:	je     a6cf2 <<hyperreal::computable::node::Computable>::approx_signal+0xdd2>
+   a627b:	cmp    $0xfffffffffffffffe,%r12
+   a627f:	jne    a6de8 <<hyperreal::computable::node::Computable>::approx_signal+0xec8>
+   a6285:	mov    0x38(%rsp),%rsi
+   a628a:	movzbl (%rsi),%eax
+   a628d:	cmp    $0xa,%eax
+   a6290:	ja     a6cff <<hyperreal::computable::node::Computable>::approx_signal+0xddf>
+   a6296:	mov    $0x430,%ecx
+   a629b:	bt     %eax,%ecx
+   a629e:	jae    a6cff <<hyperreal::computable::node::Computable>::approx_signal+0xddf>
+   a62a4:	movl   $0xffffffff,0x108(%rsp)
+   a62af:	movl   $0xffffffff,0x118(%rsp)
+   a62ba:	movl   $0xffffffff,0x128(%rsp)
+   a62c5:	movl   $0xffffffff,0x138(%rsp)
+   a62d0:	movl   $0xffffffff,0x148(%rsp)
+   a62db:	movl   $0xffffffff,0x158(%rsp)
+   a62e6:	movl   $0xffffffff,0x168(%rsp)
+   a62f1:	movl   $0xffffffff,0x178(%rsp)
+   a62fc:	movl   $0xffffffff,0x188(%rsp)
+   a6307:	movl   $0xffffffff,0x198(%rsp)
+   a6312:	movl   $0xffffffff,0x1a8(%rsp)
+   a631d:	movl   $0xffffffff,0x1b8(%rsp)
+   a6328:	movl   $0xffffffff,0x1c8(%rsp)
+   a6333:	movl   $0xffffffff,0x1d8(%rsp)
+   a633e:	movl   $0xffffffff,0x1e8(%rsp)
+   a6349:	movl   $0xffffffff,0x1f8(%rsp)
+   a6354:	movq   $0x0,0x208(%rsp)
+   a6360:	movq   $0x0,0xf0(%rsp)
+   a636c:	movq   $0x8,0xf8(%rsp)
+   a6378:	movq   $0x0,0x100(%rsp)
+   a6384:	movq   $0xffffffffffffffff,0x228(%rsp)
+   a6390:	movq   $0xffffffffffffffff,0x248(%rsp)
+   a639c:	movq   $0xffffffffffffffff,0x268(%rsp)
+   a63a8:	movq   $0xffffffffffffffff,0x288(%rsp)
+   a63b4:	movq   $0xffffffffffffffff,0x2a8(%rsp)
+   a63c0:	movq   $0xffffffffffffffff,0x2c8(%rsp)
+   a63cc:	movq   $0xffffffffffffffff,0x2e8(%rsp)
+   a63d8:	movq   $0xffffffffffffffff,0x308(%rsp)
+   a63e4:	movq   $0x0,0x328(%rsp)
+   a63f0:	movq   $0x0,0x210(%rsp)
+   a63fc:	movq   $0x8,0x218(%rsp)
+   a6408:	movq   $0x0,0x220(%rsp)
+   a6414:	mov    %r13,0x18(%rsp)
+   a6419:	mov    %ebp,0x14(%rsp)
+   a641d:	movl   $0x0,0x10(%rsp)
+   a6425:	lea    0xf0(%rsp),%rdi
+   a642d:	lea    0x10(%rsp),%rsi
+   a6432:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6437:	lea    0xdf262(%rip),%rax        # 1856a0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x30>
+   a643e:	mov    %rax,0x38(%rsp)
+   a6443:	lea    -0x72f9a(%rip),%rax        # 334b0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.4517756571377599578+0x360>
+   a644a:	mov    %rax,0x30(%rsp)
+   a644f:	mov    0x100(%rsp),%rax
+   a6457:	test   %rax,%rax
+   a645a:	je     a6483 <<hyperreal::computable::node::Computable>::approx_signal+0x563>
+   a645c:	dec    %rax
+   a645f:	mov    %rax,0x100(%rsp)
+   a6467:	mov    0xf8(%rsp),%rcx
+   a646f:	shl    $0x4,%rax
+   a6473:	mov    (%rcx,%rax,1),%r12d
+   a6477:	mov    0x4(%rcx,%rax,1),%r9d
+   a647c:	mov    0x8(%rcx,%rax,1),%r13
+   a6481:	jmp    a64cb <<hyperreal::computable::node::Computable>::approx_signal+0x5ab>
+   a6483:	mov    0x208(%rsp),%rax
+   a648b:	test   %rax,%rax
+   a648e:	je     a6ebc <<hyperreal::computable::node::Computable>::approx_signal+0xf9c>
+   a6494:	lea    -0x1(%rax),%rdi
+   a6498:	mov    %rdi,0x208(%rsp)
+   a64a0:	cmp    $0x10,%rax
+   a64a4:	ja     a70e6 <<hyperreal::computable::node::Computable>::approx_signal+0x11c6>
+   a64aa:	shl    $0x4,%rdi
+   a64ae:	lea    0x108(%rsp),%rax
+   a64b6:	mov    (%rax,%rdi,1),%r12d
+   a64ba:	mov    0x4(%rax,%rdi,1),%r9d
+   a64bf:	mov    0x8(%rax,%rdi,1),%r13
+   a64c4:	movl   $0xffffffff,(%rax,%rdi,1)
+   a64cb:	cmp    $0xffffffff,%r12d
+   a64cf:	je     a6ebc <<hyperreal::computable::node::Computable>::approx_signal+0xf9c>
+   a64d5:	test   %r14,%r14
+   a64d8:	je     a64e7 <<hyperreal::computable::node::Computable>::approx_signal+0x5c7>
+   a64da:	movzbl 0x10(%r14),%eax
+   a64df:	test   %al,%al
+   a64e1:	jne    a6be0 <<hyperreal::computable::node::Computable>::approx_signal+0xcc0>
+   a64e7:	movzbl 0x10(%r15),%eax
+   a64ec:	test   %eax,%eax
+   a64ee:	jne    a6b76 <<hyperreal::computable::node::Computable>::approx_signal+0xc56>
+   a64f4:	mov    (%r15),%rcx
+   a64f7:	movabs $0x7fffffffffffffff,%rax
+   a6501:	cmp    %rax,%rcx
+   a6504:	jae    a6bb0 <<hyperreal::computable::node::Computable>::approx_signal+0xc90>
+   a650a:	lea    0x1(%rcx),%rax
+   a650e:	mov    %rax,(%r15)
+   a6511:	mov    0x8(%r15),%rdx
+   a6515:	test   %rdx,%rdx
+   a6518:	je     a654e <<hyperreal::computable::node::Computable>::approx_signal+0x62e>
+   a651a:	mov    %rdx,%rsi
+   a651d:	cmpb   $0x0,0x20(%rsi)
+   a6521:	jne    a6bd0 <<hyperreal::computable::node::Computable>::approx_signal+0xcb0>
+   a6527:	mov    0x10(%rsi),%rdi
+   a652b:	mov    0x18(%rdi),%rax
+   a652f:	nop
+   a6530:	test   %rax,%rax
+   a6533:	je     a6bd0 <<hyperreal::computable::node::Computable>::approx_signal+0xcb0>
+   a6539:	lea    -0x1(%rax),%r8
+   a653d:	lock cmpxchg %r8,0x18(%rdi)
+   a6543:	jne    a6530 <<hyperreal::computable::node::Computable>::approx_signal+0x610>
+   a6545:	mov    0x18(%rsi),%rsi
+   a6549:	test   %rsi,%rsi
+   a654c:	jne    a651d <<hyperreal::computable::node::Computable>::approx_signal+0x5fd>
+   a654e:	mov    %r9d,0xc(%rsp)
+   a6553:	mov    %rcx,(%r15)
+   a6556:	mov    %r12d,%eax
+   a6559:	lea    -0x71f9c(%rip),%rcx        # 345c4 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351+0xfb4>
+   a6560:	movslq (%rcx,%rax,4),%rax
+   a6564:	add    %rcx,%rax
+   a6567:	jmp    *%rax
+   a6569:	mov    0x0(%r13),%rsi
+   a656d:	cmpb   $0x0,0x10(%rsi)
+   a6571:	jne    a6580 <<hyperreal::computable::node::Computable>::approx_signal+0x660>
+   a6573:	cmpb   $0x1,0x30(%rsi)
+   a6577:	lea    -0x72f6e(%rip),%rax        # 33610 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351>
+   a657e:	je     a65b4 <<hyperreal::computable::node::Computable>::approx_signal+0x694>
+   a6580:	mov    0xc(%rsp),%edx
+   a6584:	cmp    $0xffefffff,%edx
+   a658a:	jle    a6fb5 <<hyperreal::computable::node::Computable>::approx_signal+0x1095>
+   a6590:	lea    0x388(%rsp),%rdi
+   a6598:	call   b2960 <<hyperreal::computable::node::Computable>::cached_at_precision>
+   a659d:	cmpq   $0xffffffffffffffff,0x388(%rsp)
+   a65a6:	lea    0x388(%rsp),%rax
+   a65ae:	je     a6843 <<hyperreal::computable::node::Computable>::approx_signal+0x923>
+   a65b4:	lea    0x210(%rsp),%rdi
+   a65bc:	mov    %rax,%rsi
+   a65bf:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a65c4:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a65c9:	lea    0x10(%rsp),%rdi
+   a65ce:	lea    0x210(%rsp),%rsi
+   a65d6:	call   a57b0 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::pop>
+   a65db:	mov    %r13,0x68(%rsp)
+   a65e0:	mov    0x10(%rsp),%r12
+   a65e5:	cmp    $0xffffffffffffffff,%r12
+   a65e9:	je     a705b <<hyperreal::computable::node::Computable>::approx_signal+0x113b>
+   a65ef:	mov    0x18(%rsp),%r13
+   a65f4:	lea    0x29(%rsp),%rax
+   a65f9:	movups -0x9(%rax),%xmm0
+   a65fd:	movaps %xmm0,0x350(%rsp)
+   a6605:	lea    0x10(%rsp),%rdi
+   a660a:	lea    0x210(%rsp),%rsi
+   a6612:	call   a57b0 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::pop>
+   a6617:	cmpq   $0xffffffffffffffff,0x10(%rsp)
+   a661d:	je     a7081 <<hyperreal::computable::node::Computable>::approx_signal+0x1161>
+   a6623:	movups 0x10(%rsp),%xmm0
+   a6628:	movups 0x20(%rsp),%xmm1
+   a662d:	movaps %xmm1,0x370(%rsp)
+   a6635:	movaps %xmm0,0x360(%rsp)
+   a663d:	mov    %r12,0x10(%rsp)
+   a6642:	mov    %r13,0x18(%rsp)
+   a6647:	movaps 0x350(%rsp),%xmm0
+   a664f:	lea    0x29(%rsp),%rax
+   a6654:	movups %xmm0,-0x9(%rax)
+   a6658:	lea    0x48(%rsp),%rbp
+   a665d:	mov    %rbp,%rdi
+   a6660:	lea    0x360(%rsp),%rsi
+   a6668:	lea    0x10(%rsp),%rdx
+   a666d:	call   c28e0 <<num_bigint::bigint::BigInt as core::ops::arith::Add>::add>
+   a6672:	lea    0x330(%rsp),%r13
+   a667a:	mov    %r13,%rdi
+   a667d:	mov    %rbp,%rsi
+   a6680:	mov    $0xfffffffe,%edx
+   a6685:	call   befc0 <hyperreal::computable::node::scale>
+   a668a:	movzbl 0x348(%rsp),%r12d
+   a6693:	mov    %rbp,%rdi
+   a6696:	mov    %r13,%rsi
+   a6699:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a669e:	mov    0x58(%rsp),%rax
+   a66a3:	mov    %rax,0x20(%rsp)
+   a66a8:	movups 0x48(%rsp),%xmm0
+   a66ad:	movaps %xmm0,0x10(%rsp)
+   a66b2:	mov    %r12b,0x28(%rsp)
+   a66b7:	mov    0x68(%rsp),%rdi
+   a66bc:	mov    %r14,%rsi
+   a66bf:	mov    0xc(%rsp),%edx
+   a66c3:	lea    0x10(%rsp),%rcx
+   a66c8:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a66cd:	cmp    $0xff,%al
+   a66cf:	jne    a6f7e <<hyperreal::computable::node::Computable>::approx_signal+0x105e>
+   a66d5:	lea    0x210(%rsp),%rdi
+   a66dd:	mov    %r13,%rsi
+   a66e0:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a66e5:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a66ea:	lea    0x10(%rsp),%rdi
+   a66ef:	lea    0x210(%rsp),%rsi
+   a66f7:	call   a57b0 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::pop>
+   a66fc:	cmpq   $0xffffffffffffffff,0x10(%rsp)
+   a6702:	je     a703c <<hyperreal::computable::node::Computable>::approx_signal+0x111c>
+   a6708:	movups 0x10(%rsp),%xmm0
+   a670d:	movups 0x20(%rsp),%xmm1
+   a6712:	movaps %xmm1,0xa0(%rsp)
+   a671a:	movaps %xmm0,0x90(%rsp)
+   a6722:	movzbl 0xa8(%rsp),%r12d
+   a672b:	lea    0x48(%rsp),%rdi
+   a6730:	lea    0x90(%rsp),%rsi
+   a6738:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a673d:	mov    0xc(%rsp),%edx
+   a6741:	mov    0x58(%rsp),%rax
+   a6746:	mov    %rax,0x20(%rsp)
+   a674b:	movups 0x48(%rsp),%xmm0
+   a6750:	movaps %xmm0,0x10(%rsp)
+   a6755:	mov    %r12b,0x28(%rsp)
+   a675a:	mov    %r13,%rdi
+   a675d:	mov    %r14,%rsi
+   a6760:	lea    0x10(%rsp),%rcx
+   a6765:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a676a:	cmp    $0xff,%al
+   a676c:	jne    a6f3a <<hyperreal::computable::node::Computable>::approx_signal+0x101a>
+   a6772:	lea    0x210(%rsp),%rdi
+   a677a:	lea    0x90(%rsp),%rsi
+   a6782:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a6787:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a678c:	lea    0x10(%rsp),%rdi
+   a6791:	lea    0x210(%rsp),%rsi
+   a6799:	call   a57b0 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::pop>
+   a679e:	cmpq   $0xffffffffffffffff,0x10(%rsp)
+   a67a4:	je     a707a <<hyperreal::computable::node::Computable>::approx_signal+0x115a>
+   a67aa:	mov    0x20(%rsp),%rax
+   a67af:	mov    %rax,0x80(%rsp)
+   a67b7:	movups 0x10(%rsp),%xmm0
+   a67bc:	movaps %xmm0,0x70(%rsp)
+   a67c1:	lea    0x29(%rsp),%rcx
+   a67c6:	mov    (%rcx),%eax
+   a67c8:	mov    $0x2,%r12b
+   a67cb:	sub    0x28(%rsp),%r12b
+   a67d0:	mov    0x3(%rcx),%ecx
+   a67d3:	lea    0x89(%rsp),%rdx
+   a67db:	mov    %ecx,0x3(%rdx)
+   a67de:	mov    %eax,(%rdx)
+   a67e0:	mov    %r12b,0x88(%rsp)
+   a67e8:	lea    0x48(%rsp),%rdi
+   a67ed:	lea    0x70(%rsp),%rsi
+   a67f2:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a67f7:	mov    0xc(%rsp),%edx
+   a67fb:	mov    0x58(%rsp),%rax
+   a6800:	mov    %rax,0x20(%rsp)
+   a6805:	movups 0x48(%rsp),%xmm0
+   a680a:	movaps %xmm0,0x10(%rsp)
+   a680f:	mov    %r12b,0x28(%rsp)
+   a6814:	mov    %r13,%rdi
+   a6817:	mov    %r14,%rsi
+   a681a:	lea    0x10(%rsp),%rcx
+   a681f:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a6824:	cmp    $0xff,%al
+   a6826:	jne    a6f5f <<hyperreal::computable::node::Computable>::approx_signal+0x103f>
+   a682c:	lea    0x210(%rsp),%rdi
+   a6834:	lea    0x70(%rsp),%rsi
+   a6839:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a683e:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a6843:	lea    0x10(%rsp),%rdi
+   a6848:	mov    %r13,%rsi
+   a684b:	mov    0x40(%rsp),%rdx
+   a6850:	mov    0xc(%rsp),%ecx
+   a6854:	call   a5240 <<hyperreal::computable::node::Computable>::cached_quadratic_tower_approximation>
+   a6859:	mov    0x10(%rsp),%r12
+   a685e:	cmp    $0xfffffffffffffffe,%r12
+   a6862:	je     a690f <<hyperreal::computable::node::Computable>::approx_signal+0x9ef>
+   a6868:	cmp    $0xffffffffffffffff,%r12
+   a686c:	je     a6fc6 <<hyperreal::computable::node::Computable>::approx_signal+0x10a6>
+   a6872:	mov    %r13,%rbp
+   a6875:	movzbl 0x18(%rsp),%eax
+   a687a:	lea    0x29(%rsp),%rdx
+   a687f:	mov    -0x1(%rdx),%rcx
+   a6883:	lea    0xb9(%rsp),%rsi
+   a688b:	mov    %rcx,0xf(%rsi)
+   a688f:	movups -0x10(%rdx),%xmm0
+   a6893:	movups %xmm0,(%rsi)
+   a6896:	mov    %r12,0xb0(%rsp)
+   a689e:	mov    %al,0xb8(%rsp)
+   a68a5:	movzbl 0xc8(%rsp),%r13d
+   a68ae:	lea    0x48(%rsp),%rdi
+   a68b3:	lea    0xb0(%rsp),%rsi
+   a68bb:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a68c0:	mov    0x58(%rsp),%rax
+   a68c5:	mov    %rax,0x20(%rsp)
+   a68ca:	movups 0x48(%rsp),%xmm0
+   a68cf:	movaps %xmm0,0x10(%rsp)
+   a68d4:	mov    %r13b,0x28(%rsp)
+   a68d9:	mov    %rbp,%rdi
+   a68dc:	mov    %r14,%rsi
+   a68df:	mov    0xc(%rsp),%edx
+   a68e3:	lea    0x10(%rsp),%rcx
+   a68e8:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a68ed:	cmp    $0xff,%al
+   a68ef:	jne    a6fd3 <<hyperreal::computable::node::Computable>::approx_signal+0x10b3>
+   a68f5:	lea    0x210(%rsp),%rdi
+   a68fd:	lea    0xb0(%rsp),%rsi
+   a6905:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a690a:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a690f:	mov    0x0(%r13),%r12
+   a6913:	movzbl 0x10(%r12),%eax
+   a6919:	cmp    $0xa,%eax
+   a691c:	je     a6a46 <<hyperreal::computable::node::Computable>::approx_signal+0xb26>
+   a6922:	cmp    $0x5,%eax
+   a6925:	je     a6987 <<hyperreal::computable::node::Computable>::approx_signal+0xa67>
+   a6927:	cmp    $0x4,%eax
+   a692a:	jne    a6ab0 <<hyperreal::computable::node::Computable>::approx_signal+0xb90>
+   a6930:	mov    %r13,0x18(%rsp)
+   a6935:	mov    0xc(%rsp),%eax
+   a6939:	mov    %eax,0x14(%rsp)
+   a693d:	movl   $0x1,0x10(%rsp)
+   a6945:	lea    0xf0(%rsp),%rdi
+   a694d:	lea    0x10(%rsp),%rsi
+   a6952:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6957:	add    $0x18,%r12
+   a695b:	mov    %r12,0x18(%rsp)
+   a6960:	mov    0xc(%rsp),%eax
+   a6964:	mov    %eax,0x14(%rsp)
+   a6968:	movl   $0x0,0x10(%rsp)
+   a6970:	lea    0xf0(%rsp),%rdi
+   a6978:	lea    0x10(%rsp),%rsi
+   a697d:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6982:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a6987:	mov    %r13,0x18(%rsp)
+   a698c:	mov    0xc(%rsp),%eax
+   a6990:	mov    %eax,0x14(%rsp)
+   a6994:	movl   $0x2,0x10(%rsp)
+   a699c:	lea    0xf0(%rsp),%rdi
+   a69a4:	lea    0x10(%rsp),%rsi
+   a69a9:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a69ae:	lea    0x28(%r12),%rdx
+   a69b3:	lea    0x18(%r12),%rbp
+   a69b8:	mov    0x28(%r12),%rax
+   a69bd:	mov    0x38(%rax),%r13
+   a69c1:	shr    $0x10,%r13d
+   a69c5:	mov    0x18(%r12),%rax
+   a69ca:	mov    0x38(%rax),%r12
+   a69ce:	shr    $0x10,%r12d
+   a69d2:	mov    0xc(%rsp),%ecx
+   a69d6:	add    $0xfffffffe,%ecx
+   a69d9:	cmp    %r12w,%r13w
+   a69dd:	mov    %rdx,0x68(%rsp)
+   a69e2:	mov    %rdx,%rax
+   a69e5:	cmovg  %rbp,%rax
+   a69e9:	mov    %rax,0x18(%rsp)
+   a69ee:	mov    %ecx,0xc(%rsp)
+   a69f2:	mov    %ecx,0x14(%rsp)
+   a69f6:	movl   $0x0,0x10(%rsp)
+   a69fe:	lea    0xf0(%rsp),%rdi
+   a6a06:	lea    0x10(%rsp),%rsi
+   a6a0b:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6a10:	cmp    %r12w,%r13w
+   a6a14:	cmovg  0x68(%rsp),%rbp
+   a6a1a:	mov    %rbp,0x18(%rsp)
+   a6a1f:	mov    0xc(%rsp),%eax
+   a6a23:	mov    %eax,0x14(%rsp)
+   a6a27:	movl   $0x0,0x10(%rsp)
+   a6a2f:	lea    0xf0(%rsp),%rdi
+   a6a37:	lea    0x10(%rsp),%rsi
+   a6a3c:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6a41:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a6a46:	mov    %r13,0x18(%rsp)
+   a6a4b:	mov    0xc(%rsp),%eax
+   a6a4f:	mov    %eax,0x14(%rsp)
+   a6a53:	movl   $0x3,0x10(%rsp)
+   a6a5b:	lea    0xf0(%rsp),%rdi
+   a6a63:	lea    0x10(%rsp),%rsi
+   a6a68:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6a6d:	mov    0xc(%rsp),%eax
+   a6a71:	sub    0x14(%r12),%eax
+   a6a76:	mov    %eax,0xc(%rsp)
+   a6a7a:	jo     a70cb <<hyperreal::computable::node::Computable>::approx_signal+0x11ab>
+   a6a80:	add    $0x18,%r12
+   a6a84:	mov    %r12,0x18(%rsp)
+   a6a89:	mov    0xc(%rsp),%eax
+   a6a8d:	mov    %eax,0x14(%rsp)
+   a6a91:	movl   $0x0,0x10(%rsp)
+   a6a99:	lea    0xf0(%rsp),%rdi
+   a6aa1:	lea    0x10(%rsp),%rsi
+   a6aa6:	call   a5920 <<hyperreal::computable::node::InlineStack<<hyperreal::computable::node::Computable>::approx_signal::Frame, 16>>::push>
+   a6aab:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a6ab0:	add    $0x10,%r12
+   a6ab4:	lea    0x10(%rsp),%rdi
+   a6ab9:	mov    %r12,%rsi
+   a6abc:	mov    0x40(%rsp),%rdx
+   a6ac1:	mov    0xc(%rsp),%ecx
+   a6ac5:	call   ec9a0 <<hyperreal::computable::approximation::Approximation>::approximate>
+   a6aca:	mov    0x10(%rsp),%r12
+   a6acf:	movzbl 0x18(%rsp),%eax
+   a6ad4:	cmp    $0xffffffffffffffff,%r12
+   a6ad8:	je     a7017 <<hyperreal::computable::node::Computable>::approx_signal+0x10f7>
+   a6ade:	mov    %r13,%rbp
+   a6ae1:	lea    0x29(%rsp),%rdx
+   a6ae6:	mov    -0x1(%rdx),%rcx
+   a6aea:	lea    0xd9(%rsp),%rsi
+   a6af2:	mov    %rcx,0xf(%rsi)
+   a6af6:	movups -0x10(%rdx),%xmm0
+   a6afa:	movups %xmm0,(%rsi)
+   a6afd:	mov    %r12,0xd0(%rsp)
+   a6b05:	mov    %al,0xd8(%rsp)
+   a6b0c:	movzbl 0xe8(%rsp),%r13d
+   a6b15:	lea    0x48(%rsp),%rdi
+   a6b1a:	lea    0xd0(%rsp),%rsi
+   a6b22:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a6b27:	mov    0x58(%rsp),%rax
+   a6b2c:	mov    %rax,0x20(%rsp)
+   a6b31:	movups 0x48(%rsp),%xmm0
+   a6b36:	movaps %xmm0,0x10(%rsp)
+   a6b3b:	mov    %r13b,0x28(%rsp)
+   a6b40:	mov    %rbp,%rdi
+   a6b43:	mov    %r14,%rsi
+   a6b46:	mov    0xc(%rsp),%edx
+   a6b4a:	lea    0x10(%rsp),%rcx
+   a6b4f:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a6b54:	cmp    $0xff,%al
+   a6b56:	jne    a701f <<hyperreal::computable::node::Computable>::approx_signal+0x10ff>
+   a6b5c:	lea    0x210(%rsp),%rdi
+   a6b64:	lea    0xd0(%rsp),%rsi
+   a6b6c:	call   a5840 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::push>
+   a6b71:	jmp    a644f <<hyperreal::computable::node::Computable>::approx_signal+0x52f>
+   a6b76:	cmp    $0x2,%eax
+   a6b79:	je     a7005 <<hyperreal::computable::node::Computable>::approx_signal+0x10e5>
+   a6b7f:	mov    %r9d,%ebp
+   a6b82:	mov    %r15,%rdi
+   a6b85:	lea    0x85714(%rip),%rsi        # 12c2a0 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+   a6b8c:	call   *0xe2cbe(%rip)        # 189850 <_DYNAMIC+0x3d0>
+   a6b92:	movb   $0x0,0x10(%r15)
+   a6b97:	mov    %ebp,%r9d
+   a6b9a:	mov    (%r15),%rcx
+   a6b9d:	movabs $0x7fffffffffffffff,%rax
+   a6ba7:	cmp    %rax,%rcx
+   a6baa:	jb     a650a <<hyperreal::computable::node::Computable>::approx_signal+0x5ea>
+   a6bb0:	lea    0xdfe61(%rip),%rdi        # 186a18 <anon.047ef208c0d43d81aa529f346c7b9e9a.23.llvm.15529955461551244247>
+   a6bb7:	call   *0xe2c9b(%rip)        # 189858 <_DYNAMIC+0x3d8>
+   a6bbd:	jmp    a70f8 <<hyperreal::computable::node::Computable>::approx_signal+0x11d8>
+   a6bc2:	data16 data16 data16 data16 cs nopw 0x0(%rax,%rax,1)
+   a6bd0:	movb   $0x1,0x20(%rdx)
+   a6bd4:	mov    0x18(%rdx),%rdx
+   a6bd8:	test   %rdx,%rdx
+   a6bdb:	jne    a6bd0 <<hyperreal::computable::node::Computable>::approx_signal+0xcb0>
+   a6bdd:	mov    %rcx,(%r15)
+   a6be0:	movb   $0xc,0x8(%rbx)
+   a6be4:	movq   $0xffffffffffffffff,(%rbx)
+   a6beb:	lea    0x210(%rsp),%rdi
+   a6bf3:	call   80100 <core::ptr::drop_glue::<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>>
+   a6bf8:	mov    0xf0(%rsp),%rsi
+   a6c00:	test   %rsi,%rsi
+   a6c03:	je     a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6c09:	mov    0xf8(%rsp),%rdi
+   a6c11:	shl    $0x4,%rsi
+   a6c15:	jmp    a6cd1 <<hyperreal::computable::node::Computable>::approx_signal+0xdb1>
+   a6c1a:	test   %al,%al
+   a6c1c:	je     a6ce9 <<hyperreal::computable::node::Computable>::approx_signal+0xdc9>
+   a6c22:	xor    %esi,%esi
+   a6c24:	lea    0x10(%rsp),%rdi
+   a6c29:	call   c2f50 <<num_bigint::bigint::BigInt as core::convert::From<i64>>::from>
+   a6c2e:	add    $0x38,%r12
+   a6c32:	mov    0x28(%rsp),%esi
+   a6c36:	mov    %r12,%rdi
+   a6c39:	call   a87c0 <<hyperreal::computable::node::AtomicFacts>::publish_exact_sign>
+   a6c3e:	lea    0xf0(%rsp),%r15
+   a6c46:	lea    0x10(%rsp),%rsi
+   a6c4b:	mov    %r15,%rdi
+   a6c4e:	mov    %ebp,%edx
+   a6c50:	call   be900 <hyperreal::computable::node::scale_at_precision>
+   a6c55:	movzbl 0x108(%rsp),%r12d
+   a6c5e:	lea    0x48(%rsp),%rdi
+   a6c63:	mov    %r15,%rsi
+   a6c66:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a6c6b:	mov    0x58(%rsp),%rax
+   a6c70:	mov    %rax,0x220(%rsp)
+   a6c78:	movups 0x48(%rsp),%xmm0
+   a6c7d:	movaps %xmm0,0x210(%rsp)
+   a6c85:	mov    %r12b,0x228(%rsp)
+   a6c8d:	lea    0x210(%rsp),%rcx
+   a6c95:	mov    %r13,%rdi
+   a6c98:	mov    %r14,%rsi
+   a6c9b:	mov    %ebp,%edx
+   a6c9d:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a6ca2:	cmp    $0xff,%al
+   a6ca4:	je     a6ea7 <<hyperreal::computable::node::Computable>::approx_signal+0xf87>
+   a6caa:	mov    %al,0x8(%rbx)
+   a6cad:	movq   $0xffffffffffffffff,(%rbx)
+   a6cb4:	mov    0xf0(%rsp),%rsi
+   a6cbc:	test   %rsi,%rsi
+   a6cbf:	je     a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6cc5:	mov    0xf8(%rsp),%rdi
+   a6ccd:	shl    $0x3,%rsi
+   a6cd1:	mov    $0x8,%edx
+   a6cd6:	call   *0xe2a2c(%rip)        # 189708 <_DYNAMIC+0x288>
+   a6cdc:	jmp    a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6ce1:	test   %cl,%cl
+   a6ce3:	jne    a6c22 <<hyperreal::computable::node::Computable>::approx_signal+0xd02>
+   a6ce9:	movb   $0x2,0x8(%rbx)
+   a6ced:	jmp    a60f4 <<hyperreal::computable::node::Computable>::approx_signal+0x1d4>
+   a6cf2:	movzbl 0x218(%rsp),%eax
+   a6cfa:	jmp    a5ff4 <<hyperreal::computable::node::Computable>::approx_signal+0xd4>
+   a6cff:	lea    0x210(%rsp),%rdi
+   a6d07:	mov    0x40(%rsp),%rdx
+   a6d0c:	mov    %ebp,%ecx
+   a6d0e:	call   ec9a0 <<hyperreal::computable::approximation::Approximation>::approximate>
+   a6d13:	mov    0x210(%rsp),%r15
+   a6d1b:	movzbl 0x218(%rsp),%eax
+   a6d23:	cmp    $0xffffffffffffffff,%r15
+   a6d27:	je     a5ff4 <<hyperreal::computable::node::Computable>::approx_signal+0xd4>
+   a6d2d:	mov    0x228(%rsp),%rcx
+   a6d35:	mov    %rcx,0x108(%rsp)
+   a6d3d:	movups 0x219(%rsp),%xmm0
+   a6d45:	movups %xmm0,0xf9(%rsp)
+   a6d4d:	mov    %r15,0xf0(%rsp)
+   a6d55:	mov    %al,0xf8(%rsp)
+   a6d5c:	movzbl 0x108(%rsp),%r12d
+   a6d65:	lea    0x10(%rsp),%rdi
+   a6d6a:	lea    0xf0(%rsp),%rsi
+   a6d72:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a6d77:	mov    0x20(%rsp),%rax
+   a6d7c:	mov    %rax,0x220(%rsp)
+   a6d84:	movups 0x10(%rsp),%xmm0
+   a6d89:	movaps %xmm0,0x210(%rsp)
+   a6d91:	mov    %r12b,0x228(%rsp)
+   a6d99:	lea    0x210(%rsp),%rcx
+   a6da1:	mov    %r13,%rdi
+   a6da4:	mov    %r14,%rsi
+   a6da7:	mov    %ebp,%edx
+   a6da9:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a6dae:	cmp    $0xff,%al
+   a6db0:	je     a6ea7 <<hyperreal::computable::node::Computable>::approx_signal+0xf87>
+   a6db6:	mov    %al,0x8(%rbx)
+   a6db9:	movq   $0xffffffffffffffff,(%rbx)
+   a6dc0:	test   %r15,%r15
+   a6dc3:	je     a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6dc9:	mov    0xf8(%rsp),%rdi
+   a6dd1:	shl    $0x3,%r15
+   a6dd5:	mov    $0x8,%edx
+   a6dda:	mov    %r15,%rsi
+   a6ddd:	call   *0xe2925(%rip)        # 189708 <_DYNAMIC+0x288>
+   a6de3:	jmp    a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6de8:	movzbl 0x218(%rsp),%eax
+   a6df0:	mov    0x228(%rsp),%rcx
+   a6df8:	mov    %rcx,0x108(%rsp)
+   a6e00:	movups 0x219(%rsp),%xmm0
+   a6e08:	movups %xmm0,0xf9(%rsp)
+   a6e10:	mov    %r12,0xf0(%rsp)
+   a6e18:	mov    %al,0xf8(%rsp)
+   a6e1f:	movzbl 0x108(%rsp),%r15d
+   a6e28:	lea    0x10(%rsp),%rdi
+   a6e2d:	lea    0xf0(%rsp),%rsi
+   a6e35:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   a6e3a:	mov    0x20(%rsp),%rax
+   a6e3f:	mov    %rax,0x220(%rsp)
+   a6e47:	movups 0x10(%rsp),%xmm0
+   a6e4c:	movaps %xmm0,0x210(%rsp)
+   a6e54:	mov    %r15b,0x228(%rsp)
+   a6e5c:	lea    0x210(%rsp),%rcx
+   a6e64:	mov    %r13,%rdi
+   a6e67:	mov    %r14,%rsi
+   a6e6a:	mov    %ebp,%edx
+   a6e6c:	call   b22f0 <<hyperreal::computable::node::Computable>::store_cache_value>
+   a6e71:	cmp    $0xff,%al
+   a6e73:	je     a6ea7 <<hyperreal::computable::node::Computable>::approx_signal+0xf87>
+   a6e75:	mov    %al,0x8(%rbx)
+   a6e78:	movq   $0xffffffffffffffff,(%rbx)
+   a6e7f:	test   %r12,%r12
+   a6e82:	je     a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6e88:	mov    0xf8(%rsp),%rdi
+   a6e90:	shl    $0x3,%r12
+   a6e94:	mov    $0x8,%edx
+   a6e99:	mov    %r12,%rsi
+   a6e9c:	call   *0xe2866(%rip)        # 189708 <_DYNAMIC+0x288>
+   a6ea2:	jmp    a60fb <<hyperreal::computable::node::Computable>::approx_signal+0x1db>
+   a6ea7:	movups 0xf0(%rsp),%xmm0
+   a6eaf:	movups 0x100(%rsp),%xmm1
+   a6eb7:	jmp    a618a <<hyperreal::computable::node::Computable>::approx_signal+0x26a>
+   a6ebc:	lea    0x10(%rsp),%rdi
+   a6ec1:	lea    0x210(%rsp),%rsi
+   a6ec9:	call   a57b0 <<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>::pop>
+   a6ece:	cmpq   $0xffffffffffffffff,0x10(%rsp)
+   a6ed4:	je     a709c <<hyperreal::computable::node::Computable>::approx_signal+0x117c>
+   a6eda:	movups 0x10(%rsp),%xmm0
+   a6edf:	movups 0x20(%rsp),%xmm1
+   a6ee4:	movups %xmm1,0x10(%rbx)
+   a6ee8:	movups %xmm0,(%rbx)
+   a6eeb:	jmp    a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6ef0:	cmp    $0x1,%eax
+   a6ef3:	jne    a6f2d <<hyperreal::computable::node::Computable>::approx_signal+0x100d>
+   a6ef5:	lea    0x853a4(%rip),%rsi        # 12c2a0 <std::sys::thread_local::native::eager::destroy::<core::cell::RefCell<core::option::Option<alloc::rc::Rc<hyperreal::computable::budget::ActiveBudget>>>>>
+   a6efc:	mov    %r15,%rdi
+   a6eff:	call   *0xe294b(%rip)        # 189850 <_DYNAMIC+0x3d0>
+   a6f05:	movb   $0x0,0x10(%r15)
+   a6f0a:	movabs $0x7fffffffffffffff,%rax
+   a6f14:	mov    (%r15),%rcx
+   a6f17:	cmp    %rax,%rcx
+   a6f1a:	jb     a5f8b <<hyperreal::computable::node::Computable>::approx_signal+0x6b>
+   a6f20:	lea    0xdfb09(%rip),%rdi        # 186a30 <anon.047ef208c0d43d81aa529f346c7b9e9a.24.llvm.15529955461551244247>
+   a6f27:	call   *0xe292b(%rip)        # 189858 <_DYNAMIC+0x3d8>
+   a6f2d:	lea    0xdfa34(%rip),%rdi        # 186968 <anon.047ef208c0d43d81aa529f346c7b9e9a.4.llvm.15529955461551244247>
+   a6f34:	call   *0xe2926(%rip)        # 189860 <_DYNAMIC+0x3e0>
+   a6f3a:	mov    %al,0x8(%rbx)
+   a6f3d:	movq   $0xffffffffffffffff,(%rbx)
+   a6f44:	mov    0x90(%rsp),%rsi
+   a6f4c:	test   %rsi,%rsi
+   a6f4f:	je     a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6f55:	mov    0x98(%rsp),%rdi
+   a6f5d:	jmp    a6fa1 <<hyperreal::computable::node::Computable>::approx_signal+0x1081>
+   a6f5f:	mov    %al,0x8(%rbx)
+   a6f62:	movq   $0xffffffffffffffff,(%rbx)
+   a6f69:	mov    0x70(%rsp),%rsi
+   a6f6e:	test   %rsi,%rsi
+   a6f71:	je     a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6f77:	mov    0x78(%rsp),%rdi
+   a6f7c:	jmp    a6fa1 <<hyperreal::computable::node::Computable>::approx_signal+0x1081>
+   a6f7e:	mov    %al,0x8(%rbx)
+   a6f81:	movq   $0xffffffffffffffff,(%rbx)
+   a6f88:	mov    0x330(%rsp),%rsi
+   a6f90:	test   %rsi,%rsi
+   a6f93:	je     a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6f99:	mov    0x338(%rsp),%rdi
+   a6fa1:	shl    $0x3,%rsi
+   a6fa5:	mov    $0x8,%edx
+   a6faa:	call   *0xe2758(%rip)        # 189708 <_DYNAMIC+0x288>
+   a6fb0:	jmp    a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6fb5:	neg    %edx
+   a6fb7:	setno  %al
+   a6fba:	add    %al,%al
+   a6fbc:	add    $0xa,%al
+   a6fbe:	mov    %al,0x8(%rbx)
+   a6fc1:	jmp    a6be4 <<hyperreal::computable::node::Computable>::approx_signal+0xcc4>
+   a6fc6:	movzbl 0x18(%rsp),%eax
+   a6fcb:	mov    %al,0x8(%rbx)
+   a6fce:	jmp    a6be4 <<hyperreal::computable::node::Computable>::approx_signal+0xcc4>
+   a6fd3:	mov    %al,0x8(%rbx)
+   a6fd6:	movq   $0xffffffffffffffff,(%rbx)
+   a6fdd:	test   %r12,%r12
+   a6fe0:	je     a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a6fe6:	mov    0xb8(%rsp),%rdi
+   a6fee:	shl    $0x3,%r12
+   a6ff2:	mov    $0x8,%edx
+   a6ff7:	mov    %r12,%rsi
+   a6ffa:	call   *0xe2708(%rip)        # 189708 <_DYNAMIC+0x288>
+   a7000:	jmp    a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a7005:	lea    0xdf95c(%rip),%rdi        # 186968 <anon.047ef208c0d43d81aa529f346c7b9e9a.4.llvm.15529955461551244247>
+   a700c:	call   *0xe284e(%rip)        # 189860 <_DYNAMIC+0x3e0>
+   a7012:	jmp    a70f8 <<hyperreal::computable::node::Computable>::approx_signal+0x11d8>
+   a7017:	mov    %al,0x8(%rbx)
+   a701a:	jmp    a6be4 <<hyperreal::computable::node::Computable>::approx_signal+0xcc4>
+   a701f:	mov    %al,0x8(%rbx)
+   a7022:	movq   $0xffffffffffffffff,(%rbx)
+   a7029:	test   %r12,%r12
+   a702c:	je     a6beb <<hyperreal::computable::node::Computable>::approx_signal+0xccb>
+   a7032:	mov    0xd8(%rsp),%rdi
+   a703a:	jmp    a6fee <<hyperreal::computable::node::Computable>::approx_signal+0x10ce>
+   a703c:	mov    $0x20,%esi
+   a7041:	lea    -0x73b58(%rip),%rax        # 334f0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.345.llvm.4517756571377599578+0x3a0>
+   a7048:	mov    %rax,0x30(%rsp)
+   a704d:	lea    0xde694(%rip),%rax        # 1856e8 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x78>
+   a7054:	mov    %rax,0x38(%rsp)
+   a7059:	jmp    a70b9 <<hyperreal::computable::node::Computable>::approx_signal+0x1199>
+   a705b:	mov    $0x1b,%esi
+   a7060:	lea    -0x714e9(%rip),%rax        # 35b7e <anon.f651f877c5f1b0c83bd435f3f6e617b1.257.llvm.4517756571377599578+0x6b>
+   a7067:	mov    %rax,0x30(%rsp)
+   a706c:	lea    0xde645(%rip),%rax        # 1856b8 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x48>
+   a7073:	mov    %rax,0x38(%rsp)
+   a7078:	jmp    a70b9 <<hyperreal::computable::node::Computable>::approx_signal+0x1199>
+   a707a:	mov    $0x20,%esi
+   a707f:	jmp    a70b9 <<hyperreal::computable::node::Computable>::approx_signal+0x1199>
+   a7081:	lea    -0x714ef(%rip),%rdi        # 35b99 <anon.f651f877c5f1b0c83bd435f3f6e617b1.257.llvm.4517756571377599578+0x86>
+   a7088:	lea    0xde641(%rip),%rdx        # 1856d0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x60>
+   a708f:	mov    $0x1b,%esi
+   a7094:	call   *0xe28a6(%rip)        # 189940 <_DYNAMIC+0x4c0>
+   a709a:	jmp    a70f8 <<hyperreal::computable::node::Computable>::approx_signal+0x11d8>
+   a709c:	lea    0xde65d(%rip),%rax        # 185700 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x90>
+   a70a3:	mov    %rax,0x38(%rsp)
+   a70a8:	mov    $0x22,%esi
+   a70ad:	lea    -0x71500(%rip),%rax        # 35bb4 <anon.f651f877c5f1b0c83bd435f3f6e617b1.257.llvm.4517756571377599578+0xa1>
+   a70b4:	mov    %rax,0x30(%rsp)
+   a70b9:	mov    0x30(%rsp),%rdi
+   a70be:	mov    0x38(%rsp),%rdx
+   a70c3:	call   *0xe2877(%rip)        # 189940 <_DYNAMIC+0x4c0>
+   a70c9:	jmp    a70f8 <<hyperreal::computable::node::Computable>::approx_signal+0x11d8>
+   a70cb:	movb   $0xa,0x8(%rbx)
+   a70cf:	jmp    a6be4 <<hyperreal::computable::node::Computable>::approx_signal+0xcc4>
+   a70d4:	lea    0xde8ad(%rip),%rdx        # 185988 <anon.f651f877c5f1b0c83bd435f3f6e617b1.326.llvm.4517756571377599578+0x258>
+   a70db:	mov    $0x4,%esi
+   a70e0:	call   *0xe26fa(%rip)        # 1897e0 <_DYNAMIC+0x360>
+   a70e6:	lea    0xde59b(%rip),%rdx        # 185688 <anon.f651f877c5f1b0c83bd435f3f6e617b1.258.llvm.4517756571377599578+0x18>
+   a70ed:	mov    $0x10,%esi
+   a70f2:	call   *0xe26e8(%rip)        # 1897e0 <_DYNAMIC+0x360>
+   a70f8:	ud2
+   a70fa:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a70ff:	mov    %rax,%rbx
+   a7102:	test   %r12,%r12
+   a7105:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a710b:	mov    0xd8(%rsp),%rdi
+   a7113:	jmp    a712e <<hyperreal::computable::node::Computable>::approx_signal+0x120e>
+   a7115:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a711a:	mov    %rax,%rbx
+   a711d:	test   %r12,%r12
+   a7120:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a7126:	mov    0xb8(%rsp),%rdi
+   a712e:	shl    $0x3,%r12
+   a7132:	mov    $0x8,%edx
+   a7137:	jmp    a724d <<hyperreal::computable::node::Computable>::approx_signal+0x132d>
+   a713c:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a7141:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a7146:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a714b:	jmp    a7239 <<hyperreal::computable::node::Computable>::approx_signal+0x1319>
+   a7150:	mov    %rax,%rbx
+   a7153:	mov    0x330(%rsp),%rsi
+   a715b:	test   %rsi,%rsi
+   a715e:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a7164:	mov    0x338(%rsp),%rdi
+   a716c:	jmp    a71a7 <<hyperreal::computable::node::Computable>::approx_signal+0x1287>
+   a716e:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a7173:	mov    %rax,%rbx
+   a7176:	mov    0x70(%rsp),%rsi
+   a717b:	test   %rsi,%rsi
+   a717e:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a7184:	mov    0x78(%rsp),%rdi
+   a7189:	jmp    a71a7 <<hyperreal::computable::node::Computable>::approx_signal+0x1287>
+   a718b:	mov    %rax,%rbx
+   a718e:	mov    0x90(%rsp),%rsi
+   a7196:	test   %rsi,%rsi
+   a7199:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a719f:	mov    0x98(%rsp),%rdi
+   a71a7:	shl    $0x3,%rsi
+   a71ab:	mov    $0x8,%edx
+   a71b0:	call   *0xe2552(%rip)        # 189708 <_DYNAMIC+0x288>
+   a71b6:	jmp    a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a71bb:	mov    %rax,%rbx
+   a71be:	test   %r15,%r15
+   a71c1:	je     a728e <<hyperreal::computable::node::Computable>::approx_signal+0x136e>
+   a71c7:	mov    0xf8(%rsp),%rdi
+   a71cf:	shl    $0x3,%r15
+   a71d3:	mov    $0x8,%edx
+   a71d8:	mov    %r15,%rsi
+   a71db:	jmp    a7288 <<hyperreal::computable::node::Computable>::approx_signal+0x1368>
+   a71e0:	mov    %rax,%rbx
+   a71e3:	test   %r12,%r12
+   a71e6:	je     a728e <<hyperreal::computable::node::Computable>::approx_signal+0x136e>
+   a71ec:	mov    0xf8(%rsp),%rdi
+   a71f4:	shl    $0x3,%r12
+   a71f8:	mov    $0x8,%edx
+   a71fd:	mov    %r12,%rsi
+   a7200:	jmp    a7288 <<hyperreal::computable::node::Computable>::approx_signal+0x1368>
+   a7205:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a7207:	mov    %rax,%rbx
+   a720a:	mov    0x10(%rsp),%rsi
+   a720f:	test   %rsi,%rsi
+   a7212:	je     a728e <<hyperreal::computable::node::Computable>::approx_signal+0x136e>
+   a7214:	mov    0x18(%rsp),%rdi
+   a7219:	jmp    a7233 <<hyperreal::computable::node::Computable>::approx_signal+0x1313>
+   a721b:	mov    %rax,%rbx
+   a721e:	mov    0xf0(%rsp),%rsi
+   a7226:	test   %rsi,%rsi
+   a7229:	je     a728e <<hyperreal::computable::node::Computable>::approx_signal+0x136e>
+   a722b:	mov    0xf8(%rsp),%rdi
+   a7233:	shl    $0x3,%rsi
+   a7237:	jmp    a7283 <<hyperreal::computable::node::Computable>::approx_signal+0x1363>
+   a7239:	mov    %rax,%rbx
+   a723c:	test   %r12,%r12
+   a723f:	je     a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a7241:	shl    $0x3,%r12
+   a7245:	mov    $0x8,%edx
+   a724a:	mov    %r13,%rdi
+   a724d:	mov    %r12,%rsi
+   a7250:	call   *0xe24b2(%rip)        # 189708 <_DYNAMIC+0x288>
+   a7256:	jmp    a725d <<hyperreal::computable::node::Computable>::approx_signal+0x133d>
+   a7258:	jmp    a725a <<hyperreal::computable::node::Computable>::approx_signal+0x133a>
+   a725a:	mov    %rax,%rbx
+   a725d:	lea    0x210(%rsp),%rdi
+   a7265:	call   80100 <core::ptr::drop_glue::<hyperreal::computable::node::InlineStack<num_bigint::bigint::BigInt, 8>>>
+   a726a:	mov    0xf0(%rsp),%rsi
+   a7272:	test   %rsi,%rsi
+   a7275:	je     a728e <<hyperreal::computable::node::Computable>::approx_signal+0x136e>
+   a7277:	mov    0xf8(%rsp),%rdi
+   a727f:	shl    $0x4,%rsi
+   a7283:	mov    $0x8,%edx
+   a7288:	call   *0xe247a(%rip)        # 189708 <_DYNAMIC+0x288>
+   a728e:	mov    %rbx,%rdi
+   a7291:	call   183a80 <_Unwind_Resume@plt>

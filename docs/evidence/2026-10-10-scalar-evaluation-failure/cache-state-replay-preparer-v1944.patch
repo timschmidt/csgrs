@@ -1,0 +1,72 @@
+--- prepare_bound_merge_replays.py
++++ prepare_cache_state_merge_replays.py
+@@ -14 +14 @@
+-    out = E / "bound-merge-replay-protocol-v1858.json"
++    out = E / "cache-state-merge-replay-protocol-v1944.json"
+@@ -16 +16 @@
+-    proof = read(E / "bound-merge-proof-validation-v1840.json")
++    proof = read(E / "cache-state-merge-proof-validation-v1926.json")
+@@ -25,2 +25,2 @@
+-    build = "typed-api-prototype-v1843-bound-merge-release-build"
+-    unit = "typed-api-prototype-v1841-bound-merge-scalar-tests"
++    build = "typed-api-prototype-v1929-cache-state-merge-release-build"
++    unit = "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
+@@ -29 +29 @@
+-    for version, row in zip(range(1858, 1897), prior["caps"]):
++    for version, row in zip(range(1944, 1983), prior["caps"]):
+@@ -32 +32 @@
+-        caps.append({"phase": f"typed-api-prototype-v{version}-bound-merge-retained-cap",
++        caps.append({"phase": f"typed-api-prototype-v{version}-cache-state-merge-retained-cap",
+@@ -36,2 +36,2 @@
+-    for version, row in zip(range(1897, 1910), prior["numerical_replays"]):
+-        mapping[row["phase"]] = f"typed-api-prototype-v{version}-bound-merge-" + row["phase"].split("-domain-predicate-", 1)[1]
++    for version, row in zip(range(1983, 1996), prior["numerical_replays"]):
++        mapping[row["phase"]] = f"typed-api-prototype-v{version}-cache-state-merge-" + row["phase"].split("-domain-predicate-", 1)[1]
+@@ -62,2 +62,2 @@
+-    for version, row, runner in zip([1910, 1911], prior["public_replays"],
+-        ["reproduce_bound_merge_public_reuse.py", "reproduce_bound_merge_composed_reuse.py"]):
++    for version, row, runner in zip([1996, 1997], prior["public_replays"],
++        ["reproduce_cache_state_public_reuse.py", "reproduce_cache_state_composed_reuse.py"]):
+@@ -68 +68 @@
+-        after = "typed-api-prototype-v1850-bound-merge-atan-cost/summary.json"
++        after = "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
+@@ -72 +72 @@
+-        protocol.update(status="Frozen unchanged corpus replay for the conditional bound-merge extraction",
++        protocol.update(status="Frozen unchanged corpus replay for the conditional cache-state-merge extraction",
+@@ -77 +77 @@
+-        name = f"bound-merge-{family}-protocol-v{version}.json"
++        name = f"cache-state-merge-{family}-protocol-v{version}.json"
+@@ -81 +81 @@
+-        phase = f"typed-api-prototype-v{version}-bound-merge-{family}"
++        phase = f"typed-api-prototype-v{version}-cache-state-merge-{family}"
+@@ -92,2 +92,2 @@
+-        "domain-predicate-replay-validation-v1834.json": "bound-merge-replay-validation-v1911.json"}
+-    fork("run_domain_predicate_replays.py", "run_bound_merge_replays.py", {
++        "domain-predicate-replay-validation-v1834.json": "cache-state-merge-replay-validation-v1997.json"}
++    fork("run_domain_predicate_replays.py", "run_cache_state_replays.py", {
+@@ -95,2 +95,2 @@
+-        "domain-predicate-candidate-validation-v1772.json": "bound-merge-candidate-validation-v1849.json",
+-        "domain-predicate-cost-orchestration-v1779.json": "bound-merge-cost-orchestration-v1856.json",
++        "domain-predicate-candidate-validation-v1772.json": "cache-state-merge-candidate-validation-v1935.json",
++        "domain-predicate-cost-orchestration-v1779.json": "cache-state-merge-cost-orchestration-v1942.json",
+@@ -98 +98 @@
+-    fork("compare_domain_predicate_queries.py", "compare_bound_merge_queries.py", {
++    fork("compare_domain_predicate_queries.py", "compare_cache_state_queries.py", {
+@@ -100 +100 @@
+-        "domain-predicate-domain-query-comparison-v1819.json": "bound-merge-domain-query-comparison-v1896.json",
++        "domain-predicate-domain-query-comparison-v1819.json": "cache-state-merge-domain-query-comparison-v1982.json",
+@@ -102 +102 @@
+-    fork("compare_domain_predicate_replays.py", "compare_bound_merge_replays.py", {
++    fork("compare_domain_predicate_replays.py", "compare_cache_state_replays.py", {
+@@ -104 +104 @@
+-        "domain-predicate-deterministic-replay-comparison-v1835.json": "bound-merge-deterministic-replay-comparison-v1912.json",
++        "domain-predicate-deterministic-replay-comparison-v1835.json": "cache-state-merge-deterministic-replay-comparison-v1998.json",
+@@ -108 +108 @@
+-    fork("audit_domain_predicate_fact_retention.py", "audit_bound_merge_fact_retention.py", {
++    fork("audit_domain_predicate_fact_retention.py", "audit_cache_state_fact_retention.py", {
+@@ -110 +110 @@
+-        "domain-predicate-public-fact-audit-v1835.json": "bound-merge-public-fact-audit-v1912.json",
++        "domain-predicate-public-fact-audit-v1835.json": "cache-state-merge-public-fact-audit-v1998.json",
+@@ -113 +113 @@
+-        "status": "Frozen before runtime builds and replay execution",
++        "status": "Frozen before the nine runtime qualification commands and replay execution; earlier compile-only diagnostics remain separate",

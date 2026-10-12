@@ -1,0 +1,23 @@
+--- record_bound_merge_cost_milestone.py
++++ record_cache_state_merge_cost_milestone.py
+@@ -15 +15 @@
+-    costs_path = E / "bound-merge-cost-review-v1857.json"
++    costs_path = E / "cache-state-merge-cost-review-v1943.json"
+@@ -19,2 +19,2 @@
+-    broad = read(E / "bound-merge-broad-milestone-v1849.json")
+-    controller_path = E / "bound-merge-cost-validation-v1857.json"
++    broad = read(E / "cache-state-merge-broad-milestone-v1935.json")
++    controller_path = E / "cache-state-merge-cost-validation-v1943.json"
+@@ -44,2 +44,2 @@
+-    out = E / "bound-merge-cost-milestone-v1857.json"
+-    ledger_record = E / "bound-merge-cost-ledger-v1857.json"
++    out = E / "cache-state-merge-cost-milestone-v1943.json"
++    ledger_record = E / "cache-state-merge-cost-ledger-v1943.json"
+@@ -59,2 +59,2 @@
+-        "next_replay_protocol": "bound-merge-replay-protocol-v1858.json",
+-        "next_replay_runner": "run_bound_merge_replays.py",
++        "next_replay_protocol": "cache-state-merge-replay-protocol-v1944.json",
++        "next_replay_runner": "run_cache_state_replays.py",
+@@ -86 +86 @@
+-        "The v1850-v1857 local cost gates pass on the unchanged proved bound-merge source: "
++        "The v1936-v1943 local cost gates pass on the unchanged proved cache-state-merge source: "

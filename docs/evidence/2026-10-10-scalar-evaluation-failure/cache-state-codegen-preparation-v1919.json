@@ -1,0 +1,10 @@
+{
+  "predecessor": "inspect_flat_merge_codegen.py",
+  "predecessor_sha256": "6366b63acfd4d4c34747287333f343294e131b724c7c4af60fa1637ffffd5869",
+  "runner": "inspect_cache_state_codegen.py",
+  "runner_sha256": "c10788d72423fbf759b0c9f4f1ab056a1dc37e40a2940a09a66ff51642542dd7",
+  "fork_patch": "cache-state-codegen-runner-v1919.patch",
+  "fork_patch_sha256": "b5fa5ee4e3bf27394040d047801bac43b6298dcd2aee108b44bd6113e9411df7",
+  "timing_processes_permitted": 0,
+  "scope": "Preserve all original build/probe/disassembly commands. Update phase identities and source checks for the six declared files, require the exact publication-call replacement, and include bounds.rs in rustfmt checks. The probe is compiled but never executed."
+}

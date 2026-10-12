@@ -1,0 +1,18 @@
+{
+  "status": "Forced inlining leaves publication at 1684 bytes; freeze it before testing an outlined selector",
+  "previous_diagnostic_source_record": "typed-api-prototype-v1921-inlined-cache-merge-codegen/source-hashes.json.gz",
+  "previous_diagnostic_source_record_sha256": "3047726d5a947ac540a499768840e1e4851ed5254b7b757f08df362278aacdba",
+  "source_files_verified": 24746,
+  "archived_sources_sha256": {
+    "crates/hyperreal/src/computable/node/bounds.rs": "442fb9e9251eda144c414194d74471709940107bcb298941dc75a9e7dc01ecfa"
+  },
+  "previous_codegen": "inlined-cache-merge-generated-code-v1921/summary.json",
+  "previous_codegen_sha256": "02d1d98eaed21142e5e020af8e568513e7722fc780b673ef907ed612c67b4e53",
+  "previous_publication_bytes": 1684,
+  "first_rejected_publication_bytes": 860,
+  "retained_publication_bytes": 517,
+  "timed_processes": 0,
+  "change_boundary": "Only change #[inline(always)] to #[inline(never)] on the pure BoundCache::merge selector. Its body, contract, all callers, mutation cases, other sources, fixtures and compiler flags remain identical.",
+  "diagnostic_scope": "Include the standalone selector symbol as well as publication and compare their aggregate code size. A smaller wrapper alone is not evidence of smaller total selection code. The new call can have a runtime cost; only the unchanged full cost protocol can measure it.",
+  "limits": "No new timing observations exist for the direct-match or forced-inline variants. Neither is retained. Keep the prior v1857 cost rejection, retained v1836, all previous diagnostics and full proof/runtime/cost/replay gates unchanged."
+}

@@ -1,0 +1,133 @@
+[
+  {
+    "name": "included-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/bounds.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/representation.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.023120244033634663
+  },
+  {
+    "name": "workspace-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 10.393024817109108
+  },
+  {
+    "name": "release-build",
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "--all-features"
+    ],
+    "exit_code": 0,
+    "seconds": 70.39203537767753
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/outlined-cache-merge-generated-code-v1923/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.30558092007413507
+  },
+  {
+    "name": "publish-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=688704",
+      "--stop-address=688996",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.01059696264564991
+  },
+  {
+    "name": "approx-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=680000",
+      "--stop-address=684982",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008406653068959713
+  },
+  {
+    "name": "cache-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=774576",
+      "--stop-address=775689",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.006917155347764492
+  },
+  {
+    "name": "main-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=388144",
+      "--stop-address=396803",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008790136780589819
+  },
+  {
+    "name": "merge_helper-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=552720",
+      "--stop-address=552948",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-cache-merge-generated-code-v1923/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.006598527077585459
+  }
+]

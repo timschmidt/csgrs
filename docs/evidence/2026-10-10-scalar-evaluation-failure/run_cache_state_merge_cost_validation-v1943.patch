@@ -1,0 +1,37 @@
+--- run_bound_merge_cost_validation.py
++++ run_cache_state_merge_cost_validation.py
+@@ -16,3 +16,3 @@
+-    validation = read(E / "bound-merge-candidate-validation-v1849.json")
+-    broad = read(E / "bound-merge-broad-validation-v1849.json")
+-    protocol = read(E / "bound-merge-cost-protocol-v1850.json")
++    validation = read(E / "cache-state-merge-candidate-validation-v1935.json")
++    broad = read(E / "cache-state-merge-broad-validation-v1935.json")
++    protocol = read(E / "cache-state-merge-cost-protocol-v1936.json")
+@@ -23 +23 @@
+-    strategy = E / "bound-merge-cost-followup-strategy-v1857.json"
++    strategy = E / "cache-state-merge-cost-followup-strategy-v1943.json"
+@@ -25,2 +25,2 @@
+-    out = E / "bound-merge-cost-validation-v1857.json"
+-    logs = E / "bound-merge-cost-controller-v1857"
++    out = E / "cache-state-merge-cost-validation-v1943.json"
++    logs = E / "cache-state-merge-cost-controller-v1943"
+@@ -55,2 +55,2 @@
+-    assert run("standalone", "run_bound_merge_costs.py") == 0
+-    paired = run("paired", "replay_bound_merge_cost.py")
++    assert run("standalone", "run_cache_state_merge_costs.py") == 0
++    paired = run("paired", "replay_cache_state_merge_cost.py")
+@@ -59 +59 @@
+-    reviewed = run("initial-review", "record_bound_merge_initial_costs.py")
++    reviewed = run("initial-review", "record_cache_state_merge_initial_costs.py")
+@@ -61,2 +61,2 @@
+-    assert run("freeze-followup", "prepare_bound_merge_cost_followup.py") == 0
+-    followup = read(E / "bound-merge-cost-followup-protocol-v1857.json")
++    assert run("freeze-followup", "prepare_cache_state_merge_cost_followup.py") == 0
++    followup = read(E / "cache-state-merge-cost-followup-protocol-v1943.json")
+@@ -65,3 +65,3 @@
+-        assert run(f"followup-{index}", "replay_bound_merge_followup.py", str(index)) == 0
+-    assert run("final-review", "record_bound_merge_costs.py") == 0
+-    result = read(E / "bound-merge-cost-review-v1857.json")
++        assert run(f"followup-{index}", "replay_cache_state_merge_followup.py", str(index)) == 0
++    assert run("final-review", "record_cache_state_merge_costs.py") == 0
++    result = read(E / "cache-state-merge-cost-review-v1943.json")

@@ -1,0 +1,10 @@
+{
+  "predecessor": "prepare_bound_merge_replays.py",
+  "predecessor_sha256": "f108e524a60c49df274f5752698cb10a059e7262f28b4d84f92d3a6d80f6c02d",
+  "prepared_generator": "prepare_cache_state_merge_replays.py",
+  "prepared_generator_sha256": "6b157e1e9bc605010d1c980239d20f910640fb97cea4c93281aa9cf2a898c54f",
+  "fork_patch": "cache-state-replay-preparer-v1944.patch",
+  "fork_patch_sha256": "a46778c2dbe74e67b0faf7fd08ded761292a3ecf54f3fb37aca1dc1ebc69b541",
+  "status": "Prepared only; run after the complete fresh proof record exists",
+  "scope": "Keep retained v1836 as the replay baseline, with all 39 capped phases, 4129 numerical cases, 648 public schedules, original per-corpus limits, deterministic receipt comparisons and concurrent fact audits. Only candidate phase/runner identities and freeze-status wording change."
+}

@@ -1,0 +1,53 @@
+--- inspect_cache_state_codegen.py
++++ inspect_inlined_cache_merge.py
+@@ -1 +1 @@
+-"""Build the direct cache-state merge and inspect code without timing the probe."""
++"""Inspect the one-attribute pure-merge inlining variant without timing it."""
+@@ -12 +12 @@
+-PHASE = E / "typed-api-prototype-v1919-cache-state-merge-codegen"
++PHASE = E / "typed-api-prototype-v1921-inlined-cache-merge-codegen"
+@@ -18,2 +18,2 @@
+-    out = E / "cache-state-merge-generated-code-v1919"
+-    binary = ROOT / "target/cache-state-merge-generated-code-v1919/probe"
++    out = E / "inlined-cache-merge-generated-code-v1921"
++    binary = ROOT / "target/inlined-cache-merge-generated-code-v1921/probe"
+@@ -21 +21 @@
+-    baseline = read(E / "cache-state-merge-baseline-v1918/baseline.json")
++    baseline = read(E / "cache-merge-inlining-baseline-v1920/baseline.json")
+@@ -25,2 +25,2 @@
+-    name = "crates/hyperreal/src/computable/node/representation.rs"
+-    assert set(changed) == set(baseline["archived_sources_sha256"]) and len(changed) == 6
++    name = "crates/hyperreal/src/computable/node/bounds.rs"
++    assert set(changed) == set(baseline["archived_sources_sha256"]) and len(changed) == 1
+@@ -28,9 +28,6 @@
+-    old = (E / "cache-state-merge-baseline-v1918/inputs" / name).read_text()
+-    previous = """            let combined = match (retained, value) {
+-                (BoundCache::Invalid | BoundCache::Valid(BoundInfo::Unknown), incoming) => incoming,
+-                (BoundCache::Valid(bound), incoming) => bound.merge(incoming),
+-            };
+-"""
+-    replacement = """            let combined = retained.merge(value);
+-"""
+-    assert old.count(previous) == 1 and (SOURCE / name).read_text() == old.replace(previous, replacement, 1)
++    old = (E / "cache-merge-inlining-baseline-v1920/inputs" / name).read_text()
++    start = old.index("impl BoundCache {")
++    end = old.index("impl BoundInfo {", start)
++    method = old[start:end]
++    assert method.count("#[inline]") == 1
++    assert (SOURCE / name).read_text() == old[:start] + method.replace("#[inline]", "#[inline(always)]", 1) + old[end:]
+@@ -54 +51 @@
+-    run("included-format", ["rustfmt", "--edition", "2024", "--check", str(SOURCE / name), str(SOURCE / "crates/hyperreal/src/computable/node/bounds.rs")])
++    run("included-format", ["rustfmt", "--edition", "2024", "--check", str(SOURCE / name), str(SOURCE / "crates/hyperreal/src/computable/node/representation.rs")])
+@@ -78 +75,2 @@
+-            "rejected_bytes": reference["functions"]["candidate"][label]["bytes"]}
++            "rejected_bytes": reference["functions"]["candidate"][label]["bytes"],
++            "direct_match_bytes": read(E / baseline["previous_codegen"])["functions"][label]["bytes"]}
+@@ -81,4 +79,4 @@
+-        "changed_since_caller_only_diagnostic_sha256": changed,
+-        "declared_source_set_and_publication_expression_verified": True,
+-        "baseline": "cache-state-merge-baseline-v1918/baseline.json",
+-        "baseline_sha256": sha(E / "cache-state-merge-baseline-v1918/baseline.json"),
++        "changed_since_direct_cache_match_sha256": changed,
++        "only_merge_inlining_attribute_changed": True,
++        "baseline": "cache-merge-inlining-baseline-v1920/baseline.json",
++        "baseline_sha256": sha(E / "cache-merge-inlining-baseline-v1920/baseline.json"),

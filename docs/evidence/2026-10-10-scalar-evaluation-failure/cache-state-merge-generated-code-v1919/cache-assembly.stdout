@@ -1,0 +1,292 @@
+
+/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-generated-code-v1919/probe:     file format elf64-x86-64
+
+
+Disassembly of section .text:
+
+00000000000bd600 <<hyperreal::computable::node::EvaluationCache>::at_precision>:
+   bd600:	push   %rbp
+   bd601:	push   %r15
+   bd603:	push   %r14
+   bd605:	push   %r13
+   bd607:	push   %r12
+   bd609:	push   %rbx
+   bd60a:	sub    $0x68,%rsp
+   bd60e:	mov    %rdi,%r14
+   bd611:	mov    (%rsi),%rbx
+   bd614:	test   %rbx,%rbx
+   bd617:	je     bd657 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x57>
+   bd619:	mov    (%rbx),%eax
+   bd61b:	cmp    $0x3ffffffd,%eax
+   bd620:	ja     bd955 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x355>
+   bd626:	lea    0x1(%rax),%ecx
+   bd629:	lock cmpxchg %ecx,(%rbx)
+   bd62d:	jne    bd955 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x355>
+   bd633:	movzbl 0x8(%rbx),%eax
+   bd637:	cmpq   $0xffffffffffffffff,0x10(%rbx)
+   bd63c:	je     bd973 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x373>
+   bd642:	lea    0x10(%rbx),%r15
+   bd646:	sub    0x30(%rbx),%edx
+   bd649:	jge    bd663 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x63>
+   bd64b:	movq   $0xffffffffffffffff,(%r14)
+   bd652:	jmp    bd934 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x334>
+   bd657:	movq   $0xffffffffffffffff,(%r14)
+   bd65e:	jmp    bd990 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x390>
+   bd663:	jne    bd6d6 <<hyperreal::computable::node::EvaluationCache>::at_precision+0xd6>
+   bd665:	mov    0x20(%rbx),%rbp
+   bd669:	lea    0x0(,%rbp,8),%r15
+   bd671:	mov    %rbp,%rax
+   bd674:	shr    $0x3d,%rax
+   bd678:	setne  %al
+   bd67b:	movabs $0x7ffffffffffffff8,%rcx
+   bd685:	cmp    %rcx,%r15
+   bd688:	seta   %cl
+   bd68b:	or     %al,%cl
+   bd68d:	jne    bd705 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x105>
+   bd68f:	movzbl 0x28(%rbx),%eax
+   bd693:	mov    %al,0xc(%rsp)
+   bd697:	mov    0x18(%rbx),%rsi
+   bd69b:	test   %r15,%r15
+   bd69e:	je     bd790 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x190>
+   bd6a4:	mov    %rsi,0x58(%rsp)
+   bd6a9:	call   *0xcc011(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   bd6af:	mov    $0x8,%esi
+   bd6b4:	mov    %r15,%rdi
+   bd6b7:	call   *0xcc00b(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   bd6bd:	test   %rax,%rax
+   bd6c0:	je     bd9fc <<hyperreal::computable::node::EvaluationCache>::at_precision+0x3fc>
+   bd6c6:	mov    %rax,%r13
+   bd6c9:	mov    %rbp,%r12
+   bd6cc:	mov    0x58(%rsp),%rsi
+   bd6d1:	jmp    bd799 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x199>
+   bd6d6:	cmp    $0x1,%edx
+   bd6d9:	jne    bd712 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x112>
+   bd6db:	mov    0x20(%rbx),%r12
+   bd6df:	lea    0x0(,%r12,8),%r15
+   bd6e7:	mov    %r12,%rax
+   bd6ea:	shr    $0x3d,%rax
+   bd6ee:	setne  %al
+   bd6f1:	movabs $0x7ffffffffffffff8,%rcx
+   bd6fb:	cmp    %rcx,%r15
+   bd6fe:	seta   %cl
+   bd701:	or     %al,%cl
+   bd703:	je     bd75d <<hyperreal::computable::node::EvaluationCache>::at_precision+0x15d>
+   bd705:	xor    %edi,%edi
+   bd707:	mov    %r15,%rsi
+   bd70a:	call   *0xcc018(%rip)        # 189728 <_DYNAMIC+0x2a8>
+   bd710:	ud2
+   bd712:	mov    0x20(%rbx),%rax
+   bd716:	test   %rax,%rax
+   bd719:	je     bd740 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x140>
+   bd71b:	mov    0x18(%rbx),%rcx
+   bd71f:	mov    %edx,%esi
+   bd721:	mov    $0x7f,%edi
+   bd726:	bsr    -0x8(%rcx,%rax,8),%rdi
+   bd72c:	xor    $0x3f,%rdi
+   bd730:	shl    $0x6,%rax
+   bd734:	sub    %rdi,%rax
+   bd737:	cmp    %rsi,%rax
+   bd73a:	jae    bd7c3 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x1c3>
+   bd740:	movups -0x8a127(%rip),%xmm0        # 33620 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351+0x10>
+   bd747:	movaps %xmm0,0x20(%rsp)
+   bd74c:	movups -0x8a143(%rip),%xmm0        # 33610 <anon.cc8a35c2c4be5681ab7929d48bff7af3.53.llvm.402208641839637351>
+   bd753:	movaps %xmm0,0x10(%rsp)
+   bd758:	jmp    bd921 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x321>
+   bd75d:	movzbl 0x28(%rbx),%ebp
+   bd761:	mov    0x18(%rbx),%r13
+   bd765:	test   %r15,%r15
+   bd768:	je     bd808 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x208>
+   bd76e:	call   *0xcbf4c(%rip)        # 1896c0 <_DYNAMIC+0x240>
+   bd774:	mov    $0x8,%esi
+   bd779:	mov    %r15,%rdi
+   bd77c:	call   *0xcbf46(%rip)        # 1896c8 <_DYNAMIC+0x248>
+   bd782:	test   %rax,%rax
+   bd785:	je     bd9fc <<hyperreal::computable::node::EvaluationCache>::at_precision+0x3fc>
+   bd78b:	mov    %r12,%rsi
+   bd78e:	jmp    bd80f <<hyperreal::computable::node::EvaluationCache>::at_precision+0x20f>
+   bd790:	mov    $0x8,%r13d
+   bd796:	xor    %r12d,%r12d
+   bd799:	test   %rbp,%rbp
+   bd79c:	je     bd7aa <<hyperreal::computable::node::EvaluationCache>::at_precision+0x1aa>
+   bd79e:	mov    %r13,%rdi
+   bd7a1:	mov    %r15,%rdx
+   bd7a4:	call   *0xcbf36(%rip)        # 1896e0 <memcpy@GLIBC_2.14>
+   bd7aa:	mov    %r12,(%r14)
+   bd7ad:	mov    %r13,0x8(%r14)
+   bd7b1:	mov    %rbp,0x10(%r14)
+   bd7b5:	movzbl 0xc(%rsp),%eax
+   bd7ba:	mov    %al,0x18(%r14)
+   bd7be:	jmp    bd934 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x334>
+   bd7c3:	dec    %edx
+   bd7c5:	mov    %r15,%rdi
+   bd7c8:	mov    %rdx,%r12
+   bd7cb:	mov    %edx,%esi
+   bd7cd:	call   127390 <num_bigint::bigint::shift::shr_round_down::<u32>>
+   bd7d2:	mov    %eax,%ebp
+   bd7d4:	cmpq   $0x0,0x20(%rbx)
+   bd7d9:	je     bd847 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x247>
+   bd7db:	mov    %r12,%rdx
+   bd7de:	mov    %edx,%eax
+   bd7e0:	and    $0x3f,%al
+   bd7e2:	shr    $0x6,%edx
+   bd7e5:	movq   $0xffffffffffffffff,0x10(%rsp)
+   bd7ee:	mov    %r15,0x18(%rsp)
+   bd7f3:	movzbl %al,%ecx
+   bd7f6:	lea    0x38(%rsp),%rdi
+   bd7fb:	lea    0x10(%rsp),%rsi
+   bd800:	call   *0xcc10a(%rip)        # 189910 <_DYNAMIC+0x490>
+   bd806:	jmp    bd854 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x254>
+   bd808:	mov    $0x8,%eax
+   bd80d:	xor    %esi,%esi
+   bd80f:	test   %r12,%r12
+   bd812:	je     bd83f <<hyperreal::computable::node::EvaluationCache>::at_precision+0x23f>
+   bd814:	mov    %r13,%rcx
+   bd817:	mov    %rax,%r13
+   bd81a:	mov    %rax,%rdi
+   bd81d:	mov    %ebp,0xc(%rsp)
+   bd821:	mov    %rsi,%rbp
+   bd824:	mov    %rcx,%rsi
+   bd827:	mov    %r15,%rdx
+   bd82a:	call   *0xcbeb0(%rip)        # 1896e0 <memcpy@GLIBC_2.14>
+   bd830:	mov    %r13,%rax
+   bd833:	mov    %rbp,%rsi
+   bd836:	mov    0xc(%rsp),%ebp
+   bd83a:	jmp    bd8da <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2da>
+   bd83f:	xor    %r12d,%r12d
+   bd842:	jmp    bd8da <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2da>
+   bd847:	lea    0x38(%rsp),%rdi
+   bd84c:	mov    %r15,%rsi
+   bd84f:	call   12b910 <<alloc::vec::Vec<u64> as core::clone::Clone>::clone>
+   bd854:	test   %bpl,%bpl
+   bd857:	je     bd86a <<hyperreal::computable::node::EvaluationCache>::at_precision+0x26a>
+   bd859:	lea    0x10(%rsp),%rdi
+   bd85e:	lea    0x38(%rsp),%rsi
+   bd863:	call   c1b30 <<num_bigint::biguint::BigUint as core::ops::arith::Add<u32>>::add>
+   bd868:	jmp    bd87e <<hyperreal::computable::node::EvaluationCache>::at_precision+0x27e>
+   bd86a:	mov    0x48(%rsp),%rax
+   bd86f:	mov    %rax,0x20(%rsp)
+   bd874:	movups 0x38(%rsp),%xmm0
+   bd879:	movaps %xmm0,0x10(%rsp)
+   bd87e:	movzbl 0x28(%rbx),%eax
+   bd882:	cmp    $0x1,%al
+   bd884:	jne    bd899 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x299>
+   bd886:	mov    0x10(%rsp),%rsi
+   bd88b:	mov    $0x1,%bpl
+   bd88e:	cmp    $0x4,%rsi
+   bd892:	jae    bd8b3 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2b3>
+   bd894:	xor    %r12d,%r12d
+   bd897:	jmp    bd8d5 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2d5>
+   bd899:	mov    0x10(%rsp),%rsi
+   bd89e:	mov    0x20(%rsp),%r12
+   bd8a3:	test   %r12,%r12
+   bd8a6:	movzbl %al,%eax
+   bd8a9:	mov    $0x1,%ebp
+   bd8ae:	cmovne %eax,%ebp
+   bd8b1:	jmp    bd8d5 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2d5>
+   bd8b3:	mov    0x18(%rsp),%rdi
+   bd8b8:	shl    $0x3,%rsi
+   bd8bc:	mov    $0x8,%edx
+   bd8c1:	call   *0xcbe41(%rip)        # 189708 <_DYNAMIC+0x288>
+   bd8c7:	movq   $0x8,0x18(%rsp)
+   bd8d0:	xor    %r12d,%r12d
+   bd8d3:	xor    %esi,%esi
+   bd8d5:	mov    0x18(%rsp),%rax
+   bd8da:	mov    %rsi,0x10(%rsp)
+   bd8df:	mov    %rax,0x18(%rsp)
+   bd8e4:	mov    %r12,0x20(%rsp)
+   bd8e9:	mov    %bpl,0x28(%rsp)
+   bd8ee:	mov    0xfd41c(%rip),%ecx        # 1bad10 <hyperreal::computable::node::signed::ONE+0x20>
+   bd8f4:	test   %ecx,%ecx
+   bd8f6:	jne    bd9b6 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x3b6>
+   bd8fc:	lea    0xfd3ed(%rip),%rdx        # 1bacf0 <hyperreal::computable::node::signed::ONE>
+   bd903:	lea    0x38(%rsp),%rdi
+   bd908:	lea    0x10(%rsp),%rsi
+   bd90d:	call   c17e0 <<num_bigint::bigint::BigInt as core::ops::arith::Add<&num_bigint::bigint::BigInt>>::add>
+   bd912:	lea    0x10(%rsp),%rdi
+   bd917:	lea    0x38(%rsp),%rsi
+   bd91c:	call   c2d00 <<num_bigint::bigint::BigInt as core::ops::bit::Shr<i32>>::shr>
+   bd921:	movaps 0x10(%rsp),%xmm0
+   bd926:	movaps 0x20(%rsp),%xmm1
+   bd92b:	movups %xmm1,0x10(%r14)
+   bd930:	movups %xmm0,(%r14)
+   bd934:	mov    $0xffffffff,%esi
+   bd939:	lock xadd %esi,(%rbx)
+   bd93d:	dec    %esi
+   bd93f:	mov    %esi,%eax
+   bd941:	and    $0xbfffffff,%eax
+   bd946:	neg    %eax
+   bd948:	jno    bd990 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x390>
+   bd94a:	mov    %rbx,%rdi
+   bd94d:	call   *0xcc0fd(%rip)        # 189a50 <_DYNAMIC+0x5d0>
+   bd953:	jmp    bd990 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x390>
+   bd955:	mov    %rbx,%rdi
+   bd958:	mov    %rdx,%r15
+   bd95b:	call   *0xcc0f7(%rip)        # 189a58 <_DYNAMIC+0x5d8>
+   bd961:	mov    %r15,%rdx
+   bd964:	movzbl 0x8(%rbx),%eax
+   bd968:	cmpq   $0xffffffffffffffff,0x10(%rbx)
+   bd96d:	jne    bd642 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x42>
+   bd973:	movq   $0xffffffffffffffff,(%r14)
+   bd97a:	mov    $0xffffffff,%esi
+   bd97f:	lock xadd %esi,(%rbx)
+   bd983:	dec    %esi
+   bd985:	mov    %esi,%eax
+   bd987:	and    $0xbfffffff,%eax
+   bd98c:	neg    %eax
+   bd98e:	jo     bd99f <<hyperreal::computable::node::EvaluationCache>::at_precision+0x39f>
+   bd990:	add    $0x68,%rsp
+   bd994:	pop    %rbx
+   bd995:	pop    %r12
+   bd997:	pop    %r13
+   bd999:	pop    %r14
+   bd99b:	pop    %r15
+   bd99d:	pop    %rbp
+   bd99e:	ret
+   bd99f:	mov    %rbx,%rdi
+   bd9a2:	add    $0x68,%rsp
+   bd9a6:	pop    %rbx
+   bd9a7:	pop    %r12
+   bd9a9:	pop    %r13
+   bd9ab:	pop    %r14
+   bd9ad:	pop    %r15
+   bd9af:	pop    %rbp
+   bd9b0:	jmp    *0xcc09a(%rip)        # 189a50 <_DYNAMIC+0x5d0>
+   bd9b6:	mov    %rax,%r12
+   bd9b9:	mov    %rsi,%r15
+   bd9bc:	lea    0xfd32d(%rip),%rax        # 1bacf0 <hyperreal::computable::node::signed::ONE>
+   bd9c3:	mov    %rax,0x60(%rsp)
+   bd9c8:	lea    0x60(%rsp),%rax
+   bd9cd:	mov    %rax,0x38(%rsp)
+   bd9d2:	lea    0xfd337(%rip),%rdi        # 1bad10 <hyperreal::computable::node::signed::ONE+0x20>
+   bd9d9:	lea    0xc76f8(%rip),%rcx        # 1850d8 <anon.f651f877c5f1b0c83bd435f3f6e617b1.3.llvm.4517756571377599578>
+   bd9e0:	lea    0xc76d9(%rip),%r8        # 1850c0 <anon.f651f877c5f1b0c83bd435f3f6e617b1.2.llvm.4517756571377599578>
+   bd9e7:	lea    0x38(%rsp),%rdx
+   bd9ec:	mov    $0x1,%esi
+   bd9f1:	call   *0xcbe71(%rip)        # 189868 <_DYNAMIC+0x3e8>
+   bd9f7:	jmp    bd8fc <<hyperreal::computable::node::EvaluationCache>::at_precision+0x2fc>
+   bd9fc:	mov    $0x8,%edi
+   bda01:	jmp    bd707 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x107>
+   bda06:	mov    %rax,%r14
+   bda09:	test   %r15,%r15
+   bda0c:	je     bda2a <<hyperreal::computable::node::EvaluationCache>::at_precision+0x42a>
+   bda0e:	mov    %r15,%rsi
+   bda11:	shl    $0x3,%rsi
+   bda15:	mov    $0x8,%edx
+   bda1a:	mov    %r12,%rdi
+   bda1d:	call   *0xcbce5(%rip)        # 189708 <_DYNAMIC+0x288>
+   bda23:	jmp    bda2a <<hyperreal::computable::node::EvaluationCache>::at_precision+0x42a>
+   bda25:	jmp    bda27 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x427>
+   bda27:	mov    %rax,%r14
+   bda2a:	mov    $0xffffffff,%esi
+   bda2f:	lock xadd %esi,(%rbx)
+   bda33:	dec    %esi
+   bda35:	mov    %esi,%eax
+   bda37:	and    $0xbfffffff,%eax
+   bda3c:	neg    %eax
+   bda3e:	jo     bda48 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x448>
+   bda40:	mov    %r14,%rdi
+   bda43:	call   183a80 <_Unwind_Resume@plt>
+   bda48:	mov    %rbx,%rdi
+   bda4b:	call   *0xcbfff(%rip)        # 189a50 <_DYNAMIC+0x5d0>
+   bda51:	jmp    bda40 <<hyperreal::computable::node::EvaluationCache>::at_precision+0x440>
+   bda53:	call   *0xcbca7(%rip)        # 189700 <_DYNAMIC+0x280>
