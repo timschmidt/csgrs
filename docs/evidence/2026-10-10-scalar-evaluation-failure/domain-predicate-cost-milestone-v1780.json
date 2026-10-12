@@ -1,0 +1,27 @@
+{
+  "status": "All frozen local cost controls and the prescribed repeat complete under original caps; runtime retention awaits replays",
+  "source_record": "typed-api-prototype-v1766-domain-predicate-release-build/source-hashes.json.gz",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "cost_record": "domain-predicate-cost-review-v1780.json",
+  "cost_record_sha256": "ba66b633d83eda8440ae1df167cb6fd4abaa9c36766c8e5a78a770a648ed057d",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1754-state.json",
+  "retained_runtime_checkpoint_sha256": "869debcfc73df34c47cec7ce84ce7f57a30507a0201083773e8d05f576dcac71",
+  "successful_cost_processes": 1566,
+  "separate_cpu_preludes": 1098,
+  "original_paired_fixtures": 52,
+  "original_paired_processes": 936,
+  "followup_processes": 162,
+  "failed_cost_processes": 0,
+  "initial_and_followup_pi_percent": [
+    5.050091607219431,
+    1.0190624625344702
+  ],
+  "next_replay_protocol": "domain-predicate-replay-protocol-v1781.json",
+  "next_replay_runner": "run_domain_predicate_replays.py",
+  "limits": [
+    "The 5.0501 percent initial pi increase and 1.0191 percent 27-pair repeat are both retained. No causal attribution or uniform speedup is established.",
+    "All non-timing outputs are unchanged. Seven probe executables shrink by 48 to 152 bytes; these local sizes do not establish whole-board size parity.",
+    "The cost baseline is the retained v1754 runtime. Older v1638/v1710 failures and the integer-control tradeoff remain separate evidence; the fixed pre-Verus acceptance baseline is not reset.",
+    "The extraction remains unretained pending all 39 capped phases, 4129 numerical cases, 648 public reuse schedules and their receipt/fact audits. Main/native/full-board admission and all thirteen whole-crate proof groups remain open."
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "status": "Frozen after the complete original-cap comparison and before follow-up execution",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "original_record": "domain-predicate-initial-cost-review-v1780.json",
+  "original_record_sha256": "3fb66a61db1643adb9079736d6711d227c8b4d6193abb17d3eb2344965f9af1c",
+  "original_run": "domain-predicate-preconditioned-cost-v1780",
+  "original_run_complete": true,
+  "initial_above_five_percent_increases": [
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          50486,
+          52536,
+          51306,
+          49446,
+          48537,
+          49296,
+          56216,
+          54016,
+          51647
+        ],
+        "candidate": [
+          55206,
+          77284,
+          51006,
+          53897,
+          51466,
+          72575,
+          51866,
+          50906,
+          57206
+        ]
+      },
+      "median_ns": {
+        "baseline": 51306,
+        "candidate": 53897
+      },
+      "median_percent_change": 5.050091607219431
+    }
+  ],
+  "retained_runtime_checkpoint": "typed-api-prototype-v1754-state.json",
+  "unchanged_inputs": "The original run and every observation remain immutable. Both binaries use identical inputs and limits; no reduced fixture or substituted baseline is used.",
+  "jobs": [
+    {
+      "output": "domain-predicate-focused-cost-v1780",
+      "prelude": "domain-predicate-focused-cpu-prelude-v1780",
+      "repetitions": 27,
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "wall_seconds": 4,
+      "selection": {
+        "inverse_trig": [
+          [
+            "cost",
+            "pi",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "atan",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "acos",
+            "1024",
+            "64"
+          ]
+        ]
+      },
+      "scope": "Twenty-seven alternating-order pairs of the above-five-percent pi control and unchanged same-width atan/acos controls. Preserve all full-size inputs, query counts, binaries, checksums and allocation/work receipts; use the original 192 MiB, CPU 2/3-second and four-second wall caps and the same 50-million-step CPU prelude. Retain both the initial and follow-up observations. This proof-only change has no completeness gain that could justify a persistent runtime regression."
+    }
+  ]
+}

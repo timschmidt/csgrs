@@ -1,0 +1,12 @@
+{
+  "before_sha256": "10c638f53f2daeeb6f7b472f6a4f1ed73d7c22deb7663ed3de06cb3b96e61955",
+  "after_sha256": "bdd2d0a74f5a383b0f576e8492c959d2a08dc6bd9f2ce9f0996c20f6df7eb148",
+  "changed_fields": [
+    "P4.evidence",
+    "P4.remaining",
+    "next_actions[0]"
+  ],
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "milestone_record_sha256": "aa4d430968c2cfe82c88f39c2e31581c5e725b68dae070805d78826eda72181e",
+  "runtime_retention_pending": true
+}

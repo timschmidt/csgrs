@@ -1,0 +1,30 @@
+{
+  "predecessor": "replay_domain_bound_followup.py",
+  "predecessor_sha256": "bb6c587e228a85fb755bac3ce573d05da0a074b81c2238abcb6aab880404d5ee",
+  "runner": "replay_domain_predicate_followup.py",
+  "runner_sha256": "28fcd4fe99a0861ccbdcbabd854facf57ff2f62321cd39433171dd6ddb40ec44",
+  "protocol": "domain-predicate-cost-followup-protocol-v1780.json",
+  "protocol_sha256": "9357287c3e79c505048360b8c0d4e29542ab48ebf92dba786a96e6b504f86703",
+  "literal_replacements": {
+    "typed-api-prototype-v1696-domain-bound-release-build": "typed-api-prototype-v1766-domain-predicate-release-build",
+    "read(E/'domain-bound-candidate-caps-v1693.json')['source_record_sha256']": "sha(E/'typed-api-prototype-v1761-domain-predicate-verus/source-hashes.json.gz')",
+    "typed-api-prototype-v1703-domain-bound-atan-cost": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+    "typed-api-prototype-v1704-domain-bound-integer-cost": "typed-api-prototype-v1774-domain-predicate-integer-cost",
+    "typed-api-prototype-v1705-domain-bound-inverse-cost": "typed-api-prototype-v1775-domain-predicate-inverse-cost",
+    "typed-api-prototype-v1706-domain-bound-normal-form-cost": "typed-api-prototype-v1776-domain-predicate-normal-form-cost",
+    "typed-api-prototype-v1707-domain-bound-default-cost": "typed-api-prototype-v1777-domain-predicate-default-cost",
+    "typed-api-prototype-v1708-domain-bound-algebraic-cost": "typed-api-prototype-v1778-domain-predicate-algebraic-cost",
+    "typed-api-prototype-v1709-domain-bound-acos-cost": "typed-api-prototype-v1779-domain-predicate-acos-cost",
+    "typed-api-prototype-v1631-domain-sign-atan-cost": "typed-api-prototype-v1703-domain-bound-atan-cost",
+    "typed-api-prototype-v1632-domain-sign-integer-cost": "typed-api-prototype-v1704-domain-bound-integer-cost",
+    "typed-api-prototype-v1633-domain-sign-inverse-cost": "typed-api-prototype-v1705-domain-bound-inverse-cost",
+    "typed-api-prototype-v1634-domain-sign-normal-form-cost": "typed-api-prototype-v1706-domain-bound-normal-form-cost",
+    "typed-api-prototype-v1635-domain-sign-default-cost": "typed-api-prototype-v1707-domain-bound-default-cost",
+    "typed-api-prototype-v1636-domain-sign-algebraic-cost": "typed-api-prototype-v1708-domain-bound-algebraic-cost",
+    "typed-api-prototype-v1637-domain-sign-acos-cost": "typed-api-prototype-v1709-domain-bound-acos-cost",
+    "typed-api-prototype-v1672-state.json": "typed-api-prototype-v1754-state.json",
+    "domain-sign-cost-review-v1639.json": "domain-bound-cost-review-v1710.json",
+    "domain-bound-cost-followup-protocol-v1710.json": "domain-predicate-cost-followup-protocol-v1780.json"
+  },
+  "scope": "Only frozen source, baseline/candidate phase and protocol references change in the already validated follow-up runner. Workloads, measurements, guards and comparison criteria remain unchanged."
+}

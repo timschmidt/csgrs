@@ -1,0 +1,4052 @@
+[
+  {
+    "name": "inverse_trig-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0465676081366837,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "68085",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04696228075772524,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58226",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04315940337255597,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "64936",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04411351680755615,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57986",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-2-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.042916299775242805,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58386",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-2-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.043144834227859974,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "64945",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-3-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.044020942877978086,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60806",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-3-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.043287443928420544,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60586",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-4-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045499301981180906,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73725",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-4-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.046366041991859674,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63316",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-5-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.044020943343639374,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54866",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-5-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04573019593954086,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57676",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-6-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045654051937162876,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63965",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-6-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.047066273633390665,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59986",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-7-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04727930901572108,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "66006",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-7-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04283050587400794,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "69655",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-8-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04348886990919709,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60496",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-8-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.041726761031895876,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57676",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-9-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07578111998736858,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "123821",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-9-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07669631810858846,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114532",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-10-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12876175763085485,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "212525",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-10-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07775212498381734,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120252",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-11-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07610967708751559,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109373",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-11-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07419290905818343,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108542",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-12-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07374597014859319,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107512",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-12-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0741133950650692,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109162",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-13-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07450881693512201,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109473",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-13-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12582339998334646,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "213136",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-14-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07609372772276402,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108413",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-14-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07834812393411994,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "134391",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-15-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07722326088696718,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110102",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-15-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07624503830447793,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118282",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-16-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.075637920293957,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110242",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-16-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07500942330807447,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111442",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-17-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07635322073474526,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116182",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-17-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0766584794037044,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "114353",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-18-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013741245027631521,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50907",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-18-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015658433083444834,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52067",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-19-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.019413555040955544,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50556",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-19-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01847409037873149,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50387",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-20-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01916699204593897,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52747",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-20-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.020191852003335953,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52977",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-21-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01417605485767126,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51446",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-21-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015094711910933256,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49607",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-22-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.018905621021986008,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51146",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-22-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.020191950723528862,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49857",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-23-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.012993285898119211,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49477",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-23-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013585445936769247,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53397",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-24-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.020045312121510506,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "78045",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-24-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.020839888136833906,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49277",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-25-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.020579565316438675,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52397",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-25-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.019796479027718306,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51047",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-26-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015270839910954237,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50287",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-26-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01511136069893837,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "79654",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-27-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045478273183107376,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58766",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-27-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0433114729821682,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "95464",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-28-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04643634706735611,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73585",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-28-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045041183941066265,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "66005",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-29-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.043380327988415956,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60556",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-29-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04466602997854352,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "62236",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-30-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04487954406067729,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "61666",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-30-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0427677296102047,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59096",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-31-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04663017392158508,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59786",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-31-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04540153918787837,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57286",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-32-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04174763895571232,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54767",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-32-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04297256609424949,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54706",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-33-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04435454122722149,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54396",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-33-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045333524234592915,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57376",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-34-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.045200091786682606,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60166",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-34-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04602931486442685,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60555",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-35-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04563356330618262,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58846",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-35-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.046776614151895046,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56336",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-36-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07966745318844914,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "130501",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-36-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0751680820249021,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109902",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-37-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07346659898757935,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107173",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-37-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07337930519133806,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108373",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-38-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0751357339322567,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109072",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-38-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0748269660398364,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "128421",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-39-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07417138991877437,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111223",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-39-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07380764512345195,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110302",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-40-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07449346873909235,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "116292",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-40-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07762801321223378,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "110542",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-41-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07419231906533241,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111562",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-41-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07396840490400791,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107983",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-42-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12495330907404423,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "186587",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-42-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0743347299285233,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112972",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-43-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07547600055113435,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108422",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-43-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0740042719990015,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113792",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-44-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07380695594474673,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113813",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-44-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0732269361615181,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107893",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-45-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.012972048949450254,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44907",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-45-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013026033993810415,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45047",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-46-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013332783244550228,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "43937",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-46-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013748094905167818,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49647",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-47-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.016928397119045258,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52177",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-47-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013594855088740587,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47597",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-48-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01818133983761072,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47737",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-48-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013770532794296741,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49467",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-49-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013223190791904926,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46047",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-49-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013402008917182684,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49307",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-50-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01712698210030794,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50157",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-50-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01932276226580143,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57396",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-51-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013610834255814552,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44677",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-51-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013068992178887129,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47667",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-52-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013736396096646786,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45246",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-52-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013101909309625626,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46616",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-53-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.017211826983839273,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46117",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-53-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01387142576277256,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46087",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-54-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04278610786423087,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52926",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-54-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04297072580084205,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54896",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-55-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04403260303661227,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56186",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-55-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04226397490128875,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59276",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-56-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04232964897528291,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56026",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-56-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04417104320600629,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63436",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-57-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.044446694664657116,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54776",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-57-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04524302016943693,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58166",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-58-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04522943031042814,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "58856",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-58-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04324772721156478,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56806",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-59-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.042958226054906845,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57206",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-59-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.042239675763994455,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57656",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-60-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04292271938174963,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57776",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-60-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04518441390246153,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59986",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-61-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04479603003710508,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "60326",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-61-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04513822589069605,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75465",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-62-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.04597293911501765,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55926",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-62-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "atan",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.043618801049888134,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55696",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-63-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0762126799672842,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "132831",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-63-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07623727805912495,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109453",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07632986269891262,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108463",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07694965926930308,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "118162",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-65-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07642412604764104,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "113152",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-65-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07514800410717726,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "187557",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-66-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07510238699615002,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108662",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-66-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07774211606010795,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "121331",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-67-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07800571667030454,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "117242",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-67-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.12978857709094882,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "206536",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-68-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07603416312485933,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120592",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-68-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07824670989066362,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "129831",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-69-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0802198052406311,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "195326",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-69-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07932284707203507,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "191836",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-70-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07630380475893617,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "120612",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-70-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07835775287821889,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "123861",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-71-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07841871911659837,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "185827",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-71-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "acos",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.07570466492325068,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "109353",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-72-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.019642099738121033,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "56816",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-72-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.022341824136674404,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54326",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-73-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.017223665956407785,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51426",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-73-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01301665510982275,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47017",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-74-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.02006144030019641,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57276",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-74-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013931042049080133,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50936",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-75-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015928084962069988,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52716",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-75-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0133309131488204,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50046",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-76-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.016877789981663227,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44597",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-76-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.018319370225071907,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75715",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-77-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.019202759955078363,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52386",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-77-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01589774712920189,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52087",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-78-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013298925012350082,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44797",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-78-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014234631322324276,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48696",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-79-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013933482114225626,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48087",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  },
+  {
+    "name": "inverse_trig-79-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01892667869105935,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51887",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-80-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1705-domain-bound-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.017017649952322245,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49366",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "e6c7a6d02147367784f3667ea76903904de20102639c9c34e876bde723963a48"
+  },
+  {
+    "name": "inverse_trig-80-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1775-domain-predicate-inverse-cost/probe",
+      "cost",
+      "pi",
+      "1024",
+      "64"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014627854339778423,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50527",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22"
+  }
+]
