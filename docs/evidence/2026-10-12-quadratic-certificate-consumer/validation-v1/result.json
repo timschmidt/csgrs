@@ -1,0 +1,32 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 10.877160110045224,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "consumer-format",
+      "exit_code": 0,
+      "seconds": 0.4609194556251168,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "quadratic-regressions",
+      "exit_code": 101,
+      "seconds": 15.526864217594266,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "81716b232accde36543d201dba116088561b5512f600f7abc2338f809c5b2c1f"
+    }
+  ],
+  "complete": false
+}

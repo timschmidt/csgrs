@@ -1,0 +1,12 @@
+{
+  "scope": "Compilation correction after the immutable first validation attempt.",
+  "failed_result_sha256": "e4b472005a66f40c21268587a33ccf06cae8b28cf5a77d9a4e46dd638b6a72cd",
+  "failed_protocol_sha256": "d3803d5091dd08d23624ec7e79fe669ad8a8d3c086f3b2f686b1dccb2439a32d",
+  "failed_source_archive_sha256": "e83a8532455b9f7a0cec0f50dab42c325922ac94a36c04a9a6c39e1832e47e52",
+  "failure": "The compiler rejected two Rational += expressions (no AddAssign implementation) and two i32 arguments to Rational::new(i64). No candidate test ran.",
+  "correction": "Use owned Rational addition and the i64 radicand type. No arithmetic rule, test expectation, fallback or budget changes.",
+  "next_runner": "validate_v2.py",
+  "next_output": "validation-v2",
+  "original_artifacts_preserved": true,
+  "runtime_admitted": false
+}

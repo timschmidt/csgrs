@@ -1,0 +1,75 @@
+{
+  "scope": "Initial correctness qualification of the isolated direct quadratic coefficient consumer; no runtime admission.",
+  "previous_goal_turn": "progress",
+  "base_commit": "2026a0187e2d84f7cc2a3c3f716221b30fc5780e",
+  "implementation": "At most eight uncached nodes combine retained exact rational/quadratic coefficients through addition, negation, small binary offsets, and rational scaling. Unsupported expressions use the unchanged Laurent recognizer and its mandatory original fallback. Retained payloads contain no Computable owners.",
+  "publication": "Existing rational proofs take priority over newly published less reduced forms. A successful rational proof may strengthen a wider form; misses are never published. Cache locks are released before recursion.",
+  "correctness": {
+    "quadratic-regressions": [
+      "test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 862 filtered out; finished in 0.00s"
+    ],
+    "cache-regressions": [
+      "test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 863 filtered out; finished in 0.02s"
+    ],
+    "scalar-library": [
+      "test result: ok. 868 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.30s"
+    ],
+    "scalar-doctests": [
+      "test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s"
+    ]
+  },
+  "other_gates": [
+    "Workspace formatting and direct consumer rustfmt pass.",
+    "Release all-feature all-target scalar Clippy with -D warnings passes.",
+    "All-feature scalar documentation with RUSTDOCFLAGS=-D warnings passes."
+  ],
+  "compilation_failure": "The first source snapshot and logs retain the Rational API compile failure; validation-v1-correction.json records the correction. No test ran in that failed build.",
+  "coverage_limits": "Six new regression tests cover finite affine identities, zero-work cancellation reuse, unsupported fields/opaque atoms, traversal/shift limits, and stronger certificate publication. The existing five cache tests include concurrent numeric/certificate publication, graph reclamation, and the eight/nine-term fallback counterexample. These finite tests do not prove whole-cache monotonicity or every representation.",
+  "remaining": [
+    "Matched scalar first/warm/cloned/opaque timing, allocation and binary-size controls with separate Cargo target directories.",
+    "Focused and broad native consumer tests, unchanged full-board gates, and complete report replay.",
+    "Default and additional feature configurations, independent cache frontiers and broader scalar prototype integration."
+  ],
+  "artifacts_sha256": {
+    "baseline-source-hashes.json.gz": "b09b74970cc6fa5716c2879bcc39006bfdb90351716783934611623b49dd00b7",
+    "copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparation.json": "27f18a81e26c6cd8d0263e0461667ad9929969c92b4265219e37d54946496249",
+    "prepare.py": "0d6dc4c53620e0d92aac68073fd829eb18533b6d33f81a5db6b6216b018ec125",
+    "validate_v1.py": "3b7eab2fe9a6b28d14773f747fbcc1338b7aab812bc65d059cc89d8c19762131",
+    "validate_v2.py": "4ff1da2696b725cbe01654476e02520d6199719112c777a56d94887f2c370200",
+    "validation-v1/candidate-delta.tar.gz": "e83a8532455b9f7a0cec0f50dab42c325922ac94a36c04a9a6c39e1832e47e52",
+    "validation-v1/candidate.patch": "4ccd1b783141cf1c82b5ca97009fe209b4e397b1378b035c8084bbe23becbec5",
+    "validation-v1/consumer-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/consumer-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/protocol.json": "d3803d5091dd08d23624ec7e79fe669ad8a8d3c086f3b2f686b1dccb2439a32d",
+    "validation-v1/quadratic-regressions.stderr": "81716b232accde36543d201dba116088561b5512f600f7abc2338f809c5b2c1f",
+    "validation-v1/quadratic-regressions.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/result.json": "e4b472005a66f40c21268587a33ccf06cae8b28cf5a77d9a4e46dd638b6a72cd",
+    "validation-v1-correction.json": "54a3514fff2c174e70ccd7be2aaee283cff45b766f8a6a2ae9a598eb8bbf0412",
+    "validation-v2/cache-regressions.stderr": "a8f05028d7925b18aee436b667dc43f01eb5fcfa54e46762b32be2c6ce0c5379",
+    "validation-v2/cache-regressions.stdout": "7c6145f7cdd6789b0fb167ba3dd7a179407228ac2fefa9ef55312676f34deefe",
+    "validation-v2/candidate-delta.tar.gz": "2c918054fc20e1aba1674a7c1a09ac1b71b9ccc7cce0c13a07a3a51118c2d507",
+    "validation-v2/candidate.patch": "e44da90b6a9b6ebad38e01650a42c6096eb170466f4d70c1cb2e4fe8907e1ec6",
+    "validation-v2/consumer-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v2/consumer-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v2/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v2/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v2/protocol.json": "439361603bac1ead5e7b613d4f9e4042be997ae3db0206d8ca59836a11b77094",
+    "validation-v2/quadratic-regressions.stderr": "1b77843a8f0fe4dfb1c6cca65463c36ee5e3c5c75e944879c360218140bb5f2c",
+    "validation-v2/quadratic-regressions.stdout": "788746199636672da151a4a7bad100554dd857bd9f44729550352861da136733",
+    "validation-v2/result.json": "3f132486e67ebe67b779f2c33f05e45dc0b95f2d508e30fc3e85555abcad98d2",
+    "validation-v2/scalar-docs.stderr": "9765a2f128bc1257d22663dacc2c232cd1407a3cc28739961d900400fc95a5a9",
+    "validation-v2/scalar-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v2/scalar-doctests.stderr": "18421018669a58f4c90d643111140a20060ba5694427101fb416f762200ac8fd",
+    "validation-v2/scalar-doctests.stdout": "28c075dbcc47ad337bae78a06417dfe1283a868fff1b83190bb2166f1eac2009",
+    "validation-v2/scalar-library.stderr": "1a88df767e714a7af56cba46039254a41feebe093bb2a040e8cc24ddb94c2327",
+    "validation-v2/scalar-library.stdout": "ea55d15f8f8f740bae9f425f726ba0049108eb3fcc7b8ab8175966ba1742f6c0",
+    "validation-v2/strict-clippy.stderr": "a652f0609b300c22a6dfe654e1b010e91e35f97b96690d782e524c6c29762c02",
+    "validation-v2/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

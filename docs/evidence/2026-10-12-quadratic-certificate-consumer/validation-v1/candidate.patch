@@ -1,0 +1,475 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -8,6 +8,8 @@
+ 
+ #[cfg(test)]
+ mod persistent_laurent_cache_tests;
++
++mod cached_quadratic;
+ 
+ #[cfg(test)]
+ mod pi_laurent_compaction_node_tests {
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1309,8 +1309,8 @@
+         // Project the shared bounded normal form after cancellation. Requiring
+         // every intermediate expression to use one radical would miss exact
+         // quadratic values assembled from independent geometric directions.
+-        let value = self.project_pi_laurent_polynomial(64, |polynomial| {
+-            match polynomial.terms.as_slice() {
++        let value = self.retained_quadratic_parts().or_else(|| {
++            self.project_pi_laurent_polynomial(64, |polynomial| match polynomial.terms.as_slice() {
+                 [] => Some((Rational::zero(), Rational::zero(), None)),
+                 [(0, coefficient)] if coefficient.atoms.is_empty() => {
+                     match coefficient.radicals.as_slice() {
+@@ -1324,7 +1324,7 @@
+                     }
+                 }
+                 _ => None,
+-            }
++            })
+         })?;
+         crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+         Some(value)
+--- a/crates/hyperreal/src/computable/node/cached_quadratic.rs
++++ b/crates/hyperreal/src/computable/node/cached_quadratic.rs
+@@ -0,0 +1,397 @@
++//! Small exact combinations of retained quadratic coefficients.
++//!
++//! This consumer avoids rebuilding coefficient vectors for common affine
++//! queries. It expands at most eight uncached nodes; unsupported operations or
++//! fields continue through the existing bounded Laurent recognizer.
++
++use super::*;
++
++struct QuadraticForm {
++    constant: Rational,
++    coefficient: Rational,
++    radicand: Option<Rational>,
++}
++
++impl QuadraticForm {
++    fn rational(constant: Rational) -> Self {
++        Self {
++            constant,
++            coefficient: Rational::zero(),
++            radicand: None,
++        }
++    }
++
++    fn from_closed(polynomial: &ClosedPiLaurentPolynomial) -> Option<Self> {
++        match polynomial.terms.as_slice() {
++            [] => Some(Self::rational(Rational::zero())),
++            [(0, coefficient)] => match coefficient.radicals.as_slice() {
++                [] => Some(Self::rational(coefficient.rational.clone())),
++                [(radicand, scale)] => Some(Self {
++                    constant: coefficient.rational.clone(),
++                    coefficient: scale.clone(),
++                    radicand: Some(radicand.clone()),
++                }),
++                _ => None,
++            },
++            _ => None,
++        }
++    }
++
++    fn add(mut self, other: Self) -> Option<Self> {
++        if let (Some(left), Some(right)) = (&self.radicand, &other.radicand)
++            && left != right
++        {
++            return None;
++        }
++        self.constant += other.constant;
++        if self.radicand.is_none() {
++            self.coefficient = other.coefficient;
++            self.radicand = other.radicand;
++        } else if other.radicand.is_some() {
++            self.coefficient += other.coefficient;
++            if self.coefficient.is_zero() {
++                self.radicand = None;
++            }
++        }
++        Some(self)
++    }
++
++    fn scaled(mut self, factor: Rational) -> Self {
++        self.constant *= &factor;
++        if self.radicand.is_some() {
++            self.coefficient *= factor;
++            if self.coefficient.is_zero() {
++                self.radicand = None;
++            }
++        }
++        self
++    }
++
++    fn to_closed(&self) -> ClosedPiLaurentPolynomial {
++        let terms = if self.constant.is_zero() && self.radicand.is_none() {
++            Vec::new()
++        } else {
++            vec![(
++                0,
++                ClosedRadicalCoefficient {
++                    rational: self.constant.clone(),
++                    radicals: self
++                        .radicand
++                        .as_ref()
++                        .map(|radicand| (radicand.clone(), self.coefficient.clone()))
++                        .into_iter()
++                        .collect(),
++                },
++            )]
++        };
++        ClosedPiLaurentPolynomial { terms }
++    }
++
++    fn into_parts(self) -> (Rational, Rational, Option<Rational>) {
++        (self.constant, self.coefficient, self.radicand)
++    }
++}
++
++impl EvaluationCache {
++    // The outer option distinguishes no retained form from a retained form
++    // outside this narrow consumer. Neither case is a negative value fact.
++    fn retained_quadratic_form(&self) -> Option<Option<QuadraticForm>> {
++        let guard = self
++            .cell()?
++            .read()
++            .unwrap_or_else(|error| error.into_inner());
++        Some(QuadraticForm::from_closed(
++            guard.pi_laurent_polynomial.as_deref()?,
++        ))
++    }
++
++    fn store_quadratic_form(&self, form: &QuadraticForm) {
++        let mut guard = self
++            .cell_or_init()
++            .write()
++            .unwrap_or_else(|error| error.into_inner());
++        let already_sufficient = guard
++            .pi_laurent_polynomial
++            .as_deref()
++            .is_some_and(|polynomial| match polynomial.terms.as_slice() {
++                [] => true,
++                [(0, coefficient)] => {
++                    coefficient.radicals.is_empty()
++                        || (form.radicand.is_some() && coefficient.radicals.len() == 1)
++                }
++                _ => false,
++            });
++        if !already_sufficient {
++            // This node has one immutable value. A newly proved quadratic
++            // form strengthens an earlier wider representation of that value.
++            // Prefer a rational proof to a radical representation. Preserve
++            // existing rational or equally specific quadratic certificates;
++            // never publish a miss.
++            guard.pi_laurent_polynomial = Some(Box::new(form.to_closed()));
++        }
++    }
++}
++
++impl Computable {
++    pub(super) fn retained_quadratic_parts(
++        &self,
++    ) -> Option<(Rational, Rational, Option<Rational>)> {
++        self.quadratic_from_retained(&mut 8)
++            .map(QuadraticForm::into_parts)
++    }
++
++    fn quadratic_from_retained(&self, remaining: &mut usize) -> Option<QuadraticForm> {
++        if let Some(cached) = self.internal.cache.retained_quadratic_form() {
++            return cached;
++        }
++        if *remaining == 0 {
++            return None;
++        }
++        *remaining -= 1;
++        if let Some(rational) = self.exact_rational() {
++            return Some(QuadraticForm::rational(rational));
++        }
++        if let Some(kind @ (SharedConstant::Sqrt2 | SharedConstant::Sqrt3)) =
++            self.shared_constant_kind()
++        {
++            return Some(QuadraticForm {
++                constant: Rational::zero(),
++                coefficient: Rational::one(),
++                radicand: Some(Rational::new(if kind == SharedConstant::Sqrt2 {
++                    2
++                } else {
++                    3
++                })),
++            });
++        }
++        let shared = Arc::strong_count(&self.internal) > 1;
++        let form = match &self.internal.approximation {
++            Approximation::Add(left, right) => left
++                .quadratic_from_retained(remaining)?
++                .add(right.quadratic_from_retained(remaining)?)?,
++            Approximation::Negate(child) => child
++                .quadratic_from_retained(remaining)?
++                .scaled(Rational::new(-1)),
++            Approximation::Offset(child, shift) if (-64..=64).contains(shift) => child
++                .quadratic_from_retained(remaining)?
++                .scaled(Self::power_of_two_rational(*shift)),
++            Approximation::Multiply(left, right) => {
++                let left = left.quadratic_from_retained(remaining)?;
++                let right = right.quadratic_from_retained(remaining)?;
++                if left.radicand.is_none() {
++                    right.scaled(left.constant)
++                } else if right.radicand.is_none() {
++                    left.scaled(right.constant)
++                } else {
++                    return None;
++                }
++            }
++            _ => return None,
++        };
++        if shared {
++            self.internal.cache.store_quadratic_form(&form);
++        }
++        Some(form)
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn raw(approximation: Approximation) -> Computable {
++        Computable {
++            internal: Arc::new(Node::new(
++                approximation,
++                BoundCache::Invalid,
++                ExactSignCache::Unknown,
++            )),
++            signal: None,
++        }
++    }
++
++    fn warm_root(radicand: i32) -> Computable {
++        let root = raw(Approximation::Sqrt(Computable::rational(Rational::new(
++            radicand,
++        ))));
++        let clone = root.clone();
++        assert!(root.exact_quadratic_surd_parts().is_some());
++        assert!(
++            clone
++                .internal
++                .cache
++                .retained_quadratic_form()
++                .unwrap()
++                .is_some()
++        );
++        root
++    }
++
++    #[test]
++    fn affine_identities_match_independent_coefficients() {
++        for radicand in [2, 3, 5, 13, 34] {
++            let root = warm_root(radicand);
++            for a in [-7, 0, 5] {
++                for b in [-3, 0, 2] {
++                    for shift in [-3, 0, 4] {
++                        let value = raw(Approximation::Offset(
++                            raw(Approximation::Add(
++                                Computable::rational(Rational::new(a)),
++                                raw(Approximation::Multiply(
++                                    Computable::rational(Rational::new(b)),
++                                    root.clone(),
++                                )),
++                            )),
++                            shift,
++                        ));
++                        let scale = Computable::power_of_two_rational(shift);
++                        let expected = (
++                            Rational::new(a) * &scale,
++                            Rational::new(b) * scale,
++                            (b != 0).then(|| Rational::new(radicand)),
++                        );
++                        assert_eq!(value.retained_quadratic_parts(), Some(expected.clone()));
++                        assert_eq!(value.exact_quadratic_surd_parts(), Some(expected));
++                        assert!(value.cached().is_none());
++                    }
++                }
++            }
++        }
++    }
++
++    #[test]
++    fn cancellation_publishes_a_rational_proof_for_zero_work_queries() {
++        let root = warm_root(13);
++        let value = raw(Approximation::Add(
++            root.clone(),
++            raw(Approximation::Negate(root)),
++        ));
++        let clone = value.clone();
++        assert_eq!(
++            value.retained_quadratic_parts(),
++            Some((Rational::zero(), Rational::zero(), None))
++        );
++        assert_eq!(clone.bounded_laurent_rational(0), Some(Rational::zero()));
++        assert!(value.cached().is_none());
++    }
++
++    #[test]
++    fn unsupported_fields_and_opaque_atoms_keep_the_original_fallback() {
++        let two = warm_root(2);
++        let three = warm_root(3);
++        let sum = raw(Approximation::Add(two.clone(), three));
++        assert!(sum.retained_quadratic_parts().is_none());
++        assert!(sum.exact_quadratic_surd_parts().is_none());
++        let square = raw(Approximation::Multiply(two.clone(), two));
++        assert!(square.retained_quadratic_parts().is_none());
++        assert_eq!(
++            square.exact_quadratic_surd_parts(),
++            Some((Rational::new(2), Rational::zero(), None))
++        );
++        let atom = raw(Approximation::AtanRational(
++            Rational::fraction(3, 4).unwrap(),
++        ));
++        let cancellation = raw(Approximation::Add(
++            atom.clone(),
++            raw(Approximation::Negate(atom)),
++        ));
++        assert!(cancellation.retained_quadratic_parts().is_none());
++        assert_eq!(
++            cancellation.exact_quadratic_surd_parts(),
++            Some((Rational::zero(), Rational::zero(), None))
++        );
++    }
++
++    #[test]
++    fn traversal_limit_does_not_weaken_the_full_recognizer() {
++        let mut value = warm_root(13);
++        for _ in 0..9 {
++            value = raw(Approximation::Negate(value));
++        }
++        assert!(value.retained_quadratic_parts().is_none());
++        assert_eq!(
++            value.exact_quadratic_surd_parts(),
++            Some((Rational::zero(), Rational::new(-1), Some(Rational::new(13))))
++        );
++        for shift in [-65, 65] {
++            let value = raw(Approximation::Offset(warm_root(13), shift));
++            assert!(value.retained_quadratic_parts().is_none());
++            assert_eq!(
++                value.exact_quadratic_surd_parts(),
++                Some((
++                    Rational::zero(),
++                    Computable::power_of_two_rational(shift),
++                    Some(Rational::new(13))
++                ))
++            );
++        }
++    }
++
++    #[test]
++    fn stronger_quadratic_publication_preserves_existing_certificates() {
++        let value = raw(Approximation::Add(
++            Computable::one(),
++            Computable::rational(Rational::new(6)),
++        ));
++        // sqrt(2) - sqrt(8)/2 cancels exactly, although these deliberately
++        // unreduced retained coefficients do not fit the quadratic projection.
++        let wider = PiLaurentPolynomial::monomial(
++            0,
++            RadicalCoefficient {
++                rational: Rational::new(7),
++                radicals: vec![
++                    (Rational::new(2), Rational::one()),
++                    (Rational::new(8), Rational::fraction(-1, 2).unwrap()),
++                ],
++                atoms: Vec::new(),
++            },
++        );
++        value.internal.cache.store_pi_laurent_polynomial(&wider);
++        assert!(
++            value
++                .internal
++                .cache
++                .retained_quadratic_form()
++                .unwrap()
++                .is_none()
++        );
++        value
++            .internal
++            .cache
++            .store_quadratic_form(&QuadraticForm::rational(Rational::new(7)));
++        assert_eq!(value.bounded_laurent_rational(0), Some(Rational::new(7)));
++        value.internal.cache.store_pi_laurent_polynomial(&wider);
++        assert_eq!(value.bounded_laurent_rational(0), Some(Rational::new(7)));
++        let weak = Arc::downgrade(&value.internal);
++        drop(value);
++        assert!(weak.upgrade().is_none());
++    }
++
++    #[test]
++    fn rational_publication_supersedes_a_nonreduced_single_radical() {
++        let value = raw(Approximation::Add(
++            Computable::one(),
++            Computable::rational(Rational::new(6)),
++        ));
++        // 1 + 2*sqrt(9) = 7. The retained form is an exact certificate,
++        // but a rational-only consumer cannot project it without reduction.
++        let less_reduced = QuadraticForm {
++            constant: Rational::one(),
++            coefficient: Rational::new(2),
++            radicand: Some(Rational::new(9)),
++        };
++        value.internal.cache.store_quadratic_form(&less_reduced);
++        assert!(value.bounded_laurent_rational(0).is_none());
++        value
++            .internal
++            .cache
++            .store_quadratic_form(&QuadraticForm::rational(Rational::new(7)));
++        assert_eq!(value.bounded_laurent_rational(0), Some(Rational::new(7)));
++        value.internal.cache.store_quadratic_form(&less_reduced);
++        assert_eq!(value.bounded_laurent_rational(0), Some(Rational::new(7)));
++        assert_eq!(
++            value.retained_quadratic_parts(),
++            Some((Rational::new(7), Rational::zero(), None))
++        );
++    }
++}
+--- a/crates/hyperreal/src/real/arithmetic/facts.rs
++++ b/crates/hyperreal/src/real/arithmetic/facts.rs
+@@ -75,6 +75,10 @@
+     /// rational/π/quadratic expression or cancel structurally identical opaque
+     /// nonlinear atoms in a bounded affine form. It never approximates: `None`
+     /// means only that the bounded normal form does not cover the expression.
++    /// Successful retained certificates may strengthen later queries. Each
++    /// recognition pass expands at most 512 nodes; an unsuccessful pass that
++    /// reused a certificate may retry the original recognizer once. These
++    /// bounds count expression expansion, not integer operand sizes.
+     pub fn exact_rational_normal_form(&self) -> Option<Rational> {
+         if let Some(rational) = self.exact_rational() {
+             return Some(rational);
+@@ -90,6 +94,10 @@
+     /// square roots. It performs no approximation. `None` means only that
+     /// the bounded normal form did not establish a quadratic value; the
+     /// original exact expression remains available unchanged.
++    ///
++    /// Small combinations of retained coefficients expand at most eight
++    /// uncached nodes before using the normal recognizer. The latter has the
++    /// two-pass bound described by [`Self::exact_rational_normal_form`].
+     pub fn exact_quadratic_normal_form(&self) -> Option<(Rational, Rational, Rational)> {
+         if let Some(rational) = self.exact_rational() {
+             return Some((rational, Rational::zero(), Rational::zero()));
+--- a/crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs
++++ b/crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs
+@@ -3,9 +3,12 @@
+     ///
+     /// Coefficients are rational linear combinations of principal square roots
+     /// of nonnegative rationals. This uses the existing bounded symbolic normal
+-    /// form, without approximation or increased recognition limits. It can keep
+-    /// repeated exact sums usable when their unreduced arithmetic graphs would
+-    /// exceed a later predicate's optional symbolic recognition budget.
++    /// form without approximation. Each recognition pass keeps its 512-node
++    /// limit; an unsuccessful pass using retained certificates may retry the
++    /// original recognizer once. Retained proofs may strengthen later queries.
++    /// These limits bound expression expansion, not integer operand sizes.
++    /// It can keep repeated exact sums usable when their unreduced arithmetic
++    /// graphs would exceed a later predicate's optional recognition budget.
+     ///
+     /// Already compact symbolic classes are retained. `None` means that an
+     /// opaque remainder or a recognition limit prevented reconstruction; the
