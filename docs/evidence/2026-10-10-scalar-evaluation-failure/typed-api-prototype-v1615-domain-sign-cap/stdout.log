@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1064 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "b2f3269a6ba8c6165b9c924d3147cbf4fc7a2baf3477c5040d8c2e7777e35143", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.02001541806384921}

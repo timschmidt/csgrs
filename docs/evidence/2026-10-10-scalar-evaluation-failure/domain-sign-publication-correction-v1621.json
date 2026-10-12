@@ -1,0 +1,151 @@
+{
+  "status": "Reject first sign-domain candidate; corrected candidate preserves child proofs in all twelve frozen cases",
+  "first_candidate_source_record": "typed-api-prototype-v1594-domain-sign-build/source-hashes.json.gz",
+  "first_candidate_focused_record": "domain-sign-caps-v1604.json",
+  "first_candidate_scalar_tests": "typed-api-prototype-v1605-domain-sign-scalar-tests",
+  "new_regression_source": "typed-api-prototype-v1606-domain-sign-publication-build/inputs/crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+  "baseline_reproduction": "Restored only domain_certificates.rs and domain_validation.rs to retained v1404 source; left the new test unchanged. The old proof path publishes all twelve child signs.",
+  "failure": "The first candidate answered the private domain query with two units but failed to retain the canonical leaf sign. The old four-unit query retained a proof reusable by a later public zero-unit sign query.",
+  "repair": "Publish the proved literal sign through the existing monotone atomic fact publisher before returning it. Existing retained signs remain available through immediate_sign.",
+  "phases": {
+    "typed-api-prototype-v1607-domain-sign-publication-cap": {
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1166955172084272,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "1b71cf0fdac664237159ca51dab682804074b8e766076957656ff000c921caf7",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.022925719153136015
+      },
+      "rows": [
+        "domain sign publication bits=4097, kind=Inverse, consumed=2, sign=None",
+        "domain sign publication bits=4097, kind=Sqrt, consumed=2, sign=None",
+        "domain sign publication bits=4097, kind=LnDeferred, consumed=2, sign=None",
+        "domain sign publication bits=4097, kind=PrescaledLn, consumed=2, sign=None",
+        "domain sign publication bits=65537, kind=Inverse, consumed=2, sign=None",
+        "domain sign publication bits=65537, kind=Sqrt, consumed=2, sign=None",
+        "domain sign publication bits=65537, kind=LnDeferred, consumed=2, sign=None",
+        "domain sign publication bits=65537, kind=PrescaledLn, consumed=2, sign=None",
+        "domain sign publication bits=1000001, kind=Inverse, consumed=2, sign=None",
+        "domain sign publication bits=1000001, kind=Sqrt, consumed=2, sign=None",
+        "domain sign publication bits=1000001, kind=LnDeferred, consumed=2, sign=None",
+        "domain sign publication bits=1000001, kind=PrescaledLn, consumed=2, sign=None"
+      ],
+      "source_record_sha256": "fb6ac9101d5c25b21a82e0a31d39c01dae12a8a031da153d96a1c9abb36285b4"
+    },
+    "typed-api-prototype-v1609-domain-sign-retained-publication-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1279086070135236,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b2e659af7ded17aceb6973c27e622228e582bc5c015f7172b1e2af87523a14bc",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021068075206130743
+      },
+      "rows": [
+        "domain sign publication bits=4097, kind=Inverse, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=Sqrt, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=LnDeferred, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=PrescaledLn, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=Inverse, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=Sqrt, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=LnDeferred, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=PrescaledLn, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=Inverse, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=Sqrt, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=LnDeferred, consumed=4, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=PrescaledLn, consumed=4, sign=Some(Positive)"
+      ],
+      "source_record_sha256": "afdbd91d24dd0e7563fded1cc5b1ee7b85e7a5a245b181a88703071edd835ac0"
+    },
+    "typed-api-prototype-v1616-domain-sign-cap": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0914826849475503,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "b2f3269a6ba8c6165b9c924d3147cbf4fc7a2baf3477c5040d8c2e7777e35143",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.019318385049700737
+      },
+      "rows": [
+        "domain sign publication bits=4097, kind=Inverse, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=Sqrt, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=4097, kind=PrescaledLn, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=Inverse, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=Sqrt, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=65537, kind=PrescaledLn, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=Inverse, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=Sqrt, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+        "domain sign publication bits=1000001, kind=PrescaledLn, consumed=2, sign=Some(Positive)"
+      ],
+      "source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d"
+    }
+  },
+  "corrected_candidate_source_record": "typed-api-prototype-v1610-domain-sign-retaining-build/source-hashes.json.gz",
+  "corrected_candidate_source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "limits": [
+    "The domain observation is private instrumentation with public query APIs used for proof reuse; it is not claimed as a separate public finite-domain API.",
+    "The first candidate never received runtime admission. No earlier test, fixture or failure was removed.",
+    "The corrected variant still requires cost and broader admission evidence."
+  ]
+}

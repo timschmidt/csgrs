@@ -1,0 +1,4 @@
+domain sign retained kind=Inverse, answer=true, exhausted=false, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=Sqrt, answer=true, exhausted=false, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=LnDeferred, answer=true, exhausted=false, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+domain sign retained kind=PrescaledLn, answer=true, exhausted=false, consumed=1, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }

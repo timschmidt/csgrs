@@ -1,0 +1,139 @@
+{
+  "status": "Corrected isolated implementation passes focused scalar/lint/format gates; broader validation and costs pending; no runtime admission",
+  "baseline_record": "domain-sign-baseline-v1593.json",
+  "baseline_commit": "11776868d",
+  "rejected_variant_and_correction": "domain-sign-publication-correction-v1621.json",
+  "source_record": "typed-api-prototype-v1624-domain-sign-release-build/source-hashes.json.gz",
+  "source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "changed_since_baseline": [
+    "crates/hyperreal/src/computable/node/domain_certificates.rs",
+    "crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+    "crates/hyperreal/src/computable/node/domain_validation.rs"
+  ],
+  "production_patch": "domain-sign-retaining.patch",
+  "production_patch_sha256": "5e7a03bc5348b57ce290e0e0ee046486b2dae23b330c632aa0a722dde0caeb29",
+  "focused_caps": "domain-sign-retaining-caps-v1621.json",
+  "focused_test_functions": 11,
+  "scalar_tests": {
+    "top_level_batches": 1,
+    "top_level_passed": 1065,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1065,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1065,
+        "status": "ok",
+        "passed": 1065,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "phases": {
+    "typed-api-prototype-v1622-domain-sign-scalar-tests": {
+      "exit_code": 0,
+      "seconds": 7.264828399289399,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1623-domain-sign-clippy": {
+      "exit_code": 0,
+      "seconds": 32.77956375107169,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1624-domain-sign-release-build": {
+      "exit_code": 0,
+      "seconds": 69.64110430702567,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1625-domain-sign-workspace-fmt": {
+      "exit_code": 0,
+      "seconds": 11.34695939393714,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1626-domain-sign-included-fmt": {
+      "exit_code": 0,
+      "seconds": 1.687495666090399,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "public_coarse_queries": [
+    "domain sign public bits=65, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=65, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 312, largest: 72 }",
+    "domain sign public bits=516, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=516, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 568, largest: 144 }",
+    "domain sign public bits=2050, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=2050, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 1528, largest: 528 }",
+    "domain sign public bits=4096, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=4096, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 2808, largest: 1040 }",
+    "domain sign public bits=4097, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=4097, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 3824, largest: 1040 }",
+    "domain sign public bits=1000001, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }",
+    "domain sign public bits=1000001, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 875240, largest: 250016 }"
+  ],
+  "retained_child_proofs": [
+    "domain sign publication bits=4097, kind=Inverse, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=4097, kind=Sqrt, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=4097, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=4097, kind=PrescaledLn, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=65537, kind=Inverse, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=65537, kind=Sqrt, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=65537, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=65537, kind=PrescaledLn, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=1000001, kind=Inverse, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=1000001, kind=Sqrt, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=1000001, kind=LnDeferred, consumed=2, sign=Some(Positive)",
+    "domain sign publication bits=1000001, kind=PrescaledLn, consumed=2, sign=Some(Positive)"
+  ],
+  "public_completion_before_after": [
+    4,
+    12
+  ],
+  "new_behavior": "Finite-real domain checks consult retained signs and canonical leaf signs before copying coefficients or traversing rational expressions. Literal proofs are published with the existing monotone atomic fact mechanism.",
+  "preserved_behavior": [
+    "Independent child existence still precedes sign use.",
+    "Lazy/unreduced rational preflight and all existing recognition/refinement fallbacks remain.",
+    "All 1054 earlier scalar tests and full-size fixtures remain unchanged.",
+    "No API, serialization, work-unit definition, numerical kernel or main runtime file changed."
+  ],
+  "limits": [
+    "Public query examples use public serialization; retained-child diagnostics inspect internal domain proofs and then use public zero-work queries.",
+    "The sign-domain private query itself still is not a public API.",
+    "Million-bit public ln1p sampling still requests 875240 Rust bytes; no aggregate byte/time guarantee follows from the cheaper domain proof.",
+    "The survey warmup comment is known to overstate shared-log warming; log-range-survey-v1583.json records the exact limitation.",
+    "Prior conditional proof inputs are unchanged, but the new runtime domain implementation is outside their scope.",
+    "The broad consumer/default/debug checks, cost controls and replay comparisons were not complete at this record. The full 39 properties, 14 targets and crate future work remain open."
+  ]
+}

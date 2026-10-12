@@ -1,0 +1,22 @@
+{
+  "status": "Prepared before timing the sign-domain runtime candidate",
+  "candidate_source_record": "typed-api-prototype-v1610-domain-sign-retaining-build/source-hashes.json.gz",
+  "candidate_source_record_sha256": "f8dbb363116f762ef866231905590de0b21a020a5eedbe3f2d7fcc8d8c8ccd0d",
+  "runners": [
+    "run_domain_sign_costs.py",
+    "replay_domain_sign_cost.py"
+  ],
+  "families": [
+    "atan",
+    "integer",
+    "inverse_trig",
+    "normal_form",
+    "default",
+    "algebraic",
+    "acos"
+  ],
+  "samples": "Nine separate processes per fixture, followed by nine alternating-order baseline/candidate pairs at one CPU with an identical 50-million-step dependent-integer prelude before each timed process.",
+  "invariants": "Unchanged probe and helper sources, exact non-timing outputs, fixed inputs/counts/caps; retained baseline executables verified against prior committed provenance.",
+  "interpretation": "The public eight-unit and private two-unit domain successes are completeness gains. Timing controls check the cost of the new proof order; allocation reductions alone cannot justify loss of any previously available certificate. Differences above five percent require examination, not automatic attribution to code layout.",
+  "limits": "These are scalar microbenchmarks and executable-size observations. Full-board and broad-stack admission remain separate."
+}

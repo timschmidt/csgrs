@@ -1,0 +1,51 @@
+--- a/crates/hyperreal/src/computable/node/domain_certificates.rs
++++ b/crates/hyperreal/src/computable/node/domain_certificates.rs
+@@ -1,4 +1,22 @@
+ impl Computable {
++    // Call only after independently proving this operand is real. A literal
++    // or retained sign needs neither rational recognition nor a graph walk.
++    // Unreduced rationals keep their existing metered recognition path.
++    fn available_domain_sign(&self) -> Option<Sign> {
++        let sign = match &self.internal.approximation {
++            Approximation::One | Approximation::Constant(_) => Sign::Plus,
++            Approximation::Int(value) => value.sign(),
++            Approximation::Ratio(value) if !value.is_internally_unreduced() => value.sign(),
++            _ => return self.immediate_sign().map(private_sign),
++        };
++        // The former exact-sign fallback retained this proof for wide leaves.
++        // Keep it available to subsequent zero-work queries on the child.
++        self.internal
++            .facts
++            .publish_exact_sign(ExactSignCache::Valid(sign));
++        Some(sign)
++    }
++
+     // These range theorems require existence, which callers establish first.
+     // A square need not have a known sign/nonzero certificate for its real
+     // value to be nonnegative.
+@@ -35,8 +53,8 @@
+     fn has_finite_real_certificate_with_budget(&self, depth: u16, work: &mut usize) -> bool {
+         fn sign_of_real(child: &Computable) -> Option<Sign> {
+             child
+-                .bounded_rational_value()
+-                .map(|value| value.sign())
++                .available_domain_sign()
++                .or_else(|| child.bounded_rational_value().map(|value| value.sign()))
+                 .or_else(|| child.exact_sign())
+         }
+ 
+--- a/crates/hyperreal/src/computable/node/domain_validation.rs
++++ b/crates/hyperreal/src/computable/node/domain_validation.rs
+@@ -56,6 +56,12 @@
+             && self.has_nonnegative_range_when_real()
+         {
+             return Ok(());
++        }
++        if let Some(accepted) = self
++            .available_domain_sign()
++            .and_then(|sign| domain.accepts_sign(sign))
++        {
++            return accepted.then_some(()).ok_or(invalid);
+         }
+         if let Some(value) = self.bounded_rational_value() {
+             return domain.accepts_rational(&value).then_some(()).ok_or(invalid);

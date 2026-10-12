@@ -1,0 +1,16 @@
+domain sign publication bits=4097, kind=Inverse, consumed=2, sign=None
+domain sign publication bits=4097, kind=Sqrt, consumed=2, sign=None
+domain sign publication bits=4097, kind=LnDeferred, consumed=2, sign=None
+domain sign publication bits=4097, kind=PrescaledLn, consumed=2, sign=None
+domain sign publication bits=65537, kind=Inverse, consumed=2, sign=None
+domain sign publication bits=65537, kind=Sqrt, consumed=2, sign=None
+domain sign publication bits=65537, kind=LnDeferred, consumed=2, sign=None
+domain sign publication bits=65537, kind=PrescaledLn, consumed=2, sign=None
+domain sign publication bits=1000001, kind=Inverse, consumed=2, sign=None
+domain sign publication bits=1000001, kind=Sqrt, consumed=2, sign=None
+domain sign publication bits=1000001, kind=LnDeferred, consumed=2, sign=None
+domain sign publication bits=1000001, kind=PrescaledLn, consumed=2, sign=None
+
+thread 'computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained' (12) panicked at crates/hyperreal/src/computable/node/domain_sign_tests.rs:204:9:
+[(4097, "Inverse"), (4097, "Sqrt"), (4097, "LnDeferred"), (4097, "PrescaledLn"), (65537, "Inverse"), (65537, "Sqrt"), (65537, "LnDeferred"), (65537, "PrescaledLn"), (1000001, "Inverse"), (1000001, "Sqrt"), (1000001, "LnDeferred"), (1000001, "PrescaledLn")]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
