@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1055 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "a48f5d3506818e79b88dee44c0b532a8bef1b5b13b986bc0ec8fdff3f02a221a", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.044916392769664526}

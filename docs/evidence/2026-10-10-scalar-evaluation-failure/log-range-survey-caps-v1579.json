@@ -1,0 +1,66 @@
+{
+  "source_record": "typed-api-prototype-v1577-log-range-survey-build/source-hashes.json.gz",
+  "source_record_sha256": "eb335dcf3cb7ca4a8bf2f286d331701b1e8c61731dc85772940354575fef7caa",
+  "tests": {
+    "typed-api-prototype-v1578-log-range-survey-cap": {
+      "test": "log_range_stored_budget_cutpoints",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1520889191888273,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "a48f5d3506818e79b88dee44c0b532a8bef1b5b13b986bc0ec8fdff3f02a221a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.044916392769664526
+      }
+    },
+    "typed-api-prototype-v1579-log-range-survey-cap": {
+      "test": "log_range_public_construction_routes",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1510053938254714,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "a48f5d3506818e79b88dee44c0b532a8bef1b5b13b986bc0ec8fdff3f02a221a",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07723742118105292
+      }
+    }
+  }
+}

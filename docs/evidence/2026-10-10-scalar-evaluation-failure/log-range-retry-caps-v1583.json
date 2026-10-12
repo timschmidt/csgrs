@@ -1,0 +1,96 @@
+{
+  "source_record": "typed-api-prototype-v1580-log-range-retry-build/source-hashes.json.gz",
+  "source_record_sha256": "55a4ac4d3af49cd87cd24e03ab9f2cd81e90e844af16b400047a6d8ac18dc059",
+  "tests": {
+    "typed-api-prototype-v1581-log-range-retry-cap": {
+      "test": "log_range_stored_successful_retries",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1149922590702772,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "ab9c7af36234544ae4ea467ad92236491d30305362c4066243eee6db970b68b9",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.022200543899089098
+      }
+    },
+    "typed-api-prototype-v1582-log-range-retry-cap": {
+      "test": "log_range_asinh_successful_retries",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1464154589921236,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "ab9c7af36234544ae4ea467ad92236491d30305362c4066243eee6db970b68b9",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07739325985312462
+      }
+    },
+    "typed-api-prototype-v1583-log-range-retry-cap": {
+      "test": "log_range_real_serialized_successful_retries",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1120997378602624,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "ab9c7af36234544ae4ea467ad92236491d30305362c4066243eee6db970b68b9",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.028366459999233484
+      }
+    }
+  }
+}
