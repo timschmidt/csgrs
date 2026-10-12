@@ -1,0 +1,111 @@
+
+running 5 tests
+test distinct_close_rotations_reach_duplicate_and_polarized_checks ... ok
+test exhausted_numbers_are_visible_and_cannot_form_false_matches ... ok
+test parser_and_readiness_share_numeric_syntax_and_failure_classes ... ok
+test rotation_parity_uses_exact_euclidean_remainders ... ok
+test placement_identity_preserves_small_differences_and_numeric_aliases ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 1 test
+test tracing_preserves_readiness_results_and_exposes_unavailable_values ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 33 tests
+test a_failed_shape_cannot_supply_an_ordinary_net_marker ... ok
+test a_failed_source_cannot_supply_a_fabricated_origin_marker ... ok
+test a_class_without_a_finding_does_not_require_a_finite_marker ... ok
+test an_unrepresentable_required_drill_marker_is_uncertain ... ok
+test absent_optional_parameters_keep_the_documented_defaults ... ok
+test an_unrepresentable_required_net_marker_is_uncertain ... ok
+test an_unrepresentable_required_width_marker_is_uncertain ... ok
+test custom_pad_placement_keeps_an_unrepresentable_exact_center ... ok
+test chamfer_ratio_product_keeps_source_digits ... ok
+test decimal_circle_diameter_is_halved_after_exact_parsing ... ok
+test decimal_rectangle_geometry_agrees_with_its_exact_marker ... ok
+test decimal_roundrect_geometry_agrees_with_its_exact_marker ... ok
+test decimal_trapezoid_geometry_agrees_with_its_exact_marker ... ok
+test drill_offset_uses_absolute_pad_rotation ... ok
+test decimal_oval_keeps_the_straight_body_and_both_cap_centers ... ok
+test exhausted_marker_projection_retains_uncertainty_and_can_retry ... ok
+test footprint_rotation_uses_kicad_coordinate_handedness ... ok
+test malformed_chamfer_ratio_does_not_select_a_rounded_rectangle ... ok
+test malformed_delta_does_not_select_an_ordinary_rectangle ... ok
+test malformed_footprint_position_is_a_retained_source_failure ... ok
+test malformed_pad_angle_does_not_select_zero_rotation ... ok
+test malformed_pad_position_does_not_select_the_origin ... ok
+test malformed_rounding_ratio_does_not_select_the_default ... ok
+test maximum_rounding_and_chamfer_distances_keep_degenerate_straight_edges_valid ... ok
+test nonzero_dimensions_below_binary64_range_remain_native ... ok
+test omitted_pad_orientation_is_axis_aligned_in_the_board_frame ... ok
+test overflowing_finite_view_does_not_erase_exact_source_geometry ... ok
+test pad_orientation_is_absolute_in_the_board_frame ... ok
+test pad_rotation_uses_kicad_handedness_without_adding_footprint_angle ... ok
+test roundrect_ratio_product_keeps_source_digits ... ok
+test selected_chamfer_keeps_rounding_on_the_other_three_corners ... ok
+test zero_chamfer_ratio_preserves_rounding_even_with_selected_corners ... ok
+test every_chamfer_selection_keeps_unselected_round_corners_after_rotation ... ok
+
+test result: ok. 33 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+
+running 14 tests
+test computable_thresholds_require_matching_exact_enclosure_rounding ... ok
+test every_exported_field_is_checked_and_nonpositive_values_are_omitted ... ok
+test exact_thresholds_round_on_the_nanometer_grid ... ok
+test exhausted_shared_budget_prevents_publication ... ok
+test final_value_abort_cannot_export_a_zero_minimum ... ok
+test generated_comments_use_kicad_syntax ... ok
+test malformed_decks_return_errors_instead_of_discarding_custom_rules ... ok
+test merge_adds_a_header_and_is_idempotent_even_without_a_final_newline ... ok
+test merge_keeps_unreserved_names_and_quoted_marker_text ... ok
+test merge_migrates_only_known_legacy_comments_and_owned_blocks ... ok
+test merge_preserves_same_line_rules_and_ignores_comment_parentheses ... ok
+test tiny_or_large_thresholds_cannot_become_a_different_rule ... ok
+test unresolved_sign_and_rounding_are_errors_with_cold_or_warm_caches ... ok
+test cli_conversion_failures_preserve_existing_destination_bytes ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 26 tests
+test ambient_approximate_policy_does_not_change_stroke_geometry ... ok
+test coincident_track_endpoints_keep_the_width_disk ... ok
+test denied_stroke_construction_retains_failure_after_scope_exit ... ok
+test denied_track_import_cannot_disappear_or_become_a_valid_origin ... ok
+test exact_diagonal_track_area_includes_caps_without_rounding_the_width ... ok
+test finite_endpoint_difference_can_exceed_float_range ... ok
+test finite_length_squaring_cannot_overflow ... ok
+test finite_length_squaring_cannot_underflow_to_zero ... ok
+test fresh_zero_budget_admits_rational_butt_strokes ... ok
+test irrational_diagonal_retains_native_surd_width ... ok
+test kicad_linear_tracks_include_both_round_caps ... ok
+test large_finite_stroke_does_not_collapse_its_width ... ok
+test irrational_diagonal_track_keeps_line_and_arc_geometry ... ok
+test ordinary_butt_stroke_keeps_its_contract ... ok
+test malformed_track_fields_retain_source_failure ... ok
+test rejected_finite_adapter_inputs_remain_absent ... ok
+test pythagorean_diagonal_has_exact_rational_area ... ok
+test subnormal_width_is_halved_after_lifting ... ok
+test tangent_track_caps_do_not_create_filled_overlap ... ok
+test reversed_stroke_preserves_exact_bounds_and_area ... ok
+test track_decimal_endpoints_and_width_are_never_rounded_first ... ok
+test track_subrange_width_and_length_remain_nonzero ... ok
+test track_superrange_coordinates_stay_native ... ok
+test warmed_stroke_queries_recheck_exhausted_scope ... ok
+test zero_track_width_is_certified_empty ... ok
+test track_caps_drive_actual_short_readiness ... ok
+
+test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+
+running 2 tests
+test readme_quickstart_matches_the_runnable_example ... ok
+test readme_release_metadata_matches_the_manifest ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

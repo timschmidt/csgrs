@@ -1,0 +1,52 @@
+   Compiling hash32 v0.3.1
+   Compiling chrono v0.4.44
+   Compiling half v2.7.1
+   Compiling num-rational v0.4.2
+   Compiling argmin-math v0.5.1
+   Compiling indexmap v2.14.0
+   Compiling tempfile v3.27.0
+   Compiling ordered-float v2.10.1
+   Compiling atoi v2.0.0
+   Compiling hashlink v0.11.1
+   Compiling heapless v0.8.0
+   Compiling argmin v0.11.0
+   Compiling rusty-fork v0.3.1
+   Compiling thrift v0.17.0
+   Compiling rusqlite v0.39.0
+   Compiling num v0.4.3
+   Compiling nalgebra v0.35.0
+   Compiling ciborium-ll v0.2.2
+   Compiling arrow-buffer v57.3.1
+   Compiling proptest v1.11.0
+   Compiling rstar v0.12.2
+   Compiling ciborium v0.2.2
+   Compiling zip v7.2.0
+   Compiling zip v2.4.2
+   Compiling geo-types v0.7.20
+   Compiling gerber-types v0.7.0
+   Compiling arrow-data v57.3.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal)
+   Compiling geo v0.33.1
+   Compiling arrow-array v57.3.1
+   Compiling gerber_parser v0.4.0
+   Compiling calamine v0.35.0
+   Compiling arrow-select v57.3.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlattice)
+   Compiling arrow-ord v57.3.1
+   Compiling arrow-ipc v57.3.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperlimit)
+   Compiling arrow-cast v57.3.1
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypersolve)
+   Compiling gauss-quad v0.3.2
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypermesh)
+   Compiling curvo v0.1.92
+   Compiling parquet v57.3.1
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hypercurve)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperphysics)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 1m 50s
+   Doc-tests hypercurve
+   Doc-tests hyperdrc

@@ -1,0 +1,29 @@
+{
+  "phases": [
+    {
+      "name": "drc-integrations",
+      "exit_code": 0,
+      "seconds": 0.4086637790314853,
+      "source_unchanged": true,
+      "stdout_sha256": "5cd4b962ea2e60cea359c999f3e5c05d26d380b7b1a302c376238bc0a4b726fa",
+      "stderr_sha256": "7f41ab621cb4d85c362ca9c27e323da168ada96629c61a4e84105a39613bb21c"
+    },
+    {
+      "name": "doctests",
+      "exit_code": 0,
+      "seconds": 113.898460122291,
+      "source_unchanged": true,
+      "stdout_sha256": "318519ca0402ac21fcad61695da9623ff100e4787f36964668766d5ff9bc5605",
+      "stderr_sha256": "af501e4bd71e929915f5e7a4047b1e4bf9a4f1efd9334027597abbd216892f21"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 34.70966573758051,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ed1ffd8fcc5e3eba13ef0e8958fe43f44e2718f03505bfac49ed12d5b17653d1"
+    }
+  ],
+  "complete": true
+}

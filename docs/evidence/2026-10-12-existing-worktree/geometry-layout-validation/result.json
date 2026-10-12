@@ -1,0 +1,29 @@
+{
+  "phases": [
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 25.054203891195357,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b85838889c89302c0e392cb9c252e93de262f303fa2291d8773cf42599d8d33f"
+    },
+    {
+      "name": "curve-tests",
+      "exit_code": 0,
+      "seconds": 1048.8658031583764,
+      "source_unchanged": true,
+      "stdout_sha256": "55896ae565b6aa5163d02b909f4aec9c90067eed43a96c680ce889438c0796a7",
+      "stderr_sha256": "423bec23d62a8d75d3f33bfc321c389e655c31794e0eae8d39945fae75060de3"
+    },
+    {
+      "name": "drc-tests",
+      "exit_code": 101,
+      "seconds": 560.20913384296,
+      "source_unchanged": true,
+      "stdout_sha256": "ff2feaf39a2b38291b0c0c5898e1af032db2767e33d9643f70a68f19abedd046",
+      "stderr_sha256": "5de49b545649f463b2403b0fcf3edc708a092a168485f4d8c2837774d395bc18"
+    }
+  ],
+  "complete": false
+}
