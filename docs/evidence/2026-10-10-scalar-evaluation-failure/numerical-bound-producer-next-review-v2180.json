@@ -1,0 +1,37 @@
+{
+  "status": "Read-only review of the next production/model gap; no new proof or source change",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "decoder_proof_record": "bound-decoder-proof-validation-v2171.json",
+  "decoder_proof_record_sha256": "44113d1e9485622d1a815cb4f8f47d5d9e33f8d74fbaacc9b367112f29892482",
+  "reviewed_inputs_sha256": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+    "crates/hyperreal/src/verified/word.rs": "fbabae87dc7a585559649974ccdc466e210a478d0cbf35d69d52994f4faba601",
+    "crates/hyperreal/verification/bound_denotation.rs": "5e13ccdad986919f9bb91ce0e4d49f5fbd88bed13a69ff12ee4cff5e9954aa70",
+    "crates/hyperreal/verification/bit_length_model.rs": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+    "crates/hyperreal/verification/computable_bounds.rs": "cfb073ac994c56830967f78d4a37b0ffc78210cbbb0e0f60f056fa9af5fbe578"
+  },
+  "reviewed_production_functions": {
+    "bound_from_approx": "    fn bound_from_approx(prec: Precision, appr: &BigInt) -> BoundInfo {\n        // Approximation values with magnitude <= 1 are within the allowed error\n        // band, so they cannot certify sign or nonzero status.\n        let magnitude = appr.magnitude();\n        let magnitude_bits = magnitude.bits();\n        if magnitude_bits <= 1 {\n            BoundInfo::Unknown\n        } else {\n            let reaches_next_binade = magnitude.trailing_ones() == magnitude_bits;\n            let msd = crate::verified::word::checked_bit_length_msd(\n                magnitude_bits,\n                if reaches_next_binade { 0 } else { 1 },\n                false,\n                prec,\n            );\n            // The closed one-unit interval [|a|-1, |a|+1] has one binary\n            // exponent unless a is a power of two or one below the next power.\n            // Inspect trailing bits instead of allocating endpoint integers.\n            let exact_msd = msd.is_some()\n                && magnitude.trailing_zeros() != Some(magnitude_bits - 1)\n                && !reaches_next_binade;\n            BoundInfo::with_sign_msd(appr.sign(), msd, exact_msd)\n        }\n    }",
+    "store_cache_value": "    fn store_cache_value(\n        &self,\n        signal: &Option<Signal>,\n        p: Precision,\n        value: BigInt,\n    ) -> Result<(), Problem> {\n        // Store only exact node approximation results, not temporary scaled\n        // values. For shared constants this updates the process-wide cache so\n        // every cloned constant wrapper and worker thread benefits.\n        //\n        // Kernels propagate failure before this method is called. Cancellation\n        // may still arrive after a kernel completes; propagate that observation\n        // while leaving previously completed cache entries intact.\n        if should_stop(signal) || evaluation_exhausted() {\n            return Err(Problem::Exhausted);\n        }\n        let approximation_bound = Self::bound_from_approx(p, &value);\n        if approximation_bound != BoundInfo::Unknown {\n            // Discover structural certificates before publishing a numerical\n            // bound. Otherwise an approximation-first query can occupy an\n            // uninitialized slot and hide an exact rational or root MSD.\n            self.cheap_bound();\n            if evaluation_exhausted() {\n                return Err(Problem::Exhausted);\n            }\n            // A separated approximation may add a sign or magnitude to the\n            // structural evidence. Atomic publication combines compatible\n            // proofs without dropping an existing exact MSD or sign.\n            self.internal.facts.publish_bound(approximation_bound);\n        }\n        if let Some(constant) = self.shared_constant_kind() {\n            Self::store_shared_constant_cache_value(constant, p, value);\n        } else {\n            self.internal.store_cache_value(p, value);\n        }\n        Ok(())\n    }"
+  },
+  "reviewed_sections": {
+    "crates/hyperreal/src/verified/word.rs": "checked_bit_length_msd and its exact mathematical range contract; adjacent upper_bit_length_msd for the distinct below-minimum clamping case.",
+    "crates/hyperreal/verification/bound_denotation.rs": "separated_approximation_yields_a_bound and its certified closed-interval endpoint premises.",
+    "crates/hyperreal/verification/bit_length_model.rs": "Complete file: normalized-limb denotation, leading-zero/bit-length connection, binary-shift length and width-based order.",
+    "crates/hyperreal/verification/computable_bounds.rs": "Complete include wrapper: it includes bounds.rs and bound_denotation.rs, not structural_analysis.rs."
+  },
+  "findings": [
+    "The actual decoder is now included in the conditional target. Computable::bound_from_approx is still absent; the new codec proof does not justify the incoming certificate.",
+    "The producer declines magnitudes zero/one, obtains the bigint bit length, raises the upper exponent when every magnitude bit is one, and withholds an exact binade for either a power of two or one below the next power. It delegates exponent range arithmetic to the already verified checked_bit_length_msd.",
+    "The existing denotation lemma requires the closed one-unit magnitude interval to fit a strict upper bound and, when exact, a lower binade. Those premises are not yet connected to the runtime bits/trailing_ones/trailing_zeros/sign calls or to BigUint storage normalization.",
+    "The normalized-limb bit-length lemmas are conditional on their sequence representation. Actual BigUint storage/import and the leading/trailing-bit metadata remain separate refinement obligations; do not replace them with assumed method specifications or credit a copied model as production coverage.",
+    "store_cache_value checks cancellation/exhaustion, obtains the numerical bound, discovers structural evidence, rechecks exhaustion, and then publishes the bound before storing the numeric approximation. This source reading does not verify operand existence, approximate-value validity, concurrency or that ordering's invariant."
+  ],
+  "candidate_next_work_after_decoder_qualification": "Connect the numerical producer's bit-pattern decisions and checked exponent to the closed-interval certificate lemma. Preserve all all-ones/power-of-two neighbors, both signs, exponent boundaries and existing public warming/work-budget behavior. Keep the actual BigInt metadata/import, independent existence and atomic publication obligations explicit; any source extraction needs its own correctness and compiled-code/resource evidence.",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "source_changed": false,
+  "new_formal_units": 0,
+  "runtime_retained": false,
+  "limits": "Selected functions and named sections were read; file hashing does not imply a whole-file source audit. The decoder's own remaining binary/cost/replay gates take precedence. This review closes no property, target, whole-crate obligation or main/native/full-board admission requirement."
+}

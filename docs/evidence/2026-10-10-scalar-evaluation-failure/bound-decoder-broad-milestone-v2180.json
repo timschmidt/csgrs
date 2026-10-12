@@ -1,0 +1,26 @@
+{
+  "status": "All nine runtime commands pass on the proved decoder source; binary, cost and replay qualification pending",
+  "source_record": "typed-api-prototype-v2174-bound-decoder-release-build/source-hashes.json.gz",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "broad_validation": "bound-decoder-broad-validation-v2180.json",
+  "broad_validation_sha256": "c7c5893aa1708552024a198b640696b995f3557491b4b2f62ee7ec1d5af82548",
+  "validation_controller": "bound-decoder-candidate-validation-v2180.json",
+  "validation_controller_sha256": "24c0c9c54bebc897cf07eeaf206066d4f2138c56bbacba7798f454d9dadf599e",
+  "proof_record": "bound-decoder-proof-validation-v2171.json",
+  "proof_record_sha256": "44113d1e9485622d1a815cb4f8f47d5d9e33f8d74fbaacc9b367112f29892482",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "next_binary_comparison_protocol": "bound-decoder-binary-comparison-protocol-v2181.json",
+  "next_binary_comparison_protocol_sha256": "39e7111016f2f09c8d8db7595ebf212fd34427d2e279a2e8d18b7daa73a3b5fb",
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "limits": [
+    "The five-crate test suite covers hyperreal, hyperlimit, hyperlattice, hypercurve and hyperdrc. All 33 ignored cases and 14 inherited Cargo example-filename warning lines match the retained baseline. This is not whole-repository CI, a full-board check or main admission.",
+    "The fresh conditional proof reports 655 units, 98 production contracts and 135 model theorems; all 245 negative mutations, four positive baselines and ten acceptance tests pass afresh. The added contract covers the actual all-word decoder and five connected field lemmas. Producer truth, existence, atomic/caller ordering and all thirteen whole-crate groups remain open.",
+    "The seven retained baseline binaries are frozen and byte-identical to their historical versions. The prepared candidate comparison has not yet run. Reuse fixture cost evidence only for exact binary identity; otherwise run fresh original-cap comparisons. Existing failures and the fixed pre-Verus baseline remain unchanged.",
+    "The remaining capped/numerical/public replay and fact audits remain separate gates. No runtime retention or property/target completion follows from this milestone alone."
+  ],
+  "next_priority": "All nine decoder runtime commands now pass. Execute the frozen seven-probe binary comparison, bind any reused cost evidence to exact executable/workload identity, and run original-cap cost controls for changed binaries. Complete the remaining capped/numerical/public replay and fact audits before retaining the decoder. Preserve all earlier failures, the fixed pre-Verus baseline and open producer/existence/atomic and main/native/full-board requirements."
+}
