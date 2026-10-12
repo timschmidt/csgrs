@@ -1,0 +1,94 @@
+{
+  "source_record_sha256": "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9",
+  "runner_sha256": "48f04c3c91fd0773d26ad0c9515dd9bd2ac8b6569c6089c8d278609eb14cb81b",
+  "followup_strategy_sha256": "d8327cd99eb9ab8616a65e362782125196fa9375350f7f332e6a7383a4e5cbc7",
+  "complete": false,
+  "steps": [
+    {
+      "label": "standalone",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_bound_merge_costs.py"
+      ],
+      "helper_sha256": "d8a0c7f73edf3ee945d4eb493d056a096fd46db6b27f0ec04d0be4bd4767407c",
+      "exit_code": 0,
+      "seconds": 96.8557273298502,
+      "stdout": "bound-merge-cost-controller-v1857/standalone.stdout",
+      "stdout_sha256": "0f218bdfd0acc5b46b7efb11ecfa605f525db9b372670ee9cc6bc28ace528425",
+      "stderr": "bound-merge-cost-controller-v1857/standalone.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "paired",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_bound_merge_cost.py"
+      ],
+      "helper_sha256": "c0f5c2b9a751aa12e965f0fc4bc05c04e7ab3bca87069e667201699a7c29a04f",
+      "exit_code": 0,
+      "seconds": 222.14848224865273,
+      "stdout": "bound-merge-cost-controller-v1857/paired.stdout",
+      "stdout_sha256": "b66ca59ff8171c26ef2a4d84b8c0abfe1bd84ce760e7ea41bfba4d83cd29def4",
+      "stderr": "bound-merge-cost-controller-v1857/paired.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "initial-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_bound_merge_initial_costs.py"
+      ],
+      "helper_sha256": "d51a3080a64e3bb234d48fca99389cc6152162ebed9d85a9f2dce3cd1c6c62b3",
+      "exit_code": 0,
+      "seconds": 1.6649157460778952,
+      "stdout": "bound-merge-cost-controller-v1857/initial-review.stdout",
+      "stdout_sha256": "815b81a3acfe9b42110c96c32288a7c80298c15145b5596c00f73928158fb4dc",
+      "stderr": "bound-merge-cost-controller-v1857/initial-review.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "freeze-followup",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/prepare_bound_merge_cost_followup.py"
+      ],
+      "helper_sha256": "b8b9de944ff3b7607dc294e4ab1082394f172213db53bbfcb9f593b905ba3889",
+      "exit_code": 0,
+      "seconds": 0.038511058781296015,
+      "stdout": "bound-merge-cost-controller-v1857/freeze-followup.stdout",
+      "stdout_sha256": "6a4c8a972502795e1cf77fc5effa7247d4d951c722d1de119de5604e2a6c02a6",
+      "stderr": "bound-merge-cost-controller-v1857/freeze-followup.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "followup-0",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_bound_merge_followup.py",
+        "0"
+      ],
+      "helper_sha256": "33dd007f7299beb6806a954ef646abe07b68ddc1fbef8426911e14fe4c1ea29b",
+      "exit_code": 0,
+      "seconds": 127.15546432090923,
+      "stdout": "bound-merge-cost-controller-v1857/followup-0.stdout",
+      "stdout_sha256": "f2a888bc79ab879114cb54b5676be1cc4c4917d6201fb3f343edd0e6b05cd647",
+      "stderr": "bound-merge-cost-controller-v1857/followup-0.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "final-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_bound_merge_costs.py"
+      ],
+      "helper_sha256": "f58e93e67b0a80a49423db3b81ed9ef57a6e1f92365fd5abfe8eb26f7363074f",
+      "exit_code": 1,
+      "seconds": 0.2403288958594203,
+      "stdout": "bound-merge-cost-controller-v1857/final-review.stdout",
+      "stdout_sha256": "b37c8a0f8209e4f92eda1d1fc0b1f9647171e6297f99251b1fc6aba985024fa4",
+      "stderr": "bound-merge-cost-controller-v1857/final-review.stderr",
+      "stderr_sha256": "e616f4a2c7f90c97a268a7dd942b624d4b73b0d741703ea4bd0766627277412e"
+    }
+  ],
+  "scope": "Sequential standalone and paired original-cap costs, original receipt audit, predeclared family repeats when needed, and final cost audit. No concurrent builds/tests/measurements or source edits; all unsuccessful steps remain recorded."
+}

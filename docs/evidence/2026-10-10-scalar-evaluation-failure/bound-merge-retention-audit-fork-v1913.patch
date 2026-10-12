@@ -1,0 +1,249 @@
+--- record_domain_predicate_retention.py
++++ record_bound_merge_retention.py
+@@ -1,4 +1,4 @@
+-"""Retain the proved production predicate only after all frozen runtime gates."""
++"""Retain compatible cached-bound merging only after all frozen runtime gates."""
+ from collections import Counter
+ import copy
+ import gzip
+@@ -15,7 +15,7 @@
+ E = Path(__file__).resolve().parent
+ ROOT = E.parents[2]
+ SOURCE = ROOT / "target/scalar-evaluation-candidate/source"
+-SOURCE_HASH = "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6"
++SOURCE_HASH = "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9"
+ read = lambda path: json.loads(path.read_text())
+ sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+ 
+@@ -29,31 +29,31 @@
+ 
+ 
+ def main():
+-    outputs = [E / name for name in ["domain-predicate-retention-v1836.json",
+-        "typed-api-prototype-v1836-metadata.json", "domain-predicate-ledger-update-v1836.json"]]
++    outputs = [E / name for name in ["bound-merge-retention-v1913.json",
++        "typed-api-prototype-v1913-metadata.json", "bound-merge-ledger-update-v1913.json"]]
+     assert all(not path.exists() for path in outputs)
+-    proof = read(E / "domain-predicate-proof-validation-v1763.json")
+-    broad = read(E / "domain-predicate-broad-validation-v1772.json")
++    proof = read(E / "bound-merge-proof-validation-v1840.json")
++    broad = read(E / "bound-merge-broad-validation-v1849.json")
+     completed = read(E / broad["orchestration_record"])
+-    costs = read(E / "domain-predicate-cost-review-v1780.json")
+-    plan_path = E / "domain-predicate-replay-protocol-v1781.json"
++    costs = read(E / "bound-merge-cost-review-v1857.json")
++    plan_path = E / "bound-merge-replay-protocol-v1858.json"
+     plan = read(plan_path)
+-    replay = read(E / "domain-predicate-replay-validation-v1834.json")
+-    queries = read(E / "domain-predicate-domain-query-comparison-v1819.json")
+-    comparison = read(E / "domain-predicate-deterministic-replay-comparison-v1835.json")
+-    facts = read(E / "domain-predicate-public-fact-audit-v1835.json")
++    replay = read(E / "bound-merge-replay-validation-v1911.json")
++    queries = read(E / "bound-merge-domain-query-comparison-v1896.json")
++    comparison = read(E / "bound-merge-deterministic-replay-comparison-v1912.json")
++    facts = read(E / "bound-merge-public-fact-audit-v1912.json")
+     for item in [proof, broad, costs, plan, replay, queries, comparison, facts]:
+         assert item["source_record_sha256"] == SOURCE_HASH
+     assert completed["complete"] and len(completed["phases"]) == 9
+     assert replay["complete"] and len(replay["results"]) == 54
+     for item in [replay, comparison, facts]:
+         assert item["protocol_sha256"] == sha(plan_path)
+-    assert replay["runner_sha256"] == sha(E / "run_domain_predicate_replays.py")
++    assert replay["runner_sha256"] == sha(E / "run_bound_merge_replays.py")
+     assert sha(E / proof["retained_runtime_checkpoint"]) == proof["retained_runtime_checkpoint_sha256"]
+-    assert proof["verified_units"] == 645 and proof["errors"] == 0
+-    assert proof["listed_production_contracts"] == 97 and proof["listed_model_theorems"] == 130
++    assert proof["verified_units"] == 651 and proof["errors"] == 0
++    assert proof["listed_production_contracts"] == 98 and proof["listed_model_theorems"] == 135
+     assert proof["open_obligation_groups"] == 13 and proof["fresh_acceptance_tests"] == 10
+-    assert proof["fresh_rejected_mutants"] == 226 and proof["fresh_passing_guard_baselines"] == 4
++    assert proof["fresh_rejected_mutants"] == 246 and proof["fresh_passing_guard_baselines"] == 4
+     assert proof["reused_rejected_mutants"] == 0
+     for key in ["fresh_verification_phase", "fresh_acceptance_phase", "fresh_rejection_phase"]:
+         checked_phase(proof[key])
+@@ -70,8 +70,8 @@
+         tests = parse_phase(E / name)
+         assert tests == broad["test_summaries"][name]
+         validations[name] = {"result": row["result"], "tests": tests}
+-    expected_tests = {1764: (1074, 1, 0), 1769: (5858, 3, 33),
+-                      1770: (1059, 3, 0), 1771: (1074, 1, 0)}
++    expected_tests = {1841: (1074, 1, 0), 1846: (5858, 3, 33),
++                      1847: (1059, 3, 0), 1848: (1074, 1, 0)}
+     for version, expected in expected_tests.items():
+         matches = [row["tests"] for name, row in validations.items()
+                    if name.startswith(f"typed-api-prototype-v{version}-")]
+@@ -140,79 +140,89 @@
+     assert composed["root_fact_retention_comparisons"] == 85176
+     assert composed["child_fact_retention_comparisons"] == 9360
+     assert composed["events:cached"] == 13104
+-    assert costs["successful_cost_processes_including_standalone"] == 1566
+-    assert costs["separate_cpu_preparation_processes"] == 1098 and costs["original_process_caps_preserved"]
++    cost_controller_path = E / "bound-merge-cost-validation-v1857.json"
++    cost_controller = read(cost_controller_path)
++    cost_milestone = read(E / "bound-merge-cost-milestone-v1857.json")
++    assert cost_controller["complete"] and costs["local_timing_and_process_gates_passed"]
++    assert not costs["persistent_above_five_percent_increases"]
++    assert cost_milestone["cost_controller_sha256"] == sha(cost_controller_path)
++    assert cost_milestone["cost_record_sha256"] == sha(E / "bound-merge-cost-review-v1857.json")
++    assert cost_milestone["source_record_sha256"] == cost_controller["source_record_sha256"] == SOURCE_HASH
++    assert subprocess.check_output(["git", "show", "HEAD:" + str((E / "bound-merge-cost-review-v1857.json").relative_to(ROOT))], cwd=ROOT) == (E / "bound-merge-cost-review-v1857.json").read_bytes()
++    repeats = sum(row["successful_processes"] for row in costs["followups"])
++    processes, preludes = 1404 + repeats, 936 + repeats
++    assert costs["successful_cost_processes_including_standalone"] == processes
++    assert costs["separate_cpu_preparation_processes"] == preludes and costs["original_process_caps_preserved"]
+     assert costs["original_run"]["complete_fixtures"] == 52
+-    assert costs["original_run"]["successful_processes"] == 936
+-    assert costs["original_run"]["failed_attempts"] == costs["followup"]["failed_attempts"] == 0
++    assert costs["original_run"]["successful_processes"] == 936 and costs["original_run"]["failed_attempts"] == 0
++    assert all(row["failed_attempts"] == 0 for row in costs["followups"])
+     assert all(row["non_timing_outputs_identical"] for row in costs["families"].values())
+-    assert all(row["delta_bytes"] < 0 for row in costs["executable_size_comparison"].values())
+-    assert costs["initial_and_followup_pi_percent"][0] > 5 > costs["initial_and_followup_pi_percent"][1]
+-    assert all(row["median_percent_change"] <= 5 for row in costs["followup"]["cases"]["inverse_trig"])
+-
+-    source_record = "typed-api-prototype-v1766-domain-predicate-release-build/source-hashes.json.gz"
++    assert all(case["median_percent_change"] <= 5 for row in costs["followups"]
++               for cases in row["cases"].values() for case in cases)
++
++    source_record = "typed-api-prototype-v1843-bound-merge-release-build/source-hashes.json.gz"
+     assert sha(E / source_record) == SOURCE_HASH
+     sources = json.loads(gzip.decompress((E / source_record).read_bytes()))
+     previous = read(E / proof["retained_runtime_checkpoint"])
+     before_sources = json.loads(gzip.decompress((E / previous["source_record"]).read_bytes()))
+     assert sources.keys() == before_sources.keys() and len(sources) == 24746
+     changed = {name: value for name, value in sources.items() if before_sources[name] != value}
+-    assert changed == proof["changed_sources_sha256"] and len(changed) == 7
++    assert changed == proof["changed_sources_sha256"] and len(changed) == 6
+     for name, value in sources.items():
+         assert sha(SOURCE / name) == value, name
+ 
+     limits = [
+-        "The proof includes the actual production predicate body and establishes a real-domain consequence conditional on a valid incoming bound. Independent real existence, producer soundness, caller ordering, graph semantics and atomic publication remain separate obligations; all thirteen whole-crate groups remain open.",
+-        "Ten acceptance/dependency tests and 226 rejected mutations plus four passing baselines do not satisfy the still-pending fixed pre-Verus acceptance report. The failed v1760 proof attempt and all earlier failed experiments remain immutable.",
++        "The proof includes the actual production BoundInfo::merge body. Two valid bounds for the same real value are compatible; merging them preserves denotation, all available certificates and accepted domain predicates. Producer soundness and independent real existence remain premises. The atomic load/CAS loop, caller ordering and graph semantics remain separate obligations; all thirteen whole-crate groups remain open.",
++        "Ten acceptance/dependency tests and 246 rejected mutations plus four passing baselines do not satisfy the still-pending fixed pre-Verus acceptance report. This extraction has no failed proof attempt; all earlier failed experiments remain immutable.",
+         "The nine broad commands cover scalar configurations and the five-crate consumer stack, not every workspace/CI job. Thirty-three ignored tests and fourteen inherited Cargo example-filename warnings remain; both strict Clippy configurations have zero warnings.",
+         "The 39 direct-binary caps and 648 public schedules retain 192 MiB, CPU 2/3-second and four-second wall limits. Numerical corpora preserve their individual original limits; the base and precision corpora use a three-second wall limit without the later CPU guard. The 78 private-kernel cases check result shapes, so 4129 is not a count of independent numerical oracle checks.",
+         "All deterministic observations remain identical, including samples, typed errors, work, facts and recorded allocations. Only duration fields and known executable phase paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts separately from schedule-dependent outcomes.",
+         "The public fact audit checks observed worker/root sequences and joined final snapshots. Thread stress is not exhaustive interleaving verification. Composed child snapshots start at the first serialized observation; the frozen Rust probe separately checks the initial child state. Exact-rational flags are checked for retention, not general recognition soundness.",
+-        "The 1584 domain queries include 453 successes and 1131 Exhausted answers, unchanged from v1754. The zero-Rust-allocation observation applies to 56 private certificate queries. The 48 endpoint/invalid/upper-only controls, 36 fine-retry schedules and 144 cached retry queries remain unchanged; these are nested in the nine domain cap phases, not additional executable processes.",
+-        "All 1566 fresh cost processes and 1098 separate CPU preludes pass their original caps. The initial 5.0501 percent pi increase and prescribed 1.0191 percent repeat both remain recorded. Seven local probe executables shrink 48-152 bytes. These measurements establish neither causal attribution, a uniform speedup nor whole-board performance/size parity.",
+-        "The local cost baseline remains v1754. Older original-cap failures at v1638/v1710, the earlier retained integer-control tradeoff and the fixed pre-Verus acceptance baseline are not erased or reset by this successful comparison.",
++        "The 1584 domain queries include 453 successes and 1131 Exhausted answers, unchanged from v1836. The zero-Rust-allocation observation applies to 56 private certificate queries. The 48 endpoint/invalid/upper-only controls, 36 fine-retry schedules and 144 cached retry queries remain unchanged; these are nested in the nine domain cap phases, not additional executable processes.",
++        "All fresh standalone, original paired and prescribed family-repeat processes pass their original caps. The cost record preserves all initial/repeated timing observations and separate executable sizes. These measurements establish neither causal attribution, a uniform speedup nor whole-board performance/size parity.",
++        "The local cost baseline remains v1836. Older original-cap failures at v1638/v1710, the earlier retained integer-control tradeoff and the fixed pre-Verus acceptance baseline are not erased or reset by this successful comparison.",
+         "EvaluationBudget excludes aggregate bytes/time and unmetered algebraic helpers. Construction and structural inspection are outside the public query allowances. Reconstructed graphs discard sharing/caches while process-global constants may already be warm.",
+         "This retains an isolated candidate only. Main retains its original scalar failure and all 49 preexisting worktree entries. Native combination, full-board admission, all 39 properties, 14 targets and crate future work remain in scope; no property/target status changes and no push follow from this checkpoint.",
+     ]
+     next_priority = (
+         "Continue implementation-connected review of bound producers, independent real existence "
+         "and atomic publication, using the retained public and composed schedules as regression "
+-        "controls. Conditional predicate soundness does not discharge those prerequisites. "
++        "controls. Conditional merge and domain soundness do not discharge those prerequisites. "
+         "Continue the remaining constructor/coefficient and exact-operation resource work before "
+         "native combination and unchanged full-board admission."
+     )
+     record = {
+-        "status": "Retain the isolated proved cached magnitude-domain predicate extraction; main admission remains open",
++        "status": "Retain the isolated proved compatible cached-bound merge; main admission remains open",
+         "source_record": source_record, "source_record_sha256": SOURCE_HASH,
+         "previous_checkpoint": proof["retained_runtime_checkpoint"],
+         "previous_checkpoint_sha256": proof["retained_runtime_checkpoint_sha256"],
+         "baseline": proof["baseline"], "baseline_sha256": proof["baseline_sha256"],
+         "production_patch": proof["proposal_patch"], "production_patch_sha256": proof["proposal_patch_sha256"],
+         "changed_sources_sha256": changed,
+-        "proof_record": "domain-predicate-proof-validation-v1763.json",
+-        "proof_record_sha256": sha(E / "domain-predicate-proof-validation-v1763.json"),
++        "proof_record": "bound-merge-proof-validation-v1840.json",
++        "proof_record_sha256": sha(E / "bound-merge-proof-validation-v1840.json"),
+         "conditional_proof": {key: proof[key] for key in ["verified_units", "errors", "listed_production_contracts",
+             "listed_model_theorems", "open_obligation_groups", "fresh_acceptance_tests", "fresh_rejected_mutants",
+             "fresh_passing_guard_baselines", "reused_rejected_mutants"]},
+         "fresh_cargo_and_format_validations": validations,
+         "fresh_capped_validations": caps, "capped_test_counts": cap_counts,
+-        "replay_orchestration": "domain-predicate-replay-validation-v1834.json",
++        "replay_orchestration": "bound-merge-replay-validation-v1911.json",
+         "replays": summaries, "replay_cases": dict(replay_counts),
+-        "domain_observation_comparison": "domain-predicate-domain-query-comparison-v1819.json",
+-        "deterministic_replay_comparison": "domain-predicate-deterministic-replay-comparison-v1835.json",
+-        "public_fact_audit": "domain-predicate-public-fact-audit-v1835.json",
++        "domain_observation_comparison": "bound-merge-domain-query-comparison-v1896.json",
++        "deterministic_replay_comparison": "bound-merge-deterministic-replay-comparison-v1912.json",
++        "public_fact_audit": "bound-merge-public-fact-audit-v1912.json",
+         "public_fact_observations": facts["reports"],
+-        "cost_record": "domain-predicate-cost-review-v1780.json",
+-        "cost_processes": 1566, "separate_cpu_preludes": 1098,
+-        "initial_and_followup_pi_percent": costs["initial_and_followup_pi_percent"],
+-        "decision": "Keep the exact runtime domain decisions and route them through the same pure BoundInfo method included by Verus. The extraction adds conditional proof coverage without losing any observed successful query, fact, work allowance or allocation behavior in the frozen deterministic corpora. The original-cap cost comparison and predeclared repeat pass. This is the new isolated baseline, not main runtime admission.",
++        "cost_record": "bound-merge-cost-review-v1857.json",
++        "cost_processes": processes, "separate_cpu_preludes": preludes,
++        "initial_and_followup_percent": costs["initial_and_followup_percent"],
++        "decision": "Keep the exact runtime bound selection and route it through the same pure BoundInfo::merge body included by Verus. The extraction adds conditional denotation, compatibility, certificate-retention and domain-retention proofs without losing any observed successful query, fact, work allowance or allocation behavior in the frozen deterministic corpora. Original-cap costs and the predeclared repeat rule pass. This is the new isolated baseline; main runtime admission remains open.",
+         "limits": limits, "remaining_source_review": "domain-bound-deferred-review-v1702.json",
+-        "remaining_source_review_scope": "Historical review of v1754. Its public/concurrent/composed coverage gaps now have finite replay evidence and its cached-bound predicate has a conditional production proof; producer/existence/atomic/caller and resource obligations remain open.",
++        "remaining_source_review_scope": "Historical review of v1754. Its public/concurrent/composed coverage gaps now have finite replay evidence, and cached-bound domain decisions and compatible merging have conditional production proofs. Producer/existence/atomic/caller and resource obligations remain open.",
+         "next_priority": next_priority,
+     }
+     evidence_names = [record["replay_orchestration"], record["domain_observation_comparison"],
+         record["deterministic_replay_comparison"], record["public_fact_audit"], outputs[0].name,
+-        "typed-api-prototype-v1836-state.json"]
++        "typed-api-prototype-v1913-state.json"]
+     ledger = ROOT / "docs/properties-status.json"
+     before_bytes = ledger.read_bytes()
+     assert subprocess.check_output(["git", "show", "HEAD:docs/properties-status.json"], cwd=ROOT) == before_bytes
+@@ -225,30 +235,30 @@
+         assert path not in p4["evidence"]
+         p4["evidence"].append(path)
+     update = (
+-        "The v1836 isolated checkpoint retains the proved cached-domain predicate extraction "
+-        "after all frozen gates: 645 verified units, 226 rejected mutations, four passing guard "
++        "The v1913 isolated checkpoint retains the proved compatible cached-bound merge "
++        "after all frozen gates: 651 verified units, 246 rejected mutations, four passing guard "
+         "baselines, ten acceptance tests, nine broad commands, 39 capped phases (156 top-level "
+         "tests plus one child), 4129 numerical cases and 648 public reuse schedules. All 1724 "
+         "domain observations and all deterministic numerical/public receipt fields remain "
+         "identical apart from times and known phase paths. Available facts survive 6144 joined "
+         "final comparisons, 85176 root comparisons and 9360 observed-child comparisons. "
+         "Concurrent outcome counts remain schedule-dependent and are audited for invariants. "
+-        "The 1566 original-cap cost processes and 1098 CPU preludes pass, including the "
+-        "predeclared pi follow-up; older cost failures/tradeoff and the fixed pre-Verus "
++        f"The {processes} original-cap cost processes and {preludes} CPU preludes pass, "
++        "including all prescribed family repeats; older cost failures/tradeoff and the fixed pre-Verus "
+         "baseline remain explicit. This changes only the isolated retained candidate. "
+         "Incoming-bound soundness, independent existence, atomic publication, caller ordering, "
+         "all thirteen whole-crate groups, main/native/full-board admission and the full "
+         "39-property/14-target/crate-future-work scope remain open."
+     )
+     p4["remaining"] += " " + update
+-    old_checkpoint = "Continue the isolated fallible scalar evaluator from typed-api-prototype-v1754-state.json before production admission."
++    old_checkpoint = "Continue the isolated fallible scalar evaluator from typed-api-prototype-v1836-state.json before production admission."
+     assert after["next_actions"][0].startswith(old_checkpoint)
+     after["next_actions"][0] = after["next_actions"][0].replace(old_checkpoint,
+-        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v1836-state.json before production admission.", 1)
++        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v1913-state.json before production admission.", 1)
+     old_pending = "Next run all capped/numerical/public replays and receipt/fact audits before deciding retention."
+     assert after["next_actions"][0].count(old_pending) == 1
+     after["next_actions"][0] = after["next_actions"][0].replace(old_pending,
+-        "All capped/numerical/public replays and receipt/fact audits pass; the extraction is retained in v1836. " + next_priority, 1)
++        "All capped/numerical/public replays and receipt/fact audits pass; the extraction is retained in v1913. " + next_priority, 1)
+     after["next_actions"][0] += " " + update
+     unchanged = copy.deepcopy(after)
+     original_p4 = next(row for row in before["properties"] if row["id"] == "P4")
+@@ -260,7 +270,7 @@
+         "previous_checkpoint": proof["retained_runtime_checkpoint"], "status": record["status"],
+         "contract_decision": "p4-contract-decision-v173.json",
+         "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+-        "evidence_commits": ["520dcad721e1630e232c168e67e40894bdf4374e", "96b45f3c20b935ad00a2354e78c3515f3aabd484", "29dc377ac4f6ed7fe31a8bc3849f96f79f6a96ef"],
++        "evidence_commits": ["21a45c3ed2b7aee9e5f98d8beaba184b4a8f37f6", "0e865eca8bb98f83137c66fe78d2b9793b1f6557", subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()],
+         "retention_record": outputs[0].name,
+         "production_patch": record["production_patch"], "production_patch_sha256": record["production_patch_sha256"],
+         "fresh_validation_phases": {"cargo_and_format": 9, "separately_verified_capped_binary": 39},
+@@ -290,7 +300,7 @@
+         "changed_fields": ["P4.evidence", "P4.remaining", "next_actions[0]"],
+         "all_39_property_and_14_target_requirements_and_statuses_preserved": True,
+         "retention_record_sha256": sha(outputs[0]), "metadata_sha256": sha(outputs[1]),
+-        "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json", "main_runtime_admitted": False,
++        "retained_runtime_checkpoint": "typed-api-prototype-v1913-state.json", "main_runtime_admitted": False,
+     }, indent=2) + "\n")
+     print(json.dumps({"status": record["status"], "broad_commands": len(validations),
+         "capped_phases": len(caps), "capped_tests": cap_counts, "replay_cases": dict(replay_counts),

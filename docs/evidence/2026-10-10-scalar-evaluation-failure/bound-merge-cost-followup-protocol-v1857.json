@@ -1,0 +1,365 @@
+{
+  "status": "Frozen after the complete original-cap comparison and before follow-up execution",
+  "source_record_sha256": "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9",
+  "original_record": "bound-merge-initial-cost-review-v1857.json",
+  "original_record_sha256": "60d419a8aa7e430227d45e1362fb0eaf0877e3c560fe6592053ac8df2dc6e437",
+  "original_run": "bound-merge-preconditioned-cost-v1857",
+  "original_run_complete": true,
+  "initial_above_five_percent_increases": [
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_one",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          3430905,
+          3478542,
+          3650150,
+          3663399,
+          3459533,
+          3498790,
+          3514019,
+          3712785,
+          3531098
+        ],
+        "candidate": [
+          3763462,
+          6684451,
+          4883805,
+          3796779,
+          3768081,
+          4049793,
+          3791780,
+          3859485,
+          3687817
+        ]
+      },
+      "median_ns": {
+        "baseline": 3514019,
+        "candidate": 3796779
+      },
+      "median_percent_change": 8.04662695335454
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_integer_many",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          6987921,
+          6525092,
+          6510673,
+          6586788,
+          11426466,
+          6623096,
+          6766556,
+          6616537,
+          6767136
+        ],
+        "candidate": [
+          7078814,
+          6783985,
+          10709276,
+          7221905,
+          10918791,
+          6935364,
+          6763056,
+          6992940,
+          6845261
+        ]
+      },
+      "median_ns": {
+        "baseline": 6623096,
+        "candidate": 6992940
+      },
+      "median_percent_change": 5.584155808703373
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_many",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          3575004,
+          3589664,
+          3477762,
+          3486211,
+          3573945,
+          3503100,
+          3500080,
+          3543287,
+          3590244
+        ],
+        "candidate": [
+          3701517,
+          3726055,
+          3752782,
+          3745623,
+          4459875,
+          3841506,
+          3780680,
+          4135647,
+          3743703
+        ]
+      },
+      "median_ns": {
+        "baseline": 3543287,
+        "candidate": 3752782
+      },
+      "median_percent_change": 5.912447961455003
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_coarse",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          600569,
+          483326,
+          476207,
+          460428,
+          476627,
+          483396,
+          475017,
+          454669,
+          580511
+        ],
+        "candidate": [
+          642925,
+          525534,
+          804505,
+          465868,
+          468338,
+          468098,
+          472278,
+          527683,
+          549002
+        ]
+      },
+      "median_ns": {
+        "baseline": 476627,
+        "candidate": 525534
+      },
+      "median_percent_change": 10.261063682921856
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_gap",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          103203,
+          104353,
+          84964,
+          97153,
+          82534,
+          105522,
+          83505,
+          103123,
+          89234
+        ],
+        "candidate": [
+          105333,
+          82555,
+          116672,
+          154390,
+          82514,
+          83514,
+          83504,
+          102593,
+          103173
+        ]
+      },
+      "median_ns": {
+        "baseline": 97153,
+        "candidate": 102593
+      },
+      "median_percent_change": 5.599415355161441
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_fine",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          1772189,
+          1801876,
+          1791857,
+          1770378,
+          2174061,
+          1892410,
+          1775449,
+          1784317,
+          2175140
+        ],
+        "candidate": [
+          1771329,
+          2056089,
+          1791427,
+          2538855,
+          1766879,
+          1992793,
+          1893880,
+          2105836,
+          1841333
+        ]
+      },
+      "median_ns": {
+        "baseline": 1791857,
+        "candidate": 1893880
+      },
+      "median_percent_change": 5.693702120202682
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_identity",
+        "10000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          1013860,
+          1096765,
+          1038469,
+          1438782,
+          1385684,
+          1069197,
+          1052568,
+          1234756,
+          1322179
+        ],
+        "candidate": [
+          1168550,
+          1650127,
+          1567903,
+          1258154,
+          1034260,
+          1338008,
+          1032919,
+          1016130,
+          1256574
+        ]
+      },
+      "median_ns": {
+        "baseline": 1096765,
+        "candidate": 1256574
+      },
+      "median_percent_change": 14.570942727019908
+    }
+  ],
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "followup_strategy": "bound-merge-cost-followup-strategy-v1857.json",
+  "followup_strategy_sha256": "d8327cd99eb9ab8616a65e362782125196fa9375350f7f332e6a7383a4e5cbc7",
+  "unchanged_inputs": "The complete original run remains immutable. Every fixture in each affected family is retained as an unchanged control; none is selected according to a favorable timing outcome.",
+  "jobs": [
+    {
+      "output": "bound-merge-focused-cost-v1857",
+      "prelude": "bound-merge-focused-cpu-prelude-v1857",
+      "repetitions": 27,
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "wall_seconds": 4,
+      "selection": {
+        "atan": [
+          [
+            "small_integer",
+            "4096"
+          ],
+          [
+            "small_reciprocal",
+            "4096"
+          ],
+          [
+            "medium_integer",
+            "512"
+          ],
+          [
+            "medium_reciprocal",
+            "512"
+          ],
+          [
+            "wide_integer",
+            "64"
+          ],
+          [
+            "wide_reciprocal",
+            "64"
+          ],
+          [
+            "dense_integer",
+            "4"
+          ],
+          [
+            "dense_reciprocal",
+            "4"
+          ],
+          [
+            "cached_integer_one",
+            "100000"
+          ],
+          [
+            "cached_reciprocal_one",
+            "100000"
+          ],
+          [
+            "cached_integer_many",
+            "100000"
+          ],
+          [
+            "cached_reciprocal_many",
+            "100000"
+          ]
+        ],
+        "integer": [
+          [
+            "small_fine",
+            "200000"
+          ],
+          [
+            "small_coarse",
+            "200000"
+          ],
+          [
+            "small_identity",
+            "200000"
+          ],
+          [
+            "wide_coarse",
+            "10000"
+          ],
+          [
+            "wide_gap",
+            "10000"
+          ],
+          [
+            "wide_halfway",
+            "10000"
+          ],
+          [
+            "wide_fine",
+            "10000"
+          ],
+          [
+            "wide_identity",
+            "10000"
+          ]
+        ]
+      },
+      "scope": "Twenty-seven alternating-order pairs for every unchanged original fixture in each family with an initial increase above five percent. The family selection follows the strategy frozen before any candidate timings. Preserve all full-size inputs, binaries, checksums, allocation/work receipts, original 192 MiB/CPU 2/3-second/four-second wall limits and the identical 50-million-step CPU prelude. Keep initial and follow-up observations without causal attribution or a uniform-speedup claim."
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_domain_predicate_retention.py",
+  "predecessor_sha256": "dfe55e007010983152f7a0d797bfbe7249604f3fd7f9cbc266df56f4b2a694bc",
+  "runner": "record_bound_merge_retention.py",
+  "runner_sha256": "8fd633af287a04cd48b86471e10dd85f6fc320acd637877840a806d11700e601",
+  "fork_patch": "bound-merge-retention-audit-fork-v1913.patch",
+  "fork_patch_sha256": "3d9fb70a22bede5eaf6177386dcbe68148eb19e3b684cd807aabbbe761331467",
+  "status": "Prepared only; all cost and replay gates must finish before execution",
+  "scope": "Preserve the prior retention audit, update source/phase/proof identities, and audit the predeclared family-repeat cost protocol without a pi-specific or shrinking-executable assumption. No source or ledger changes occur during preparation."
+}

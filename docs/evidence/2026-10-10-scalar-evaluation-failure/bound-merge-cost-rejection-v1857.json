@@ -1,0 +1,307 @@
+{
+  "status": "Reject the isolated bound-merge extraction: two prescribed repeat controls exceed the frozen timing threshold",
+  "source_record": "typed-api-prototype-v1843-bound-merge-release-build/source-hashes.json.gz",
+  "source_record_sha256": "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9",
+  "cost_record": "bound-merge-cost-review-v1857.json",
+  "cost_record_sha256": "da887d953dc9fc2ec8802d8d335014713a03597c6ade8b81f537546ae1b46918",
+  "cost_controller": "bound-merge-cost-validation-v1857.json",
+  "cost_controller_sha256": "e2b9ff30cec33c88aa9c3796ce14745608ab152441d343eddbc6496a7a3fb001",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "proposal_patch": "bound-merge-proposal-v1840.patch",
+  "proposal_patch_sha256": "88d0dd17ac1fca301b9b6255c51e14a337475b9e5633754461c44d9aa92e9ba6",
+  "persistent_increases": [
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_one",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          5936393,
+          3447424,
+          3666018,
+          3556616,
+          3462482,
+          3436994,
+          3434165,
+          3434014,
+          3449404,
+          3479811,
+          3465192,
+          6420130,
+          4370850,
+          3569955,
+          3536247,
+          3499470,
+          3462702,
+          3818558,
+          3473492,
+          3514259,
+          3505400,
+          3507479,
+          3454873,
+          3489331,
+          3545777,
+          3545447,
+          3446033
+        ],
+        "candidate": [
+          6603007,
+          3804219,
+          3901432,
+          3796509,
+          3920981,
+          3813708,
+          3763192,
+          3812888,
+          3802859,
+          3777421,
+          3818999,
+          3794720,
+          3806409,
+          4027544,
+          3967928,
+          7069955,
+          3847566,
+          3750393,
+          3841946,
+          3931600,
+          3704006,
+          3825137,
+          3767331,
+          3819478,
+          4162534,
+          3803639,
+          4108008
+        ]
+      },
+      "median_ns": {
+        "baseline": 3499470,
+        "candidate": 3818999
+      },
+      "median_percent_change": 9.130782661374436
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_many",
+        "100000"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          3575045,
+          3564765,
+          3590114,
+          3554826,
+          3567015,
+          3583844,
+          3578035,
+          3495790,
+          3662799,
+          3529598,
+          3573765,
+          3561676,
+          3517129,
+          7082004,
+          3592313,
+          3625761,
+          3688117,
+          3694847,
+          3741143,
+          3569845,
+          3585114,
+          3549027,
+          3629341,
+          3476322,
+          3613612,
+          3537338,
+          3498740
+        ],
+        "candidate": [
+          3759912,
+          3797550,
+          3848826,
+          5030195,
+          3762592,
+          3769371,
+          3732424,
+          4017544,
+          4041363,
+          3895243,
+          6967342,
+          3836467,
+          3800000,
+          3997556,
+          3940050,
+          4073241,
+          3754643,
+          3746063,
+          3782760,
+          3698706,
+          4360221,
+          3832937,
+          3767451,
+          3718915,
+          3856686,
+          3911951,
+          3800259
+        ]
+      },
+      "median_ns": {
+        "baseline": 3575045,
+        "candidate": 3832937
+      },
+      "median_percent_change": 7.213671436303604
+    }
+  ],
+  "initial_and_followup_percent": [
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_one",
+        "100000"
+      ],
+      "initial_percent": 8.04662695335454,
+      "followup_percent": 9.130782661374436
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_integer_many",
+        "100000"
+      ],
+      "initial_percent": 5.584155808703373,
+      "followup_percent": 4.643612768653438
+    },
+    {
+      "family": "atan",
+      "arguments": [
+        "cached_reciprocal_many",
+        "100000"
+      ],
+      "initial_percent": 5.912447961455003,
+      "followup_percent": 7.213671436303604
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_coarse",
+        "10000"
+      ],
+      "initial_percent": 10.261063682921856,
+      "followup_percent": -3.0949877666525794
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_gap",
+        "10000"
+      ],
+      "initial_percent": 5.599415355161441,
+      "followup_percent": -1.7772043610665533
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_fine",
+        "10000"
+      ],
+      "initial_percent": 5.693702120202682,
+      "followup_percent": 0.3333158899302857
+    },
+    {
+      "family": "integer",
+      "arguments": [
+        "wide_identity",
+        "10000"
+      ],
+      "initial_percent": 14.570942727019908,
+      "followup_percent": 0.035806595386422835
+    }
+  ],
+  "successful_cost_processes": 2484,
+  "separate_cpu_preludes": 2016,
+  "failed_capped_cost_processes": 0,
+  "cost_gate_passed": false,
+  "original_fixture_count": 52,
+  "family_repeat_fixture_count": 20,
+  "executable_size_comparison": {
+    "atan": {
+      "bytes": {
+        "baseline": 6261016,
+        "candidate": 6261424
+      },
+      "delta_bytes": 408,
+      "percent_change": 0.006516514252630223
+    },
+    "integer": {
+      "bytes": {
+        "baseline": 6239120,
+        "candidate": 6239472
+      },
+      "delta_bytes": 352,
+      "percent_change": 0.005641821282487136
+    },
+    "inverse_trig": {
+      "bytes": {
+        "baseline": 6920888,
+        "candidate": 6921240
+      },
+      "delta_bytes": 352,
+      "percent_change": 0.005086052541236619
+    },
+    "normal_form": {
+      "bytes": {
+        "baseline": 6925912,
+        "candidate": 6926232
+      },
+      "delta_bytes": 320,
+      "percent_change": 0.004620330145699292
+    },
+    "default": {
+      "bytes": {
+        "baseline": 6498336,
+        "candidate": 6498672
+      },
+      "delta_bytes": 336,
+      "percent_change": 0.00517055443116643
+    },
+    "algebraic": {
+      "bytes": {
+        "baseline": 6914520,
+        "candidate": 6914840
+      },
+      "delta_bytes": 320,
+      "percent_change": 0.00462794235898123
+    },
+    "acos": {
+      "bytes": {
+        "baseline": 6244448,
+        "candidate": 6244776
+      },
+      "delta_bytes": 328,
+      "percent_change": 0.00525266604829433
+    }
+  },
+  "passing_evidence": {
+    "verified_units": 651,
+    "fresh_rejected_mutants": 246,
+    "fresh_passing_guard_baselines": 4,
+    "fresh_acceptance_tests": 10,
+    "broad_runtime_commands": 9,
+    "all_observed_non_timing_cost_outputs_identical": true
+  },
+  "replays_started": false,
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "limits": [
+    "The gate rejects this candidate based on the frozen local comparison. Timing does not establish a code-level cause or a uniform regression; integer-family initial increases did not persist in the repeat.",
+    "The 468 standalone, 936 original paired and 1080 family-repeat processes all pass their original caps, as do 2016 separate CPU preludes. Process success does not override the failed timing gate.",
+    "The seven probe executables grow by 320-408 bytes, recorded separately from timing. These sizes do not establish whole-board effects.",
+    "The conditional production proof and nine runtime checks remain valid evidence for their source. Prepared cost-milestone/retention helpers and the 39-cap/4129-numerical/648-public replay protocol were not executed; none is an admission result.",
+    "The retained runtime remains v1836, and the current candidate directory still holds the rejected proposal for diagnosis. Older failures/tradeoffs, the fixed pre-Verus acceptance baseline, thirteen whole-crate proof groups and all main/native/full-board obligations remain unchanged."
+  ],
+  "next_priority": "Investigate the two persistent cached-reciprocal atan increases using the preserved binaries and unchanged full-size controls. Any revised extraction needs a new frozen source/protocol and all required proof, runtime, cost and replay gates. Preserve this failed comparison; do not retry unchanged timings until a favorable result appears."
+}
