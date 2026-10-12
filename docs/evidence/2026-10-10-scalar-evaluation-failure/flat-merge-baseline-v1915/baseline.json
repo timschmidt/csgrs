@@ -1,0 +1,26 @@
+{
+  "status": "Frozen before editing the single caller-branching variant",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "rejected_source_record": "typed-api-prototype-v1843-bound-merge-release-build/source-hashes.json.gz",
+  "rejected_source_record_sha256": "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9",
+  "rejected_source_files_verified": 24746,
+  "archived_rejected_sources_sha256": {
+    "crates/hyperreal/src/computable/node/bounds.rs": "1a18497fb0d76b8f6178ced99c2602c050070c3c0c871457040518d0e97bda18",
+    "crates/hyperreal/src/computable/node/representation.rs": "67a44e97b3fb9fbb8c520d9106f7c06abd95c20418c8ecd492b4278868e4adec",
+    "crates/hyperreal/verification/README.md": "5ac706de7b08a7c8a1e85a96d9d9533a7c5cea9b6c5e4ee80701aa9653fa1b5c",
+    "crates/hyperreal/verification/bound_denotation.rs": "34a66c33ea2925f28a1e7c288203c799643534eed20549124fc6aa3d924be815",
+    "crates/hyperreal/verification/scope.json": "f230034943c978650b463aed032e70026315efe58280f1acbf84775c8be40a6f",
+    "crates/hyperreal/verification/test_bound_rejections.py": "478b1888cac6d02a39244afa7e22312957b624bb7d42085f230ae2ef815653c7"
+  },
+  "rejection_record": "bound-merge-cost-rejection-v1857.json",
+  "rejection_record_sha256": "7ceea1fbcbb4390ab789f88a6a498ddde7fb5eec96a4a32f23823e6ad890e6b5",
+  "static_diagnosis": "bound-merge-static-diagnosis-v1914/summary.json",
+  "static_diagnosis_sha256": "43359ac10e0387e00570a54d5329c65fb5e31f4edd913f19ebaed94ab4db391a",
+  "base_commit": "05f2d8ea77184520caf010ec765bdb8b9d56dc07",
+  "change_boundary": "Only the combined-bound selection expression in AtomicFacts::publish_bound: preserve Invalid-or-Unknown as the original top-level incoming-value branch, then use BoundInfo::merge for other valid retained bounds. The pure merge body, all ghost lemmas, diagnostics, atomic load/test hook, encode/mask/CAS suffix, tests and fixtures remain byte-identical to the rejected source.",
+  "initial_diagnostic_gate": "First format and release-build the candidate and compile the unchanged atan probe without executing it. Inspect generated publication code against both v1836 and the rejected variant. Static size/layout is not a timing pass.",
+  "required_gates": "Before retention, verify the actual production proof source, acceptance/negative checks, nine runtime checks, all seven unchanged cost families with the same 52 full-size fixtures, caps, alternating pairs and predeclared family-repeat rule, then unchanged capped/numerical/public replays and receipt/fact audits. A fresh comparison uses v1836 as baseline and preserves the v1857 rejection. No threshold/cap/fixture reduction or reset of older fixed baselines is permitted.",
+  "main_runtime_admitted": false,
+  "original_worktree_entries_preserved": 49
+}

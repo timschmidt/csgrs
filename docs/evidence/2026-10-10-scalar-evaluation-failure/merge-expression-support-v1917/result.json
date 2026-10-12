@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--no-cheating",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/merge-expression-support-v1917/probe.rs"
+  ],
+  "exit_code": 1,
+  "seconds": 0.48929029796272516,
+  "source_sha256": "f81bd7dbe1c4ca1325db5b12e59cd061c060abbfd10cf460aea63caf8c9cb9ad",
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "verifier_unchanged": true,
+  "scope": "Exploratory verification of the original generic Option::or and signed i32::min selections with the pinned vstd contracts. This is not the production merge proof, runtime validation, or acceptance of either rejected variant.",
+  "artifacts_sha256": {
+    "probe.rs": "f81bd7dbe1c4ca1325db5b12e59cd061c060abbfd10cf460aea63caf8c9cb9ad",
+    "runner.py": "acee3200925d84dc2d1a07738dd84eb0d45c1a5d6f0db55695d5475cc1b90ceb",
+    "stderr.log": "15ebd5a5570a3ce534dce2f5b99bf869be3471afa22610cc383f9c0346e04680",
+    "stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

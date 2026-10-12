@@ -1,0 +1,212 @@
+{
+  "status": "Static diagnostic only; no new timing samples or causal conclusion",
+  "source_record_sha256": "2cdd765b340ce6d0a331aeb25b2596639bc262bb18805cb7efeed27aa43143b9",
+  "rejection_record": "bound-merge-cost-rejection-v1857.json",
+  "rejection_record_sha256": "7ceea1fbcbb4390ab789f88a6a498ddde7fb5eec96a4a32f23823e6ad890e6b5",
+  "binary_provenance": {
+    "phases": {
+      "baseline": "typed-api-prototype-v1773-domain-predicate-atan-cost",
+      "candidate": "typed-api-prototype-v1850-bound-merge-atan-cost"
+    },
+    "binaries": {
+      "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe",
+      "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    },
+    "binary_sha256_at_paired_run": {
+      "baseline": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+      "candidate": "d8805dde8a4385e354e215a1c88a0a52b4aad4455564e00d53b475d96fb551b5"
+    },
+    "executable_bytes": {
+      "baseline": 6261016,
+      "candidate": 6261424
+    },
+    "original_summary_sha256": {
+      "baseline": "358e4d9a87f314706b7174925bf979b3cfca04b54be999b2f777c6957ad2cde0",
+      "candidate": "dd73acdfd8cb98d9c2df345dd95c5eac029fbe1450c6610facb74ebacd023b64"
+    }
+  },
+  "functions": {
+    "baseline": {
+      "publish": {
+        "symbol": "<hyperreal::computable::node::AtomicFacts>::publish_bound",
+        "address": "00000000000a8420",
+        "bytes": 517,
+        "address_mod_64": 32,
+        "assembly": "baseline-publish.asm",
+        "assembly_sha256": "745e4daf54c0f94332a09623c2fa407ac73525ddeaf6af5142d538903ba15147"
+      },
+      "approx": {
+        "symbol": "<hyperreal::computable::node::Computable>::approx_signal",
+        "address": "00000000000a6220",
+        "bytes": 4982,
+        "address_mod_64": 32,
+        "assembly": "baseline-approx.asm",
+        "assembly_sha256": "1e1c2257e226b9045b597336c97d81af1b3cece66f7ab94cb49b6bf3a13599ca"
+      },
+      "cache": {
+        "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision",
+        "address": "00000000000bd170",
+        "bytes": 1113,
+        "address_mod_64": 48,
+        "assembly": "baseline-cache.asm",
+        "assembly_sha256": "77a05560491785f4b067d08a6cedf2523130f747589c724863d80e568f9e604e"
+      },
+      "main": {
+        "symbol": "probe::main",
+        "address": "000000000005ec00",
+        "bytes": 8659,
+        "address_mod_64": 0,
+        "assembly": "baseline-main.asm",
+        "assembly_sha256": "9b6933e1b5f60e6284516fa802b469cfa79e108d6ae825bf9f6e9ec6d9e58a71"
+      }
+    },
+    "candidate": {
+      "publish": {
+        "symbol": "<hyperreal::computable::node::AtomicFacts>::publish_bound",
+        "address": "00000000000a8460",
+        "bytes": 860,
+        "address_mod_64": 32,
+        "assembly": "candidate-publish.asm",
+        "assembly_sha256": "d7b961078871d3b2d921bf770775a4bd42fc2bfeccb1cf467ac36896feaa13d3"
+      },
+      "approx": {
+        "symbol": "<hyperreal::computable::node::Computable>::approx_signal",
+        "address": "00000000000a6260",
+        "bytes": 4982,
+        "address_mod_64": 32,
+        "assembly": "candidate-approx.asm",
+        "assembly_sha256": "2349cf8aaf2e83fae761ff49a7bd4add8f6530a13cc4dffe7346de41015d2f53"
+      },
+      "cache": {
+        "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision",
+        "address": "00000000000bd300",
+        "bytes": 1113,
+        "address_mod_64": 0,
+        "assembly": "candidate-cache.asm",
+        "assembly_sha256": "b2f4618a7db1e21ca3f87e44ca76e7cb1f6a9bc1c4cc568f48627dafb45614a4"
+      },
+      "main": {
+        "symbol": "probe::main",
+        "address": "000000000005ec40",
+        "bytes": 8659,
+        "address_mod_64": 0,
+        "assembly": "candidate-main.asm",
+        "assembly_sha256": "2dc17baff848ce60eeb94b564969970b3d5a17ff01ef83687485bb97c943c138"
+      }
+    }
+  },
+  "commands": [
+    [
+      "nm",
+      "-S",
+      "--size-sort",
+      "-C",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=689184",
+      "--stop-address=689701",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=680480",
+      "--stop-address=685462",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=774512",
+      "--stop-address=775625",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=388096",
+      "--stop-address=396755",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1773-domain-predicate-atan-cost/probe"
+    ],
+    [
+      "nm",
+      "-S",
+      "--size-sort",
+      "-C",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=689248",
+      "--stop-address=690108",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=680544",
+      "--stop-address=685526",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=774912",
+      "--stop-address=776025",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    ],
+    [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=388160",
+      "--stop-address=396819",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1850-bound-merge-atan-cost/probe"
+    ]
+  ],
+  "source_inputs_sha256": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+    "crates/hyperreal/src/computable/node/representation.rs": "67a44e97b3fb9fbb8c520d9106f7c06abd95c20418c8ecd492b4278868e4adec",
+    "crates/hyperreal/src/computable/node/bounds.rs": "1a18497fb0d76b8f6178ced99c2602c050070c3c0c871457040518d0e97bda18"
+  },
+  "fixture": "typed-api-prototype-v1850-bound-merge-atan-cost/probe.rs",
+  "fixture_sha256": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+  "observations": [
+    "The cached fixtures finish each root at the measured precision before timing. In the inspected source, a completed cached_at_precision result returns before publication. This relies on that fixture/setup contract and is not a general reachability proof.",
+    "The bound-publication function grows from 517 to 860 bytes. The approximation, cache and probe-main function sizes are unchanged. The cache function moves from address modulo 64 equal to 48 to modulo 64 equal to zero. Equal size does not establish equivalent instructions or timing.",
+    "The generated publication code has a different branch/loop structure. A source variant will preserve the old top-level Invalid-or-Unknown branch before delegating valid known bounds to the proved merge method. This is a hypothesis for reducing generated code, not an attribution of the cached timing increases."
+  ],
+  "artifacts_sha256": {
+    "baseline-approx.asm": "1e1c2257e226b9045b597336c97d81af1b3cece66f7ab94cb49b6bf3a13599ca",
+    "baseline-cache.asm": "77a05560491785f4b067d08a6cedf2523130f747589c724863d80e568f9e604e",
+    "baseline-main.asm": "9b6933e1b5f60e6284516fa802b469cfa79e108d6ae825bf9f6e9ec6d9e58a71",
+    "baseline-publish.asm": "745e4daf54c0f94332a09623c2fa407ac73525ddeaf6af5142d538903ba15147",
+    "baseline-symbols.txt.gz": "d9f63ee950adfe157512be61451e9c0044577f63d3252e6bf91fe91711728c94",
+    "candidate-approx.asm": "2349cf8aaf2e83fae761ff49a7bd4add8f6530a13cc4dffe7346de41015d2f53",
+    "candidate-cache.asm": "b2f4618a7db1e21ca3f87e44ca76e7cb1f6a9bc1c4cc568f48627dafb45614a4",
+    "candidate-main.asm": "2dc17baff848ce60eeb94b564969970b3d5a17ff01ef83687485bb97c943c138",
+    "candidate-publish.asm": "d7b961078871d3b2d921bf770775a4bd42fc2bfeccb1cf467ac36896feaa13d3",
+    "candidate-symbols.txt.gz": "7b280c76d797bda2a50018fa0519376b6748934cbf85a0fef05597987b00f212",
+    "reproduce.py": "9dc4b8a18be9113bead6eac2f0c9908adb7d123a799ae30ee9bf10d85d6ca6eb"
+  }
+}

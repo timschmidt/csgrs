@@ -1,0 +1,13 @@
+error: `core::option::impl&%0::or` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+ --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/merge-expression-support-v1917/probe.rs:7:5
+  |
+7 |     retained.or(incoming)
+  |     ^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: The following declaration may resolve this error:
+          pub assume_specification<T> [std::option::Option::<T>::or] (_0: std::option::Option<T>, _1: std::option::Option<T>) -> std::option::Option<T>
+          where
+          T: std::marker::Destruct,;
+
+error: aborting due to 1 previous error
+

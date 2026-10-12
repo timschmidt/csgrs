@@ -1,0 +1,118 @@
+[
+  {
+    "name": "included-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/src/computable/node/representation.rs"
+    ],
+    "exit_code": 0,
+    "seconds": 0.018101749010384083
+  },
+  {
+    "name": "workspace-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "seconds": 10.479985618963838
+  },
+  {
+    "name": "release-build",
+    "command": [
+      "cargo",
+      "build",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "--all-features"
+    ],
+    "exit_code": 0,
+    "seconds": 70.8087318232283
+  },
+  {
+    "name": "probe-build",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/flat-merge-generated-code-v1916/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/flat-merge-generated-code-v1916/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.30973902391269803
+  },
+  {
+    "name": "publish-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=689184",
+      "--stop-address=690044",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/flat-merge-generated-code-v1916/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.009505988098680973
+  },
+  {
+    "name": "approx-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=680480",
+      "--stop-address=685462",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/flat-merge-generated-code-v1916/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008643907029181719
+  },
+  {
+    "name": "cache-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=774848",
+      "--stop-address=775961",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/flat-merge-generated-code-v1916/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.006806382909417152
+  },
+  {
+    "name": "main-assembly",
+    "command": [
+      "objdump",
+      "-d",
+      "-C",
+      "--no-show-raw-insn",
+      "--start-address=388096",
+      "--stop-address=396755",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/flat-merge-generated-code-v1916/probe"
+    ],
+    "exit_code": 0,
+    "seconds": 0.008561752736568451
+  }
+]
