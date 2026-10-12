@@ -1,0 +1,53 @@
+{
+  "phases": [
+    {
+      "name": "default-tests",
+      "exit_code": 0,
+      "seconds": 24.08283717976883,
+      "source_unchanged": true,
+      "stdout_sha256": "97c1cf3d5369116901ab4004ab55b2fd54b7d274e387390a7e16523612fcad50",
+      "stderr_sha256": "824294981179ad55df61f075085381ee3f2df8870063c2974193cebe94a8efa2"
+    },
+    {
+      "name": "all-feature-tests",
+      "exit_code": 0,
+      "seconds": 19.750898367725313,
+      "source_unchanged": true,
+      "stdout_sha256": "9a2342a2d8839939a659d1059d8c67a95adb102d2f25e6429dec9702aa59d79f",
+      "stderr_sha256": "028055dce7cacb1b56ce21488704a84c4ef8adaf53d6a7ad333b5f06fd25e07e"
+    },
+    {
+      "name": "all-feature-doctests",
+      "exit_code": 0,
+      "seconds": 1.0430222838185728,
+      "source_unchanged": true,
+      "stdout_sha256": "78e427e8a8fb669f538da49eacea396bdd30936da6169279e3f64d664ccfc5b9",
+      "stderr_sha256": "0ff47345db01a2a4c13b6866b4338fcd08af4d44cadd9bb1113e9aa9c85f21d5"
+    },
+    {
+      "name": "default-clippy",
+      "exit_code": 0,
+      "seconds": 9.274025269318372,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d45c4953dc3a306f14d916f3ecc394c5b0bdd3f8b24c42827947ad156ba7f9a1"
+    },
+    {
+      "name": "all-feature-clippy",
+      "exit_code": 0,
+      "seconds": 5.073595121968538,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "462d529955df25706c2e881d446ca1a5558c8b4e382a3e3cea948c6219aac1b8"
+    },
+    {
+      "name": "docs",
+      "exit_code": 0,
+      "seconds": 4.939467198215425,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1498ad926016bb78cf3318aaab0b82176bf97facc793466aa4f081df9bab7bf1"
+    }
+  ],
+  "complete": true
+}

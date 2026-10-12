@@ -122,6 +122,7 @@ const NO_GMP_ANALOG: &[&str] = &[
     "certified_cmp_until",
     "certified_dyadic_interval",
     "certified_rational_interval",
+    "cached_rational_interval",
     "certified_eq_until",
     "certified_sign_until",
     "domain_facts",

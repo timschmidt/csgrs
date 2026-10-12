@@ -1,0 +1,51 @@
+{
+  "status": "Retain the existing cached rational interval API and its focused validation",
+  "scope": "Five hyperreal files only. The existing hypercurve and hyperdrc changes remain in scope and pending separate qualification.",
+  "base_commit": "17271b301d3e588a661c218f7ee134836e8376fa",
+  "files_sha256": {
+    "crates/hyperreal/README.md": "c561fe3ac3c5ca9206bf4c11c05aaffa8fab8bfbfda0846fb7cf22b3f27e006d",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "195c6abd8ba22527a0ec5712e8cb949665ff51f3c85ec7c215d3210750e4353b",
+    "crates/hyperreal/src/real/tests.rs": "2e20787c1bf86d83b04e6ae7568402b8ef3d71631a7e3a75ba00f898aa79fa57",
+    "crates/hyperreal/tests/gmp_api_coverage.rs": "a2225eec0ce7d9052e21f100e6c4236b32db88ee0f3648d324b9f5aa9e675b67"
+  },
+  "validation": {
+    "initial-format": {
+      "result_sha256": "877f733e8daa9ae8f51e9c28cbd42cc2624544124edd5b309726e69eceb268ba",
+      "protocol_sha256": "579bc725bd70dd9368364b1b565e9c57162e1b9a330c0c4bf94a965838d68b09"
+    },
+    "scalar-validation": {
+      "result_sha256": "b86c896e177e75500556e78f11d7027f7ed1a3b0a92ae178b2e64b7a667f4a5e",
+      "protocol_sha256": "87230b2a9f47b618ae3371ca6d1b1e26dccf5fa53dba368dd220aacc9bb765d6"
+    }
+  },
+  "test_results": {
+    "default-tests": {
+      "passing_results": 867,
+      "failed": 0,
+      "ignored": 0,
+      "test_summaries": 22
+    },
+    "all-feature-tests": {
+      "passing_results": 972,
+      "failed": 0,
+      "ignored": 0,
+      "test_summaries": 23
+    },
+    "all-feature-doctests": {
+      "passing_results": 28,
+      "failed": 0,
+      "ignored": 0,
+      "test_summaries": 1
+    }
+  },
+  "behavior": "Exact rationals return point intervals. Computable values reuse a sufficiently precise cached approximation, apply their exact rational scale, reverse endpoints for negative scales, and return None when the cache is unavailable or the value is aborted. The query initiates no numeric refinement. The existing certified interval API uses the same endpoint arithmetic through a private helper.",
+  "regressions": "Exact rational points, absent caches, finer-to-coarser reuse, insufficient cached precision, negative scales, and abort/clear behavior.",
+  "accepted_P4_contract": "Warming may strengthen Unknown to Certified and reuse prior higher-precision proofs; never contradict or weaken an available certificate.",
+  "limits": [
+    "Configured test executions overlap between feature configurations; these totals do not count unique tests or prove all cache schedules.",
+    "This API addition makes no measured speedup, allocation or binary-size claim. It does not admit the pending geometry optimizations or native-stroke prototype.",
+    "The isolated v2498 integer-dependency/proof candidate remains separate from this main-worktree API commit. Its earlier main/worktree guards describe the historical checkpoint.",
+    "The full-board runtime gate, scalar prototype admission, full pre-push matrix, all 39 properties, 14 targets and crate future work remain open."
+  ]
+}

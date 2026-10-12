@@ -1415,6 +1415,52 @@ mod tests {
     }
 
     #[test]
+    fn cached_rational_interval_reuses_certificates_without_refinement() {
+        let rational = Rational::fraction(-7, 3).unwrap();
+        assert_eq!(
+            Real::new(rational.clone()).cached_rational_interval(-128),
+            Some([rational.clone(), rational]),
+        );
+        let value = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
+        assert!(value.cached_rational_interval(-4096).is_none());
+        assert!(value.cached_rational_interval(-4096).is_none());
+        let refined = value.certified_rational_interval(-96).unwrap();
+        for precision in [-64, -32, 0, 2] {
+            let cached = value.cached_rational_interval(precision).unwrap();
+            assert!(cached[0] <= refined[0] && cached[1] >= refined[1]);
+            assert_eq!(
+                cached,
+                value.certified_rational_interval(precision).unwrap()
+            );
+        }
+        assert!(value.cached_rational_interval(-4096).is_none());
+
+        let scale = Rational::fraction(-3, 7).unwrap();
+        let negative = &value * Real::new(scale.clone());
+        let original = value.cached_rational_interval(-64).unwrap();
+        assert_eq!(
+            negative.cached_rational_interval(-64).unwrap(),
+            [&original[1] * &scale, &original[0] * &scale],
+        );
+    }
+
+    #[test]
+    fn cached_rational_interval_rejects_an_aborted_warm_value() {
+        use std::sync::{
+            Arc,
+            atomic::{AtomicBool, Ordering},
+        };
+        let mut value = Real::from(7).sin() + Real::from(53).sqrt().unwrap();
+        value.certified_rational_interval(-96).unwrap();
+        let expected = value.cached_rational_interval(-32).unwrap();
+        let signal = Arc::new(AtomicBool::new(true));
+        value.abort(signal.clone());
+        assert!(value.cached_rational_interval(-32).is_none());
+        signal.store(false, Ordering::Relaxed);
+        assert_eq!(value.cached_rational_interval(-32), Some(expected));
+    }
+
+    #[test]
     fn certified_dyadic_interval_encloses_rational_points_and_scaled_computables() {
         let third = Rational::fraction(1, 3).unwrap();
         let half = Rational::fraction(1, 2).unwrap();

@@ -557,7 +557,7 @@ impl Computable {
         Self::bound_from_strict_interval(lower + rational, upper + rational)
     }
 
-    fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
+    pub(crate) fn cached_at_precision(&self, p: Precision) -> Option<BigInt> {
         // A cached value at precision q can answer any less precise request p
         // by shifting, but not a more precise one. Shared constants use the
         // process-wide cache; other nodes keep their cache beside the node.
