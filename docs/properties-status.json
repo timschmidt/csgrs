@@ -47,6 +47,19 @@
       "diagnostic_evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/diagnostic-assessment-v2.json",
       "diagnostic": "Complete-board counters record 19296432 quadratic projection calls, including 1973751 unsuccessful original retries. No retry succeeded on these boards; the separate deterministic term-limit regression still requires fallback. Timer data is instrumented and is not matched performance evidence.",
       "next_step": "Evaluate a narrow quadratic-coefficient consumer to reduce allocation in successful queries, preserving fallback, proof publication and ownership. Public recognition-budget wording and all prior runtime admission gates remain open."
+    },
+    "isolated_quadratic_consumer": {
+      "status": "initial-correctness-qualified",
+      "base_commit": "2026a0187e2d84f7cc2a3c3f716221b30fc5780e",
+      "evidence": "docs/evidence/2026-10-12-quadratic-certificate-consumer/correctness-assessment-v2.json",
+      "qualification": "868 all-feature scalar library tests, 28 doctests, strict release all-feature all-target Clippy, warning-denied documentation and formatting pass. The six new regressions and five prior cache regressions are included in the 868 library total. The initial compile failure and correction remain archived.",
+      "implementation": "At most eight uncached nodes combine retained exact rational/quadratic coefficients through addition, negation, small binary offsets, and rational scaling. Unsupported expressions use the unchanged Laurent recognizer and its mandatory original fallback. Retained payloads contain no Computable owners.",
+      "remaining": [
+        "Matched scalar first/warm/cloned/opaque timing, allocation and binary-size controls with separate Cargo target directories.",
+        "Focused and broad native consumer tests, unchanged full-board gates, and complete report replay.",
+        "Default and additional feature configurations, independent cache frontiers and broader scalar prototype integration."
+      ],
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
