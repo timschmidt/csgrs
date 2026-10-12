@@ -1,0 +1,9 @@
+{
+  "restored_checkpoint": "typed-api-prototype-v1836-state.json",
+  "restored_source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "restored_files": 9,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "validation_complete": false,
+  "new_runtime_admission": false
+}
