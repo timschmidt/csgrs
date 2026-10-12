@@ -1,0 +1,20 @@
+{
+  "status": "Prepared only; execution requires every fresh cost and replay gate to pass",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "predecessor": "record_bound_merge_retention.py",
+  "predecessor_sha256": "8fd633af287a04cd48b86471e10dd85f6fc320acd637877840a806d11700e601",
+  "recorder": "record_cache_state_merge_retention.py",
+  "recorder_sha256": "d8032a7bea074b4bf5d4102bd56a6e787a60a91af8c9b743f918897722b2de40",
+  "patch": "cache-state-merge-retention-preparation-v1999.patch",
+  "patch_sha256": "326970f4cad010a99d26049e825c20f694170b2f9c9a346fa6ff268f54214bb9",
+  "generator_sha256": "72b114ff01300fe27bce3061fa06b8cc868f5117d12ca70a7ac1bd84992a54e7",
+  "conditional_retention_checkpoint": "typed-api-prototype-v1999-state.json",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "changes": [
+    "Bind to the outlined cache-state source, its 247 fresh negative mutations and all new phase identities.",
+    "Keep every runtime, original-cap, receipt, fact-retention and conditional-proof requirement from the predecessor, including dynamic family-repeat counts.",
+    "Validate and retain the earlier failed extraction and compile-only diagnostics; use the actual BoundCache selector and current evidence commits.",
+    "Name the reviewed production decoder gap as the next proof task without claiming it resolved."
+  ],
+  "limits": "Preparing this recorder neither admits the runtime nor changes any property/target status. No old helper, completed phase, source file or checkpoint-covered artifact is edited."
+}

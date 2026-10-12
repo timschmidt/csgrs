@@ -1,0 +1,25 @@
+{
+  "status": "All nine runtime validation commands pass; cost and replay checks remain pending before retaining the extraction",
+  "source_record": "typed-api-prototype-v1929-cache-state-merge-release-build/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "broad_validation": "cache-state-merge-broad-validation-v1935.json",
+  "broad_validation_sha256": "a5c717cff55e8f9976848d2986accd13c20ef6511f3aaf7e17d589d0c8d44f50",
+  "proof_record": "cache-state-merge-proof-validation-v1926.json",
+  "proof_record_sha256": "04064212053b2c45cf0ab7682f00d418dc033358a5f51e976ef20e6965e2d985",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "next_cost_protocol": "cache-state-merge-cost-protocol-v1936.json",
+  "next_replay_protocol": "cache-state-merge-replay-protocol-v1944.json",
+  "prepared_receipt_audits_sha256": {
+    "compare_cache_state_queries.py": "5734b6bc6b30e9cc3159bc061eee093b44212fddaa89cbbdbb713d390ed5011c",
+    "compare_cache_state_replays.py": "00fe4c27a450df97577fc28186031d9416dc37e14f7631a9b8b68a8292ec93f9",
+    "audit_cache_state_fact_retention.py": "0c1fef031cb9eeb70fbccfb7523f7e374a5e1f8cd2eb3ae5fc7ded4cf0051c6e",
+    "cache-state-merge-replay-protocol-v1944.json": "f49e6b83a656bd45343270582ca197a5f9cf746c28b16566c8a3f488add13c7d"
+  },
+  "limits": [
+    "The five-crate test suite covers hyperreal, hyperlimit, hyperlattice, hypercurve and hyperdrc, with 33 unchanged ignored tests and 14 inherited Cargo example-filename warning lines. This is not all-workspace/CI or main admission.",
+    "Source hashes match the fresh conditional proof exactly, so its 651 verified units, 247 rejected mutations, four passing guard baselines and ten acceptance tests still apply only to their declared scope. All thirteen whole-crate groups remain open.",
+    "The runtime extraction is still a proposal. Preserve all original capped fixtures, public reuse schedules, fixed cost baselines and older cost failures/tradeoffs; proof coverage alone cannot justify a runtime regression.",
+    "The new receipt/fact audits are prepared, not executed. They will compare all deterministic observations and independently audit concurrent fact retention without requiring race-dependent outcome counts to match."
+  ]
+}
