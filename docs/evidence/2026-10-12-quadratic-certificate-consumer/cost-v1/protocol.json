@@ -1,0 +1,40 @@
+{
+  "scope": "Fixed paired scalar controls for the direct quadratic-consumer prototype.\n\nCompare the frozen persistent-cache baseline with the added quadratic consumer.\nThe historical rational-query probe stays byte-identical. An additional public\nquadratic-query probe checks independent coefficients and unsupported controls.\nEach suite has five alternating fresh-process pairs per mode, construction plus\nfirst/warm/cloned queries, and separate time and allocator-instrumented builds.\nEvery build finishes before measurement, and each source owns a separate Cargo\ntarget directory. This is not application performance or runtime admission.\n",
+  "runner_sha256": "6d4b2985db46bc9f28b1908854a785910c5fc13db82221dcb1370e41b60395d8",
+  "probes_sha256": {
+    "rational": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+    "quadratic": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60"
+  },
+  "predecessor_validation_sha256": "3f132486e67ebe67b779f2c33f05e45dc0b95f2d508e30fc3e85555abcad98d2",
+  "preparation_sha256": "27f18a81e26c6cd8d0263e0461667ad9929969c92b4265219e37d54946496249",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "60bd01cddcbbc424776f95ddb96d2013471999d13efc74e21fb4aa63a9da4f90",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c4ba8bc3a2b51b1504e2083ec3a01732317fed5949304ec585ee4ceca5ad4b82",
+    "crates/hyperreal/src/computable/node/cached_quadratic.rs": "314934fa650e3ccdbcb2eec119d62b6ff92ab6170a88e9c074a065e65eaaf0c7",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "2e04f9c6bd9f1df3b2f95b66ce550a7f4d8a092de5d5682414d56ab92f7f093c",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "4c6ed142fc207a965919ad8506a6074d4f482e93ed061ec470e6d6ff74e804da"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-consumer/target"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "pinned_cpu": 0,
+  "time_iterations": 4096,
+  "memory_iterations": 1000,
+  "pairs_each_suite_and_mode": 5,
+  "preflight_iterations": 42,
+  "all_builds_finish_before_measurements": true,
+  "runtime_admitted": false
+}
