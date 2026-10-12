@@ -1,0 +1,952 @@
+{
+  "status": "Measured isolated baseline; production arithmetic unchanged; no runtime admission",
+  "previous_checkpoint": "typed-api-prototype-v1500-state.json",
+  "previous_checkpoint_sha256": "adadeb0ee94ced7edb7ec9757a84b417a7e0cfb75441cdfa47730a4a7bf89d56",
+  "source_record": "typed-api-prototype-v1513-atan-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "6272d9f66da17b411def2bec9dabf53f730781b2fac7b7744d15a926d592c1ce",
+  "source_changes": [
+    "crates/hyperreal/src/computable/node.rs",
+    "crates/hyperreal/src/computable/node/atan_kernel_tests.rs",
+    "crates/hyperreal/src/computable/node/atan_numeric_probe_tests.rs"
+  ],
+  "production_behavior_unchanged": true,
+  "main_guarded_files": 1167,
+  "original_worktree_entries_preserved": 49,
+  "survey_record": "atan-numeric-survey-caps-v1506.json",
+  "survey_schedules": [
+    "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 17, bytes: 480, largest: 104 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 14, bytes: 312, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 15, bytes: 592, largest: 256 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 13, bytes: 240, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 13, bytes: 240, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 16, bytes: 392, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 16, bytes: 392, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 248, largest: 72 }",
+    "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 248, largest: 72 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 19, bytes: 3432, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 19, bytes: 3432, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 20, bytes: 3712, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 18, bytes: 3360, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 18, bytes: 3360, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 21, bytes: 3512, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 21, bytes: 3512, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 19, bytes: 3368, largest: 1048 }",
+    "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 19, bytes: 3368, largest: 1048 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 217, bytes: 188776, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 217, bytes: 188776, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 218, bytes: 189056, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 216, bytes: 188704, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 216, bytes: 188704, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 219, bytes: 188856, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 219, bytes: 188856, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 217, bytes: 188712, largest: 16408 }",
+    "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 217, bytes: 188712, largest: 16408 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 3010, bytes: 4926632, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 3010, bytes: 4926632, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 3011, bytes: 4926912, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 3009, bytes: 4926560, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 3009, bytes: 4926560, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 3012, bytes: 4926712, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 3012, bytes: 4926712, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 3010, bytes: 4926568, largest: 250024 }",
+    "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 3010, bytes: 4926568, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 9, bytes: 208, largest: 72 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 9, bytes: 208, largest: 72 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 10, bytes: 280, largest: 72 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 10, bytes: 280, largest: 72 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 14, bytes: 3328, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 14, bytes: 3328, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 15, bytes: 3400, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 15, bytes: 3400, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 212, bytes: 188672, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 212, bytes: 188672, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 213, bytes: 188744, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 213, bytes: 188744, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3005, bytes: 4926528, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3005, bytes: 4926528, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3006, bytes: 4926600, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3006, bytes: 4926600, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 184, largest: 72 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 184, largest: 72 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 184, largest: 72 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 184, largest: 72 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 112, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 12, bytes: 2800, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 12, bytes: 2800, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 12, bytes: 2800, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 12, bytes: 2800, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 11, bytes: 2728, largest: 1048 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 210, bytes: 180464, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 210, bytes: 180464, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 210, bytes: 180464, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 210, bytes: 180464, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 209, bytes: 180392, largest: 16408 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3003, bytes: 4801512, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3003, bytes: 4801512, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3003, bytes: 4801512, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 3003, bytes: 4801512, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3002, bytes: 4801440, largest: 250024 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=7, remaining=1, finite=true, before=None, after=None, allocations=Allocations { calls: 13, bytes: 624, largest: 104 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=23, remaining=9, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 40, bytes: 2024, largest: 256 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 368, largest: 104 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=7, remaining=1, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 14, bytes: 880, largest: 256 }",
+    "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=21, remaining=11, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 34, bytes: 1672, largest: 256 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=7, remaining=1, finite=true, before=None, after=None, allocations=Allocations { calls: 14, bytes: 696, largest: 104 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=28, remaining=4, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 38, bytes: 1896, largest: 256 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 440, largest: 104 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=7, remaining=1, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 15, bytes: 952, largest: 256 }",
+    "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=26, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 37, bytes: 1824, largest: 256 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 1376, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 1376, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 1376, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 1376, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 1376, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 1448, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 1448, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 1448, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 1448, largest: 520 }",
+    "atan numeric survey route=deferred, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 1448, largest: 520 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 16736, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 16736, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 16736, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 16736, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 16736, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 16808, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 16808, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 16808, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 16808, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 16808, largest: 8200 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 250352, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 8, bytes: 250352, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 250352, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 250352, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 8, bytes: 250352, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 250424, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=None, after=None, allocations=Allocations { calls: 9, bytes: 250424, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 250424, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 250424, largest: 125008 }",
+    "atan numeric survey route=deferred, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 250424, largest: 125008 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=32, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 27, bytes: 1896, largest: 256 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 15, bytes: 848, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=32, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 30, bytes: 2344, largest: 256 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=32, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 24, bytes: 2272, largest: 256 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 9, bytes: 512, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=32, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 25, bytes: 2528, largest: 256 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 10, bytes: 592, largest: 104 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=false, preparation=None, units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=false, preparation=None, units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=false, before=None, after=None, allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Err(Exhausted), consumed=8, remaining=0, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Err(Exhausted), consumed=8, remaining=24, finite=true, before=None, after=None, allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=0, answer=Err(Exhausted), consumed=0, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 1, bytes: 40, largest: 40 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Err(Exhausted), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }",
+    "atan numeric survey route=opaque, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Err(Exhausted), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 4, bytes: 256, largest: 72 }"
+  ],
+  "warm_preparations": 160,
+  "warm_preparations_all_ok_zero": true,
+  "kernel_record": "atan-kernel-baseline-caps-v1511.json",
+  "expected_allocation_failures": [
+    {
+      "phase": "typed-api-prototype-v1508-atan-kernel-baseline-cap",
+      "test": "atan_kernel_zero_term_public_allocations",
+      "exit_code": 101
+    },
+    {
+      "phase": "typed-api-prototype-v1509-atan-kernel-baseline-cap",
+      "test": "atan_kernel_zero_term_dispatch_allocations",
+      "exit_code": 101
+    }
+  ],
+  "allocation_rows": [
+    "atan zero-term public route=integer, bits=65, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 13, bytes: 248, largest: 72 }",
+    "atan zero-term public route=integer, bits=65, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 14, bytes: 256, largest: 72 }",
+    "atan zero-term public route=integer, bits=4097, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 18, bytes: 3368, largest: 1048 }",
+    "atan zero-term public route=integer, bits=4097, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 19, bytes: 3376, largest: 1048 }",
+    "atan zero-term public route=integer, bits=65537, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 216, bytes: 188712, largest: 16408 }",
+    "atan zero-term public route=integer, bits=65537, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 217, bytes: 188720, largest: 16408 }",
+    "atan zero-term public route=integer, bits=1000001, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 3009, bytes: 4926568, largest: 250024 }",
+    "atan zero-term public route=integer, bits=1000001, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 3010, bytes: 4926576, largest: 250024 }",
+    "atan zero-term public route=reciprocal, bits=65, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan zero-term public route=reciprocal, bits=65, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 8, bytes: 136, largest: 40 }",
+    "atan zero-term public route=reciprocal, bits=4097, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan zero-term public route=reciprocal, bits=4097, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }",
+    "atan zero-term public route=reciprocal, bits=65537, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan zero-term public route=reciprocal, bits=65537, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }",
+    "atan zero-term public route=reciprocal, bits=1000001, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan zero-term public route=reciprocal, bits=1000001, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }",
+    "atan zero-term dispatch bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 6, bytes: 80, largest: 40 }",
+    "atan zero-term dispatch bits=65, negative=true, answer=Ok(0), allocations=Allocations { calls: 5, bytes: 72, largest: 40 }",
+    "atan zero-term dispatch bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 10, bytes: 2688, largest: 1048 }",
+    "atan zero-term dispatch bits=4097, negative=true, answer=Ok(0), allocations=Allocations { calls: 10, bytes: 2688, largest: 1048 }",
+    "atan zero-term dispatch bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 208, bytes: 180352, largest: 16408 }",
+    "atan zero-term dispatch bits=65537, negative=true, answer=Ok(0), allocations=Allocations { calls: 208, bytes: 180352, largest: 16408 }",
+    "atan zero-term dispatch bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 3001, bytes: 4801400, largest: 250024 }",
+    "atan zero-term dispatch bits=1000001, negative=true, answer=Ok(0), allocations=Allocations { calls: 3001, bytes: 4801400, largest: 250024 }"
+  ],
+  "independent_enclosure_rows": [
+    "atan kernel enclosure n=1, p=0, sample=1",
+    "atan kernel enclosure n=-1, p=0, sample=-1",
+    "atan kernel enclosure n=2, p=0, sample=0",
+    "atan kernel enclosure n=-2, p=0, sample=0",
+    "atan kernel enclosure n=3, p=0, sample=0",
+    "atan kernel enclosure n=-3, p=0, sample=0",
+    "atan kernel enclosure n=5, p=0, sample=0",
+    "atan kernel enclosure n=-5, p=0, sample=0",
+    "atan kernel enclosure n=17, p=0, sample=0",
+    "atan kernel enclosure n=-17, p=0, sample=0",
+    "atan kernel enclosure n=257, p=0, sample=0",
+    "atan kernel enclosure n=-257, p=0, sample=0",
+    "atan kernel enclosure n=2147483649, p=0, sample=0",
+    "atan kernel enclosure n=-2147483649, p=0, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=0, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=0, sample=0",
+    "atan kernel enclosure n=31, p=0, sample=0",
+    "atan kernel enclosure n=-31, p=0, sample=0",
+    "atan kernel enclosure n=32, p=0, sample=0",
+    "atan kernel enclosure n=-32, p=0, sample=0",
+    "atan kernel enclosure n=33, p=0, sample=0",
+    "atan kernel enclosure n=-33, p=0, sample=0",
+    "atan kernel enclosure n=1, p=-1, sample=2",
+    "atan kernel enclosure n=-1, p=-1, sample=-2",
+    "atan kernel enclosure n=2, p=-1, sample=1",
+    "atan kernel enclosure n=-2, p=-1, sample=-1",
+    "atan kernel enclosure n=3, p=-1, sample=1",
+    "atan kernel enclosure n=-3, p=-1, sample=-1",
+    "atan kernel enclosure n=5, p=-1, sample=0",
+    "atan kernel enclosure n=-5, p=-1, sample=0",
+    "atan kernel enclosure n=17, p=-1, sample=0",
+    "atan kernel enclosure n=-17, p=-1, sample=0",
+    "atan kernel enclosure n=257, p=-1, sample=0",
+    "atan kernel enclosure n=-257, p=-1, sample=0",
+    "atan kernel enclosure n=2147483649, p=-1, sample=0",
+    "atan kernel enclosure n=-2147483649, p=-1, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=-1, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=-1, sample=0",
+    "atan kernel enclosure n=63, p=-1, sample=0",
+    "atan kernel enclosure n=-63, p=-1, sample=0",
+    "atan kernel enclosure n=64, p=-1, sample=0",
+    "atan kernel enclosure n=-64, p=-1, sample=0",
+    "atan kernel enclosure n=65, p=-1, sample=0",
+    "atan kernel enclosure n=-65, p=-1, sample=0",
+    "atan kernel enclosure n=1, p=-4, sample=13",
+    "atan kernel enclosure n=-1, p=-4, sample=-13",
+    "atan kernel enclosure n=2, p=-4, sample=7",
+    "atan kernel enclosure n=-2, p=-4, sample=-7",
+    "atan kernel enclosure n=3, p=-4, sample=5",
+    "atan kernel enclosure n=-3, p=-4, sample=-5",
+    "atan kernel enclosure n=5, p=-4, sample=3",
+    "atan kernel enclosure n=-5, p=-4, sample=-3",
+    "atan kernel enclosure n=17, p=-4, sample=1",
+    "atan kernel enclosure n=-17, p=-4, sample=-1",
+    "atan kernel enclosure n=257, p=-4, sample=0",
+    "atan kernel enclosure n=-257, p=-4, sample=0",
+    "atan kernel enclosure n=2147483649, p=-4, sample=0",
+    "atan kernel enclosure n=-2147483649, p=-4, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=-4, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=-4, sample=0",
+    "atan kernel enclosure n=1023, p=-4, sample=0",
+    "atan kernel enclosure n=-1023, p=-4, sample=0",
+    "atan kernel enclosure n=1024, p=-4, sample=0",
+    "atan kernel enclosure n=-1024, p=-4, sample=0",
+    "atan kernel enclosure n=1025, p=-4, sample=0",
+    "atan kernel enclosure n=-1025, p=-4, sample=0",
+    "atan kernel enclosure n=1, p=-8, sample=201",
+    "atan kernel enclosure n=-1, p=-8, sample=-201",
+    "atan kernel enclosure n=2, p=-8, sample=119",
+    "atan kernel enclosure n=-2, p=-8, sample=-119",
+    "atan kernel enclosure n=3, p=-8, sample=82",
+    "atan kernel enclosure n=-3, p=-8, sample=-82",
+    "atan kernel enclosure n=5, p=-8, sample=51",
+    "atan kernel enclosure n=-5, p=-8, sample=-51",
+    "atan kernel enclosure n=17, p=-8, sample=15",
+    "atan kernel enclosure n=-17, p=-8, sample=-15",
+    "atan kernel enclosure n=257, p=-8, sample=1",
+    "atan kernel enclosure n=-257, p=-8, sample=-1",
+    "atan kernel enclosure n=2147483649, p=-8, sample=0",
+    "atan kernel enclosure n=-2147483649, p=-8, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=-8, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=-8, sample=0",
+    "atan kernel enclosure n=16383, p=-8, sample=0",
+    "atan kernel enclosure n=-16383, p=-8, sample=0",
+    "atan kernel enclosure n=16384, p=-8, sample=0",
+    "atan kernel enclosure n=-16384, p=-8, sample=0",
+    "atan kernel enclosure n=16385, p=-8, sample=0",
+    "atan kernel enclosure n=-16385, p=-8, sample=0",
+    "atan kernel enclosure n=1, p=-32, sample=3373259426",
+    "atan kernel enclosure n=-1, p=-32, sample=-3373259426",
+    "atan kernel enclosure n=2, p=-32, sample=1991351318",
+    "atan kernel enclosure n=-2, p=-32, sample=-1991351318",
+    "atan kernel enclosure n=3, p=-32, sample=1381908109",
+    "atan kernel enclosure n=-3, p=-32, sample=-1381908109",
+    "atan kernel enclosure n=5, p=-32, sample=847807474",
+    "atan kernel enclosure n=-5, p=-32, sample=-847807474",
+    "atan kernel enclosure n=17, p=-32, sample=252354337",
+    "atan kernel enclosure n=-17, p=-32, sample=-252354337",
+    "atan kernel enclosure n=257, p=-32, sample=16711851",
+    "atan kernel enclosure n=-257, p=-32, sample=-16711851",
+    "atan kernel enclosure n=2147483649, p=-32, sample=2",
+    "atan kernel enclosure n=-2147483649, p=-32, sample=-2",
+    "atan kernel enclosure n=18446744073709551617, p=-32, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=-32, sample=0",
+    "atan kernel enclosure n=1099511627775, p=-32, sample=0",
+    "atan kernel enclosure n=-1099511627775, p=-32, sample=0",
+    "atan kernel enclosure n=1099511627776, p=-32, sample=0",
+    "atan kernel enclosure n=-1099511627776, p=-32, sample=0",
+    "atan kernel enclosure n=1099511627777, p=-32, sample=0",
+    "atan kernel enclosure n=-1099511627777, p=-32, sample=0",
+    "atan kernel enclosure n=1, p=-128, sample=267257146016241686964920093290467695825",
+    "atan kernel enclosure n=-1, p=-128, sample=-267257146016241686964920093290467695825",
+    "atan kernel enclosure n=2, p=-128, sample=157771105808028117754327952606648682114",
+    "atan kernel enclosure n=-2, p=-128, sample=-157771105808028117754327952606648682114",
+    "atan kernel enclosure n=3, p=-128, sample=109486040208213569210592140683819013711",
+    "atan kernel enclosure n=-3, p=-128, sample=-109486040208213569210592140683819013711",
+    "atan kernel enclosure n=5, p=-128, sample=67170228325401192858676624039028311153",
+    "atan kernel enclosure n=-5, p=-128, sample=-67170228325401192858676624039028311152",
+    "atan kernel enclosure n=17, p=-128, sample=19993570424093160431990439744768775989",
+    "atan kernel enclosure n=-17, p=-128, sample=-19993570424093160431990439744768775989",
+    "atan kernel enclosure n=257, p=-128, sample=1324049220286801976094908043940280422",
+    "atan kernel enclosure n=-257, p=-128, sample=-1324049220286801976094908043940280422",
+    "atan kernel enclosure n=2147483649, p=-128, sample=158456324954741698915156186453",
+    "atan kernel enclosure n=-2147483649, p=-128, sample=-158456324954741698915156186453",
+    "atan kernel enclosure n=18446744073709551617, p=-128, sample=18446744073709551615",
+    "atan kernel enclosure n=-18446744073709551617, p=-128, sample=-18446744073709551615",
+    "atan kernel enclosure n=348449143727040986586495598010130648530943, p=-128, sample=0",
+    "atan kernel enclosure n=-348449143727040986586495598010130648530943, p=-128, sample=0",
+    "atan kernel enclosure n=348449143727040986586495598010130648530944, p=-128, sample=0",
+    "atan kernel enclosure n=-348449143727040986586495598010130648530944, p=-128, sample=0",
+    "atan kernel enclosure n=348449143727040986586495598010130648530945, p=-128, sample=0",
+    "atan kernel enclosure n=-348449143727040986586495598010130648530945, p=-128, sample=0",
+    "atan kernel enclosure n=1, p=1, sample=0",
+    "atan kernel enclosure n=-1, p=1, sample=0",
+    "atan kernel enclosure n=2, p=1, sample=0",
+    "atan kernel enclosure n=-2, p=1, sample=0",
+    "atan kernel enclosure n=3, p=1, sample=0",
+    "atan kernel enclosure n=-3, p=1, sample=0",
+    "atan kernel enclosure n=5, p=1, sample=0",
+    "atan kernel enclosure n=-5, p=1, sample=0",
+    "atan kernel enclosure n=17, p=1, sample=0",
+    "atan kernel enclosure n=-17, p=1, sample=0",
+    "atan kernel enclosure n=257, p=1, sample=0",
+    "atan kernel enclosure n=-257, p=1, sample=0",
+    "atan kernel enclosure n=2147483649, p=1, sample=0",
+    "atan kernel enclosure n=-2147483649, p=1, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=1, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=1, sample=0",
+    "atan kernel enclosure n=1, p=8, sample=0",
+    "atan kernel enclosure n=-1, p=8, sample=0",
+    "atan kernel enclosure n=2, p=8, sample=0",
+    "atan kernel enclosure n=-2, p=8, sample=0",
+    "atan kernel enclosure n=3, p=8, sample=0",
+    "atan kernel enclosure n=-3, p=8, sample=0",
+    "atan kernel enclosure n=5, p=8, sample=0",
+    "atan kernel enclosure n=-5, p=8, sample=0",
+    "atan kernel enclosure n=17, p=8, sample=0",
+    "atan kernel enclosure n=-17, p=8, sample=0",
+    "atan kernel enclosure n=257, p=8, sample=0",
+    "atan kernel enclosure n=-257, p=8, sample=0",
+    "atan kernel enclosure n=2147483649, p=8, sample=0",
+    "atan kernel enclosure n=-2147483649, p=8, sample=0",
+    "atan kernel enclosure n=18446744073709551617, p=8, sample=0",
+    "atan kernel enclosure n=-18446744073709551617, p=8, sample=0"
+  ],
+  "domain_precision_and_stopped_cases": 32,
+  "other_scalar_tests": {
+    "top_level_batches": 1,
+    "top_level_passed": 1061,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1061,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1061,
+        "status": "ok",
+        "passed": 1061,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "cost_record": "typed-api-prototype-v1514-atan-zero-term-baseline-cost/summary.json",
+  "cost_binary_sha256": "af066083b2dcd0a275c23067301565064bd9599df1f97bc182a8bafbbad3df70",
+  "cost_binary_bytes": 6261392,
+  "cost_cases": {
+    "small_integer": {
+      "iterations": 4096,
+      "elapsed_ns": [
+        13505246,
+        12980931,
+        12836301,
+        12469425,
+        12504954,
+        13273491,
+        13115562,
+        13586420,
+        13398652
+      ],
+      "median_ns": 13115562,
+      "checksums": [
+        5767488156499607552
+      ],
+      "output_bytes": [
+        161792
+      ],
+      "references": [
+        [
+          "467344063707082181071163562541907080498",
+          "-467344063707082181071163562541907080498"
+        ]
+      ]
+    },
+    "small_reciprocal": {
+      "iterations": 4096,
+      "elapsed_ns": [
+        12779774,
+        11935533,
+        11927873,
+        11382920,
+        12502714,
+        13259042,
+        11451516,
+        11381061,
+        11578667
+      ],
+      "median_ns": 11927873,
+      "checksums": [
+        12196652506430668800
+      ],
+      "output_bytes": [
+        157696
+      ],
+      "references": [
+        [
+          "67170228325401192858676624039028311153",
+          "-67170228325401192858676624039028311153"
+        ]
+      ]
+    },
+    "medium_integer": {
+      "iterations": 512,
+      "elapsed_ns": [
+        19109181,
+        22375328,
+        19033267,
+        19450408,
+        20356806,
+        21743151,
+        18840580,
+        20550763,
+        20183788
+      ],
+      "median_ns": 20183788,
+      "checksums": [
+        17735618227665768448
+      ],
+      "output_bytes": [
+        768
+      ],
+      "references": [
+        [
+          "2",
+          "-2"
+        ]
+      ]
+    },
+    "medium_reciprocal": {
+      "iterations": 512,
+      "elapsed_ns": [
+        20281222,
+        21463280,
+        20348086,
+        18689460,
+        20108252,
+        19457928,
+        18960621,
+        19818363,
+        19996390
+      ],
+      "median_ns": 19996390,
+      "checksums": [
+        17929487241888226816
+      ],
+      "output_bytes": [
+        512
+      ],
+      "references": [
+        [
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "wide_integer": {
+      "iterations": 64,
+      "elapsed_ns": [
+        46890699,
+        48021572,
+        50993568,
+        48139943,
+        47086735,
+        49845037,
+        47804676,
+        53722941,
+        47599460
+      ],
+      "median_ns": 48021572,
+      "checksums": [
+        14005786568699855360
+      ],
+      "output_bytes": [
+        96
+      ],
+      "references": [
+        [
+          "2",
+          "-2"
+        ]
+      ]
+    },
+    "wide_reciprocal": {
+      "iterations": 64,
+      "elapsed_ns": [
+        48968116,
+        47383845,
+        48688046,
+        48958277,
+        46816154,
+        49419295,
+        47027150,
+        50939042,
+        50473753
+      ],
+      "median_ns": 48958277,
+      "checksums": [
+        17266854238393641920
+      ],
+      "output_bytes": [
+        64
+      ],
+      "references": [
+        [
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "dense_integer": {
+      "iterations": 4,
+      "elapsed_ns": [
+        18333085,
+        18355973,
+        21245015,
+        19315107,
+        17980568,
+        19872329,
+        18183705,
+        19209254,
+        19511203
+      ],
+      "median_ns": 19209254,
+      "checksums": [
+        1540758119651360
+      ],
+      "output_bytes": [
+        6
+      ],
+      "references": [
+        [
+          "2",
+          "-2"
+        ]
+      ]
+    },
+    "dense_reciprocal": {
+      "iterations": 4,
+      "elapsed_ns": [
+        20148451,
+        18388190,
+        18055533,
+        20471388,
+        18110530,
+        20501846,
+        19363694,
+        19116021,
+        18772624
+      ],
+      "median_ns": 19116021,
+      "checksums": [
+        1548530289852
+      ],
+      "output_bytes": [
+        4
+      ],
+      "references": [
+        [
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "cached_integer_one": {
+      "iterations": 100000,
+      "elapsed_ns": [
+        6536492,
+        6565421,
+        6829242,
+        6409361,
+        6330236,
+        7168359,
+        7343598,
+        6525943,
+        6394362
+      ],
+      "median_ns": 6536492,
+      "checksums": [
+        6538784449528302592
+      ],
+      "output_bytes": [
+        200000
+      ],
+      "references": [
+        [
+          "-2",
+          "-2"
+        ]
+      ]
+    },
+    "cached_reciprocal_one": {
+      "iterations": 100000,
+      "elapsed_ns": [
+        4422547,
+        3667248,
+        3638841,
+        3617193,
+        3960959,
+        3887094,
+        4305025,
+        3409906,
+        3529858
+      ],
+      "median_ns": 3667248,
+      "checksums": [
+        3170163568771254112
+      ],
+      "output_bytes": [
+        100000
+      ],
+      "references": [
+        [
+          "0",
+          "0"
+        ]
+      ]
+    },
+    "cached_integer_many": {
+      "iterations": 100000,
+      "elapsed_ns": [
+        6350945,
+        7804246,
+        6914096,
+        7339548,
+        6422600,
+        6608907,
+        6401532,
+        7950245,
+        6479126
+      ],
+      "median_ns": 6608907,
+      "checksums": [
+        11270986196675597568
+      ],
+      "output_bytes": [
+        150000
+      ],
+      "references": [
+        [
+          "2",
+          "-2"
+        ]
+      ]
+    },
+    "cached_reciprocal_many": {
+      "iterations": 100000,
+      "elapsed_ns": [
+        5921975,
+        3491391,
+        3477252,
+        3672039,
+        3599194,
+        3556376,
+        4136557,
+        3617162,
+        3531579
+      ],
+      "median_ns": 3599194,
+      "checksums": [
+        3170163568771254112
+      ],
+      "output_bytes": [
+        100000
+      ],
+      "references": [
+        [
+          "0",
+          "0"
+        ]
+      ]
+    }
+  },
+  "validations": {
+    "typed-api-prototype-v1501-atan-numeric-survey-build": {
+      "exit_code": 0,
+      "seconds": 18.85314316675067,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1507-atan-kernel-baseline-build": {
+      "exit_code": 0,
+      "seconds": 19.869021805003285,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1512-atan-baseline-other-unit-tests": {
+      "exit_code": 0,
+      "seconds": 7.29873581789434,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1513-atan-baseline-build": {
+      "exit_code": 0,
+      "seconds": 69.53782461816445,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "candidate": "After all existing precision, domain and endpoint guards, return zero when the borrowed denominator magnitude strictly exceeds scaled_one. Its truncated quotient is zero, so the existing loop and final scaling already return zero; avoid the unused square without changing nonzero-path operation order.",
+  "limitations": [
+    "EvaluationBudget counts cooperative work units; these allocation observations do not establish or violate a per-operation byte/time bound.",
+    "The raw IntegralAtan and AtanDeferred integer routes are diagnostic; public rational atan constructs AtanRational instead.",
+    "Successful cache-hit retries are checked. Exhausted uncached survey queries are not claimed to have independent unlimited retries.",
+    "The full baseline unit run explicitly skips the two newly frozen allocation guards, whose failing runs remain separate evidence.",
+    "Cost references detect behavior changes but are not independent mathematical oracles. Exact rational alternating-series enclosures provide separate numeric checks.",
+    "The 39 properties, 14 targets and crate future work remain open; no full-stack claim follows from these scalar measurements."
+  ]
+}

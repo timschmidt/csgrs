@@ -1,0 +1,12 @@
+atan zero-term dispatch bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 6, bytes: 80, largest: 40 }
+atan zero-term dispatch bits=65, negative=true, answer=Ok(0), allocations=Allocations { calls: 5, bytes: 72, largest: 40 }
+atan zero-term dispatch bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 10, bytes: 2688, largest: 1048 }
+atan zero-term dispatch bits=4097, negative=true, answer=Ok(0), allocations=Allocations { calls: 10, bytes: 2688, largest: 1048 }
+atan zero-term dispatch bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 208, bytes: 180352, largest: 16408 }
+atan zero-term dispatch bits=65537, negative=true, answer=Ok(0), allocations=Allocations { calls: 208, bytes: 180352, largest: 16408 }
+atan zero-term dispatch bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 3001, bytes: 4801400, largest: 250024 }
+atan zero-term dispatch bits=1000001, negative=true, answer=Ok(0), allocations=Allocations { calls: 3001, bytes: 4801400, largest: 250024 }
+
+thread 'computable::node::atan_kernel_tests::atan_kernel_zero_term_dispatch_allocations' (16) panicked at crates/hyperreal/src/computable/node/atan_kernel_tests.rs:82:9:
+[Allocations { calls: 6, bytes: 80, largest: 40 }, Allocations { calls: 5, bytes: 72, largest: 40 }, Allocations { calls: 10, bytes: 2688, largest: 1048 }, Allocations { calls: 10, bytes: 2688, largest: 1048 }, Allocations { calls: 208, bytes: 180352, largest: 16408 }, Allocations { calls: 208, bytes: 180352, largest: 16408 }, Allocations { calls: 3001, bytes: 4801400, largest: 250024 }, Allocations { calls: 3001, bytes: 4801400, largest: 250024 }]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

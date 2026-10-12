@@ -1,0 +1,7 @@
+{
+  "helper": "record_atan_baseline_v1515.py",
+  "helper_sha256": "28c7e42227a73f23736e54dc1a7d49211ce5310f8246eda6bbb13008ad57a4cf",
+  "exit_code": 1,
+  "reason": "The facade equality assertion expected blank lines before the two appended includes; the source has contiguous include lines. No baseline record was written.",
+  "correction": "Fork v2 uses the actual exact facade suffix and the test parser top_level_passed/top_level_failed field names. Frozen tests, measurements and source unchanged."
+}

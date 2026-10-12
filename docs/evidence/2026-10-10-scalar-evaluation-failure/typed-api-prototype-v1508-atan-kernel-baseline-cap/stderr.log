@@ -1,0 +1,20 @@
+atan zero-term public route=integer, bits=65, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 13, bytes: 248, largest: 72 }
+atan zero-term public route=integer, bits=65, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 14, bytes: 256, largest: 72 }
+atan zero-term public route=integer, bits=4097, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 18, bytes: 3368, largest: 1048 }
+atan zero-term public route=integer, bits=4097, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 19, bytes: 3376, largest: 1048 }
+atan zero-term public route=integer, bits=65537, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 216, bytes: 188712, largest: 16408 }
+atan zero-term public route=integer, bits=65537, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 217, bytes: 188720, largest: 16408 }
+atan zero-term public route=integer, bits=1000001, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 3009, bytes: 4926568, largest: 250024 }
+atan zero-term public route=integer, bits=1000001, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 3010, bytes: 4926576, largest: 250024 }
+atan zero-term public route=reciprocal, bits=65, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 8, bytes: 136, largest: 40 }
+atan zero-term public route=reciprocal, bits=65, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 8, bytes: 136, largest: 40 }
+atan zero-term public route=reciprocal, bits=4097, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }
+atan zero-term public route=reciprocal, bits=4097, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 13, bytes: 3256, largest: 1048 }
+atan zero-term public route=reciprocal, bits=65537, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }
+atan zero-term public route=reciprocal, bits=65537, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 211, bytes: 188600, largest: 16408 }
+atan zero-term public route=reciprocal, bits=1000001, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }
+atan zero-term public route=reciprocal, bits=1000001, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 3004, bytes: 4926456, largest: 250024 }
+
+thread 'computable::node::atan_kernel_tests::atan_kernel_zero_term_public_allocations' (12) panicked at crates/hyperreal/src/computable/node/atan_kernel_tests.rs:45:9:
+atan squared a denominator after its first term became zero: [(65, Allocations { calls: 13, bytes: 248, largest: 72 }), (65, Allocations { calls: 14, bytes: 256, largest: 72 }), (4097, Allocations { calls: 18, bytes: 3368, largest: 1048 }), (4097, Allocations { calls: 19, bytes: 3376, largest: 1048 }), (65537, Allocations { calls: 216, bytes: 188712, largest: 16408 }), (65537, Allocations { calls: 217, bytes: 188720, largest: 16408 }), (1000001, Allocations { calls: 3009, bytes: 4926568, largest: 250024 }), (1000001, Allocations { calls: 3010, bytes: 4926576, largest: 250024 }), (65, Allocations { calls: 8, bytes: 136, largest: 40 }), (65, Allocations { calls: 8, bytes: 136, largest: 40 }), (4097, Allocations { calls: 13, bytes: 3256, largest: 1048 }), (4097, Allocations { calls: 13, bytes: 3256, largest: 1048 }), (65537, Allocations { calls: 211, bytes: 188600, largest: 16408 }), (65537, Allocations { calls: 211, bytes: 188600, largest: 16408 }), (1000001, Allocations { calls: 3004, bytes: 4926456, largest: 250024 }), (1000001, Allocations { calls: 3004, bytes: 4926456, largest: 250024 })]
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

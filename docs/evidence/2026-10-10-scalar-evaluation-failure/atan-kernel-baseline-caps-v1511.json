@@ -1,0 +1,126 @@
+{
+  "source_record": "typed-api-prototype-v1507-atan-kernel-baseline-build/source-hashes.json.gz",
+  "source_record_sha256": "6272d9f66da17b411def2bec9dabf53f730781b2fac7b7744d15a926d592c1ce",
+  "tests": {
+    "typed-api-prototype-v1508-atan-kernel-baseline-cap": {
+      "test": "atan_kernel_zero_term_public_allocations",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.10160838579759,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::atan_kernel_tests::atan_kernel_zero_term_public_allocations",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "692483d754b51986c6ad316c42e5637273ccf85c4be9f43265d7059dda130f29",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.02841922314837575
+      }
+    },
+    "typed-api-prototype-v1509-atan-kernel-baseline-cap": {
+      "test": "atan_kernel_zero_term_dispatch_allocations",
+      "result": {
+        "exit_code": 101,
+        "seconds": 1.1146836220286787,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::atan_kernel_tests::atan_kernel_zero_term_dispatch_allocations",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "692483d754b51986c6ad316c42e5637273ccf85c4be9f43265d7059dda130f29",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 101,
+        "wall_timeout": false,
+        "seconds": 0.021199597977101803
+      }
+    },
+    "typed-api-prototype-v1510-atan-kernel-baseline-cap": {
+      "test": "atan_kernel_term_boundaries_and_independent_bounds",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1001031501218677,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::atan_kernel_tests::atan_kernel_term_boundaries_and_independent_bounds",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "692483d754b51986c6ad316c42e5637273ccf85c4be9f43265d7059dda130f29",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.028891190886497498
+      }
+    },
+    "typed-api-prototype-v1511-atan-kernel-baseline-cap": {
+      "test": "atan_kernel_zero_denominator_and_precision_precedence",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0874085589312017,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::atan_kernel_tests::atan_kernel_zero_denominator_and_precision_precedence",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "692483d754b51986c6ad316c42e5637273ccf85c4be9f43265d7059dda130f29",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015857574064284563
+      }
+    }
+  }
+}
