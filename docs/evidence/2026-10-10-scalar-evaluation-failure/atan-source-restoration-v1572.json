@@ -1,0 +1,41 @@
+{
+  "status": "Both rejected variants remain archived; retained v1404/v1500 source restored",
+  "rejection_records": [
+    "atan-magnitude-guard-rejection-v1541.json",
+    "atan-quotient-rejection-v1571.json"
+  ],
+  "candidate_source_sha256": "c789297f8e3463ae9b76b28e48ad3106bb59426c9d96783fcdb57b9d154fe23d",
+  "retained_source_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "retained_source_record": "typed-api-prototype-v1497-restored-build/source-hashes.json.gz",
+  "restoration_actions": [
+    {
+      "path": "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+      "before_sha256": "8a6083afb4ede951cbe01e2e258a21461ba6afc7aae378ea57d1a6d525fb8701",
+      "after_sha256": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+      "action": "restore exact retained bytes"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node.rs",
+      "before_sha256": "7dfb887940dc6cf9fbbac687b5f50ce90619867012faeb8ee2cdaa0a0fe4b6d8",
+      "after_sha256": "69c44bad6e9fe0d9a54829943305f7f213486c925df484c529c41c825a4533dc",
+      "action": "restore exact retained bytes"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/atan_kernel_tests.rs",
+      "before_sha256": "28196cb298a84cbca1dd7a489eed940821809be81f17d16027542454f2617d11",
+      "after_sha256": null,
+      "action": "remove only the newly added, archived test source from the isolated candidate"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/atan_numeric_probe_tests.rs",
+      "before_sha256": "4699e5eddd1901ff76400761925d7cd7d222aea02ea5d181e64e5c2e514319c2",
+      "after_sha256": null,
+      "action": "remove only the newly added, archived test source from the isolated candidate"
+    }
+  ],
+  "retained_source_files_verified": 24743,
+  "main_guarded_files": 1167,
+  "new_test_functions_archived": 9,
+  "older_retained_test_sources_unchanged": true,
+  "next_step": "Refresh the restored scalar tests, release libraries and formatting; no broader fresh-validation claim."
+}

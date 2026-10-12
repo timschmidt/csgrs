@@ -1,0 +1,83 @@
+{
+  "status": "Retained source, tests, release libraries and formatting restored",
+  "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "phases": {
+    "typed-api-prototype-v1572-restored-scalar-unit-tests": {
+      "exit_code": 0,
+      "seconds": 25.905595818068832,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1573-restored-build": {
+      "exit_code": 0,
+      "seconds": 69.45438447594643,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1574-restored-workspace-fmt": {
+      "exit_code": 0,
+      "seconds": 11.556584055069834,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    },
+    "typed-api-prototype-v1575-restored-included-fmt": {
+      "exit_code": 0,
+      "seconds": 1.6898897858336568,
+      "source_unchanged": true,
+      "main_unchanged": true,
+      "status": "isolated prototype validation; not runtime admission"
+    }
+  },
+  "tests": {
+    "top_level_batches": 1,
+    "top_level_passed": 1054,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1054,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1054,
+        "status": "ok",
+        "passed": 1054,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "included_rust_files": 105,
+  "retained_v1404_libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "b4ee365d40b41a49de0a66c6b111a608ec62f37f1aba51751932484f69d098de",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+  },
+  "restored_libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "b4ee365d40b41a49de0a66c6b111a608ec62f37f1aba51751932484f69d098de",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4"
+  },
+  "restored_libraries_match_retained": true,
+  "limits": "The v1404 broad validation remains evidence for these identical source bytes. This restoration reruns scalar units, the release build and formatting only; it does not claim a fresh full-stack or proof run."
+}

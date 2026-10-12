@@ -1,0 +1,35 @@
+{
+  "source_record_sha256": "c789297f8e3463ae9b76b28e48ad3106bb59426c9d96783fcdb57b9d154fe23d",
+  "helper": "replay_atan_quotient_focused_cost.py",
+  "helper_sha256": "5f7c162c70e29fac3beb39d480a4a3c39a1a3a68bde8ea0b924f26e97b42258c",
+  "prior_complete_comparison": "atan-quotient-zero-preconditioned-cost-v1563/summary.json",
+  "scope": "Four predeclared fixtures; 27 fresh repetitions per side; 216 timed processes and 216 identical CPU preparations. Original query iteration counts and all caps unchanged.",
+  "fixtures": {
+    "atan": [
+      [
+        "small_reciprocal",
+        "4096"
+      ],
+      [
+        "cached_reciprocal_one",
+        "100000"
+      ]
+    ],
+    "integer": [
+      [
+        "wide_coarse",
+        "10000"
+      ]
+    ],
+    "inverse_trig": [
+      [
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ]
+    ]
+  },
+  "reason": "The complete comparison recorded +9.45 percent wide-coarse integer and +6.82 percent wide-pi medians with visibly variable samples. Check persistence with more samples; retain every original measurement and include the two earlier atan controls rather than selecting only successful cases.",
+  "decision_pending": true
+}
