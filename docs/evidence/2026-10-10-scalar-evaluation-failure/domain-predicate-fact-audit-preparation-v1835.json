@@ -1,0 +1,11 @@
+{
+  "predecessors_sha256": {
+    "record_public_proof_reuse.py": "a9aa7f8c52d88e1ee0e7e15bfa9c377d8558d77c4b159659eea475522630e68a",
+    "record_composed_proof_reuse.py": "bf1c1c6f7b8f265e18052be4e711fa8472526e146e56d45219914aa7d1a0f2d5"
+  },
+  "generated_audit": "audit_domain_predicate_fact_retention.py",
+  "generated_audit_sha256": "ac1f80338a982d9153b384b325acd0d8cf80a6f8f26fff72de0c5522cddffc96",
+  "common_retention_function_ast_identical": true,
+  "change": "Extract the retained fact comparison and receipt loops unchanged. Preserve fixed corpus totals while reporting, rather than fixing, race-dependent observations. Remove ledger/admission mutations and require all new replay artifacts and frozen probes to match their hashes.",
+  "status": "Prepared only; new replay and audit executions remain pending"
+}
