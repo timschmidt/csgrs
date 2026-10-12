@@ -1,0 +1,84 @@
+{
+  "status": "All domain observations identical",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "phases": [
+    {
+      "baseline": "typed-api-prototype-v1781-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2280-eager-bound-decoder-retained-cap",
+      "observations": 36,
+      "baseline_stderr_sha256": "70a0449f1a9822b347884571419090194a00f6229959a5e3ee6ddf471d1d48d1",
+      "candidate_stderr_sha256": "70a0449f1a9822b347884571419090194a00f6229959a5e3ee6ddf471d1d48d1"
+    },
+    {
+      "baseline": "typed-api-prototype-v1782-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2281-eager-bound-decoder-retained-cap",
+      "observations": 6,
+      "baseline_stderr_sha256": "d0353f68723829610e6aa47063bbbb173f583cd65fe1a45acf54c87c42f0cb8d",
+      "candidate_stderr_sha256": "d0353f68723829610e6aa47063bbbb173f583cd65fe1a45acf54c87c42f0cb8d"
+    },
+    {
+      "baseline": "typed-api-prototype-v1783-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2282-eager-bound-decoder-retained-cap",
+      "observations": 14,
+      "baseline_stderr_sha256": "1aa047b62a7669539bdc676ad89a2beb0c169e2d65591af4c4ed154b827aaba2",
+      "candidate_stderr_sha256": "1aa047b62a7669539bdc676ad89a2beb0c169e2d65591af4c4ed154b827aaba2"
+    },
+    {
+      "baseline": "typed-api-prototype-v1784-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2283-eager-bound-decoder-retained-cap",
+      "observations": 2,
+      "baseline_stderr_sha256": "f7cd1f9b29ff38dd4dfa0cc4333229539327469a3ed36bffc682d0864f463e5a",
+      "candidate_stderr_sha256": "f7cd1f9b29ff38dd4dfa0cc4333229539327469a3ed36bffc682d0864f463e5a"
+    },
+    {
+      "baseline": "typed-api-prototype-v1785-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2284-eager-bound-decoder-retained-cap",
+      "observations": 46,
+      "baseline_stderr_sha256": "d3630e0993dfa4333eee4ae3c522c271d0847b2a304d1e1f82565899a6214379",
+      "candidate_stderr_sha256": "d3630e0993dfa4333eee4ae3c522c271d0847b2a304d1e1f82565899a6214379"
+    },
+    {
+      "baseline": "typed-api-prototype-v1786-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2285-eager-bound-decoder-retained-cap",
+      "observations": 528,
+      "baseline_stderr_sha256": "3e99c7f795509308de4793a7aee588461ca42b1745dc7f98f6cd14c4ff40adea",
+      "candidate_stderr_sha256": "3e99c7f795509308de4793a7aee588461ca42b1745dc7f98f6cd14c4ff40adea"
+    },
+    {
+      "baseline": "typed-api-prototype-v1787-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2286-eager-bound-decoder-retained-cap",
+      "observations": 528,
+      "baseline_stderr_sha256": "548265aa7b928efa66c5c2ad85874609f4a804dc77fd0e5ababe479d6dc5417c",
+      "candidate_stderr_sha256": "548265aa7b928efa66c5c2ad85874609f4a804dc77fd0e5ababe479d6dc5417c"
+    },
+    {
+      "baseline": "typed-api-prototype-v1788-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2287-eager-bound-decoder-retained-cap",
+      "observations": 528,
+      "baseline_stderr_sha256": "058a773abf7756489684ccf1c577e670c4faa15abaf3387ccf78bab0e43140df",
+      "candidate_stderr_sha256": "058a773abf7756489684ccf1c577e670c4faa15abaf3387ccf78bab0e43140df"
+    },
+    {
+      "baseline": "typed-api-prototype-v1789-domain-predicate-retained-cap",
+      "candidate": "typed-api-prototype-v2288-eager-bound-decoder-retained-cap",
+      "observations": 36,
+      "baseline_stderr_sha256": "52c6a37560d4009772adf9686857d79674e585f46ec4df66f27860743a423e27",
+      "candidate_stderr_sha256": "52c6a37560d4009772adf9686857d79674e585f46ec4df66f27860743a423e27"
+    }
+  ],
+  "observed_counts": {
+    "unit": 36,
+    "lower": 6,
+    "required": 14,
+    "upper-only": 2,
+    "endpoint": 28,
+    "invalid": 18,
+    "public": 1584,
+    "public_exhausted": 1131,
+    "public_success": 453,
+    "retry": 36
+  },
+  "differences": [],
+  "scope": "All 1584 public domain schedules, 56 private certificate queries, 48 endpoint/invalid/upper-only controls and 36 fine-retry schedules from the retained runtime. Exact diagnostic-line comparison preserves samples, typed outcomes, work accounting, cached facts and allocation observations; 144 zero-work cached retry queries remain covered by the frozen tests.",
+  "limits": "Finite frozen schedules and independently checked test oracles; no whole-crate proof, aggregate byte/time guarantee or runtime admission follows."
+}

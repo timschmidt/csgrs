@@ -1,0 +1,17 @@
+
+running 11 tests
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_every_opaque_sign_cutpoint_preserves_retry ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_every_public_sign_cutpoint_preserves_retry ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_infallible_construction_retains_exact_leaves ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_domain_warming_preserves_signs ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_opaque_retries_preserve_completed_proofs ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_cancellation_remains_exact ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_integer_atan_stays_preflighted ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_opaque_preflight_stops_wide_offset_copies ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_public_pi_preflight_stops_wide_offset_copies ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_raw_integer_preflight_stops_wide_leaf_copies ... ok
+test computable::node::inverse_constructor_preflight_tests::inverse_constructor_wide_retries_preserve_coarse_and_zero_work_proofs ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 1063 filtered out; finished in 0.26s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::inverse_constructor_preflight_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.27736058877781034}

@@ -1,0 +1,9 @@
+{
+  "predecessor": "record_domain_predicate_retention.py",
+  "predecessor_sha256": "dfe55e007010983152f7a0d797bfbe7249604f3fd7f9cbc266df56f4b2a694bc",
+  "runner": "record_eager_decoder_retention.py",
+  "runner_sha256": "2de0f2d96f8d685b8d6da994f5d335d9013327ccf297c55f6d9a8c9a6ef574b4",
+  "reused_audit_block_sha256": "b5341d3b2eaa6518ea425af88d93a7d3df5a1771198d487377682dabfdddc9a7",
+  "audit_change": "Only four broad phase numbers change in the complete broad/cap/replay/receipt/fact validation block. Proof provenance uses the current 655-unit split-guard milestone. Cost qualification uses the separately frozen v2279 computation review while requiring both later baseline failures to remain failed. New source/ledger/checkpoint metadata names v2335.",
+  "execution": "Prepared only; all replay and fact gates must complete before this recorder can run."
+}

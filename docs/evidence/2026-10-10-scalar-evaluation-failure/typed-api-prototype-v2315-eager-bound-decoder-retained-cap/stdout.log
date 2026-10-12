@@ -1,0 +1,20 @@
+
+running 14 tests
+test computable::node::structural_comparison_budget_tests::wide_structural_cross_product_stops_before_allocation ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_every_cutpoint_preserves_graphs_and_retry ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_identity_and_cheap_rejections_remain_available ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_integer_comparison_requires_payload_work ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_lazy_and_reduced_values_preserve_exact_equality ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_lazy_payload_stops_before_reduction ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_metadata_rejection_avoids_payload_allocation ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_public_sign_keeps_completed_proof_at_zero_work ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_quantile_precision_rejects_before_payload ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_quantile_seed_requires_work ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_rational_variants_require_payload_work ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_scaled_log_payload_requires_work ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_shared_dags_preserve_equality ... ok
+test computable::node::structural_comparison_budget_tests::wide_structural_symbolic_read_does_not_canonicalize_before_charge ... ok
+
+test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 1060 filtered out; finished in 0.03s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::structural_comparison_budget_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.04495213786140084}

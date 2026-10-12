@@ -1,0 +1,117 @@
+{
+  "status": "Every audited public and composed fact sequence retains available certificates",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "protocol_sha256": "e4732b693f0992329324681444696b062976d68c6e71704614cbadd65b6aed9b",
+  "reports": {
+    "public": {
+      "phase": "typed-api-prototype-v2332-eager-bound-decoder-public-proof-reuse",
+      "summary_sha256": "8bcc4e701b0098dcc5b9cccf052c029b1aa775d6912f5fcb15b0eb9235df379e",
+      "numeric_samples_checked": 6446,
+      "definite_sign_observations_checked": 12549,
+      "observed_counts": {
+        "sequential_cold_unknown": 24,
+        "sequential_cold_exhausted": 24,
+        "sequential_finer_exhausted": 24,
+        "warm_worker_samples": 1536,
+        "race_worker_samples": 4574,
+        "race_worker_exhausted": 34,
+        "race_unknown_signs": 154,
+        "known_sign_query_retention_checks": 5749,
+        "joined_final_fact_comparisons": 6144,
+        "invalid_budget_queries": 96,
+        "invalid_unlimited_retries": 24
+      }
+    },
+    "composed": {
+      "phase": "typed-api-prototype-v2333-eager-bound-decoder-composed-proof-reuse",
+      "summary_sha256": "d28f4f9c294d9a4e5d54828dabe1995a4d572c50bdf92e33fe8899da184ff3a3",
+      "numeric_samples_checked": 27266,
+      "definite_sign_observations_checked": 68862,
+      "observed_counts": {
+        "composed_cases": 468,
+        "events:bounded": 3276,
+        "bounded:Exhausted": 2506,
+        "root_fact_retention_comparisons": 85176,
+        "child_fact_retention_comparisons": 9360,
+        "events:unlimited_retry": 3276,
+        "available_sign_query_checks": 17525,
+        "events:cached": 13104,
+        "events:finer_retry": 3276,
+        "finer:Exhausted": 2988,
+        "bounded:Ok": 770,
+        "finer:Ok": 288,
+        "invalid_cases": 54,
+        "invalid_bounded:Err(Exhausted)": 219,
+        "invalid_retry:Err(DivideByZero)": 126,
+        "invalid_bounded:Err(DivideByZero)": 53,
+        "invalid_retry:Err(SqrtNegative)": 126,
+        "invalid_bounded:Err(SqrtNegative)": 53,
+        "invalid_retry:Err(NotANumber)": 126,
+        "invalid_bounded:Err(NotANumber)": 53
+      },
+      "bounded_outcomes_by_root": {
+        "log_exp": {
+          "Exhausted": 332,
+          "Ok": 136
+        },
+        "log_one_plus_expm1": {
+          "Exhausted": 344,
+          "Ok": 124
+        },
+        "expm1_log_one_plus": {
+          "Exhausted": 356,
+          "Ok": 112
+        },
+        "asinh_sinh": {
+          "Exhausted": 364,
+          "Ok": 104
+        },
+        "acosh_cosh": {
+          "Exhausted": 392,
+          "Ok": 76
+        },
+        "atanh_tanh": {
+          "Exhausted": 367,
+          "Ok": 101
+        },
+        "log_exp_cancellation": {
+          "Exhausted": 351,
+          "Ok": 117
+        }
+      },
+      "bounded_outcomes_by_allowance": {
+        "0": {
+          "Exhausted": 510,
+          "Ok": 36
+        },
+        "1": {
+          "Exhausted": 510,
+          "Ok": 36
+        },
+        "8": {
+          "Exhausted": 510,
+          "Ok": 36
+        },
+        "64": {
+          "Exhausted": 510,
+          "Ok": 36
+        },
+        "512": {
+          "Ok": 144,
+          "Exhausted": 402
+        },
+        "4096": {
+          "Ok": 482,
+          "Exhausted": 64
+        }
+      }
+    }
+  },
+  "scope": "Reuse the exact retained receipt-audit loops, with current observation counts. Check each worker/root fact sequence, joined final snapshots and subsequent sign queries after available proofs, including exhausted allowances and finer retries. Frozen probes and Python Fraction oracle checks establish the numerical observations separately.",
+  "limits": [
+    "Race-dependent sample, Exhausted and Unknown counts describe this run; they are not required to match an earlier schedule.",
+    "Composed child snapshots start with the first serialized observation. The frozen Rust probe also checks its initial child state, which is not serialized in this corpus.",
+    "Exact-rational flags are checked for retention, not general mathematical soundness. Constructors and structural inspections lie outside query allowances.",
+    "Finite thread stress and composition schedules do not prove all interleavings, general graph semantics, aggregate byte/time bounds or whole-crate correctness. Runtime retention still depends on the other gates."
+  ]
+}

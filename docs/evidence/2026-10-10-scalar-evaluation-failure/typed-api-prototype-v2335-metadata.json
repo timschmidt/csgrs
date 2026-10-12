@@ -1,0 +1,69 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v1836-state.json",
+  "status": "Retain the isolated proved eager bound decoder; main admission and resource obligations remain open",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "evidence_commits": [
+    "467569e05b0e8475df089e83f4e2ac63ba62102a",
+    "4e50b4aba045e2eed88033d71590a957de7cfc6b"
+  ],
+  "retention_record": "eager-bound-decoder-retention-v2335.json",
+  "production_patch": "eager-bound-decoder-baseline-v2257/proposal.patch",
+  "production_patch_sha256": "869a1421c484714da52ec1acfcd0584be6c9d990ab2656ba00a5d513664c9e25",
+  "fresh_validation_phases": {
+    "cargo_and_format": 9,
+    "separately_verified_capped_binary": 39
+  },
+  "cap_record_scope": "All direct-binary cap receipts and nested counts are checked in the retention record; pass only nine Cargo/format phases to the checkpoint parser.",
+  "fresh_stack_counts": {
+    "top_level_passed": 5858,
+    "child_process_passed": 3,
+    "ignored": 33
+  },
+  "fresh_scalar_counts": {
+    "top_level_passed": 1074,
+    "child_process_passed": 1
+  },
+  "fresh_replay_cases": {
+    "numerical": 4129,
+    "public": 648
+  },
+  "conditional_proof_scope": "eager-bound-decoder-broad-milestone-v2279.json",
+  "conditional_proof": {
+    "verified_units": 655,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 135,
+    "open_obligation_groups": 13,
+    "fresh_acceptance_tests": 10,
+    "fresh_rejected_mutants": 245,
+    "fresh_passing_guard_baselines": 4,
+    "reused_rejected_mutants": 0
+  },
+  "cost_record": "eager-bound-decoder-computation-review-v2279.json",
+  "cost_method": "unchanged-computation-with-reviewed-diagnostic-metadata",
+  "fresh_timing_processes": 0,
+  "original_cost_guard_failures_preserved": true,
+  "coverage_limits": [
+    "The actual decoder is proved for every u64 and five connected lemmas cover encoding round trips and field updates. Incoming certificate truth, independent existence, actual BigInt metadata, approximation kernels, callers and concurrent publication remain separate obligations; all thirteen whole-crate groups stay open.",
+    "The 655 verified units, 245 rejected mutations, four positive baselines and ten acceptance tests describe the conditional target. They do not satisfy the pending fixed pre-Verus acceptance report or a whole-crate proof.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "remaining_source_review": "numerical-bound-metadata-review-v2279-v2.json",
+  "remaining_requirements": [
+    "Continue from the retained eager decoder by connecting numerical bit-pattern decisions and checked exponent arithmetic to closed-interval bound certificates. Preserve metadata short-circuiting and distinguish conditional model bridges from verified production callers and dependency storage. Continue producer truth, independent existence, atomic publication and exact-operation resource work; the repeated baseline algebraic CPU failures, fixed pre-Verus baseline and main/native/full-board requirements remain open.",
+    "Preserve every original full-size regression, corpus, process cap, failure and retained tradeoff. Thread stress and conditional lemmas do not replace graph/producer/existence/atomic proofs.",
+    "Continue constructor/coefficient copies, exact-operation CPU/memory use and unshared expression growth before native combination and unchanged full-board admission.",
+    "All thirteen whole-crate groups and the fixed pre-Verus baseline remain open. Complete the whole properties.md plan and repository pre-push checks; no property/target completion follows from this isolated checkpoint."
+  ],
+  "retention_record_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b"
+}

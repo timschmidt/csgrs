@@ -1,0 +1,1464 @@
+{
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "protocol_sha256": "e4732b693f0992329324681444696b062976d68c6e71704614cbadd65b6aed9b",
+  "runner_sha256": "8760872e12af79e2faf27d903aef7261aff6453b2d529020e889f9b4bc74e8d2",
+  "complete": true,
+  "results": [
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2280-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1781-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1385040590539575,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02169109182432294
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2281-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1782-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0824718321673572,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.017444543074816465
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2282-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1783-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.107695293147117,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.017974196933209896
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2283-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1784-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1043140338733792,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.018245447892695665
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2284-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1785-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1171201658435166,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015928938053548336
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2285-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1786-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1072309236042202,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04340434307232499
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2286-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1787-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1181854628957808,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.043962675146758556
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2287-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1788-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1507519888691604,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04548850003629923
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2288-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1789-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.116762860212475,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020550600718706846
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2289-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1790-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1048833448439837,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02741037029772997
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2290-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1791-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1142733809538186,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01634678803384304
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2291-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1792-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1009304029867053,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.018367430195212364
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2292-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1793-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1094543859362602,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01626195479184389
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2293-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1794-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1178638599812984,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.022761888802051544
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2294-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1795-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1188953891396523,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02061787573620677
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2295-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1796-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1410495699383318,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04541990486904979
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2296-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1797-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1737124901264906,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07749666506424546
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2297-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1798-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1247884551994503,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.022589470725506544
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2298-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1799-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1742870900779963,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.0787137821316719
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2299-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1800-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1226196731440723,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.028638496063649654
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2300-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1801-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1527225291356444,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::private_kernel_domain_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.044843335170298815
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2301-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1802-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1206162702292204,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::magnitude_upper_bound_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01942086825147271
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2302-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1803-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1081341467797756,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::cache_publication_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02044578781351447
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2303-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1804-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1523710628971457,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::fractional_separation_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07682480104267597
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2304-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1805-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1214205548167229,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::scaled_lower_magnitude_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016523786820471287
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2305-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1806-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1470833560451865,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::private_trig_range_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07624478172510862
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2306-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1807-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1352911735884845,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_lattice_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04580292897298932
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2307-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1808-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.2008941280655563,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_periodic_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 1.0798194776289165
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2308-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1809-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.5845810240134597,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_operands_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.47827650094404817
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2309-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1810-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0935262679122388,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::evaluation_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021561841946095228
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2310-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1811-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1398990079760551,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04503232194110751
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2311-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1812-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.104812883771956,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::normal_form_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02009266195818782
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2312-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1813-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.103416619822383,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01980239199474454
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2313-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1814-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1186024686321616,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_leaf_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.019987009931355715
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2314-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1815-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1014031991362572,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021833092905580997
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2315-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1816-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1403773948550224,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::structural_comparison_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04495213786140084
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2316-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1817-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1467351601459086,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04495627712458372
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2317-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1818-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1495001097209752,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::rational_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04517023218795657
+      }
+    },
+    {
+      "kind": "cap",
+      "phase": "typed-api-prototype-v2318-eager-bound-decoder-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1819-domain-predicate-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.3629352529533207,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "16b39a2732a1a44539604c794dc99fa9c40097c60e55f4e3344d1b2701fcc6b5",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.27736058877781034
+      }
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2319-eager-bound-decoder-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2319-eager-bound-decoder-inverse-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.702413174789399,
+      "expected_cases": 384,
+      "summary_sha256": "ff6d12f33f74f63a6fe8cd7e95f234a06e30239ecbb824244f4212d746f81178"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2320-eager-bound-decoder-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2320-eager-bound-decoder-evaluation-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 7.419346829410642,
+      "expected_cases": 384,
+      "summary_sha256": "a5074a6fe6237805cc7323f5a39e03e33ff0ae4a8c5e288066e4af248fff202e"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2321-eager-bound-decoder-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2321-eager-bound-decoder-algebraic-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 9.762227029073983,
+      "expected_cases": 288,
+      "summary_sha256": "915ecde600f93a1ddb2a02b0f60ccf0aa31d20343cadb220a92e59efeeb1192a"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2322-eager-bound-decoder-algebraic-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2322-eager-bound-decoder-algebraic-wide-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 36.98266103584319,
+      "expected_cases": 144,
+      "summary_sha256": "362e948ee17cf245abff6bcc615f39fdfbd6067ce3a5815bb6cbe8e634991583"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2323-eager-bound-decoder-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2323-eager-bound-decoder-normal-form-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.101426699198782,
+      "expected_cases": 384,
+      "summary_sha256": "b9c430d93cfaf71a57d931d34c48929bf86dbe7b84390605ea43315006ec625d"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2324-eager-bound-decoder-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_candidate.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2324-eager-bound-decoder-replay"
+      ],
+      "exit_code": 0,
+      "seconds": 22.102190882898867,
+      "expected_cases": 415,
+      "summary_sha256": "cf9efa57dc7745a66f1c87dfc05c43ecd62deff46bc02c43724ef6b669d91d07"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2325-eager-bound-decoder-precision-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_precision.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2324-eager-bound-decoder-replay",
+        "typed-api-prototype-v2325-eager-bound-decoder-precision-replay"
+      ],
+      "exit_code": 0,
+      "seconds": 13.059326922055334,
+      "expected_cases": 60,
+      "summary_sha256": "908a93800f923684603484e796a137564a5f43605795a07eb9af34f3f50bf90d"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2326-eager-bound-decoder-private-kernel-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_kernel.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2326-eager-bound-decoder-private-kernel-replay"
+      ],
+      "exit_code": 0,
+      "seconds": 4.1632334450259805,
+      "expected_cases": 78,
+      "summary_sha256": "ce06e7c8482e3bdf7b79dd56a9cfde61659676bbbcd713b64632a9d9fdb75acc"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2327-eager-bound-decoder-private-trig-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2327-eager-bound-decoder-private-trig-replay"
+      ],
+      "exit_code": 0,
+      "seconds": 13.507128383032978,
+      "expected_cases": 600,
+      "summary_sha256": "93b281a89d1526baac61b601b4b59f9cafa1475004395076319e4b93169232d9"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2328-eager-bound-decoder-private-trig-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig_wide.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2328-eager-bound-decoder-private-trig-wide-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 12.847062437795103,
+      "expected_cases": 384,
+      "summary_sha256": "7e1e0f70554f01be2e2cfe21d1183edd350f4b050fb0c756c2d7e2e802e7b06c"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2329-eager-bound-decoder-trig-scale-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_scales.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2329-eager-bound-decoder-trig-scale-replay"
+      ],
+      "exit_code": 0,
+      "seconds": 27.37320123007521,
+      "expected_cases": 168,
+      "summary_sha256": "9d8750b07019e14fcca8750dc942d52321640809b559d3cc22e6b4957da0d57e"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2330-eager-bound-decoder-trig-residual-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_residuals.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2330-eager-bound-decoder-trig-residual-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 7.444128498900682,
+      "expected_cases": 456,
+      "summary_sha256": "325488136bcdab1c3868ced84966e4478c916fb5f127a841ae87d90a4bf3de0a"
+    },
+    {
+      "kind": "numerical",
+      "phase": "typed-api-prototype-v2331-eager-bound-decoder-trig-nonrational-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_nonrational.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2331-eager-bound-decoder-trig-nonrational-replay",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 6.903789723757654,
+      "expected_cases": 384,
+      "summary_sha256": "daa4e161eac9d34b9bc60cedc4e8e3a2a03a974965d1f5f23d0e487ce97e8ed9"
+    },
+    {
+      "kind": "public",
+      "phase": "typed-api-prototype-v2332-eager-bound-decoder-public-proof-reuse",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_eager_bound_decoder_public_reuse.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2332-eager-bound-decoder-public-proof-reuse",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "eager-bound-decoder-public-proof-reuse-protocol-v2332.json"
+      ],
+      "exit_code": 0,
+      "seconds": 6.24818710424006,
+      "expected_cases": 126,
+      "summary_sha256": "8bcc4e701b0098dcc5b9cccf052c029b1aa775d6912f5fcb15b0eb9235df379e"
+    },
+    {
+      "kind": "public",
+      "phase": "typed-api-prototype-v2333-eager-bound-decoder-composed-proof-reuse",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_eager_bound_decoder_composed_reuse.py",
+        "typed-api-prototype-v2261-eager-bound-decoder-release-build",
+        "typed-api-prototype-v2333-eager-bound-decoder-composed-proof-reuse",
+        "typed-api-prototype-v2268-eager-bound-decoder-scalar-tests",
+        "eager-bound-decoder-composed-proof-reuse-protocol-v2333.json"
+      ],
+      "exit_code": 0,
+      "seconds": 65.30433092173189,
+      "expected_cases": 522,
+      "summary_sha256": "d28f4f9c294d9a4e5d54828dabe1995a4d572c50bdf92e33fe8899da184ff3a3"
+    }
+  ]
+}
