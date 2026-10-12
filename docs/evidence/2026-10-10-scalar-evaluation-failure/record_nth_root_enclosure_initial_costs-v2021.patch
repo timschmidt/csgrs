@@ -1,0 +1,22 @@
+--- record_cache_state_merge_initial_costs.py
++++ record_nth_root_enclosure_initial_costs.py
+@@ -17 +17 @@
+-    out = E / "cache-state-merge-initial-cost-review-v1943.json"
++    out = E / "nth-root-enclosure-initial-cost-review-v2021.json"
+@@ -19 +19 @@
+-    protocol_path = E / "cache-state-merge-cost-protocol-v1936.json"
++    protocol_path = E / "nth-root-enclosure-cost-protocol-v2014.json"
+@@ -28 +28 @@
+-    standalone = read(E / "cache-state-merge-cost-orchestration-v1942.json")
++    standalone = read(E / "nth-root-enclosure-cost-orchestration-v2020.json")
+@@ -68,2 +68,2 @@
+-    phase = E / "cache-state-merge-preconditioned-cost-v1943"
+-    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_cache_state_merge_cost.py"]["fork_sha256"]
++    phase = E / "nth-root-enclosure-preconditioned-cost-v2021"
++    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_nth_root_enclosure_cost.py"]["fork_sha256"]
+@@ -124 +124 @@
+-            "All successful processes preserve every frozen non-timing output, including allocations, samples, work accounting and checksums. Only elapsed_ns is excluded from equality.",
++            "All successful processes preserve every frozen non-timing output, including certification counts, checksums and output fields. Only elapsed_ns is excluded from equality.",
+@@ -127 +127 @@
+-            "The proof-only extraction provides no new completeness gain to justify a runtime regression. The fixed pre-Verus acceptance baseline, earlier cost failures/tradeoff and main/full-board admission remain separate open obligations.",
++            "The combined kernel/selector proposal provides no new completeness gain to justify a runtime regression. The fixed pre-Verus acceptance baseline, earlier cost failures/tradeoff and main/full-board admission remain separate open obligations.",

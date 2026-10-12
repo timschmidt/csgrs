@@ -1,0 +1,26 @@
+--- prepare_cache_state_merge_cost_followup.py
++++ prepare_nth_root_enclosure_cost_followup.py
+@@ -13 +13 @@
+-    original_path = E / "cache-state-merge-initial-cost-review-v1943.json"
++    original_path = E / "nth-root-enclosure-initial-cost-review-v2021.json"
+@@ -18 +18 @@
+-    strategy_path = E / "cache-state-merge-cost-followup-strategy-v1943.json"
++    strategy_path = E / "nth-root-enclosure-cost-followup-strategy-v2021.json"
+@@ -27,3 +27,3 @@
+-    protocol = E / "cache-state-merge-cost-followup-protocol-v1943.json"
+-    runner = E / "replay_cache_state_merge_followup.py"
+-    provenance = E / "cache-state-merge-cost-followup-preparation-v1943.json"
++    protocol = E / "nth-root-enclosure-cost-followup-protocol-v2021.json"
++    runner = E / "replay_nth_root_enclosure_followup.py"
++    provenance = E / "nth-root-enclosure-cost-followup-preparation-v2021.json"
+@@ -32,2 +32,2 @@
+-        "output": "cache-state-merge-focused-cost-v1943",
+-        "prelude": "cache-state-merge-focused-cpu-prelude-v1943",
++        "output": "nth-root-enclosure-focused-cost-v2021",
++        "prelude": "nth-root-enclosure-focused-cpu-prelude-v2021",
+@@ -36 +36 @@
+-        "scope": "Twenty-seven alternating-order pairs for every unchanged original fixture in each family with an initial increase above five percent. The family selection follows the strategy frozen before any candidate timings. Preserve all full-size inputs, binaries, checksums, allocation/work receipts, original 192 MiB/CPU 2/3-second/four-second wall limits and the identical 50-million-step CPU prelude. Keep initial and follow-up observations without causal attribution or a uniform-speedup claim.",
++        "scope": "Twenty-seven alternating-order pairs for every unchanged original fixture in each family with an initial increase above five percent. The family selection follows the strategy frozen before any candidate timings. Preserve all full-size inputs, binaries, checksums and all non-timing output fields, original 192 MiB/CPU 2/3-second/four-second wall limits and the identical 50-million-step CPU prelude. Keep initial and follow-up observations without causal attribution or a uniform-speedup claim.",
+@@ -51 +51 @@
+-    prepared = read(E / "cache-state-merge-cost-protocol-v1936.json")["runner_forks"]["replay_cache_state_merge_cost.py"]
++    prepared = read(E / "nth-root-enclosure-cost-protocol-v2014.json")["runner_forks"]["replay_nth_root_enclosure_cost.py"]

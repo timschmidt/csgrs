@@ -1,0 +1,32 @@
+--- record_cache_state_merge_cost_milestone.py
++++ record_nth_root_enclosure_cost_milestone.py
+@@ -15 +15 @@
+-    costs_path = E / "cache-state-merge-cost-review-v1943.json"
++    costs_path = E / "nth-root-enclosure-cost-review-v2021.json"
+@@ -19,2 +19,2 @@
+-    broad = read(E / "cache-state-merge-broad-milestone-v1935.json")
+-    controller_path = E / "cache-state-merge-cost-validation-v1943.json"
++    broad = read(E / "nth-root-enclosure-broad-milestone-v2013.json")
++    controller_path = E / "nth-root-enclosure-cost-validation-v2021.json"
+@@ -44,2 +44,2 @@
+-    out = E / "cache-state-merge-cost-milestone-v1943.json"
+-    ledger_record = E / "cache-state-merge-cost-ledger-v1943.json"
++    out = E / "nth-root-enclosure-cost-milestone-v2021.json"
++    ledger_record = E / "nth-root-enclosure-cost-ledger-v2021.json"
+@@ -59,2 +59,2 @@
+-        "next_replay_protocol": "cache-state-merge-replay-protocol-v1944.json",
+-        "next_replay_runner": "run_cache_state_replays.py",
++        "next_replay_protocol": "nth-root-enclosure-replay-protocol-v2022.json",
++        "next_replay_runner": "run_nth_root_replays.py",
+@@ -63 +63 @@
+-            "Samples, allocations, work counts and checksums are unchanged. Probe executable sizes are separate local observations and do not establish whole-board size parity.",
++            "Certification counts, checksums and all non-timing output fields are unchanged. These probes do not measure allocations or consumed evaluation work. Probe executable sizes are separate local observations and do not establish whole-board size parity.",
+@@ -65 +65 @@
+-            "The extraction remains unretained pending all 39 capped phases, 4129 numerical cases, 648 public reuse schedules and their receipt/fact audits. Main/native/full-board admission and all thirteen whole-crate proof groups remain open.",
++            "The combined proposal remains unretained pending all 39 capped phases, 4129 numerical cases, 648 public reuse schedules and their receipt/fact audits. Main/native/full-board admission and all thirteen whole-crate proof groups remain open.",
+@@ -86 +86 @@
+-        "The v1936-v1943 local cost gates pass on the unchanged proved cache-state-merge source: "
++        "The v2014-v2021 local cost gates pass on the unchanged combined kernel/selector source: "
+@@ -90 +90 @@
+-        "limits. Samples, allocations, consumed work and checksums are unchanged. All timing "
++        "limits. Certification counts, checksums and non-timing output fields are unchanged. These probes do not measure allocations or consumed evaluation work. All timing "

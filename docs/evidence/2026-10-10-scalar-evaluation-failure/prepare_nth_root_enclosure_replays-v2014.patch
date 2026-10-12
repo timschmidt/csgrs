@@ -1,0 +1,76 @@
+--- prepare_cache_state_merge_replays.py
++++ prepare_nth_root_enclosure_replays.py
+@@ -14 +14 @@
+-    out = E / "cache-state-merge-replay-protocol-v1944.json"
++    out = E / "nth-root-enclosure-replay-protocol-v2022.json"
+@@ -16 +16 @@
+-    proof = read(E / "cache-state-merge-proof-validation-v1926.json")
++    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
+@@ -25,2 +25,2 @@
+-    build = "typed-api-prototype-v1929-cache-state-merge-release-build"
+-    unit = "typed-api-prototype-v1927-cache-state-merge-scalar-tests"
++    build = "typed-api-prototype-v2007-nth-root-enclosure-release-build"
++    unit = "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
+@@ -29 +29 @@
+-    for version, row in zip(range(1944, 1983), prior["caps"]):
++    for version, row in zip(range(2022, 2061), prior["caps"]):
+@@ -32 +32 @@
+-        caps.append({"phase": f"typed-api-prototype-v{version}-cache-state-merge-retained-cap",
++        caps.append({"phase": f"typed-api-prototype-v{version}-nth-root-enclosure-retained-cap",
+@@ -36,2 +36,2 @@
+-    for version, row in zip(range(1983, 1996), prior["numerical_replays"]):
+-        mapping[row["phase"]] = f"typed-api-prototype-v{version}-cache-state-merge-" + row["phase"].split("-domain-predicate-", 1)[1]
++    for version, row in zip(range(2061, 2074), prior["numerical_replays"]):
++        mapping[row["phase"]] = f"typed-api-prototype-v{version}-nth-root-enclosure-" + row["phase"].split("-domain-predicate-", 1)[1]
+@@ -62,2 +62,2 @@
+-    for version, row, runner in zip([1996, 1997], prior["public_replays"],
+-        ["reproduce_cache_state_public_reuse.py", "reproduce_cache_state_composed_reuse.py"]):
++    for version, row, runner in zip([2074, 2075], prior["public_replays"],
++        ["reproduce_nth_root_public_reuse.py", "reproduce_nth_root_composed_reuse.py"]):
+@@ -68 +68 @@
+-        after = "typed-api-prototype-v1936-cache-state-merge-atan-cost/summary.json"
++        after = "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
+@@ -72 +72 @@
+-        protocol.update(status="Frozen unchanged corpus replay for the conditional cache-state-merge extraction",
++        protocol.update(status="Frozen unchanged corpus replay for the combined nth-root kernel and outlined-cache proposal",
+@@ -77 +77 @@
+-        name = f"cache-state-merge-{family}-protocol-v{version}.json"
++        name = f"nth-root-enclosure-{family}-protocol-v{version}.json"
+@@ -81 +81 @@
+-        phase = f"typed-api-prototype-v{version}-cache-state-merge-{family}"
++        phase = f"typed-api-prototype-v{version}-nth-root-enclosure-{family}"
+@@ -92,2 +92,2 @@
+-        "domain-predicate-replay-validation-v1834.json": "cache-state-merge-replay-validation-v1997.json"}
+-    fork("run_domain_predicate_replays.py", "run_cache_state_replays.py", {
++        "domain-predicate-replay-validation-v1834.json": "nth-root-enclosure-replay-validation-v2075.json"}
++    fork("run_domain_predicate_replays.py", "run_nth_root_replays.py", {
+@@ -95,2 +95,3 @@
+-        "domain-predicate-candidate-validation-v1772.json": "cache-state-merge-candidate-validation-v1935.json",
+-        "domain-predicate-cost-orchestration-v1779.json": "cache-state-merge-cost-orchestration-v1942.json",
++        "domain-predicate-candidate-validation-v1772.json": "nth-root-enclosure-candidate-validation-v2013.json",
++        "domain-predicate-cost-orchestration-v1779.json": "nth-root-enclosure-cost-orchestration-v2020.json",
++        '    assert costs["completed"] and costs["source_record_sha256"] == expected\n': '    assert costs["completed"] and costs["source_record_sha256"] == expected\n    cost_review = read(E / "nth-root-enclosure-cost-review-v2021.json")\n    controller = read(E / "nth-root-enclosure-cost-validation-v2021.json")\n    assert controller["complete"] and cost_review["local_timing_and_process_gates_passed"]\n    assert cost_review["source_record_sha256"] == controller["source_record_sha256"] == expected\n',
+@@ -98 +99 @@
+-    fork("compare_domain_predicate_queries.py", "compare_cache_state_queries.py", {
++    fork("compare_domain_predicate_queries.py", "compare_nth_root_queries.py", {
+@@ -100 +101 @@
+-        "domain-predicate-domain-query-comparison-v1819.json": "cache-state-merge-domain-query-comparison-v1982.json",
++        "domain-predicate-domain-query-comparison-v1819.json": "nth-root-enclosure-domain-query-comparison-v2060.json",
+@@ -102 +103 @@
+-    fork("compare_domain_predicate_replays.py", "compare_cache_state_replays.py", {
++    fork("compare_domain_predicate_replays.py", "compare_nth_root_replays.py", {
+@@ -104 +105 @@
+-        "domain-predicate-deterministic-replay-comparison-v1835.json": "cache-state-merge-deterministic-replay-comparison-v1998.json",
++        "domain-predicate-deterministic-replay-comparison-v1835.json": "nth-root-enclosure-deterministic-replay-comparison-v2076.json",
+@@ -108 +109 @@
+-    fork("audit_domain_predicate_fact_retention.py", "audit_cache_state_fact_retention.py", {
++    fork("audit_domain_predicate_fact_retention.py", "audit_nth_root_fact_retention.py", {
+@@ -110 +111 @@
+-        "domain-predicate-public-fact-audit-v1835.json": "cache-state-merge-public-fact-audit-v1998.json",
++        "domain-predicate-public-fact-audit-v1835.json": "nth-root-enclosure-public-fact-audit-v2076.json",
+@@ -113 +114 @@
+-        "status": "Frozen before the nine runtime qualification commands and replay execution; earlier compile-only diagnostics remain separate",
++        "status": "Frozen before capped, numerical and public replays; broad runtime validation is in progress",
+@@ -119 +120 @@
+-        "audit_scope": "Only frozen identity literals change in the replay, comparison and fact-audit helpers. The public/composed fact-retention audit loops, numerical oracles, work comparisons and full-size cases are unchanged.",
++        "audit_scope": "Candidate identities change, and replay startup additionally requires the final cost audit and controller to pass. The public/composed fact-retention audit loops, numerical oracles, work comparisons and full-size cases are unchanged.",

@@ -1,0 +1,22 @@
+{
+  "status": "Generators prepared before any new cost or replay execution",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "generators": {
+    "prepare_nth_root_enclosure_costs.py": {
+      "predecessor": "prepare_cache_state_merge_costs.py",
+      "predecessor_sha256": "3019de3b95d2a263d4c56c01f83165dcb8b7e532afaae7e8556dfd464ae1316b",
+      "generator_sha256": "bc72659d2231966c079b5029fd8a94b04426c8e045ce1868c219742dd2f99a64",
+      "patch": "prepare_nth_root_enclosure_costs-v2014.patch",
+      "patch_sha256": "03145a2bfe4ef959075e31c4366d3cfb8ef56e5af848258b51e1e12e665c8c02"
+    },
+    "prepare_nth_root_enclosure_replays.py": {
+      "predecessor": "prepare_cache_state_merge_replays.py",
+      "predecessor_sha256": "6b157e1e9bc605010d1c980239d20f910640fb97cea4c93281aa9cf2a898c54f",
+      "generator_sha256": "56b86e1bb9270e8597bfb13177d8d2c6a51b0f6dc35d2df52b99e7163c78b464",
+      "patch": "prepare_nth_root_enclosure_replays-v2014.patch",
+      "patch_sha256": "17b13bdfebdaf5389917eb30f9dee98383ceb91353607ee758ef9e6fa587b5f4"
+    }
+  },
+  "preparer_sha256": "57d24657825fca226d6b0c51edde0c242b427648c0468a99446e0cb3e0dec106",
+  "limits": "Keep retained v1836, every original full-size fixture and cap, all cost/replay comparisons and the predeclared repeat strategy. The replay runner also checks the final cost gate before starting. The v1943 cap failure and every earlier failure remain unchanged; no new measurements are performed by this preparation."
+}

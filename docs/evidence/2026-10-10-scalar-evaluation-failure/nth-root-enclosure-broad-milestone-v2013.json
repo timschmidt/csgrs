@@ -1,0 +1,25 @@
+{
+  "status": "All nine runtime validation commands pass; cost and replay checks remain pending before retaining the combined proposal",
+  "source_record": "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "broad_validation": "nth-root-enclosure-broad-validation-v2013.json",
+  "broad_validation_sha256": "ab6a2873cb72b923289b215364e931818e2b82c6a8252ef8fe0d57209992e313",
+  "proof_record": "nth-root-enclosure-proof-validation-v2004.json",
+  "proof_record_sha256": "a968e30410e01a3355824b66d79c8d8f3cea087ae9928897b9bb12c370017ec3",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "next_cost_protocol": "nth-root-enclosure-cost-protocol-v2014.json",
+  "next_replay_protocol": "nth-root-enclosure-replay-protocol-v2022.json",
+  "prepared_receipt_audits_sha256": {
+    "compare_nth_root_queries.py": "f6d2643721dd9b24471c6dad27af79f063c5312c49eb7a5c32fc4317ddc580e2",
+    "compare_nth_root_replays.py": "7596b5a467d348294e102dc27d9b737b17c93c910896d09cc369ca3cbaad3024",
+    "audit_nth_root_fact_retention.py": "e213c52acac2355e1d8c4b79631c84de09b777ec46130e50ce861e378456acdb",
+    "nth-root-enclosure-replay-protocol-v2022.json": "e7cbfa40f25625c10cdb5b5232e6364e0de991d39dd8aa58794da5f2fffc7006"
+  },
+  "limits": [
+    "The five-crate test suite covers hyperreal, hyperlimit, hyperlattice, hypercurve and hyperdrc, with 33 unchanged ignored tests and 14 inherited Cargo example-filename warning lines. This is not all-workspace/CI or main admission.",
+    "Source hashes match the fresh conditional verification (651 units) and ten fresh acceptance tests. The 247 rejected mutations and four passing guard baselines are reused from v1926 because all 44 proof/guard inputs and verifier identities are unchanged; zero mutations were rerun. The modified bigint kernel is outside Verus coverage. All thirteen whole-crate groups remain open.",
+    "The combined kernel/selector change is still a proposal. Preserve all original capped fixtures, public reuse schedules, fixed cost baselines and older cost failures/tradeoffs; proof coverage alone cannot justify a runtime regression.",
+    "The new receipt/fact audits are prepared, not executed. They will compare all deterministic observations and independently audit concurrent fact retention without requiring race-dependent outcome counts to match."
+  ]
+}

@@ -1,0 +1,23 @@
+--- record_cache_state_merge_costs.py
++++ record_nth_root_enclosure_costs.py
+@@ -15 +15 @@
+-    out = E / "cache-state-merge-cost-review-v1943.json"
++    out = E / "nth-root-enclosure-cost-review-v2021.json"
+@@ -17 +17 @@
+-    original_path = E / "cache-state-merge-initial-cost-review-v1943.json"
++    original_path = E / "nth-root-enclosure-initial-cost-review-v2021.json"
+@@ -24 +24 @@
+-    protocol_path = E / "cache-state-merge-cost-followup-protocol-v1943.json"
++    protocol_path = E / "nth-root-enclosure-cost-followup-protocol-v2021.json"
+@@ -50 +50 @@
+-        preparation = read(E / "cache-state-merge-cost-followup-preparation-v1943.json")
++        preparation = read(E / "nth-root-enclosure-cost-followup-preparation-v2021.json")
+@@ -106 +106 @@
+-        "status": "Original-cap local cost controls and prescribed repeats pass" if passed else "Persistent timing increases require review; do not retain the extraction",
++        "status": "Original-cap local cost controls and prescribed repeats pass" if passed else "Persistent timing increases require review; do not retain the combined proposal",
+@@ -123 +123 @@
+-            "Every completed process preserves all frozen non-timing observations, including allocations, samples, consumed work and checksums. CPU preludes are separate processes and all original caps remain in force.",
++            "Every completed process preserves all frozen non-timing observations, including certification counts, checksums and output fields. CPU preludes are separate processes and all original caps remain in force.",
+@@ -126 +126 @@
+-            "The extraction still awaits capped, numerical and public replays and receipt/fact audits. General graph/atomic proofs, all thirteen whole-crate groups, main/native/full-board admission and the full properties plan remain open.",
++            "The combined proposal still awaits capped, numerical and public replays and receipt/fact audits. General graph/atomic proofs, all thirteen whole-crate groups, main/native/full-board admission and the full properties plan remain open.",

@@ -1,0 +1,54 @@
+{
+  "status": "Frozen before building or executing the copied-kernel allocation probe",
+  "source_record": "typed-api-prototype-v2003-nth-root-enclosure-verus/source-hashes.json.gz",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "candidate_file": "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+  "candidate_file_sha256": "4458732e7ed4e239439c9437e19a57f7ec80fcb443633bfe6930028ebed185d6",
+  "baseline_file": "nth-root-enclosure-baseline-v2001/inputs/crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+  "baseline_file_sha256": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+  "baseline_block_sha256": "39561407b6b4ef572dec565f4c674c17c56352df8e34c8af4b063fd896b8e188",
+  "candidate_function_sha256": "97d1b731732e67118051e7f8d6f46e3a3cc4db37250c38a68b83fbe95c808575",
+  "template": "nth_root_allocation_probe_template.rs",
+  "template_sha256": "1ff987b2179178edfbd58b1db07e37e4afd68d5eac896f31942b75cd2eebc575",
+  "probe": "nth_root_allocation_probe_v2021.rs",
+  "probe_sha256": "275c748516fc9deaf67de40977681a67dc0a0caf30c9db7f6770a5c8be5f8869",
+  "preparer_sha256": "a8bfb3177912cffd07a96c891f35a898725e170f64551a47cee09f7638f421fd",
+  "degrees": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "root_bit_widths": [
+    16,
+    128,
+    1024,
+    "ceil(65568 / degree)"
+  ],
+  "root_low_bits": 7,
+  "perfect_power_deltas": [
+    -1,
+    0,
+    1
+  ],
+  "repetitions": 3,
+  "fixtures": 84,
+  "paired_observations": 252,
+  "kernel_calls": 504,
+  "address_space_mib": 192,
+  "cpu_seconds": [
+    2,
+    3
+  ],
+  "wall_seconds": 4,
+  "measurement_fields": [
+    "successful_allocation_calls_including_realloc",
+    "total_requested_bytes_including_full_realloc_size",
+    "successful_reallocation_calls"
+  ],
+  "acceptance": "Require equal exact endpoints and stable allocation counts across all three repetitions. Report every case and any increases; no timing or whole-process memory inference.",
+  "limits": "This copies the exact candidate helper and the archived prior endpoint block (indentation and a tuple-return wrapper only), linking the same num dependency as the production release library. It measures Rust allocation requests during the helper call only. Input construction, output checks, formatting and output destruction are outside the counter window. It does not measure peak/live memory, production call-site behavior, public query allocations, consumed evaluation work or execution time. It cannot pass or replace any original public cost or replay gate, including earlier SIGXCPU failures."
+}

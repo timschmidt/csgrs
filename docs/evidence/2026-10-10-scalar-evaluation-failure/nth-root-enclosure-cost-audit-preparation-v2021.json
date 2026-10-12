@@ -1,0 +1,65 @@
+{
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "runner_forks": {
+    "record_nth_root_enclosure_initial_costs.py": {
+      "predecessor": "record_cache_state_merge_initial_costs.py",
+      "predecessor_sha256": "865849afc695056b120ff64a620c73682a6ed8913c48e5fca006975721f718dd",
+      "runner_sha256": "e3cb8d7499b659d6c2eb9be0bf370305620902043a6a218a3870f0d2715c5fce",
+      "fork_patch": "record_nth_root_enclosure_initial_costs-v2021.patch",
+      "fork_patch_sha256": "6aa52cd4dc7301d27e9aa170151a4e6e25bfe795279ca459befd93270cdf58a6",
+      "description_corrections": {
+        "including allocations, samples, work accounting and checksums": "including certification counts, checksums and output fields",
+        "The proof-only extraction provides no new completeness gain to justify a runtime regression.": "The combined kernel/selector proposal provides no new completeness gain to justify a runtime regression."
+      }
+    },
+    "prepare_nth_root_enclosure_cost_followup.py": {
+      "predecessor": "prepare_cache_state_merge_cost_followup.py",
+      "predecessor_sha256": "b6e81e289b57bc21c0e85a2f3520b19c56e72acb7221ba38a6f47f063fc473a4",
+      "runner_sha256": "c3b5177fb577234bca34a500885f20d44170ca9af15a601c25f31595e7e6f5be",
+      "fork_patch": "prepare_nth_root_enclosure_cost_followup-v2021.patch",
+      "fork_patch_sha256": "30bc4f03f1f8f1dc4c30d7af1706dadb827cb841ffe645e2a5276bee94e23b6d",
+      "description_corrections": {
+        "checksums, allocation/work receipts": "checksums and all non-timing output fields"
+      }
+    },
+    "record_nth_root_enclosure_costs.py": {
+      "predecessor": "record_cache_state_merge_costs.py",
+      "predecessor_sha256": "de93dbd765235616f71e759906328f7b8f24a01a3398591cfb17d0c23f6dfe28",
+      "runner_sha256": "438f7a5cedb8f955cf82e0e7148d934b903860242a6664e5c881e8fc4f566caf",
+      "fork_patch": "record_nth_root_enclosure_costs-v2021.patch",
+      "fork_patch_sha256": "e2fe5287f50fd47ee5be90b46066aacf913bfbdcc79a713990acbf670145eec8",
+      "description_corrections": {
+        "including allocations, samples, consumed work and checksums": "including certification counts, checksums and output fields",
+        "the extraction": "the combined proposal",
+        "The extraction": "The combined proposal"
+      }
+    },
+    "run_nth_root_enclosure_cost_validation.py": {
+      "predecessor": "run_cache_state_merge_cost_validation.py",
+      "predecessor_sha256": "eff11ff3727b89fa204c579f78214d1f1f61f301eb4642bd3b0888b340b98044",
+      "runner_sha256": "e2fc03dcaa62a8f782883f455bf1fe9891b260df812a5570d3e6b32c807977fc",
+      "fork_patch": "run_nth_root_enclosure_cost_validation-v2021.patch",
+      "fork_patch_sha256": "f921c26ccde70119f6209d1b5cbaf2f556ad98f101aa36c7e13c8fa6483c4180",
+      "description_corrections": {}
+    },
+    "record_nth_root_enclosure_cost_milestone.py": {
+      "predecessor": "record_cache_state_merge_cost_milestone.py",
+      "predecessor_sha256": "86482972e140b1d0eb5c912f7e69506c3fc2b9fb8442ce0df135044c99f8ff6d",
+      "runner_sha256": "5548b074fb413d8201343a7e6d0bff4cfc754243ade8673b83bc95afe22e5f76",
+      "fork_patch": "record_nth_root_enclosure_cost_milestone-v2021.patch",
+      "fork_patch_sha256": "6e7817cd2416091e3041148b9188404e9f76b3cf25d5fba8ec43dab706faa0bf",
+      "description_corrections": {
+        "Samples, allocations, work counts and checksums are unchanged.": "Certification counts, checksums and all non-timing output fields are unchanged. These probes do not measure allocations or consumed evaluation work.",
+        "limits. Samples, allocations, consumed work and checksums are unchanged. All timing ": "limits. Certification counts, checksums and non-timing output fields are unchanged. These probes do not measure allocations or consumed evaluation work. All timing ",
+        "unchanged proved nth-root-enclosure source": "unchanged combined kernel/selector source",
+        "The extraction": "The combined proposal"
+      }
+    }
+  },
+  "strategy": "nth-root-enclosure-cost-followup-strategy-v2021.json",
+  "strategy_sha256": "5e86614885d38e96933498c28443dad2535443d954c6472b60d1161b50fd6511",
+  "strategy_predecessor": "cache-state-merge-cost-followup-strategy-v1943.json",
+  "strategy_predecessor_sha256": "5bc85aad8ceb0dff1a2d72c52ef9fb8708be53db4c5bddf949fb55806d9e06a3",
+  "preparer_sha256": "17426b88ceccb0de0626699d849e386658a0824cfc2588c470f9613b3550acf7",
+  "scope": "Keep all 52 full-size fixtures, original process caps, nine initial pairs and 27 pairs of every fixture in each affected family. Every non-timing receipt field remains an exact equality check. Correct the inherited prose: these cost probes emit certification counts, checksums and output fields, not allocation or consumed-work counters. No acceptance rule changes. Prior timing failures and the v1943 SIGXCPU remain failed and immutable."
+}

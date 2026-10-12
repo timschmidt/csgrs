@@ -1,0 +1,37 @@
+--- run_cache_state_merge_cost_validation.py
++++ run_nth_root_enclosure_cost_validation.py
+@@ -16,3 +16,3 @@
+-    validation = read(E / "cache-state-merge-candidate-validation-v1935.json")
+-    broad = read(E / "cache-state-merge-broad-validation-v1935.json")
+-    protocol = read(E / "cache-state-merge-cost-protocol-v1936.json")
++    validation = read(E / "nth-root-enclosure-candidate-validation-v2013.json")
++    broad = read(E / "nth-root-enclosure-broad-validation-v2013.json")
++    protocol = read(E / "nth-root-enclosure-cost-protocol-v2014.json")
+@@ -23 +23 @@
+-    strategy = E / "cache-state-merge-cost-followup-strategy-v1943.json"
++    strategy = E / "nth-root-enclosure-cost-followup-strategy-v2021.json"
+@@ -25,2 +25,2 @@
+-    out = E / "cache-state-merge-cost-validation-v1943.json"
+-    logs = E / "cache-state-merge-cost-controller-v1943"
++    out = E / "nth-root-enclosure-cost-validation-v2021.json"
++    logs = E / "nth-root-enclosure-cost-controller-v2021"
+@@ -55,2 +55,2 @@
+-    assert run("standalone", "run_cache_state_merge_costs.py") == 0
+-    paired = run("paired", "replay_cache_state_merge_cost.py")
++    assert run("standalone", "run_nth_root_enclosure_costs.py") == 0
++    paired = run("paired", "replay_nth_root_enclosure_cost.py")
+@@ -59 +59 @@
+-    reviewed = run("initial-review", "record_cache_state_merge_initial_costs.py")
++    reviewed = run("initial-review", "record_nth_root_enclosure_initial_costs.py")
+@@ -61,2 +61,2 @@
+-    assert run("freeze-followup", "prepare_cache_state_merge_cost_followup.py") == 0
+-    followup = read(E / "cache-state-merge-cost-followup-protocol-v1943.json")
++    assert run("freeze-followup", "prepare_nth_root_enclosure_cost_followup.py") == 0
++    followup = read(E / "nth-root-enclosure-cost-followup-protocol-v2021.json")
+@@ -65,3 +65,3 @@
+-        assert run(f"followup-{index}", "replay_cache_state_merge_followup.py", str(index)) == 0
+-    assert run("final-review", "record_cache_state_merge_costs.py") == 0
+-    result = read(E / "cache-state-merge-cost-review-v1943.json")
++        assert run(f"followup-{index}", "replay_nth_root_enclosure_followup.py", str(index)) == 0
++    assert run("final-review", "record_nth_root_enclosure_costs.py") == 0
++    result = read(E / "nth-root-enclosure-cost-review-v2021.json")

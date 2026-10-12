@@ -1,0 +1,749 @@
+{
+  "status": "Frozen before capped, numerical and public replays; broad runtime validation is in progress",
+  "source_record": "typed-api-prototype-v2003-nth-root-enclosure-verus/source-hashes.json.gz",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "build_phase": "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+  "unit_phase": "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+  "caps": [
+    {
+      "phase": "typed-api-prototype-v2022-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1781-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2023-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1782-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2024-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1783-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2025-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1784-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2026-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1785-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2027-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1786-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2028-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1787-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2029-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1788-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2030-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1789-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2031-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1790-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2032-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1791-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2033-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1792-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2034-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1793-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2035-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1794-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2036-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1795-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2037-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1796-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2038-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1797-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2039-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1798-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2040-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1799-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2041-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1800-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+        "--exact",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2042-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1801-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::private_kernel_domain_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2043-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1802-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::magnitude_upper_bound_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2044-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1803-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::cache_publication_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2045-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1804-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::fractional_separation_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2046-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1805-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::scaled_lower_magnitude_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2047-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1806-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::private_trig_range_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2048-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1807-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_lattice_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2049-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1808-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_periodic_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2050-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1809-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::trig_operands_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2051-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1810-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::evaluation_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2052-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1811-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2053-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1812-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::normal_form_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2054-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1813-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2055-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1814-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_leaf_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2056-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1815-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_trig_dag_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2057-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1816-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::structural_comparison_budget_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2058-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1817-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::algebraic_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2059-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1818-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::rational_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    },
+    {
+      "phase": "typed-api-prototype-v2060-nth-root-enclosure-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1819-domain-predicate-retained-cap",
+      "arguments": [
+        "computable::node::inverse_constructor_preflight_tests::",
+        "--nocapture",
+        "--test-threads=1"
+      ],
+      "runner_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617"
+    }
+  ],
+  "numerical_replays": [
+    {
+      "phase": "typed-api-prototype-v2061-nth-root-enclosure-inverse-replay",
+      "baseline_phase": "typed-api-prototype-v1820-domain-predicate-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2061-nth-root-enclosure-inverse-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "d972b7dd02507d3f23dea5e90583d291a996ee99932d908aad62532368f102f8",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2062-nth-root-enclosure-evaluation-replay",
+      "baseline_phase": "typed-api-prototype-v1821-domain-predicate-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2062-nth-root-enclosure-evaluation-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
+      ],
+      "runner_sha256": "6ade8892ec7680242f343538e4920e58c68cc1c2c31f6b571aaf1046e609e922",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a20fb8d400bb79ea26896a7c4f8f524a60ca21fab8f9ed4befc03e7ef49d6b2e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2063-nth-root-enclosure-algebraic-replay",
+      "baseline_phase": "typed-api-prototype-v1822-domain-predicate-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2063-nth-root-enclosure-algebraic-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "255fc1ed1bbcb85c1ab8279968aaab3962205e4fa9e055fc64a50525daac2518",
+      "expected_cases": 288,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2064-nth-root-enclosure-algebraic-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1823-domain-predicate-algebraic-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2064-nth-root-enclosure-algebraic-wide-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "4b3f7e599225684b109d9c97ef3f74258d2541f1b98015481d850e701007d8ad",
+      "expected_cases": 144,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "f5051c35573d20d65faf95253e3620de98523ca36d97ae11fa5fd008610494ce"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2065-nth-root-enclosure-normal-form-replay",
+      "baseline_phase": "typed-api-prototype-v1824-domain-predicate-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2065-nth-root-enclosure-normal-form-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "replay"
+      ],
+      "runner_sha256": "9cb33e415bfd01bba3d7cefe550c6098ca541670bd06ff3dd51a42e1fb1aa180",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2066-nth-root-enclosure-replay",
+      "baseline_phase": "typed-api-prototype-v1825-domain-predicate-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_candidate.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2066-nth-root-enclosure-replay"
+      ],
+      "runner_sha256": "375eacc23ff4c3338c8e24f5417c8164edb5a4f08dd2b6c39dbd9f6528ab64db",
+      "expected_cases": 415,
+      "baseline_rust_inputs_sha256": {
+        "cache_candidate_probe.rs": "bfab65e1d36a562e6594cc46c35269eebb14b9f7cee55d8309e9fa034a7db356",
+        "candidate_probe.rs": "58da4d66c59675a08a250bb6d711f1a40df16d46f914b59f4dc2dd9f0fd9c72c"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2067-nth-root-enclosure-precision-replay",
+      "baseline_phase": "typed-api-prototype-v1826-domain-predicate-precision-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_precision.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2066-nth-root-enclosure-replay",
+        "typed-api-prototype-v2067-nth-root-enclosure-precision-replay"
+      ],
+      "runner_sha256": "3d7202561daca829b9515fd603303956856fc29a6410b580aaac9be4d92444b8",
+      "expected_cases": 60,
+      "baseline_rust_inputs_sha256": {}
+    },
+    {
+      "phase": "typed-api-prototype-v2068-nth-root-enclosure-private-kernel-replay",
+      "baseline_phase": "typed-api-prototype-v1827-domain-predicate-private-kernel-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_kernel.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2068-nth-root-enclosure-private-kernel-replay"
+      ],
+      "runner_sha256": "26c6ea11ed1469772d085529499edea4eb21cfa5eb1f668ada257ce4d3f56d55",
+      "expected_cases": 78,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3caaba77889d086cf0ede744b6d4838f24a7165200fece4d35eee167f5882312"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2069-nth-root-enclosure-private-trig-replay",
+      "baseline_phase": "typed-api-prototype-v1828-domain-predicate-private-trig-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2069-nth-root-enclosure-private-trig-replay"
+      ],
+      "runner_sha256": "461ab611fb3a9429090a55e9cfd461accf35776942f0cc6651eb0de72d3a8740",
+      "expected_cases": 600,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a53880fc287fab1837f87fa43c8517cdd0b20401b4b2153e207c69a87ee31c3e"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2070-nth-root-enclosure-private-trig-wide-replay",
+      "baseline_phase": "typed-api-prototype-v1829-domain-predicate-private-trig-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_private_trig_wide.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2070-nth-root-enclosure-private-trig-wide-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
+      ],
+      "runner_sha256": "491e7ca414d01796c86e745fe9df81fe8fccd75caf79736f23168449a6bee2f0",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "471a955e4ae073bf5d47f1ee6ad3e083dc04f474c35dd1e0385ddc3b89c2053d"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2071-nth-root-enclosure-trig-scale-replay",
+      "baseline_phase": "typed-api-prototype-v1830-domain-predicate-trig-scale-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_scales.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2071-nth-root-enclosure-trig-scale-replay"
+      ],
+      "runner_sha256": "adc962f16ed927ed6e382836fc01d02f87092f29f71ecc6f48727866729fe70d",
+      "expected_cases": 168,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "3e9c2fa21dbb9a4b1c4840dee03aa168b2f19009c60528bbc6d71ab112725931"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2072-nth-root-enclosure-trig-residual-replay",
+      "baseline_phase": "typed-api-prototype-v1831-domain-predicate-trig-residual-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_residuals.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2072-nth-root-enclosure-trig-residual-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
+      ],
+      "runner_sha256": "537915f6d67a04620d8616e2d010fa5197a6d575d6c37bc085b0c4ffbb322c58",
+      "expected_cases": 456,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "ff314e0337338b6599647d484c11341977c5a303f90b363e144a159bc9547753"
+      }
+    },
+    {
+      "phase": "typed-api-prototype-v2073-nth-root-enclosure-trig-nonrational-replay",
+      "baseline_phase": "typed-api-prototype-v1832-domain-predicate-trig-nonrational-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_symbolic_trig_nonrational.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2073-nth-root-enclosure-trig-nonrational-replay",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
+      ],
+      "runner_sha256": "9b0884722c5ad52b303f9832409a7cfedb90a49abb5d3399654760b051ba80f2",
+      "expected_cases": 384,
+      "baseline_rust_inputs_sha256": {
+        "probe.rs": "a83ae3dd69db7aebf94fc9041f3d3e000aa15dee460c478659deedb9d83aff25"
+      }
+    }
+  ],
+  "public_replays": [
+    {
+      "phase": "typed-api-prototype-v2074-nth-root-enclosure-public-proof-reuse",
+      "baseline_phase": "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+      "protocol": "nth-root-enclosure-public-proof-reuse-protocol-v2074.json",
+      "protocol_sha256": "bb567758fec61fc7597aea790207e01cbc80093781e0e813576b90854505d3af",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_nth_root_public_reuse.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2074-nth-root-enclosure-public-proof-reuse",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "nth-root-enclosure-public-proof-reuse-protocol-v2074.json"
+      ],
+      "expected_cases": 126,
+      "runner": "reproduce_nth_root_public_reuse.py",
+      "runner_sha256": "f5722235aa037730563a5127f08ff07aa143df1839aa8edfd2d774670d666e8e",
+      "predecessor_runner": "reproduce_public_proof_reuse_v2.py",
+      "predecessor_runner_sha256": "abad82e39559c81394227ae9a9e4b6c044cf23c1fee6b303ada9f2ce2547b681",
+      "runner_change": {
+        "before": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json",
+        "after": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
+      },
+      "probe_sha256": "054dccf922561bcf8586aa08501af3c2b17915c6a4769930d6cab6259dcbd013"
+    },
+    {
+      "phase": "typed-api-prototype-v2075-nth-root-enclosure-composed-proof-reuse",
+      "baseline_phase": "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse",
+      "protocol": "nth-root-enclosure-composed-proof-reuse-protocol-v2075.json",
+      "protocol_sha256": "ce61f9be7f486860abeb204a3c19dc677eb6730fc235a2999164f86afe2c181a",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_nth_root_composed_reuse.py",
+        "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+        "typed-api-prototype-v2075-nth-root-enclosure-composed-proof-reuse",
+        "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+        "nth-root-enclosure-composed-proof-reuse-protocol-v2075.json"
+      ],
+      "expected_cases": 522,
+      "runner": "reproduce_nth_root_composed_reuse.py",
+      "runner_sha256": "43693a2a309148b2d1b581d70665fb9a247cd8b821873020125c2418e2cb8638",
+      "predecessor_runner": "reproduce_composed_proof_reuse_v2.py",
+      "predecessor_runner_sha256": "ba913ff90d3542032362c8a90e562c0c11344d9fa038bcc8e1898ecc8665f0e1",
+      "runner_change": {
+        "before": "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json",
+        "after": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
+      },
+      "probe_sha256": "edf0f540ce527da0bec073776e379041d5eff9dc7173f51f4dccb2117e2dd5e2"
+    }
+  ],
+  "requirements": [
+    "Preserve all 39 capped test commands, 4129 numerical cases and 648 public reuse schedules; no runtime test body, probe or oracle is changed.",
+    "Keep the original process limits and full-size inputs. Validate each terminal result and hash; preserve failures under their original phase names.",
+    "Compare all deterministic non-timing observations with the retained runtime. Public thread schedules may change Unknown/Exhausted counts; require each observed sample/fact to satisfy its oracle and every published fact to persist.",
+    "Check all successful numerical enclosures, typed errors, work accounting and serialized bytes. Public constructors and structural inspections remain outside query allowances.",
+    "No builds, source edits or other validation/measurement workloads overlap a capped phase. Main admission and whole-crate proof remain separate gates."
+  ],
+  "runner_forks": {
+    "reproduce_nth_root_public_reuse.py": {
+      "predecessor": "reproduce_public_proof_reuse_v2.py",
+      "predecessor_sha256": "abad82e39559c81394227ae9a9e4b6c044cf23c1fee6b303ada9f2ce2547b681",
+      "fork_sha256": "f5722235aa037730563a5127f08ff07aa143df1839aa8edfd2d774670d666e8e",
+      "literal_replacements": {
+        "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
+      }
+    },
+    "reproduce_nth_root_composed_reuse.py": {
+      "predecessor": "reproduce_composed_proof_reuse_v2.py",
+      "predecessor_sha256": "ba913ff90d3542032362c8a90e562c0c11344d9fa038bcc8e1898ecc8665f0e1",
+      "fork_sha256": "43693a2a309148b2d1b581d70665fb9a247cd8b821873020125c2418e2cb8638",
+      "literal_replacements": {
+        "typed-api-prototype-v1773-domain-predicate-atan-cost/summary.json": "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
+      }
+    },
+    "run_nth_root_replays.py": {
+      "predecessor": "run_domain_predicate_replays.py",
+      "predecessor_sha256": "cffc7956dfacf0261864877ecaab50c0c6c7415e70bafb9ba85780a41938243e",
+      "fork_sha256": "03fe89ce6a25333eab85868b6178de1fb04b70e3a7f9e94446d6e6f90a80b22a",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "nth-root-enclosure-replay-protocol-v2022.json",
+        "domain-predicate-replay-validation-v1834.json": "nth-root-enclosure-replay-validation-v2075.json",
+        "domain-predicate-candidate-validation-v1772.json": "nth-root-enclosure-candidate-validation-v2013.json",
+        "domain-predicate-cost-orchestration-v1779.json": "nth-root-enclosure-cost-orchestration-v2020.json",
+        "    assert costs[\"completed\"] and costs[\"source_record_sha256\"] == expected\n": "    assert costs[\"completed\"] and costs[\"source_record_sha256\"] == expected\n    cost_review = read(E / \"nth-root-enclosure-cost-review-v2021.json\")\n    controller = read(E / \"nth-root-enclosure-cost-validation-v2021.json\")\n    assert controller[\"complete\"] and cost_review[\"local_timing_and_process_gates_passed\"]\n    assert cost_review[\"source_record_sha256\"] == controller[\"source_record_sha256\"] == expected\n"
+      }
+    },
+    "compare_nth_root_queries.py": {
+      "predecessor": "compare_domain_predicate_queries.py",
+      "predecessor_sha256": "fe186dbfc245047e6dfe3a6dd2c7150c0a1242eb1255a6813c6707565fe42376",
+      "fork_sha256": "f6d2643721dd9b24471c6dad27af79f063c5312c49eb7a5c32fc4317ddc580e2",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "nth-root-enclosure-replay-protocol-v2022.json",
+        "domain-predicate-domain-query-comparison-v1819.json": "nth-root-enclosure-domain-query-comparison-v2060.json"
+      }
+    },
+    "compare_nth_root_replays.py": {
+      "predecessor": "compare_domain_predicate_replays.py",
+      "predecessor_sha256": "a45c78a2682ee0b4103178006a8876d9d5386d986177592f9713a8e7e6433c45",
+      "fork_sha256": "7596b5a467d348294e102dc27d9b737b17c93c910896d09cc369ca3cbaad3024",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "nth-root-enclosure-replay-protocol-v2022.json",
+        "domain-predicate-replay-validation-v1834.json": "nth-root-enclosure-replay-validation-v2075.json",
+        "domain-predicate-deterministic-replay-comparison-v1835.json": "nth-root-enclosure-deterministic-replay-comparison-v2076.json",
+        "typed-api-prototype-v1755-public-proof-reuse": "typed-api-prototype-v1833-domain-predicate-public-proof-reuse",
+        "typed-api-prototype-v1757-composed-proof-reuse": "typed-api-prototype-v1834-domain-predicate-composed-proof-reuse"
+      }
+    },
+    "audit_nth_root_fact_retention.py": {
+      "predecessor": "audit_domain_predicate_fact_retention.py",
+      "predecessor_sha256": "ac1f80338a982d9153b384b325acd0d8cf80a6f8f26fff72de0c5522cddffc96",
+      "fork_sha256": "e213c52acac2355e1d8c4b79631c84de09b777ec46130e50ce861e378456acdb",
+      "literal_replacements": {
+        "domain-predicate-replay-protocol-v1781.json": "nth-root-enclosure-replay-protocol-v2022.json",
+        "domain-predicate-replay-validation-v1834.json": "nth-root-enclosure-replay-validation-v2075.json",
+        "domain-predicate-public-fact-audit-v1835.json": "nth-root-enclosure-public-fact-audit-v2076.json"
+      }
+    }
+  },
+  "protocol_predecessor": "domain-predicate-replay-protocol-v1781.json",
+  "protocol_predecessor_sha256": "0ff1a0910336a1bfe0d2b9cd35c73aad15c960af32f4679623adc52aa4b47bdf",
+  "audit_scope": "Candidate identities change, and replay startup additionally requires the final cost audit and controller to pass. The public/composed fact-retention audit loops, numerical oracles, work comparisons and full-size cases are unchanged."
+}

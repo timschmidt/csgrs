@@ -1,0 +1,10 @@
+{
+  "predecessor": "record_cache_state_merge_broad_milestone.py",
+  "predecessor_sha256": "540ca596fa09bb66c0bda6d009e656c175e42e56b8a63d4043dd288a22d6b646",
+  "recorder": "record_nth_root_enclosure_broad_milestone.py",
+  "recorder_sha256": "68575a68fac902a0f56caefcb4ed0b135b49532b9665013038c88f450d9ae415",
+  "patch": "record_nth_root_enclosure_broad_milestone-v2013.patch",
+  "patch_sha256": "724c5ebc553323579dda5c914d520ef9a7f60af07db08e26f8b15bf0f95ba680",
+  "preparer_sha256": "300a27ecbaa4a00a0f67e15062a256f1156ca675413abb43b1f7fc1bce587a94",
+  "scope": "Require all nine broad commands and their receipt audit, account for two new tests, and distinguish refreshed conditional verification from reused mutation guards and the unverified bigint kernel. Preserve every property/target status and leave cost/replay retention pending."
+}
