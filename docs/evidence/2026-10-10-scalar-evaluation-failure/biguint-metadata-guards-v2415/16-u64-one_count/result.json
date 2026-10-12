@@ -1,0 +1,21 @@
+{
+  "index": 16,
+  "name": "u64-one_count",
+  "exit_code": 1,
+  "seconds": 5.46801544399932,
+  "input_files_sha256": {
+    "metadata_u64.rs": "f69420c8da961b0d99702bb1fc5f9c2e6ff38c16ed938e2471af830008035f8b",
+    "probe.rs": "5bd93e2cba0b1c8d4cbfe40236c74187f5bb423f3858f511e89fcc9e4d8e11da"
+  },
+  "stdout_sha256": "57deab752f00fa9bf1ecec87e10cf9fbfadbe51c89e9e1e1460a6d0276f41721",
+  "stderr_sha256": "d8c76309a05e4c013fc3d9f8e133e46ec2ebe66e6bed25ca6b5f35c0bba25042",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

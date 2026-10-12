@@ -1,0 +1,22 @@
+{
+  "protocol_sha256": "b422381b2708cfef7af9baf81b57d6bfdc518e9bc9e4f638ede7f22e17971671",
+  "runs": [
+    {
+      "name": "harness",
+      "command": [
+        "cargo",
+        "metadata",
+        "--offline",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2409/Cargo.toml"
+      ],
+      "exit_code": 101,
+      "seconds": 0.01837175991386175,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ba9d6fbbcb0029970d64ecc86f13ecff13141aaca267a61315e28f190dd85083"
+    }
+  ],
+  "complete": false
+}

@@ -1,0 +1,21 @@
+{
+  "index": 4,
+  "name": "u32-trim_zero_suffix",
+  "exit_code": 1,
+  "seconds": 5.845899407286197,
+  "input_files_sha256": {
+    "metadata_u32.rs": "335f9df84ec0833d6f45aa01561b89a8a564733b59b69db31cd866c5f8f6a11c",
+    "probe.rs": "a325807f4e3b8f03527d7e18c003b14cd1870a9b6fce700d61338bb47d902be3"
+  },
+  "stdout_sha256": "d5f09632aec82d109f9996ab9f144e8b880d5ebc23ab692adad22017fe045459",
+  "stderr_sha256": "4dc3b0498a6df80cbf02252c7500d79d041988a1741d103b2f88098317a861f7",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

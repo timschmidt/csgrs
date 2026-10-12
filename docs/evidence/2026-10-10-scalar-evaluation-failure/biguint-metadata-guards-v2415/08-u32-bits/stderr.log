@@ -1,0 +1,11 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/08-u32-bits/metadata_impl.rs:32:17
+   |
+32 |         ensures self.metadata_value() == 0 <==> result == 0,
+   |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+42 |         0
+   |         - at the end of the function body
+
+error: aborting due to 1 previous error
+

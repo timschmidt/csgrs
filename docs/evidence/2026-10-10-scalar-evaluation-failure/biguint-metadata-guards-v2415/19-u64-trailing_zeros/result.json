@@ -1,0 +1,21 @@
+{
+  "index": 19,
+  "name": "u64-trailing_zeros",
+  "exit_code": 1,
+  "seconds": 5.746542340610176,
+  "input_files_sha256": {
+    "metadata_impl.rs": "fd8ed61cafbec052207ff6bf3b1b26c227de7b0d380deca2816c11a59ffa0a1d",
+    "probe.rs": "9fbe40af47093bbe15c3a458dc8ab8be3d65f981daa455ab0c10abc2124f149a"
+  },
+  "stdout_sha256": "8121d36c169caba7be715e2b928f0f9ec5c538b22ad7db70fec9b78aaa999d57",
+  "stderr_sha256": "ffb2db35e9c760cc8e2ccd0953e6cc23658bbb917c290f9a37b739ee25585a16",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

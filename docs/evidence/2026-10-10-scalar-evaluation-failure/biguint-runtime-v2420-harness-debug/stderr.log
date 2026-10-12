@@ -1,0 +1,5 @@
+   Compiling num-bigint v0.4.6
+   Compiling num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/vendor/num-bigint)
+   Compiling biguint-metadata-runtime-preview v0.0.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.05s
+     Running `/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/biguint-metadata-runtime-preview`

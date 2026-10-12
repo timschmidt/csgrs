@@ -1,0 +1,17 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2408/20-u64-trailing_ones/metadata_impl.rs:73:17
+   |
+73 |           ensures {
+   |  _________________^
+74 | |             let unit = pow2(result as nat);
+75 | |             let quotient = (self.metadata_value() + 1) / unit;
+76 | |             quotient > 0 && quotient % 2 == 1 && self.metadata_value() + 1 == quotient * unit
+77 | |                 && result <= self.metadata_storage_bits()
+78 | |         },
+   | |_________^ failed this postcondition
+...
+86 |           0
+   |           - at the end of the function body
+
+error: aborting due to 1 previous error
+

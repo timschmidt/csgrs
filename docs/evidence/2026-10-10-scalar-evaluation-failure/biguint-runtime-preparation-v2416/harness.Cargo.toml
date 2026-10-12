@@ -1,0 +1,16 @@
+[package]
+name = "biguint-metadata-runtime-preview"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[workspace]
+resolver = "2"
+exclude = ["vendor/num-bigint"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)'] }
+
+[dependencies]
+patched = { package = "num-bigint", path = "vendor/num-bigint" }
+upstream = { package = "num-bigint", version = "=0.4.6" }

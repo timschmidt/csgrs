@@ -1,0 +1,2670 @@
+{
+  "func-details": {
+    "probe::word_scan_model::digit_scan_count_fits_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::first_nonzero_digit_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%18::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%14::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::trailing_zeros_factor_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%76::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::checked_shift_left_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i128_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_scaled": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%28::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%69::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_numerator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::shift_left_u128_is_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::extend_prefix_less": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%23::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::product_fraction_transitive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fixed_gcd::result_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::checked_exponent_denotes_scaled_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u64_trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%58::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::first_nonmaximal_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::float::FloatParts::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u32_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%19::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::matrix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_power_two_factors_ordered": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::fill_small_gcd_table": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::in_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::normalized_words": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%64::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%64::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%21::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::array::impl&%20::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::normalized_limb_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::normalize_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::trailing_zeros_factor_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u64_trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::one_scan_determines_all_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::subrange": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::vec::axiom_vec_has_resolved": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i64_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%24::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::slice::impl&%0::len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::bezout_witness": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_decreases_to_seq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::gcd_bezout": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%13::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::add_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::SMALL_GCD_TABLE": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%68::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_basic_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%193::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%21::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::cancelled_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_low_bits_mask_is_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::binary_shift_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::ZeroablePrimitiveSpec::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::u32_digit_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::first_nonzero_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%36::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::reduce_gcd_to_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd_characterization": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%79::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%17::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u32_shr_is_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shift_prefix_carry": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::compare": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_digit_bounds_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_is_value_below_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::mutually_coprime_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::vec::spec_vec_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%16::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%69::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%13::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::last_nonzero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%3::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%17::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_add_mod_noop": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::native_product_fits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::scale_bounds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%68::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_multiples_basic": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::aligned_digit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%9::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%14::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix_full": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::factors_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::shifted_extent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_bit_length_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%20::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::last_nonzero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_digit_bounds_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::OrdSpec::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%25::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%47::branch": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_nonincreasing": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%9::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::normalized_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::spec_array_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::coprime_quotients": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::unit_is_coprime": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::Magnitude::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::FromSpec::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_len_matches_n": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%16::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::compare_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_spec_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::one_shift_is_power_of_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_power_two_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::normalized_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_spec_slice_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::bit_lengths_determine_order": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%10::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%16::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%10::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::bit_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::axiom_nonzero_is_not_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_normalized_bit_length_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::abs_divisibility": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::slice::impl&%0::is_empty": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::PartialOrd::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::product::multiply": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::OptionAdditionalFns::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::normalize": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::zero_scan_determines_power_of_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%42::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::weight": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%74::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_two_subranges_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::small_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_spec_array_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::cancel_preserves_product_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_suffix_truncation_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%66::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%32::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%26::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%61::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::add_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_digits_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::weight_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%5::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%42::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%65::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shift_right": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_pos": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_one_scan_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::float::decode_f32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::add_wide_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%80::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::extend_prefix_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_mul_pow2_le_max_iff_max_shr": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_same": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::canonical_is_reduced": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::trailing_ones_determine_all_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%7::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::vec::axiom_spec_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::aligned_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::product::prefix_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::word_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_scan_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_unfold": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%29::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%40::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%73::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::rust_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%75::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%196::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::sum_products_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::trim_zero_suffix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::product::multiply_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%8::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::first_nonmaximal_digit_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%14::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%10::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::aligned_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::word_alignment_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::cross_cancelled_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "alloc::vec::impl&%1::as_slice": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_suffix_truncation_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::binary_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::linear_combination_divisible": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::word_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::bit_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%52::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::low_bits_mask": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::PartialOrdSpec::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_one_scan_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::aligned_bit_length_bounds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_one_scan_none_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%20::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::spec_slice_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%15::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::finish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::high_quotient_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::view_reverse_for_eq_sized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::left_shifted_limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::leading_zeros_determine_word_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%17::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_different": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%4::checked_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd_swap_increasing": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_of0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_self_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%14::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%19::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%18::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::u64_digit_value_matches_production": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fixed_gcd::gcd_fixed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%68::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::coprime_divides_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::word_left_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::unimodular_preserves_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%2::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%77::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::View::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::spec_array_fill_for_copy_type": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::alignment_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%29::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u64_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::sum_products": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_scan_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::zero_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::quotient_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%67::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%10::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::OrdSpec::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::trailing_zeros_determine_power_of_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::new": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_less": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::view_reverse_for_eq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::factors_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::trimmed_zero_suffix_preserves_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_scales_compose": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::lemma_array_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%114::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::lemma_pow0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::opposite_coefficient_growth": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::odd_divisor_cancels_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%11::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_one_scan_none_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::cancel_preserves_processed_coprimality": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::float::decode_f64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::exponent": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::spec_slice_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::reduce": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::native_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::signed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::plan": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::first_different": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::matrix_view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::determinant": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%60::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_split": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::left_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%46::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%6::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_multiples_vanish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::first_nonzero_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%12::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%6::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::subtotal_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::checked_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%8::leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_odd_double": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::build_small_gcd_table": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i128_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "verus_builtin::impl&%7::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::one_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::common_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%16::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::lemma_slice_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::spec_unwrap": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::cancel_power_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%7::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::power_of_two_has_unit_odd_part": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_array_has_resolved": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::float::decodes": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::to_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::WIDTH": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::word_difference": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u32_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::wrapping::u64_specs::wrapping_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::normalized_zero_iff_empty": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_small_mod": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::ptrs_mut_eq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::ptrs_mut_eq_sized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_ext_equal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::max": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::strictly_cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%63::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_value_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%0::arrow_0": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%27::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::approximation_scale_plan": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd_preserves_common_divisors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%67::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::common_shift_preserves_gcd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::valid_matrix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%22::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::trim_zero_suffix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::From::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_none": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%76::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u32_trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%9::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::add_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%4::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::spec_slice_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%34::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%4::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::highest_nonzero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma2_to64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::coefficient_magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mul_mod_noop_right": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::aligned_support": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_ext_equal_deep": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::vec::axiom_vec_decreases_to_view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%11::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%8::trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::Product::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%19::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%72::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%22::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::trailing_ones_factor_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%23::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::subtract": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u128_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::axiom_spec_array_fill_for_copy_type": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::below_aligned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::trailing_zeros_u128_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_subtract": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%6::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%6::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%77::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%66::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::first_nonmaximal_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_denominator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::mem::swap": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::first_different": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::Word::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%62::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%4::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::signed_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::separated_binary_scales": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%16::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_symmetric": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::trailing_zeros_factor_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%66::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%192::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "alloc::vec::impl&%1::truncate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::is_some": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_adds": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::word_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::array_fill_for_copy_types": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%71::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::lemma_pow2_strictly_increases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::signed": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%10::checked_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%81::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u64_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::common_divisors_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::left_shifted_digit_correct": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%1::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::pow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i64_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_has_resolved": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_digits_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_value_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::batch_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::rescale_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::row_growth": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::wrapping::u64_specs::wrapping_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::aligned_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::wrapping_sub": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::resize": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%13::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%26::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_scan_none_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::BigUint::bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::two_limbs_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%60::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u32_mul_pow2_le_max_iff_max_shr": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%2::partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%6::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%70::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%94::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::WIDTH": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mul_mod_noop": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%10::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%10::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::full_digit_scan_determines_all_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%65::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "alloc::boxed::impl&%15::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%0::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_weight_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::factors_fit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::factors_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::len%returns_clause_autospec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%78::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_update_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::left_shift_prefix_carry": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%8::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%92::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%10::checked_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::one_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::i32_specs_tmp::impl&%2::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::pow2": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::upper_digits_preserve_odd_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::word_left_shift_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u64_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::floor_half": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::wrapping_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::Div::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%50::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binade_is_unique": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%2::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%5::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%28::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::option::impl&%48::from_residual": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::impl&%2::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_reduction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%2::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::is_binary_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_by_self": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%20::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::divide_trailing_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%38::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_weight_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::step_counter_bound": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::first_nonzero_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::linear_combination_divisible": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_positive": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::subtotals_denote_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%16::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%64::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::magnitude_row": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::product::multiply_accumulate": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_twice": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::has_odd_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::checked_factors_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::convert::num::impl&%81::from": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::trailing_ones_factor_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u32_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::lemma_array_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::nonzero_spec_get": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%8::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::trailing_zeros_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_shl_is_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::coefficient_fits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_fundamental_div_mod_converse_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%11::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::division::gcd_remainder": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%18::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::difference_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%26::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::normalized_digits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::option::impl&%3::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::product::split_u128": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::canonical_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_weight": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%117::obeys_div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::BigUint::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%60::partial_cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%59::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::word_bit_length_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::bit_lengths_determine_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%15::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::usize_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::PartialOrd::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u32_trailing_ones": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%11::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_denominator": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::binary_scale_preserves_binade": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::prefix_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::coprime_product": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%18::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::FromSpec::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::word_scale": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::weight_add": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::subtract_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shifted_digit_correct": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::u64_trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u128_shr_is_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::finish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::u64_digit_prefix_matches_production": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::add_shifted": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::difference": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%48::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%11::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%12::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u8_specs_tmp::impl&%2::obeys_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_mod_sub_multiples_vanish": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u32_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::Seq::len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%28::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shift_left": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_index_decreases": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%16::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::SliceAdditionalSpecFns::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::PartialOrdSpec::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::normalized_digit_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%7::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%5::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%30::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%20::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::shifted_limb": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%24::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::impl&%3::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%11::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%8::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::dyadic::reduction_preserves_fraction": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::math::abs": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::pervasive::cloned": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::subtotal": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%28::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_odd_power_two": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::impls::impl&%10::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::cmp::impl&%17::cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::addition_update": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%10::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::ops::arith::impl&%203::div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::row_coefficients": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::signed_sum": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_new_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_new_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%130::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%4::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::limbs::radix": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::div_mod::lemma_div_basics": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%79::cmp": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_shr_is_div": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::bits::axiom_u32_leading_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%1::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%13::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u64_pow2_no_overflow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_spec_slice_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%27::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::word_width": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::divisor_of_odd_is_odd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u64::metadata::zero_count": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%9::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%24::from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_normalized_bit_length_u32": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%58::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::convert::impl&%25::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::all_full_digits_factor": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::impls::impl&%76::lt": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::array::ArrayAdditionalSpecFns::spec_index": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::num::impl&%9::trailing_zeros": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%18::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::cmp::Ord::min": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::seq::lemma_seq_subrange_len": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::digit_scan_model::digit_prefix_split": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::magnitude_model::has_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::factors_update_quotient": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::slice::axiom_slice_decreases_to_seq": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%14::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "core::clone::Clone::clone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::word_scan_model::typed_zero_scan_none_u64": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::limb_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::aggregate::magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::biguint_u32::metadata::word_width": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::accumulate::weight_monotone": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%3::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::impl&%113::div_req": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::fraction::coprime_factors": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::ops::DivSpec::div_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::bit_length_model::odd_factor_of_power_is_unit": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_power_of_two_word": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::gcd::gcd_small_wide": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::upper_bit_length_msd": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::bits::lemma_u32_shl_is_mul": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::num::u64_specs_tmp::impl&%1::obeys_partial_cmp_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::determinant_step": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%16::obeys_from_spec": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::lehmer::alternating": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::view::impl&%22::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "probe::verified::word::checked_shift_left": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::raw_ptr::impl&%2::view": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::std_specs::nonzero::impl&%8::is_zero": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    }
+  },
+  "verification-results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 462,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  }
+}

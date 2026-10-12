@@ -1,0 +1,11 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/14-u64-trim_zero_suffix/metadata_u64.rs:79:13
+   |
+79 |     ensures word_value_u64(final(words)@) == word_value_u64(old(words)@),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+83 | pub(crate) fn trim_zero_suffix(words: &mut Vec<u64>) {
+   | ---------------------------------------------------- at the end of the function body
+
+error: aborting due to 1 previous error
+

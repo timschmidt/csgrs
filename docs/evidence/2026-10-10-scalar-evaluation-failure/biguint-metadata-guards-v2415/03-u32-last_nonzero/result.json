@@ -1,0 +1,21 @@
+{
+  "index": 3,
+  "name": "u32-last_nonzero",
+  "exit_code": 1,
+  "seconds": 5.846350914798677,
+  "input_files_sha256": {
+    "metadata_u32.rs": "a194de881e5dcf07badff32111e874041082ff7db16123529150a9c0fbc3c743",
+    "probe.rs": "5b30162c70eebd480bfe07cc732f86b23904b235570834eae11d6b56eb591974"
+  },
+  "stdout_sha256": "f1b15c65dde4942c5726a5bb309b39d603df9b9b5b33be10c90861c232c54d3e",
+  "stderr_sha256": "e85e751ce0bc612869b22c85ebae2427c208ed57865a2df3facadb17e9ef89e1",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

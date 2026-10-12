@@ -1,0 +1,17 @@
+{
+  "exit_code": 101,
+  "seconds": 3.0943234297446907,
+  "protocol_sha256": "12049f8a85cb046b3d8390bf2e939a0dd2af06560925bb8d7b464c3544490772",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "2d2f354872094fd6062149ffb63159e0298447c01878160ee0e73d440aaf0f45",
+  "kind": "vendor-clippy",
+  "test_summaries": [],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false
+}

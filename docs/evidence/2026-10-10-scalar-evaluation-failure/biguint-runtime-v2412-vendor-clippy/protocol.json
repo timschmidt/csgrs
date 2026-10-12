@@ -1,0 +1,30 @@
+{
+  "status": "Frozen before this ordinary-Rust preview validation",
+  "runner_sha256": "c6c61333cacf53bb7b384caabd2835cca39205fec558a87beefeab3a23ec4bee",
+  "preparation": "biguint-runtime-preparation-v2411",
+  "preparation_result_sha256": "9f444aca166cd5f12d94e118fe12a0b2df01e0b466f8098b5cd77e83f3ffe837",
+  "kind": "vendor-clippy",
+  "command": [
+    "cargo",
+    "clippy",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2411/vendor/num-bigint/Cargo.toml",
+    "--lib",
+    "--",
+    "-D",
+    "warnings"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2411",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2411",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "scope": "Direct patched dependency validation and a deterministic bit-level/differential corpus. This does not run scalar fixed-baseline cost, memory or size qualification; it cannot admit a runtime change. Sources, resolved dependency inputs and prior preview evidence must remain byte-identical through the command."
+}

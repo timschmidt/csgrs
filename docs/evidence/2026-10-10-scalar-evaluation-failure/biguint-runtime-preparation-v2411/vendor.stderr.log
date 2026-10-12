@@ -1,0 +1,4 @@
+     Locking 3 packages to latest compatible versions
+      Adding quickcheck v1.0.3
+      Adding rand v0.8.7 (available: v0.10.3)
+      Adding rand_core v0.6.4

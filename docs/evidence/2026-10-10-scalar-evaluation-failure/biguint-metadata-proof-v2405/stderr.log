@@ -1,0 +1,44 @@
+error: cannot read const with mode exec
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u32.rs:88:14
+   |
+88 |     requires WIDTH * words.len() <= u64::MAX,
+   |              ^^^^^
+
+error: cannot read const with mode exec
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u32.rs:114:14
+    |
+114 |     requires WIDTH * words.len() <= u64::MAX,
+    |              ^^^^^
+
+error: cannot read const with mode exec
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u32.rs:137:38
+    |
+137 |     requires normalized_u32(words@), WIDTH * words.len() <= u64::MAX,
+    |                                      ^^^^^
+
+error: cannot read const with mode exec
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u64.rs:88:14
+   |
+88 |     requires WIDTH * words.len() <= u64::MAX,
+   |              ^^^^^
+
+error: cannot read const with mode exec
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u64.rs:114:14
+    |
+114 |     requires WIDTH * words.len() <= u64::MAX,
+    |              ^^^^^
+
+error: cannot read const with mode exec
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_u64.rs:137:38
+    |
+137 |     requires normalized_u64(words@), WIDTH * words.len() <= u64::MAX,
+    |                                      ^^^^^
+
+error: cannot read const with mode exec
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2404/vendor/num-bigint/src/biguint/metadata_impl.rs:22:9
+   |
+22 |         metadata::WIDTH as nat * self.data@.len()
+   |         ^^^^^^^^^^^^^^^
+
+error: aborting due to 7 previous errors
+

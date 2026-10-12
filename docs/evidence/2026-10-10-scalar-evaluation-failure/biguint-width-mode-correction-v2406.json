@@ -1,0 +1,13 @@
+{
+  "status": "Forked before rerunning preparation or proof; failed v2405 retained",
+  "repair_runner_sha256": "132e2d19798c810bafbe9a69b6ab78abd6aa5e043a55a87d7dd443fb0a7565ae",
+  "parent_preparation_sha256": "3905667f1e35685def6e1ff60d223b2887757b8563ba707c0d31c894e8e6077b",
+  "failed_result_sha256": "987537093301245305db7fa8d3677ee54e4615fcff0b2a5595c009060554e813",
+  "failed_stderr_sha256": "4263998ee0c42ae740449d3a91a089b969e5c467020bf80f29c2a712be39011f",
+  "preparation_sha256": "91691f20d93ca5c6207f64c5b632b3c1f7bb35ac63b533b3a6402eb1ef0f75f7",
+  "parent_proof_runner_sha256": "58110ad9c6d970e600f910697765f475c70bdecb185a5790a640e65275bd3e32",
+  "proof_runner_sha256": "b7a948696280bf4241eb033c6efc3c58564803020114cba84de661c29cc89e42",
+  "change": "The pinned verifier distinguishes executable constants from specification expressions. Add one ghost literal width per native helper and prove the existing executable constant equals it. Contracts use the ghost width; executable constant values and operation bodies are unchanged. This equality is verified, not assumed.",
+  "source_changed": false,
+  "retained_coverage_changed": false
+}

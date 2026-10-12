@@ -1,0 +1,21 @@
+{
+  "index": 12,
+  "name": "u64-first_different",
+  "exit_code": 1,
+  "seconds": 5.721229087095708,
+  "input_files_sha256": {
+    "metadata_u64.rs": "81d8849ec9dd729e96bcc7d08e209716244e625a49a580ab029b36dcd440707a",
+    "probe.rs": "905c35f2e7b9e52abd27e31ec7a5fe6a0968e3cc7f285df21d680355e63ce592"
+  },
+  "stdout_sha256": "eb1629c2a4691ba5c95af8c2378d3e99bb88f95b3678d29d0d5c3465dfe071f1",
+  "stderr_sha256": "8d34521b80aa1099124d61a4af79df7e4e67b5ce02bfd14a215010e1024806d9",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

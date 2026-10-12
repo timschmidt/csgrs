@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before this ordinary-Rust preview validation",
+  "runner_sha256": "909041b89bf0e4f1c1023a4d3e0b38ceabdc10f0fc874552916715986c16a55a",
+  "preparation": "biguint-runtime-preparation-v2416",
+  "preparation_result_sha256": "9e9ef22939364e833ff655fa4aa4e481353704b4c62c3bba507c0846668277d4",
+  "kind": "harness-release",
+  "command": [
+    "cargo",
+    "run",
+    "--offline",
+    "--locked",
+    "--manifest-path",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/Cargo.toml",
+    "--release"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "scope": "Direct patched dependency validation and a deterministic bit-level/differential corpus. This does not run scalar fixed-baseline cost, memory or size qualification; it cannot admit a runtime change. Sources, resolved dependency inputs and prior preview evidence must remain byte-identical through the command."
+}

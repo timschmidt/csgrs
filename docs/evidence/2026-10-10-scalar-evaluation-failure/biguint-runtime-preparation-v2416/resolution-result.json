@@ -1,0 +1,38 @@
+{
+  "protocol_sha256": "69d98d331b10efaabb2833f6c914fe47c1c142cd4b27606de62fdd3e7fc83b07",
+  "runs": [
+    {
+      "name": "harness",
+      "command": [
+        "cargo",
+        "metadata",
+        "--offline",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.06176763400435448,
+      "stdout_sha256": "5d1110331d54731b6431e1a335b46758abbcdc8953706726390eebe94dddb154",
+      "stderr_sha256": "e615d468547fe4b70c66b2a5c32614780ff42ae86334bc7c5e15a1f8a27355dc"
+    },
+    {
+      "name": "vendor",
+      "command": [
+        "cargo",
+        "metadata",
+        "--offline",
+        "--format-version",
+        "1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/vendor/num-bigint/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07087944820523262,
+      "stdout_sha256": "763cb4a888a0710e540615a531540adb0a7df5847487678a77e535ad77e6b7e4",
+      "stderr_sha256": "defaeecce4f756f23d7e39a7b8f4c1a99f6f7a04c5bf7e34c119c10a0828d58a"
+    }
+  ],
+  "complete": true
+}

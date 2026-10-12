@@ -1,0 +1,18 @@
+{
+  "status": "Forked before rebuilding or verifying the amended preview; failed Clippy phase retained",
+  "repair_runner_sha256": "afdb9851f1c6c1059e502bca43a6ebfa869ab62b3cd8b966e1c354022d1bb1fe",
+  "parent_preparation_sha256": "91691f20d93ca5c6207f64c5b632b3c1f7bb35ac63b533b3a6402eb1ef0f75f7",
+  "failed_result_sha256": "98cc3a1d6c0adb2ba0f19a9226fbd12bb6e980496d77625ded740f4ef0b90dc6",
+  "failed_stderr_sha256": "2d2f354872094fd6062149ffb63159e0298447c01878160ee0e73d440aaf0f45",
+  "preparation_sha256": "b6f5326fe0d28ded72eda71a9392e350120457a02cc24592e4e9341002c4d955",
+  "parent_proof_runner_sha256": "b7a948696280bf4241eb033c6efc3c58564803020114cba84de661c29cc89e42",
+  "proof_runner_sha256": "0fca4a7a8193ab127e79ece4550aa0927ea1956a01727d0269e74ef55f4e90e1",
+  "changes": [
+    "Use the equivalent is_empty check in both shared bit-count helpers.",
+    "Narrowly permit the original intrinsic unsafe blocks on modern compilers; retain those blocks for older supported compiler signatures.",
+    "Use clear() for the two original multiplication scratch-vector truncate(0) calls; preserve capacity and all subsequent resize/normalization operations."
+  ],
+  "scope": "The original Clippy failure remains failed. New proof, controls and ordinary-Rust checks must run on this amendment. Additional upstream maintenance is disclosed and is not covered by the conditional metadata proof. No SOURCE change, fixed-baseline scalar admission or MSRV claim.",
+  "source_changed": false,
+  "runtime_admitted": false
+}

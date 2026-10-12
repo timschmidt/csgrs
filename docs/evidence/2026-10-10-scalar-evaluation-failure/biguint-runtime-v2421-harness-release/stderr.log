@@ -1,0 +1,8 @@
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6
+   Compiling num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/vendor/num-bigint)
+   Compiling biguint-metadata-runtime-preview v0.0.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416)
+    Finished `release` profile [optimized] target(s) in 2.31s
+     Running `/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/release/biguint-metadata-runtime-preview`

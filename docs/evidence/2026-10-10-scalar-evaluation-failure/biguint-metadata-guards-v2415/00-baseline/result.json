@@ -1,0 +1,20 @@
+{
+  "index": 0,
+  "name": "baseline",
+  "exit_code": 0,
+  "seconds": 5.911627929192036,
+  "input_files_sha256": {
+    "probe.rs": "e1663527f0b0af63375d64a39854d45ca0ef21d3e83f7bf0203bc96cc7a2fe6a"
+  },
+  "stdout_sha256": "0191fe2473c9d1d59309fb651277a2fe449d44248a3ad2b6a9dc81bbc5800453",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 462,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

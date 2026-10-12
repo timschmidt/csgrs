@@ -1,0 +1,10 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/11-u64-WIDTH/metadata_u64.rs:27:49
+   |
+27 | #[cfg_attr(verus_keep_ghost, verus_spec(ensures WIDTH == word_width(),))]
+   |                                                 ^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+28 | pub(crate) const WIDTH: u64 = 65;
+   |                               -- at the end of the function body
+
+error: aborting due to 1 previous error
+

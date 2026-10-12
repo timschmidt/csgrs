@@ -1,0 +1,63 @@
+{
+  "exit_code": 0,
+  "seconds": 4.070719814859331,
+  "protocol_sha256": "78efb323c61c517fcb0a4e5d48d7e29d8aac152d1bf04c3c3b194157d0c61dba",
+  "stdout_sha256": "afcd2b0d140e17dba560e63255edd368e120947615b67505dc4cd501a21dcd40",
+  "stderr_sha256": "9959343db19abe17429e6dfd3fd7f57b06447b841d87d03d13fb3ad7c457057a",
+  "kind": "vendor-tests",
+  "test_summaries": [
+    [
+      15,
+      0,
+      0
+    ],
+    [
+      54,
+      0,
+      0
+    ],
+    [
+      4,
+      0,
+      0
+    ],
+    [
+      5,
+      0,
+      0
+    ],
+    [
+      61,
+      0,
+      0
+    ],
+    [
+      6,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      0
+    ],
+    [
+      6,
+      0,
+      0
+    ],
+    [
+      12,
+      0,
+      0
+    ]
+  ],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false
+}

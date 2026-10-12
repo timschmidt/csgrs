@@ -1,0 +1,17 @@
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2408/16-u64-one_count/metadata_u64.rs:120:13
+    |
+120 |       ensures has_odd_factor(word_value_u64(words@) + 1, result as nat),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+125 | /     match first_different(words, u64::MAX) {
+126 | |         Some(index) => {
+127 | |             let count = words[index].trailing_ones();
+128 | |             proof! {
+...   |
+137 | |         },
+138 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 1 previous error
+

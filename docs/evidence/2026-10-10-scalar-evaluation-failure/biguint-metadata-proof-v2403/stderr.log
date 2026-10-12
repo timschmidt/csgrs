@@ -1,0 +1,72 @@
+error: cannot use function `proof::biguint_u32::metadata::WIDTH` which is ignored because it is either declared outside the verus! macro or it is marked as `external`.
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2402/vendor/num-bigint/src/biguint/metadata_u32.rs:87:14
+    |
+ 87 |     requires WIDTH * words.len() <= u64::MAX,
+    |              ^^^^^
+...
+ 90 |             && count < WIDTH * words.len(),
+    |                        -----
+...
+103 |             Some(index as u64 * WIDTH + u64::from(count))
+    |                                 -----
+...
+113 |     requires WIDTH * words.len() <= u64::MAX,
+    |              -----
+114 |     ensures has_odd_factor(word_value_u32(words@) + 1, result as nat),
+115 |         result <= WIDTH * words.len(),
+    |                   -----
+...
+126 |             index as u64 * WIDTH + u64::from(count)
+    |                            -----
+...
+130 |             words.len() as u64 * WIDTH
+    |                                  -----
+...
+136 |     requires normalized_u32(words@), WIDTH * words.len() <= u64::MAX,
+    |                                      -----
+...
+148 |         words.len() as u64 * WIDTH - u64::from(count)
+    |                              -----
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2402/vendor/num-bigint/src/biguint/metadata_impl.rs:22:9
+    |
+ 22 |         metadata::WIDTH as nat * self.data@.len()
+    |         ---------------
+
+error: cannot use function `proof::biguint_u64::metadata::WIDTH` which is ignored because it is either declared outside the verus! macro or it is marked as `external`.
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2402/vendor/num-bigint/src/biguint/metadata_u64.rs:87:14
+    |
+ 87 |     requires WIDTH * words.len() <= u64::MAX,
+    |              ^^^^^
+...
+ 90 |             && count < WIDTH * words.len(),
+    |                        -----
+...
+103 |             Some(index as u64 * WIDTH + u64::from(count))
+    |                                 -----
+...
+113 |     requires WIDTH * words.len() <= u64::MAX,
+    |              -----
+114 |     ensures has_odd_factor(word_value_u64(words@) + 1, result as nat),
+115 |         result <= WIDTH * words.len(),
+    |                   -----
+...
+126 |             index as u64 * WIDTH + u64::from(count)
+    |                            -----
+...
+130 |             words.len() as u64 * WIDTH
+    |                                  -----
+...
+136 |     requires normalized_u64(words@), WIDTH * words.len() <= u64::MAX,
+    |                                      -----
+...
+148 |         words.len() as u64 * WIDTH - u64::from(count)
+    |                              -----
+    |
+   ::: /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2402/vendor/num-bigint/src/biguint/metadata_impl.rs:22:9
+    |
+ 22 |         metadata::WIDTH as nat * self.data@.len()
+    |         ---------------
+
+error: aborting due to 2 previous errors
+

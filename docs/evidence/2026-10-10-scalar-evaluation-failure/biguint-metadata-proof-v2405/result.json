@@ -1,0 +1,19 @@
+{
+  "exit_code": 1,
+  "seconds": 3.8321747691370547,
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": true,
+    "success": false
+  },
+  "protocol_sha256": "c64d932e0da84fdc2b2c8ea3ca9b5dcd6c822eaa668cb1867329c3437c93338e",
+  "stdout_sha256": "f6de49ab48da1fb94275546d514453ace8da91ef693a9120c0dde038381ad5e9",
+  "stderr_sha256": "4263998ee0c42ae740449d3a91a089b969e5c467020bf80f29c2a712be39011f",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "new_executable_functions_attempted": 18,
+  "runtime_admitted": false
+}

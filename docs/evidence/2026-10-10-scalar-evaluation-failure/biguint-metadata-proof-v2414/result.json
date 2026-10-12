@@ -1,0 +1,22 @@
+{
+  "exit_code": 0,
+  "seconds": 9.004354408942163,
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 462,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "protocol_sha256": "a2791ab16b902174709502b0af9c79e649fa50739d4e0af6a2971ae70f5c09f2",
+  "stdout_sha256": "df42901b49b276c56fb7f677d387bb83b7c7ea1ddc3485bf323b84168da4787c",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "new_executable_functions_attempted": 18,
+  "runtime_admitted": false
+}

@@ -1,0 +1,13 @@
+   Compiling num-traits v0.2.19
+   Compiling num-integer v0.1.46
+   Compiling num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2416/vendor/num-bigint)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.10s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/num_bigint-805afeab5b77401e)
+     Running tests/bigint.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/bigint-8469bfb433d44cdd)
+     Running tests/bigint_bitwise.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/bigint_bitwise-7c1a9c860126e160)
+     Running tests/bigint_scalar.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/bigint_scalar-3b9811651a8687e5)
+     Running tests/biguint.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/biguint-10935b1ea99da479)
+     Running tests/biguint_scalar.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/biguint_scalar-b61a7bcfb1fa44e8)
+     Running tests/fuzzed.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/fuzzed-d00236467d8cf34c)
+     Running tests/modpow.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/modpow-4f5cd006757875cb)
+     Running tests/roots.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/deps/roots-5762b6f913e5094f)

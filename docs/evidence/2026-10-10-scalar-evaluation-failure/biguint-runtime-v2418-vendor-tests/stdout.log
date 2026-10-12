@@ -1,0 +1,210 @@
+
+running 15 tests
+test bigint::test_assign_from_slice ... ok
+test bigint::test_from_biguint ... ok
+test bigint::test_from_slice ... ok
+test biguint::convert::test_half_radix_bases ... ok
+test biguint::convert::test_radix_bases ... ok
+test biguint::iter::test_iter_u32_digits ... ok
+test biguint::iter::test_iter_u32_digits_be ... ok
+test biguint::iter::test_iter_u64_digits ... ok
+test biguint::iter::test_iter_u64_digits_be ... ok
+test biguint::multiplication::test_sub_sign ... ok
+test biguint::power::test_pow_biguint ... ok
+test biguint::test_from_slice ... ok
+test biguint::test_u128_u32_roundtrip ... ok
+test biguint::test_u32_u128 ... ok
+test biguint::power::test_plain_modpow ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 54 tests
+test test_abs_sub ... ok
+test test_bit ... ok
+test test_binary ... ok
+test test_checked_add ... ok
+test test_add ... ok
+test test_checked_sub ... ok
+test test_checked_div ... ok
+test test_checked_mul ... ok
+test test_cmp ... ok
+test test_convert_from_biguint ... ok
+test test_convert_f32 ... ok
+test test_convert_from_int ... ok
+test test_convert_from_uint ... ok
+test test_convert_i128 ... ok
+test test_convert_i64 ... ok
+test test_convert_f64 ... ok
+test test_convert_to_biguint ... ok
+test test_convert_u128 ... ok
+test test_convert_u64 ... ok
+test test_display ... ok
+test test_from_bytes_be ... ok
+test test_div_ceil ... ok
+test test_from_bytes_le ... ok
+test test_from_signed_bytes_be ... ok
+test test_from_signed_bytes_le ... ok
+test test_from_str_radix ... ok
+test test_hash ... ok
+test test_is_multiple_of ... ok
+test test_gcd ... ok
+test test_iter_product ... ok
+test test_iter_product_generic ... ok
+test test_iter_sum ... ok
+test test_iter_sum_generic ... ok
+test test_lower_hex ... ok
+test test_lcm ... ok
+test test_neg ... ok
+test test_negative_shr ... ok
+test test_next_multiple_of ... ok
+test test_div_mod_floor ... ok
+test test_octal ... ok
+test test_prev_multiple_of ... ok
+test test_set_bit ... ok
+test test_mul ... ok
+test test_to_bytes_be ... ok
+test test_to_bytes_le ... ok
+test test_to_signed_bytes_be ... ok
+test test_upper_hex ... ok
+test test_to_signed_bytes_le ... ok
+test test_sub ... ok
+test test_div_rem_euclid ... ok
+test test_div_rem ... ok
+test test_pow ... ok
+test test_signed_bytes_le_round_trip ... ok
+test test_signed_bytes_be_round_trip ... ok
+
+test result: ok. 54 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.16s
+
+
+running 4 tests
+test test_bitwise ... ok
+test test_not ... ok
+test test_not_i64 ... ok
+test test_bitwise_i64 ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 5 tests
+test test_scalar_div_rem_zero ... ok
+test test_scalar_add ... ok
+test test_scalar_mul ... ok
+test test_scalar_sub ... ok
+test test_scalar_div_rem ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 61 tests
+test test_add ... ok
+test test_bit ... ok
+test test_binary ... ok
+test test_bitand ... ok
+test test_bitor ... ok
+test test_bits ... ok
+test test_checked_add ... ok
+test test_bitxor ... ok
+test test_checked_div ... ok
+test test_all_str_radix ... ok
+test test_checked_mul ... ok
+test test_checked_sub ... ok
+test test_cmp ... ok
+test test_convert_f32 ... ok
+test test_convert_from_uint ... ok
+test test_convert_i128 ... ok
+test test_convert_i64 ... ok
+test test_convert_f64 ... ok
+test test_convert_to_bigint ... ok
+test test_convert_u128 ... ok
+test test_convert_u64 ... ok
+test test_count_ones ... ok
+test test_display ... ok
+test test_div_ceil ... ok
+test test_div_rem_big_multiple ... ok
+test test_factor ... ok
+test test_div_rem_euclid ... ok
+test test_from_bytes_be ... ok
+test test_from_bytes_le ... ok
+test test_gcd ... ok
+test test_from_str_radix ... ok
+test test_hash ... ok
+test test_is_even ... ok
+test test_iter_product ... ok
+test test_is_multiple_of ... ok
+test test_div_rem ... ok
+test test_iter_product_generic ... ok
+test test_iter_sum ... ok
+test test_iter_sum_generic ... ok
+test test_lcm ... ok
+test test_lower_hex ... ok
+test test_mul_overflow ... ok
+test test_next_multiple_of ... ok
+test test_mul ... ok
+test test_octal ... ok
+test test_prev_multiple_of ... ok
+test test_set_bit ... ok
+test test_shl ... ok
+test test_from_and_to_radix ... ok
+test test_shr ... ok
+test test_sub ... ok
+test test_sub_fail_on_underflow - should panic ... ok
+test test_to_bytes_be ... ok
+test test_to_bytes_le ... ok
+test test_trailing_ones ... ok
+test test_trailing_zeros ... ok
+test test_to_str_radix ... ok
+test test_upper_hex ... ok
+test test_pow ... ok
+test test_mul_overflow_2 ... ok
+test test_big_str ... ok
+
+test result: ok. 61 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.07s
+
+
+running 6 tests
+test test_scalar_div_rem_zero ... ok
+test test_scalar_add ... ok
+test test_scalar_rem_noncommutative ... ok
+test test_scalar_sub ... ok
+test test_scalar_mul ... ok
+test test_scalar_div_rem ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 2 tests
+test fuzzed_mul_1 ... ok
+test fuzzed_mul_2 ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 6 tests
+test biguint::test_modpow_single ... ok
+test bigint::test_modpow ... ok
+test biguint::test_modpow_small ... ok
+test biguint::test_modpow_big ... ok
+test bigint::test_modpow_big ... ok
+test bigint::test_modpow_small ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.59s
+
+
+running 12 tests
+test bigint::test_cbrt ... ok
+test bigint::test_nth_root ... ok
+test bigint::test_sqrt_x_neg - should panic ... ok
+test biguint::test_nth_root ... ok
+test biguint::test_nth_root_big ... ok
+test bigint::test_nth_root_x_neg_n_even - should panic ... ok
+test biguint::test_cbrt ... ok
+test biguint::test_nth_root_n_is_zero - should panic ... ok
+test biguint::test_sqrt ... ok
+test biguint::test_nth_root_googol ... ok
+test biguint::test_roots_rand1 ... ok
+test biguint::test_nth_root_twos ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+

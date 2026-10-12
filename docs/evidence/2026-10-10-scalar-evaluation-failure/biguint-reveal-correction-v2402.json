@@ -1,0 +1,13 @@
+{
+  "status": "Forked before rerunning preparation or proof; failed v2401 retained",
+  "repair_runner_sha256": "282e941ac22df2a73556b203a780f87c190149acf6f7e72f42fce416843d238b",
+  "parent_preparation_sha256": "3d18c36981c30f3a51f342ec0b589b77b2e7f118698dcbe1f49bdc3163a3be62",
+  "failed_result_sha256": "3e9c236ab7ea4a868f90714b1c57a9b1d652fa65eaec70d98e794ee35f69498e",
+  "failed_stderr_sha256": "06e694174f2c0cd4bc6c3b4382371e58d12ebd6662543b1c9c919164b1815c55",
+  "preparation_sha256": "656cb2a37cfa944995028ea129112c3a0e91ed0565fefd56ebe75a7334399975",
+  "parent_proof_runner_sha256": "2fa62f0c12523a755be7380f88b8fc35facc7e3fedda1820e0fb610b95bb8946",
+  "proof_runner_sha256": "991d1140b3621af4bb7a90b765bcf7632a847ec8fb6b3fd87e730312bb4e902e",
+  "change": "Only seven erased reveal targets change from Self to the explicit BigUint type required by the pinned macro; runtime bodies and proof requirements are unchanged.",
+  "source_changed": false,
+  "retained_coverage_changed": false
+}

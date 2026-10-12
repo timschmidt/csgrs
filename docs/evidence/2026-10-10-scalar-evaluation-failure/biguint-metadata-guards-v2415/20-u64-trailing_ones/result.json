@@ -1,0 +1,21 @@
+{
+  "index": 20,
+  "name": "u64-trailing_ones",
+  "exit_code": 1,
+  "seconds": 5.655223434325308,
+  "input_files_sha256": {
+    "metadata_impl.rs": "05d0161aad8be3a65203256939cfc8b94a3ae09c750ec55dc3d595cfd571fced",
+    "probe.rs": "5784d90575e34f0b3389524ebfea1e8511712713ecbd05a4d34979c52ceab499"
+  },
+  "stdout_sha256": "0db0389de25a7abc230fc3a8282ef5f2d467e1bf5231514f24cd288eebc5f9fa",
+  "stderr_sha256": "fc3be503b851dc62f0905081026667dad32e4181c31f42d5d0797605a01e45a9",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

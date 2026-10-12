@@ -1,0 +1,448 @@
+{
+  "status": "Shared-source BigUint preview verified, guarded and checked in ordinary Rust; not applied to SOURCE",
+  "runner_sha256": "479198c588c4dc13dccd7aec8d6f01dbd3cc00ac8f605763ec2a3dd9a351065b",
+  "retained_checkpoint": "typed-api-prototype-v2386-state.json",
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "retained_source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "previous_frontier_sha256": "2fbbaf6524f8f6c0c0f3a70f895f43deaec335a2e89814419127b0a5cbdfdf2d",
+  "source_files_verified": 24751,
+  "main_files_verified": 1167,
+  "candidate_sources_changed": false,
+  "main_sources_changed": false,
+  "main_runtime_admitted": false,
+  "retained_verified_units": 736,
+  "retained_production_contracts": 98,
+  "retained_model_theorems": 178,
+  "retained_negative_controls": 306,
+  "retained_positive_baselines": 7,
+  "whole_crate_obligation_groups_open": 13,
+  "new_retained_proof_units": 0,
+  "new_retained_model_theorems": 0,
+  "new_retained_production_contracts": 0,
+  "final_preview": "biguint-metadata-candidate-v2413",
+  "previews": {
+    "biguint-metadata-candidate-v2400": {
+      "protocol_sha256": "65d4a56e9bdf3c810afb2385702a0780819bc54771a465ad10b11c7eedf24d01",
+      "modified_upstream_files": [
+        "Cargo.toml",
+        "src/biguint.rs"
+      ],
+      "allocation_policy_unchanged": true,
+      "licenses_preserved": true,
+      "shared_source_files": [
+        "src/biguint/metadata_impl.rs",
+        "src/biguint/metadata_u32.rs",
+        "src/biguint/metadata_u64.rs",
+        "src/biguint/representation.rs"
+      ]
+    },
+    "biguint-metadata-candidate-v2402": {
+      "protocol_sha256": "a8fc8ca1de0a26620b7f6208101a7d713e9d7e9faa74b04aeb04aa16ef3c152a",
+      "modified_upstream_files": [
+        "Cargo.toml",
+        "src/biguint.rs"
+      ],
+      "allocation_policy_unchanged": true,
+      "licenses_preserved": true,
+      "shared_source_files": [
+        "src/biguint/metadata_impl.rs",
+        "src/biguint/metadata_u32.rs",
+        "src/biguint/metadata_u64.rs",
+        "src/biguint/representation.rs"
+      ]
+    },
+    "biguint-metadata-candidate-v2404": {
+      "protocol_sha256": "8848c64ac3f2a0ddacef36ca4f7727199db1896ac5125bd41475e3e0aa191383",
+      "modified_upstream_files": [
+        "Cargo.toml",
+        "src/biguint.rs"
+      ],
+      "allocation_policy_unchanged": true,
+      "licenses_preserved": true,
+      "shared_source_files": [
+        "src/biguint/metadata_impl.rs",
+        "src/biguint/metadata_u32.rs",
+        "src/biguint/metadata_u64.rs",
+        "src/biguint/representation.rs"
+      ]
+    },
+    "biguint-metadata-candidate-v2406": {
+      "protocol_sha256": "cc6882cbb2f229dde0ce8fb6090cc45ac228e18446a1f3252258797ec40d7fa4",
+      "modified_upstream_files": [
+        "Cargo.toml",
+        "src/biguint.rs"
+      ],
+      "allocation_policy_unchanged": true,
+      "licenses_preserved": true,
+      "shared_source_files": [
+        "src/biguint/metadata_impl.rs",
+        "src/biguint/metadata_u32.rs",
+        "src/biguint/metadata_u64.rs",
+        "src/biguint/representation.rs"
+      ]
+    },
+    "biguint-metadata-candidate-v2413": {
+      "protocol_sha256": "1e095483514de449f2602a92f6872311115d12bf1de6e5b2e9438f11b870d87e",
+      "modified_upstream_files": [
+        "Cargo.toml",
+        "src/biguint/addition.rs",
+        "src/biguint/multiplication.rs",
+        "src/biguint/subtraction.rs",
+        "src/biguint.rs"
+      ],
+      "allocation_policy_unchanged": true,
+      "licenses_preserved": true,
+      "shared_source_files": [
+        "src/biguint/metadata_impl.rs",
+        "src/biguint/metadata_u32.rs",
+        "src/biguint/metadata_u64.rs",
+        "src/biguint/representation.rs"
+      ]
+    }
+  },
+  "proof_phases": {
+    "biguint-metadata-proof-v2401": {
+      "result_sha256": "3e9c236ab7ea4a868f90714b1c57a9b1d652fa65eaec70d98e794ee35f69498e",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 0,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "diagnostic": "Self is not supported in reveal/hide"
+    },
+    "biguint-metadata-proof-v2403": {
+      "result_sha256": "3a3816fdc66ad4e0d2ced70d8588f67ddf3cdc79f5510450d09893fa7f995307",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "which is ignored because"
+    },
+    "biguint-metadata-proof-v2405": {
+      "result_sha256": "987537093301245305db7fa8d3677ee54e4615fcff0b2a5595c009060554e813",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "cannot read const with mode exec"
+    },
+    "biguint-metadata-proof-v2407": {
+      "result_sha256": "25442a75a2e7b59ca44ea380a2c2ea1145cd2e462cca9c003d6edbb29f026536",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 462,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "diagnostic": ""
+    },
+    "biguint-metadata-proof-v2414": {
+      "result_sha256": "3f2f3526b272603a01bd1888bf3a875dce08001c7b49fa8ecca4824f4c679c4b",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 462,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "diagnostic": ""
+    }
+  },
+  "guard_runs": {
+    "biguint-metadata-guards-v2408": {
+      "protocol_sha256": "821c013dc568ec5bbd3f0a2192da3031f7bece95ac0e298fa9ae699e666a99f3",
+      "result_sha256": "73e6062190bbc9849ada164aad465df2edcdf12bae69cfd48ed843098a11c846",
+      "negative_controls": 20,
+      "positive_baselines": 1,
+      "mutated_inputs_reconstructed": true
+    },
+    "biguint-metadata-guards-v2415": {
+      "protocol_sha256": "354e33491c184ad140f276da7dad007538e9941398b2f6653050c2ecf174cd43",
+      "result_sha256": "41f180434b2b9357f9a49556df5ea2eec52906dc42b895c54d4d6e36d01951ee",
+      "negative_controls": 20,
+      "positive_baselines": 1,
+      "mutated_inputs_reconstructed": true
+    }
+  },
+  "final_preview_verified_units_including_existing_imports": 462,
+  "final_preview_executable_functions": 18,
+  "final_preview_executable_width_constants": 2,
+  "final_preview_negative_controls": 20,
+  "final_preview_positive_baselines": 1,
+  "runtime_preparation_sha256": "9e9ef22939364e833ff655fa4aa4e481353704b4c62c3bba507c0846668277d4",
+  "native_phases": {
+    "biguint-runtime-v2417-vendor-clippy": {
+      "result_sha256": "93640df041ed5bc442ccbeeb7943622ef624e4506c71dda547d3933eb3a9788a",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.493292741011828,
+        "protocol_sha256": "5d7838025b3f690721be6dc5291c2f6e2e3c5c36f35a57cd73960fc8ee49e9eb",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "8ce894ae0123eb1d665a118cbbe9ff5d4e1ff70412cb06732c79309adca31571",
+        "kind": "vendor-clippy",
+        "test_summaries": [],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false
+      }
+    },
+    "biguint-runtime-v2418-vendor-tests": {
+      "result_sha256": "d0b48398476d93563ffea03bb66d5a725ede447c1e29934f1ece2170e628086e",
+      "result": {
+        "exit_code": 0,
+        "seconds": 4.070719814859331,
+        "protocol_sha256": "78efb323c61c517fcb0a4e5d48d7e29d8aac152d1bf04c3c3b194157d0c61dba",
+        "stdout_sha256": "afcd2b0d140e17dba560e63255edd368e120947615b67505dc4cd501a21dcd40",
+        "stderr_sha256": "9959343db19abe17429e6dfd3fd7f57b06447b841d87d03d13fb3ad7c457057a",
+        "kind": "vendor-tests",
+        "test_summaries": [
+          [
+            15,
+            0,
+            0
+          ],
+          [
+            54,
+            0,
+            0
+          ],
+          [
+            4,
+            0,
+            0
+          ],
+          [
+            5,
+            0,
+            0
+          ],
+          [
+            61,
+            0,
+            0
+          ],
+          [
+            6,
+            0,
+            0
+          ],
+          [
+            2,
+            0,
+            0
+          ],
+          [
+            6,
+            0,
+            0
+          ],
+          [
+            12,
+            0,
+            0
+          ]
+        ],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false
+      }
+    },
+    "biguint-runtime-v2419-vendor-no-std": {
+      "result_sha256": "66d48f8efcbe4a141d0257ee1d5d40b660e19d5039ce26f682d3d980321d8929",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.3012519320473075,
+        "protocol_sha256": "e50f8c0963d8af130d76fae9c6b9680bfd11fb97617748443d2425b1d8411bb9",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "5cf3a30097c1acd218fecb61e06e9f6234651692a30a8037e7b39f3378cb2c7c",
+        "kind": "vendor-no-std",
+        "test_summaries": [],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false
+      }
+    },
+    "biguint-runtime-v2420-harness-debug": {
+      "result_sha256": "71c24df7d7c3daf3b6add16f17f550788aaa3ce3e11073a75dec773c4b5dd806",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.7146272300742567,
+        "protocol_sha256": "8edc08e9c5e9f41991b71b0e815e109313aa1dcf8e6d584f5af2ff118329c504",
+        "stdout_sha256": "f3598386985c93b4e77a64ada29cd6935ade0ca7a550d8d09323512386cc4acf",
+        "stderr_sha256": "c8616704f406be19b5f396bb94203fc0f1248738d425a203b5acd4034267f968",
+        "kind": "harness-debug",
+        "test_summaries": [],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false,
+        "harness": {
+          "cases": "67137",
+          "paired_values": "170970",
+          "helper_width_checks": "134274",
+          "diagnostic_checksum": "f8af72a05fcd32ff"
+        },
+        "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/biguint-metadata-runtime-preview",
+        "binary_sha256": "fd68ab56198a64a19b41ae5a57353b90485273b793c1eb87a43f9a3fcf4f0c13"
+      }
+    },
+    "biguint-runtime-v2421-harness-release": {
+      "result_sha256": "5ea0dc4ebf8dd025aa386940e13589f977a4b94b2fea2c068685e5bfc77bfb73",
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.4424597742035985,
+        "protocol_sha256": "6ca869cc2866fb8b4874a84df0b5398ad4047631e5cb53dff308ef42389a15c4",
+        "stdout_sha256": "f3598386985c93b4e77a64ada29cd6935ade0ca7a550d8d09323512386cc4acf",
+        "stderr_sha256": "fcb845ca1f46efe0a5e93936a70fc676793cd70908fe0bc0110ac84a27ee013e",
+        "kind": "harness-release",
+        "test_summaries": [],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false,
+        "harness": {
+          "cases": "67137",
+          "paired_values": "170970",
+          "helper_width_checks": "134274",
+          "diagnostic_checksum": "f8af72a05fcd32ff"
+        },
+        "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/release/biguint-metadata-runtime-preview",
+        "binary_sha256": "2dc9fa40e7e2d2e454d98e9021e07fc7346c919d740a35f34af599299485132f"
+      }
+    },
+    "biguint-runtime-v2422-shared-fmt": {
+      "result_sha256": "fcac534e6887ece64fa48d2de4e5c94131ec5a34040fb4ff78450fdb950c73e9",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0990806696936488,
+        "protocol_sha256": "e0eeeb3b91fa321a5f3fc25e4248fe4c4738d2bf91f585a27c32522f2c84d06d",
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "kind": "shared-fmt",
+        "test_summaries": [],
+        "warning_lines": [],
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "work_unchanged": true,
+        "preview_unchanged": true,
+        "dependencies_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "runtime_admitted": false
+      }
+    }
+  },
+  "native_upstream_test_summaries": [
+    [
+      15,
+      0,
+      0
+    ],
+    [
+      54,
+      0,
+      0
+    ],
+    [
+      4,
+      0,
+      0
+    ],
+    [
+      5,
+      0,
+      0
+    ],
+    [
+      61,
+      0,
+      0
+    ],
+    [
+      6,
+      0,
+      0
+    ],
+    [
+      2,
+      0,
+      0
+    ],
+    [
+      6,
+      0,
+      0
+    ],
+    [
+      12,
+      0,
+      0
+    ]
+  ],
+  "native_upstream_tests_passed": 165,
+  "native_corpus_per_build": {
+    "cases": "67137",
+    "paired_values": "170970",
+    "helper_width_checks": "134274",
+    "diagnostic_checksum": "f8af72a05fcd32ff"
+  },
+  "native_corpus_builds": [
+    "debug",
+    "release"
+  ],
+  "native_biguint_host": "x86_64-unknown-linux-gnu",
+  "native_shared_helper_widths": [
+    32,
+    64
+  ],
+  "failed_formatter_preparation_sha256": "07834eba6cc4a30a1c718245a92821a6e9d80002372c6b27906560db61b82978",
+  "failed_workspace_resolution_sha256": "02d85d5e3e2c62f98e5c4a28cbac5761dc7e443fc4043bc5195c121769486147",
+  "failed_strict_clippy_sha256": "98cc3a1d6c0adb2ba0f19a9226fbd12bb6e980496d77625ded740f4ef0b90dc6",
+  "fresh_scalar_runtime_commands": 0,
+  "fresh_fixed_baseline_cost_commands": 0,
+  "findings": [
+    "The production preview and Verus compile the same private Vec-backed BigUint declaration, three metadata method bodies and six helpers for each native width. Public ghost views are defined from the actual field. No layout cast, shadow executable implementation or local trusted metadata assertion is used.",
+    "The final proof verifies under explicit normalized-storage and u64 aggregate-count premises. Twenty actual executable mutations are rejected with proof errors, including width constants, scans, truncation, count arithmetic and each public method. Both the initial and amended guard runs are retained; only the amended run qualifies the final preview.",
+    "The original normalize guard and exact capacity/shrink_to_fit block are unchanged. Existing licenses and archive identities are retained. Scoped legacy-intrinsic lint allowances and two scratch-vector clear calls are explicitly disclosed; the remaining dependency arithmetic and allocator implementation are not proved by this milestone.",
+    "Ordinary Cargo resolves the patched path dependency and locked registry original as distinct packages. Strict library Clippy, original library/integration tests, no_std checking, shared-file formatting and the independent bit-vector/differential corpus pass. Debug and release corpus summaries match.",
+    "SOURCE, the scalar producer's lazy evaluation order, main files and all retained coverage counts remain unchanged. This isolated native corpus is not scalar fixed-baseline correctness, cost, resource, memory or size admission."
+  ],
+  "next_action": "Integrate the verified shared files into a frozen SOURCE candidate only after extending snapshots to every vendor file and binding the proof/production Cargo path package identities. Preserve actual dependency implementation provenance, discharge the storage normalization/count-range and BigInt/producer caller premises, and run the original fixed-baseline scalar correctness/cost/resource/memory/size gates before retaining a runtime change. Standalone publication and old-compiler/cross-target compatibility remain explicit open work.",
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "limits": "Retained runtime v2335 and proof checkpoint v2386 remain authoritative. All thirteen whole-crate groups remain open. Preserve every prior failure, original resource cap, pre-Verus baseline and all 49 original worktree entries. No property, target, backend, whole-crate or main/native/full-board completion is claimed."
+}

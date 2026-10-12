@@ -1,0 +1,21 @@
+{
+  "index": 1,
+  "name": "u32-WIDTH",
+  "exit_code": 1,
+  "seconds": 5.463730376213789,
+  "input_files_sha256": {
+    "metadata_u32.rs": "7783c864ed1e8ec191a161632e1e728cce2c4448fafbfdfc71829fb12b6431b1",
+    "probe.rs": "0ab73850efdfdb1c89242f4cccc111a5652b7056162fc84afb17a1dc3f158b3c"
+  },
+  "stdout_sha256": "f2788bb014b0eafbac447b9225bd724b4cc74567c7422f80b4b7df336d8793bf",
+  "stderr_sha256": "e7378ada1919486ccb01d688f0fe27d2e83bc0d92d4cc87a8fc304488cae6426",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 461,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

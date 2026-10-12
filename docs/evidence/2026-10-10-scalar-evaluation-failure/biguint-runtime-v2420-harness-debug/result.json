@@ -1,0 +1,25 @@
+{
+  "exit_code": 0,
+  "seconds": 2.7146272300742567,
+  "protocol_sha256": "8edc08e9c5e9f41991b71b0e815e109313aa1dcf8e6d584f5af2ff118329c504",
+  "stdout_sha256": "f3598386985c93b4e77a64ada29cd6935ade0ca7a550d8d09323512386cc4acf",
+  "stderr_sha256": "c8616704f406be19b5f396bb94203fc0f1248738d425a203b5acd4034267f968",
+  "kind": "harness-debug",
+  "test_summaries": [],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false,
+  "harness": {
+    "cases": "67137",
+    "paired_values": "170970",
+    "helper_width_checks": "134274",
+    "diagnostic_checksum": "f8af72a05fcd32ff"
+  },
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/debug/biguint-metadata-runtime-preview",
+  "binary_sha256": "fd68ab56198a64a19b41ae5a57353b90485273b793c1eb87a43f9a3fcf4f0c13"
+}

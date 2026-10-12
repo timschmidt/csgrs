@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "seconds": 2.3012519320473075,
+  "protocol_sha256": "e50f8c0963d8af130d76fae9c6b9680bfd11fb97617748443d2425b1d8411bb9",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "5cf3a30097c1acd218fecb61e06e9f6234651692a30a8037e7b39f3378cb2c7c",
+  "kind": "vendor-no-std",
+  "test_summaries": [],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false
+}

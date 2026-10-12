@@ -1,0 +1,58 @@
+   Compiling autocfg v1.5.0
+   Compiling num-traits v0.2.19
+    Checking num-integer v0.1.46
+    Checking num-bigint v0.4.6 (/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-preview-v2411/vendor/num-bigint)
+error: unnecessary `unsafe` block
+  --> src/biguint/addition.rs:23:9
+   |
+23 |         unsafe { arch::_addcarry_u64(carry, a, b, out) }
+   |         ^^^^^^ unnecessary `unsafe` block
+   |
+   = note: `-D unused-unsafe` implied by `-D warnings`
+   = help: to override `-D warnings` add `#[allow(unused_unsafe)]`
+
+error: unnecessary `unsafe` block
+  --> src/biguint/subtraction.rs:23:9
+   |
+23 |         unsafe { arch::_subborrow_u64(borrow, a, b, out) }
+   |         ^^^^^^ unnecessary `unsafe` block
+
+error: truncating to zero length
+   --> src/biguint/multiplication.rs:248:9
+    |
+248 |         p.data.truncate(0);
+    |         ^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_clear
+    = note: `-D clippy::manual-clear` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::manual_clear)]`
+help: use `clear()` instead
+    |
+248 -         p.data.truncate(0);
+248 +         p.data.clear();
+    |
+
+error: truncating to zero length
+   --> src/biguint/multiplication.rs:265:17
+    |
+265 |                 p.data.truncate(0);
+    |                 ^^^^^^^^^^^^^^^^^^
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#manual_clear
+help: use `clear()` instead
+    |
+265 -                 p.data.truncate(0);
+265 +                 p.data.clear();
+    |
+
+error: length comparison to zero
+   --> src/biguint/metadata_u64.rs:150:8
+    |
+150 |     if words.len() == 0 {
+    |        ^^^^^^^^^^^^^^^^ help: using `is_empty` is clearer and more explicit: `words.is_empty()`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.98.0/index.html#len_zero
+    = note: `-D clippy::len-zero` implied by `-D warnings`
+    = help: to override `-D warnings` add `#[allow(clippy::len_zero)]`
+
+error: could not compile `num-bigint` (lib) due to 5 previous errors

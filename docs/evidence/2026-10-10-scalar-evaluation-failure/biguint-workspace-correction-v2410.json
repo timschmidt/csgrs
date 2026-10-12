@@ -1,0 +1,12 @@
+{
+  "status": "Forked before rerunning resolution; failed v2409 is immutable",
+  "repair_runner_sha256": "9a3f33333340c794b3f27afa7ae579e38869d9df1bc29b5fdd2bb7dfd56dd680",
+  "parent_preparation_sha256": "0e68e2b889f889cecff324c0ba641ab4c95fa81cc26d00a6ea0492e16c7231ac",
+  "failed_resolution_sha256": "02d85d5e3e2c62f98e5c4a28cbac5761dc7e443fc4043bc5195c121769486147",
+  "failed_stderr_sha256": "ba9d6fbbcb0029970d64ecc86f13ecff13141aaca267a61315e28f190dd85083",
+  "successor": "prepare_biguint_runtime_preview_v2411.py",
+  "successor_sha256": "d910559fafc34cebc699a9b044c9972d7b7f72f01e1f3ffc2e8c07de00a0d05b",
+  "change": "Add the explicit workspace exclusion for the path dependency's own standalone workspace. Shared dependency sources, runtime harness and requested dependency identities are unchanged.",
+  "source_changed": false,
+  "runtime_admitted": false
+}

@@ -1,0 +1,85 @@
+--- upstream/Cargo.toml
++++ candidate/Cargo.toml
+@@ -105,3 +105,9 @@
+     "num-integer/std",
+     "num-traits/std",
+ ]
++
++# Local verification preview; excluded from the production workspace until admitted.
++[workspace]
++
++[lints.rust]
++unexpected_cfgs = { level = "warn", check-cfg = ['cfg(verus_keep_ghost)'] }
+--- upstream/src/biguint.rs
++++ candidate/src/biguint.rs
+@@ -30,10 +30,16 @@
+ pub(crate) use self::convert::to_str_radix_reversed;
+ pub use self::iter::{U32Digits, U64Digits};
+ 
+-/// A big unsigned integer type.
+-pub struct BigUint {
+-    data: Vec<BigDigit>,
+-}
++include!("biguint/representation.rs");
++
++cfg_digit!(
++    #[path = "biguint/metadata_u32.rs"]
++    mod metadata;
++    #[path = "biguint/metadata_u64.rs"]
++    mod metadata;
++);
++
++include!("biguint/metadata_impl.rs");
+ 
+ // Note: derived `Clone` doesn't specialize `clone_from`,
+ // but we want to keep the allocation in `data`.
+@@ -845,23 +851,12 @@
+         convert::to_radix_le(self, radix)
+     }
+ 
+-    /// Determines the fewest bits necessary to express the [`BigUint`].
+-    #[inline]
+-    pub fn bits(&self) -> u64 {
+-        if self.is_zero() {
+-            return 0;
+-        }
+-        let zeros: u64 = self.data.last().unwrap().leading_zeros().into();
+-        self.data.len() as u64 * u64::from(big_digit::BITS) - zeros
+-    }
+-
+     /// Strips off trailing zero bigdigits - comparisons require the last element in the vector to
+     /// be nonzero.
+     #[inline]
+     fn normalize(&mut self) {
+         if let Some(&0) = self.data.last() {
+-            let len = self.data.iter().rposition(|&d| d != 0).map_or(0, |i| i + 1);
+-            self.data.truncate(len);
++            metadata::trim_zero_suffix(&mut self.data);
+         }
+         if self.data.len() < self.data.capacity() / 4 {
+             self.data.shrink_to_fit();
+@@ -983,24 +978,6 @@
+     /// see [Roots::nth_root](https://docs.rs/num-integer/0.1/num_integer/trait.Roots.html#tymethod.nth_root).
+     pub fn nth_root(&self, n: u32) -> Self {
+         Roots::nth_root(self, n)
+-    }
+-
+-    /// Returns the number of least-significant bits that are zero,
+-    /// or `None` if the entire number is zero.
+-    pub fn trailing_zeros(&self) -> Option<u64> {
+-        let i = self.data.iter().position(|&digit| digit != 0)?;
+-        let zeros: u64 = self.data[i].trailing_zeros().into();
+-        Some(i as u64 * u64::from(big_digit::BITS) + zeros)
+-    }
+-
+-    /// Returns the number of least-significant bits that are ones.
+-    pub fn trailing_ones(&self) -> u64 {
+-        if let Some(i) = self.data.iter().position(|&digit| !digit != 0) {
+-            let ones: u64 = self.data[i].trailing_ones().into();
+-            i as u64 * u64::from(big_digit::BITS) + ones
+-        } else {
+-            self.data.len() as u64 * u64::from(big_digit::BITS)
+-        }
+     }
+ 
+     /// Returns the number of one bits.

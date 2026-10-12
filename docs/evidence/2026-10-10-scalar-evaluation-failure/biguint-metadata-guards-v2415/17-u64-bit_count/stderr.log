@@ -1,0 +1,36 @@
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/17-u64-bit_count/metadata_u64.rs:148:1
+    |
+148 | pub(crate) fn bit_count(words: &[u64]) -> u64 {
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/17-u64-bit_count/metadata_u64.rs:143:13
+    |
+143 |       ensures result == word_bit_length_u64(words@),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+150 | /     if words.is_empty() {
+151 | |         0
+152 | |     } else {
+153 | |         let count = words[words.len() - 1].leading_zeros();
+154 | |         words.len() as u64 * WIDTH + u64::from(count)
+155 | |     }
+    | |_____- at the end of the function body
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/17-u64-bit_count/metadata_u64.rs:145:9
+    |
+145 |           result > 0 ==> has_bit_length(word_value_u64(words@), result as nat),
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+150 | /     if words.is_empty() {
+151 | |         0
+152 | |     } else {
+153 | |         let count = words[words.len() - 1].leading_zeros();
+154 | |         words.len() as u64 * WIDTH + u64::from(count)
+155 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 2 previous errors
+

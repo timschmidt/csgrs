@@ -1,0 +1,44 @@
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:83:13
+   |
+83 |             reveal(Self::metadata_storage_bits);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:84:13
+   |
+84 |             reveal(Self::metadata_value);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:63:13
+   |
+63 |             reveal(Self::metadata_storage_bits);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:64:13
+   |
+64 |             reveal(Self::metadata_value);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:38:13
+   |
+38 |             reveal(Self::metadata_normalized);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:39:13
+   |
+39 |             reveal(Self::metadata_storage_bits);
+   |             ^^^^^^
+
+error: Self is not supported in reveal/hide, use the type name instead, or <T as X> for functions in trait impls
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-candidate-v2400/vendor/num-bigint/src/biguint/metadata_impl.rs:40:13
+   |
+40 |             reveal(Self::metadata_value);
+   |             ^^^^^^
+
+error: aborting due to 7 previous errors
+

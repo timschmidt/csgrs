@@ -1,0 +1,25 @@
+{
+  "exit_code": 0,
+  "seconds": 3.4424597742035985,
+  "protocol_sha256": "6ca869cc2866fb8b4874a84df0b5398ad4047631e5cb53dff308ef42389a15c4",
+  "stdout_sha256": "f3598386985c93b4e77a64ada29cd6935ade0ca7a550d8d09323512386cc4acf",
+  "stderr_sha256": "fcb845ca1f46efe0a5e93936a70fc676793cd70908fe0bc0110ac84a27ee013e",
+  "kind": "harness-release",
+  "test_summaries": [],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false,
+  "harness": {
+    "cases": "67137",
+    "paired_values": "170970",
+    "helper_width_checks": "134274",
+    "diagnostic_checksum": "f8af72a05fcd32ff"
+  },
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/biguint-metadata-runtime-build-v2416/release/biguint-metadata-runtime-preview",
+  "binary_sha256": "2dc9fa40e7e2d2e454d98e9021e07fc7346c919d740a35f34af599299485132f"
+}

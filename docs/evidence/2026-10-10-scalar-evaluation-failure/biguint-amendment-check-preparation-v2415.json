@@ -1,0 +1,74 @@
+{
+  "status": "Frozen before fresh controls and ordinary-Rust preparation for the amended preview",
+  "runner_sha256": "779c915e794e6f7cddc5c90e11b7a0c72c9a4263ebd5071b5bee32162a1e3105",
+  "proof_result_sha256": "3f2f3526b272603a01bd1888bf3a875dce08001c7b49fa8ecca4824f4c679c4b",
+  "prepared": [
+    {
+      "parent": "check_biguint_metadata_guards_v2408.py",
+      "parent_sha256": "3fd39e3f1d29e4032f9a0529300526f4b758b1f5040361d8f01089dea92da94b",
+      "successor": "check_biguint_metadata_guards_v2415.py",
+      "successor_sha256": "c03ad0991ed2394948ca9e62491e14e1f6d8bbf7d81d4bacadd449181c1c8563",
+      "replacements": [
+        [
+          "biguint-metadata-candidate-v2406",
+          "biguint-metadata-candidate-v2413"
+        ],
+        [
+          "biguint-metadata-guards-v2408",
+          "biguint-metadata-guards-v2415"
+        ],
+        [
+          "biguint-metadata-proof-v2407",
+          "biguint-metadata-proof-v2414"
+        ]
+      ]
+    },
+    {
+      "parent": "prepare_biguint_runtime_preview_v2411.py",
+      "parent_sha256": "d910559fafc34cebc699a9b044c9972d7b7f72f01e1f3ffc2e8c07de00a0d05b",
+      "successor": "prepare_biguint_runtime_preview_v2416.py",
+      "successor_sha256": "f59333cf0a28cb5a85326d729b0b98c5faaf8c5b345270c36d1c657705808464",
+      "replacements": [
+        [
+          "biguint-metadata-candidate-v2406",
+          "biguint-metadata-candidate-v2413"
+        ],
+        [
+          "biguint-runtime-preparation-v2411",
+          "biguint-runtime-preparation-v2416"
+        ],
+        [
+          "biguint-metadata-runtime-preview-v2411",
+          "biguint-metadata-runtime-preview-v2416"
+        ],
+        [
+          "biguint-metadata-runtime-build-v2411",
+          "biguint-metadata-runtime-build-v2416"
+        ],
+        [
+          "biguint-metadata-proof-v2407",
+          "biguint-metadata-proof-v2414"
+        ],
+        [
+          "biguint-metadata-guards-v2408",
+          "biguint-metadata-guards-v2415"
+        ]
+      ]
+    },
+    {
+      "parent": "validate_biguint_runtime_preview_v2412.py",
+      "parent_sha256": "c6c61333cacf53bb7b384caabd2835cca39205fec558a87beefeab3a23ec4bee",
+      "successor": "validate_biguint_runtime_preview_v2417.py",
+      "successor_sha256": "909041b89bf0e4f1c1023a4d3e0b38ceabdc10f0fc874552916715986c16a55a",
+      "replacements": [
+        [
+          "biguint-runtime-preparation-v2411",
+          "biguint-runtime-preparation-v2416"
+        ]
+      ]
+    }
+  ],
+  "negative_controls": 20,
+  "positive_baselines": 1,
+  "scope": "Only input/phase bindings change in the existing runners. Mutation definitions, proof error criteria, dependency pin checks and runtime corpus remain unchanged. All controls execute afresh after the helper's empty-slice change. No earlier failed phase is overwritten or credited as successful."
+}

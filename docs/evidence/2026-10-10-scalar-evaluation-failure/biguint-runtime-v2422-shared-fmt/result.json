@@ -1,0 +1,17 @@
+{
+  "exit_code": 0,
+  "seconds": 1.0990806696936488,
+  "protocol_sha256": "e0eeeb3b91fa321a5f3fc25e4248fe4c4738d2bf91f585a27c32522f2c84d06d",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "kind": "shared-fmt",
+  "test_summaries": [],
+  "warning_lines": [],
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "work_unchanged": true,
+  "preview_unchanged": true,
+  "dependencies_unchanged": true,
+  "retained_proof_coverage_changed": false,
+  "runtime_admitted": false
+}

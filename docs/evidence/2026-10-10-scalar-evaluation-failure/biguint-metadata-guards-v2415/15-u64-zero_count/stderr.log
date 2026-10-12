@@ -1,0 +1,22 @@
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/biguint-metadata-guards-v2415/15-u64-zero_count/metadata_u64.rs:94:13
+    |
+ 94 |       ensures match result {
+    |  _____________^
+ 95 | |         Some(count) => has_odd_factor(word_value_u64(words@), count as nat)
+ 96 | |             && count < word_width() * words.len(),
+ 97 | |         None => word_value_u64(words@) == 0,
+ 98 | |     },
+    | |_____^ failed this postcondition
+...
+102 | /     match first_different(words, 0) {
+103 | |         Some(index) => {
+104 | |             let count = words[index].trailing_zeros();
+105 | |             proof! {
+...   |
+114 | |         },
+115 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 1 previous error
+
