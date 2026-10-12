@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before primitive support probing",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--no-cheating",
+    "--output-json",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/trailing-bit-factorization-v2348/probe.rs"
+  ],
+  "runner_sha256": "83ef1eca54da25563392349e07d604e782c9662e98f39372fe8edd58aa165915",
+  "probe_sha256": "c2326fa6e9b2f14ee4198066ffcd1e43f46e30d4027565772c80bf333048d736",
+  "retained_checkpoint": "typed-api-prototype-v2345-state.json",
+  "retained_checkpoint_sha256": "a75220d56a289d2e83e36a426fb6f1f04b808e684b0889e5d360924408d940b9",
+  "source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "pinned_toolchain": {
+    "version": "0.2026.09.13.671956e",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+    "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+    "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+    "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+    "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+  },
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "question": "Do the pinned word bit-count contracts prove that a word plus one factors into the reported power of two and a positive odd quotient, including full all-ones words, for u32 and u64?",
+  "scope": "Use only the pinned vstd standard-library axioms already supplied by Verus. Introduce no external method specification, assumption or trusted arithmetic axiom. This support probe is not a production BigInt proof, a SOURCE change, a new retained theorem or runtime admission. Preserve a failure without changing completed artifacts."
+}

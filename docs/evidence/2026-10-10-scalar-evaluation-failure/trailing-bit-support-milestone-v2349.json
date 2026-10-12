@@ -1,0 +1,106 @@
+{
+  "status": "Standalone word contracts support the next metadata model; candidate unchanged",
+  "runner_sha256": "0f6abf2e082591ab73a14d74e058d9f05400327e0aa51caefc11064c51a54d44",
+  "retained_checkpoint": "typed-api-prototype-v2345-state.json",
+  "retained_checkpoint_sha256": "a75220d56a289d2e83e36a426fb6f1f04b808e684b0889e5d360924408d940b9",
+  "source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "phases": {
+    "trailing-bit-support-v2346": {
+      "result_sha256": "4f8545604ca73501a2bca3d95a09c2e8879c7020ef90eb3a86b3e43712722d0f",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.687800182029605,
+        "protocol_sha256": "811849299bc3bfbb7830c965801e8ef85c469b656d512a6681c5b34bc31eb52c",
+        "stdout_sha256": "90863ad954e9aa131ea2d7731d69d029d6dfc11d8c5066b5416947e0219a5bd3",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "tooling_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "next_step": "Inspect the exact result before using any primitive contract in a metadata model. BigUint storage, normalization, aggregate scans, length ranges and production caller refinement remain separate."
+      },
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 4,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "protocol_sha256": "811849299bc3bfbb7830c965801e8ef85c469b656d512a6681c5b34bc31eb52c"
+    },
+    "trailing-bit-factorization-v2347": {
+      "result_sha256": "b5e8d621812cbb29788c3ac2500ff1fe6e1c17780d92392267c6a8d4950523d3",
+      "result": {
+        "exit_code": 1,
+        "seconds": 2.1827043732628226,
+        "protocol_sha256": "eb55ee67d24bfb45b57033d9fc472c2c57e32db5ac39d8a3525f4a732ad38266",
+        "stdout_sha256": "567483c5d683262264958fc4011863f265e1d49b8d452dade00942743ddd2c4e",
+        "stderr_sha256": "934bfae0f0c03872ddf1c146089f43aa5b0bc84235d2fa6c7039e91ebc89d8f6",
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "tooling_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "next_step": "Inspect the exact result before using any primitive contract in a metadata model. BigUint storage, normalization, aggregate scans, length ranges and production caller refinement remain separate."
+      },
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 0,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "protocol_sha256": "eb55ee67d24bfb45b57033d9fc472c2c57e32db5ac39d8a3525f4a732ad38266"
+    },
+    "trailing-bit-factorization-v2348": {
+      "result_sha256": "23efe207234d61eb1ce165beb3879a69d6b8a5c9f16cb87f12c87b65fabf258c",
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.018976727966219,
+        "protocol_sha256": "929c4066b1701ef22ab6d803cab85dd7851362bd0afa36b0e5c1e00368dba3f5",
+        "stdout_sha256": "5606f021d3956e6d849b5fe3b4285736cd3201372ff980f1df69fc3bff7a30c0",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "tooling_unchanged": true,
+        "retained_proof_coverage_changed": false,
+        "next_step": "Inspect the exact result before using any primitive contract in a metadata model. BigUint storage, normalization, aggregate scans, length ranges and production caller refinement remain separate."
+      },
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 16,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "protocol_sha256": "929c4066b1701ef22ab6d803cab85dd7851362bd0afa36b0e5c1e00368dba3f5"
+    }
+  },
+  "reader_correction": "trailing-bit-support-reader-failure-v2348.json",
+  "reader_correction_sha256": "8b6612e48251437bbdbab5918f4cdc5977f709a7c7194bccccd93ce0fad5f43d",
+  "findings": [
+    "The pinned standard-library specification equates trailing ones to trailing zeros of the complement for every u32 and u64. Actual primitive method calls satisfy that specification in the support target.",
+    "For each word width, the arithmetic target proves that word + 1, interpreted as an unbounded natural, equals a positive odd quotient times 2 raised to the trailing-one count. The all-ones word is covered without machine-width addition.",
+    "The first factorization attempt stopped at three unresolved library names before verifying any units. The corrected target changes only those names, passes 16 verification units across four proof functions and emits no warnings. Both attempts remain intact.",
+    "The proof uses existing pinned vstd word contracts and arithmetic lemmas. It adds no external arithmetic method specification or new trusted axiom. These standalone results have not been integrated into the candidate's conditional proof catalog."
+  ],
+  "dependency_review": "numerical-bound-metadata-review-v2279-v2.json",
+  "dependency_review_sha256": "c3ea9b40e4669ca9608177480dc98d5f3f698a5defe9b6a54fcaface46344958",
+  "next_obligations": [
+    "Derive the all-ones and power-of-two flags from bit length and positive odd-factor metadata using unbounded arithmetic.",
+    "Connect those facts to normalized little-endian digit scans at both 32- and 64-bit widths, including empty storage, all-maximal limbs, the first nonmaximal limb and the first nonzero limb.",
+    "Discharge the actual BigUint storage/import and normalization invariant, BigInt sign/magnitude relation, iterator first-match semantics, usize conversion and u64 bit-count range. The existing mathematical limb count is unbounded; it does not prove the dependency's length-times-digit-width arithmetic cannot overflow.",
+    "Preserve the producer's early Unknown return and its lazy trailing-zero scan when the exponent is absent. Do not extract metadata in a way that adds eager work.",
+    "Integrate any successful model extension with explicit scope, negative controls, current full proof/formatting and proportionate unchanged-input or runtime evidence before retaining it. Then continue approximation truth, caller, independent-existence and atomic publication obligations."
+  ],
+  "candidate_sources_changed": false,
+  "retained_verified_units": 662,
+  "retained_production_contracts": 98,
+  "retained_model_theorems": 137,
+  "whole_crate_obligation_groups_open": 13,
+  "fresh_runtime_or_cost_processes": 0,
+  "main_runtime_admitted": false,
+  "limits": "These are separate support targets with 4 and 16 verification units, including auxiliary assertion obligations; they add no retained production proof coverage. No BigUint method, aggregate scan, normalization invariant, producer caller or concurrent publication is verified here. All earlier resource failures and the full 39-property, 14-target and crate-future-work scope remain unchanged."
+}

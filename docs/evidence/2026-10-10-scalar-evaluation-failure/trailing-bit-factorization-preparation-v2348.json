@@ -1,0 +1,17 @@
+{
+  "status": "Frozen before corrected standalone probe",
+  "preparation_sha256": "f3a7c133c9bc9006eae70fa50e039e9a5ef33ae5387d9f60dbc511f6df438445",
+  "previous_proposal_sha256": "473ebb456492c939745f41b74d2c80a41fa7f7af6e2f24898941e9a82e23ae9a",
+  "previous_runner_sha256": "806e84ea8f8ec8b07ee9b408325860fc6f9516d7c211af88a06e005b719403da",
+  "failed_result_sha256": "b5e8d621812cbb29788c3ac2500ff1fe6e1c17780d92392267c6a8d4950523d3",
+  "failed_stderr_sha256": "934bfae0f0c03872ddf1c146089f43aa5b0bc84235d2fa6c7039e91ebc89d8f6",
+  "proposal": "trailing-bit-factorization-proposal-v2348.rs",
+  "proposal_sha256": "c2326fa6e9b2f14ee4198066ffcd1e43f46e30d4027565772c80bf333048d736",
+  "runner": "probe_trailing_bit_factorization_v2348.py",
+  "runner_sha256": "83ef1eca54da25563392349e07d604e782c9662e98f39372fe8edd58aa165915",
+  "changes": [
+    "Use the existing lemma2_to64 constant-power lemma for both word widths.",
+    "Use the pinned library's lemma_div_by_self name in both all-ones cases."
+  ],
+  "scope": "No theorem statement, algorithm, fixture, runtime source or admission status changes. The failed name-resolution probe remains immutable; no mathematical verification was completed by that attempt."
+}

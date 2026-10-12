@@ -1,0 +1,46 @@
+error[E0425]: cannot find function `lemma2_to32` in this scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/trailing-bit-factorization-v2347/probe.rs:41:5
+   |
+41 |     lemma2_to32();
+   |     ^^^^^^^^^^^
+   |
+  --> arithmetic/power2.rs:190:0
+   |
+   = note: similarly named function `lemma2_to64` defined here
+help: a function with a similar name exists
+   |
+41 -     lemma2_to32();
+41 +     lemma2_to64();
+   |
+
+error[E0425]: cannot find function `lemma_div_self` in this scope
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/trailing-bit-factorization-v2347/probe.rs:50:9
+   |
+50 |         lemma_div_self(unit as int);
+   |         ^^^^^^^^^^^^^^
+   |
+  --> arithmetic/div_mod.rs:96:0
+   |
+   = note: similarly named function `lemma_div_by_self` defined here
+help: a function with a similar name exists
+   |
+50 |         lemma_div_by_self(unit as int);
+   |                   +++
+
+error[E0425]: cannot find function `lemma_div_self` in this scope
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/trailing-bit-factorization-v2347/probe.rs:118:9
+    |
+118 |         lemma_div_self(unit as int);
+    |         ^^^^^^^^^^^^^^
+    |
+   --> arithmetic/div_mod.rs:96:0
+    |
+    = note: similarly named function `lemma_div_by_self` defined here
+help: a function with a similar name exists
+    |
+118 |         lemma_div_by_self(unit as int);
+    |                   +++
+
+error: aborting due to 3 previous errors
+
+For more information about this error, try `rustc --explain E0425`.

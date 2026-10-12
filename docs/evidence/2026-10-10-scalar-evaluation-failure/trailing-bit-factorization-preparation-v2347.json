@@ -1,0 +1,16 @@
+{
+  "status": "Frozen before factorization probing",
+  "preparation_sha256": "21446167cfe0a9eb1f0e079564de95f008a93a1de5eb1e12ec2ad4da304100d6",
+  "predecessor_runner": "probe_trailing_bit_support_v2346.py",
+  "predecessor_runner_sha256": "223056f3b6572772be8877a3dbdba1fc1bb19e4c3c446130ef9d5920cf675193",
+  "support_result_sha256": "4f8545604ca73501a2bca3d95a09c2e8879c7020ef90eb3a86b3e43712722d0f",
+  "proposal": "trailing-bit-factorization-proposal-v2347.rs",
+  "proposal_sha256": "473ebb456492c939745f41b74d2c80a41fa7f7af6e2f24898941e9a82e23ae9a",
+  "runner": "probe_trailing_bit_factorization_v2347.py",
+  "runner_sha256": "806e84ea8f8ec8b07ee9b408325860fc6f9516d7c211af88a06e005b719403da",
+  "digit_widths": [
+    32,
+    64
+  ],
+  "scope": "Standalone mathematical support probe only. The zero-factor proof follows the existing verified u64 proof's standard-library argument at both native widths; no production body is replaced. BigUint storage/import, normalized limb scans, length bounds and producer callers are still open. SOURCE and retained coverage stay unchanged."
+}

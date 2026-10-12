@@ -1,0 +1,21 @@
+{
+  "status": "Preserved evidence-reader failure; proof results are unchanged",
+  "failed_runner": "record_trailing_bit_support_v2348.py",
+  "failed_runner_sha256": "0e0a006dcf8f06d9e26d61fee420a1805269e8a275ad04cf12f5cbb3adaae3f6",
+  "observed_exit_code": 1,
+  "observed_failure": "AssertionError at line 24: expected four verification units for a four-function target; the actual successful target reports sixteen units.",
+  "actual_proof_report": "trailing-bit-factorization-v2348/stdout.json",
+  "actual_proof_report_sha256": "5606f021d3956e6d849b5fe3b4285736cd3201372ff980f1df69fc3bff7a30c0",
+  "actual_verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 16,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "corrected_runner": "record_trailing_bit_support_v2349.py",
+  "corrected_runner_sha256": "0f6abf2e082591ab73a14d74e058d9f05400327e0aa51caefc11064c51a54d44",
+  "preparation_sha256": "2867db0ba251a6525b725c0ca46956db9a2c8b16ddab07c30d67f3567256c30f",
+  "scope": "The verifier also counts auxiliary assertion obligations. Correct the reader to the actual per-target counts 4, 0 and 16. No theorem, gate, source, result or retained coverage changes, and no proof rerun is necessary."
+}
