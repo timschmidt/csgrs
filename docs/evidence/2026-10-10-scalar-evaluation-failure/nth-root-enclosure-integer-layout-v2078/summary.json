@@ -1,0 +1,139 @@
+{
+  "status": "Static review only; the failed timing gate remains failed",
+  "source_record_sha256": "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3",
+  "rejection_record": "nth-root-enclosure-cost-rejection-v2021.json",
+  "rejection_record_sha256": "ee52e8b61fbad24c89068ef74b5da8828c51e9e4d94eb0bc9da963547fa3b3e4",
+  "initial_cost_record": "nth-root-enclosure-initial-cost-review-v2021.json",
+  "initial_cost_record_sha256": "048d629a5a5c9854a0cc6731414cbac6bdf42633de4c04735e05ee26d4b5b07f",
+  "reviewed_source_files_sha256": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+    "crates/hyperreal/src/computable/node/scale.rs": "1f5cfc2008c5c7ec28d8dde04a140b48807321b6a48ca6ced36837dd39aee8f7",
+    "crates/hyperreal/src/computable/node/integer_scale_tests.rs": "e4441d8f6862399f98ff0abd1e6dbad848138ff2ae0491dfc950f2ed36edaf28",
+    "crates/hyperreal/src/computable/node/evaluation_budget.rs": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011"
+  },
+  "reviewed_sources_identical_to_retained_v1836": true,
+  "source_files_verified": 24746,
+  "main_guarded_files_verified": 1167,
+  "binaries": {
+    "baseline": {
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1774-domain-predicate-integer-cost/probe",
+      "binary_sha256": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+      "functions": {
+        "probe::main": {
+          "address": 380624,
+          "size_bytes": 6535,
+          "address_mod_64": 16,
+          "instructions": 1436,
+          "assembly": "baseline-0.asm",
+          "assembly_sha256": "b3a57def3e52238672ba7f82900b47427a6bcc8311bfa9c5422f09baa00187b6",
+          "normalized_assembly": "baseline-0-normalized.asm",
+          "normalized_sha256": "6f851d4bbdb917a3bdea75d466d382049032553c9400d0dcdcaa1d6f0df75a23"
+        },
+        "<hyperreal::computable::node::Computable>::approx_signal": {
+          "address": 668464,
+          "size_bytes": 4982,
+          "address_mod_64": 48,
+          "instructions": 986,
+          "assembly": "baseline-1.asm",
+          "assembly_sha256": "d65bed72173b9326e6793193b582e17a278285c9a633791be09260506d3463f4",
+          "normalized_assembly": "baseline-1-normalized.asm",
+          "normalized_sha256": "c93d51ca70b9836b1f594b0461066e7b7b231593088c46c07be334708707e1bf"
+        },
+        "hyperreal::computable::node::scale_at_precision_ref": {
+          "address": 767840,
+          "size_bytes": 1238,
+          "address_mod_64": 32,
+          "instructions": 298,
+          "assembly": "baseline-2.asm",
+          "assembly_sha256": "8fdd84f5ece899d9bb5263fd505b47e6e95c5990ad3ebabb1b28b632e034f47d",
+          "normalized_assembly": "baseline-2-normalized.asm",
+          "normalized_sha256": "2ed71062c585d1d60e12c764aaa2e261e5c6f4b120fc0db2590eab2d2fc1c9f6"
+        }
+      }
+    },
+    "candidate": {
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2015-nth-root-enclosure-integer-cost/probe",
+      "binary_sha256": "97d2f48bfd46ca220b0fc97438cfdb9163276e7140a026360098dbdbe7a55725",
+      "functions": {
+        "probe::main": {
+          "address": 380512,
+          "size_bytes": 6535,
+          "address_mod_64": 32,
+          "instructions": 1436,
+          "assembly": "candidate-0.asm",
+          "assembly_sha256": "b18b075b16caaa2dac4d5ea6d8506534d1c4e3ffc4576c390f297f9081f34b59",
+          "normalized_assembly": "candidate-0-normalized.asm",
+          "normalized_sha256": "6f851d4bbdb917a3bdea75d466d382049032553c9400d0dcdcaa1d6f0df75a23"
+        },
+        "<hyperreal::computable::node::Computable>::approx_signal": {
+          "address": 667824,
+          "size_bytes": 4982,
+          "address_mod_64": 48,
+          "instructions": 986,
+          "assembly": "candidate-1.asm",
+          "assembly_sha256": "d19e0001db826583c9116ab211a7c3fbc655043d217c44f3c8f733c7a8355b0c",
+          "normalized_assembly": "candidate-1-normalized.asm",
+          "normalized_sha256": "c93d51ca70b9836b1f594b0461066e7b7b231593088c46c07be334708707e1bf"
+        },
+        "hyperreal::computable::node::scale_at_precision_ref": {
+          "address": 767744,
+          "size_bytes": 1238,
+          "address_mod_64": 0,
+          "instructions": 298,
+          "assembly": "candidate-2.asm",
+          "assembly_sha256": "6803b294ba06e4581b0b38a181fd03c3b54196339b1b2971443279df4bfdbe48",
+          "normalized_assembly": "candidate-2-normalized.asm",
+          "normalized_sha256": "2ed71062c585d1d60e12c764aaa2e261e5c6f4b120fc0db2590eab2d2fc1c9f6"
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "probe::main": {
+      "normalized_instruction_shapes_equal": true,
+      "diff": "function-0.diff",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "<hyperreal::computable::node::Computable>::approx_signal": {
+      "normalized_instruction_shapes_equal": true,
+      "diff": "function-1.diff",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "hyperreal::computable::node::scale_at_precision_ref": {
+      "normalized_instruction_shapes_equal": true,
+      "diff": "function-2.diff",
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "timed_processes": 0,
+  "observations": [
+    "Exact integer leaves check cancellation/exhaustion, preserve the exact-zero shortcut, validate precision, charge one evaluation-work unit, then call scale_at_precision_ref. This path precedes all graph validation and node-cache publication.",
+    "The wide_gap fixture uses positive/negative 1000001-bit exact integers, precision i32::MAX and 10000 timed queries. In scale_at_precision_ref, the positive precision enters rounded_shift_right, whose gap > n.bits() branch returns zero before any bigint shift or allocation.",
+    "The current out-of-line scale helper saves six registers and reserves 88 stack bytes before the gap test. A possible source optimization is to discharge exactly that coarse-zero case in the already-charged exact-integer branch, leaving cancellation, precision validation, work charging and all nonzero-shift behavior in their original order. This hypothesis still needs separate focused evidence and every frozen qualification gate."
+  ],
+  "limits": "The normalization removes absolute instruction addresses, RIP displacements/comments, and branch target addresses while retaining instruction offsets and named external targets. Equality describes normalized instruction shape, not byte identity, target/data identity, executed traces, formal semantics or timing causation. This review cannot convert the v2021 failed comparison into a pass. It makes no source edit and performs no timing retry.",
+  "artifacts_sha256": {
+    "baseline-0-normalized.asm": "6f851d4bbdb917a3bdea75d466d382049032553c9400d0dcdcaa1d6f0df75a23",
+    "baseline-0.asm": "b3a57def3e52238672ba7f82900b47427a6bcc8311bfa9c5422f09baa00187b6",
+    "baseline-1-normalized.asm": "c93d51ca70b9836b1f594b0461066e7b7b231593088c46c07be334708707e1bf",
+    "baseline-1.asm": "d65bed72173b9326e6793193b582e17a278285c9a633791be09260506d3463f4",
+    "baseline-2-normalized.asm": "2ed71062c585d1d60e12c764aaa2e261e5c6f4b120fc0db2590eab2d2fc1c9f6",
+    "baseline-2.asm": "8fdd84f5ece899d9bb5263fd505b47e6e95c5990ad3ebabb1b28b632e034f47d",
+    "baseline-symbols.txt": "37382e2ae27dc8a64d336138fe66b258092d4761abbf2495aa184a6915cbea48",
+    "candidate-0-normalized.asm": "6f851d4bbdb917a3bdea75d466d382049032553c9400d0dcdcaa1d6f0df75a23",
+    "candidate-0.asm": "b18b075b16caaa2dac4d5ea6d8506534d1c4e3ffc4576c390f297f9081f34b59",
+    "candidate-1-normalized.asm": "c93d51ca70b9836b1f594b0461066e7b7b231593088c46c07be334708707e1bf",
+    "candidate-1.asm": "d19e0001db826583c9116ab211a7c3fbc655043d217c44f3c8f733c7a8355b0c",
+    "candidate-2-normalized.asm": "2ed71062c585d1d60e12c764aaa2e261e5c6f4b120fc0db2590eab2d2fc1c9f6",
+    "candidate-2.asm": "6803b294ba06e4581b0b38a181fd03c3b54196339b1b2971443279df4bfdbe48",
+    "candidate-symbols.txt": "f8ecb64c018cd9bb20a522153058c3f139b3ac23e03b234fc86da51bffd028cc",
+    "function-0.diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "function-1.diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "function-2.diff": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "inputs/crates/hyperreal/src/computable/node/approximation_queries.rs": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+    "inputs/crates/hyperreal/src/computable/node/evaluation_budget.rs": "6db535f4b8a99ef2f98d879f6b20adb617370ba614ba81eb91ef8609f1e3e011",
+    "inputs/crates/hyperreal/src/computable/node/integer_scale_tests.rs": "e4441d8f6862399f98ff0abd1e6dbad848138ff2ae0491dfc950f2ed36edaf28",
+    "inputs/crates/hyperreal/src/computable/node/scale.rs": "1f5cfc2008c5c7ec28d8dde04a140b48807321b6a48ca6ced36837dd39aee8f7",
+    "reproduce.py": "cad0140ae1c5082c37f80facef8d3870c1e2624ff01bd36eef9a68c441692217"
+  }
+}
