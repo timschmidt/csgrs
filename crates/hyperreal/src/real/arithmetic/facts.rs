@@ -1407,6 +1407,42 @@ impl Real {
     /// Returns `None` if evaluation was aborted; aborted approximations are not
     /// certificates.
     pub fn certified_rational_interval(&self, precision: i32) -> Option<[Rational; 2]> {
+        if let Some(exact) = self.exact_rational_ref() {
+            return Some([exact.clone(), exact.clone()]);
+        }
+        if self.is_aborted() {
+            return None;
+        }
+        let approximation = self.computable_clone().approx(precision);
+        if self.is_aborted() {
+            return None;
+        }
+        Some(self.interval_from_approximation(approximation, precision))
+    }
+
+    /// Returns a certified rational interval using only an existing cache.
+    ///
+    /// Exact rationals return point intervals. Other values return `None` when
+    /// the cache cannot answer the requested computable precision or evaluation
+    /// is aborted. Finer cached values are rounded to the requested precision;
+    /// this method never initiates numeric refinement. The exact rational scale
+    /// is applied as in [`Self::certified_rational_interval`], including reversal
+    /// of the interval for a negative scale.
+    pub fn cached_rational_interval(&self, precision: i32) -> Option<[Rational; 2]> {
+        if let Some(exact) = self.exact_rational_ref() {
+            return Some([exact.clone(), exact.clone()]);
+        }
+        if self.is_aborted() {
+            return None;
+        }
+        let approximation = self.computable.as_ref()?.cached_at_precision(precision)?;
+        if self.is_aborted() {
+            return None;
+        }
+        Some(self.interval_from_approximation(approximation, precision))
+    }
+
+    fn interval_from_approximation(&self, approximation: BigInt, precision: i32) -> [Rational; 2] {
         fn scaled_integer(value: BigInt, precision: i32) -> Rational {
             if precision < 0 {
                 let shift = usize::try_from(precision.unsigned_abs())
@@ -1420,25 +1456,15 @@ impl Real {
             }
         }
 
-        if let Some(exact) = self.exact_rational_ref() {
-            return Some([exact.clone(), exact.clone()]);
-        }
-        if self.is_aborted() {
-            return None;
-        }
-        let approximation = self.computable_clone().approx(precision);
-        if self.is_aborted() {
-            return None;
-        }
         let lower = scaled_integer(&approximation - BigInt::from(1_u8), precision);
         let upper = scaled_integer(approximation + BigInt::from(1_u8), precision);
         let scaled_lower = &self.rational * &lower;
         let scaled_upper = &self.rational * &upper;
-        Some(if self.rational.sign() == Sign::Minus {
+        if self.rational.sign() == Sign::Minus {
             [scaled_upper, scaled_lower]
         } else {
             [scaled_lower, scaled_upper]
-        })
+        }
     }
 
     /// Returns certified bounds on the dyadic grid with spacing `2^precision`.
