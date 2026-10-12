@@ -1,0 +1,7 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "sha256": "4912fe46e58e083b00e8ecd31aeab997835e07314868926954999712a5ba9065",
+  "bytes": 54166288,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc/Cargo.toml",
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc#0.3.0"
+}

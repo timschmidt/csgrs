@@ -1,0 +1,72 @@
+{
+  "scope": "Original focused native consumer and full-board gates on the frozen integer-leaf reuse candidate.",
+  "decision": "full-board-runtime-gate-failed",
+  "focused_tests": {
+    "curve-regressions": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.49s"
+    ],
+    "drc-regressions": [
+      "test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+    ]
+  },
+  "strict_consumer_clippy": "Release all-feature all-target Clippy with -D warnings passes for hypercurve and hyperdrc.",
+  "full_board": {
+    "exit_code": 101,
+    "worker_cpu_seconds": 154.353265288,
+    "original_limit_seconds": 120,
+    "finding_counts": [
+      12,
+      197
+    ],
+    "check_progress": [
+      "hyperdrc: finished check layer-sanity (7 finding(s), 77.977s)",
+      "hyperdrc: finished check min-copper-neck (5 finding(s), 42.092s)",
+      "hyperdrc: finished emit report (0.010s)",
+      "hyperdrc: finished check layer-sanity (1 finding(s), 15.989s)",
+      "hyperdrc: finished check min-copper-neck (4 finding(s), 9.111s)",
+      "hyperdrc: finished emit report (0.001s)"
+    ],
+    "process_user_seconds": 152.85,
+    "process_system_seconds": 1.87,
+    "process_maximum_rss_kib": 1963460
+  },
+  "copper_neck": {
+    "exit_code": 0,
+    "original_check_wall_limit_seconds": 60,
+    "check_assertion_passed": true,
+    "exact_check_duration_reported": false,
+    "complete_process_seconds": 151.58288175007328,
+    "qualification": "Complete process duration includes parsing and layer preparation before the timed check. It is not the check duration."
+  },
+  "comparison_limits": "The prior cache snapshot failed at 159.882472765 worker seconds and this snapshot fails at 154.353265288. These standalone gates are not a fixed matched application cost experiment and do not establish a causal speedup. Finding counts alone do not establish complete report identity.",
+  "remaining": [
+    "Byte-for-byte complete report replay with identical shared input paths and independently bound binaries.",
+    "Diagnose remaining full-board costs while preserving all original limits, fixtures and cache fallback guarantees.",
+    "Resolve scalar control-cost/retained-memory tradeoffs, broader/default/feature consumer suites and cache-frontier coverage.",
+    "Update public two-pass recognition-budget wording before considering any persistent-cache admission."
+  ],
+  "artifacts_sha256": {
+    "native-gate-v1/binary.json": "066746c5057109fe928f5f1911c15233ac99a97efa10f63691b59302e0b05ca1",
+    "native-gate-v1/build-board-tests.stderr": "64d4bc469ebe88707decf4df24b2366b9b738e3da5194dc1cf49eefde6b7b384",
+    "native-gate-v1/build-board-tests.stdout": "5a99d079bbaf5e0b2c1780b0db71fe491f639279d2d7416147103fdd4c68028c",
+    "native-gate-v1/copper-neck.stderr": "6ecafe985db60edbc88088395fa0972dbfb3085a7986c51273e43e1839264bc3",
+    "native-gate-v1/copper-neck.stdout": "62f39845e890dcca51b99837c55de9848e997ff519d8f62e0c3882149501a454",
+    "native-gate-v1/curve-regressions.stderr": "3acfbf72da8db86e056cf9d6a92a58f087d7811a848bd21040abbae1aeb816ad",
+    "native-gate-v1/curve-regressions.stdout": "0228d477203ba37695b914ddc9511fbdd86a97f647b752330c6fe1e6904e5000",
+    "native-gate-v1/drc-regressions.stderr": "b646b28491be3b6f2e5646889f800838bdcca83d186bd3996c15da11995bdb4d",
+    "native-gate-v1/drc-regressions.stdout": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "native-gate-v1/full-board.stderr": "2faf97fd5513dcf3ad7f1350e8492c877485e333f46fa5a39e76efbafcfa4d1a",
+    "native-gate-v1/full-board.stdout": "b7373a9275d8a29326b5d89f2f65acad722483b87bf5653c26311b9da27a07e5",
+    "native-gate-v1/protocol.json": "f4b2b56b36bb45736a0dcd3f1425db0b81e0d79bd5d723f3cd948e090f08c96b",
+    "native-gate-v1/result.json": "36fa766e14a40ad762802dc74ca1b877f770159797a25e1aaf03a4209664b58b",
+    "native-gate-v1/strict-consumer-clippy.stderr": "1070d954b90a471697e1891b2acf42a4bc9750e27cbdbb66de876891f0667921",
+    "native-gate-v1/strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native_gate_v1.py": "ccd716c850a91f235ee650ee7299e2c53b8e47e38219223d4063d5b51dd24c84",
+    "scalar-assessment-v1.json": "a7367fd4fb5cef99488dab0cce2dc2d8fbcd830cd341dfc0aecc28306944e454"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

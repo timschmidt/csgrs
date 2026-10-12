@@ -68,18 +68,19 @@
       "latest_result": "Affine and pi-transport quadratic queries become faster and allocate less, but mixed-field declines are slower in all five pairs (median ratios about 1.582 first/warm and 1.349 cloned), with 18000 additional allocation calls per 1000 inputs. Conjugate-then-affine warm/cloned queries also regress in all five pairs. Native gates are not advanced for this rejected source."
     },
     "isolated_integer_leaf_reuse": {
-      "status": "native-diagnostics-pending",
+      "status": "full-board-runtime-gate-failed",
       "evidence": "docs/evidence/2026-10-12-small-integer-certificates/scalar-assessment-v1.json",
       "qualification": "863 scalar library results, 28 doctests, strict all-feature all-target Clippy, docs and formatting pass. Fixed three-suite scalar costs preserve all exact witnesses and representation inventories; many quadratic/integer queries improve. The one new boundary regression and five original cache regressions are included in the 863 result total.",
       "tradeoffs": "Most substantive quadratic and integer-boundary queries improve, including the mixed-field decline that regressed in both direct consumers. Some controls have higher timing medians, including rational radical-Laurent construction and quadratic opaque-cancellation cloning. Some construction phases retain slightly more cache memory; the signed-word construction allocates more bytes. All ranges and pairs remain visible; no statistical significance, application speedup, universal monotonicity or runtime admission is claimed.",
       "remaining": [
-        "Run original native fixtures and unchanged 120-second worker CPU / 60-second copper-neck check wall assertions.",
-        "Broader/default/feature consumer correctness and complete report replay.",
-        "Resolve control-cost and retained-memory tradeoffs; independent cache frontiers and matched full-application performance.",
-        "Public recognition-budget documentation still needs the persistent-cache two-pass wording before any runtime admission.",
-        "The larger typed scalar evaluation prototype and the full properties plan remain open."
+        "Byte-for-byte complete report replay with identical shared input paths and independently bound binaries.",
+        "Diagnose remaining full-board costs while preserving all original limits, fixtures and cache fallback guarantees.",
+        "Resolve scalar control-cost/retained-memory tradeoffs, broader/default/feature consumer suites and cache-frontier coverage.",
+        "Update public two-pass recognition-budget wording before considering any persistent-cache admission."
       ],
-      "runtime_admitted": false
+      "runtime_admitted": false,
+      "native_evidence": "docs/evidence/2026-10-12-small-integer-certificates/native-assessment-v1.json",
+      "native_result": "Twelve curve and 26 DRC focused tests plus strict consumer Clippy pass. The unchanged copper-neck check passes its 60-second assertion. Full-board worker CPU remains above the original 120-second limit at 154.353265288 seconds, with 12/197 findings."
     }
   },
   "status_meanings": {
