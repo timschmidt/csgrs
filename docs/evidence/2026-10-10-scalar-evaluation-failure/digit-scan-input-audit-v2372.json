@@ -1,0 +1,277 @@
+{
+  "status": "Generic scan proofs and fresh controls pass; prior disjoint guards and runtime inputs remain applicable",
+  "runner_sha256": "b7741725b0b4d0f85ff63f97ba73c3ffcb57b3dfc25cd5afccd4313dc05f88cd",
+  "previous_checkpoint": "typed-api-prototype-v2358-state.json",
+  "previous_checkpoint_sha256": "5af0c6067447ffcf6f531b7b3cb206b83532225b99f6c8a1f66cbca7698bc991",
+  "source_record": "typed-api-prototype-v2367-digit-scan-final-verus/source-hashes.json.gz",
+  "source_record_sha256": "a83cff31d79bb8bbbb5100829d14a5683ca081410433e95b32d22460a062a730",
+  "source_files_verified": 24749,
+  "main_files_verified": 1167,
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "645d0dd57909ec9a70f4ecb958e0f09a146be256e1842528dfd4ad4de7a34195",
+      "after": "42453d638f19acb73323970c871fe6a215986235cb370b829ec8bf4a5ae4fcd0"
+    },
+    "crates/hyperreal/verification/digit_scan_model.rs": {
+      "before": null,
+      "after": "af28a1fc717138f0aa9ee4a49d948d2e229e846c4d99f2c95cde3a9feb14ea41"
+    },
+    "crates/hyperreal/verification/lib.rs": {
+      "before": "c85f1dfe01e7610a31eafb8ed9e31bad0e41c934f54c8f3e5b2e6dfca500437a",
+      "after": "2d2d2bea5136e0fe44adbfac0005733380ff912359cabbd2af23db4dedc2dc1a"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "cabef5a8805d1abf4b7a3e19ab4ed13f2b500348766c01ee08c017117168d90c",
+      "after": "f72d68b70d40f98a378b52953db6c5e0932413534914db82b207117bbb036bc6"
+    },
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": {
+      "before": null,
+      "after": "0f246d84619d9e848373307e1538c451adc4ccf61b1bc765ddc393750b920f3a"
+    },
+    "crates/hyperreal/verification/test_rejections.py": {
+      "before": "465280ee7ddb756ce84ea8183e8179a7f64db05282f815d8c74a1a1511619b20",
+      "after": "bcd200c9c219886f851d1da28f7c2c56ba47d1af279a5ca0ec73932c72aa3332"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "conditional_proof": {
+    "verified_units": 716,
+    "errors": 0,
+    "production_contracts": 98,
+    "model_theorems": 160,
+    "open_obligation_groups": 13
+  },
+  "fresh_validation_record_sha256": "eac7eed54fdb9a964ea900f21888ca431dcdd02f14371624809e8210f1c876bf",
+  "fresh_rejected_mutations": 19,
+  "fresh_positive_baselines": 1,
+  "fresh_guard_log_sha256": "1ef7ffcb8549a4f7ac3e30e33667e48429a3920d704bfc0b9f0e375e191e300f",
+  "fresh_mutations": [
+    {
+      "function": "digit_prefix_bound",
+      "invocation_index": 1,
+      "mutated_source_sha256": "21a5081d17e6c47f1b7f1a7a6b9a31ab5c09e0e9888aa19cc2ad29cbb8c87629"
+    },
+    {
+      "function": "digit_prefix_zero",
+      "invocation_index": 2,
+      "mutated_source_sha256": "6df1c6feb31bd9b4697d52fecf9746b2f8c5f68e41bda02c8fb52098d48d4ce9"
+    },
+    {
+      "function": "digit_prefix_full",
+      "invocation_index": 3,
+      "mutated_source_sha256": "ecfdf6e71630302042979466d0b756cff22033b47ccf76942fb643178a50ec4a"
+    },
+    {
+      "function": "upper_digits_preserve_odd_factor",
+      "invocation_index": 4,
+      "mutated_source_sha256": "2bcc6ff632e2e4ed582270a371ef82c4f5f8d73305a3ba181d1e3866deb72858"
+    },
+    {
+      "function": "upper_digits_preserve_odd_factor",
+      "invocation_index": 5,
+      "mutated_source_sha256": "a965e16b425a6fdabd117e459f34d083050b4220dcea3e56b50c47789f542b20"
+    },
+    {
+      "function": "all_full_digits_factor",
+      "invocation_index": 6,
+      "mutated_source_sha256": "788812321aeb0d4ba3dbc2e0b5ad9c320502179e1c82aae0d63b4257976279fe"
+    },
+    {
+      "function": "first_nonzero_digit_factor",
+      "invocation_index": 7,
+      "mutated_source_sha256": "62f81a3b688143a0d83b7297bcfff739558afa1510cf1b0e3362eae535378b60"
+    },
+    {
+      "function": "first_nonzero_digit_factor",
+      "invocation_index": 8,
+      "mutated_source_sha256": "46cb4d63eb42a15f29921d1b0e90d9d7e5c9747a6b314a621d49d975aca9d15a"
+    },
+    {
+      "function": "first_nonmaximal_digit_factor",
+      "invocation_index": 9,
+      "mutated_source_sha256": "3046580bc00f080bfbaa7df0c5e7f83cbbec9e6ef5270e49e253bb700754ea99"
+    },
+    {
+      "function": "first_nonmaximal_digit_factor",
+      "invocation_index": 10,
+      "mutated_source_sha256": "71540324c5fd13859bf23139e1ac64019a913e1d38344c70ff7c00377fd70442"
+    },
+    {
+      "function": "normalized_zero_iff_empty",
+      "invocation_index": 11,
+      "mutated_source_sha256": "1023ee5fcae4ce509bfcf61748398e11f3e8f21b134dbaa20acafb2974a6172c"
+    },
+    {
+      "function": "normalized_digit_bit_length",
+      "invocation_index": 12,
+      "mutated_source_sha256": "bdd6a5219979f2f5015f1ff55bf62a688e2a897618c28c838cc9ccfd19b34e1d"
+    },
+    {
+      "function": "normalized_digit_bit_length",
+      "invocation_index": 13,
+      "mutated_source_sha256": "bbc9c7bdb773d79836fb43536776492282fb712a854779d7444ce0117b236aef"
+    },
+    {
+      "function": "zero_scan_determines_power_of_two",
+      "invocation_index": 14,
+      "mutated_source_sha256": "96dcfe286d6be49882ccb4a3ab8b13f623b748cbdb9dc1412b397dc56236eb96"
+    },
+    {
+      "function": "zero_scan_determines_power_of_two",
+      "invocation_index": 15,
+      "mutated_source_sha256": "10a42600098756a65898788ff3c78f8beaebabed1e9d462ba15304d97bab4f10"
+    },
+    {
+      "function": "one_scan_determines_all_ones",
+      "invocation_index": 16,
+      "mutated_source_sha256": "b59a369300ec1cc272f4125cccf11d264f42cbe7c7d13226cfa514b0d35d6e66"
+    },
+    {
+      "function": "full_digit_scan_determines_all_ones",
+      "invocation_index": 17,
+      "mutated_source_sha256": "e9d20f2fa3fe6a077b5123d3abcb74cf92c750e3f3fd8670cb523e423e59f09c"
+    },
+    {
+      "function": "u32_digit_bit_length",
+      "invocation_index": 18,
+      "mutated_source_sha256": "db17fb2a5e07642a5cae763ceb5bb39903ac2eee5c2c654c4d4b0f9fbb7b2b6b"
+    },
+    {
+      "function": "u32_digit_bit_length",
+      "invocation_index": 19,
+      "mutated_source_sha256": "264016dde7ebde36cc75f337f636d18fe51e54e2bdd21c9892035c11dff31bbc"
+    }
+  ],
+  "fresh_acceptance_tests": 10,
+  "included_format_files": 111,
+  "inherited_input_audit": "trailing-metadata-input-audit-v2357.json",
+  "inherited_input_audit_sha256": "f72fef1ddbd076cb7ebee657c4afd93ac1428d288fd586fd794398473b139605",
+  "reused_rejected_mutations": 267,
+  "reused_positive_baselines": 5,
+  "total_applicable_rejected_mutations": 286,
+  "total_applicable_positive_baselines": 6,
+  "reconstructed_prior_temporary_entrypoints": {
+    "test_rejections.py": 104,
+    "test_structural_rejections.py": 22,
+    "test_bound_rejections.py": 91,
+    "test_cache_rejections.py": 42,
+    "test_bit_metadata_rejections.py": 13
+  },
+  "prior_guard_logs_sha256": {
+    "typed-api-prototype-v2339-approximation-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "9ce5d2933e9b162930faaa4299bc56dc826c7a4370dc13ced992f7b611bb8efa",
+    "typed-api-prototype-v2353-trailing-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "a26a937acb1ef609fc263f188a06f15f25195b13025fdfce3ed55652df3afa24"
+  },
+  "old_guard_reuse_basis": "All prior model and production Rust inputs and guard generators are unchanged from v2358. Each of the 272 captured temporary lib.rs hashes reconstructs exactly from its unchanged generator and original temporary path; none imports the new module or the changed full-target entrypoint. Removing exactly the new test entrypoint import and call restores its old bytes. Reuse inherits v2357 and its explicit v2344 import-order audit, preserving original invocation identities.",
+  "unchanged_proof_dependencies_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "historical_runtime_evidence_applicable": true,
+  "unchanged_frozen_probe_binaries": 7,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "support_probes": {
+    "digit-scan-model-probe-v2359": {
+      "result_sha256": "d39f892f23e1eacecbae17d502fd0ff3562a6c8d846d2f5aba0e001aff7737d2",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 25,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    },
+    "digit-scan-connections-probe-v2360": {
+      "result_sha256": "db85ba740400421974a91c8fcee28d24779822e6ae7eb25803636867b21e3d7c",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 0,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    },
+    "digit-scan-connections-probe-v2361": {
+      "result_sha256": "b01aea152ba8a991917eeb45437e25401919bd6ec930a383482957e0e520815f",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      }
+    },
+    "digit-scan-connections-probe-v2362": {
+      "result_sha256": "3240528f4c14dec45267eb96d82ddcfe970c44b3e55d04876e6010b9502b15f9",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 418,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      }
+    }
+  },
+  "launcher_failure_preserved": "typed-api-prototype-v2364-digit-scan-verus",
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "scope": "Seventeen conditional model lemmas and nineteen new controls. Radix-parametric denotation, first-match premises and the public u32 bit contract now connect to the retained flag decisions. Actual dependency storage/views, normalization, iterators, machine count range, sign imports, approximation truth, independent existence, callers and concurrent publication remain open. No runtime execution, historical relabelling, main/native admission or property/target completion follows."
+}

@@ -1,0 +1,18 @@
+{
+  "status": "Frozen before applying final entrypoint and guard layout",
+  "runner_sha256": "be6cac4e55bdcdf784dae72ae933b6857632fa94eed98c2fad2dbc6b6ec31001",
+  "previous_source_record_sha256": "7b1277a3edce614e4ee8c4c2ba37fb9330876e0b37c79633921e95051e7db0e5",
+  "before_sha256": {
+    "crates/hyperreal/verification/lib.rs": "af0d32e434cb501d0ba22a7c07aedb56f34b76829e2a6bdc9988f852d0c79e43",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "01e66b390cb706d60ac46de3322326008172a014fa887cba7baca949f745079c"
+  },
+  "after_sha256": {
+    "crates/hyperreal/verification/lib.rs": "2d2d2bea5136e0fe44adbfac0005733380ff912359cabbd2af23db4dedc2dc1a",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "0f246d84619d9e848373307e1538c451adc4ccf61b1bc765ddc393750b920f3a"
+  },
+  "patch_sha256": "0889f104f8ebf245972d96a291e078ace56bab4acf17cf5e6047288cf19dc626",
+  "source_record_sha256": "a83cff31d79bb8bbbb5100829d14a5683ca081410433e95b32d22460a062a730",
+  "change": "Sort proof module declarations using rustfmt and format the nineteen mutation tuples over readable lines. Python AST equality is checked; no proof, mutation, production body or old evidence is changed. Rerun the full proof and fresh guards on this final source.",
+  "failed_launcher_phase_preserved": "typed-api-prototype-v2364-digit-scan-verus",
+  "launcher_failure_reason": "The wrapper runs in SOURCE, so the first relative proof-runner path was unavailable. The v2365 run used the existing absolute runner path and passed 716 units. This is not a verifier failure or a pass credited to v2364."
+}

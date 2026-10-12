@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before primitive support probing",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--no-cheating",
+    "--output-json",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/digit-scan-model-probe-v2359/probe.rs"
+  ],
+  "runner_sha256": "0412e8b398f22be18d8b3f1c4d1c74c74471e021e10fe584beea02f23e5f7394",
+  "probe_sha256": "df758143d4bd21a7ce43c5ade6e6cd5f67f9f2f4ce93e23eaebb786f6914929b",
+  "retained_checkpoint": "typed-api-prototype-v2358-state.json",
+  "retained_checkpoint_sha256": "5af0c6067447ffcf6f531b7b3cb206b83532225b99f6c8a1f66cbca7698bc991",
+  "source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "pinned_toolchain": {
+    "version": "0.2026.09.13.671956e",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+    "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+    "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+    "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+    "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+  },
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "question": "Do radix-parametric prefix identities and first matching digit premises establish whole-value odd factors for zero and one scans, including empty and all-maximal storage?",
+  "scope": "Use only the pinned vstd standard-library axioms already supplied by Verus. Introduce no external method specification, assumption or trusted arithmetic axiom. This support probe is not a production BigInt proof, a SOURCE change, a new retained theorem or runtime admission. Preserve a failure without changing completed artifacts."
+}

@@ -1,0 +1,17 @@
+error[E0308]: mismatched types
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/digit-scan-connections-probe-v2360/probe.rs:278:9
+    |
+277 |     ensures crate::magnitude_model::has_bit_length(digit_value(digits, width),
+    |             -------------------------------------- arguments to this function are incorrect
+278 |         width * (digits.len() - 1) + top_bits),
+    |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ expected `nat`, found `int`
+    |
+note: function defined here
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/magnitude_model.rs:16:18
+    |
+ 16 | pub open spec fn has_bit_length(value: nat, bits: nat) -> bool {
+    |                  ^^^^^^^^^^^^^^             ---------
+
+error: aborting due to 1 previous error
+
+For more information about this error, try `rustc --explain E0308`.

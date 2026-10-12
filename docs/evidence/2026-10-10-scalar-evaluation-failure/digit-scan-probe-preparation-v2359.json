@@ -1,0 +1,13 @@
+{
+  "status": "Frozen before the generic arithmetic support probe",
+  "preparation_sha256": "97e38bcb92fb92038f0cac3920b4cac2c0f38f762668cf7921d3a98ec564ddc6",
+  "parent_runner": "probe_trailing_bit_support_v2346.py",
+  "parent_runner_sha256": "223056f3b6572772be8877a3dbdba1fc1bb19e4c3c446130ef9d5920cf675193",
+  "proposal": "digit-scan-model-proposal-v2359.rs",
+  "proposal_sha256": "df758143d4bd21a7ce43c5ade6e6cd5f67f9f2f4ce93e23eaebb786f6914929b",
+  "runner": "probe_digit_scan_model_v2359.py",
+  "runner_sha256": "0412e8b398f22be18d8b3f1c4d1c74c74471e021e10fe584beea02f23e5f7394",
+  "retained_checkpoint": "typed-api-prototype-v2358-state.json",
+  "source_changed": false,
+  "scope": "The generic prefix lemmas adapt the existing ghost limb-denotation arguments to natural digits and arbitrary power-of-two radix. The scan lemmas take explicit first-match and word-factor premises. No production body, BigUint storage, iterator or machine count is substituted or assumed verified; the model has not yet been integrated into the retained conditional target. Preserve every failed attempt separately."
+}

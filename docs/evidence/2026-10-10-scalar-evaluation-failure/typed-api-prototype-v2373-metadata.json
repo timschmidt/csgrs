@@ -1,0 +1,61 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v2358-state.json",
+  "status": "Retain the isolated conditional digit-scan models; runtime remains v2335",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "evidence_commits": [
+    "467569e05b0e8475df089e83f4e2ac63ba62102a",
+    "4e50b4aba045e2eed88033d71590a957de7cfc6b",
+    "8de1a1b380991834b6d6180139c49fdb520ef278",
+    "b5fef35e7ae76323ff4f5bcffbb2d334305211fb",
+    "92dff914846a44e14e67a1fc549ce4491f8d4ad3",
+    "082a7ca73c8f3b256b17d6d25a17349c96556c5b"
+  ],
+  "retention_record": "digit-scan-retention-v2373.json",
+  "retention_record_sha256": "c342f5cab093c99b6cdbee1361c2eeaeec8a233302e2668e38579485d6e76a0f",
+  "input_audit": "digit-scan-input-audit-v2372.json",
+  "input_audit_sha256": "219cb18b2d02d00755f2958e091dab028c0df57a8587c460e6152142616987b1",
+  "conditional_proof": {
+    "verified_units": 716,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 160,
+    "open_obligation_groups": 13,
+    "fresh_acceptance_tests": 10,
+    "fresh_rejected_mutants": 19,
+    "fresh_passing_guard_baselines": 1,
+    "reused_rejected_mutants": 267,
+    "reused_passing_guard_baselines": 5,
+    "total_applicable_rejected_mutants": 286,
+    "total_applicable_passing_guard_baselines": 6
+  },
+  "fresh_validation_record": "digit-scan-validation-v2371.json",
+  "historical_runtime_retention": "eager-bound-decoder-retention-v2335.json",
+  "historical_runtime_retention_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "coverage_limits": [
+    "Seventeen added conditional model lemmas cover radix-parametric multiword denotation, empty/all-maximal storage, normalized zero and bit length, first-nonzero/nonmaximal digit premises, and the public u32 leading-zero contract. They connect to the actual retained power-of-two/all-ones flag lemmas. The model uses natural digits and unbounded counts; actual dependency digit views, normalization, iterators, u64 count range and BigInt sign/magnitude imports remain open.",
+    "The full conditional target passes 716 units, zero errors, 98 production contracts and 160 model theorems. Nineteen new negatives and one baseline pass, with ten acceptance tests and workspace/111-input formatting. The 267 old negatives/five baselines retain their original identities under v2372: all 272 temporary entrypoints reconstruct exactly from unchanged generators and original paths. The audit inherits v2357 and its explicit v2344 import-order correction; old runs are not relabelled as fresh.",
+    "Six verification files change, including a new model and guard module. Ordinary runtime, build, test corpus and probe sources remain unchanged. Historical v2335 runtime, cap, cost and replay evidence remains applicable with all original limits and failures. No fresh runtime, cost or replay process is credited.",
+    "The standalone generic probe passes 25 units and the connected probe passes 418 units including existing imported proofs; neither count is added to retained coverage. The failed int-to-nat proposal, unavailable closed-spec reveal and incorrect relative launcher path remain archived. The correction uses public pinned bit-position contracts without introducing trusted assumptions. Final entrypoint sorting and guard layout preserve module membership and the Python AST; the complete proof and fresh guards execute on that final source.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "remaining_requirements": [
+    "Connect the generic digit denotation and scan lemmas to typed u32/u64 dependency storage and actual normalization/first-match iterator behavior. Discharge machine-width metadata ranges and BigInt sign/magnitude imports, retaining the producer's early Unknown and short-circuit trailing-zero scan. Continue approximation truth, independent real existence, caller and atomic publication proofs. Exact-operation resource failures, fixed-baseline and main/native/full-board requirements remain open.",
+    "Preserve every original full-size regression, corpus, process cap, failure and retained tradeoff. Thread stress and conditional lemmas do not replace graph/producer/existence/atomic proofs.",
+    "Continue constructor/coefficient copies, exact-operation CPU/memory use and unshared expression growth before native combination and unchanged full-board admission.",
+    "All thirteen whole-crate groups and the fixed pre-Verus baseline remain open. Complete the whole properties.md plan and repository pre-push checks; no property/target completion follows from this isolated checkpoint."
+  ]
+}

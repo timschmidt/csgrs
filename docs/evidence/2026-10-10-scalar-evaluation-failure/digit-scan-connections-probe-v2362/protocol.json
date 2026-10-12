@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before primitive support probing",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--no-cheating",
+    "--output-json",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/digit-scan-connections-probe-v2362/probe.rs"
+  ],
+  "runner_sha256": "e7c61e9177676211d2b55bc63d74e58fac103800080246e41571318e0a6f60fb",
+  "probe_sha256": "c6a66ea1ce94307396ba8938a63e28033d99b815f4cbc621c98b81ba232c3ed5",
+  "retained_checkpoint": "typed-api-prototype-v2358-state.json",
+  "retained_checkpoint_sha256": "5af0c6067447ffcf6f531b7b3cb206b83532225b99f6c8a1f66cbca7698bc991",
+  "source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "pinned_toolchain": {
+    "version": "0.2026.09.13.671956e",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+    "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+    "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+    "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+    "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+  },
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "question": "Do generic digit scans, normalization and native u32 leading-zero arithmetic connect to the actual retained bit-length and metadata flag lemmas?",
+  "scope": "Compile the actual retained verified helpers, magnitude model and bit-length model alongside the generic scan proposal. Use the pinned vstd axioms and no new trusted assumptions. Report verifier units separately from new proof functions; imported existing units are not new coverage. This support probe is not a production BigInt proof, a SOURCE change, a new retained theorem or runtime admission. Preserve a failure without changing completed artifacts."
+}

@@ -1,0 +1,8 @@
+error: reveal/fuel statement is not allowed here because the function `vstd::std_specs::bits::u32_leading_zeros` is marked 'closed' and thus its body is not visible here. (Note: 'reveal' statements are intended for functions that are opaque, not functions that are closed)
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/digit-scan-connections-probe-v2361/probe.rs:355:5
+    |
+355 |     reveal(u32_leading_zeros);
+    |     ^^^^^^
+
+error: aborting due to 1 previous error
+

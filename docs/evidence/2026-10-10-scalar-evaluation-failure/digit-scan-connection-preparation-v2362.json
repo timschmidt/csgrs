@@ -1,0 +1,23 @@
+{
+  "status": "Frozen before rerunning the connection probe with public u32 contracts",
+  "preparation_sha256": "cfbaa755a9bccd30814655ba791103801590e126743c3eea3d1d638dd05bc621",
+  "parent_proposal_sha256": "6346ced8611b134886e15242835d88f7cc03cf1a68fcc6691f99550e386361ff",
+  "parent_runner_sha256": "27366fe508703d00052717d3cdef5d36cc88701a4779d3e8f12b8af58900da91",
+  "failed_phase_result_sha256": "b01aea152ba8a991917eeb45437e25401919bd6ec930a383482957e0e520815f",
+  "replacement_proof_sha256": "9e5a2a1e92ff950e44adc392a8f74f0f4d86f74db5e9c7bc6bbb65c4b6ccf386",
+  "proposal_sha256": "c6a66ea1ce94307396ba8938a63e28033d99b815f4cbc621c98b81ba232c3ed5",
+  "runner_sha256": "e7c61e9177676211d2b55bc63d74e58fac103800080246e41571318e0a6f60fb",
+  "pinned_library_source_inspected": {
+    "std_specs/bits.rs": {
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/bits.rs",
+      "sha256": "4bf86e02b483635134634c0300a4fc0624019eaffd687a974f8cb2227c4cb0d9"
+    },
+    "bits.rs": {
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/bits.rs",
+      "sha256": "55cdb303823e41f76b3a2fe467a9dc5aa78962c021b616843cccdcc7ceb077b6"
+    }
+  },
+  "change": "Keep the u32 statement and replace the unavailable recursive reveal with the public top-set-bit and higher-zero-bit guarantees and pinned shift/division lemmas. No new trusted contract or axiom is introduced.",
+  "source_changed": false,
+  "prior_failures_preserved": true
+}

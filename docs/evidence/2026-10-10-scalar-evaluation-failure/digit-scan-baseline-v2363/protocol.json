@@ -1,0 +1,49 @@
+{
+  "status": "Frozen before applying or verifying the generic digit-scan extension",
+  "runner_sha256": "dcb8ecadae2b7b45d80b1e25103d00284f412bbb02ff140188940879e72f2ede",
+  "retained_checkpoint": "typed-api-prototype-v2358-state.json",
+  "retained_checkpoint_sha256": "5af0c6067447ffcf6f531b7b3cb206b83532225b99f6c8a1f66cbca7698bc991",
+  "retained_source_record": "typed-api-prototype-v2352-trailing-metadata-verus/source-hashes.json.gz",
+  "retained_source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "base_commit": "082a7ca73c8f3b256b17d6d25a17349c96556c5b",
+  "support_result_sha256": "3240528f4c14dec45267eb96d82ddcfe970c44b3e55d04876e6010b9502b15f9",
+  "candidate_files_sha256": {
+    "crates/hyperreal/verification/lib.rs": "af0d32e434cb501d0ba22a7c07aedb56f34b76829e2a6bdc9988f852d0c79e43",
+    "crates/hyperreal/verification/test_rejections.py": "bcd200c9c219886f851d1da28f7c2c56ba47d1af279a5ca0ec73932c72aa3332",
+    "crates/hyperreal/verification/scope.json": "f72d68b70d40f98a378b52953db6c5e0932413534914db82b207117bbb036bc6",
+    "crates/hyperreal/verification/README.md": "42453d638f19acb73323970c871fe6a215986235cb370b829ec8bf4a5ae4fcd0",
+    "crates/hyperreal/verification/digit_scan_model.rs": "af28a1fc717138f0aa9ee4a49d948d2e229e846c4d99f2c95cde3a9feb14ea41",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py": "01e66b390cb706d60ac46de3322326008172a014fa887cba7baca949f745079c"
+  },
+  "new_source_files": [
+    "crates/hyperreal/verification/digit_scan_model.rs",
+    "crates/hyperreal/verification/test_digit_scan_rejections.py"
+  ],
+  "source_record_sha256": "7b1277a3edce614e4ee8c4c2ba37fb9330876e0b37c79633921e95051e7db0e5",
+  "proposal_patch_sha256": "7a1d6ca0f317f69fa9193a34395ab574badf1b949c4ff16bafb6db55d019338b",
+  "runtime_source_files_changed": 0,
+  "new_model_theorems": [
+    "digit_scan_model::digit_weight_step",
+    "digit_scan_model::digit_weight_add",
+    "digit_scan_model::digit_prefix_bound",
+    "digit_scan_model::digit_prefix_equal",
+    "digit_scan_model::digit_prefix_split",
+    "digit_scan_model::digit_prefix_zero",
+    "digit_scan_model::digit_prefix_full",
+    "digit_scan_model::upper_digits_preserve_odd_factor",
+    "digit_scan_model::all_full_digits_factor",
+    "digit_scan_model::first_nonzero_digit_factor",
+    "digit_scan_model::first_nonmaximal_digit_factor",
+    "digit_scan_model::normalized_zero_iff_empty",
+    "digit_scan_model::normalized_digit_bit_length",
+    "digit_scan_model::zero_scan_determines_power_of_two",
+    "digit_scan_model::one_scan_determines_all_ones",
+    "digit_scan_model::full_digit_scan_determines_all_ones",
+    "digit_scan_model::u32_digit_bit_length"
+  ],
+  "new_negative_controls": 19,
+  "unchanged_production_contracts": 98,
+  "unchanged_open_obligation_groups": 13,
+  "gates": "Full conditional proof, nineteen new negatives and their unmutated baseline, acceptance and both formatting commands. Prior guards and runtime evidence require exact-input, dependency and tool audits. Preserve every failed phase; no simultaneous SOURCE edits or overlapping validations.",
+  "scope": "Seventeen conditional arithmetic lemmas only. Actual dependency digit views and normalization, iterator behavior, machine-width metadata range, BigInt sign/magnitude import, caller and producer truth, independent real existence and atomic publication remain open. No runtime, main or property/target admission."
+}
