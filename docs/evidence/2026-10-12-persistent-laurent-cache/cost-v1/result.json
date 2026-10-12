@@ -1,0 +1,3512 @@
+{
+  "complete": true,
+  "source_unchanged": true,
+  "main_runtime_unchanged": true,
+  "mathematical_witnesses_identical": true,
+  "fixed_sampling_complete": true,
+  "summary": [
+    {
+      "mode": "time",
+      "name": "multiradical_square_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              12448447,
+              12412980,
+              12790354,
+              13069875,
+              12630085
+            ],
+            "median": 12630085
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              12497604,
+              12387941,
+              12385662,
+              13237764,
+              12311607
+            ],
+            "median": 12387941
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              11766184,
+              11389670,
+              11676310,
+              11738966,
+              11697318
+            ],
+            "median": 11697318
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              11791952,
+              10641272,
+              11714667,
+              12609397,
+              10954100
+            ],
+            "median": 11714667
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "multiradical_square_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              11577167,
+              10748674,
+              11178775,
+              11647612,
+              11256349
+            ],
+            "median": 11256349
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              11542909,
+              10461154,
+              11449706,
+              12009127,
+              10705027
+            ],
+            "median": 11449706
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "multiradical_square_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              11672271,
+              10907953,
+              10828109,
+              11317435,
+              10570076
+            ],
+            "median": 10907953
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              11734596,
+              10794921,
+              11688920,
+              12478076,
+              10828359
+            ],
+            "median": 11688920
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "quadratic_reciprocal_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              4823970,
+              5073243,
+              4819010,
+              4902974,
+              4780373
+            ],
+            "median": 4823970
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              5278668,
+              4823159,
+              4815840,
+              5807162,
+              4862037
+            ],
+            "median": 4862037
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "quadratic_reciprocal_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              4275897,
+              4505781,
+              4243840,
+              4261388,
+              4397879
+            ],
+            "median": 4275897
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4210952,
+              4466454,
+              4421177,
+              5013107,
+              4253008
+            ],
+            "median": 4421177
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "quadratic_reciprocal_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              4288086,
+              4492852,
+              4259858,
+              4318564,
+              4246839
+            ],
+            "median": 4288086
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4232250,
+              4497552,
+              4434786,
+              4546178,
+              4307325
+            ],
+            "median": 4434786
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "quadratic_reciprocal_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              4342073,
+              4518301,
+              4346952,
+              4381410,
+              4309354
+            ],
+            "median": 4346952
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              4277088,
+              4557368,
+              4515800,
+              4936862,
+              4333753
+            ],
+            "median": 4515800
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "pi_parameter_transport_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              18866978,
+              18866398,
+              18798393,
+              18844790,
+              20185167
+            ],
+            "median": 18866398
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              18377472,
+              18490843,
+              19285409,
+              24150056,
+              18645763
+            ],
+            "median": 18645763
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "pi_parameter_transport_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              8706234,
+              8391985,
+              8204508,
+              8080866,
+              8675836
+            ],
+            "median": 8391985
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              8957936,
+              8341568,
+              9522048,
+              8567053,
+              8304281
+            ],
+            "median": 8567053
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "pi_parameter_transport_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              7957145,
+              8215557,
+              8133493,
+              7927917,
+              8165371
+            ],
+            "median": 8133493
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              8590421,
+              8187889,
+              8672966,
+              8365517,
+              8011841
+            ],
+            "median": 8365517
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "pi_parameter_transport_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              8128403,
+              8470650,
+              8203098,
+              8114504,
+              9033371
+            ],
+            "median": 8203098
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              8687005,
+              8326190,
+              8899850,
+              8485899,
+              8200198
+            ],
+            "median": 8485899
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "radical_laurent_transport_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              2888332,
+              2842106,
+              2907551,
+              3018734,
+              2820956
+            ],
+            "median": 2888332
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              2966687,
+              2927359,
+              2812847,
+              2870183,
+              2878673
+            ],
+            "median": 2878673
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "radical_laurent_transport_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              14659,
+              14419,
+              14629,
+              14859,
+              14449
+            ],
+            "median": 14629
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              14349,
+              14539,
+              14609,
+              14609,
+              14459
+            ],
+            "median": 14539
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "radical_laurent_transport_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              14519,
+              14039,
+              14359,
+              14149,
+              14149
+            ],
+            "median": 14149
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              14149,
+              14389,
+              14159,
+              14249,
+              14099
+            ],
+            "median": 14159
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "radical_laurent_transport_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              14269,
+              14329,
+              14409,
+              14139,
+              14639
+            ],
+            "median": 14329
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              14219,
+              14239,
+              14279,
+              14140,
+              18219
+            ],
+            "median": 14239
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "opaque_linear_atom_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              11652362,
+              11549019,
+              11708688,
+              11669351,
+              11495353
+            ],
+            "median": 11652362
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              11375711,
+              11457835,
+              11241870,
+              11248260,
+              11163115
+            ],
+            "median": 11248260
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "opaque_linear_atom_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5381152,
+              5462576,
+              5350874,
+              5586328,
+              5414929
+            ],
+            "median": 5414929
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              5520982,
+              5445037,
+              5819801,
+              5672561,
+              5462535
+            ],
+            "median": 5520982
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "opaque_linear_atom_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5411779,
+              5459546,
+              5428288,
+              5454816,
+              5424369
+            ],
+            "median": 5428288
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              8590422,
+              5554580,
+              5822722,
+              5666102,
+              5513133
+            ],
+            "median": 5666102
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "opaque_linear_atom_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5522622,
+              5551980,
+              5557019,
+              5510553,
+              5513593
+            ],
+            "median": 5522622
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              9767381,
+              5612285,
+              5840300,
+              5680051,
+              5601626
+            ],
+            "median": 5680051
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "conjugate_product_construction",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              7092664,
+              7173289,
+              7072176,
+              7094984,
+              7111732
+            ],
+            "median": 7094984
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              12952383,
+              7204087,
+              6986902,
+              7128292,
+              6912946
+            ],
+            "median": 7128292
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "conjugate_product_first",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5523461,
+              5840930,
+              5613206,
+              5637073,
+              5602156
+            ],
+            "median": 5613206
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              9896782,
+              5737207,
+              5769625,
+              5518042,
+              5396510
+            ],
+            "median": 5737207
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "conjugate_product_warm",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5496854,
+              5827721,
+              5550220,
+              5595517,
+              5598696
+            ],
+            "median": 5595517
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              10190102,
+              5632705,
+              5742666,
+              5577768,
+              5376832
+            ],
+            "median": 5632705
+          }
+        }
+      }
+    },
+    {
+      "mode": "time",
+      "name": "conjugate_product_cloned",
+      "variants": {
+        "baseline": {
+          "nanos": {
+            "samples": [
+              5587767,
+              5981130,
+              5700499,
+              5719328,
+              6642605
+            ],
+            "median": 5719328
+          }
+        },
+        "candidate": {
+          "nanos": {
+            "samples": [
+              10090879,
+              5765635,
+              5838060,
+              5621155,
+              5443587
+            ],
+            "median": 5765635
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "multiradical_square_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              62943,
+              62943,
+              62943,
+              62943,
+              62943
+            ],
+            "median": 62943
+          },
+          "allocated_bytes": {
+            "samples": [
+              2966432,
+              2966432,
+              2966432,
+              2966432,
+              2966432
+            ],
+            "median": 2966432
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1273032,
+              1273032,
+              1273032,
+              1273032,
+              1273032
+            ],
+            "median": 1273032
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1273320,
+              1273320,
+              1273320,
+              1273320,
+              1273320
+            ],
+            "median": 1273320
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              62943,
+              62943,
+              62943,
+              62943,
+              62943
+            ],
+            "median": 62943
+          },
+          "allocated_bytes": {
+            "samples": [
+              2966432,
+              2966432,
+              2966432,
+              2966432,
+              2966432
+            ],
+            "median": 2966432
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1273032,
+              1273032,
+              1273032,
+              1273032,
+              1273032
+            ],
+            "median": 1273032
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1273320,
+              1273320,
+              1273320,
+              1273320,
+              1273320
+            ],
+            "median": 1273320
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "multiradical_square_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              77118,
+              77118,
+              77118,
+              77118,
+              77118
+            ],
+            "median": 77118
+          },
+          "allocated_bytes": {
+            "samples": [
+              4321048,
+              4321048,
+              4321048,
+              4321048,
+              4321048
+            ],
+            "median": 4321048
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55848,
+              55848,
+              55848,
+              55848,
+              55848
+            ],
+            "median": 55848
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              77118,
+              77118,
+              77118,
+              77118,
+              77118
+            ],
+            "median": 77118
+          },
+          "allocated_bytes": {
+            "samples": [
+              4321048,
+              4321048,
+              4321048,
+              4321048,
+              4321048
+            ],
+            "median": 4321048
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              53144,
+              53144,
+              53144,
+              53144,
+              53144
+            ],
+            "median": 53144
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              55848,
+              55848,
+              55848,
+              55848,
+              55848
+            ],
+            "median": 55848
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "multiradical_square_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              77092,
+              77092,
+              77092,
+              77092,
+              77092
+            ],
+            "median": 77092
+          },
+          "allocated_bytes": {
+            "samples": [
+              4318776,
+              4318776,
+              4318776,
+              4318776,
+              4318776
+            ],
+            "median": 4318776
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50784,
+              50784,
+              50784,
+              50784,
+              50784
+            ],
+            "median": 50784
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              77092,
+              77092,
+              77092,
+              77092,
+              77092
+            ],
+            "median": 77092
+          },
+          "allocated_bytes": {
+            "samples": [
+              4318776,
+              4318776,
+              4318776,
+              4318776,
+              4318776
+            ],
+            "median": 4318776
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50784,
+              50784,
+              50784,
+              50784,
+              50784
+            ],
+            "median": 50784
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "multiradical_square_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              77759,
+              77759,
+              77759,
+              77759,
+              77759
+            ],
+            "median": 77759
+          },
+          "allocated_bytes": {
+            "samples": [
+              4361464,
+              4361464,
+              4361464,
+              4361464,
+              4361464
+            ],
+            "median": 4361464
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50784,
+              50784,
+              50784,
+              50784,
+              50784
+            ],
+            "median": 50784
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              77759,
+              77759,
+              77759,
+              77759,
+              77759
+            ],
+            "median": 77759
+          },
+          "allocated_bytes": {
+            "samples": [
+              4361464,
+              4361464,
+              4361464,
+              4361464,
+              4361464
+            ],
+            "median": 4361464
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50784,
+              50784,
+              50784,
+              50784,
+              50784
+            ],
+            "median": 50784
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              21020,
+              21020,
+              21020,
+              21020,
+              21020
+            ],
+            "median": 21020
+          },
+          "allocated_bytes": {
+            "samples": [
+              1227336,
+              1227336,
+              1227336,
+              1227336,
+              1227336
+            ],
+            "median": 1227336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              874936,
+              874936,
+              874936,
+              874936,
+              874936
+            ],
+            "median": 874936
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              875256,
+              875256,
+              875256,
+              875256,
+              875256
+            ],
+            "median": 875256
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              21020,
+              21020,
+              21020,
+              21020,
+              21020
+            ],
+            "median": 21020
+          },
+          "allocated_bytes": {
+            "samples": [
+              1227336,
+              1227336,
+              1227336,
+              1227336,
+              1227336
+            ],
+            "median": 1227336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              874936,
+              874936,
+              874936,
+              874936,
+              874936
+            ],
+            "median": 874936
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              875256,
+              875256,
+              875256,
+              875256,
+              875256
+            ],
+            "median": 875256
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              33155,
+              33155,
+              33155,
+              33155,
+              33155
+            ],
+            "median": 33155
+          },
+          "allocated_bytes": {
+            "samples": [
+              1642120,
+              1642120,
+              1642120,
+              1642120,
+              1642120
+            ],
+            "median": 1642120
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49448,
+              49448,
+              49448,
+              49448,
+              49448
+            ],
+            "median": 49448
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              33155,
+              33155,
+              33155,
+              33155,
+              33155
+            ],
+            "median": 33155
+          },
+          "allocated_bytes": {
+            "samples": [
+              1642120,
+              1642120,
+              1642120,
+              1642120,
+              1642120
+            ],
+            "median": 1642120
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48552,
+              48552,
+              48552,
+              48552,
+              48552
+            ],
+            "median": 48552
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49448,
+              49448,
+              49448,
+              49448,
+              49448
+            ],
+            "median": 49448
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              33150,
+              33150,
+              33150,
+              33150,
+              33150
+            ],
+            "median": 33150
+          },
+          "allocated_bytes": {
+            "samples": [
+              1641648,
+              1641648,
+              1641648,
+              1641648,
+              1641648
+            ],
+            "median": 1641648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              48976,
+              48976,
+              48976,
+              48976,
+              48976
+            ],
+            "median": 48976
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              33150,
+              33150,
+              33150,
+              33150,
+              33150
+            ],
+            "median": 33150
+          },
+          "allocated_bytes": {
+            "samples": [
+              1641648,
+              1641648,
+              1641648,
+              1641648,
+              1641648
+            ],
+            "median": 1641648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              48976,
+              48976,
+              48976,
+              48976,
+              48976
+            ],
+            "median": 48976
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "quadratic_reciprocal_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              33817,
+              33817,
+              33817,
+              33817,
+              33817
+            ],
+            "median": 33817
+          },
+          "allocated_bytes": {
+            "samples": [
+              1684336,
+              1684336,
+              1684336,
+              1684336,
+              1684336
+            ],
+            "median": 1684336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              48976,
+              48976,
+              48976,
+              48976,
+              48976
+            ],
+            "median": 48976
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              33817,
+              33817,
+              33817,
+              33817,
+              33817
+            ],
+            "median": 33817
+          },
+          "allocated_bytes": {
+            "samples": [
+              1684336,
+              1684336,
+              1684336,
+              1684336,
+              1684336
+            ],
+            "median": 1684336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              48976,
+              48976,
+              48976,
+              48976,
+              48976
+            ],
+            "median": 48976
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              92319,
+              92319,
+              92319,
+              92319,
+              92319
+            ],
+            "median": 92319
+          },
+          "allocated_bytes": {
+            "samples": [
+              4831344,
+              4831344,
+              4831344,
+              4831344,
+              4831344
+            ],
+            "median": 4831344
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1667104,
+              1667104,
+              1667104,
+              1667104,
+              1667104
+            ],
+            "median": 1667104
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1667576,
+              1667576,
+              1667576,
+              1667576,
+              1667576
+            ],
+            "median": 1667576
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              92319,
+              92319,
+              92319,
+              92319,
+              92319
+            ],
+            "median": 92319
+          },
+          "allocated_bytes": {
+            "samples": [
+              4831344,
+              4831344,
+              4831344,
+              4831344,
+              4831344
+            ],
+            "median": 4831344
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1667104,
+              1667104,
+              1667104,
+              1667104,
+              1667104
+            ],
+            "median": 1667104
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1667576,
+              1667576,
+              1667576,
+              1667576,
+              1667576
+            ],
+            "median": 1667576
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49824,
+              49824,
+              49824,
+              49824,
+              49824
+            ],
+            "median": 49824
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48288,
+              48288,
+              48288,
+              48288,
+              48288
+            ],
+            "median": 48288
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49824,
+              49824,
+              49824,
+              49824,
+              49824
+            ],
+            "median": 49824
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49616,
+              49616,
+              49616,
+              49616,
+              49616
+            ],
+            "median": 49616
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              40150,
+              40150,
+              40150,
+              40150,
+              40150
+            ],
+            "median": 40150
+          },
+          "allocated_bytes": {
+            "samples": [
+              4185648,
+              4185648,
+              4185648,
+              4185648,
+              4185648
+            ],
+            "median": 4185648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49616,
+              49616,
+              49616,
+              49616,
+              49616
+            ],
+            "median": 49616
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "pi_parameter_transport_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              40817,
+              40817,
+              40817,
+              40817,
+              40817
+            ],
+            "median": 40817
+          },
+          "allocated_bytes": {
+            "samples": [
+              4228336,
+              4228336,
+              4228336,
+              4228336,
+              4228336
+            ],
+            "median": 4228336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49616,
+              49616,
+              49616,
+              49616,
+              49616
+            ],
+            "median": 49616
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              40817,
+              40817,
+              40817,
+              40817,
+              40817
+            ],
+            "median": 40817
+          },
+          "allocated_bytes": {
+            "samples": [
+              4228336,
+              4228336,
+              4228336,
+              4228336,
+              4228336
+            ],
+            "median": 4228336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49616,
+              49616,
+              49616,
+              49616,
+              49616
+            ],
+            "median": 49616
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              9025,
+              9025,
+              9025,
+              9025,
+              9025
+            ],
+            "median": 9025
+          },
+          "allocated_bytes": {
+            "samples": [
+              569776,
+              569776,
+              569776,
+              569776,
+              569776
+            ],
+            "median": 569776
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              49776,
+              49776,
+              49776,
+              49776,
+              49776
+            ],
+            "median": 49776
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50296,
+              50296,
+              50296,
+              50296,
+              50296
+            ],
+            "median": 50296
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              9025,
+              9025,
+              9025,
+              9025,
+              9025
+            ],
+            "median": 9025
+          },
+          "allocated_bytes": {
+            "samples": [
+              569776,
+              569776,
+              569776,
+              569776,
+              569776
+            ],
+            "median": 569776
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              49776,
+              49776,
+              49776,
+              49776,
+              49776
+            ],
+            "median": 49776
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              50296,
+              50296,
+              50296,
+              50296,
+              50296
+            ],
+            "median": 50296
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "radical_laurent_transport_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              1,
+              1,
+              1,
+              1,
+              1
+            ],
+            "median": 1
+          },
+          "allocated_bytes": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              8000,
+              8000,
+              8000,
+              8000,
+              8000
+            ],
+            "median": 8000
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              54311,
+              54311,
+              54311,
+              54311,
+              54311
+            ],
+            "median": 54311
+          },
+          "allocated_bytes": {
+            "samples": [
+              3286704,
+              3286704,
+              3286704,
+              3286704,
+              3286704
+            ],
+            "median": 3286704
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1394464,
+              1394464,
+              1394464,
+              1394464,
+              1394464
+            ],
+            "median": 1394464
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1394936,
+              1394936,
+              1394936,
+              1394936,
+              1394936
+            ],
+            "median": 1394936
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              54311,
+              54311,
+              54311,
+              54311,
+              54311
+            ],
+            "median": 54311
+          },
+          "allocated_bytes": {
+            "samples": [
+              3286704,
+              3286704,
+              3286704,
+              3286704,
+              3286704
+            ],
+            "median": 3286704
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              1394464,
+              1394464,
+              1394464,
+              1394464,
+              1394464
+            ],
+            "median": 1394464
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              1394936,
+              1394936,
+              1394936,
+              1394936,
+              1394936
+            ],
+            "median": 1394936
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              30150,
+              30150,
+              30150,
+              30150,
+              30150
+            ],
+            "median": 30150
+          },
+          "allocated_bytes": {
+            "samples": [
+              3233648,
+              3233648,
+              3233648,
+              3233648,
+              3233648
+            ],
+            "median": 3233648
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "opaque_linear_atom_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              30817,
+              30817,
+              30817,
+              30817,
+              30817
+            ],
+            "median": 30817
+          },
+          "allocated_bytes": {
+            "samples": [
+              3276336,
+              3276336,
+              3276336,
+              3276336,
+              3276336
+            ],
+            "median": 3276336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              30817,
+              30817,
+              30817,
+              30817,
+              30817
+            ],
+            "median": 30817
+          },
+          "allocated_bytes": {
+            "samples": [
+              3276336,
+              3276336,
+              3276336,
+              3276336,
+              3276336
+            ],
+            "median": 3276336
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              48080,
+              48080,
+              48080,
+              48080,
+              48080
+            ],
+            "median": 48080
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              49288,
+              49288,
+              49288,
+              49288,
+              49288
+            ],
+            "median": 49288
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_construction",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              51133,
+              51133,
+              51133,
+              51133,
+              51133
+            ],
+            "median": 51133
+          },
+          "allocated_bytes": {
+            "samples": [
+              2398312,
+              2398312,
+              2398312,
+              2398312,
+              2398312
+            ],
+            "median": 2398312
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              791616,
+              791616,
+              791616,
+              791616,
+              791616
+            ],
+            "median": 791616
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              792240,
+              792240,
+              792240,
+              792240,
+              792240
+            ],
+            "median": 792240
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              51133,
+              51133,
+              51133,
+              51133,
+              51133
+            ],
+            "median": 51133
+          },
+          "allocated_bytes": {
+            "samples": [
+              2398312,
+              2398312,
+              2398312,
+              2398312,
+              2398312
+            ],
+            "median": 2398312
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              791616,
+              791616,
+              791616,
+              791616,
+              791616
+            ],
+            "median": 791616
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              792240,
+              792240,
+              792240,
+              792240,
+              792240
+            ],
+            "median": 792240
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_first",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              43538,
+              43538,
+              43538,
+              43538,
+              43538
+            ],
+            "median": 43538
+          },
+          "allocated_bytes": {
+            "samples": [
+              2790592,
+              2790592,
+              2790592,
+              2790592,
+              2790592
+            ],
+            "median": 2790592
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19344,
+              19344,
+              19344,
+              19344,
+              19344
+            ],
+            "median": 19344
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              43538,
+              43538,
+              43538,
+              43538,
+              43538
+            ],
+            "median": 43538
+          },
+          "allocated_bytes": {
+            "samples": [
+              2790592,
+              2790592,
+              2790592,
+              2790592,
+              2790592
+            ],
+            "median": 2790592
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              17264,
+              17264,
+              17264,
+              17264,
+              17264
+            ],
+            "median": 17264
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              19344,
+              19344,
+              19344,
+              19344,
+              19344
+            ],
+            "median": 19344
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_warm",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              43521,
+              43521,
+              43521,
+              43521,
+              43521
+            ],
+            "median": 43521
+          },
+          "allocated_bytes": {
+            "samples": [
+              2788752,
+              2788752,
+              2788752,
+              2788752,
+              2788752
+            ],
+            "median": 2788752
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              13760,
+              13760,
+              13760,
+              13760,
+              13760
+            ],
+            "median": 13760
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              15840,
+              15840,
+              15840,
+              15840,
+              15840
+            ],
+            "median": 15840
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              43521,
+              43521,
+              43521,
+              43521,
+              43521
+            ],
+            "median": 43521
+          },
+          "allocated_bytes": {
+            "samples": [
+              2788752,
+              2788752,
+              2788752,
+              2788752,
+              2788752
+            ],
+            "median": 2788752
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              13760,
+              13760,
+              13760,
+              13760,
+              13760
+            ],
+            "median": 13760
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              15840,
+              15840,
+              15840,
+              15840,
+              15840
+            ],
+            "median": 15840
+          }
+        }
+      }
+    },
+    {
+      "mode": "memory",
+      "name": "conjugate_product_cloned",
+      "variants": {
+        "baseline": {
+          "allocation_calls": {
+            "samples": [
+              44188,
+              44188,
+              44188,
+              44188,
+              44188
+            ],
+            "median": 44188
+          },
+          "allocated_bytes": {
+            "samples": [
+              2831440,
+              2831440,
+              2831440,
+              2831440,
+              2831440
+            ],
+            "median": 2831440
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              13760,
+              13760,
+              13760,
+              13760,
+              13760
+            ],
+            "median": 13760
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              15840,
+              15840,
+              15840,
+              15840,
+              15840
+            ],
+            "median": 15840
+          }
+        },
+        "candidate": {
+          "allocation_calls": {
+            "samples": [
+              44188,
+              44188,
+              44188,
+              44188,
+              44188
+            ],
+            "median": 44188
+          },
+          "allocated_bytes": {
+            "samples": [
+              2831440,
+              2831440,
+              2831440,
+              2831440,
+              2831440
+            ],
+            "median": 2831440
+          },
+          "retained_bytes_delta": {
+            "samples": [
+              13760,
+              13760,
+              13760,
+              13760,
+              13760
+            ],
+            "median": 13760
+          },
+          "peak_bytes_delta": {
+            "samples": [
+              15840,
+              15840,
+              15840,
+              15840,
+              15840
+            ],
+            "median": 15840
+          }
+        }
+      }
+    }
+  ],
+  "representation_rows": [
+    {
+      "mode": "time",
+      "pair": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "time",
+      "pair": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 4096
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 4096
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 1,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 1,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 2,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 2,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 3,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 3,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 4,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 4,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 5,
+      "variant": "baseline",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    },
+    {
+      "mode": "memory",
+      "pair": 5,
+      "variant": "candidate",
+      "rows": [
+        {
+          "fixture": "multiradical_square",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "quadratic_reciprocal",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "pi_parameter_transport",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "radical_laurent_transport",
+          "non_leaf_inputs": 0
+        },
+        {
+          "fixture": "opaque_linear_atom",
+          "non_leaf_inputs": 1000
+        },
+        {
+          "fixture": "conjugate_product",
+          "non_leaf_inputs": 1000
+        }
+      ]
+    }
+  ],
+  "runtime_admitted": false
+}

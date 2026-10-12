@@ -1,0 +1,54 @@
+{
+  "libraries": {
+    "baseline": {
+      "sha256": "b98882a43a29e14d5273a5c0b541ee5c142ac650dd23f27049ee630d9d6d029e",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/baseline/cost-v2-target/release/libhyperreal.rlib",
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/baseline/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/baseline/source/crates/hyperreal/Cargo.toml"
+    },
+    "candidate": {
+      "sha256": "c1e280c22e44f4c14af9525f5000eb64b3e9d42d86de4cc7c5977ae682684ad7",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/libhyperreal.rlib",
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperreal/Cargo.toml"
+    }
+  },
+  "binaries": {
+    "baseline-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v2-binaries/baseline-time",
+      "sha256": "ece0224e4997502012d911294df476b7075aa9c7699d27bf7367e977f7aff0ff",
+      "bytes": 6181768
+    },
+    "baseline-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v2-binaries/baseline-memory",
+      "sha256": "7e49cb8a3f48390ab45dd27e43b2d0a8a115e60a53e78b305167310054bcc071",
+      "bytes": 6183696
+    },
+    "candidate-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v2-binaries/candidate-time",
+      "sha256": "76b34f90bfffb84c8faa90c286e15bba96f99965a777b222c519201663094b57",
+      "bytes": 6195064
+    },
+    "candidate-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v2-binaries/candidate-memory",
+      "sha256": "05613a9fb802f9ff8e1272dd57fd4a32fdbe905919f7a866579eda61689ff4d2",
+      "bytes": 6196984
+    }
+  }
+}

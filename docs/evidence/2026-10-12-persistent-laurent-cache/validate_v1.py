@@ -1,0 +1,88 @@
+"""Freeze and run early correctness gates for the first retained-form trial.
+
+The fallback recognizer retains its original per-pass limits. A failed cached
+projection may retry it once, making the explicit maximum two 512-node passes.
+This is an experimental cost change, not an admitted performance improvement.
+"""
+import difflib
+import gzip
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tarfile
+import time
+
+E = Path(__file__).resolve().parent
+ROOT = E.parents[2]
+WORK = ROOT / 'target/persistent-laurent-cache'
+SOURCE = WORK / 'candidate/source'
+sys.path.insert(0, str(ROOT / 'docs/evidence/2026-10-12-existing-worktree'))
+from validate import sources
+
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def main():
+    out = E / 'validation-v1'
+    out.mkdir(exist_ok=False)
+    preparation = json.loads((E / 'preparation.json').read_text())
+    original = json.loads(gzip.decompress((E / 'initial-source-hashes.json.gz').read_bytes()))
+    changed = ['crates/hyperreal/src/computable/node/' + name for name in [
+        'algebra.rs', 'representation.rs', 'structural_analysis.rs',
+        'persistent_laurent_cache_tests.rs']]
+    current = {name: sha(SOURCE / name) for name in sorted(set(original) | set(changed))}
+    assert {name for name, value in current.items() if original.get(name) != value} == set(changed)
+    assert sources() == preparation['main_source_sha256']
+    for name, expected in original.items():
+        assert sha(WORK / 'baseline/source' / name) == expected
+    with tarfile.open(out / 'candidate-delta.tar.gz', 'w:gz') as archive:
+        for name in changed:
+            archive.add(SOURCE / name, arcname=name)
+    patch = ''.join(''.join(difflib.unified_diff(
+        (WORK / 'baseline/source' / name).read_text().splitlines(True) if name in original else [],
+        (SOURCE / name).read_text().splitlines(True), 'a/' + name, 'b/' + name)) for name in changed)
+    (out / 'candidate.patch').write_text(patch)
+    commands = [
+        ('format', ['cargo', 'fmt', '--all', '--', '--check']),
+        ('cache-regressions', ['cargo', 'test', '--locked', '--release', '-p', 'hyperreal', '--all-features', '--lib', 'persistent_laurent_cache_tests', '--', '--test-threads=1']),
+        ('strict-clippy', ['cargo', 'clippy', '--locked', '--release', '-p', 'hyperreal', '--all-features', '--all-targets', '--', '-D', 'warnings']),
+        ('scalar-library', ['cargo', 'test', '--locked', '--release', '-p', 'hyperreal', '--all-features', '--lib', '--', '--test-threads=2']),
+    ]
+    env = {'CARGO_HOME': '/tmp/csgrs-properties-cargo', 'CCACHE_DIR': '/tmp/csgrs-properties-ccache',
+           'CARGO_NET_OFFLINE': 'true', 'CARGO_TERM_COLOR': 'never',
+           'CARGO_TARGET_DIR': str(ROOT / 'target')}
+    protocol = {'runner_sha256': sha(Path(__file__)), 'preparation_sha256': sha(E / 'preparation.json'),
+                'source_changes_sha256': {name: current[name] for name in changed},
+                'candidate_archive_sha256': sha(out / 'candidate-delta.tar.gz'),
+                'candidate_patch_sha256': sha(out / 'candidate.patch'),
+                'commands': commands, 'environment': env, 'scope': __doc__,
+                'runtime_admitted': False}
+    (out / 'protocol.json').write_text(json.dumps(protocol, indent=2) + '\n')
+    results = []
+    for name, command in commands:
+        assert sources() == preparation['main_source_sha256']
+        assert all(sha(SOURCE / p) == expected for p, expected in current.items())
+        started = time.monotonic()
+        with (out / (name + '.stdout')).open('w') as stdout, (out / (name + '.stderr')).open('w') as stderr:
+            code = subprocess.run(command, cwd=SOURCE, env=os.environ | env,
+                                  stdout=stdout, stderr=stderr).returncode
+        unchanged = all(sha(SOURCE / p) == expected for p, expected in current.items())
+        main_unchanged = sources() == preparation['main_source_sha256']
+        result = {'name': name, 'exit_code': code, 'seconds': time.monotonic() - started,
+                  'candidate_unchanged': unchanged, 'main_unchanged': main_unchanged,
+                  'stdout_sha256': sha(out / (name + '.stdout')),
+                  'stderr_sha256': sha(out / (name + '.stderr'))}
+        results.append(result)
+        complete = len(results) == len(commands) and all(r['exit_code'] == 0 for r in results)
+        (out / 'result.json').write_text(json.dumps({'phases': results, 'complete': complete}, indent=2) + '\n')
+        print(json.dumps(result), flush=True)
+        assert unchanged and main_unchanged
+        if code:
+            raise SystemExit(code)
+
+
+if __name__ == '__main__':
+    main()

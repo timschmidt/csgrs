@@ -1,0 +1,80 @@
+{
+  "runner_sha256": "8c1d1778d1c77ab83ebbc881b0b15c56852365cff332853cd359ec733fd85c23",
+  "preparation_sha256": "04776730ea13e3cc582f59cf4f9ca190746860b2f303e9b402a467bfb58e40e7",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "6afb6c80f2d880a15a04eb3a9c9bbc122d8730c80f086d2d2837ca34f8b16551",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "ff4c48d785c4dbb57c66dc78d41e1e0f72d3192ef931c91017aeef53bd589658"
+  },
+  "candidate_archive_sha256": "fba4a7a92c8e8603cda5acc6c4196c575255ef8b98a48b2b1ccd1f350aa997a6",
+  "candidate_patch_sha256": "25d86e1843b1c8df4255d067f806ca71bfb4beced10c26d877482760ed0fa338",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "cache-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "scalar-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target"
+  },
+  "scope": "Freeze and run early correctness gates for the first retained-form trial.\n\nThe fallback recognizer retains its original per-pass limits. A failed cached\nprojection may retry it once, making the explicit maximum two 512-node passes.\nThis is an experimental cost change, not an admitted performance improvement.\n",
+  "runtime_admitted": false
+}

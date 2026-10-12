@@ -1,0 +1,50 @@
+{
+  "libraries": {
+    "baseline": {
+      "sha256": "f531fd43fcc9a853f9d81ae6b353820a458b5b5eb8683c8a3b116dadf5171e09",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ]
+    },
+    "candidate": {
+      "sha256": "f531fd43fcc9a853f9d81ae6b353820a458b5b5eb8683c8a3b116dadf5171e09",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ]
+    }
+  },
+  "binaries": {
+    "baseline-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "sha256": "68670b7b5ada7731ae0e08f9e41590e56f88eb32559334fa126e41683a86d01c",
+      "bytes": 6181768
+    },
+    "baseline-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "sha256": "bc13dd552d36b422b28c735bab6db8d64f819404c334a6e0509349b15b17d321",
+      "bytes": 6183696
+    },
+    "candidate-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "sha256": "68670b7b5ada7731ae0e08f9e41590e56f88eb32559334fa126e41683a86d01c",
+      "bytes": 6181768
+    },
+    "candidate-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "sha256": "bc13dd552d36b422b28c735bab6db8d64f819404c334a6e0509349b15b17d321",
+      "bytes": 6183696
+    }
+  }
+}

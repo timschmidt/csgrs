@@ -1,0 +1,532 @@
+[
+  {
+    "name": "build-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/baseline/source",
+    "exit_code": 0,
+    "seconds": 8.902540917042643,
+    "stdout_sha256": "311f3f378b90a3c3de72cb7908b3a65430a00b84bafeeba994fbc2ff4e65217b",
+    "stderr_sha256": "695d4c6d55d56d1caec0ef6a0183c0aba4d3b7b25db7a5c3dc8124e44d49ded5"
+  },
+  {
+    "name": "link-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-persistent-laurent-cache/cost-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.8754992140457034,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-persistent-laurent-cache/cost-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.8492274940945208,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source",
+    "exit_code": 0,
+    "seconds": 0.2816447289660573,
+    "stdout_sha256": "4a768bc75f00510275123ece212ee57f2b6e1816cfbbbc733b71af95c5dd0fe4",
+    "stderr_sha256": "0b5fe2277fd2b29cc111b76604c482f8ec516047dbc0954657203c5614f4e4db"
+  },
+  {
+    "name": "link-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-persistent-laurent-cache/cost-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.8468996030278504,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-persistent-laurent-cache/cost-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.8504301812499762,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.16840861504897475,
+    "stdout_sha256": "2d2986744c20f97aa4ea4fc02b6f7b429a9f0f27d677195a1e46ba9164e51ef2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.15214147977530956,
+    "stdout_sha256": "af128f0691be44654ef08600945a4830de6f3a5f9ae09dca63dbf8aaf6660bc0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.15928132086992264,
+    "stdout_sha256": "f790335325a3863a7fbb9b8ee9e8eec6e961f94212576062059b8632c842383f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.15127839799970388,
+    "stdout_sha256": "cb716c268d7f441ff82061471eeb55942fc9bc84a7684c8ab695e8f1ec2bf873",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.3459203168749809,
+    "stdout_sha256": "f10da8f84ac5607ff447c82dcb25824d5aa3753f01caf09cd43f087fc6a6c312",
+    "stderr_sha256": "08c779543e3c85cf20e5cb922f59e46e87bf275a7a17a47f99fac2ee624c564b"
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.36653546476736665,
+    "stdout_sha256": "38aa86c8b20eba45ada263bdf1c1554e8ca5c8829fd64f9a7cea30baecbb0fe1",
+    "stderr_sha256": "cb6876781c0739d03fcc0861b50f57908bbe0240862bbacde0115c181980582e"
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.32550579495728016,
+    "stdout_sha256": "1eeedd80f79bcf6cfd2fcff8ec7e59dbe3398c35c81cc308c97e7f52de02a878",
+    "stderr_sha256": "abca8f35cfef0dd344499e27157712b1532a95f741b687435d846c2f075adf12"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.3286092928610742,
+    "stdout_sha256": "594aa7c483397542badc1b66665a5aca546930d5dcae7f93457c8aa8f1239f3e",
+    "stderr_sha256": "d91b0f9432fedcb1c6d29253180428ce14ab8f233fc7e2d1b1b9b63d36bad02f"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.3261377620510757,
+    "stdout_sha256": "71081bca5a80458cf40a764a13c9202de24183414c7af1fb8e0eb0cb168f0e5b",
+    "stderr_sha256": "a574b80e8b13b685acb9d45a00f6b76febec0ee6284467bdf49f3491ec063c65"
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.3331863689236343,
+    "stdout_sha256": "22bac770cf6d41e9966d0506f628177024bbc24906ae6f690571a73ed1d56be7",
+    "stderr_sha256": "e4fe5bc3eba1d01a47c56a83e266ef2764394d7fddecda2da7e896095c373728"
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.34757659304887056,
+    "stdout_sha256": "885ce8a353c0a601eb6db013dfdc4262e16a70ae9c008c1f7efd8ef53cb475d7",
+    "stderr_sha256": "dfc188f488a8c5c526e8600d8181976a9bb955a021e3376c38c92e1b5b07e003"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.32953218882903457,
+    "stdout_sha256": "042f59c132b42ba8a67c43636e846aa2daf0142a6cd2e4b69166940098ee08b6",
+    "stderr_sha256": "23aa682390d0e06d6e267b82f4e3d2bfafeea06436cf9de296584e3d1b31c1f2"
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.32666472531855106,
+    "stdout_sha256": "df392582da429566a4794d7b980392266a2e4c3aa3842cc2c9c48cf6ab01c968",
+    "stderr_sha256": "944ed26071c13c283ca2f457a0cb2c02adc823ec71af748e4ac1ac88a96f297e"
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.32526604225859046,
+    "stdout_sha256": "fea58fd2a668cec775a8cf7d61cefc667882d09d1f348a7bf5cbdd4223f7568b",
+    "stderr_sha256": "a8bd12b6402262b14c4f2940730773251fccdef88edccdb7ef256bdb5dfd7cbd"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.2013791366480291,
+    "stdout_sha256": "e73b270e7c3848d0bf9251d60a79e01597c629eff0f01f447ab8805f2fbc86c8",
+    "stderr_sha256": "9ef93c6051a4d49785b50846a72ee26a36c0a362c202d80227210e713afbc75f"
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.2007880681194365,
+    "stdout_sha256": "ac7a84d8f2a9c2b0766f1d8919d5c5a5bcfa0f7543f3a795be518419960c752c",
+    "stderr_sha256": "8b1694cec4a8bab19a8a55490c87293e25e41c079a398fe06ee1a3d3fc24dc21"
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.20441482914611697,
+    "stdout_sha256": "2aaf9945d83de76601ff1993bd12d83d30bffa4cb5261d18bc9cf61ae29ffd33",
+    "stderr_sha256": "b82196aa582590780985a58eab66bc66d45e7eff813846dc0fc973d247564832"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.1997623979113996,
+    "stdout_sha256": "f92d16ba97d24b3c8e90aa259260f7a1830cad72b42240dfefa04803415a37f8",
+    "stderr_sha256": "31f1ba6cc9894ed6c9e76c4a323dce314a6205c3eba272a693fbc01c131cd445"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.1971446368843317,
+    "stdout_sha256": "aaab200875ccfb58b5acbaa9bd4343f7089d077c8ceaf38a0d70d2983d021150",
+    "stderr_sha256": "0d5c3408ca134a205472de120dbdebf713a9fa8101e6bf28843ef3a0964921ab"
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.2040835819207132,
+    "stdout_sha256": "36fe86883727cfddd020620dca46f56cc52ea569c52d062def309be93b0aa078",
+    "stderr_sha256": "cc75f590c6f65c6125c2c85c9be8215b955768582bb4d479ffbb892a7cddbdde"
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.2052283831872046,
+    "stdout_sha256": "5828172a4e6d056c6689a16ec369c953ada2ffd0fe7e927a61d042425035f65d",
+    "stderr_sha256": "f87dc7efb163bfa9a6fb7cf6f0a1fdf3f4d0182560e2970cf4802f5c288ce2d7"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.20034838700667024,
+    "stdout_sha256": "f0655905b4d07abd4130c0ff8fc4f74a7907a03e0168a7b00bb7aad50451a770",
+    "stderr_sha256": "96c4d5fa7ae592bc9a60a5e93ce027b918c5af839661fdc9c292fe561d7566f5"
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.20314142620190978,
+    "stdout_sha256": "5214e013bf158ddb14a9d7fef202eca4b1306bccbc2c9bcb6a6430dddf85599d",
+    "stderr_sha256": "4acee9b22d4a25c802c658a5724c46894ad7920da2bf098501a8ed60b23b853c"
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/cost-v1-binaries/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "seconds": 0.19615268521010876,
+    "stdout_sha256": "cb654c3884bc7181094f36bcecd8ddc92b3b42e33a055f782d080ac2b042d97d",
+    "stderr_sha256": "5f196fc089d028752580e92915119a3e2fd2028fc167b010b428c313d36e8821"
+  }
+]

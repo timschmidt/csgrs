@@ -1,0 +1,1264 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -5,6 +5,9 @@
+     atan: Rational,
+     argument: Option<Computable>,
+ }
++
++#[cfg(test)]
++mod persistent_laurent_cache_tests;
+ 
+ #[cfg(test)]
+ mod pi_laurent_compaction_node_tests {
+@@ -211,6 +214,63 @@
+ #[derive(Clone)]
+ struct PiLaurentPolynomial {
+     terms: Vec<(i16, RadicalCoefficient)>,
++}
++
++// A retained certificate cannot own Computable nodes. In particular, storing
++// an opaque coefficient here would retain the node that owns this cache.
++struct ClosedPiLaurentPolynomial {
++    terms: Vec<(i16, ClosedRadicalCoefficient)>,
++}
++
++struct ClosedRadicalCoefficient {
++    rational: Rational,
++    radicals: Vec<(Rational, Rational)>,
++}
++
++impl ClosedPiLaurentPolynomial {
++    fn from_polynomial(polynomial: &PiLaurentPolynomial) -> Option<Self> {
++        if polynomial
++            .terms
++            .iter()
++            .any(|(_, coefficient)| !coefficient.atoms.is_empty())
++        {
++            return None;
++        }
++        Some(Self {
++            terms: polynomial
++                .terms
++                .iter()
++                .map(|(power, coefficient)| {
++                    (
++                        *power,
++                        ClosedRadicalCoefficient {
++                            rational: coefficient.rational.clone(),
++                            radicals: coefficient.radicals.clone(),
++                        },
++                    )
++                })
++                .collect(),
++        })
++    }
++
++    fn to_polynomial(&self) -> PiLaurentPolynomial {
++        PiLaurentPolynomial {
++            terms: self
++                .terms
++                .iter()
++                .map(|(power, coefficient)| {
++                    (
++                        *power,
++                        RadicalCoefficient {
++                            rational: coefficient.rational.clone(),
++                            radicals: coefficient.radicals.clone(),
++                            atoms: Vec::new(),
++                        },
++                    )
++                })
++                .collect(),
++        }
++    }
+ }
+ 
+ // This normal form is a bounded recognition fast path, not an exactness
+@@ -306,10 +366,7 @@
+             return None;
+         }
+         let (power, coefficient) = self.terms.pop()?;
+-        Some(Self::monomial(
+-            power.checked_neg()?,
+-            coefficient.inverse()?,
+-        ))
++        Some(Self::monomial(power.checked_neg()?, coefficient.inverse()?))
+     }
+ }
+ 
+@@ -394,6 +451,41 @@
+ }
+ 
+ impl Computable {
++    fn project_pi_laurent_polynomial<T>(
++        &self,
++        budget: usize,
++        project: impl Fn(PiLaurentPolynomial) -> Option<T>,
++    ) -> Option<T> {
++        let mut memo = None;
++        let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
++        let mut reused = false;
++        if let Some(value) = self
++            .pi_laurent_polynomial_retained::<true>(
++                budget,
++                &mut remaining_work,
++                &mut memo,
++                &mut reused,
++            )
++            .and_then(&project)
++        {
++            return Some(value);
++        }
++        // A previously opaque child may have acquired a larger closed form.
++        // Expansion can then reach a term limit in a different place. Retry
++        // the original recognizer when retained certificates did not prove
++        // the requested fact, so warming cannot remove an earlier proof.
++        // Each pass has the original 512-node limit; a query performs at most
++        // two passes, and only a failed pass that reused a certificate retries.
++        // The first memo can own opaque expression references. Release it
++        // before retrying so it cannot change the original sharing decisions.
++        drop(memo);
++        if reused {
++            self.pi_laurent_polynomial(budget).and_then(project)
++        } else {
++            None
++        }
++    }
++
+     fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {
+         let mut memo = None;
+         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+@@ -406,6 +498,20 @@
+         remaining_work: &mut usize,
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+     ) -> Option<PiLaurentPolynomial> {
++        self.pi_laurent_polynomial_retained::<false>(budget, remaining_work, memo, &mut false)
++    }
++
++    fn pi_laurent_polynomial_retained<const RETAIN: bool>(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++        reused: &mut bool,
++    ) -> Option<PiLaurentPolynomial> {
++        if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {
++            *reused = true;
++            return Some(polynomial);
++        }
+         let key = Arc::as_ptr(&self.internal) as usize;
+         let shared = Arc::strong_count(&self.internal) > 1;
+         if shared
+@@ -459,40 +565,75 @@
+         } else {
+             let expanded = (|| match &self.internal.approximation {
+                 Approximation::Add(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .add(right.pi_laurent_polynomial_with_memo(
++                    .pi_laurent_polynomial_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+-                    )?),
+-                Approximation::Multiply(left, right) => left
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
+-                    .multiply(right.pi_laurent_polynomial_with_memo(
++                        reused,
++                    )?
++                    .add(right.pi_laurent_polynomial_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
++                        reused,
++                    )?),
++                Approximation::Multiply(left, right) => left
++                    .pi_laurent_polynomial_retained::<RETAIN>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                        reused,
++                    )?
++                    .multiply(right.pi_laurent_polynomial_retained::<RETAIN>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                        reused,
+                     )?),
+                 Approximation::Negate(child) => Some(
+                     child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                        .pi_laurent_polynomial_retained::<RETAIN>(
++                            budget - 1,
++                            remaining_work,
++                            memo,
++                            reused,
++                        )?
+                         .scaled(Rational::new(-1)),
+                 ),
+                 Approximation::Offset(child, shift) => Some(
+                     child
+-                        .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                        .pi_laurent_polynomial_retained::<RETAIN>(
++                            budget - 1,
++                            remaining_work,
++                            memo,
++                            reused,
++                        )?
+                         .scaled(Self::power_of_two_rational(*shift)),
+                 ),
+                 Approximation::Inverse(child) => child
+-                    .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                    .pi_laurent_polynomial_retained::<RETAIN>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                        reused,
++                    )?
+                     .inverse_monomial(),
+                 Approximation::Square(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                        reused,
++                    )?;
+                     child.clone().multiply(child)
+                 }
+                 Approximation::Sqrt(child) => {
+-                    let child =
+-                        child.pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?;
++                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(
++                        budget - 1,
++                        remaining_work,
++                        memo,
++                        reused,
++                    )?;
+                     let radicand = match child.terms.as_slice() {
+                         [] => Rational::zero(),
+                         [(0, coefficient)]
+@@ -522,7 +663,12 @@
+                     {
+                         sum = sum.add(
+                             coefficient
+-                                .pi_laurent_polynomial_with_memo(budget - 1, remaining_work, memo)?
++                                .pi_laurent_polynomial_retained::<RETAIN>(
++                                    budget - 1,
++                                    remaining_work,
++                                    memo,
++                                    reused,
++                                )?
+                                 .scaled(value.clone()),
+                         )?;
+                     }
+@@ -540,13 +686,31 @@
+         if shared {
+             memo.get_or_insert_with(|| Vec::with_capacity(8))
+                 .push((key, result.clone()));
++            if RETAIN
++                && matches!(
++                    self.internal.approximation,
++                    Approximation::Add(_, _)
++                        | Approximation::Multiply(_, _)
++                        | Approximation::Negate(_)
++                        | Approximation::Offset(_, _)
++                        | Approximation::Inverse(_)
++                        | Approximation::Square(_)
++                        | Approximation::Sqrt(_)
++                        | Approximation::LinearCombination3(_)
++                )
++                && let Some(polynomial) = &result
++            {
++                self.internal.cache.store_pi_laurent_polynomial(polynomial);
++            }
+         }
+         result
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
+-        let polynomial = self.pi_laurent_polynomial(budget)?;
+-        let rational = match polynomial.terms.as_slice() {
++        let rational = self.project_pi_laurent_polynomial(budget, |polynomial| match polynomial
++            .terms
++            .as_slice()
++        {
+             [] => Some(Rational::zero()),
+             [(0, coefficient)]
+                 if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+@@ -554,7 +718,7 @@
+                 Some(coefficient.rational.clone())
+             }
+             _ => None,
+-        }?;
++        })?;
+         // A successful symbolic proof remains valid for every clone. Retain
+         // its sign so later predicates do not rebuild the same normal form.
+         self.internal
+@@ -564,17 +728,19 @@
+     }
+ 
+     pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {
+-        let polynomial = self.pi_laurent_polynomial(64)?;
+-        // Rebuild only coefficients in the admitted rational/radical basis.
+-        // An opaque remainder may hide an arbitrarily large graph, including
+-        // one left opaque after the recognition budget was exhausted.
+-        if polynomial
+-            .terms
+-            .iter()
+-            .any(|(_, coefficient)| !coefficient.atoms.is_empty())
+-        {
+-            return None;
+-        }
++        let polynomial = self.project_pi_laurent_polynomial(64, |polynomial| {
++            // Rebuild only coefficients in the admitted rational/radical basis.
++            // An opaque remainder may hide an arbitrarily large graph, including
++            // one left opaque after the recognition budget was exhausted.
++            if polynomial
++                .terms
++                .iter()
++                .any(|(_, coefficient)| !coefficient.atoms.is_empty())
++            {
++                return None;
++            }
++            Some(polynomial)
++        })?;
+         let mut result = Self::zero();
+         for (power, coefficient) in polynomial.terms {
+             let mut value = Self::rational(coefficient.rational);
+@@ -683,11 +849,7 @@
+             ),
+             Approximation::Multiply(left, right) => {
+                 if let Some(scale) = left.exact_rational() {
+-                    return Some(
+-                        right
+-                            .pi_atan_linear_form(budget - 1)?
+-                            .scaled(scale),
+-                    );
++                    return Some(right.pi_atan_linear_form(budget - 1)?.scaled(scale));
+                 }
+                 if let Some(scale) = right.exact_rational() {
+                     return Some(left.pi_atan_linear_form(budget - 1)?.scaled(scale));
+@@ -778,8 +940,7 @@
+                 };
+                 return Some(PiAcosLinearForm {
+                     constant: Rational::zero(),
+-                    pi: orientation.clone()
+-                        * Rational::fraction(1, 2).expect("two is nonzero"),
++                    pi: orientation.clone() * Rational::fraction(1, 2).expect("two is nonzero"),
+                     acos: -orientation,
+                     argument: Some(Self::rational(
+                         Rational::fraction(1, 6).expect("six is nonzero"),
+@@ -837,11 +998,7 @@
+             ),
+             Approximation::Multiply(left, right) => {
+                 if let Some(scale) = left.exact_rational() {
+-                    return Some(
+-                        right
+-                            .pi_acos_linear_form(budget - 1)?
+-                            .scaled(scale),
+-                    );
++                    return Some(right.pi_acos_linear_form(budget - 1)?.scaled(scale));
+                 }
+                 if let Some(scale) = right.exact_rational() {
+                     return Some(left.pi_acos_linear_form(budget - 1)?.scaled(scale));
+@@ -921,29 +1078,22 @@
+         Some((orientation, form.argument?))
+     }
+ 
+-    fn collapsed_inverse_trig_linear_sum(
+-        &self,
+-        other: &Computable,
+-    ) -> Option<Rational> {
++    fn collapsed_inverse_trig_linear_sum(&self, other: &Computable) -> Option<Rational> {
+         if !self.internal.contains_inverse_trig_or_pi()
+             && !other.internal.contains_inverse_trig_or_pi()
+         {
+             return None;
+         }
+-        if let (Some(left), Some(right)) = (
+-            self.pi_atan_linear_form(32),
+-            other.pi_atan_linear_form(32),
+-        )
++        if let (Some(left), Some(right)) =
++            (self.pi_atan_linear_form(32), other.pi_atan_linear_form(32))
+             && let Some(form) = left.add(right)
+             && form.pi.sign() == Sign::NoSign
+             && form.atan.sign() == Sign::NoSign
+         {
+             return Some(form.constant);
+         }
+-        if let (Some(left), Some(right)) = (
+-            self.pi_acos_linear_form(32),
+-            other.pi_acos_linear_form(32),
+-        )
++        if let (Some(left), Some(right)) =
++            (self.pi_acos_linear_form(32), other.pi_acos_linear_form(32))
+             && let Some(form) = left.add(right)
+             && form.pi.sign() == Sign::NoSign
+             && form.acos.sign() == Sign::NoSign
+@@ -1026,10 +1176,7 @@
+             && form.constant.sign() == Sign::NoSign
+         {
+             if form.pi.sign() == Sign::NoSign {
+-                return Some(product_sign(
+-                    form.atan.sign(),
+-                    form.argument?.exact_sign()?,
+-                ));
++                return Some(product_sign(form.atan.sign(), form.argument?.exact_sign()?));
+             }
+             if form.atan.sign() == Sign::NoSign {
+                 return Some(form.pi.sign());
+@@ -1092,8 +1239,7 @@
+     }
+ 
+     fn pi_laurent_rational_multiple(&self) -> Option<Rational> {
+-        let polynomial = self.pi_laurent_polynomial(48)?;
+-        match polynomial.terms.as_slice() {
++        self.project_pi_laurent_polynomial(48, |polynomial| match polynomial.terms.as_slice() {
+             [] => Some(Rational::zero()),
+             [(1, coefficient)]
+                 if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+@@ -1101,7 +1247,7 @@
+                 Some(coefficient.rational.clone())
+             }
+             _ => None,
+-        }
++        })
+     }
+ 
+     fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {
+@@ -1121,9 +1267,7 @@
+                     None
+                 }
+             }
+-            Approximation::Negate(child) => {
+-                Some(-child.retained_pi_rational_multiple(budget - 1)?)
+-            }
++            Approximation::Negate(child) => Some(-child.retained_pi_rational_multiple(budget - 1)?),
+             Approximation::Offset(child, shift) => Some(
+                 child.retained_pi_rational_multiple(budget - 1)?
+                     * Self::power_of_two_rational(*shift),
+@@ -1213,7 +1357,11 @@
+             _ => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Negate(self), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Negate(self),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1287,7 +1435,11 @@
+             _ => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Inverse(self), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Inverse(self),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1316,7 +1468,11 @@
+             _ => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Offset(self, n), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Offset(self, n),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1375,7 +1531,11 @@
+             _ => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Square(self), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Square(self),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1402,8 +1562,7 @@
+                         return self.multiply(left.clone()).add(remainder);
+                     }
+                 }
+-                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::InvPi)
+-                {
++                if let Some(remainder) = other.without_scaled_shared_factor(SharedConstant::InvPi) {
+                     return remainder;
+                 }
+             }
+@@ -1428,8 +1587,7 @@
+                         return other.multiply(left.clone()).add(remainder);
+                     }
+                 }
+-                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::InvPi)
+-                {
++                if let Some(remainder) = self.without_scaled_shared_factor(SharedConstant::InvPi) {
+                     return remainder;
+                 }
+             }
+@@ -1540,7 +1698,11 @@
+             }
+         }
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Multiply(self, other), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Multiply(self, other),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1551,12 +1713,10 @@
+     ) -> Computable {
+         Self {
+             internal: Arc::new(Node::new(
+-                Approximation::LinearCombination3(Box::new(
+-                    LinearCombination3 {
+-                        coefficients,
+-                        values,
+-                    },
+-                )),
++                Approximation::LinearCombination3(Box::new(LinearCombination3 {
++                    coefficients,
++                    values,
++                })),
+                 BoundCache::Invalid,
+                 ExactSignCache::Invalid,
+             )),
+@@ -1612,7 +1772,11 @@
+             _ => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Multiply(Self::rational(scale), self), BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::Multiply(Self::rational(scale), self),
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1632,9 +1796,8 @@
+                 }
+                 let (left, left_scale, left_offset) = left.rational_offset_parts(budget)?;
+                 let (right, right_scale, right_offset) = right.rational_offset_parts(budget)?;
+-                return Self::internal_structural_eq(left, right).then(|| {
+-                    (left, left_scale + right_scale, left_offset + right_offset)
+-                });
++                return Self::internal_structural_eq(left, right)
++                    .then(|| (left, left_scale + right_scale, left_offset + right_offset));
+             }
+             Approximation::Negate(child) => (child, Rational::new(-1)),
+             Approximation::Offset(child, shift) if shift.unsigned_abs() <= 4096 => {
+@@ -1663,12 +1826,16 @@
+             let left_parts = left.rational_offset_parts(&mut 8);
+             let right_parts = right.rational_offset_parts(&mut 8);
+             let (left, left_scale, right, right_scale) = match (left_parts, right_parts) {
+-                (Some((left, left_scale, left_offset)), Some((right, right_scale, right_offset)))
+-                    if left_offset == right_offset => (left, left_scale, right, right_scale),
+-                (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign =>
+-                    (base, scale, right, Rational::one()),
+-                (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign =>
+-                    (left, Rational::one(), base, scale),
++                (
++                    Some((left, left_scale, left_offset)),
++                    Some((right, right_scale, right_offset)),
++                ) if left_offset == right_offset => (left, left_scale, right, right_scale),
++                (Some((base, scale, offset)), None) if offset.sign() == Sign::NoSign => {
++                    (base, scale, right, Rational::one())
++                }
++                (None, Some((base, scale, offset))) if offset.sign() == Sign::NoSign => {
++                    (left, Rational::one(), base, scale)
++                }
+                 _ => return false,
+             };
+             if left_scale == right_scale {
+@@ -1722,14 +1889,18 @@
+             && let Some((base, scale, offset)) = self.rational_offset_parts(&mut 8)
+         {
+             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
+-            return base.clone().multiply_rational(scale)
++            return base
++                .clone()
++                .multiply_rational(scale)
+                 .add(Self::rational(offset + rational));
+         }
+         if let Some(rational) = &left_exact
+             && let Some((base, scale, offset)) = other.rational_offset_parts(&mut 8)
+         {
+             crate::trace_dispatch!("computable", "add", "rational-offset-fold");
+-            return base.clone().multiply_rational(scale)
++            return base
++                .clone()
++                .multiply_rational(scale)
+                 .add(Self::rational(offset + rational));
+         }
+         if let Approximation::Add(left, right) = &self.internal.approximation
+@@ -1838,7 +2009,9 @@
+                     .and_then(|rational| other.sin_pi_rational_sum_sign(rational))
+             });
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Add(self, other), if certified_bound == BoundInfo::Unknown {
++            internal: Arc::new(Node::new(
++                Approximation::Add(self, other),
++                if certified_bound == BoundInfo::Unknown {
+                     BoundCache::Invalid
+                 } else {
+                     BoundCache::Valid(certified_bound)
+@@ -1857,7 +2030,11 @@
+             return Self::one();
+         }
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Int(n), BoundCache::Invalid, ExactSignCache::Invalid)),
++            internal: Arc::new(Node::new(
++                Approximation::Int(n),
++                BoundCache::Invalid,
++                ExactSignCache::Invalid,
++            )),
+             signal: None,
+         }
+     }
+@@ -1870,7 +2047,11 @@
+             return Self::zero();
+         }
+         let series = Self {
+-            internal: Arc::new(Node::new(Approximation::ErfSeries(self.clone()), BoundCache::Invalid, ExactSignCache::Invalid)),
++            internal: Arc::new(Node::new(
++                Approximation::ErfSeries(self.clone()),
++                BoundCache::Invalid,
++                ExactSignCache::Invalid,
++            )),
+             signal: None,
+         };
+         let gaussian = self.square().negate().exp();
+@@ -1886,7 +2067,11 @@
+             return Self::one();
+         }
+         Self {
+-            internal: Arc::new(Node::new(Approximation::Erfc(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
++            internal: Arc::new(Node::new(
++                Approximation::Erfc(self),
++                BoundCache::Invalid,
++                ExactSignCache::Valid(Sign::Plus),
++            )),
+             signal: None,
+         }
+     }
+@@ -1928,7 +2113,11 @@
+             return Self::rational(HALF_RATIONAL.clone());
+         }
+         Self {
+-            internal: Arc::new(Node::new(Approximation::NormalSf(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Plus))),
++            internal: Arc::new(Node::new(
++                Approximation::NormalSf(self),
++                BoundCache::Invalid,
++                ExactSignCache::Valid(Sign::Plus),
++            )),
+             signal: None,
+         }
+     }
+@@ -1955,7 +2144,11 @@
+             None => ExactSignCache::Invalid,
+         };
+         Self {
+-            internal: Arc::new(Node::new(Approximation::NormalInterval { lo, hi }, BoundCache::Invalid, exact_sign)),
++            internal: Arc::new(Node::new(
++                Approximation::NormalInterval { lo, hi },
++                BoundCache::Invalid,
++                exact_sign,
++            )),
+             signal: None,
+         }
+     }
+@@ -1963,7 +2156,11 @@
+     /// Natural logarithm of the standard normal CDF.
+     pub fn log_pnorm(self) -> Computable {
+         Self {
+-            internal: Arc::new(Node::new(Approximation::LogPnorm(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
++            internal: Arc::new(Node::new(
++                Approximation::LogPnorm(self),
++                BoundCache::Invalid,
++                ExactSignCache::Valid(Sign::Minus),
++            )),
+             signal: None,
+         }
+     }
+@@ -1971,7 +2168,11 @@
+     /// Natural logarithm of the standard normal upper-tail probability.
+     pub fn log_normal_sf(self) -> Computable {
+         Self {
+-            internal: Arc::new(Node::new(Approximation::LogNormalSf(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
++            internal: Arc::new(Node::new(
++                Approximation::LogNormalSf(self),
++                BoundCache::Invalid,
++                ExactSignCache::Valid(Sign::Minus),
++            )),
+             signal: None,
+         }
+     }
+@@ -1979,7 +2180,11 @@
+     /// Natural logarithm of the standard normal density.
+     pub fn log_dnorm(self) -> Computable {
+         Self {
+-            internal: Arc::new(Node::new(Approximation::LogDnorm(self), BoundCache::Invalid, ExactSignCache::Valid(Sign::Minus))),
++            internal: Arc::new(Node::new(
++                Approximation::LogDnorm(self),
++                BoundCache::Invalid,
++                ExactSignCache::Valid(Sign::Minus),
++            )),
+             signal: None,
+         }
+     }
+@@ -1988,11 +2193,8 @@
+     pub fn normal_quantile(p: Computable, seed: BigInt, seed_prec: Precision) -> Computable {
+         Self {
+             internal: Arc::new(Node::new(
+-                Approximation::NormalQuantile(Box::new(NormalQuantileData {
+-                    p,
+-                    seed,
+-                    seed_prec,
+-                })), BoundCache::Invalid,
++                Approximation::NormalQuantile(Box::new(NormalQuantileData { p, seed, seed_prec })),
++                BoundCache::Invalid,
+                 ExactSignCache::Invalid,
+             )),
+             signal: None,
+@@ -2003,5 +2205,4 @@
+     pub fn abort(&mut self, s: Signal) {
+         self.signal = Some(s);
+     }
+-
+ }
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -140,6 +140,7 @@
+ struct CachedEvaluation {
+     approximation: Option<CachedApproximation>,
+     quadratic_tower: Option<Box<Tower>>,
++    pi_laurent_polynomial: Option<Box<ClosedPiLaurentPolynomial>>,
+     /// The iterated radical-tower sign reduction declined this root.
+     radical_tower_declined: bool,
+ }
+@@ -258,6 +259,27 @@
+             .read()
+             .unwrap_or_else(|error| error.into_inner());
+         guard.quadratic_tower.as_deref().cloned()
++    }
++
++    fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {
++        let guard = self
++            .cell()?
++            .read()
++            .unwrap_or_else(|error| error.into_inner());
++        Some(guard.pi_laurent_polynomial.as_deref()?.to_polynomial())
++    }
++
++    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {
++        let Some(closed) = ClosedPiLaurentPolynomial::from_polynomial(polynomial) else {
++            return;
++        };
++        let mut guard = self
++            .cell_or_init()
++            .write()
++            .unwrap_or_else(|error| error.into_inner());
++        if guard.pi_laurent_polynomial.is_none() {
++            guard.pi_laurent_polynomial = Some(Box::new(closed));
++        }
+     }
+ 
+     fn radical_tower_declined(&self) -> bool {
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -76,15 +76,9 @@
+     fn rational_root(root: &Computable) -> Option<(u32, Rational)> {
+         match &root.internal.approximation {
+             Approximation::Sqrt(child) => Some((2, child.exact_rational()?)),
+-            Approximation::NthRoot(child, degree) => {
+-                Some((*degree, child.exact_rational()?))
+-            }
+-            Approximation::Constant(SharedConstant::Sqrt2) => {
+-                Some((2, Rational::new(2)))
+-            }
+-            Approximation::Constant(SharedConstant::Sqrt3) => {
+-                Some((2, Rational::new(3)))
+-            }
++            Approximation::NthRoot(child, degree) => Some((*degree, child.exact_rational()?)),
++            Approximation::Constant(SharedConstant::Sqrt2) => Some((2, Rational::new(2))),
++            Approximation::Constant(SharedConstant::Sqrt3) => Some((2, Rational::new(3))),
+             _ => None,
+         }
+     }
+@@ -173,18 +167,14 @@
+             .checked_add(self.conjugate_log2)?
+             .max(self.denominator_log2.checked_add(other.conjugate_log2)?)
+             .checked_add(1)?;
+-        self.denominator_log2 = self
+-            .denominator_log2
+-            .checked_add(other.denominator_log2)?;
++        self.denominator_log2 = self.denominator_log2.checked_add(other.denominator_log2)?;
+         self.conjugate_log2 = conjugate_log2;
+         self.merge_generators(other)?;
+         self.within_limits().then_some(self)
+     }
+ 
+     fn multiply(mut self, other: Self) -> Option<Self> {
+-        self.denominator_log2 = self
+-            .denominator_log2
+-            .checked_add(other.denominator_log2)?;
++        self.denominator_log2 = self.denominator_log2.checked_add(other.denominator_log2)?;
+         self.conjugate_log2 = self.conjugate_log2.checked_add(other.conjugate_log2)?;
+         self.merge_generators(other)?;
+         self.within_limits().then_some(self)
+@@ -213,9 +203,7 @@
+             .denominator_log2
+             .checked_mul(degree_u64.checked_sub(1)?)?
+             .checked_add(self.conjugate_log2)?;
+-        self.conjugate_log2 = numerator
+-            .checked_add(degree_u64.checked_sub(1)?)?
+-            / degree_u64;
++        self.conjugate_log2 = numerator.checked_add(degree_u64.checked_sub(1)?)? / degree_u64;
+         self.insert_generator(root, degree)?;
+         self.within_limits().then_some(self)
+     }
+@@ -273,9 +261,7 @@
+         let numerator = num::ToPrimitive::to_u64(value.numerator())?;
+         let denominator = num::ToPrimitive::to_u64(value.denominator())?;
+         const MAX_EXACT_BINARY64_INTEGER: u64 = 1_u64 << 53;
+-        if numerator > MAX_EXACT_BINARY64_INTEGER
+-            || denominator > MAX_EXACT_BINARY64_INTEGER
+-        {
++        if numerator > MAX_EXACT_BINARY64_INTEGER || denominator > MAX_EXACT_BINARY64_INTEGER {
+             return None;
+         }
+         // Both integer-to-binary64 conversions are exact. Division is the only
+@@ -324,10 +310,7 @@
+         if self.lower <= 0.0 && self.upper >= 0.0 {
+             return None;
+         }
+-        Self::new(
+-            (1.0 / self.upper).next_down(),
+-            (1.0 / self.lower).next_up(),
+-        )
++        Self::new((1.0 / self.upper).next_down(), (1.0 / self.lower).next_up())
+     }
+ 
+     fn square(self) -> Option<Self> {
+@@ -382,9 +365,9 @@
+             *remaining = remaining.checked_sub(1)?;
+             let result = match &node.internal.approximation {
+                 Approximation::One => AlgebraicSeparation::rational(&Rational::one()),
+-                Approximation::Int(value) => AlgebraicSeparation::rational(
+-                    &Rational::from_bigint(value.clone()),
+-                ),
++                Approximation::Int(value) => {
++                    AlgebraicSeparation::rational(&Rational::from_bigint(value.clone()))
++                }
+                 Approximation::Ratio(value) => AlgebraicSeparation::rational(value),
+                 Approximation::Constant(SharedConstant::Sqrt2)
+                 | Approximation::Constant(SharedConstant::Sqrt3) => {
+@@ -393,28 +376,25 @@
+                         Approximation::Constant(SharedConstant::Sqrt3) => 3,
+                         _ => unreachable!(),
+                     };
+-                    AlgebraicSeparation::rational(&Rational::new(radicand))?
+-                        .root(node.clone(), 2)
++                    AlgebraicSeparation::rational(&Rational::new(radicand))?.root(node.clone(), 2)
+                 }
+                 Approximation::Negate(child) => parse(child, remaining, memo),
+                 Approximation::Offset(child, shift) => {
+                     parse(child, remaining, memo)?.offset(*shift)
+                 }
+-                Approximation::Add(left, right) => parse(left, remaining, memo)?
+-                    .add(parse(right, remaining, memo)?),
+-                Approximation::Multiply(left, right) => parse(left, remaining, memo)?
+-                    .multiply(parse(right, remaining, memo)?),
++                Approximation::Add(left, right) => {
++                    parse(left, remaining, memo)?.add(parse(right, remaining, memo)?)
++                }
++                Approximation::Multiply(left, right) => {
++                    parse(left, remaining, memo)?.multiply(parse(right, remaining, memo)?)
++                }
+                 Approximation::Inverse(child)
+-                    if child
+-                        .exact_sign()
+-                        .is_some_and(|sign| sign != Sign::NoSign) =>
++                    if child.exact_sign().is_some_and(|sign| sign != Sign::NoSign) =>
+                 {
+                     parse(child, remaining, memo)?.inverse()
+                 }
+                 Approximation::Square(child) => parse(child, remaining, memo)?.square(),
+-                Approximation::Sqrt(child) => {
+-                    parse(child, remaining, memo)?.root(node.clone(), 2)
+-                }
++                Approximation::Sqrt(child) => parse(child, remaining, memo)?.root(node.clone(), 2),
+                 Approximation::NthRoot(child, degree) => {
+                     parse(child, remaining, memo)?.root(node.clone(), *degree)
+                 }
+@@ -573,9 +553,9 @@
+             return Some(cached);
+         }
+         if constant == SharedConstant::Tau
+-                && let Some(pi_precision) = p.checked_sub(1)
+-                && let Some(cached) =
+-                    Self::cached_shared_constant_at_precision(SharedConstant::Pi, pi_precision)
++            && let Some(pi_precision) = p.checked_sub(1)
++            && let Some(cached) =
++                Self::cached_shared_constant_at_precision(SharedConstant::Pi, pi_precision)
+         {
+             // tau is exactly 2*pi, so a pi approximation at precision p-1
+             // is already a tau approximation at precision p. Populate the
+@@ -585,9 +565,9 @@
+             return Some(cached);
+         }
+         if constant == SharedConstant::Pi
+-                && let Some(tau_precision) = p.checked_add(1)
+-                && let Some(cached) =
+-                    Self::cached_shared_constant_at_precision(SharedConstant::Tau, tau_precision)
++            && let Some(tau_precision) = p.checked_add(1)
++            && let Some(cached) =
++                Self::cached_shared_constant_at_precision(SharedConstant::Tau, tau_precision)
+         {
+             // The same identity works in reverse: a tau approximation at
+             // precision p+1 is already a pi approximation at precision p.
+@@ -690,7 +670,15 @@
+             Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
+                 BoundInfo::Zero
+             } else {
+-                BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
++                BoundInfo::with_sign(
++                    n.sign(),
++                    crate::verified::word::checked_bit_length_msd(
++                        n.magnitude().bits(),
++                        1,
++                        false,
++                        0,
++                    ),
++                )
+             }),
+             Approximation::Constant(constant) => Some(constant.bound_info()),
+             Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
+@@ -783,7 +771,15 @@
+                 Approximation::Int(n) => Some(if n.sign() == Sign::NoSign {
+                     BoundInfo::Zero
+                 } else {
+-                    BoundInfo::with_sign(n.sign(), crate::verified::word::checked_bit_length_msd(n.magnitude().bits(), 1, false, 0))
++                    BoundInfo::with_sign(
++                        n.sign(),
++                        crate::verified::word::checked_bit_length_msd(
++                            n.magnitude().bits(),
++                            1,
++                            false,
++                            0,
++                        ),
++                    )
+                 }),
+                 Approximation::Constant(constant) => Some(constant.bound_info()),
+                 Approximation::Ratio(r) => Some(BoundInfo::from_rational(r)),
+@@ -970,9 +966,7 @@
+                     .binary64_filter_interval(remaining)?
+                     .multiply(Binary64Interval::exact(scale)?)
+             }
+-            Approximation::Inverse(child) => {
+-                child.binary64_filter_interval(remaining)?.inverse()
+-            }
++            Approximation::Inverse(child) => child.binary64_filter_interval(remaining)?.inverse(),
+             Approximation::Square(child) => child.binary64_filter_interval(remaining)?.square(),
+             Approximation::Add(left, right) => left
+                 .binary64_filter_interval(remaining)?
+@@ -1062,7 +1056,9 @@
+                         && appr.abs() > BigInt::one()
+                     {
+                         let sign = appr.sign();
+-                        node.internal.facts.replace_exact_sign(ExactSignCache::Valid(sign));
++                        node.internal
++                            .facts
++                            .replace_exact_sign(ExactSignCache::Valid(sign));
+                         Some(Some(sign))
+                     } else {
+                         Some(None)
+@@ -1245,7 +1241,8 @@
+                         (Some(Sign::Plus), Some(Sign::Plus)) => Some(Sign::Plus),
+                         (Some(Sign::Minus), Some(Sign::Minus)) => Some(Sign::Minus),
+                         _ => None,
+-                    }.or_else(|| node.exact_positive_exp_difference_sign());
++                    }
++                    .or_else(|| node.exact_positive_exp_difference_sign());
+                     store_exact_sign(node, result);
+                     values.push(result);
+                 }
+@@ -1286,14 +1283,16 @@
+         }
+         let rational_square = &rational * &rational;
+         let radical_square = &scale * &scale * radicand?;
+-        Some(match rational_square
+-            .partial_cmp(&radical_square)
+-            .expect("finite exact rationals are totally ordered")
+-        {
+-            Ordering::Less => scale.sign(),
+-            Ordering::Equal => Sign::NoSign,
+-            Ordering::Greater => rational.sign(),
+-        })
++        Some(
++            match rational_square
++                .partial_cmp(&radical_square)
++                .expect("finite exact rationals are totally ordered")
++            {
++                Ordering::Less => scale.sign(),
++                Ordering::Equal => Sign::NoSign,
++                Ordering::Greater => rational.sign(),
++            },
++        )
+     }
+ 
+     pub(crate) fn exact_pure_quadratic_surd(&self) -> Option<(Rational, Rational)> {
+@@ -1310,22 +1309,23 @@
+         // Project the shared bounded normal form after cancellation. Requiring
+         // every intermediate expression to use one radical would miss exact
+         // quadratic values assembled from independent geometric directions.
+-        let polynomial = self.pi_laurent_polynomial(64)?;
+-        let value = match polynomial.terms.as_slice() {
+-            [] => (Rational::zero(), Rational::zero(), None),
+-            [(0, coefficient)] if coefficient.atoms.is_empty() => {
+-                match coefficient.radicals.as_slice() {
+-                    [] => (coefficient.rational.clone(), Rational::zero(), None),
+-                    [(radicand, scale)] => (
+-                        coefficient.rational.clone(),
+-                        scale.clone(),
+-                        Some(radicand.clone()),
+-                    ),
+-                    _ => return None,
+-                }
+-            }
+-            _ => return None,
+-        };
++        let value = self.project_pi_laurent_polynomial(64, |polynomial| {
++            match polynomial.terms.as_slice() {
++                [] => Some((Rational::zero(), Rational::zero(), None)),
++                [(0, coefficient)] if coefficient.atoms.is_empty() => {
++                    match coefficient.radicals.as_slice() {
++                        [] => Some((coefficient.rational.clone(), Rational::zero(), None)),
++                        [(radicand, scale)] => Some((
++                            coefficient.rational.clone(),
++                            scale.clone(),
++                            Some(radicand.clone()),
++                        )),
++                        _ => None,
++                    }
++                }
++                _ => None,
++            }
++        })?;
+         crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+         Some(value)
+     }
+@@ -1358,5 +1358,4 @@
+             _ => None,
+         }
+     }
+-
+ }
+--- a/crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs
++++ b/crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs
+@@ -0,0 +1,186 @@
++use super::*;
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn rational(polynomial: PiLaurentPolynomial) -> Option<Rational> {
++    match polynomial.terms.as_slice() {
++        [] => Some(Rational::zero()),
++        [(0, coefficient)] if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() => {
++            Some(coefficient.rational.clone())
++        }
++        _ => None,
++    }
++}
++
++fn retained_query(
++    value: &Computable,
++    depth: usize,
++    work: usize,
++) -> (Option<PiLaurentPolynomial>, usize, bool) {
++    let mut remaining = work;
++    let mut reused = false;
++    let result =
++        value.pi_laurent_polynomial_retained::<true>(depth, &mut remaining, &mut None, &mut reused);
++    (result, remaining, reused)
++}
++
++#[test]
++fn warm_proof_is_available_with_no_new_work() {
++    let value = raw(Approximation::Add(
++        Computable::rational(Rational::new(3)),
++        Computable::rational(Rational::new(5)),
++    ));
++    let clone = value.clone();
++    let owners = Arc::strong_count(&value.internal);
++    assert!(value.pi_laurent_polynomial(0).is_none());
++    assert!(retained_query(&value, 0, 0).0.is_none());
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    assert_eq!(
++        retained_query(&value, 8, 512).0.and_then(rational),
++        Some(Rational::new(8))
++    );
++    let (proof, remaining, reused) = retained_query(&clone, 0, 0);
++    assert!(reused);
++    assert_eq!(remaining, 0);
++    assert_eq!(proof.and_then(rational), Some(Rational::new(8)));
++    assert_eq!(clone.bounded_laurent_rational(0), Some(Rational::new(8)));
++    assert_eq!(Arc::strong_count(&value.internal), owners);
++    assert!(value.cached().is_none());
++}
++
++#[test]
++fn opaque_coefficients_are_not_retained_and_nodes_are_reclaimed() {
++    let atom = raw(Approximation::AtanRational(
++        Rational::fraction(3, 4).unwrap(),
++    ));
++    let value = raw(Approximation::Add(atom.clone(), Computable::pi()));
++    let clone = value.clone();
++    let atom_weak = Arc::downgrade(&atom.internal);
++    let value_weak = Arc::downgrade(&value.internal);
++    let owners = Arc::strong_count(&atom.internal);
++    let polynomial = retained_query(&value, 64, 512).0.unwrap();
++    assert!(ClosedPiLaurentPolynomial::from_polynomial(&polynomial).is_none());
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    drop(polynomial);
++    assert_eq!(Arc::strong_count(&atom.internal), owners);
++    drop(value);
++    drop(clone);
++    drop(atom);
++    assert!(value_weak.upgrade().is_none());
++    assert!(atom_weak.upgrade().is_none());
++}
++
++#[test]
++fn expansion_at_a_term_limit_retries_the_original_proof() {
++    let mut power = Computable::one();
++    let mut sum = Computable::zero();
++    for _ in 0..8 {
++        sum = raw(Approximation::Add(sum, power.clone()));
++        power = raw(Approximation::Multiply(power, Computable::pi()));
++    }
++    // ((x + y) - x) - y is zero. At depth four the cold recognizer can
++    // cancel opaque x/y atoms. Warming x/y expands nine distinct pi powers,
++    // exceeding the unchanged eight-term limit before cancellation.
++    let expression = raw(Approximation::Add(
++        raw(Approximation::Add(
++            raw(Approximation::Add(sum.clone(), power.clone())),
++            raw(Approximation::Negate(sum.clone())),
++        )),
++        raw(Approximation::Negate(power.clone())),
++    ));
++    assert_eq!(
++        expression.pi_laurent_polynomial(4).and_then(rational),
++        Some(Rational::zero())
++    );
++    assert!(retained_query(&sum, 64, 512).0.is_some());
++    assert!(retained_query(&power, 64, 512).0.is_some());
++    let (expanded, _, reused) = retained_query(&expression, 4, 512);
++    assert!(reused);
++    assert!(expanded.and_then(rational).is_none());
++    assert_eq!(
++        expression.bounded_laurent_rational(4),
++        Some(Rational::zero())
++    );
++    assert!(expression.cached().is_none());
++}
++
++#[test]
++fn successful_cold_rational_facts_survive_warming_and_cloning() {
++    for width in [1, 2, 7, 8, 9, 127, 255, 256, 257, 511, 512, 513] {
++        for depth in [0, 1, 2, 4, 8, 48, 64] {
++            let mut nodes = (0..width)
++                .map(|index| {
++                    raw(Approximation::Ratio(
++                        Rational::fraction(index + 1, 4099).unwrap(),
++                    ))
++                })
++                .collect::<Vec<_>>();
++            while nodes.len() > 1 {
++                let mut next = Vec::new();
++                let mut values = nodes.into_iter();
++                while let Some(left) = values.next() {
++                    next.push(match values.next() {
++                        Some(right) => raw(Approximation::Add(left, right)),
++                        None => left,
++                    });
++                }
++                nodes = next;
++            }
++            let value = nodes.pop().unwrap();
++            let clone = value.clone();
++            let cold = value.pi_laurent_polynomial(depth).and_then(rational);
++            let expected = Rational::fraction(width * (width + 1), 2 * 4099).unwrap();
++            for query in [&value, &clone, &value] {
++                let actual = query.bounded_laurent_rational(depth);
++                if let Some(cold) = &cold {
++                    assert_eq!(actual.as_ref(), Some(cold), "width={width}, depth={depth}");
++                }
++                if let Some(actual) = actual {
++                    assert_eq!(actual, expected, "width={width}, depth={depth}");
++                }
++                let _ = retained_query(query, 64, 512);
++            }
++            assert!(value.cached().is_none());
++        }
++    }
++}
++
++#[test]
++fn concurrent_publication_keeps_approximations_and_releases_the_graph() {
++    let value = raw(Approximation::Add(
++        Computable::rational(Rational::new(3)),
++        Computable::sqrt_rational(Rational::new(13)),
++    ));
++    let weak = Arc::downgrade(&value.internal);
++    std::thread::scope(|scope| {
++        for index in 0..8 {
++            let clone = value.clone();
++            scope.spawn(move || {
++                for _ in 0..8 {
++                    assert_eq!(
++                        clone.exact_quadratic_surd_parts(),
++                        Some((Rational::new(3), Rational::one(), Some(Rational::new(13))))
++                    );
++                    let _ = clone.approx(if index % 2 == 0 { -32 } else { -64 });
++                }
++            });
++        }
++    });
++    assert_eq!(value.cached().unwrap().0, -64);
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    assert_eq!(
++        value.exact_quadratic_surd_parts(),
++        Some((Rational::new(3), Rational::one(), Some(Rational::new(13))))
++    );
++    drop(value);
++    assert!(weak.upgrade().is_none());
++}

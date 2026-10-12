@@ -1,0 +1,11 @@
+{
+  "decision": "Invalid baseline/candidate comparison: both labels linked the same library and identical executable bytes.",
+  "binaries_record_sha256": "d82c900215b814aa94adb96a5465fb010b6070303d9298bdc3e84f700f710f73",
+  "result_sha256": "e4de91b5cd673f9a84b6559944af187d1322983308b8a66c9e05b102d6a9bfc1",
+  "candidate_library_reported_fresh": true,
+  "library_sha256": "f531fd43fcc9a853f9d81ae6b353820a458b5b5eb8683c8a3b116dadf5171e09",
+  "cause": "Both isolated workspaces shared CARGO_TARGET_DIR and the unqualified release/libhyperreal.rlib output. The candidate Cargo invocation reported fresh after the baseline build and returned the same library bytes. Source hashes alone did not prove which artifact was linked.",
+  "retention": "All fixed samples and original results remain unmodified. No measured candidate speedup, regression, allocation or executable-size comparison is credited from cost-v1.",
+  "correction": "Fork the runner; use separate target directories and dependency search paths, record each source manifest and package identity, require distinct baseline/candidate library and executable hashes before sampling.",
+  "runtime_admitted": false
+}

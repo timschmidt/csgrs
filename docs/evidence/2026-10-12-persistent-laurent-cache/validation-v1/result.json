@@ -1,0 +1,41 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 10.891155670862645,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cache-regressions",
+      "exit_code": 0,
+      "seconds": 17.320000119972974,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "493b830712bc014443ed1bce5e2c0817e06c1fccd7ed99914932e2c8e0cfc12f",
+      "stderr_sha256": "c0c300a4147614fa465ed7cceae43a163f8a0bdd4211090d900c2f12f4d4048f"
+    },
+    {
+      "name": "strict-clippy",
+      "exit_code": 0,
+      "seconds": 5.411608692258596,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "766e4a1166993927ae927893eca4707e4c8c1a2d9a51a064d4b52bded8a0ec01"
+    },
+    {
+      "name": "scalar-library",
+      "exit_code": 0,
+      "seconds": 3.931413206271827,
+      "candidate_unchanged": true,
+      "main_unchanged": true,
+      "stdout_sha256": "27bd5bf9b4b8e2d882ac73812cbfc18aadd0dd5ef43be843bf2d5d0b7076e6be",
+      "stderr_sha256": "91f2cd4b82dbba32fa9636c215466980918cd0fbbb5d2d5ad2b611d9f8d9f9ee"
+    }
+  ],
+  "complete": true
+}

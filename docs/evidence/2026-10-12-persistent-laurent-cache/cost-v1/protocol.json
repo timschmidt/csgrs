@@ -1,0 +1,28 @@
+{
+  "scope": "Measure unchanged public normal-form workloads in fresh paired processes.\n\nFive fixed alternating pairs in each of time and allocation modes. Both\nlibraries use the same release features/compiler and the exact same probe.\nOnly mathematical witnesses must agree; representation inventory is retained\nseparately, so construction changes cannot be hidden by reporting query cost.\nThis early scalar gate does not admit a native or scalar runtime change.\n",
+  "runner_sha256": "dc2104da99da123befba18e00d3af38f85c3cfbcecdb862eff57aebff9f4eb6f",
+  "probe_sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+  "predecessor_validation_sha256": "6dd109dd73335df26ee4cd11268f81eec3c42f53a44100b5efd005f81c7bc80b",
+  "preparation_sha256": "04776730ea13e3cc582f59cf4f9ca190746860b2f303e9b402a467bfb58e40e7",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "6afb6c80f2d880a15a04eb3a9c9bbc122d8730c80f086d2d2837ca34f8b16551",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "ff4c48d785c4dbb57c66dc78d41e1e0f72d3192ef931c91017aeef53bd589658"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "pinned_cpu": 0,
+  "time_iterations": 4096,
+  "memory_iterations": 1000,
+  "pairs_each_mode": 5,
+  "all_builds_finish_before_measurements": true,
+  "native_runtime_admitted": false
+}
