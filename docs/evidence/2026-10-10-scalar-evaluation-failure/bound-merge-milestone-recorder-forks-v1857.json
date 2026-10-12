@@ -1,0 +1,43 @@
+{
+  "runner_forks": {
+    "record_bound_merge_broad_milestone.py": {
+      "predecessor": "record_domain_predicate_broad_milestone.py",
+      "predecessor_sha256": "c41049207ed4f87fb02dd3e300fafdc34a9de2707606c308a1ac5dd32eeb71ba",
+      "fork_sha256": "edf0cf9c58c4c9a31d2c9e0b62bebc4ce1fc2777ab6cced0d0ee303b4198c1ae",
+      "literal_replacements": {
+        "domain-predicate-broad-validation-v1772.json": "bound-merge-broad-validation-v1849.json",
+        "domain-predicate-candidate-validation-v1772.json": "bound-merge-candidate-validation-v1849.json",
+        "domain-predicate-proof-validation-v1763.json": "bound-merge-proof-validation-v1840.json",
+        "domain-predicate-broad-milestone-v1772.json": "bound-merge-broad-milestone-v1849.json",
+        "domain-predicate-broad-ledger-v1772.json": "bound-merge-broad-ledger-v1849.json",
+        "typed-api-prototype-v1766-domain-predicate-release-build": "typed-api-prototype-v1843-bound-merge-release-build",
+        "v1754": "v1836",
+        "645 verified units, 226 rejected mutations": "651 verified units, 246 rejected mutations",
+        "domain-predicate-cost-protocol-v1773.json": "bound-merge-cost-protocol-v1850.json",
+        "domain-predicate-replay-protocol-v1781.json": "bound-merge-replay-protocol-v1858.json",
+        "compare_domain_predicate_queries.py": "compare_bound_merge_queries.py",
+        "compare_domain_predicate_replays.py": "compare_bound_merge_replays.py",
+        "audit_domain_predicate_fact_retention.py": "audit_bound_merge_fact_retention.py",
+        "domain-predicate-fact-audit-preparation-v1835.json": "bound-merge-replay-protocol-v1858.json",
+        "v1764-v1772": "v1841-v1849",
+        "v1761 proof source": "v1838 proof source",
+        "Next validate its runtime extraction against the unchanged tests, public/capped replays \"\n           \"and retained cost controls before deciding retention.": "Next validate its runtime extraction against unchanged scalar/consumer tests, cost \"\n           \"controls and capped/numerical/public replays before deciding retention."
+      }
+    },
+    "record_bound_merge_initial_costs.py": {
+      "predecessor": "record_domain_predicate_initial_costs.py",
+      "predecessor_sha256": "f92c18671b882ec45e8ad640f378a2a0f418d563f3032046be41bc3112d5816b",
+      "fork_sha256": "d51a3080a64e3bb234d48fca99389cc6152162ebed9d85a9f2dce3cd1c6c62b3",
+      "literal_replacements": {
+        "domain-predicate-initial-cost-review-v1780.json": "bound-merge-initial-cost-review-v1857.json",
+        "domain-predicate-cost-protocol-v1773.json": "bound-merge-cost-protocol-v1850.json",
+        "domain-predicate-cost-orchestration-v1779.json": "bound-merge-cost-orchestration-v1856.json",
+        "domain-predicate-preconditioned-cost-v1780": "bound-merge-preconditioned-cost-v1857",
+        "replay_domain_predicate_cost.py": "replay_bound_merge_cost.py"
+      }
+    }
+  },
+  "followup_strategy": "bound-merge-cost-followup-strategy-v1857.json",
+  "followup_strategy_sha256": "d8327cd99eb9ab8616a65e362782125196fa9375350f7f332e6a7383a4e5cbc7",
+  "scope": "Result recorders retain their prior assertions and parsers. Identity/proof-count literals and the current ledger transition change explicitly; the repeat selection is frozen before observing candidate timings."
+}
