@@ -1,0 +1,35 @@
+--- baseline/crates/hyperreal/src/computable/approximation/inverse_trig.rs
++++ outlined/crates/hyperreal/src/computable/approximation/inverse_trig.rs
+@@ -554,6 +554,23 @@
+     })
+ }
+ 
++// Keep coefficient arithmetic out of the dispatcher-facing kernel. Its caller
++// has already checked that the stored rational is strictly inside (-1, 1).
++#[inline(never)]
++fn acos_rational_half_angle(r: &Rational) -> Rational {
++    // Cancel the shared denominator before constructing either fraction.
++    // For signed n/d, (1-r)/(1+r) is (d-n)/(d+n).
++    let difference = r.denominator() - r.numerator();
++    let sum = r.denominator() + r.numerator();
++    let (numerator, denominator) = if r.sign() == Sign::Minus {
++        (sum, difference)
++    } else {
++        (difference, sum)
++    };
++    Rational::from_bigint_fraction(BigInt::from_biguint(Sign::Plus, numerator), denominator)
++        .expect("acos half-angle denominator is positive inside the unit interval")
++}
++
+ fn acos_positive_rational(
+     signal: &Option<Signal>,
+     r: &Rational,
+@@ -583,7 +600,7 @@
+         // Exact-rational endpoint inputs benefit from forming the half-angle
+         // residual directly. This follows the same cancellation-avoiding reduction
+         // as `acos_positive` while avoiding a temporary Computable division tree.
+-        let residual = (Rational::one() - r.clone()) / (Rational::one() + r.clone());
++        let residual = acos_rational_half_angle(r);
+         if residual <= Rational::fraction(1, 4).expect("nonzero denominator") {
+             crate::trace_dispatch!("computable_approx", "acos", "small-rational-residual");
+             return atan_sqrt_rational_small(signal, &residual, p - 1, false);

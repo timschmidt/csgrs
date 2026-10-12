@@ -1,0 +1,21 @@
+{"exit_code": 0, "seconds": 1.0895418827421963, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1488-acos-warm-allocation-cap exit 0
+{"exit_code": 0, "seconds": 1.1059920461848378, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1489-acos-warm-allocation-cap exit 0
+{"exit_code": 0, "seconds": 7.183481781277806, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 32.610935516655445, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 69.9825852997601, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_positive": 4077481, "small_negative": 4330603, "mid_positive": 204956, "mid_negative": 276771, "wide_positive": 154430, "wide_negative": 174548, "cached_positive": 785647, "cached_negative": 1619749}
+acos [-10.8, -10.1, -91.35, -88.97, -99.98, -99.98, 17.42, 30.26]
+acos [-10.3, -9.62, -90.44, -87.71, -99.98, -99.99, 6.26, 17.0]
+Outlined candidate screen completed; retention still requires comparison review.

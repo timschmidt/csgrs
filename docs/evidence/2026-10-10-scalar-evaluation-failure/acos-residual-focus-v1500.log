@@ -1,0 +1,213 @@
+{"exit_code": 0, "seconds": 1.101581227965653, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1427-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.0927363252267241, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1428-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.075199505314231, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1429-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.1305437651462853, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1430-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.11650812625885, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1431-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.0864487546496093, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1432-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.1267270860262215, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1433-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 1.0868248189799488, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+typed-api-prototype-v1434-acos-warm-survey-cap exit 0
+{"exit_code": 0, "seconds": 32.945034824777395, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 69.57406074274331, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_positive": 3875815, "small_negative": 4354322, "mid_positive": 208456, "mid_negative": 238653, "wide_positive": 168569, "wide_negative": 173708, "cached_positive": 856681, "cached_negative": 1608020}
+typed-api-prototype-v1437-acos-residual-targeted-cost passed
+Inverse-trig budget probe built; no builds during capped workloads.
+atan_small completed
+atan_wide completed
+acos_wide completed
+terms_small completed
+terms_wide completed
+pi_wide completed
+{"processes": 54, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v1438-acos-residual-inverse-cost passed
+Normal-form budget probe built; no builds during capped workloads.
+pi_small completed
+pi_wide completed
+inverse_wide completed
+rational_wide completed
+atom_small completed
+atom_wide completed
+{"processes": 54, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v1439-acos-residual-normal-form-cost passed
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"cold_sin": 2635070, "cold_opaque": 8499738, "shared_hot": 6896658, "structural_cancel": 5875157, "domain_tree": 9217129, "nested_exp": 27576641}
+typed-api-prototype-v1440-acos-residual-default-cost passed
+Algebraic shared-budget probe built; no builds during capped replay.
+square_roots completed
+cube_roots completed
+fourth_roots completed
+reciprocals completed
+wide_256 completed
+wide_1024_inverse completed
+{"processes": 54, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "cost"}
+typed-api-prototype-v1441-acos-residual-algebraic-cost passed
+Inverse-trig budget probe built; no builds during capped workloads.
+completed atan 0
+completed atan 16
+completed atan 128
+completed atan 1024
+completed acos 0
+completed acos 16
+completed acos 128
+completed acos 1024
+completed terms 0
+completed terms 16
+completed terms 128
+completed terms 1024
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+{"numeric_observations": 960, "unknown_answers": 160, "certified_answers": 224, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v1442-acos-residual-inverse-replay passed
+Shared evaluation-budget probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+typed-api-prototype-v1443-acos-residual-evaluation-replay passed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 60, "certified_answers": 228, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v1444-acos-residual-algebraic-replay passed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 3 2 64 False
+completed 3 2 64 True
+completed 3 2 256 False
+completed 3 2 256 True
+completed 3 2 1024 False
+completed 3 2 1024 True
+completed 4 2 64 False
+completed 4 2 64 True
+completed 4 2 256 False
+completed 4 2 256 True
+completed 4 2 1024 False
+completed 4 2 1024 True
+{"numeric_observations": 288, "unknown_answers": 36, "certified_answers": 108, "zero_budget_retained_proofs": 144, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v1445-acos-residual-wide-replay passed
+Normal-form budget probe built; no builds during capped workloads.
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+completed inverse 0
+completed inverse 16
+completed inverse 128
+completed inverse 1024
+completed rational 0
+completed rational 16
+completed rational 128
+completed rational 1024
+completed atom 0
+completed atom 16
+completed atom 128
+completed atom 1024
+{"numeric_observations": 960, "unknown_answers": 165, "certified_answers": 219, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080", "build_phase": "typed-api-prototype-v1436-acos-residual-build", "guards_unchanged": true, "mode": "replay"}
+typed-api-prototype-v1446-acos-residual-normal-form-replay passed
+Cost probe built; repeats run sequentially without overlapping workloads.
+Repeat 0 completed
+Repeat 1 completed
+Repeat 2 completed
+Repeat 3 completed
+Repeat 4 completed
+Repeat 5 completed
+Repeat 6 completed
+Repeat 7 completed
+Repeat 8 completed
+{"small_fine": 8389796, "small_coarse": 8468360, "small_identity": 7158699, "wide_coarse": 596870, "wide_gap": 101473, "wide_halfway": 20678164, "wide_fine": 2221958, "wide_identity": 1119123}
+typed-api-prototype-v1447-acos-residual-integer-cost passed
+Frozen residual checks and cost/replay processes completed.

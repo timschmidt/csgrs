@@ -1,0 +1,136 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v1404-state.json",
+  "status": "Both acos allocation variants rejected; retained v1404 runtime restored exactly; no runtime admission",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "evidence_commits": [
+    "782329f0c",
+    "dee893319"
+  ],
+  "retained_runtime_checkpoint": "typed-api-prototype-v1404-state.json",
+  "retained_runtime_source_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "baseline_record": "acos-warm-baseline-v1422.json",
+  "rejected_experiments": [
+    "acos-residual-implementation-v1448.json",
+    "acos-residual-retention-v1486.json",
+    "acos-outlined-rejection-v1495.json"
+  ],
+  "restoration_record": "acos-source-restoration-v1496.json",
+  "restoration_validation_record": "acos-restoration-validation-v1500.json",
+  "completed_orchestrations": "acos-completed-orchestrations-v1500.json",
+  "fresh_scalar_test_summary": {
+    "top_level_batches": 1,
+    "top_level_passed": 1054,
+    "top_level_failed": 0,
+    "top_level_ignored": 0,
+    "child_process_batches": 1,
+    "child_process_passed": 1,
+    "child_process_failed": 0,
+    "child_process_ignored": 0,
+    "per_crate": {
+      "hyperreal": {
+        "unit_and_integration": 1054,
+        "doctests": 0,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "batches": [
+      {
+        "declared_tests": 1054,
+        "status": "ok",
+        "passed": 1054,
+        "failed": 0,
+        "ignored": 0,
+        "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+      }
+    ],
+    "child_batches": [
+      {
+        "declared_tests": 1,
+        "status": "ok",
+        "passed": 1,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "ignored_test_lines": []
+  },
+  "fresh_included_rustfmt_files": 105,
+  "restored_release_libraries_match_retained": true,
+  "measurements": {
+    "baseline_public_and_private_diagnostic_schedules": 160,
+    "new_test_functions_archived": 10,
+    "baseline_failed_allocation_guards": 2,
+    "first_candidate_focused_replays_with_identical_receipts": 1584,
+    "first_candidate_scalar_units": 1064,
+    "outlined_candidate_scalar_units": 1064,
+    "child_tests_per_candidate_suite": 1,
+    "original_first_candidate_paired_cost_processes": 720,
+    "controlled_first_candidate_paired_cost_processes": 720,
+    "outlined_paired_cost_processes": 144,
+    "controlled_outlined_paired_cost_processes": 144,
+    "each_controlled_cost_process_has_one_separate_fixed_cpu_prelude": true,
+    "million_bit_baseline_rust_bytes_positive_negative": [
+      11425512,
+      11425952
+    ],
+    "million_bit_candidate_rust_bytes_positive_negative": [
+      250392,
+      250832
+    ],
+    "first_candidate_negative_cached_percent_change": [
+      31.653991330742272,
+      31.32
+    ],
+    "outlined_negative_cached_percent_change": [
+      30.26148884386202,
+      16.99721252381896
+    ]
+  },
+  "decision": "Neither allocation optimization passes the higher-priority performance gate. Preserve every trial and fixture; restore retained source rather than admitting the unresolved cached-query regression.",
+  "reused_prior_validation": {
+    "checkpoint": "typed-api-prototype-v1404-state.json",
+    "checkpoint_sha256": "fad2d16a1483824f4d6587e26a22049bfac5b715e4a2ecf9f8a74661b6f34e77",
+    "source_identical": true,
+    "scope": "The full v1404 stack/default/debug/Clippy/format/cap/replay/proof evidence remains evidence for identical source bytes. This turn freshly reruns retained scalar units, the release build and format checks only."
+  },
+  "coverage_limits": [
+    "Cooperative EvaluationBudget excludes per-operation byte/time bounds. The measured rational copying is an optimization opportunity, not a demonstrated allowance or cache-value contract violation.",
+    "The million-bit aggregate surveys originally reached SIGXCPU after six logged schedules. Complete uncapped baseline schedules and individual allocation guards are separately retained; no individual query timeout is inferred.",
+    "Domain-only warming is an internal diagnostic. Coarse and completed numeric warming use public APIs, with setup outside allocation windows.",
+    "All observed signs, domain facts, numeric values, error contracts, exhausted-query cache retention and completed zero-work reuse agree. The new test correction permits a finer cache to rescale to a different valid coarse integer.",
+    "Rust counters exclude fixtures, native allocations, RSS and peak-live memory. Local timing controls do not establish the cause of cached-query regressions or whole-board performance.",
+    "The rejected numerical kernels are outside the conditional Verus target. No new proof or whole-crate obligation closure is claimed.",
+    "The outlined screen stops at adverse targeted costs; no ordinary-family or full replay coverage is claimed for that variant.",
+    "Prepared checkpoint helpers for v1449-v1485 were never executed and refer to the rejected first variant.",
+    "All prior retained tests and original full-resolution hard cases remain unchanged. All ten new test bodies and both implementations remain archived as rejected-experiment evidence.",
+    "Main runtime retains the original scalar failure and all original 49 worktree entries. All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "remaining_source_review": "integer-scale-deferred-review-v1404.json",
+  "remaining_requirements": [
+    "Continue from the measured constructor repair: review additional bounded-query constructor call sites, lazy/scaled coefficients and acos endpoint allocation cutpoints without changing ordinary constructor exactness.",
+    "Measure bounded Laurent coefficient-copy allocation ordering without changing its eight-term recognition limit.",
+    "Trace direct Real inverse-trig/radical/quadratic-tower helper reachability from the two public Computable allowance wrappers, preserving retained facts and explicit API scope.",
+    "Review unshared symbolic form growth, construction-time structural comparison, subsequent algebraic metadata copies/vector growth and individual exact-operation resource use with unchanged adversarial fixtures. Initial zero-work vector allocation and lazy preflight reduction are repaired only in the retained scoped cases.",
+    "Continue kernel-specific interruption cutpoints, public concurrent/reconstructed and cross-root warming schedules, implementation-connected proofs, composed ln/exp/inverse-hyperbolic planning, native-prototype combination and unchanged full-board admission.",
+    "Coarse integer output no longer requires cloning discarded limbs. Fine/output-sized allocation, negative-shift scans and individual exact-operation CPU/native-memory costs remain separate review targets; EvaluationBudget does not promise bytes or elapsed time.",
+    "Avoidable integer copying is repaired for the measured coarse-output paths; this is not a new byte/time bound or proof of an EvaluationBudget contract violation.",
+    "Negative shifts can still scan discarded bits. Output-sized fine scaling, native allocations and broader exact-operation costs remain outside the allocation result.",
+    "The initial new sign test incorrectly required a cold fact to be retained; the correction was frozen before runtime changes. All earlier tests and failures remain unchanged.",
+    "The shared cache implementation is excluded from the conditional Verus target. The containing proof-input file changed, so fresh negative guard checks are required for this checkpoint; whole-crate proof remains open.",
+    "Main retains the original scalar failure. All 49 original worktree entries, 39 properties, 14 targets and crate future work remain in scope.",
+    "The 78 private-kernel replay cases check result shapes. The 64 coarse-integer allocation observations do not establish whole-call-graph resource bounds.",
+    "All 1584 focused replay receipts agree except executable commands, including numerical observations, allowance counts and retained proofs.",
+    "Both timing attempts and their separate/paired trials remain archived. The final retention record states their practical limits; no uniform speedup or whole-program admission is claimed.",
+    "The retained v3 parser and earlier six-test correction remain authoritative; raw logs are unchanged.",
+    "Fresh positive and negative proof checks cover the existing conditional target. The changed rounded-scaling/cache implementation itself remains outside that proof target.",
+    "Main runtime remains unadmitted; no push was requested or performed."
+  ],
+  "next_measurements": [
+    "Numeric AtanDeferred paths: separate internal rational diagnostics from ordinary public AtanRational controls and public opaque/rational-offset reachability.",
+    "Log-range fallback: separate necessary operand sampling from avoidable constructors and establish a public path to an explicit EvaluationBudget.",
+    "Retained quadratic towers: establish public proof warming before measuring later fine-cache misses and coefficient copies.",
+    "Any further acos residual rewrite must address the recorded completed-cache cost regression while preserving all frozen schedules and original workloads."
+  ]
+}

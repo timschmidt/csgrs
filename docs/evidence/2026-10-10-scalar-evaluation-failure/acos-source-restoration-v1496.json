@@ -1,0 +1,16 @@
+{
+  "status": "Retained source restored exactly; both experiments remain archived and rejected",
+  "retained_checkpoint": "typed-api-prototype-v1404-state.json",
+  "retained_source_record": "typed-api-prototype-v1368-budget-verus/source-hashes.json.gz",
+  "retained_source_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+  "source_files_verified": 24743,
+  "main_files_verified": 1167,
+  "restored_or_removed": [
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+    "crates/hyperreal/src/computable/node.rs",
+    "crates/hyperreal/src/computable/node/acos_warm_probe_tests.rs"
+  ],
+  "rejected_source_record": "typed-api-prototype-v1492-acos-outlined-build/source-hashes.json.gz",
+  "rejected_source_sha256": "2c9f69fb9f20310fb5d9b21acf98cdb5e830eea9e6b0e43975f5b85b1c5b173c",
+  "fixtures_preserved": "All ten new tests and both runtime variants remain in immutable phase input archives. No pre-existing retained test was edited or removed."
+}

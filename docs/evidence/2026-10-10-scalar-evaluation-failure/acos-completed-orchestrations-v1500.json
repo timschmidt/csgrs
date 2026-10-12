@@ -1,0 +1,20 @@
+{
+  "orchestrations": {
+    "acos-residual-focus-v1500.log": {
+      "sha256": "2677f92a282ca4210c1b926437e2ea5f98f5cdf6cf87ab3de74f8ca57ce4d686",
+      "source_record_sha256": "94999b4ae4cf57ea63431cc2c2671c96335fa23049870e1abaf222a0c226d080",
+      "terminal_zero_exit_observed": true
+    },
+    "acos-outlined-focus-v1500.log": {
+      "sha256": "ba0d4e77f7143b0e5b80a4698e1a8248aae36af78745f990e3bada82cd8b1a93",
+      "source_record_sha256": "2c9f69fb9f20310fb5d9b21acf98cdb5e830eea9e6b0e43975f5b85b1c5b173c",
+      "terminal_zero_exit_observed": true
+    },
+    "acos-restoration-validation-v1500.log": {
+      "sha256": "0085858a02598822dde933be21616e949b382ac4b20aceaf72a10f7276d05bb2",
+      "source_record_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2",
+      "terminal_zero_exit_observed": true
+    }
+  },
+  "scope": "The three tool sessions completed with exit zero. Individual phase results and measured adverse outcomes remain authoritative; orchestration success does not imply retention."
+}

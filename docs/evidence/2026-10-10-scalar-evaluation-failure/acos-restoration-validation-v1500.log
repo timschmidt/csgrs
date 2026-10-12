@@ -1,0 +1,4 @@
+{"exit_code": 0, "seconds": 69.06942007597536, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 11.388449755962938, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"exit_code": 0, "seconds": 1.6898064939305186, "source_unchanged": true, "main_unchanged": true, "status": "isolated prototype validation; not runtime admission"}
+{"record": "acos-restoration-validation-v1500.json", "scalar_units": 1054, "child_tests": 1, "source_sha256": "32b816463eacd2d2cef2f905c0455557c015117690a8a8dd635229a57726d2b2", "included_rust_files": 105, "release_libraries_match_retained": true}

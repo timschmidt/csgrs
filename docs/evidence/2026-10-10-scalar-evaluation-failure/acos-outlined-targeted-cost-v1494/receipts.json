@@ -1,0 +1,4178 @@
+[
+  {
+    "name": "acos-0-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015102924779057503,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4362291",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-0-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014580422081053257,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4095020",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-1-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014522344805300236,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "5029176",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-1-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014815036207437515,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4464804",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-2-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014287611935287714,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2334090",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-2-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007822084706276655,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "199066",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-3-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014466369990259409,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2495299",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-3-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007676925044506788,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "273841",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-4-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3736374657601118,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1062980742",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-4-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01157723693177104,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "181568",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-5-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3733677151612937,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1062029477",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-5-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011031315196305513,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "171888",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-6-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32197159994393587,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "712991",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-6-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01031817402690649,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "732570",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-7-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32155907806009054,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1220087",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-7-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010965959168970585,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1628479",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-8-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014620749279856682,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4116188",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-8-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014650556724518538,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4575407",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-9-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014352486934512854,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "3893414",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-9-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01404509786516428,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4549918",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-10-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.008517286740243435,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "205506",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-10-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014465129002928734,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2359599",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-11-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.00825254525989294,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "219115",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-11-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010645460337400436,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "1989444",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-12-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.009942668955773115,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "190267",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-12-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.372887478210032,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1057655546",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-13-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01158708706498146,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "171238",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-13-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3732318738475442,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1046399768",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-14-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010623062029480934,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "700782",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-14-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3214205480180681,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "678463",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-15-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010856396984308958,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1643107",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-15-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32107560243457556,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1251105",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-16-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014731221832334995,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4148316",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-16-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014044147916138172,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "3783080",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-17-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014511475805193186,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "5379952",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-17-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01393870497122407,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4590226",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-18-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.00981111777946353,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2032711",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-18-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007799406070262194,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "200206",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-19-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014594450127333403,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2585733",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-19-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010036232881247997,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "432720",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-20-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3732950598932803,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1073622433",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-20-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011274388059973717,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "193387",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-21-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.373659994918853,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1076571792",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-21-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011794132180511951,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "148569",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-22-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3224130095914006,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "694103",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-22-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011307444889098406,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "836973",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-23-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3216238636523485,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1402374",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-23-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011648232117295265,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1647848",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-24-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014072906225919724,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "3986567",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-24-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014563961885869503,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4521870",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-25-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014405693858861923,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4435907",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-25-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014449580106884241,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "5302417",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-26-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.00782498437911272,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "196467",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-26-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.009510009083896875,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "1916619",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-27-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007609327789396048,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "272542",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-27-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.009570993948727846,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2141804",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-28-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.009976326022297144,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "174508",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-28-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3737917160615325,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1066695728",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-29-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011864716652780771,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "198447",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-29-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.372745047789067,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1048410200",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-30-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010725704953074455,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "657385",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-30-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.27061617700383067,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "716991",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-31-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01102209510281682,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1547824",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-31-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32152266008779407,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1236265",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-32-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014430772047489882,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4617873",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-32-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014148551039397717,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "3724895",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-33-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013734430074691772,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4251859",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-33-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014392283745110035,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4577256",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-34-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014917627908289433,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2427084",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-34-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007700412999838591,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "205436",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-35-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010274806059896946,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "1968895",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-35-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.008545584976673126,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "273651",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-36-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3733536759391427,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1062349375",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-36-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011472754180431366,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "171838",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-37-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3733965526334941,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1068149678",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-37-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011548508889973164,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "143850",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-38-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32210289081558585,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "702301",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-38-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.012276330031454563,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "827403",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-39-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32194179110229015,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1262284",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-39-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011382870841771364,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1642338",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-40-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014795687049627304,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "3911802",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-40-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015210239216685295,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4412908",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-41-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015392445959150791,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4521080",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-41-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014840393792837858,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4928113",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-42-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01125482888892293,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "206966",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-42-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011133858002722263,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "1924648",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-43-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010538618080317974,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "307839",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-43-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011192203033715487,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2040971",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-44-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010776021983474493,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "162069",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-44-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.373491286765784,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1067474854",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-45-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010682099033147097,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "151000",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-45-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3732697921805084,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1049731549",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-46-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011879406403750181,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "841322",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-46-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32195761101320386,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "687823",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-47-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010977097786962986,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1629708",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-47-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.32151862094178796,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1257153",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-48-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.015095136128365993,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4084911",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-48-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014822435099631548,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4532489",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-49-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014697883743792772,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "5237321",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-49-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014437770936638117,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4533020",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-50-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014413082972168922,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2459411",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-50-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0076800440438091755,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "199247",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-51-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0146103803999722,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2482120",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-51-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.009016503114253283,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "228844",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-52-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.372542941942811,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1054020306",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-52-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011150856968015432,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "151720",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-53-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.373332257848233,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1058855204",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-53-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011648202314972878,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "169809",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-54-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3218815759755671,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "1021140",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-54-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.012148038018494844,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "868301",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-55-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3218249101191759,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1235376",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-55-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01159854605793953,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1702503",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-56-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013916716910898685,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4031604",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-56-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014713041950017214,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4762313",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-57-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014532054774463177,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4916063",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-57-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014462740160524845,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "5143498",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-58-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.007739359978586435,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "201787",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-58-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010576036293059587,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "1900759",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-59-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.0107265948317945,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "503176",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-59-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014644487295299768,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2509748",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-60-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010762101970613003,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "217115",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-60-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3742132671177387,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1066005295",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-61-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011560048907995224,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "178378",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-61-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3736956431530416,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1052291004",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-62-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01168984966352582,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "915537",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-62-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.321251449175179,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "704642",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-63-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011083551216870546,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1591351",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-63-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3218234800733626,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1253304",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-64-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01477627782151103,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "4469304",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-64-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_positive",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013988521881401539,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_positive",
+      "checksum": 589225375048917280,
+      "elapsed_ns": "3759783",
+      "iterations": 2000,
+      "negative": false,
+      "output_bytes": 38000,
+      "precision": -64,
+      "reference": "2307346854069416588"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-65-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.013987012207508087,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4369751",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-65-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "small_negative",
+      "2000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014601469971239567,
+    "receipt": {
+      "bits": 8,
+      "cached": false,
+      "case": "small_negative",
+      "checksum": 6981356068566875136,
+      "elapsed_ns": "4098989",
+      "iterations": 2000,
+      "negative": true,
+      "output_bytes": 40000,
+      "precision": -64,
+      "reference": "55644808810547566151"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-66-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014506377279758453,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "2415105",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-66-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_positive",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.00880068726837635,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_positive",
+      "checksum": 17215049362319382292,
+      "elapsed_ns": "239844",
+      "iterations": 300,
+      "negative": false,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-67-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.014914369210600853,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "2504099",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-67-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "mid_negative",
+      "300"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011130387894809246,
+    "receipt": {
+      "bits": 4097,
+      "cached": false,
+      "case": "mid_negative",
+      "checksum": 11116832649655165328,
+      "elapsed_ns": "275011",
+      "iterations": 300,
+      "negative": true,
+      "output_bytes": 300,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-68-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.3736202879808843,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "1057570443",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-68-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_positive",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011922802776098251,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_positive",
+      "checksum": 1548530289852,
+      "elapsed_ns": "170398",
+      "iterations": 4,
+      "negative": false,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-69-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 1.372986570931971,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "1058982056",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-69-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "wide_negative",
+      "4"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.010640581138432026,
+    "receipt": {
+      "bits": 1000001,
+      "cached": false,
+      "case": "wide_negative",
+      "checksum": 1631154109104,
+      "elapsed_ns": "147770",
+      "iterations": 4,
+      "negative": true,
+      "output_bytes": 4,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-70-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.27176044788211584,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "712901",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-70-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_positive",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.011801712214946747,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_positive",
+      "checksum": 17030526626131355616,
+      "elapsed_ns": "750748",
+      "iterations": 20000,
+      "negative": false,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "0"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  },
+  {
+    "name": "acos-71-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1418-acos-warm-baseline-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.3213135050609708,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1218427",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "7e7170475569f9d5cb8639bc172a2c8ecf395195a1d62bb6334407ef554fce40"
+  },
+  {
+    "name": "acos-71-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1493-acos-outlined-targeted-cost/probe",
+      "cached_negative",
+      "20000"
+    ],
+    "exit_code": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4,
+    "wall_seconds": 0.01088634505867958,
+    "receipt": {
+      "bits": 1000001,
+      "cached": true,
+      "case": "cached_negative",
+      "checksum": 16986712518039764352,
+      "elapsed_ns": "1386605",
+      "iterations": 20000,
+      "negative": true,
+      "output_bytes": 20000,
+      "precision": 0,
+      "reference": "3"
+    },
+    "binary_sha256": "cb9069a07c82cb4dd19a0828b8d7bc4e21e3cdbb5ffab498e5d1a1298b522957"
+  }
+]
