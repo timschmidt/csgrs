@@ -1,0 +1,29 @@
+{
+  "phases": [
+    {
+      "name": "fmt",
+      "exit_code": 0,
+      "seconds": 11.329703197814524,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "fragments",
+      "exit_code": 0,
+      "seconds": 91.43050640076399,
+      "source_unchanged": true,
+      "stdout_sha256": "8d744e729d8bd6f8d0c4b201ab1802f2e190a6a1d23566684b55499e397eb234",
+      "stderr_sha256": "ac75c5d8d8556a16a6b21cb698a5415253fd5f18e675a2b79301a7d4ab4785fe"
+    },
+    {
+      "name": "segments",
+      "exit_code": 0,
+      "seconds": 0.32757362397387624,
+      "source_unchanged": true,
+      "stdout_sha256": "620e7ccd64576a141b347b2981513300190799398639ab345278ba50e5c78447",
+      "stderr_sha256": "8888ee2583503376d7432a7ec70c9833d0c1c627133e38e46b9f5fcf836393ba"
+    }
+  ],
+  "complete": true
+}

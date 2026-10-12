@@ -2,6 +2,36 @@
   "source": "properties.md",
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
+  "current_work": {
+    "updated_on": "2026-10-12",
+    "existing_worktree_changes_in_scope": true,
+    "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
+    "main_scalar_api": {
+      "commit": "046fd6ed17d6ba4ae0cfe598ad68591a760e34a3",
+      "change": "Real::cached_rational_interval reuses existing certified approximations without numeric refinement, preserving exact rational scaling and abort checks.",
+      "evidence": "docs/evidence/2026-10-12-existing-worktree/scalar-retention.json",
+      "qualification": "867 default test results, 972 all-feature release test results, 28 doctests, strict default/all-feature Clippy, docs and workspace formatting. Configuration totals overlap; no speedup or whole-cache proof is claimed."
+    },
+    "isolated_scalar_prototype": {
+      "commit": "17271b301d3e588a661c218f7ee134836e8376fa",
+      "checkpoint": "docs/evidence/2026-10-10-scalar-evaluation-failure/typed-api-prototype-v2498-state.json",
+      "qualification": "737 conditional scalar proof units, 99 production contracts, 178 model theorems, 51 acceptance tests, 318 rejected controls and eight passing baselines. The actual integer dependency separately verifies 453 units; those units include shared models and are not additive unique coverage. Fresh scalar native tests pass 1074 top-level plus one child test.",
+      "remaining": "All 13 whole-crate obligation groups remain open. Current candidate runtime admission, production callers, normalization/count premises, concurrent publication, matched cost/memory/size, original caps and full-board qualification remain open. The corrected rejection sweep still exceeds the current 15-minute CI job locally. Historical main-worktree guards describe their recorded checkpoint; subsequent authorized main changes require a fresh integration baseline."
+    },
+    "pending_native_geometry": {
+      "status": "qualification-in-progress",
+      "scope": "The 35 existing curve/DRC runtime entries remain in scope, including exact source strokes, certificate reuse and their regressions.",
+      "failure": "The first fresh all-feature curve library run passed 1756 tests, failed the existing 48-byte LineSeg2 storage assertion and ignored six cases. The DRC step did not execute after that failure.",
+      "correction": "Line flags and construction certificates now share one enum; the original size assertion and all 11 focused fragment/segment tests pass. Full corrected curve/DRC validation and original full-board runtime gates remain required.",
+      "evidence": [
+        "docs/evidence/2026-10-12-existing-worktree/geometry-validation/result.json",
+        "docs/evidence/2026-10-12-existing-worktree/line-layout-fix/result.json",
+        "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/historical-worktree-retention.json"
+      ],
+      "runtime_admitted": false
+    },
+    "plan_complete": false
+  },
   "status_meanings": {
     "unverified": "The requirement has not been audited to its full scope.",
     "open": "Implementation or evidence is still required.",

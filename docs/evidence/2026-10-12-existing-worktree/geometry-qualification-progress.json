@@ -1,0 +1,53 @@
+{
+  "status": "Correct the pending native line storage regression; broad runtime qualification remains in progress",
+  "existing_worktree_changes_in_scope": true,
+  "original_runtime_entries_remaining": 35,
+  "first_geometry_validation": {
+    "result_sha256": "fe32b876c062df3b58185616269d1272635f997f5bf3222d3b6ab308537e6806",
+    "strict_clippy_passed": true,
+    "library_passed": 1756,
+    "library_failed": 1,
+    "library_ignored": 6,
+    "integration_and_drc_steps_executed": false
+  },
+  "correction": {
+    "changed_source": "crates/hypercurve/src/segment.rs",
+    "before_sha256": "9db650219b0f548b0be677c68b9e2e93ca78c253ead06cfdd9aa88d4ee318f76",
+    "after_sha256": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "source_copy_sha256": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "patch_sha256": "e6c5e56c3118833d0ae93b65af69a70c64ac5cf9eb62c8847f6730ec80a0f922",
+    "existing_size_limit_bytes": 48,
+    "size_limit_changed": false,
+    "focused_tests": {
+      "fragments": 4,
+      "segments": 7
+    },
+    "workspace_formatting_passed": true
+  },
+  "qualification_limits": [
+    "The source correction is present in the pending worktree and archived here. The native runtime change is not yet admitted.",
+    "The full corrected curve and DRC validation has started separately. Its results are not credited in this progress record.",
+    "The unchanged 48-byte native storage assertion is the size gate. No matched throughput, allocation-count, heap-memory or executable-size result is claimed.",
+    "Earlier full-board runtime failures and their 120-second gates remain preserved. Full repository pre-push verification and the full properties.md plan remain open.",
+    "The earlier isolated scalar proof checkpoint remains immutable. Its historical main-byte/status guards precede this authorized source correction; future combined validation needs a fresh main baseline."
+  ],
+  "artifacts_sha256": {
+    "geometry-validation/clippy.stderr": "5555128660be99423b873cfa76d4a1c0b19b235bf409aaabbcd2cda12d332f1b",
+    "geometry-validation/clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "geometry-validation/curve-tests.stderr": "4131d5302aec349ab22b98016b7b8e62f595b7989bd519b24b0a639b101d0800",
+    "geometry-validation/curve-tests.stdout": "b5ec93c531bd1fa692822065d2ce8b90d7c1341a424f095a349d2593cc833cc1",
+    "geometry-validation/protocol.json": "47c622e7a785f930bafd11b34901f2e7d0451cdeb4d0c1fee00110add74c8ce1",
+    "geometry-validation/result.json": "fe32b876c062df3b58185616269d1272635f997f5bf3222d3b6ab308537e6806",
+    "line-layout-fix/candidate-segment.rs": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+    "line-layout-fix/correction.patch": "e6c5e56c3118833d0ae93b65af69a70c64ac5cf9eb62c8847f6730ec80a0f922",
+    "line-layout-fix/fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "line-layout-fix/fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "line-layout-fix/fragments.stderr": "ac75c5d8d8556a16a6b21cb698a5415253fd5f18e675a2b79301a7d4ab4785fe",
+    "line-layout-fix/fragments.stdout": "8d744e729d8bd6f8d0c4b201ab1802f2e190a6a1d23566684b55499e397eb234",
+    "line-layout-fix/original-segment.rs": "9db650219b0f548b0be677c68b9e2e93ca78c253ead06cfdd9aa88d4ee318f76",
+    "line-layout-fix/protocol.json": "a6f1522d0326355e0fab22f8d769d509614efaa7403129dec1d8e6d1193d1e25",
+    "line-layout-fix/result.json": "93082858a482dd3dadae1cb3212798a091eee9414cf879ea92638b9b31805bbd",
+    "line-layout-fix/segments.stderr": "8888ee2583503376d7432a7ec70c9833d0c1c627133e38e46b9f5fcf836393ba",
+    "line-layout-fix/segments.stdout": "620e7ccd64576a141b347b2981513300190799398639ab345278ba50e5c78447"
+  }
+}

@@ -1,0 +1,12 @@
+
+running 7 tests
+test segment::retained_delta_tests::certified_ray_delta_survives_reversal_and_equal_endpoint_representations ... ok
+test segment::retained_delta_tests::mapped_and_cut_lines_do_not_reuse_the_source_displacement ... ok
+test segment::retained_delta_tests::split_support_preserves_direction_but_arbitrary_maps_recompute_it ... ok
+test segment::retained_delta_tests::repeated_parallel_offsets_retain_the_exact_source_displacement ... ok
+test segment::retained_delta_tests::equal_endpoint_representations_keep_parallel_offset_certificates ... ok
+test segment::policy_cache_tests::approximate_sweep_fragment_does_not_gain_certified_cache_facts ... ok
+test segment::policy_cache_tests::sweep_membership_uses_a_decisive_half_plane ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1756 filtered out; finished in 0.00s
+

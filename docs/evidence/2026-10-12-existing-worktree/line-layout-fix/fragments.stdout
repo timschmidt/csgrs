@@ -1,0 +1,9 @@
+
+running 4 tests
+test fragment::tests::native_segment_storage_remains_compact ... ok
+test fragment::tests::retained_support_interval_orders_vertical_reversed_fragments_from_endpoints ... ok
+test fragment::tests::source_line_reuses_support_and_reversal_drops_the_oriented_cache ... ok
+test fragment::tests::sibling_line_fragments_share_retained_source_support ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 1759 filtered out; finished in 0.00s
+

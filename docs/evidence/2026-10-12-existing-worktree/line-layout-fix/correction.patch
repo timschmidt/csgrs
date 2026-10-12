@@ -1,0 +1,416 @@
+--- before/segment.rs
++++ after/segment.rs
+@@ -20,16 +20,41 @@
+ pub struct LineSeg2 {
+     start: Point2,
+     end: Point2,
++    support: OnceLock<Arc<LineSupport2>>,
++    certificates: LineCertificates2,
++}
++
++#[derive(Clone, Copy, Debug, Default)]
++struct LineFlags2 {
+     endpoints_decided_distinct: bool,
+-    // An exact construction displacement can be much smaller than either
+-    // endpoint expression, especially for rays through selected curve points.
+-    retained_delta: Option<Arc<(Real, Real)>>,
+-    support: OnceLock<Arc<LineSupport2>>,
+     has_retained_support: bool,
+     // Shared supports retain source orientation; this bit recovers the
+     // fragment's directed tangent without subtracting its wide endpoints.
+     support_direction_reversed: bool,
+-    offset_provenance: Option<Arc<LineOffsetProvenance2>>,
++}
++
++// Keep the flags beside the enum tag, sharing its alignment padding. An
++// offset owns its optional displacement, so each variant needs only one Arc
++// and the complete native line stays within its existing 48-byte contract.
++#[derive(Clone, Debug)]
++enum LineCertificates2 {
++    Plain(LineFlags2),
++    Displaced(LineFlags2, Arc<(Real, Real)>),
++    Offset(LineFlags2, Arc<LineOffsetProvenance2>),
++}
++
++impl LineCertificates2 {
++    const fn flags(&self) -> &LineFlags2 {
++        match self {
++            Self::Plain(flags) | Self::Displaced(flags, _) | Self::Offset(flags, _) => flags,
++        }
++    }
++
++    fn flags_mut(&mut self) -> &mut LineFlags2 {
++        match self {
++            Self::Plain(flags) | Self::Displaced(flags, _) | Self::Offset(flags, _) => flags,
++        }
++    }
+ }
+ 
+ impl PartialEq for LineSeg2 {
+@@ -57,6 +82,7 @@
+ struct LineOffsetProvenance2 {
+     source: Arc<LineSupport2>,
+     left_distance: Real,
++    retained_delta: Option<Arc<(Real, Real)>>,
+ }
+ 
+ fn line_support_cell(support: Option<Arc<LineSupport2>>) -> OnceLock<Arc<LineSupport2>> {
+@@ -95,12 +121,11 @@
+         Ok(Self {
+             start,
+             end,
+-            endpoints_decided_distinct,
+-            retained_delta: None,
+             support: OnceLock::new(),
+-            has_retained_support: false,
+-            support_direction_reversed: false,
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2 {
++                endpoints_decided_distinct,
++                ..LineFlags2::default()
++            }),
+         })
+     }
+ 
+@@ -109,12 +134,8 @@
+         Self {
+             start,
+             end,
+-            endpoints_decided_distinct: false,
+-            retained_delta: None,
+             support: OnceLock::new(),
+-            has_retained_support: false,
+-            support_direction_reversed: false,
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2::default()),
+         }
+     }
+ 
+@@ -124,8 +145,13 @@
+     pub(crate) fn from_certified_nonzero_delta(start: Point2, dx: Real, dy: Real) -> Self {
+         let end = Point2::new(start.x() + &dx, start.y() + &dy);
+         let mut line = Self::new_unchecked(start, end);
+-        line.endpoints_decided_distinct = true;
+-        line.retained_delta = Some(Arc::new((dx, dy)));
++        line.certificates = LineCertificates2::Displaced(
++            LineFlags2 {
++                endpoints_decided_distinct: true,
++                ..LineFlags2::default()
++            },
++            Arc::new((dx, dy)),
++        );
+         line
+     }
+ 
+@@ -141,10 +167,29 @@
+ 
+     /// Returns `(end.x - start.x, end.y - start.y)`.
+     pub fn delta(&self) -> (Real, Real) {
+-        self.retained_delta
+-            .as_deref()
+-            .cloned()
++        self.retained_delta()
++            .map(|delta| delta.as_ref().clone())
+             .unwrap_or_else(|| self.end.delta_from(&self.start))
++    }
++
++    fn retained_delta(&self) -> Option<&Arc<(Real, Real)>> {
++        // An offset fragment can share the source's provenance, but its own
++        // finite displacement must come from its restricted endpoints.
++        if self.has_retained_support() {
++            return None;
++        }
++        match &self.certificates {
++            LineCertificates2::Plain(_) => None,
++            LineCertificates2::Displaced(_, delta) => Some(delta),
++            LineCertificates2::Offset(_, provenance) => provenance.retained_delta.as_ref(),
++        }
++    }
++
++    fn offset_provenance(&self) -> Option<&Arc<LineOffsetProvenance2>> {
++        match &self.certificates {
++            LineCertificates2::Offset(_, provenance) => Some(provenance),
++            LineCertificates2::Plain(_) | LineCertificates2::Displaced(_, _) => None,
++        }
+     }
+ 
+     pub(crate) fn support_delta(&self) -> (Real, Real) {
+@@ -167,7 +212,7 @@
+     /// against it avoid subtracting the fragment's wide endpoints.
+     pub(crate) fn directed_support_delta(&self) -> (Real, Real) {
+         let (dx, dy) = self.support_delta();
+-        if self.has_retained_support && self.support_direction_reversed {
++        if self.has_retained_support() && self.certificates.flags().support_direction_reversed {
+             (-dx, -dy)
+         } else {
+             (dx, dy)
+@@ -183,34 +228,36 @@
+         start: Point2,
+         end: Point2,
+     ) -> CurveResult<Self> {
+-        let mut validated = if self.endpoints_decided_distinct {
++        let mut validated = if self.endpoints_decided_distinct() {
+             // The caller retained endpoint equality, so the source's
+             // distinctness proof applies to these representations as well.
+             let mut line = Self::new_unchecked(start, end);
+-            line.endpoints_decided_distinct = true;
++            line.certificates.flags_mut().endpoints_decided_distinct = true;
+             line
+         } else {
+             Self::try_new(start, end)?
+         };
+-        validated.retained_delta = self.retained_delta.clone();
+-        validated.offset_provenance = self.offset_provenance.clone();
+-        if !self.has_retained_support {
++        let endpoints_decided_distinct = validated.endpoints_decided_distinct();
++        validated.certificates = self.certificates.clone();
++        validated
++            .certificates
++            .flags_mut()
++            .endpoints_decided_distinct = endpoints_decided_distinct;
++        if !self.has_retained_support() {
+             return Ok(validated);
+         }
+         Ok(Self {
+             support: line_support_cell(self.support.get().cloned()),
+-            has_retained_support: true,
+-            support_direction_reversed: self.support_direction_reversed,
+             ..validated
+         })
+     }
+ 
+     pub(crate) const fn has_retained_support(&self) -> bool {
+-        self.has_retained_support
++        self.certificates.flags().has_retained_support
+     }
+ 
+     pub(crate) const fn endpoints_decided_distinct(&self) -> bool {
+-        self.endpoints_decided_distinct
++        self.certificates.flags().endpoints_decided_distinct
+     }
+ 
+     pub(crate) fn support_start(&self) -> &Point2 {
+@@ -225,15 +272,20 @@
+         end: Point2,
+         support: Arc<LineSupport2>,
+     ) -> Self {
++        let flags = LineFlags2 {
++            endpoints_decided_distinct: true,
++            has_retained_support: true,
++            support_direction_reversed: self.certificates.flags().support_direction_reversed,
++        };
++        let certificates = match self.offset_provenance() {
++            Some(provenance) => LineCertificates2::Offset(flags, provenance.clone()),
++            None => LineCertificates2::Plain(flags),
++        };
+         Self {
+             start,
+             end,
+-            endpoints_decided_distinct: true,
+-            retained_delta: None,
+             support: line_support_cell(Some(support)),
+-            has_retained_support: true,
+-            support_direction_reversed: self.support_direction_reversed,
+-            offset_provenance: self.offset_provenance.clone(),
++            certificates,
+         }
+     }
+ 
+@@ -243,7 +295,7 @@
+                 Arc::new(LineSupport2 {
+                     start: self.start.clone(),
+                     end: self.end.clone(),
+-                    retained_delta: self.retained_delta.clone(),
++                    retained_delta: self.retained_delta().cloned(),
+                 })
+             })
+             .clone()
+@@ -254,7 +306,7 @@
+         other: &Self,
+         policy: &CurveContext,
+     ) -> Option<bool> {
+-        if !self.has_retained_support || !other.has_retained_support {
++        if !self.has_retained_support() || !other.has_retained_support() {
+             return None;
+         }
+         let first_support = self.support.get()?;
+@@ -287,25 +339,28 @@
+         end: Point2,
+         distance: Real,
+     ) -> CurveResult<Self> {
+-        let mut offset = if self.endpoints_decided_distinct {
++        let mut offset = if self.endpoints_decided_distinct() {
+             let mut offset = Self::new_unchecked(start, end);
+-            offset.endpoints_decided_distinct = true;
++            offset.certificates.flags_mut().endpoints_decided_distinct = true;
+             offset
+         } else {
+             Self::try_new(start, end)?
+         };
+-        offset.retained_delta = Some(Arc::new(self.delta()));
+-        let provenance = match self.offset_provenance.as_ref() {
++        let retained_delta = Some(Arc::new(self.delta()));
++        let provenance = match self.offset_provenance() {
+             None => LineOffsetProvenance2 {
+                 source: self.fragment_support(),
+                 left_distance: distance,
++                retained_delta,
+             },
+             Some(provenance) => LineOffsetProvenance2 {
+                 source: provenance.source.clone(),
+                 left_distance: &provenance.left_distance + &distance,
++                retained_delta,
+             },
+         };
+-        offset.offset_provenance = Some(Arc::new(provenance));
++        offset.certificates =
++            LineCertificates2::Offset(*offset.certificates.flags(), Arc::new(provenance));
+         Ok(offset)
+     }
+ 
+@@ -314,8 +369,8 @@
+         other: &Self,
+         policy: &CurveContext,
+     ) -> Option<RetainedLineRelation2> {
+-        let first = self.offset_provenance.as_ref()?;
+-        let second = other.offset_provenance.as_ref()?;
++        let first = self.offset_provenance()?;
++        let second = other.offset_provenance()?;
+         let second_distance = if first.source == second.source {
+             second.left_distance.clone()
+         } else if first.source.start == second.source.end && first.source.end == second.source.start
+@@ -361,7 +416,7 @@
+             ZeroKnowledge::Unknown => false,
+         };
+         let support = self
+-            .has_retained_support
++            .has_retained_support()
+             .then(|| self.support.get())
+             .flatten()
+             .map(|support| {
+@@ -374,13 +429,13 @@
+         Ok(Self {
+             start,
+             end,
+-            endpoints_decided_distinct,
+-            retained_delta: None,
+             support: line_support_cell(support),
+-            has_retained_support: self.has_retained_support,
+-            support_direction_reversed: self.support_direction_reversed,
+             // An arbitrary point map need not preserve signed offset distance.
+-            offset_provenance: None,
++            certificates: LineCertificates2::Plain(LineFlags2 {
++                endpoints_decided_distinct,
++                has_retained_support: self.has_retained_support(),
++                support_direction_reversed: self.certificates.flags().support_direction_reversed,
++            }),
+         })
+     }
+ 
+@@ -408,8 +463,18 @@
+ 
+     /// Returns this segment with traversal direction reversed.
+     pub fn reversed(&self) -> Self {
+-        let offset_provenance = self.offset_provenance.as_ref().map(|provenance| {
+-            Arc::new(LineOffsetProvenance2 {
++        let retained_delta = self.retained_delta().map(|delta| {
++            let (dx, dy) = delta.as_ref();
++            Arc::new((-dx, -dy))
++        });
++        let flags = LineFlags2 {
++            endpoints_decided_distinct: self.endpoints_decided_distinct(),
++            has_retained_support: self.has_retained_support(),
++            support_direction_reversed: self.has_retained_support()
++                && !self.certificates.flags().support_direction_reversed,
++        };
++        let certificates = if let Some(provenance) = self.offset_provenance() {
++            let provenance = Arc::new(LineOffsetProvenance2 {
+                 source: Arc::new(LineSupport2 {
+                     start: provenance.source.end.clone(),
+                     end: provenance.source.start.clone(),
+@@ -420,40 +485,39 @@
+                         .map(|(dx, dy)| Arc::new((-dx, -dy))),
+                 }),
+                 left_distance: -provenance.left_distance.clone(),
+-            })
+-        });
++                retained_delta,
++            });
++            LineCertificates2::Offset(flags, provenance)
++        } else if let Some(delta) = retained_delta {
++            LineCertificates2::Displaced(flags, delta)
++        } else {
++            LineCertificates2::Plain(flags)
++        };
+         Self {
+             start: self.end.clone(),
+             end: self.start.clone(),
+-            endpoints_decided_distinct: self.endpoints_decided_distinct,
+-            retained_delta: self
+-                .retained_delta
+-                .as_deref()
+-                .map(|(dx, dy)| Arc::new((-dx, -dy))),
+             support: line_support_cell(
+-                self.has_retained_support
++                self.has_retained_support()
+                     .then(|| self.support.get().cloned())
+                     .flatten(),
+             ),
+-            has_retained_support: self.has_retained_support,
+-            support_direction_reversed: self.has_retained_support
+-                && !self.support_direction_reversed,
+-            offset_provenance,
++            certificates,
+         }
+     }
+ 
+     #[cfg(test)]
+     pub(crate) fn into_reversed(mut self) -> Self {
+-        if self.offset_provenance.is_some() {
++        if self.offset_provenance().is_some() {
+             return self.reversed();
+         }
+         std::mem::swap(&mut self.start, &mut self.end);
+-        self.retained_delta = self
+-            .retained_delta
+-            .as_deref()
+-            .map(|(dx, dy)| Arc::new((-dx, -dy)));
+-        if self.has_retained_support {
+-            self.support_direction_reversed = !self.support_direction_reversed;
++        if let LineCertificates2::Displaced(_, delta) = &mut self.certificates {
++            let (dx, dy) = delta.as_ref();
++            *delta = Arc::new((-dx, -dy));
++        }
++        if self.has_retained_support() {
++            let flags = self.certificates.flags_mut();
++            flags.support_direction_reversed = !flags.support_direction_reversed;
+         } else {
+             self.support.take();
+         }
+@@ -478,7 +542,7 @@
+         let support_start = self.support_start();
+         let support_end = self.support.get().map_or(&self.end, |support| &support.end);
+         let side = classify_oriented_line(support_start, support_end, point, policy);
+-        if self.has_retained_support && self.support_direction_reversed {
++        if self.has_retained_support() && self.certificates.flags().support_direction_reversed {
+             // Retained support keeps the source orientation when a fragment
+             // reverses. The public classifier follows this segment's traversal.
+             side.map(|side| match side {
+@@ -2175,7 +2239,7 @@
+         );
+         assert!(Arc::ptr_eq(
+             cut.support.get().unwrap().retained_delta.as_ref().unwrap(),
+-            source.retained_delta.as_ref().unwrap(),
++            source.retained_delta().unwrap(),
+         ));
+         assert_eq!(cut.support_delta(), (Real::one(), Real::from(2)));
+         assert_eq!(
+@@ -2186,7 +2250,7 @@
+             .map_points(|p| Point2::new(p.x() * Real::from(3), -p.y()))
+             .unwrap();
+         assert!(mapped.support.get().unwrap().retained_delta.is_none());
+-        assert!(mapped.offset_provenance.is_none());
++        assert!(mapped.offset_provenance().is_none());
+         let (dx, dy) = mapped.support_delta();
+         assert_eq!(
+             compare_reals(&dx, &Real::from(3), &CurveContext::STRICT),

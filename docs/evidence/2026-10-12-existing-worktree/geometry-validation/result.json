@@ -1,0 +1,21 @@
+{
+  "phases": [
+    {
+      "name": "clippy",
+      "exit_code": 0,
+      "seconds": 38.675628130789846,
+      "source_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5555128660be99423b873cfa76d4a1c0b19b235bf409aaabbcd2cda12d332f1b"
+    },
+    {
+      "name": "curve-tests",
+      "exit_code": 101,
+      "seconds": 585.7351182224229,
+      "source_unchanged": true,
+      "stdout_sha256": "b5ec93c531bd1fa692822065d2ce8b90d7c1341a424f095a349d2593cc833cc1",
+      "stderr_sha256": "4131d5302aec349ab22b98016b7b8e62f595b7989bd519b24b0a639b101d0800"
+    }
+  ],
+  "complete": false
+}
