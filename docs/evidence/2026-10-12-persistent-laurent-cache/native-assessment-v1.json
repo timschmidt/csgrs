@@ -1,0 +1,92 @@
+{
+  "decision": "The cache prototype clears the original copper-neck assertion in this run, but still fails the original full-board worker-time gate. No runtime admission.",
+  "focused_tests": {
+    "curve-regressions": 12,
+    "drc-regressions": 26
+  },
+  "full_board": {
+    "passed": false,
+    "worker_cpu_seconds": 159.882472765,
+    "unchanged_limit_seconds": 120,
+    "findings": {
+      "cparti-fpga": 12,
+      "hvp109a": 197
+    },
+    "checks": [
+      {
+        "check": "layer-sanity",
+        "findings": 7,
+        "wall_seconds": 79.585
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 5,
+        "wall_seconds": 44.864
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 0,
+        "wall_seconds": 0.006
+      },
+      {
+        "check": "layer-sanity",
+        "findings": 1,
+        "wall_seconds": 16.729
+      },
+      {
+        "check": "board-outline-sanity",
+        "findings": 0,
+        "wall_seconds": 0.0
+      },
+      {
+        "check": "min-copper-neck",
+        "findings": 4,
+        "wall_seconds": 9.225
+      },
+      {
+        "check": "drill-spacing",
+        "findings": 192,
+        "wall_seconds": 0.006
+      }
+    ],
+    "process_user_seconds": 158.29,
+    "process_system_seconds": 1.98,
+    "peak_rss_kib": 1979760
+  },
+  "copper_neck": {
+    "passed": true,
+    "unchanged_check_wall_limit_seconds": 60,
+    "exact_check_elapsed_reported": false,
+    "complete_process_wall_seconds": 149.55950747383758,
+    "scope": "The passing assertion bounds check time only. Complete process time also includes board parsing and copper-layer construction and must not be reported as the check duration."
+  },
+  "runner_correction": "The first native runner searched stdout for progress emitted to stderr after the full-board test had already finished. The followup validates both retained streams and runs only the omitted copper-neck test; the full-board failure was not overwritten or rerun.",
+  "comparison_limits": "The current native main checkpoint failed at 202.370870026 worker seconds and 98.539989332 copper-neck check seconds in a full-library run. Those numbers and this isolated candidate process are not a fixed matched application experiment. Finding counts agree, but counts do not establish exact report-byte identity. No causal application-speedup, complete consumer-suite or full-plan claim is made.",
+  "remaining": "The first-query and opaque-control scalar costs and added retained memory remain unresolved tradeoffs. Full board admission still requires the original 120-second gate, broader consumer correctness, cache-frontier checks and complete report replay.",
+  "next_step": "Diagnose cache-assisted projection success, fallback frequency and remaining native layer-sanity callers on a separately instrumented source snapshot before choosing another runtime change. Preserve the current candidate and all original fixtures and limits.",
+  "artifacts_sha256": {
+    "native-gate-v1/binary.json": "f7e4e26b4864f0ed8d672b1e3e1219099f1eff19f245cb2fc12bcb7b9b23a31b",
+    "native-gate-v1/build-board-tests.stderr": "f4ca7533baab1df9e5ae5f42137bad4a8cf58aa544cfa9e77d9fe84a32cfc12c",
+    "native-gate-v1/build-board-tests.stdout": "1b60f6c2ff6568502fbbcff27145557df5647f8e109a260c803f7af0250a75fc",
+    "native-gate-v1/curve-regressions.stderr": "f11840b6f1b5bc19b50362a938c143e78beff9c79499e58bb920ef7a94a2a54a",
+    "native-gate-v1/curve-regressions.stdout": "513efc74b57218eedbd12f73c6e02f881732a1143ee09e5667d9b58eedf5a3c9",
+    "native-gate-v1/drc-regressions.stderr": "989f24f3c1ef4245049490a767f76662f40d763f4bf94a5109dd7347fb87c378",
+    "native-gate-v1/drc-regressions.stdout": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "native-gate-v1/full-board.stderr": "8d19d6241eadb14488f049b06ec0648c9c0b1cc65bff0d9a4e75d3fd13caac49",
+    "native-gate-v1/full-board.stdout": "0577b6815fd4e9c16c2ef389de7db06cc6178baf0c2e2a2497de721a9165c3f6",
+    "native-gate-v1/protocol.json": "39b1f65213deef5b074a7a59be3b6dcd439d6f9954adf809d948aaf0bf0675a8",
+    "native-gate-v1/result.json": "ca767aa8f85f66f7761032366349ddf2e03af39240976b2b9b6a8fd3ffee6073",
+    "native-gate-v1-followup/copper-neck.stderr": "a43b6bea85b6f28358328a18d9d4c590d84e18fc67637501ae9d99bddb060e27",
+    "native-gate-v1-followup/copper-neck.stdout": "bfc10effb413dfb13c9d3c8009baeb31925d8eff6340312ce10bc989fdc26572",
+    "native-gate-v1-followup/protocol.json": "93bd2c1b5153cd3a78420f3f06dcdf0d3e0c6a61fc123265483fd066e86e757a",
+    "native-gate-v1-followup/result.json": "7124367059616b027f4a4f3d9fc8345398272eeb5d704f8fa37151a690e2a5fa"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

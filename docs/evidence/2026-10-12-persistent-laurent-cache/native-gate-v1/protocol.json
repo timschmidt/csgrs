@@ -1,0 +1,85 @@
+{
+  "scope": "Early native consumer and original full-board cost gates for the cache trial.\n\nThe source-frozen candidate keeps its own Cargo target directory. These gates\nare diagnostic qualification, not full native correctness or matched application\nperformance evidence. Both original full-board fixtures and limits are intact.\n",
+  "runner_sha256": "a44dbe2fedc798bf9d92c4b73f40e88aeb0bdd1f6a33eb54af1d61e69f31a125",
+  "preparation_sha256": "04776730ea13e3cc582f59cf4f9ca190746860b2f303e9b402a467bfb58e40e7",
+  "candidate_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "6afb6c80f2d880a15a04eb3a9c9bbc122d8730c80f086d2d2837ca34f8b16551",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "ff4c48d785c4dbb57c66dc78d41e1e0f72d3192ef931c91017aeef53bd589658"
+  },
+  "cost_evidence_sha256": "4302f9ba89da7c28241a6d523bca976b0b5776434e231515ad58bfbb60e38e98",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target"
+  },
+  "commands": [
+    [
+      "curve-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--test",
+        "native_linear_stroke",
+        "--test",
+        "contour_area_normal_form",
+        "--test",
+        "ray_filter_extreme_coordinates",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "drc-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check wall time"
+    }
+  ],
+  "runtime_admitted": false
+}

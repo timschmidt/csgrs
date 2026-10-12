@@ -1,0 +1,88 @@
+{
+  "phases": [
+    {
+      "name": "curve-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--test",
+        "native_linear_stroke",
+        "--test",
+        "contour_area_normal_form",
+        "--test",
+        "ray_filter_extreme_coordinates",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 81.84137714887038,
+      "sources_unchanged": true,
+      "stdout_sha256": "513efc74b57218eedbd12f73c6e02f881732a1143ee09e5667d9b58eedf5a3c9",
+      "stderr_sha256": "f11840b6f1b5bc19b50362a938c143e78beff9c79499e58bb920ef7a94a2a54a"
+    },
+    {
+      "name": "drc-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 119.03344848100096,
+      "sources_unchanged": true,
+      "stdout_sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+      "stderr_sha256": "989f24f3c1ef4245049490a767f76662f40d763f4bf94a5109dd7347fb87c378"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 30.252909746952355,
+      "sources_unchanged": true,
+      "stdout_sha256": "1b60f6c2ff6568502fbbcff27145557df5647f8e109a260c803f7af0250a75fc",
+      "stderr_sha256": "f4ca7533baab1df9e5ae5f42137bad4a8cf58aa544cfa9e77d9fe84a32cfc12c"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 161.65592834027484,
+      "sources_unchanged": true,
+      "stdout_sha256": "0577b6815fd4e9c16c2ef389de7db06cc6178baf0c2e2a2497de721a9165c3f6",
+      "stderr_sha256": "8d19d6241eadb14488f049b06ec0648c9c0b1cc65bff0d9a4e75d3fd13caac49"
+    }
+  ],
+  "complete": false
+}

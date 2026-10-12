@@ -34,14 +34,16 @@
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
-      "status": "experimental-native-gates-in-progress",
+      "status": "full-board-gate-failed",
       "source_baseline_commit": "69fbaf049f24ed4d8adfc3c86a791cc74732e85f",
       "evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/early-assessment-v1.json",
       "qualification": "Five new cache regressions, 862 all-feature scalar library results, strict all-target Clippy and formatting pass. Corrected five-pair scalar timing/allocation measurements preserve all mathematical witnesses and representation inventories within each mode.",
       "tradeoffs": "Several warm queries improve while first queries and opaque controls cost more; retained memory increases. Failed cached projections may use a second original 512-node recognition pass to preserve cold facts.",
       "invalid_evidence": "The initial shared-target cost run linked identical binaries and is explicitly invalidated in cost-v1-binding-audit.json; none of its candidate cost claims are credited.",
-      "remaining": "Original native full-board gates are running separately. Full consumer/default/integration suites, independent cache frontiers and original-report replay remain required; no general proof, application speedup or runtime admission is claimed.",
-      "runtime_admitted": false
+      "remaining": "Diagnose remaining layer-sanity and cache fallback costs. First-query/opaque controls, retained memory, full consumer/default/integration suites, independent cache frontiers and complete report replay remain required. No matched application speedup or runtime admission is claimed.",
+      "runtime_admitted": false,
+      "native_evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/native-assessment-v1.json",
+      "native_qualification": "Twelve curve and 26 DRC focused regressions pass. The separate copper-neck test passes its unchanged 60-second check assertion. The complete two-board smoke fails its unchanged 120-second worker limit at 159.882472765 seconds, preserving 12/197 finding counts."
     }
   },
   "status_meanings": {

@@ -1,0 +1,11 @@
+{
+  "exit_code": 0,
+  "seconds": 149.55950747383758,
+  "sources_unchanged": true,
+  "binary_unchanged": true,
+  "stdout_sha256": "bfc10effb413dfb13c9d3c8009baeb31925d8eff6340312ce10bc989fdc26572",
+  "stderr_sha256": "a43b6bea85b6f28358328a18d9d4c590d84e18fc67637501ae9d99bddb060e27",
+  "complete": true,
+  "original_full_board_gate_passed": false,
+  "runtime_admitted": false
+}

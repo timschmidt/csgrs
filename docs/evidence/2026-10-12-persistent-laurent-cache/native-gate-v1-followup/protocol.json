@@ -1,0 +1,28 @@
+{
+  "scope": "Validate both retained log streams and execute the omitted copper-neck gate.\n\nThe original board process completed and failed its unchanged 120-second\nassertion. Its runner then searched stdout for progress written to stderr.\nPreserve that failure and every original artifact; do not rerun the board or\nweaken either runtime assertion to repair a log-accounting error.\n",
+  "runner_sha256": "0b3a8e8e2efec3ca8f7f837114fa655ab3baf12815edff4cb54c302e857f7333",
+  "original_runner_sha256": "a44dbe2fedc798bf9d92c4b73f40e88aeb0bdd1f6a33eb54af1d61e69f31a125",
+  "original_result_sha256": "ca767aa8f85f66f7761032366349ddf2e03af39240976b2b9b6a8fd3ffee6073",
+  "original_runner_failure": "AssertionError at native_gate_v1.py:95: assert log.count(\"hyperdrc: finished emit report\") == 2",
+  "source_data_valid": true,
+  "original_full_board_worker_cpu_seconds": 159.882472765,
+  "original_full_board_limit_seconds": 120,
+  "command": [
+    "/usr/bin/time",
+    "-v",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+    "--exact",
+    "--test-threads=1",
+    "--nocapture"
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target"
+  },
+  "binary_sha256": "f43c4051e55851664bd321feff384924b6d42ee38b2f82f5c3d9b94fe88da3c9",
+  "runtime_admitted": false
+}
