@@ -1,0 +1,23 @@
+{
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "runner_sha256": "501829fd35337892c72af8cefb571932142a8d55f775919608974e3e78aa1a61",
+  "production_input_sha256": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+  "probe_sources_sha256": {
+    "optional_magnitude": "9bd8359a78c0989358df504dc6f7ffdec5b1930c9a84cd5de9860fd6367ed0f5",
+    "masked_tag": "783f6239938d3cfaf8d9b5bbba3f165f934555a1b4423b911488bc679a8aa114"
+  },
+  "commands": {
+    "optional_magnitude": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+      "--no-cheating",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/decoder-expression-support-v2167/optional_magnitude.rs"
+    ],
+    "masked_tag": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+      "--no-cheating",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/decoder-expression-support-v2167/masked_tag.rs"
+    ]
+  },
+  "scope": "Separate expression-support probes for bool::then_some and the masked unreachable arm. Literal 16/32 replace the unchanged production constants in the first probe; neither probe includes or proves the actual decoder. No external specification, axiom or assumed result is added."
+}

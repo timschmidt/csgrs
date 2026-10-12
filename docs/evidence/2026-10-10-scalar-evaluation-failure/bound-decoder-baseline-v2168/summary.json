@@ -1,0 +1,91 @@
+{
+  "protocol_sha256": "fb6485af2f58e3141d5d41c622841118e199459f199d6ded92bd0f722975ced4",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "builds_passed": 7,
+  "results": [
+    {
+      "family": "atan",
+      "exit_code": 0,
+      "seconds": 0.28506110794842243,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/atan",
+      "binary_sha256": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "acos",
+      "exit_code": 0,
+      "seconds": 0.30551954498514533,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/acos",
+      "binary_sha256": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "integer",
+      "exit_code": 0,
+      "seconds": 0.2929987236857414,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/integer",
+      "binary_sha256": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "inverse_trig",
+      "exit_code": 0,
+      "seconds": 0.45879934215918183,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/inverse_trig",
+      "binary_sha256": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "normal_form",
+      "exit_code": 0,
+      "seconds": 0.46479438012465835,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/normal_form",
+      "binary_sha256": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "default",
+      "exit_code": 0,
+      "seconds": 0.42041543405503035,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/default",
+      "binary_sha256": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+      "matches_historical_executable_bytes": true
+    },
+    {
+      "family": "algebraic",
+      "exit_code": 0,
+      "seconds": 0.4673378262668848,
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-decoder-baseline-v2168/algebraic",
+      "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "matches_historical_executable_bytes": true
+    }
+  ],
+  "timing_processes_run": 0,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "runtime_source_changed": false,
+  "actual_decoder_verified": false,
+  "artifacts_sha256": {
+    "acos.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "acos.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algebraic.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "algebraic.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "atan.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "atan.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build-results.json": "a02d884fb7690941033421864e2b0de649ad407d4f4f364f031fbcb9ca86f1ff",
+    "default.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "inputs/crates/hyperreal/src/computable/node/representation.rs": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+    "inputs/crates/hyperreal/verification/README.md": "e9d693baffb25d546ee5386571322b8bfd0f7aa64e5ab7c9c5871d6c36ccde72",
+    "inputs/crates/hyperreal/verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+    "inputs/crates/hyperreal/verification/scope.json": "e91a02e9b60987c6bb04742e96e206502a1ba4d3f11162b11842907db999ffd9",
+    "inputs/crates/hyperreal/verification/test_cache_rejections.py": "070bbc2b177f0487862ee3e861e45ad1e3bb6fa3cdf1a22dc71ccc8705be9c54",
+    "integer.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "integer.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "inverse_trig.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "inverse_trig.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal_form.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal_form.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "fb6485af2f58e3141d5d41c622841118e199459f199d6ded92bd0f722975ced4"
+  }
+}

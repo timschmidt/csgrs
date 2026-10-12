@@ -1,0 +1,13 @@
+error: `core::bool::impl&%0::then_some` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+ --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/decoder-expression-support-v2167/optional_magnitude.rs:9:5
+  |
+9 |     (value & 16u64 != 0).then_some(((value >> 32u32) as u32) as i32)
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |
+  = help: The following declaration may resolve this error:
+          pub assume_specification<T> [core::bool::<impl bool>::then_some] (_0: bool, _1: T) -> std::option::Option<T>
+          where
+          T: std::marker::Destruct,;
+
+error: aborting due to 1 previous error
+

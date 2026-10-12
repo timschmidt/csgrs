@@ -1,0 +1,41 @@
+{
+  "protocol_sha256": "6acf048a4bc1bfa778cc301b7da4ebf9de79dd2a3036a4b5409a43c8f2c889e2",
+  "source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "results": [
+    {
+      "name": "optional_magnitude",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--no-cheating",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/decoder-expression-support-v2167/optional_magnitude.rs"
+      ],
+      "exit_code": 1,
+      "seconds": 0.4662364418618381
+    },
+    {
+      "name": "masked_tag",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+        "--no-cheating",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/decoder-expression-support-v2167/masked_tag.rs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.5352250402793288
+    }
+  ],
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "runtime_source_changed": false,
+  "actual_decoder_verified": false,
+  "scope": "Separate expression-support probes for bool::then_some and the masked unreachable arm. Literal 16/32 replace the unchanged production constants in the first probe; neither probe includes or proves the actual decoder. No external specification, axiom or assumed result is added.",
+  "artifacts_sha256": {
+    "masked_tag.rs": "783f6239938d3cfaf8d9b5bbba3f165f934555a1b4423b911488bc679a8aa114",
+    "masked_tag.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "masked_tag.stdout": "eb489a3cdf1ba4a03ff3bd67b4faa07cde1814bf7fffb2e7cca399985d2f8959",
+    "optional_magnitude.rs": "9bd8359a78c0989358df504dc6f7ffdec5b1930c9a84cd5de9860fd6367ed0f5",
+    "optional_magnitude.stderr": "7c6dcec141ceb199398cac6d2a74c77379463d74c154fd5dc3927c27130d75d9",
+    "optional_magnitude.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "6acf048a4bc1bfa778cc301b7da4ebf9de79dd2a3036a4b5409a43c8f2c889e2",
+    "runner.py": "501829fd35337892c72af8cefb571932142a8d55f775919608974e3e78aa1a61"
+  }
+}
