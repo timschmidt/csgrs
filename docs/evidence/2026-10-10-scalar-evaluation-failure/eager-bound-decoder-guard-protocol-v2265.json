@@ -1,0 +1,26 @@
+{
+  "status": "Frozen before focused guard execution",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "runner_sha256": "75bdda41aa52cf2df90fc36823e6f89973384b0b7460aa34f0b7c730d8aac625",
+  "phases": [
+    {
+      "phase": "typed-api-prototype-v2264-eager-bound-decoder-acceptance",
+      "helper": "run_candidate_proof_checks.py",
+      "entrypoint": "test_acceptance.py"
+    },
+    {
+      "phase": "typed-api-prototype-v2265-eager-bound-decoder-cache-rejections",
+      "helper": "run_candidate_cache_proof_checks_v1.py",
+      "entrypoint": "test_cache_rejections.py"
+    }
+  ],
+  "wrapper_predecessor": "run_candidate_proof_checks.py",
+  "wrapper_predecessor_sha256": "df5a99cdc922b9204c0d04c017cac0426bad319452db943bc636e12fd8b245de",
+  "wrapper": "run_candidate_cache_proof_checks_v1.py",
+  "wrapper_sha256": "6a15ea8319439ab46726981a8df0390887ee87ee8301f11d77824c63dd771d9c",
+  "only_wrapper_change": {
+    "before": "    assert entrypoint in {\"test_rejections.py\", \"test_acceptance.py\"}",
+    "after": "    assert entrypoint == \"test_cache_rejections.py\""
+  },
+  "scope": "Ten acceptance tests and only the current cache mutation suite: 23 production mutations, 18 model mutations and one passing baseline. The other mutation suites are not rerun or credited as fresh/reused here. The execution/input/tool capture and rejection criteria remain unchanged. No runtime retention or cost pass follows."
+}

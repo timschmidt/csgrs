@@ -1,0 +1,48 @@
+{
+  "status": "Eager decoder proved with matching instruction bytes; full identity and runtime qualification remain open",
+  "source_record": "typed-api-prototype-v2260-eager-bound-decoder-verus/source-hashes.json.gz",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "changed_sources_sha256": {
+    "crates/hyperreal/src/computable/node/representation.rs": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+    "crates/hyperreal/verification/README.md": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a",
+    "crates/hyperreal/verification/cache_encoding_model.rs": "7b5f309ffc5767d532431a4cf78b0910040e1631e234291900367ca573d32d9c",
+    "crates/hyperreal/verification/scope.json": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+    "crates/hyperreal/verification/test_cache_rejections.py": "cf7452723fff8b1442f47e3c7bf6846a64fe5be7de35f0a53e23d7b510b34950"
+  },
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "inputs_sha256": {
+    "eager-bound-decoder-baseline-v2257/protocol.json": "5e17d695d048fde46b45aa3121c09864187a6126363202b55ecc2b89a897c99d",
+    "eager-bound-decoder-early-validation-v2261.json": "e24e4e4671f0593c46cc13f03b3bab6221163bc890ddddc5ea51eb89074fefc1",
+    "eager-bound-decoder-focused-guards-v2265.json": "21dafde807d4e55b832f24ebf7a1aeeb8c3a93073bf37d0c06fcd032975026da",
+    "eager-bound-decoder-binary-comparison-v2262/summary.json": "4727d6d08016fe50f31d493641f752d55fb1f17a163e12db378d69ae643c6ea3",
+    "eager-bound-decoder-load-image-review-v2263.json": "f3aa2c760e277709a4c8c58258b8c547ca2e8d59a3c3b9ed3cd87e8bf6ece7c7"
+  },
+  "verified_units": 655,
+  "listed_production_contracts": 98,
+  "listed_model_theorems": 135,
+  "open_obligation_groups": 13,
+  "fresh_acceptance_tests": 10,
+  "fresh_cache_rejected_mutations": 41,
+  "fresh_cache_passing_baselines": 1,
+  "other_mutation_suites_executed": 0,
+  "other_mutations_credited_as_reused": 0,
+  "fresh_format_proof_build_commands": 4,
+  "fresh_scalar_or_consumer_runtime_tests": 0,
+  "compiled_probe_families": 7,
+  "identical_executable_instruction_segments": true,
+  "identical_complete_executables": 0,
+  "new_timing_processes": 0,
+  "cost_receipts_reused": 0,
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "next_priority": "Freeze and review an explicit qualification method for the eager decoder's identical instruction bytes and narrowly identified diagnostic/ELF metadata differences before any further runtime cost work. The whole-executable identity condition remains failed; do not reuse receipts under it or repeat the failed baseline comparison unchanged. Keep the original caps and failures visible, and complete the remaining applicable runtime, mutation, replay and fact-retention gates before retention. Continue producer, existence, atomic/caller and resource work toward native/full-board admission.",
+  "limits": [
+    "The actual all-u64 decoder and five connected field lemmas are verified. Certificate producer truth, independent existence, atomic/caller ordering and all thirteen whole-crate groups remain open.",
+    "Only ten acceptance tests and the 41 cache mutations plus one positive baseline were run afresh after this payload change. Earlier 245-mutation and nine-command reports describe the rejected source, not this one.",
+    "The static comparison preserves complete executable instruction segments but changes source locations, build identifiers and private symbol metadata. This is not full executable identity, a whole-program equivalence theorem or a fresh cost pass. All prior CPU and timing failures remain recorded.",
+    "The runtime remains unretained. Broad tests, applicable proof guards, resource/replay/fact checks, the fixed pre-Verus baseline and main/native/full-board admission remain separate requirements. No property/target status changes follow."
+  ]
+}

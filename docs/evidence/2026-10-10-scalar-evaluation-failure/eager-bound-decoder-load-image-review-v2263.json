@@ -1,0 +1,1442 @@
+{
+  "status": "Instruction equality with explicitly identified metadata differences; full executable identity still fails",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "comparison_record": "eager-bound-decoder-binary-comparison-v2262/summary.json",
+  "comparison_record_sha256": "4727d6d08016fe50f31d493641f752d55fb1f17a163e12db378d69ae643c6ea3",
+  "parser": "inspect_bound_decoder_executables.py",
+  "parser_sha256": "8586c82b9a84c3740b6213c7eb859e93c3ebb307f30a2c4c64b2212fa094475a",
+  "runner_sha256": "376e38384d36915daa8b524a63f8784bbcf9e56f7682cad2ab60eb416b96bb6e",
+  "retained_source_sha256": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+  "candidate_source_sha256": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+  "families": [
+    {
+      "family": "atan",
+      "binary_sha256": {
+        "baseline": "001d4c49a790c667933d66bea33ab3ca8e8ab3b343dc58c0512fe68f0e73c0e9",
+        "candidate": "56bfa3f48cb50c21bebf1f3e31d59569c398e864ecd0cab87ca42ea06f09d3a8"
+      },
+      "binary_size_delta": -32,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "7a624591c82332259e861d892c727e2974f927660bf1ac6d7353cbde23240596",
+        ".init": "fa9fb6d6c330930112bb456fc1af78f8cd3a5cc697eb69ed5976478c8319c3f9",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "5d825e8f59626a4a09ec9dea356610810e00f762240a0028a1c1a87756a216c3"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            376136,
+            376136,
+            4096
+          ],
+          "baseline_sha256": "8dcf3ed3b9a95413952739335a2521b16a1979d6f0b22f43a57989af9ed56b10",
+          "candidate_sha256": "a0cc41c8e51fc88cf6caecfb2b2301f86401442e3d57de0bd25b84624de68beb",
+          "changed_file_offsets": [
+            40,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            376144,
+            380240,
+            380240,
+            1206448,
+            1206448,
+            4096
+          ],
+          "baseline_sha256": "0cdf10e65d9344e570eee049a9b86b623876e70bc27b9728ab4dc10dd9663a81",
+          "candidate_sha256": "0cdf10e65d9344e570eee049a9b86b623876e70bc27b9728ab4dc10dd9663a81",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1582592,
+            1590784,
+            1590784,
+            23200,
+            27136,
+            4096
+          ],
+          "baseline_sha256": "2308013ee5242cc33fa6e0149baa03277baee564124cf42c57588045ba8d54a6",
+          "candidate_sha256": "6792489b1d5734c1685e86782cadb26f334d71eb2b721d550fc5f5fb084ee4b7",
+          "changed_file_offsets": [
+            1584928,
+            1584952,
+            1584976,
+            1585000,
+            1585024,
+            1585840
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1605792,
+            1618080,
+            1618080,
+            197264,
+            197472,
+            4096
+          ],
+          "baseline_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "candidate_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 1593104,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1584928
+        },
+        {
+          "address": 1593128,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1584952
+        },
+        {
+          "address": 1593152,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1584976
+        },
+        {
+          "address": 1593176,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1585000
+        },
+        {
+          "address": 1593200,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1585024
+        },
+        {
+          "address": 1594016,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            197824
+          ],
+          "line_field_file_offset": 1585840
+        }
+      ],
+      "symbol_count": 4088,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6258264,
+        "candidate": 6258232
+      }
+    },
+    {
+      "family": "acos",
+      "binary_sha256": {
+        "baseline": "fcc425b1caf8c56e590f3de52c974efbff8ca1fc77a2aa8ef685de687a2967a3",
+        "candidate": "3d3a422dd5b3f2742d7e503d030229575625cec20178dbcc231d49f3754b4595"
+      },
+      "binary_size_delta": -32,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "3316fd01f0d13b8d0e674144875191e7d892028786eccfbf4b9119e768e420b0",
+        ".init": "71b74d8ae0af74eccd9c42503c79a31dde4a77156cf9c74b83d6d66dd8e895bb",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "0d6816edcdb28c392c53cc7c2aa628b294ba15df0357f2f7795cc8cf29d5def8"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            372192,
+            372192,
+            4096
+          ],
+          "baseline_sha256": "65ad8e0adc50b5c11eb10a2061a6105d442b2badacff084e82e29d0b423fe187",
+          "candidate_sha256": "d2fa5727581be9a5d0b3a50d5f5506309191de82d5527e7ef01f24ee13324680",
+          "changed_file_offsets": [
+            40,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            372192,
+            376288,
+            376288,
+            1198912,
+            1198912,
+            4096
+          ],
+          "baseline_sha256": "71ed71315b9fbdaa56417cfe0a7664d0c09034db07fe368b5b3b74d6a13b9fd2",
+          "candidate_sha256": "71ed71315b9fbdaa56417cfe0a7664d0c09034db07fe368b5b3b74d6a13b9fd2",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1571104,
+            1579296,
+            1579296,
+            22784,
+            26336,
+            4096
+          ],
+          "baseline_sha256": "e4bd8a871d2f24638aa9dc1bf042d191854c9db5bdc645e741126ce2f43269c6",
+          "candidate_sha256": "0f9aa14d363a168cb17c27090dbac8857dfc51ae88abc885f84325fd45fe8169",
+          "changed_file_offsets": [
+            1573200,
+            1573224,
+            1573248,
+            1573272,
+            1573296,
+            1574112
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1593888,
+            1606176,
+            1606176,
+            197264,
+            197472,
+            4096
+          ],
+          "baseline_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "candidate_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 1581376,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1573200
+        },
+        {
+          "address": 1581400,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1573224
+        },
+        {
+          "address": 1581424,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1573248
+        },
+        {
+          "address": 1581448,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1573272
+        },
+        {
+          "address": 1581472,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1573296
+        },
+        {
+          "address": 1582288,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            197131
+          ],
+          "line_field_file_offset": 1574112
+        }
+      ],
+      "symbol_count": 4048,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6241696,
+        "candidate": 6241664
+      }
+    },
+    {
+      "family": "integer",
+      "binary_sha256": {
+        "baseline": "48310762888c5cc3ca9d63bced9454535f28c9dae1f4a2554b692b4d662ad678",
+        "candidate": "29b220fe98231963281a9cbe6f84e42e8f2bcf1dce4c2a8dac255e5b775ae65b"
+      },
+      "binary_size_delta": -24,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "cc490aad88d22608955c2ff9b8abbae5dc060098024f47568bf3bdc72fa90f85",
+        ".init": "d2963133e926ae308314492bcdabbfdb7cab0875ed4230a2877f44929c8b422b",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "b2da01f6512dcb02efeb109c3c13fa197d311508b7223b500cb276df87d91087"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            371468,
+            371468,
+            4096
+          ],
+          "baseline_sha256": "402ed11a9fecaf92f0114e36c77d36ac3d1203f9eb07d8c042872a860979d4a0",
+          "candidate_sha256": "463b0f855dc1b3133c83062ad414eb0d55365627aeedffad0765f34997ccaf99",
+          "changed_file_offsets": [
+            40,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            371472,
+            375568,
+            375568,
+            1195600,
+            1195600,
+            4096
+          ],
+          "baseline_sha256": "0689b716ca31aa39fa72b8e9816cf5ba6bfdc72e6a3ee6133950a6517327895b",
+          "candidate_sha256": "0689b716ca31aa39fa72b8e9816cf5ba6bfdc72e6a3ee6133950a6517327895b",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1567072,
+            1575264,
+            1575264,
+            22616,
+            26272,
+            4096
+          ],
+          "baseline_sha256": "c44ed7491b483149ff826f8905c79040e896eb0bfa94d086bca4c65bfe9f3d6a",
+          "candidate_sha256": "9ae104dc09ea2d30bdad1eb4509f210a09ee5df562acdce642a40fc86da64fcc",
+          "changed_file_offsets": [
+            1569048,
+            1569072,
+            1569096,
+            1569120,
+            1569144,
+            1569960
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1589688,
+            1601976,
+            1601976,
+            197264,
+            197472,
+            4096
+          ],
+          "baseline_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "candidate_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 1577224,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569048
+        },
+        {
+          "address": 1577248,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569072
+        },
+        {
+          "address": 1577272,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569096
+        },
+        {
+          "address": 1577296,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569120
+        },
+        {
+          "address": 1577320,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569144
+        },
+        {
+          "address": 1578136,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            196365
+          ],
+          "line_field_file_offset": 1569960
+        }
+      ],
+      "symbol_count": 4038,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6236368,
+        "candidate": 6236344
+      }
+    },
+    {
+      "family": "inverse_trig",
+      "binary_sha256": {
+        "baseline": "8e75a88edb5fa23b3c19aec7870bec715d8413e5237e3b4ae1009da63d6faf22",
+        "candidate": "84c4fb417eebadf4b0a5fe93239713eb7d78b0892384e51d958fc9822d1e71ed"
+      },
+      "binary_size_delta": -24,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "749ec5b66d8efa6874d76e8db3ee6f09c99e03a29e1daeca8dea7a1df1d96edb",
+        ".init": "902e8aeb433361de1984a0c0c242fb2f2a3a5d737338a5f43bf2b4ea424325f6",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "7e8795cdb1868093d209c0512453b0d59ca29f6559ba3100f1c59c609ce9ad92"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            456840,
+            456840,
+            4096
+          ],
+          "baseline_sha256": "7c622fc33c0e5fcf9a39b9fc3f4a44ef49a4a47fd661e980c406f06088f45d6f",
+          "candidate_sha256": "0eeefa55bd71dd81991816d43ff5079becd7fc69bc52c3402d4470efeec66660",
+          "changed_file_offsets": [
+            40,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            456896,
+            460992,
+            460992,
+            1638032,
+            1638032,
+            4096
+          ],
+          "baseline_sha256": "1c6b7098e0d85208eec3370a939d8b07d67c859f7404a1591c52c8daf01b1b72",
+          "candidate_sha256": "1c6b7098e0d85208eec3370a939d8b07d67c859f7404a1591c52c8daf01b1b72",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2094928,
+            2103120,
+            2103120,
+            31664,
+            34992,
+            4096
+          ],
+          "baseline_sha256": "c625b982346762b3740988719efd70c11519538b35d594b8b86ab04b0d342e5b",
+          "candidate_sha256": "f0e5ac97633bb45d2768b2f5ab8ee20ba1cc026c97bcb588abd5ca8c804d203d",
+          "changed_file_offsets": [
+            2102688,
+            2102712,
+            2102736,
+            2102760,
+            2102784,
+            2103600
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2126592,
+            2138880,
+            2138880,
+            197656,
+            197872,
+            4096
+          ],
+          "baseline_sha256": "d64fddc058fc5f5be8d2e469c61b54f5d9aa8a8917c2cb67509ae495512319ad",
+          "candidate_sha256": "d64fddc058fc5f5be8d2e469c61b54f5d9aa8a8917c2cb67509ae495512319ad",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 2110864,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2102688
+        },
+        {
+          "address": 2110888,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2102712
+        },
+        {
+          "address": 2110912,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2102736
+        },
+        {
+          "address": 2110936,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2102760
+        },
+        {
+          "address": 2110960,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2102784
+        },
+        {
+          "address": 2111776,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            218847
+          ],
+          "line_field_file_offset": 2103600
+        }
+      ],
+      "symbol_count": 5581,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6918136,
+        "candidate": 6918112
+      }
+    },
+    {
+      "family": "normal_form",
+      "binary_sha256": {
+        "baseline": "0c7fb145b5311c6398b59c82181840bd0313634adb6b74ed7ab6c11f02ea5441",
+        "candidate": "923345bafce7a96a75bc500327afa7ad54c9819c17bb5230576882145e410d87"
+      },
+      "binary_size_delta": -32,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "2c03b1f538ba31f645db6ba2638a2b198a7e1fecb11da32ad4c43886662a3da2",
+        ".init": "cf020b3c111fefd872b944bacd2ba7a2435f060532f5f3b26f60b1b22a73dd61",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "22f6d48547d6a78613dd884e94072b9896a504571797281e6f04f6e7fd374c98"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            457488,
+            457488,
+            4096
+          ],
+          "baseline_sha256": "8552396bc46a65423bc48fbc134f0d9972d196bae90d398bc018a3b5f3d3efbf",
+          "candidate_sha256": "7986988688a5d73a4c8df9095bf5e6fcf8fb5292b9c8210dcfa4713b18b76cdb",
+          "changed_file_offsets": [
+            40,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            457536,
+            461632,
+            461632,
+            1641872,
+            1641872,
+            4096
+          ],
+          "baseline_sha256": "68f757735251de8a0784c7234325f972821789996b478c5e205c37edc0612604",
+          "candidate_sha256": "68f757735251de8a0784c7234325f972821789996b478c5e205c37edc0612604",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2099408,
+            2107600,
+            2107600,
+            31776,
+            34608,
+            4096
+          ],
+          "baseline_sha256": "948443f3af7c70680466e3fb0a65f125b6dbbc7ca7270f8106947781c0aa685f",
+          "candidate_sha256": "1bb2c9d92be66712702603f900303c88ace7d73173eed642342a1746b9a44fb7",
+          "changed_file_offsets": [
+            2107240,
+            2107264,
+            2107288,
+            2107312,
+            2107336,
+            2108152
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2131184,
+            2143472,
+            2143472,
+            197672,
+            197888,
+            4096
+          ],
+          "baseline_sha256": "3a2d180e162216cb8a3f5d561bb0b3770433e4a4a404746db79748afc457a8c0",
+          "candidate_sha256": "3a2d180e162216cb8a3f5d561bb0b3770433e4a4a404746db79748afc457a8c0",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 2115416,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2107240
+        },
+        {
+          "address": 2115440,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2107264
+        },
+        {
+          "address": 2115464,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2107288
+        },
+        {
+          "address": 2115488,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2107312
+        },
+        {
+          "address": 2115512,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2107336
+        },
+        {
+          "address": 2116328,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            220967
+          ],
+          "line_field_file_offset": 2108152
+        }
+      ],
+      "symbol_count": 5592,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6923160,
+        "candidate": 6923128
+      }
+    },
+    {
+      "family": "default",
+      "binary_sha256": {
+        "baseline": "18d5d03520e199aad91e72e5ffbbe3c11e520b8f42f94adf0c63e8df1d8e765a",
+        "candidate": "8c0d6c1e78b04fa60cebbb72632fb6ebe4b492d6c35f135759ad3a4f3f60f31e"
+      },
+      "binary_size_delta": -24,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "ccbf02f3a5eaadf3cb4c5e464fbfa6c74fd51de9e9c2694747a5d333c354d83a",
+        ".init": "44fb7902dce34943dedd139ba35d297326ac106be82c55b40484274e9d4e15dd",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "e4c15fd5209dac6935a4a54bf3242a3772477189f35fcbe36eb32bd96cd6484e"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            417108,
+            417108,
+            4096
+          ],
+          "baseline_sha256": "e140d7d448133886faccc4606094f450eee765b974287111926f005c9ee4ece2",
+          "candidate_sha256": "7783ccff4a98c2f8ef280d0e44c38683721ba1bd2a551f13e1bc4e69480b363a",
+          "changed_file_offsets": [
+            40,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            417120,
+            421216,
+            421216,
+            1318336,
+            1318336,
+            4096
+          ],
+          "baseline_sha256": "d6a8d45611b33f49c9cad6bb49e84fedabb3f94dab0dec8895d4648a9d911ec9",
+          "candidate_sha256": "d6a8d45611b33f49c9cad6bb49e84fedabb3f94dab0dec8895d4648a9d911ec9",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1735456,
+            1743648,
+            1743648,
+            29328,
+            29920,
+            4096
+          ],
+          "baseline_sha256": "40cca0d2a445e8a47696350aa3984826505997e0c3c5724f016c907fda893e20",
+          "candidate_sha256": "a5f49a346eba2da0364de41bc641ef6160a998bc27b74c442add7d30271da3da",
+          "changed_file_offsets": [
+            1741800,
+            1741824,
+            1741848,
+            1741872,
+            1741896,
+            1742712
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            1764784,
+            1777072,
+            1777072,
+            197264,
+            197472,
+            4096
+          ],
+          "baseline_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "candidate_sha256": "408dc1fc12af867561c2868e4daf1f361154a6388b393926ced84d77006b8952",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 1749976,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1741800
+        },
+        {
+          "address": 1750000,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1741824
+        },
+        {
+          "address": 1750024,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1741848
+        },
+        {
+          "address": 1750048,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1741872
+        },
+        {
+          "address": 1750072,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1741896
+        },
+        {
+          "address": 1750888,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            220144
+          ],
+          "line_field_file_offset": 1742712
+        }
+      ],
+      "symbol_count": 4687,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6495584,
+        "candidate": 6495560
+      }
+    },
+    {
+      "family": "algebraic",
+      "binary_sha256": {
+        "baseline": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "candidate": "b090c2221934ebb7a5fcb76e69a93c2402b17b7a85f953691a123ca3246cb4cb"
+      },
+      "binary_size_delta": -32,
+      "changed_sections": [
+        ".note.gnu.build-id",
+        ".data.rel.ro",
+        ".symtab",
+        ".strtab"
+      ],
+      "identical_executable_sections_sha256": {
+        ".text": "2e861597995d27451b137a18f21894be45252015ca18913f06719b33692ed09a",
+        ".init": "9ecc834214409c08d0f1cde4c30af6e3ea6c860fa352c00d0c93774945de63ac",
+        ".fini": "6a4f3e5efc7c1f7ee7d6f21afd9ed040ba1d7f0b97bb12b016f5b176cc558bd8",
+        ".plt": "430410462a06ee1444eccc0eaf9da63e05f6bab0751ffbe7939a7ebe0e0a1017"
+      },
+      "load_segments": [
+        {
+          "program_header": [
+            1,
+            4,
+            0,
+            0,
+            0,
+            454972,
+            454972,
+            4096
+          ],
+          "baseline_sha256": "8c80ad0c0639d218fe24757f577844094b6880a40807a70904ab74c85eeecc80",
+          "candidate_sha256": "4faa63dd451b44e2fb9157dc64571db9c446a5799e3d8031f5a2a28631b0c1c0",
+          "changed_file_offsets": [
+            40,
+            41,
+            812,
+            813,
+            814,
+            815,
+            816,
+            817,
+            818,
+            819,
+            820,
+            821,
+            822,
+            823,
+            824,
+            825,
+            826,
+            827,
+            828,
+            829,
+            830,
+            831
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            5,
+            454976,
+            459072,
+            459072,
+            1634832,
+            1634832,
+            4096
+          ],
+          "baseline_sha256": "65e347719715fd2a04cfde4bf21657f881f247eef4c841eec8c7607cc89da606",
+          "candidate_sha256": "65e347719715fd2a04cfde4bf21657f881f247eef4c841eec8c7607cc89da606",
+          "changed_file_offsets": [],
+          "executable": true
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2089808,
+            2098000,
+            2098000,
+            31648,
+            31920,
+            4096
+          ],
+          "baseline_sha256": "daadff781a43295608934d3fde7924cdbc7f7811393bb3fdf9f57a5c09c20776",
+          "candidate_sha256": "662faf2afd6f2e4565d2bac667deaef5e281e80a713d7574a6bafe2dfb94107a",
+          "changed_file_offsets": [
+            2097592,
+            2097616,
+            2097640,
+            2097664,
+            2097688,
+            2098504
+          ],
+          "executable": false
+        },
+        {
+          "program_header": [
+            1,
+            6,
+            2121456,
+            2133744,
+            2133744,
+            197672,
+            197888,
+            4096
+          ],
+          "baseline_sha256": "3a2d180e162216cb8a3f5d561bb0b3770433e4a4a404746db79748afc457a8c0",
+          "candidate_sha256": "3a2d180e162216cb8a3f5d561bb0b3770433e4a4a404746db79748afc457a8c0",
+          "changed_file_offsets": [],
+          "executable": false
+        }
+      ],
+      "source_location_records": [
+        {
+          "address": 2105768,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 791,
+          "candidate_line": 805,
+          "column": 86,
+          "source_text": "static HALF_RATIONAL: LazyLock<Rational> = LazyLock::new(|| Rational::fraction(1, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2097592
+        },
+        {
+          "address": 2105792,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 789,
+          "candidate_line": 803,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2097616
+        },
+        {
+          "address": 2105816,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 780,
+          "candidate_line": 794,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(3, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2097640
+        },
+        {
+          "address": 2105840,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 783,
+          "candidate_line": 797,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 2).unwrap());",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2097664
+        },
+        {
+          "address": 2105864,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 786,
+          "candidate_line": 800,
+          "column": 47,
+          "source_text": "    LazyLock::new(|| Rational::fraction(7, 8).unwrap());",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2097688
+        },
+        {
+          "address": 2106680,
+          "filename": "crates/hyperreal/src/computable/node/representation.rs",
+          "baseline_line": 679,
+          "candidate_line": 693,
+          "column": 18,
+          "source_text": "            _ => unreachable!(\"invalid atomic exact-sign cache state\"),",
+          "relative_relocation": [
+            8,
+            218271
+          ],
+          "line_field_file_offset": 2098504
+        }
+      ],
+      "symbol_count": 5563,
+      "normalized_symbol_rows_identical": true,
+      "symbol_normalization": "Only trailing .llvm.<decimal-module-id> suffixes and name-table offsets",
+      "section_table_offsets": {
+        "baseline": 6911768,
+        "candidate": 6911736
+      }
+    }
+  ],
+  "findings": [
+    "All executable sections and complete executable load segments are byte-identical in all seven probes. The lazy candidate's 98 changed instruction bytes are absent.",
+    "Program headers are identical. Changed loaded bytes are confined to the ELF section-table-offset field, build-id note and six relocated source-location-shaped records. Each record points to the same source filename and unchanged statement/column, with its line increased by fourteen. These statements are five rational-constant unwraps and the invalid exact-sign-cache panic.",
+    "Symbol rows match after removing only private LLVM module-id suffixes and decoding name-table offsets; normalized string-name sets also match. Complete file sizes fall by 24 or 32 bytes. No executable was rewritten or normalized for execution."
+  ],
+  "qualification": {
+    "full_executable_identity": false,
+    "reused_cost_receipts": 0,
+    "new_workload_processes": 0,
+    "cost_gate_passed": false,
+    "runtime_retained": false
+  },
+  "limits": "This is static byte and source-location evidence, not a whole-program equivalence theorem or a fresh timing/resource pass. The exact-identity condition in the frozen protocol remains unsatisfied. The earlier baseline CPU failure and unresolved timing increases are preserved. Any further cost/admission method needs a separately frozen protocol; no fixture, cap or failed result is silently replaced.",
+  "source_files_verified": 24746,
+  "main_files_verified": 1167
+}

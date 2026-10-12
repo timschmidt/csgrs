@@ -1,0 +1,26 @@
+{
+  "protocol_sha256": "c5ae29586a1fe8e35a9f9e618ce2dffd50b0104ef1568b8bf811b554839939b8",
+  "validation_sha256": "e24e4e4671f0593c46cc13f03b3bab6221163bc890ddddc5ea51eb89074fefc1",
+  "runner_sha256": "33b4c8e02b139bcedffb3555ea0b0065561f32577103843f110ee92c33fd5c32",
+  "libraries": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": {
+      "retained_sha256": "07cddc085eb595dd04b072210af275b5041bee9a4606e8de332fb97ca14f288b",
+      "candidate_sha256": "1568590bacd2bad7bcb73f985dfb16add2c7a8dcd7aa8c1d68e03204b9de61d7",
+      "identical": false,
+      "candidate_bytes": 12450254
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": {
+      "retained_sha256": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+      "candidate_sha256": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+      "identical": true,
+      "candidate_bytes": 2042504
+    },
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": {
+      "retained_sha256": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06",
+      "candidate_sha256": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06",
+      "identical": true,
+      "candidate_bytes": 15707788
+    }
+  },
+  "no_timing_processes": true
+}

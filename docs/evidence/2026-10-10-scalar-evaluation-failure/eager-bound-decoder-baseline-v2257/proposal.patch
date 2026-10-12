@@ -1,0 +1,214 @@
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -448,8 +448,18 @@
+         }
+     }
+ 
+-    #[cfg(not(verus_keep_ghost))]
++    #[cfg_attr(verus_keep_ghost, allow(unused, verus_impl_method_marker))]
++    #[cfg_attr(verus_keep_ghost, verus_spec(result =>
++        ensures result == bound_word(value),
++    ))]
+     fn decode_bound(value: u64) -> BoundCache {
++        #[cfg(verus_keep_ghost)]
++        proof! {
++            assert(Self::MSD_PRESENT == 16u64) by (bit_vector);
++            assert(Self::EXACT_MSD == 32u64) by (bit_vector);
++            assert(value & 3u64 <= 3u64) by (bit_vector);
++            assert((value >> 2u32) & 3u64 <= 3u64) by (bit_vector);
++        }
+         match value & 0b11 {
+             Self::TAG_INVALID => BoundCache::Invalid,
+             Self::TAG_UNKNOWN => BoundCache::Valid(BoundInfo::Unknown),
+@@ -462,8 +472,12 @@
+                     3 => Some(Sign::NoSign),
+                     _ => unreachable!(),
+                 };
+-                let msd = (value & Self::MSD_PRESENT != 0)
+-                    .then_some(((value >> Self::MSD_SHIFT) as u32) as i32);
++                let magnitude = ((value >> Self::MSD_SHIFT) as u32) as i32;
++                let msd = if value & Self::MSD_PRESENT != 0 {
++                    Some(magnitude)
++                } else {
++                    None
++                };
+                 BoundCache::Valid(BoundInfo::NonZero {
+                     sign,
+                     msd,
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -1,8 +1,8 @@
+ # Verus verification of Hyperreal
+ 
+ The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
+-The current proof target verifies ninety-seven production contracts (eighty-eight
+-functions and nine constants) and one hundred thirty arithmetic model theorems. The rest
++The current proof target verifies ninety-eight production contracts (eighty-nine
++functions and nine constants) and one hundred thirty-five arithmetic model theorems. The rest
+ of the crate is still awaiting implementation refinement proofs. A passing
+ Verus job must not be described as 100% verification of Hyperreal.
+ 
+@@ -106,9 +106,12 @@
+ or concurrent atomic publication. A declined certificate means this particular
+ proof is unavailable, not that the operand is outside its domain.
+ 
+-The production `computable/node/representation.rs` file also supplies three
++The production `computable/node/representation.rs` file also supplies four
+ pure cache codecs. Bound packing preserves every typed state, sign, optional
+-signed exponent and exactness flag, with unused bits zero. Exact-sign packing
++signed exponent and exactness flag, with unused bits zero. The actual bound
++decoder matches the word specification for every `u64`, including all signed
++exponents, absent magnitudes, exactness flags and unrelated fields. Its masked
++tag and sign matches cannot reach their panic arms. Exact-sign packing
+ and decoding preserve invalid, unknown, negative, zero and positive states;
+ the decoder requires a valid sign tag. This does not establish the cache's
+ atomic operations, storage invariant, memory ownership or caller preconditions.
+@@ -116,9 +119,11 @@
+ four fields, that a bound update preserves the sign and construction hints,
+ and that a sign update preserves the bound and other fields. A further lemma
+ proves that publishing the finite-real bit retains every other field. These
+-lemmas use the production constants and checked encoder contracts. They do not
+-verify finite-real certificate producers, the atomic constructor or
+-compare-exchange loops.
++lemmas use the production constants and checked encoder contracts. Five further
++lemmas connect the actual decoder results to encoding round trips, equality
++under unrelated field changes, and the bound, sign and finite-real update
++expressions. Validity of the incoming certificates, the atomic constructor,
++compare-exchange loops and finite-real certificate producers remain open.
+ 
+ The public carriers in `structural.rs` contribute eleven checked accessors and
+ mask operations plus seven checked mask constants. Certificate queries preserve
+--- a/crates/hyperreal/verification/cache_encoding_model.rs
++++ b/crates/hyperreal/verification/cache_encoding_model.rs
+@@ -225,4 +225,54 @@
+                 | 0x200u64 | if inverse_trig { 0x400u64 } else { 0u64 };
+     bound_denotation_ignores_other_fields(bits, bound_bits);
+ }
+-}
++
++// These lemmas connect the actual decoder's checked result to the word proofs.
++// They establish field preservation, not the truth or publication of a bound.
++proof fn decoded_bound_round_trip(value: BoundCache, encoded: u64, decoded: BoundCache)
++    requires call_ensures(AtomicFacts::encode_bound, (value,), encoded),
++        call_ensures(AtomicFacts::decode_bound, (encoded,), decoded),
++    ensures decoded == value,
++{
++    encoded_bound_round_trip(value, encoded);
++}
++
++proof fn decoded_bound_ignores_other_fields(
++    left: u64, right: u64, left_result: BoundCache, right_result: BoundCache,
++)
++    requires left & 0xffff_ffff_0000_003fu64 == right & 0xffff_ffff_0000_003fu64,
++        call_ensures(AtomicFacts::decode_bound, (left,), left_result),
++        call_ensures(AtomicFacts::decode_bound, (right,), right_result),
++    ensures left_result == right_result,
++{
++    bound_denotation_ignores_other_fields(left, right);
++}
++
++proof fn decoded_bound_update_matches_certificate(
++    current: u64, value: BoundCache, encoded: u64, decoded: BoundCache,
++)
++    requires call_ensures(AtomicFacts::encode_bound, (value,), encoded),
++        call_ensures(AtomicFacts::decode_bound, ((current & AtomicFacts::NON_BOUND_MASK) | encoded,), decoded),
++    ensures decoded == value,
++{
++    bound_update_preserves_other_fields(current, value, encoded);
++}
++
++proof fn decoded_sign_update_preserves_bound(
++    current: u64, value: ExactSignCache, encoded: u64, before: BoundCache, after: BoundCache,
++)
++    requires call_ensures(AtomicFacts::encode_exact_sign, (value,), encoded),
++        call_ensures(AtomicFacts::decode_bound, (current,), before),
++        call_ensures(AtomicFacts::decode_bound, ((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded,), after),
++    ensures after == before,
++{
++    exact_sign_update_preserves_bound(current, value, encoded);
++}
++
++proof fn decoded_finite_real_update_preserves_bound(current: u64, before: BoundCache, after: BoundCache)
++    requires call_ensures(AtomicFacts::decode_bound, (current,), before),
++        call_ensures(AtomicFacts::decode_bound, (current | AtomicFacts::FINITE_REAL,), after),
++    ensures after == before,
++{
++    finite_real_publication_preserves_other_fields(current);
++}
++}
+--- a/crates/hyperreal/verification/scope.json
++++ b/crates/hyperreal/verification/scope.json
+@@ -97,7 +97,8 @@
+     "computable_bounds::BoundInfo::add",
+     "computable_cache::impl&%0::FINITE_REAL",
+     "verified::word::upper_bit_length_msd",
+-    "computable_bounds::BoundInfo::proves_domain"
++    "computable_bounds::BoundInfo::proves_domain",
++    "computable_cache::AtomicFacts::decode_bound"
+   ],
+   "verified_model_theorems": [
+     "verified::division::gcd_preserves_common_divisors",
+@@ -229,7 +230,12 @@
+     "computable_bounds::clamped_upper_exponent_preserves_certificates",
+     "computable_bounds::upper_magnitude_proves_open_unit",
+     "computable_bounds::positive_binade_proves_at_least_one",
+-    "computable_bounds::accepted_bound_proves_real_domain"
++    "computable_bounds::accepted_bound_proves_real_domain",
++    "computable_cache::decoded_bound_round_trip",
++    "computable_cache::decoded_bound_ignores_other_fields",
++    "computable_cache::decoded_bound_update_matches_certificate",
++    "computable_cache::decoded_sign_update_preserves_bound",
++    "computable_cache::decoded_finite_real_update_preserves_bound"
+   ],
+   "obligations": [
+     {
+--- a/crates/hyperreal/verification/test_cache_rejections.py
++++ b/crates/hyperreal/verification/test_cache_rejections.py
+@@ -28,6 +28,27 @@
+      'encoded >> Self::EXACT_SIGN_SHIFT'),
+     ('decode_exact_sign', '3 => ExactSignCache::Valid(Sign::NoSign),',
+      '3 => ExactSignCache::Valid(Sign::Plus),'),
++    ('decode_bound', 'Self::TAG_INVALID => BoundCache::Invalid,',
++     'Self::TAG_INVALID => BoundCache::Valid(BoundInfo::Unknown),'),
++    ('decode_bound', 'Self::TAG_UNKNOWN => BoundCache::Valid(BoundInfo::Unknown),',
++     'Self::TAG_UNKNOWN => BoundCache::Valid(BoundInfo::Zero),'),
++    ('decode_bound', 'Self::TAG_ZERO => BoundCache::Valid(BoundInfo::Zero),',
++     'Self::TAG_ZERO => BoundCache::Valid(BoundInfo::Unknown),'),
++    ('decode_bound', 'match value & 0b11 {', 'match value & 0b01 {'),
++    ('decode_bound', '(value >> Self::SIGN_SHIFT) & 0b11', '(value >> 0u32) & 0b11'),
++    ('decode_bound', '0 => None,', '0 => Some(Sign::Plus),'),
++    ('decode_bound', '1 => Some(Sign::Plus),', '1 => Some(Sign::Minus),'),
++    ('decode_bound', '2 => Some(Sign::Minus),', '2 => Some(Sign::Plus),'),
++    ('decode_bound', '3 => Some(Sign::NoSign),', '3 => None,'),
++    ('decode_bound', 'if value & Self::MSD_PRESENT != 0 {',
++     'if value & Self::MSD_PRESENT == 0 {'),
++    ('decode_bound', 'let magnitude = ((value >> Self::MSD_SHIFT) as u32) as i32;',
++     'let magnitude = (((value >> Self::MSD_SHIFT) as u32) & 0x7fff_ffff) as i32;'),
++    ('decode_bound', 'value >> Self::MSD_SHIFT', 'value >> Self::LINEAR_DEMAND_SHIFT'),
++    ('decode_bound', 'exact_msd: value & Self::EXACT_MSD != 0,',
++     'exact_msd: value & Self::EXACT_MSD == 0,'),
++    ('decode_bound', '                } else {\n                    None\n                };',
++     '                } else {\n                    Some(0)\n                };'),
+ ]
+ 
+ MODEL_MUTATIONS = [
+@@ -65,6 +86,19 @@
+     ('finite-real publication preserves the sign',
+      '&&& exact_sign_denotation(updated) == exact_sign_denotation(current)',
+      '&&& exact_sign_denotation(updated) == ExactSignCache::Unknown'),
++    ('round trip requires the actual decoded result',
++     'call_ensures(AtomicFacts::decode_bound, (encoded,), decoded),', 'true,'),
++    ('unrelated-field equality requires the actual left result',
++     'call_ensures(AtomicFacts::decode_bound, (left,), left_result),', 'true,'),
++    ('bound update requires the actual decoded result',
++     'call_ensures(AtomicFacts::decode_bound, ((current & AtomicFacts::NON_BOUND_MASK) | encoded,), decoded),',
++     'true,'),
++    ('sign update requires the actual decoded result',
++     'call_ensures(AtomicFacts::decode_bound, ((current & !AtomicFacts::EXACT_SIGN_MASK) | encoded,), after),',
++     'true,'),
++    ('finite-real update requires the actual decoded result',
++     'call_ensures(AtomicFacts::decode_bound, (current | AtomicFacts::FINITE_REAL,), after),',
++     'true,'),
+ ]
+ 
+ 

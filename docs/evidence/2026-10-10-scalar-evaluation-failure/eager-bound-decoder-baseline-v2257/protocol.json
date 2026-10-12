@@ -1,0 +1,37 @@
+{
+  "status": "Frozen before applying the eager-payload candidate or checking its generated code",
+  "helper_sha256": "b305d0456e2e186d213016a67ff754ae80272c4fc40cdd4eef561a6e51f17181",
+  "base_commit": "c292d4e29132be83356dbdd904c261c2a67fcae0",
+  "retained_source_record": "typed-api-prototype-v2249-retained-restoration-scalar-tests/source-hashes.json.gz",
+  "retained_source_record_sha256": "7a91b5d47685ba42e68609869b2712ecb56098061a1f8fb8c03a9813190ef8c6",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "restoration_record": "decoder-retained-restoration-review-v2255.json",
+  "restoration_record_sha256": "8c6748a21834aeb3e7fc972b39849a57c8fd9e3fbaee8c07901132c92c3a5e48",
+  "static_analysis": "bound-decoder-static-differences-v2256/summary.json",
+  "static_analysis_sha256": "3a9a73f3d69c057a61eea2e0d43fab28aa3e72a679114044b055b033721656b3",
+  "rejected_candidate": "bound-decoder-cost-rejection-v2247.json",
+  "rejected_candidate_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+  "retained_sources_sha256": {
+    "crates/hyperreal/src/computable/node/representation.rs": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+    "crates/hyperreal/verification/README.md": "e9d693baffb25d546ee5386571322b8bfd0f7aa64e5ab7c9c5871d6c36ccde72",
+    "crates/hyperreal/verification/cache_encoding_model.rs": "833c66030d16d0a4964d4c12795cc82e867cbf65e65b361c9f1ef01da4524271",
+    "crates/hyperreal/verification/scope.json": "e91a02e9b60987c6bb04742e96e206502a1ba4d3f11162b11842907db999ffd9",
+    "crates/hyperreal/verification/test_cache_rejections.py": "070bbc2b177f0487862ee3e861e45ad1e3bb6fa3cdf1a22dc71ccc8705be9c54"
+  },
+  "candidate_sources_sha256": {
+    "crates/hyperreal/src/computable/node/representation.rs": "4799440246ce321af52bd8e9b525487db14868ed008aa38e5ba63815fd20c6e3",
+    "crates/hyperreal/verification/README.md": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a",
+    "crates/hyperreal/verification/cache_encoding_model.rs": "7b5f309ffc5767d532431a4cf78b0910040e1631e234291900367ca573d32d9c",
+    "crates/hyperreal/verification/scope.json": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+    "crates/hyperreal/verification/test_cache_rejections.py": "cf7452723fff8b1442f47e3c7bf6846a64fe5be7de35f0a53e23d7b510b34950"
+  },
+  "source_record": "eager-bound-decoder-baseline-v2257/candidate-source-hashes.json.gz",
+  "source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "proposal_patch_sha256": "869a1421c484714da52ec1acfcd0584be6c9d990ab2656ba00a5d513664c9e25",
+  "baseline_binary_protocol": "bound-decoder-binary-comparison-protocol-v2181.json",
+  "baseline_binary_protocol_sha256": "39e7111016f2f09c8d8db7595ebf212fd34427d2e279a2e8d18b7daa73a3b5fb",
+  "proposal": "Restore the prior actual-decoder contract and five field lemmas, with the magnitude payload computed before selecting Some/None. Adjust only the signed-payload mutation anchor to the new local assignment. No field, tag, sign, cast, flag, publication operation or call site changes.",
+  "early_gate": "Check formatting, the complete conditional proof, a fresh release library build and all seven unchanged static consumer probes. No workload timing is authorized by this early gate. Complete executable identity alone permits the previously described receipt-reuse route; any remaining byte differences require separate review before freezing further runtime gates. All prior cost failures remain failed.",
+  "limits": "This is an isolated unretained experiment. The all-u64 decoder contract does not establish incoming certificate truth, existence, atomic/caller ordering, aggregate resource bounds or main/native/full-board admission. The fixed pre-Verus baseline, every property/target status and all thirteen obligation groups remain unchanged."
+}

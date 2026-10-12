@@ -1,0 +1,41 @@
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_bound
+Rejected incorrect cache codec/model: encode_exact_sign
+Rejected incorrect cache codec/model: encode_exact_sign
+Rejected incorrect cache codec/model: decode_exact_sign
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: decode_bound
+Rejected incorrect cache codec/model: zero wire tag
+Rejected incorrect cache codec/model: magnitude presence
+Rejected incorrect cache codec/model: magnitude payload
+Rejected incorrect cache codec/model: exact magnitude flag
+Rejected incorrect cache codec/model: bound update value
+Rejected incorrect cache codec/model: bound update retained fields
+Rejected incorrect cache codec/model: sign update bound
+Rejected incorrect cache codec/model: sign update value
+Rejected incorrect cache codec/model: construction demand
+Rejected incorrect cache codec/model: construction inverse flag
+Rejected incorrect cache codec/model: finite-real publication sets the flag
+Rejected incorrect cache codec/model: finite-real publication preserves the bound
+Rejected incorrect cache codec/model: finite-real publication preserves the sign
+Rejected incorrect cache codec/model: round trip requires the actual decoded result
+Rejected incorrect cache codec/model: unrelated-field equality requires the actual left result
+Rejected incorrect cache codec/model: bound update requires the actual decoded result
+Rejected incorrect cache codec/model: sign update requires the actual decoded result
+Rejected incorrect cache codec/model: finite-real update requires the actual decoded result
