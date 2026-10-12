@@ -1,0 +1,33 @@
+{
+  "status": "Predeclared before timing the domain-bound candidate",
+  "candidate_source_record": "typed-api-prototype-v1684-domain-bound-candidate-build/source-hashes.json.gz",
+  "candidate_source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "baseline_checkpoint": "typed-api-prototype-v1672-state.json",
+  "baseline_cost_provenance": "domain-sign-cost-review-v1639.json",
+  "runners": {
+    "run_domain_bound_costs.py": "b71e0d59edbf6c39aa622e5aaca1c8be3421241cfea0441782ea1cf5e931f168",
+    "replay_domain_bound_cost.py": "225e88a47320ec91aba914f72961bd9a7f8dac5326c67e901efa0d5b8cc4af6e"
+  },
+  "families": [
+    "atan",
+    "integer",
+    "inverse_trig",
+    "normal_form",
+    "default",
+    "algebraic",
+    "acos"
+  ],
+  "samples": "Nine standalone candidate processes per fixture; then nine alternating-order retained-baseline/candidate pairs on one fixed CPU, with the same 50-million-step dependent-integer prelude before each process.",
+  "limits": {
+    "address_space_mib": 192,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds": 4
+  },
+  "invariants": "All frozen probes/helpers, full-size inputs, query counts, checksums, outputs and original process caps remain unchanged.",
+  "followup_rule": "Preserve all original trials. An observed increase above five percent requires examination with a frozen follow-up protocol and a related control; do not attribute it to code layout. If any process fails, retain the failure and identify its exact baseline/candidate binary. A later larger-cap diagnostic is separate and cannot erase or pass that original guard.",
+  "interpretation": "The 38 new public successes and 52 previously exhausting private proof queries are completeness gains. Cost tradeoffs must be explicit under the governing ladder; main/full-board admission stays open. The retained baseline already includes the measured v1672 narrow integer-control slowdown.",
+  "scope": "These are local scalar timing/allocation/binary-size controls, not whole-board or universal speedup evidence."
+}

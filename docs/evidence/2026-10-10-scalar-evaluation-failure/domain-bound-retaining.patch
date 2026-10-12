@@ -1,0 +1,87 @@
+diff --git a/crates/hyperreal/src/computable/node/domain_certificates.rs b/crates/hyperreal/src/computable/node/domain_certificates.rs
+--- a/crates/hyperreal/src/computable/node/domain_certificates.rs
++++ b/crates/hyperreal/src/computable/node/domain_certificates.rs
+@@ -15,6 +15,32 @@
+             .facts
+             .publish_exact_sign(ExactSignCache::Valid(sign));
+         Some(sign)
++    }
++
++    // Use only after independently establishing that this operand is real.
++    // Reading a retained bound performs no graph walk or coefficient work.
++    fn available_bound_proves_domain(&self, domain: RequiredRealDomain) -> bool {
++        let Some(bound) = self.cached_bound() else {
++            return false;
++        };
++        use RequiredRealDomain::*;
++        match domain {
++            AboveMinusOne | ClosedUnit | OpenUnit | Probability => {
++                // An upper MSD e < 0 proves |x| < 2^(e+1) <= 1;
++                // an exact binade is unnecessary for this upper bound.
++                bound
++                    .planning_msd()
++                    .is_some_and(|msd| msd.is_none_or(|msd| msd < 0))
++                    && (!matches!(domain, Probability) || bound.known_sign() == Some(Sign::Plus))
++            }
++            AtLeastOne => {
++                // Here a lower bound is essential: only an exact binade
++                // supplies |x| >= 2^e. An upper estimate cannot prove it.
++                bound.known_sign() == Some(Sign::Plus)
++                    && bound.known_msd().flatten().is_some_and(|msd| msd >= 0)
++            }
++            Nonzero | Nonnegative | Positive => false,
++        }
+     }
+ 
+     // These range theorems require existence, which callers establish first.
+@@ -59,6 +85,9 @@
+         }
+ 
+         fn in_unit_interval(child: &Computable, closed: bool) -> bool {
++            if child.available_bound_proves_domain(RequiredRealDomain::OpenUnit) {
++                return true;
++            }
+             if let Some(value) = child.bounded_rational_value() {
+                 return value.numerator() < value.denominator()
+                     || (closed && value.numerator() == value.denominator());
+@@ -70,6 +99,9 @@
+         }
+ 
+         fn at_least_one(child: &Computable) -> bool {
++            if child.available_bound_proves_domain(RequiredRealDomain::AtLeastOne) {
++                return true;
++            }
+             if let Some(value) = child.bounded_rational_value() {
+                 return value.sign() == Sign::Plus && value.numerator() >= value.denominator();
+             }
+@@ -185,13 +217,15 @@
+                 }
+                 PrescaledTan(child) | TanDeferred(child) => {
+                     visit(child, depth, work)
+-                        && (child.bounded_rational_value().is_some()
++                        && (child.available_bound_proves_domain(RequiredRealDomain::OpenUnit)
++                            || child.bounded_rational_value().is_some()
+                             || in_unit_interval(child, true))
+                 }
+                 PrescaledCot(child) => {
+                     visit(child, depth, work)
+                         && matches!(sign_of_real(child), Some(Sign::Plus | Sign::Minus))
+-                        && (child.bounded_rational_value().is_some()
++                        && (child.available_bound_proves_domain(RequiredRealDomain::OpenUnit)
++                            || child.bounded_rational_value().is_some()
+                             || in_unit_interval(child, true))
+                 }
+                 NormalInterval { lo, hi } => visit(lo, depth, work) && visit(hi, depth, work),
+diff --git a/crates/hyperreal/src/computable/node/domain_validation.rs b/crates/hyperreal/src/computable/node/domain_validation.rs
+--- a/crates/hyperreal/src/computable/node/domain_validation.rs
++++ b/crates/hyperreal/src/computable/node/domain_validation.rs
+@@ -62,6 +62,9 @@
+             .and_then(|sign| domain.accepts_sign(sign))
+         {
+             return accepted.then_some(()).ok_or(invalid);
++        }
++        if self.available_bound_proves_domain(domain) {
++            return Ok(());
+         }
+         if let Some(value) = self.bounded_rational_value() {
+             return domain.accepts_rational(&value).then_some(()).ok_or(invalid);
