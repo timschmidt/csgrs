@@ -1,0 +1,11 @@
+{
+  "before_sha256": "ea218683c4810544bbf91c8969bdf111f6dd14d499f0f5abeaf74f59635ea107",
+  "after_sha256": "470a28605a959b56ebeee09296521fc009e8baa120e41a7a6eb907c220698de8",
+  "changed_fields": [
+    "P4.evidence",
+    "P4.remaining",
+    "next_actions[0]"
+  ],
+  "all_39_property_and_14_target_requirements_and_statuses_preserved": true,
+  "other_next_actions_and_crate_future_work_preserved": true
+}

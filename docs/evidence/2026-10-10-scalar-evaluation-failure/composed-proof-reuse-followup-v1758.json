@@ -1,0 +1,82 @@
+{
+  "status": "Source review and proposed next implementation work, not a new formal proof or runtime change",
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "reviewed_sections": {
+    "crates/hyperreal/src/computable/node/logarithms.rs": {
+      "sha256": "2ae8c2a6b61f22d5e76079a12d7dfd162e9ed963fc65ffe129c20b01845d17f1",
+      "scope": "ln/try_reduced_ln, prescaled-ln constructors and crate-private ln_1p; not the complete file."
+    },
+    "crates/hyperreal/src/computable/node/exp_trig.rs": {
+      "sha256": "676a4f121066d1da383dc919863712c6e870d303b6948e11fa2694ede229acaa",
+      "scope": "Public exp and expm1 constructor bodies only."
+    },
+    "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs": {
+      "sha256": "5d51ad06c27ebd612f9d8e81268ca6706bc953ff282b47906c170a7b70065ec8",
+      "scope": "Public asinh, acosh and atanh constructors and the start of inverse_series_argument_at_most_half."
+    },
+    "crates/hyperreal/src/computable/node/exp_relation.rs": {
+      "sha256": "b9ee85141e65f04cf6695967f95a5878b5390e3322832ced1cd67926ea40c06f",
+      "scope": "The bounded logarithm decomposition and independent-existence prerequisite; not the complete recognizer."
+    },
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "9fec5899532f406f0f896d332e198fd6f266582a660dd13fc548e799db9811a0",
+      "scope": "available_domain_sign, available_bound_proves_domain and initial finite-domain traversal helpers."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "c836bd312c7b9dde852ce2b29df295d799d54369043ac896b474bf3ae9e9497f",
+      "scope": "RequiredRealDomain, accepts_sign/accepts_rational, certify_required_domain and start of ensure_finite_real."
+    },
+    "crates/hyperreal/src/computable/node/bounds.rs": {
+      "sha256": "99ef5590c781ad66dca88b19db3416fc68260b0ba74f909d64fa6f36a62871db",
+      "scope": "Typed cache/bound declarations, initial constructors/specifications, known_msd, planning_msd, known_sign, certified_sign_and_msd and magnitude export."
+    },
+    "crates/hyperreal/verification/computable_bounds.rs": {
+      "sha256": "cfb073ac994c56830967f78d4a37b0ffc78210cbbb0e0f60f056fa9af5fbe578",
+      "scope": "Complete short module: imports and includes the actual production bound file and denotation models."
+    },
+    "crates/hyperreal/verification/computable_cache.rs": {
+      "sha256": "f54dc9f906c6a81815619ca4fe2a66126e5131ec1f51f0367121a5957d1cf829",
+      "scope": "Complete short module: includes the production representation file and cache encoding model."
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "sha256": "502f8f8aaa4c2e698f1fb7d2e7c4df0b5bca4131eb37c8e84c4bc24db109703a",
+      "scope": "Initial real-denotation definitions and constructor/negation/inverse/square/product lemmas; later theorem names were searched, not all bodies read."
+    },
+    "crates/hyperreal/verification/lib.rs": {
+      "sha256": "c85f1dfe01e7610a31eafb8ed9e31bad0e41c934f54c8f3e5b2e6dfca500437a",
+      "scope": "Complete proof entry point."
+    },
+    "crates/hyperreal/verification/README.md": {
+      "sha256": "e5540906b6436e63065b1f0eda5b61bfc29766340918621a3feef7eff3ca09b4",
+      "scope": "Current executable proof-boundary description and its explicit exclusions; the complete long document was not read."
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "sha256": "703f75ec0f2f46658d8e0c2eddbbc8cdacc73439f5b5b8ac5d2b6e4b2d26e2c1",
+      "scope": "Selected contract/theorem names and the whole-implementation obligation section."
+    },
+    "crates/hyperreal/scripts/verify_verus.py": {
+      "sha256": "d648f8e5e449bef0530f7b199d4bc9ba93d2533e62e08f57f4a11068ca28082d",
+      "scope": "Pinned verifier selection, install checks, source inventory and the first part of verify; not the complete runner."
+    }
+  },
+  "findings": [
+    "The public ln, exp/expm1 and inverse-hyperbolic routes can build or warm descendants during construction. The frozen composed corpus records this ordinary setup and separately reconstructs each root; its explicit allowances start only for queries.",
+    "Computable::ln_1p is crate-private. All seven new roots use public add/ln/expm1/exp/inverse-hyperbolic operations, with no private wrapper or forged serialized node.",
+    "The existing exp/log relation recognizer already requires independent operand existence before canceling a logarithm of an exponential. The new invalid-descendant corpus preserves this requirement through seven complete public compositions.",
+    "BoundInfo::planning_msd, known_msd and known_sign already have checked production contracts imported by the conditional proof target. available_bound_proves_domain currently combines those results in an unverified Computable method.",
+    "The verification target directly includes production bounds.rs, but it only imports pure codecs from representation.rs. Cached-bound producers, atomic publication loops, ownership, graph existence and caller preconditions remain outside that proof boundary."
+  ],
+  "next_priority": "Bind the retained magnitude-domain predicate to an included production proof contract, preserving its exact behavior and the separate independent-existence requirement. Extract a pure BoundInfo predicate and domain tag only if needed to share the actual production body with the existing verifier; do not present a copied model as an implementation proof.",
+  "required_evidence": [
+    "Freeze the v1754 runtime and the new v1755/v1757 public corpora before editing production or proof sources.",
+    "Prove the pure predicate returns exactly the intended typed decision for all bound states/domain tags, and connect accepted decisions to real-domain denotation conditional on an independently valid incoming bound and real operand.",
+    "Cover zero, unavailable exponents, inexact upper bounds, exact positive lower binades, signed exponent limits and strict/non-strict domain distinctions; reject mutations that accept an upper bound as a lower bound or admit probability zero.",
+    "Keep atomic-cache validity, existence producers, traversal/caller preconditions and all thirteen whole-crate obligation groups explicitly open where not proved.",
+    "Run the pinned complete proof target with --no-cheating, relevant rejection/acceptance guards, proportional runtime and public replay checks, and unchanged cost controls. A proof-only improvement cannot justify an empirical runtime regression under the fixed acceptance baseline."
+  ],
+  "remaining_requirements": [
+    "The 522-case public composed corpus is finite, near-zero/exact-zero and sequential. Large-argument reduction, other kernels, cancellation-signal schedules and general concurrent behavior remain broader requirements.",
+    "Continue constructor, logarithm factoring, quadratic-tower/Laurent coefficient work and native/full-board combination/admission without changing full-size fixtures or earlier cost failures.",
+    "All 39 properties, 14 targets and crate future work remain in scope; all existing statuses, including the three verified targets, stay unchanged."
+  ]
+}

@@ -1,0 +1,124 @@
+{
+  "status": "Retain public composed-query coverage on the unchanged isolated v1754 runtime; no broad admission or new formal proof",
+  "runtime_checkpoint": "typed-api-prototype-v1754-state.json",
+  "runtime_checkpoint_sha256": "869debcfc73df34c47cec7ce84ce7f57a30507a0201083773e8d05f576dcac71",
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "source_files_verified": 24746,
+  "main_guarded_files_verified": 1167,
+  "runtime_sources_changed": 0,
+  "phase": "typed-api-prototype-v1757-composed-proof-reuse",
+  "summary_sha256": "d74b3aebbaf2c38221427f6efd46cd05788d6ed88f6cdb3f01c7a18492e02f38",
+  "protocol": "composed-proof-reuse-protocol-v1757.json",
+  "protocol_sha256": "3fb5561c2fc47f7ef3f99142d5756eb73d6d219aab4613fa038e66f5a8f5281a",
+  "cases": 522,
+  "cases_by_mode": {
+    "composed": 468,
+    "invalid": 54
+  },
+  "root_identities": [
+    "ln(exp(x)) = x",
+    "ln(1 + expm1(x)) = x",
+    "expm1(ln(1 + x)) = x for x > -1",
+    "asinh((exp(x) - exp(-x))/2) = x",
+    "acosh((exp(x) + exp(-x))/2) = abs(x)",
+    "atanh(expm1(2*x)/(expm1(2*x)+2)) = x",
+    "ln(exp(x)) - x = 0"
+  ],
+  "numeric_samples_checked": 27266,
+  "definite_sign_observations_checked": 68862,
+  "observed_counts": {
+    "composed_cases": 468,
+    "events:bounded": 3276,
+    "bounded:Exhausted": 2506,
+    "root_fact_retention_comparisons": 85176,
+    "child_fact_retention_comparisons": 9360,
+    "events:unlimited_retry": 3276,
+    "available_sign_query_checks": 17525,
+    "events:cached": 13104,
+    "events:finer_retry": 3276,
+    "finer:Exhausted": 2988,
+    "bounded:Ok": 770,
+    "finer:Ok": 288,
+    "invalid_cases": 54,
+    "invalid_bounded:Err(Exhausted)": 219,
+    "invalid_retry:Err(DivideByZero)": 126,
+    "invalid_bounded:Err(DivideByZero)": 53,
+    "invalid_retry:Err(SqrtNegative)": 126,
+    "invalid_bounded:Err(SqrtNegative)": 53,
+    "invalid_retry:Err(NotANumber)": 126,
+    "invalid_bounded:Err(NotANumber)": 53
+  },
+  "bounded_outcomes_by_root": {
+    "log_exp": {
+      "Exhausted": 332,
+      "Ok": 136
+    },
+    "log_one_plus_expm1": {
+      "Exhausted": 344,
+      "Ok": 124
+    },
+    "expm1_log_one_plus": {
+      "Exhausted": 356,
+      "Ok": 112
+    },
+    "asinh_sinh": {
+      "Exhausted": 364,
+      "Ok": 104
+    },
+    "acosh_cosh": {
+      "Exhausted": 392,
+      "Ok": 76
+    },
+    "atanh_tanh": {
+      "Exhausted": 367,
+      "Ok": 101
+    },
+    "log_exp_cancellation": {
+      "Exhausted": 351,
+      "Ok": 117
+    }
+  },
+  "bounded_outcomes_by_allowance": {
+    "0": {
+      "Exhausted": 510,
+      "Ok": 36
+    },
+    "1": {
+      "Exhausted": 510,
+      "Ok": 36
+    },
+    "8": {
+      "Exhausted": 510,
+      "Ok": 36
+    },
+    "64": {
+      "Exhausted": 510,
+      "Ok": 36
+    },
+    "512": {
+      "Ok": 144,
+      "Exhausted": 402
+    },
+    "4096": {
+      "Ok": 482,
+      "Exhausted": 64
+    }
+  },
+  "validation": "The self-contained external probe passes rustfmt and rustc -D warnings. All 522 processes pass the original 192 MiB, CPU 2/3 second and four-second wall limits. Rust validates samples/facts and Python Fraction independently rechecks numerical containment and sign/zero/magnitude certificates using the same directed MPFR base endpoints and stated composition identities.",
+  "fact_audit": "All recorded cross-root and observed-child fact sequences retain prior signs, zero knowledge, exact-rational availability and magnitude strength. Later sign queries retain already observed signs or signs certified by their immediately preceding nonzero numeric samples. Exact zero is never inferred from a numeric zero sample alone.",
+  "proof_scope": "All 44 previous conditional proof/guard inputs remain unchanged. No new Verus run or formal proof is claimed; all thirteen whole-crate obligation groups remain open.",
+  "limits": [
+    "Constructors and structural-fact inspections can warm children outside explicit work allowances. Their fixed setup/order is part of each schedule, with no globally cold-process claim.",
+    "Round-tripping each root deliberately discards node caches and graph sharing; shared global constants may still be warm. The original child is then only a separately observed control.",
+    "Computable ln_1p is crate-private; this public corpus spells ln(1+x) through ordinary public add/ln and does not claim a native public Computable ln_1p API.",
+    "Input residuals satisfy abs(x)<2^-80 or 2^-1100, so the ln(1+x) and atanh identities stay in their real domains. acosh(cosh(x)) uses abs(x), and cancellation uses exact zero.",
+    "The corpus checks definite signs/zero/magnitude against the stated oracles and retains earlier exact-rational flags; it is not a complete proof of exact-rational recognition.",
+    "This is a finite sequential cross-root corpus, distinct from the prior thread stress and private publication tests. It does not establish general concurrency, full-board admission, formal whole-crate proofs or byte/time bounds.",
+    "Keep original process failures and full-size inputs. A failed process stops the phase without replacing its artifacts; any follow-up gets a separate phase and declared scope.",
+    "This corpus has 3276 first bounded queries: 770 complete and 2506 exhaust. Every unlimited retry completes. It measures semantic outcomes under the implementation-defined cooperative allowance, not aggregate construction or exact-operation cost.",
+    "The 68862 definite-sign observations include repeated structural snapshots and query results; they are not distinct mathematical theorems or a coverage percentage.",
+    "No runtime source changed, so earlier v1754 Cargo, Clippy, formatting, replay and cost evidence remains applicable without repeating unrelated builds. Original cost guard failures and the prior integer tradeoff remain explicit.",
+    "Main runtime admission, native/full-board combination, general graph semantics, larger arguments and implementation-connected proofs remain open. All 49 preexisting worktree entries and all property/target statuses remain preserved."
+  ],
+  "source_review_and_next_proof_work": "composed-proof-reuse-followup-v1758.json"
+}
