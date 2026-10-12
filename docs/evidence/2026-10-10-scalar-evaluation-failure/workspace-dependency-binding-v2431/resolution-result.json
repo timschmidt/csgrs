@@ -1,0 +1,20 @@
+{
+  "protocol_sha256": "d13a026d494ba2f20f0924c6f367679691800c3f67df7ec013c2a2a68f877223",
+  "runs": [
+    {
+      "name": "proof",
+      "exit_code": 0,
+      "seconds": 0.05846999026834965,
+      "stdout_sha256": "324fb6485926ed7178e4ec2f91f1c19693922ddf6d2cae2598d6b7cb0bbe7140",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "production",
+      "exit_code": 0,
+      "seconds": 1.2298959358595312,
+      "stdout_sha256": "5521a9f13a190fdfbe7d1b85a32a2f59ccc639766ba4df6d27a43b66e1028abe",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "complete": true
+}

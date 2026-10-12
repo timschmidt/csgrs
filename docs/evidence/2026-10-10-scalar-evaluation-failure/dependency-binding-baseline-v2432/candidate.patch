@@ -1,0 +1,442 @@
+--- before/crates/hyperreal/scripts/verus_dependencies.py
++++ after/crates/hyperreal/scripts/verus_dependencies.py
+@@ -2 +2,2 @@
+-"""Build pinned external datatypes for Verus without assuming their operations."""
++"""Bind Verus dependency inputs to the actual production Cargo resolution."""
++import hashlib
+@@ -8 +8,0 @@
+-import hashlib
+@@ -17,9 +17,90 @@
+-    return {
+-        package['id']: {
+-            str(path.relative_to(Path(package['manifest_path']).parent)): sha256(path)
+-            for path in sorted(Path(package['manifest_path']).parent.rglob('*'))
+-            if path.is_file() and not {'target', '.git'}.intersection(
+-                path.relative_to(Path(package['manifest_path']).parent).parts)
+-        }
+-        for package in packages
+-    }
++    result = {}
++    for package in packages:
++        root = Path(package['manifest_path']).parent
++        sources = {}
++        for directory, children, names in os.walk(root):
++            children[:] = sorted(name for name in children if name not in {'target', '.git'})
++            for name in [*children, *names]:
++                path = Path(directory) / name
++                if path.is_symlink():
++                    raise RuntimeError(f'Symbolic-link dependency input is not supported: {path}')
++            for name in sorted(names):
++                path = Path(directory) / name
++                if path.is_file():
++                    sources[str(path.relative_to(root))] = sha256(path)
++        result[package['id']] = sources
++    return result
++
++
++def lock_identity(package):
++    return tuple(package.get(key) for key in ('name', 'version', 'source', 'checksum'))
++
++
++def resolved_identity(package):
++    # Cargo.lock intentionally lacks local paths. Metadata supplies the actual
++    # canonical manifest selected by patches, path dependencies and overrides.
++    return (package['name'], package['version'], package.get('source'),
++            str(Path(package['manifest_path']).resolve()))
++
++
++def root_package(metadata, manifest):
++    expected = Path(manifest).resolve()
++    matches = [p for p in metadata['packages'] if Path(p['manifest_path']).resolve() == expected]
++    if len(matches) != 1:
++        raise RuntimeError(f'Expected exactly one Cargo root package: {manifest}')
++    return matches[0]
++
++
++def reachable_packages(metadata, root_id):
++    nodes = {node['id']: node for node in metadata['resolve']['nodes']}
++    packages = {package['id']: package for package in metadata['packages']}
++    reached = set()
++    pending = [root_id]
++    while pending:
++        current = pending.pop()
++        if current in reached:
++            continue
++        if current not in nodes or current not in packages:
++            raise RuntimeError(f'Incomplete Cargo dependency graph: {current}')
++        reached.add(current)
++        pending.extend(edge['pkg'] for edge in nodes[current]['deps'])
++    return [packages[key] for key in sorted(reached)]
++
++
++def bind_resolution(proof_metadata, production_metadata, proof_manifest, production_manifest, lock):
++    proof_root = root_package(proof_metadata, proof_manifest)
++    production_root = root_package(production_metadata, production_manifest)
++    proof_packages = [p for p in reachable_packages(proof_metadata, proof_root['id'])
++                      if p['id'] != proof_root['id']]
++    production_packages = reachable_packages(production_metadata, production_root['id'])
++    production = {resolved_identity(p) for p in production_packages}
++    bindings = []
++    for package in proof_packages:
++        if not any(p['name'] == package['name'] and p['version'] == package['version']
++                   and p.get('source') == package.get('source') for p in lock['package']):
++            raise RuntimeError(f"Unexpected resolved proof dependency: {package['id']}")
++        identity = resolved_identity(package)
++        if identity not in production:
++            raise RuntimeError(f"Proof dependency does not match production resolution: {package['id']}")
++        bindings.append({'proof_package_id': package['id'], 'name': identity[0],
++                         'version': identity[1], 'source': identity[2], 'manifest_path': identity[3]})
++    return proof_packages, bindings
++
++
++def configuration_sources(root, production_lock, environment):
++    paths = {root / 'Cargo.toml', production_lock, production_lock.with_name('Cargo.toml'),
++             root / 'verification/dependencies/Cargo.toml', root / 'verification/dependencies/Cargo.lock'}
++    for directory in [root, *root.parents]:
++        paths.update(directory / '.cargo' / name for name in ['config', 'config.toml'])
++    cargo_home = Path(environment.get('CARGO_HOME', Path.home() / '.cargo'))
++    paths.update(cargo_home / name for name in ['config', 'config.toml'])
++    # Record missing files too: introducing a previously absent Cargo override
++    # must invalidate the configuration binding just as editing one does.
++    return {str(path): sha256(path) if path.is_file() else None for path in sorted(paths)}
++
++
++def read_resolution(commands, root, environment, proof_manifest, production_manifest, lock):
++    proof, production = [json.loads(subprocess.check_output(command, cwd=root, env=environment, text=True))
++                         for command in commands]
++    packages, bindings = bind_resolution(proof, production, proof_manifest, production_manifest, lock)
++    return proof, packages, bindings
+@@ -28,0 +110 @@
++    root = Path(root).resolve()
+@@ -31,2 +112,0 @@
+-    # The production lock is the nearest one above the crate: the workspace
+-    # lock in the monorepo, or the crate's own lock when built standalone.
+@@ -36,2 +116 @@
+-    identity = lambda package: tuple(package.get(k) for k in ('name', 'version', 'source', 'checksum'))
+-    production_pins = {identity(package) for package in production['package']}
++    production_pins = {lock_identity(package) for package in production['package']}
+@@ -39 +118 @@
+-        if package.get('source') and identity(package) not in production_pins:
++        if package.get('source') and lock_identity(package) not in production_pins:
+@@ -43,2 +122,3 @@
+-    environment = os.environ | {'CARGO_TARGET_DIR': str(target), 'CARGO_INCREMENTAL': '0',
+-                                'CARGO_PROFILE_DEV_DEBUG': '0'}
++    overrides = {'CARGO_TARGET_DIR': str(target), 'CARGO_INCREMENTAL': '0', 'CARGO_PROFILE_DEV_DEBUG': '0'}
++    environment = os.environ | overrides
++    configuration = configuration_sources(root, production_lock, environment)
+@@ -46,7 +126,3 @@
+-    metadata_command = cargo + ['metadata', '--locked', '--format-version=1', '--manifest-path', str(manifest)]
+-    metadata = json.loads(subprocess.check_output(metadata_command, cwd=root, env=environment, text=True))
+-    packages = [p for p in metadata['packages'] if p['source'] is not None]
+-    for package in packages:
+-        if not any(p['name'] == package['name'] and p['version'] == package['version']
+-                   and p.get('source') == package['source'] for p in lock['package']):
+-            raise RuntimeError(f"Unexpected resolved proof dependency: {package['id']}")
++    metadata_commands = [cargo + ['metadata', '--locked', '--format-version=1', '--manifest-path', str(path)]
++                         for path in [manifest, root / 'Cargo.toml']]
++    metadata, packages, bindings = read_resolution(metadata_commands, root, environment, manifest, root / 'Cargo.toml', lock)
+@@ -53,0 +130,2 @@
++    if configuration != configuration_sources(root, production_lock, environment):
++        raise RuntimeError('Proof dependency configuration changed during resolution')
+@@ -60 +138 @@
+-        raise RuntimeError(f"Proof dependency build failed (exit {result.returncode}); see {reports}")
++        raise RuntimeError(f'Proof dependency build failed (exit {result.returncode}); see {reports}')
+@@ -63,3 +141,8 @@
+-    num = [item for item in artifacts if item['target']['name'] == 'num' and item['target']['kind'] == ['lib']]
+-    if len(num) != 1:
+-        raise RuntimeError('Expected exactly one pinned num library')
++    allowed_ids = {p['id'] for p in packages} | {root_package(metadata, manifest)['id']}
++    if any(item['package_id'] not in allowed_ids for item in artifacts):
++        raise RuntimeError('Unexpected package in proof dependency build artifacts')
++    num_ids = {p['id'] for p in packages if p['name'] == 'num'}
++    num = [item for item in artifacts if item['package_id'] in num_ids
++           and item['target']['name'] == 'num' and item['target']['kind'] == ['lib']]
++    if len(num) != 1 or len(num_ids) != 1:
++        raise RuntimeError('Expected exactly one production-bound num library')
+@@ -68 +151 @@
+-        raise RuntimeError('Expected exactly one pinned num rlib')
++        raise RuntimeError('Expected exactly one production-bound num rlib')
+@@ -70,2 +152,0 @@
+-    if sources != dependency_sources(packages):
+-        raise RuntimeError('Proof dependency sources changed during their build')
+@@ -74,2 +155,2 @@
+-        'metadata_command': metadata_command, 'build_command': build_command,
+-        'build_exit_code': result.returncode, 'packages': packages,
++        'metadata_commands': metadata_commands, 'build_command': build_command,
++        'build_exit_code': result.returncode, 'packages': packages, 'bindings': bindings,
+@@ -77 +158,4 @@
+-        'scope': 'Transparent Sign datatype only. No external arithmetic or equality implementation is assumed or verified by this import.',
++        'resolution': {'root': str(root), 'production_lock': str(production_lock),
++                       'proof_manifest': str(manifest), 'production_manifest': str(root / 'Cargo.toml'),
++                       'environment_overrides': overrides, 'configuration_sources': configuration},
++        'scope': 'Transparent Sign datatype only. Production/proof Cargo identity and source binding do not verify or assume external arithmetic or equality implementations.',
+@@ -78,0 +163 @@
++    check_dependency_identity(evidence)
+@@ -86 +171 @@
+-    if any(sha256(Path(name)) != expected for name, expected in evidence['artifacts'].items()):
++    if any(not Path(name).is_file() or sha256(Path(name)) != expected for name, expected in evidence['artifacts'].items()):
+@@ -87,0 +173,19 @@
++    if 'resolution' not in evidence:
++        raise RuntimeError('Proof dependency resolution binding is missing')
++    context = evidence['resolution']
++    root = Path(context['root'])
++    production_lock = Path(context['production_lock'])
++    environment = os.environ | context['environment_overrides']
++    if context['configuration_sources'] != configuration_sources(root, production_lock, environment):
++        raise RuntimeError('Proof dependency configuration changed during verification')
++    lock = tomllib.loads(Path(context['proof_manifest']).with_name('Cargo.lock').read_text())
++    _, packages, bindings = read_resolution(evidence['metadata_commands'], root, environment,
++        Path(context['proof_manifest']), Path(context['production_manifest']), lock)
++    if packages != evidence['packages'] or bindings != evidence['bindings']:
++        raise RuntimeError('Proof dependency resolution changed during verification')
++    if evidence['sources'] != dependency_sources(packages):
++        raise RuntimeError('Proof dependency sources changed while rechecking resolution')
++    if any(not Path(name).is_file() or sha256(Path(name)) != expected for name, expected in evidence['artifacts'].items()):
++        raise RuntimeError('Proof dependency artifacts changed while rechecking resolution')
++    if context['configuration_sources'] != configuration_sources(root, production_lock, environment):
++        raise RuntimeError('Proof dependency configuration changed while rechecking resolution')
+--- before/crates/hyperreal/verification/README.md
++++ after/crates/hyperreal/verification/README.md
+@@ -137,8 +137,15 @@
+-The verifier builds `verification/dependencies` with its pinned Rust compiler
+-and checks every registry dependency against the production lockfile. A
+-transparent type declaration imports the actual `num::bigint::Sign` variants;
+-it assumes no equality or arithmetic implementation. Dependency source and
+-artifact hashes are checked before and after proof checking and retained in
+-the evidence. Derived sign equality and unsupported standard-library methods
+-remain proof obligations. Conditional method markers use the pinned Verus
+-attribute implementation and disappear from normal builds.
++The verifier builds `verification/dependencies` with its pinned Rust compiler.
++Registry pins must agree with the production lockfile. Every resolved proof
++dependency, including local path packages, must also be reachable from the
++production crate and use the same canonical manifest path, name, version and
++source. An unrelated workspace package with matching names is insufficient.
++The runner hashes all dependency input files and compiled artifacts, records
++Cargo configuration, and rechecks both resolutions after building and proof
++checking. Added or removed inputs and changed paths invalidate the evidence.
++Source directory symlinks are rejected rather than hiding an unrecorded tree.
++
++A transparent type declaration imports the actual `num::bigint::Sign` variants;
++it assumes no equality or arithmetic implementation. Dependency identity checks
++do not prove those implementations. Derived sign equality and unsupported
++standard-library methods remain proof obligations. Conditional method markers
++use the pinned Verus attribute implementation and disappear from normal builds.
+--- before/crates/hyperreal/verification/test_dependency_identity.py
++++ after/crates/hyperreal/verification/test_dependency_identity.py
+@@ -2 +2,4 @@
+-"""Check that changed dependencies cannot retain their recorded proof identity."""
++"""Reject stale local-package, graph, source, configuration and binary identities."""
++import copy
++import json
++import os
+@@ -16,7 +19,12 @@
+-        self.temporary = tempfile.TemporaryDirectory()
+-        self.addCleanup(self.temporary.cleanup)
+-        self.root = Path(self.temporary.name)
+-        package = self.root / 'package'
+-        package.mkdir()
+-        (package / 'Cargo.toml').write_text('[package]\nname="fixture"\nversion="0.1.0"\n')
+-        self.source = package / 'lib.rs'
++        temporary = tempfile.TemporaryDirectory()
++        self.addCleanup(temporary.cleanup)
++        self.root = Path(temporary.name)
++        self.manifest = self.root / 'Cargo.toml'
++        self.manifest.write_text('[package]\nname="production"\nversion="0.1.0"\n')
++        self.proof_manifest = self.root / 'verification/dependencies/Cargo.toml'
++        self.proof_manifest.parent.mkdir(parents=True)
++        self.proof_manifest.write_text('[package]\nname="proof"\nversion="0.1.0"\n')
++        self.package = self.root / 'package'
++        self.package.mkdir()
++        (self.package / 'Cargo.toml').write_text('[package]\nname="fixture"\nversion="0.1.0"\n')
++        self.source = self.package / 'lib.rs'
+@@ -26,3 +34,88 @@
+-        packages = [{'id': 'fixture', 'manifest_path': str(package / 'Cargo.toml')}]
+-        self.evidence = {'packages': packages, 'sources': dependencies.dependency_sources(packages),
+-                         'artifacts': {str(self.binary): dependencies.sha256(self.binary)}}
++        self.lock = {'package': [{'name': 'fixture', 'version': '0.1.0'}]}
++        lock_text = '[[package]]\nname="fixture"\nversion="0.1.0"\n'
++        self.production_lock = self.root / 'Cargo.lock'
++        self.production_lock.write_text(lock_text)
++        self.proof_manifest.with_name('Cargo.lock').write_text(lock_text)
++        self.dependency = {'id': 'dependency', 'name': 'fixture', 'version': '0.1.0', 'source': None,
++                           'manifest_path': str(self.package / 'Cargo.toml')}
++        self.proof = self.metadata('proof', self.proof_manifest)
++        self.production = self.metadata('production', self.manifest)
++        self.overrides = {'CARGO_HOME': str(self.root / 'cargo-home')}
++        packages, bindings = self.bind()
++        self.evidence = {
++            'packages': packages, 'bindings': bindings,
++            'sources': dependencies.dependency_sources(packages),
++            'artifacts': {str(self.binary): dependencies.sha256(self.binary)},
++            'metadata_commands': [['cargo', 'proof'], ['cargo', 'production']],
++            'resolution': {
++                'root': str(self.root), 'production_lock': str(self.production_lock),
++                'proof_manifest': str(self.proof_manifest), 'production_manifest': str(self.manifest),
++                'environment_overrides': self.overrides,
++                'configuration_sources': dependencies.configuration_sources(self.root, self.production_lock, os.environ | self.overrides),
++            },
++        }
++
++    def metadata(self, name, manifest):
++        package = {'id': name, 'name': name, 'version': '0.1.0', 'source': None, 'manifest_path': str(manifest)}
++        return {'packages': [package, copy.deepcopy(self.dependency)],
++                'resolve': {'nodes': [{'id': name, 'deps': [{'pkg': 'dependency'}]},
++                                      {'id': 'dependency', 'deps': []}]}}
++
++    def bind(self, proof=None, production=None):
++        return dependencies.bind_resolution(proof or self.proof, production or self.production,
++            self.proof_manifest, self.manifest, self.lock)
++
++    def check(self, proof=None, production=None):
++        results = [json.dumps(proof or self.proof), json.dumps(production or self.production)]
++        with patch.object(dependencies.subprocess, 'check_output', side_effect=results) as cargo:
++            dependencies.check_dependency_identity(self.evidence)
++            self.assertEqual(cargo.call_count, 2)
++
++    def test_local_dependency_is_bound_and_included(self):
++        packages, bindings = self.bind()
++        self.assertEqual([p['id'] for p in packages], ['dependency'])
++        self.assertEqual(bindings[0]['manifest_path'], str(self.package / 'Cargo.toml'))
++        self.assertIsNone(bindings[0]['source'])
++        self.check()
++
++    def test_same_name_and_version_at_another_path_is_rejected(self):
++        production = copy.deepcopy(self.production)
++        production['packages'][1]['manifest_path'] = str(self.root / 'different/Cargo.toml')
++        with self.assertRaisesRegex(RuntimeError, 'does not match production resolution'):
++            self.bind(production=production)
++
++    def test_unreachable_workspace_package_is_not_a_production_dependency(self):
++        production = copy.deepcopy(self.production)
++        production['resolve']['nodes'][0]['deps'] = []
++        with self.assertRaisesRegex(RuntimeError, 'does not match production resolution'):
++            self.bind(production=production)
++
++    def test_transitive_path_dependency_is_reachable(self):
++        for metadata in [self.proof, self.production]:
++            bridge = copy.deepcopy(metadata['packages'][1])
++            bridge.update(id='bridge', name='bridge', manifest_path=str(self.root / 'bridge/Cargo.toml'))
++            metadata['packages'].append(bridge)
++            metadata['resolve']['nodes'][0]['deps'] = [{'pkg': 'bridge'}]
++            metadata['resolve']['nodes'].append({'id': 'bridge', 'deps': [{'pkg': 'dependency'}]})
++        self.lock['package'].append({'name': 'bridge', 'version': '0.1.0'})
++        packages, _ = self.bind()
++        self.assertEqual({p['id'] for p in packages}, {'bridge', 'dependency'})
++
++    def test_registry_source_identity_is_preserved(self):
++        self.proof['packages'][1]['source'] = 'registry+fixture'
++        self.production['packages'][1]['source'] = 'registry+fixture'
++        self.lock['package'][0]['source'] = 'registry+fixture'
++        self.bind()
++        self.production['packages'][1]['source'] = 'registry+replacement'
++        with self.assertRaisesRegex(RuntimeError, 'does not match production resolution'):
++            self.bind()
++
++    def test_missing_resolved_node_is_rejected(self):
++        self.proof['resolve']['nodes'].pop()
++        with self.assertRaisesRegex(RuntimeError, 'Incomplete Cargo dependency graph'):
++            self.bind()
++
++    def test_unlocked_local_dependency_is_rejected(self):
++        self.lock['package'].clear()
++        with self.assertRaisesRegex(RuntimeError, 'Unexpected resolved proof dependency'):
++            self.bind()
+@@ -31 +124 @@
+-        dependencies.check_dependency_identity(self.evidence)
++        self.check()
+@@ -34 +127 @@
+-            dependencies.check_dependency_identity(self.evidence)
++            self.check()
+@@ -36,5 +129,30 @@
+-        self.source.with_name('build.rs').write_text('fn main() {}\n')
+-        with self.assertRaisesRegex(RuntimeError, 'sources changed'):
+-            dependencies.check_dependency_identity(self.evidence)
+-
+-    def test_artifact_changes_invalidate_identity(self):
++        (self.package / 'build.rs').write_text('fn main() {}\n')
++        with self.assertRaisesRegex(RuntimeError, 'sources changed'):
++            self.check()
++
++    def test_extensionless_and_non_rust_inputs_are_hashed(self):
++        (self.package / 'LICENSE').write_text('license input\n')
++        (self.package / 'generated.inc').write_text('generated data\n')
++        captured = dependencies.dependency_sources([self.dependency])['dependency']
++        self.assertIn('LICENSE', captured)
++        self.assertIn('generated.inc', captured)
++        with self.assertRaisesRegex(RuntimeError, 'sources changed'):
++            self.check()
++
++    def test_source_removal_invalidates_identity(self):
++        self.source.unlink()
++        with self.assertRaisesRegex(RuntimeError, 'sources changed'):
++            self.check()
++
++    def test_generated_target_outputs_are_excluded(self):
++        target = self.package / 'target'
++        target.mkdir()
++        (target / 'generated.bin').write_bytes(b'build output')
++        self.check()
++
++    def test_symbolic_link_input_is_rejected(self):
++        (self.package / 'hidden').symlink_to(self.root, target_is_directory=True)
++        with self.assertRaisesRegex(RuntimeError, 'Symbolic-link dependency input'):
++            self.check()
++
++    def test_artifact_changes_and_removal_invalidate_identity(self):
+@@ -43,6 +161,45 @@
+-            dependencies.check_dependency_identity(self.evidence)
+-
+-    def test_wrong_pin_is_rejected_before_cargo(self):
+-        folder = self.root / 'verification/dependencies'
+-        folder.mkdir(parents=True)
+-        (folder / 'Cargo.toml').write_text('[package]\nname="fixture"\nversion="0.1.0"\n')
++            self.check()
++        self.binary.unlink()
++        with self.assertRaisesRegex(RuntimeError, 'artifacts changed'):
++            self.check()
++
++    def test_new_configuration_file_invalidates_identity_before_cargo(self):
++        directory = self.root / '.cargo'
++        directory.mkdir()
++        (directory / 'config.toml').write_text('[build]\ntarget = "different-target"\n')
++        with patch.object(dependencies.subprocess, 'check_output') as cargo:
++            with self.assertRaisesRegex(RuntimeError, 'configuration changed'):
++                dependencies.check_dependency_identity(self.evidence)
++            cargo.assert_not_called()
++
++    def test_changed_lock_invalidates_identity_before_cargo(self):
++        self.production_lock.write_text('# changed lock\n')
++        with patch.object(dependencies.subprocess, 'check_output') as cargo:
++            with self.assertRaisesRegex(RuntimeError, 'configuration changed'):
++                dependencies.check_dependency_identity(self.evidence)
++            cargo.assert_not_called()
++
++    def test_missing_resolution_binding_is_rejected(self):
++        del self.evidence['resolution']
++        with self.assertRaisesRegex(RuntimeError, 'resolution binding is missing'):
++            self.check()
++
++    def test_re_resolved_path_drift_is_rejected(self):
++        proof, production = copy.deepcopy(self.proof), copy.deepcopy(self.production)
++        for metadata in [proof, production]:
++            metadata['packages'][1]['manifest_path'] = str(self.root / 'replacement/Cargo.toml')
++        with self.assertRaisesRegex(RuntimeError, 'resolution changed'):
++            self.check(proof, production)
++
++    def test_binary_change_during_resolution_is_rejected(self):
++        outputs = iter([json.dumps(self.proof), json.dumps(self.production)])
++
++        def metadata(*_args, **_kwargs):
++            self.binary.write_bytes(b'changed during metadata')
++            return next(outputs)
++
++        with patch.object(dependencies.subprocess, 'check_output', side_effect=metadata):
++            with self.assertRaisesRegex(RuntimeError, 'artifacts changed while rechecking'):
++                dependencies.check_dependency_identity(self.evidence)
++
++    def test_wrong_registry_pin_is_rejected_before_cargo(self):
+@@ -50,2 +207,2 @@
+-        (self.root / 'Cargo.lock').write_text(lock)
+-        (folder / 'Cargo.lock').write_text(lock.replace('original', 'changed'))
++        self.production_lock.write_text(lock)
++        self.proof_manifest.with_name('Cargo.lock').write_text(lock.replace('original', 'changed'))

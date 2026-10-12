@@ -1,0 +1,24 @@
+test_artifact_changes_and_removal_invalidate_identity (__main__.DependencyIdentityTests.test_artifact_changes_and_removal_invalidate_identity) ... ok
+test_binary_change_during_resolution_is_rejected (__main__.DependencyIdentityTests.test_binary_change_during_resolution_is_rejected) ... ok
+test_changed_lock_invalidates_identity_before_cargo (__main__.DependencyIdentityTests.test_changed_lock_invalidates_identity_before_cargo) ... ok
+test_extensionless_and_non_rust_inputs_are_hashed (__main__.DependencyIdentityTests.test_extensionless_and_non_rust_inputs_are_hashed) ... ok
+test_generated_target_outputs_are_excluded (__main__.DependencyIdentityTests.test_generated_target_outputs_are_excluded) ... ok
+test_local_dependency_is_bound_and_included (__main__.DependencyIdentityTests.test_local_dependency_is_bound_and_included) ... ok
+test_missing_resolution_binding_is_rejected (__main__.DependencyIdentityTests.test_missing_resolution_binding_is_rejected) ... ok
+test_missing_resolved_node_is_rejected (__main__.DependencyIdentityTests.test_missing_resolved_node_is_rejected) ... ok
+test_new_configuration_file_invalidates_identity_before_cargo (__main__.DependencyIdentityTests.test_new_configuration_file_invalidates_identity_before_cargo) ... ok
+test_re_resolved_path_drift_is_rejected (__main__.DependencyIdentityTests.test_re_resolved_path_drift_is_rejected) ... ok
+test_registry_source_identity_is_preserved (__main__.DependencyIdentityTests.test_registry_source_identity_is_preserved) ... ok
+test_same_name_and_version_at_another_path_is_rejected (__main__.DependencyIdentityTests.test_same_name_and_version_at_another_path_is_rejected) ... ok
+test_source_changes_and_additions_invalidate_identity (__main__.DependencyIdentityTests.test_source_changes_and_additions_invalidate_identity) ... ok
+test_source_removal_invalidates_identity (__main__.DependencyIdentityTests.test_source_removal_invalidates_identity) ... ok
+test_symbolic_link_input_is_rejected (__main__.DependencyIdentityTests.test_symbolic_link_input_is_rejected) ... ok
+test_transitive_path_dependency_is_reachable (__main__.DependencyIdentityTests.test_transitive_path_dependency_is_reachable) ... ok
+test_unlocked_local_dependency_is_rejected (__main__.DependencyIdentityTests.test_unlocked_local_dependency_is_rejected) ... ok
+test_unreachable_workspace_package_is_not_a_production_dependency (__main__.DependencyIdentityTests.test_unreachable_workspace_package_is_not_a_production_dependency) ... ok
+test_wrong_registry_pin_is_rejected_before_cargo (__main__.DependencyIdentityTests.test_wrong_registry_pin_is_rejected_before_cargo) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.035s
+
+OK

@@ -1,0 +1,20 @@
+{
+  "status": "Frozen before the nineteen dependency identity unit tests",
+  "runner_sha256": "120610957f2db82bd86d7b8b713ef113961d0e14a89aaafd67ac163e7c912b62",
+  "preview": "dependency-binding-candidate-v2424",
+  "preview_files_sha256": {
+    "scripts/verus_dependencies.py": "7206576a8a3b2f9f6ecb615324267016083ebb61f1045615b0f3ffcc4a786f18",
+    "verification/test_dependency_identity.py": "2f2100d84b9f058e18fe5b775f477dedb5f2085ec84f47500ee5f1511f9ddf58"
+  },
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "original_helper_sha256": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+  "original_test_sha256": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/dependency-binding-candidate-v2424/verification/test_dependency_identity.py",
+    "-v"
+  ],
+  "expected_tests": 19,
+  "scope": "Exercise graph reachability, actual local paths, registry identity, arbitrary dependency input files, configuration additions, re-resolution drift and artifact changes. These unit fixtures mock Cargo metadata and do not substitute for an actual Cargo build or SOURCE integration. No retained proof/runtime coverage change."
+}

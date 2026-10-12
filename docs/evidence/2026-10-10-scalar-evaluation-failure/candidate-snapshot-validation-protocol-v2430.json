@@ -1,0 +1,18 @@
+{
+  "status": "Frozen before the complete-catalog unit tests and wrapper run",
+  "runner_sha256": "c2b3504fb03eea0d7167cbaebc7e13fd7b2332009d98fff3f5ae47d5fa083ffa",
+  "wrapper_sha256": "cb575489f05d8716bdfac55b5e2a9a28e77d96c9118ef2895812e916f869607e",
+  "tests_sha256": "813a7071e351a79d245457827bd08f525e43992a6e01c6f6940525bd2937a94c",
+  "preparation_sha256": "a1c35381ceaec2e7168f87693cc8f84105b666f93d0fb80fd3b0ddfc17a74109",
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_candidate_v3.py",
+    "typed-api-prototype-v2430-source-catalog-units",
+    "--exec",
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/test_candidate_snapshots_v2429.py",
+    "-v"
+  ],
+  "expected_tests": 13,
+  "scope": "Three tests execute the actual wrapper with real child commands against temporary source trees, including added extensionless inputs and deleted original inputs. Other tests cover input types, source edits/removals, symlinks and generated-directory pruning. The outer wrapper must preserve the retained SOURCE/main files and reproduce the v2386 source snapshot exactly."
+}

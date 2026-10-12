@@ -1,0 +1,43 @@
+{
+  "name": "split",
+  "gate_passed": true,
+  "seconds": 0.11750746099278331,
+  "expected_acceptance": false,
+  "error": "Proof dependency does not match production resolution: path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/vendor-proof/num-bigint#0.4.6",
+  "calls": [
+    {
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--locked",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/verification/dependencies/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.055992200039327145,
+      "stdout_sha256": "d33ac44d953bf1e9ad30f27e233ca82d6518a8b44ed061bce81a56124500c33d",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_captured_by_child_call": false
+    },
+    {
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--locked",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.05796948401257396,
+      "stdout_sha256": "92e26a42afe4c71cfc918ace11ca04a81b7a961490fdda8140b853c0f4cc2e62",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_captured_by_child_call": false
+    }
+  ],
+  "verus_arguments": null,
+  "dependency_report_sha256": null
+}

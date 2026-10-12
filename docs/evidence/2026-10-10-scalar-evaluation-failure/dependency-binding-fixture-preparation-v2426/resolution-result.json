@@ -1,0 +1,74 @@
+{
+  "protocol_sha256": "07fc264b602c67f38cf4126ceefded3f0e3b6b53f53737804a2a5385043322fc",
+  "runs": [
+    {
+      "name": "matched-production",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched",
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--offline",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.11999949999153614,
+      "stdout_sha256": "08358e38941cdc1b532d1d45e450ff84ce25fd9a7a98b7a4d27a049054fd43d9",
+      "stderr_sha256": "c652ed0f6ea39372b2f57759842dd04ed7bacbaea41ddeacb7817002be7fa2a8"
+    },
+    {
+      "name": "matched-proof",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched",
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--offline",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/verification/dependencies/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08603179035708308,
+      "stdout_sha256": "a77ad6786118202c7b4e7258421f0a076608b8ea09de66f0f8c1cdc3f2c801d9",
+      "stderr_sha256": "c652ed0f6ea39372b2f57759842dd04ed7bacbaea41ddeacb7817002be7fa2a8"
+    },
+    {
+      "name": "split-production",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split",
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--offline",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.083945341873914,
+      "stdout_sha256": "9b8bce6899b73cb9786b2d2a63337e8fb9fad9c98eaad109d17002982ec71a57",
+      "stderr_sha256": "a83b08578dd1d7a98bea3014bc0061a770f55eeecca0d402ee6f0c34d6028a5b"
+    },
+    {
+      "name": "split-proof",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split",
+      "command": [
+        "cargo",
+        "+1.98.1-x86_64-unknown-linux-gnu",
+        "metadata",
+        "--offline",
+        "--format-version=1",
+        "--manifest-path",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/verification/dependencies/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "seconds": 0.08151694992557168,
+      "stdout_sha256": "c60ffd7ad33eef3a6bfee06324a07fdfa9464b2b7ff5bd1797556c4ff8fc2223",
+      "stderr_sha256": "e66f0eccfcdd55e97f82239fcc3bdad0639c6269dc5e485d28a336c40a17317e"
+    }
+  ],
+  "complete": true
+}

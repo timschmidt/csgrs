@@ -1,0 +1,150 @@
+{
+  "status": "Retain isolated dependency/source binding infrastructure; runtime remains v2335",
+  "runner_sha256": "98ea9dbaa18ecee8c2cabdff3dbfadae68e3a11ecd0243814361fcd6cd6f7df7",
+  "previous_checkpoint": "typed-api-prototype-v2386-state.json",
+  "previous_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "source_record": "typed-api-prototype-v2433-dependency-binding-verus/source-hashes.json.gz",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "changed_sources": {
+    "crates/hyperreal/scripts/verus_dependencies.py": {
+      "before": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+      "after": "7206576a8a3b2f9f6ecb615324267016083ebb61f1045615b0f3ffcc4a786f18"
+    },
+    "crates/hyperreal/verification/README.md": {
+      "before": "45d87734e174eab6169f105100b3c8341345c8c168a176b17112ff10083b392c",
+      "after": "9b17501c86c6a1f48bb08ddedb9ea3c507a124de408710b803825e20f95db721"
+    },
+    "crates/hyperreal/verification/test_dependency_identity.py": {
+      "before": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+      "after": "2f2100d84b9f058e18fe5b775f477dedb5f2085ec84f47500ee5f1511f9ddf58"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "proposal_protocol": "dependency-binding-baseline-v2432/protocol.json",
+  "proposal_protocol_sha256": "6f78abcd7ac65a4308dd0b8f15e129217e5ec9df19eecf3d76c11067cdacd3a4",
+  "input_audit": "dependency-binding-input-audit-v2439.json",
+  "input_audit_sha256": "6dd75523760672c6da99326313d2cb9f94fb6b105c90d83a350dc0917ec7adb9",
+  "conditional_proof": {
+    "verified_units": 736,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 178,
+    "open_obligation_groups": 13,
+    "fresh_dependency_identity_tests": 19,
+    "fresh_acceptance_entrypoint_tests": 26,
+    "distinct_candidate_tests": 26,
+    "fresh_rejected_mutants": 0,
+    "fresh_passing_guard_baselines": 0,
+    "reused_rejected_mutants": 306,
+    "reused_passing_guard_baselines": 7,
+    "total_applicable_rejected_mutants": 306,
+    "total_applicable_passing_guard_baselines": 7
+  },
+  "fresh_validation_record": "dependency-binding-validation-v2438.json",
+  "fresh_validation_record_sha256": "b229a2c12c53f901206305b0cb2fb80a10c1db51897dcfbde8f9114d34a1d3dc",
+  "support_qualification": {
+    "dependency-binding-units-v2425/result.json": {
+      "sha256": "a434514ef8d5f67fb03d358821066fdddcce33379ef908b3e01c888bd07e1b9b"
+    },
+    "dependency-binding-cargo-v2427/result.json": {
+      "sha256": "20f71f47d2ee5fb7f9026a93cd4595c6510db726953157f818b7cd4ebcf302e5"
+    },
+    "candidate-snapshot-validation-v2430.json": {
+      "sha256": "c2342fdab32f9af9699be86d324eb1859f7227d6a956ee42d29a723c37f739af"
+    },
+    "workspace-dependency-binding-v2431/result.json": {
+      "sha256": "93ba7bd93e28305cc00067521cb90ce6d1dba48d2ea82230d35033189b6778a1"
+    }
+  },
+  "prior_support_frontiers_sha256": {
+    "storage-contract-frontier-v2397.json": "2fbbaf6524f8f6c0c0f3a70f895f43deaec335a2e89814419127b0a5cbdfdf2d",
+    "biguint-integration-frontier-v2423.json": "a3f5e18d6c874b922e71949b398533c279ca9e955f66ffc17f97ceb2a84b6713"
+  },
+  "candidate_wrapper": "validate_candidate_v3.py",
+  "candidate_wrapper_sha256": "cb575489f05d8716bdfac55b5e2a9a28e77d96c9118ef2895812e916f869607e",
+  "failed_reader_preserved": "dependency-binding-validation-v2434.json",
+  "failed_reader_sha256": "bf95e2ab5da037eba7a278bf9a3879ea1f245ca2c5287b8d58f68452a5f130cd",
+  "historical_runtime_retention": "eager-bound-decoder-retention-v2335.json",
+  "historical_runtime_retention_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+  "historical_runtime_evidence_applicable": true,
+  "historical_runs_relabelled_as_fresh": 0,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "coverage_limits": [
+    "Three verification infrastructure/documentation files change; all Rust bodies, contracts, models, runtime/build inputs and mutation generators remain unchanged. Proof dependencies must belong to the actual production root closure and match canonical manifest paths and registry identity. Local and registry sources include all file types; binaries, lock/manifests and Cargo configurations are checked around fresh resolution. The dependency proof boundary remains transparent Sign only, with no assumption about arithmetic implementations.",
+    "The fresh full conditional target passes 736 units, zero errors, 98 production contracts and 178 model theorems. Nineteen standalone dependency tests and the 26-test acceptance entry point pass; the latter includes the same nineteen tests, so there are 26 distinct candidate tests. Workspace and 112-input formatting pass. All 306 historical negative controls and seven baselines retain their original identities: unchanged Rust/generators, exact reconstruction of 313 temporary entrypoints, and unchanged dependency source/binary maps and Verus arguments. No guard is relabelled as newly executed.",
+    "Support qualification includes nineteen preview dependency tests, two actual Cargo fixtures with nine Cargo processes, eight actual-workspace dependency bindings and thirteen source-catalog tests. A path mismatch is rejected before a build even when dependency bytes agree. The new candidate wrapper discovers introduced scalar files of every type, preserves original workspace inputs and catches additions/deletions/symlinks after a command. It does not claim discovery of new files outside the scalar subtree. The old count reader failed after successful tests; its frozen failure and corrected 26-test interpretation are retained.",
+    "The v2397/v2423 support previews, including final shared BigUint source, verified conditional metadata bodies for both limb widths, mutation controls and native differential tests, remain separate from SOURCE and retained proof counts. No vendor runtime is applied. Actual imported BigUint/BigInt identity and caller refinement, normalization and machine count-range premises, approximation truth, independent existence and concurrent publication remain open. Historical v2335 runtime/cap/cost/replay evidence remains applicable under exact unchanged source and binary audits; no fresh runtime, timing or replay process is credited.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "next_priority": "Connect the qualified shared BigUint metadata bodies to the actual Cargo dependency and Verus imports, then prove BigInt sign/magnitude and bound-producing callers. Preserve normalization/allocation policy, early Unknown and lazy trailing-zero scans. Discharge explicit count-range premises and qualify any runtime change against original correctness, resource, cost, memory and size gates before admission. Continue approximation truth, independent existence and atomic publication; both baseline CPU failures and all main/native/full-board requirements remain open.",
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "checkpoint_requirement": "Verify every v2386 artifact, all subsequent support artifacts, current source, main guard and original worktree entries with record_checkpoint_v4.py before creating v2440."
+}

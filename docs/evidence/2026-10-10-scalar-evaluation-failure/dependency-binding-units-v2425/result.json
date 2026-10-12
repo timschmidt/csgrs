@@ -1,0 +1,12 @@
+{
+  "exit_code": 0,
+  "seconds": 1.2049159719608724,
+  "protocol_sha256": "f03d5d10e84aa849ad4323e987ac8cf1b8bc37b248eb9988c6ca00edf6845204",
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e22ed929e77008e8f3222d572424fad6979a18a7b37fa339ea30d0dfd928ad8f",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "preview_unchanged": true,
+  "retained_coverage_changed": false,
+  "nineteen_tests_passed": true
+}

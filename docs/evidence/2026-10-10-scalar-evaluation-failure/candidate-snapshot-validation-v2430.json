@@ -1,0 +1,19 @@
+{
+  "protocol_sha256": "1ec394725f02b891d29a10942c150cbeb234a1bb9e04de94f6815f0f08087b03",
+  "wrapper_exit_code": 0,
+  "phase_result": {
+    "exit_code": 0,
+    "seconds": 1.2553988373838365,
+    "source_unchanged": true,
+    "main_unchanged": true,
+    "source_catalog_rechecked": true,
+    "source_snapshot_error": null,
+    "status": "isolated prototype validation; not runtime admission"
+  },
+  "phase_result_sha256": "6647ae7ae66f822496938ac0892ee49040febeaf9b041b3701bb5e01f1d31404",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "thirteen_tests_passed": true,
+  "retained_source_snapshot_identical": true,
+  "source_changed": false,
+  "retained_coverage_changed": false
+}

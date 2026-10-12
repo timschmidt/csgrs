@@ -1,0 +1,18 @@
+test_added_file_changes_catalog (__main__.CandidateSnapshotTests.test_added_file_changes_catalog) ... ok
+test_changed_file_changes_catalog (__main__.CandidateSnapshotTests.test_changed_file_changes_catalog) ... ok
+test_generated_trees_are_pruned (__main__.CandidateSnapshotTests.test_generated_trees_are_pruned) ... ok
+test_non_vendor_scalar_inputs_are_also_included (__main__.CandidateSnapshotTests.test_non_vendor_scalar_inputs_are_also_included) ... ok
+test_original_workspace_inputs_are_kept (__main__.CandidateSnapshotTests.test_original_workspace_inputs_are_kept) ... ok
+test_real_command_adding_an_extensionless_input_fails (__main__.CandidateSnapshotTests.test_real_command_adding_an_extensionless_input_fails) ... ok
+test_real_command_removing_an_original_input_records_failure (__main__.CandidateSnapshotTests.test_real_command_removing_an_original_input_records_failure) ... ok
+test_real_command_with_unchanged_inputs_passes (__main__.CandidateSnapshotTests.test_real_command_with_unchanged_inputs_passes) ... ok
+test_removed_introduced_file_changes_catalog (__main__.CandidateSnapshotTests.test_removed_introduced_file_changes_catalog) ... ok
+test_removed_original_file_cannot_be_hashed (__main__.CandidateSnapshotTests.test_removed_original_file_cannot_be_hashed) ... ok
+test_symlink_directory_is_rejected (__main__.CandidateSnapshotTests.test_symlink_directory_is_rejected) ... ok
+test_symlink_file_is_rejected (__main__.CandidateSnapshotTests.test_symlink_file_is_rejected) ... ok
+test_vendor_inputs_do_not_depend_on_extensions (__main__.CandidateSnapshotTests.test_vendor_inputs_do_not_depend_on_extensions) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.076s
+
+OK

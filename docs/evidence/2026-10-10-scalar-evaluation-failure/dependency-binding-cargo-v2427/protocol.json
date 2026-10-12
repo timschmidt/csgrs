@@ -1,0 +1,117 @@
+{
+  "status": "Frozen before invoking the checker against real Cargo fixtures",
+  "runner_sha256": "594b956eca26583d82ddab5b5cbe80b24483e06558a26a765506995840334b1a",
+  "preview_files_sha256": {
+    "scripts/verus_dependencies.py": "7206576a8a3b2f9f6ecb615324267016083ebb61f1045615b0f3ffcc4a786f18",
+    "verification/test_dependency_identity.py": "2f2100d84b9f058e18fe5b775f477dedb5f2085ec84f47500ee5f1511f9ddf58"
+  },
+  "fixture_preparation_sha256": "236bb38f8dc769764f8dd036f2f1997633bd2cc8021746ca0fd0c5d508700b57",
+  "fixtures": [
+    {
+      "name": "matched",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched",
+      "expected_acceptance": true,
+      "expected_commands": [
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/verification/dependencies/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "build",
+          "--locked",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/verification/dependencies/Cargo.toml",
+          "--message-format=json"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/verification/dependencies/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/verification/dependencies/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/matched/Cargo.toml"
+        ]
+      ]
+    },
+    {
+      "name": "split",
+      "root": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split",
+      "expected_acceptance": false,
+      "expected_commands": [
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/verification/dependencies/Cargo.toml"
+        ],
+        [
+          "cargo",
+          "+1.98.1-x86_64-unknown-linux-gnu",
+          "metadata",
+          "--locked",
+          "--format-version=1",
+          "--manifest-path",
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/split/Cargo.toml"
+        ]
+      ]
+    }
+  ],
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-fixtures-v2426/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_TERM_COLOR": "never",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "scope": "Run the exact proposed prepare_dependencies/check_dependency_identity functions. Instrument subprocess.run only to capture and compare the actual command sequence; every Cargo command executes normally with the pinned compiler. The matching fixture must build and bind its real path dependency. The split fixture must reject before build. No SOURCE or retained coverage changes."
+}

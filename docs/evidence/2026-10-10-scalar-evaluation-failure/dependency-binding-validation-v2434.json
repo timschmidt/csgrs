@@ -1,0 +1,44 @@
+{
+  "protocol_sha256": "17ac57f251ed558b49c47e99686e0eb59e12b0b99fe491cc9466d19f56d1d826",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "phases": {
+    "typed-api-prototype-v2434-dependency-identity-tests": {
+      "phase": "typed-api-prototype-v2434-dependency-identity-tests",
+      "command": [
+        "/usr/bin/python3",
+        "crates/hyperreal/verification/test_dependency_identity.py",
+        "-v"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.216785416007042,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236"
+    },
+    "typed-api-prototype-v2435-dependency-binding-acceptance": {
+      "phase": "typed-api-prototype-v2435-dependency-binding-acceptance",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py",
+        "typed-api-prototype-v2435-dependency-binding-acceptance",
+        "test_acceptance.py"
+      ],
+      "result": {
+        "exit_code": 0,
+        "seconds": 3.668755784165114,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "source_catalog_rechecked": true,
+        "source_snapshot_error": null,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236"
+    }
+  },
+  "complete": false
+}

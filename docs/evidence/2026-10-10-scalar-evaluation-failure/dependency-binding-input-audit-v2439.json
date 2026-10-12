@@ -1,0 +1,165 @@
+{
+  "status": "Dependency binding and complete scalar source catalogs pass; unchanged proof/runtime inputs support historical reuse",
+  "runner_sha256": "6da3d95fff218b338169695027c485a844407474895f2c97f7cee5584978f912",
+  "previous_checkpoint": "typed-api-prototype-v2386-state.json",
+  "previous_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record": "typed-api-prototype-v2433-dependency-binding-verus/source-hashes.json.gz",
+  "source_record_sha256": "650385802de02964ad26d0f60ea407294d451b2a538f1de86f94074c1821e236",
+  "source_files_verified": 24751,
+  "main_files_verified": 1167,
+  "changed_sources": {
+    "crates/hyperreal/scripts/verus_dependencies.py": {
+      "before": "6643dd5817af7ed6cc57f5ec6d13e879046909d6232e81614d9504140ab5f10b",
+      "after": "7206576a8a3b2f9f6ecb615324267016083ebb61f1045615b0f3ffcc4a786f18"
+    },
+    "crates/hyperreal/verification/README.md": {
+      "before": "45d87734e174eab6169f105100b3c8341345c8c168a176b17112ff10083b392c",
+      "after": "9b17501c86c6a1f48bb08ddedb9ea3c507a124de408710b803825e20f95db721"
+    },
+    "crates/hyperreal/verification/test_dependency_identity.py": {
+      "before": "b85a485d95bbe7999a81cb545562453060c1dc54fd85dcd0f13b45856346d4ca",
+      "after": "2f2100d84b9f058e18fe5b775f477dedb5f2085ec84f47500ee5f1511f9ddf58"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "conditional_proof": {
+    "verified_units": 736,
+    "errors": 0,
+    "production_contracts": 98,
+    "model_theorems": 178,
+    "open_obligation_groups": 13
+  },
+  "fresh_validation_record": "dependency-binding-validation-v2438.json",
+  "fresh_validation_record_sha256": "b229a2c12c53f901206305b0cb2fb80a10c1db51897dcfbde8f9114d34a1d3dc",
+  "fresh_dependency_identity_tests": 19,
+  "fresh_acceptance_entrypoint_tests": 26,
+  "distinct_candidate_tests": 26,
+  "acceptance_includes_identity_tests": true,
+  "included_format_files": 112,
+  "failed_reader_preserved": "dependency-binding-validation-v2434.json",
+  "failed_reader_sha256": "bf95e2ab5da037eba7a278bf9a3879ea1f245ca2c5287b8d58f68452a5f130cd",
+  "reader_correction_sha256": "76b09726262c2e087e737ad7ca28e9c8657e3941713e46eada91451b38df705f",
+  "inherited_input_audit": "word-scan-input-audit-v2385.json",
+  "inherited_input_audit_sha256": "f5de70c319f85efd79cb7cc19b199daac19df211fd4f21439c46043e296df860",
+  "fresh_rejected_mutations": 0,
+  "fresh_positive_baselines": 0,
+  "reused_rejected_mutations": 306,
+  "reused_positive_baselines": 7,
+  "total_applicable_rejected_mutations": 306,
+  "total_applicable_positive_baselines": 7,
+  "reconstructed_prior_temporary_entrypoints": {
+    "test_rejections.py": 104,
+    "test_structural_rejections.py": 22,
+    "test_bound_rejections.py": 91,
+    "test_cache_rejections.py": 42,
+    "test_bit_metadata_rejections.py": 13,
+    "test_digit_scan_rejections.py": 20,
+    "test_word_scan_rejections.py": 21
+  },
+  "prior_guard_logs_sha256": {
+    "typed-api-prototype-v2339-approximation-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "9ce5d2933e9b162930faaa4299bc56dc826c7a4370dc13ced992f7b611bb8efa",
+    "typed-api-prototype-v2353-trailing-metadata-rejections/proof-checks/verus-invocations.jsonl.gz": "a26a937acb1ef609fc263f188a06f15f25195b13025fdfce3ed55652df3afa24",
+    "typed-api-prototype-v2368-digit-scan-rejections/proof-checks/verus-invocations.jsonl.gz": "1ef7ffcb8549a4f7ac3e30e33667e48429a3920d704bfc0b9f0e375e191e300f",
+    "typed-api-prototype-v2381-word-scan-rejections/proof-checks/verus-invocations.jsonl.gz": "d4ae46dc7525181213a2432eabb0dbd11c016145c71ecd6bdf6b33bc13d5c8b8"
+  },
+  "old_guard_reuse_basis": "All Rust inputs and guard generators are unchanged from v2386. The 313 original temporary entrypoints reconstruct exactly. Dependency package maps, source maps, all nineteen artifact bytes and all four Verus arguments match the previous full proof; package list order alone differs. The fresh full proof uses the stronger binding helper. Original mutant validation and execution identities remain inherited through v2385/v2372/v2357/v2344; no mutation run is relabelled as fresh.",
+  "proof_dependencies_sha256": "5f175ee4648ceead3ff91658234d63f254ec8aba72cb7a4f1d717e2ff9dd247d",
+  "prior_proof_dependencies_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "unchanged_dependency_packages": 8,
+  "unchanged_dependency_artifacts": 19,
+  "support_qualification": {
+    "dependency-binding-units-v2425/result.json": {
+      "sha256": "a434514ef8d5f67fb03d358821066fdddcce33379ef908b3e01c888bd07e1b9b"
+    },
+    "dependency-binding-cargo-v2427/result.json": {
+      "sha256": "20f71f47d2ee5fb7f9026a93cd4595c6510db726953157f818b7cd4ebcf302e5"
+    },
+    "candidate-snapshot-validation-v2430.json": {
+      "sha256": "c2342fdab32f9af9699be86d324eb1859f7227d6a956ee42d29a723c37f739af"
+    },
+    "workspace-dependency-binding-v2431/result.json": {
+      "sha256": "93ba7bd93e28305cc00067521cb90ce6d1dba48d2ea82230d35033189b6778a1"
+    }
+  },
+  "prior_support_commits_rechecked": {
+    "storage-contract": {
+      "preparation_sha256": "40e5c7d6c3337204ce038dd34650857a3682d8a3fdb89f85d5017a3c7c6ea1e8",
+      "committed_files_rechecked": 128
+    },
+    "biguint-integration": {
+      "preparation_sha256": "dcacc6de1483de056b765649826e842feec24ecacfb03e9d096f7735a2b80df7",
+      "committed_files_rechecked": 677
+    }
+  },
+  "fresh_preview_identity_tests": 19,
+  "fresh_source_catalog_tests": 13,
+  "actual_cargo_fixtures": 2,
+  "fixture_cargo_processes": 9,
+  "actual_workspace_proof_bindings": 8,
+  "historical_runtime_input_audit_sha256": "4c616739428dae2489c3611b2de7c292c51bd024500f62d49b49d6e11323e9f2",
+  "historical_runtime_evidence_applicable": true,
+  "unchanged_frozen_probe_binaries": 7,
+  "unchanged_runtime_libraries": 3,
+  "historical_runs_relabelled_as_fresh": 0,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "scope": "Verification infrastructure only. Proof dependencies must match the production root closure, exact registry identity and canonical manifest path; local sources, all file types, binaries and configuration are checked around resolution. Candidate source discovery covers original workspace files plus introduced scalar files, rejecting scalar source symlinks. The dependency model remains transparent Sign only. No vendor runtime application, new Rust theorem, arithmetic assumption, fresh runtime qualification, main/native admission or property/target completion follows. BigUint shared-source previews remain separate support evidence; all thirteen whole-crate groups remain open."
+}

@@ -1,0 +1,14 @@
+{
+  "status": "Snapshot wrapper forked before unit or candidate validation",
+  "preparation_sha256": "9357ce5347357a5ca9a8cded3a6288969dbb07d3dadcece12e1264a18bcd9804",
+  "parent_sha256": "1addfc358bb4cba5f39f938d2a9a7a15b544f58d035d5d6f005a1f8df1e0c103",
+  "successor": "validate_candidate_v3.py",
+  "successor_sha256": "cb575489f05d8716bdfac55b5e2a9a28e77d96c9118ef2895812e916f869607e",
+  "removed_collection_block_sha256": "41c5bb4caab00ef3dd54a4a951e500b24302fba9a1da6ca122513bf7c0c0be76",
+  "changes": [
+    "Keep every original workspace input, and remove extension filtering from introduced scalar inputs. Licenses, original manifests, binary tables and hidden files are included.",
+    "Prune the same generated target, Git and Python cache directories before traversal; reject scalar source symlinks that would hide external input trees.",
+    "Recollect and compare the complete source catalogue after each command, detecting added files as well as changed/deleted inputs. Preserve the existing main guard, archived changed inputs, command environment and failure assertion."
+  ],
+  "scope": "The wrapper still bounds new-file discovery to the scalar candidate subtree. It does not claim to discover arbitrary new files throughout all workspace crates. Completed v2 phases and retained source/coverage counts are unchanged."
+}

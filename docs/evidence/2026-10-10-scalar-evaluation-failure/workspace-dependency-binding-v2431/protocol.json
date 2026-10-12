@@ -1,0 +1,69 @@
+{
+  "status": "Frozen before actual workspace and proof metadata commands",
+  "runner_sha256": "1f0c8ed3717cf880dcb7013431293d107e5575b45fd0c30c2690046ef932eff8",
+  "helper_sha256": "7206576a8a3b2f9f6ecb615324267016083ebb61f1045615b0f3ffcc4a786f18",
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "commands": [
+    [
+      "cargo",
+      "+1.98.1-x86_64-unknown-linux-gnu",
+      "metadata",
+      "--locked",
+      "--format-version=1",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies/Cargo.toml"
+    ],
+    [
+      "cargo",
+      "+1.98.1-x86_64-unknown-linux-gnu",
+      "metadata",
+      "--locked",
+      "--format-version=1",
+      "--manifest-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/Cargo.toml"
+    ]
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal",
+  "configuration_sources": {
+    "/.cargo/config": null,
+    "/.cargo/config.toml": null,
+    "/home/.cargo/config": null,
+    "/home/.cargo/config.toml": null,
+    "/home/tim/.cargo/config": null,
+    "/home/tim/.cargo/config.toml": null,
+    "/home/tim/Documents/.cargo/config": null,
+    "/home/tim/Documents/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/.cargo/config": null,
+    "/home/tim/Documents/GitHub/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/.cargo/config.toml": "a5b48f97a3eae472fd23aeffe79dc4bba316e42d6c415001f22d1d23861ca4a9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/.cargo/config.toml": "a5b48f97a3eae472fd23aeffe79dc4bba316e42d6c415001f22d1d23861ca4a9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/Cargo.lock": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/Cargo.toml": "fad45dbdf4c23516b61c2cfa7da138cd8c13c7b7534878ef443220499c897cd3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/.cargo/config": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/.cargo/config.toml": null,
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/Cargo.toml": "dd0ec5a91e14470125c9b58425e1f9af0ea3e297ca48f98a83f4e2d4ce701306",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies/Cargo.lock": "fa974f4f87ed32f8f31d6b7c2e48e02c52b6d73e426449fde5b5d2c32adb99e4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/dependencies/Cargo.toml": "efea0dc468e94774eaa7840ca89feabb350a7bfa7765c7e4dc92a7cc156a3416",
+    "/tmp/csgrs-properties-cargo/config": null,
+    "/tmp/csgrs-properties-cargo/config.toml": null
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/dependency-binding-workspace-probe-v2431",
+    "CARGO_TERM_COLOR": "never",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "scope": "Use real metadata for the retained workspace and standalone proof bundle with the proposed graph/path binding function. Read-only resolution and source hashing; do not rebuild retained dependency libraries or modify SOURCE. This is infrastructure qualification and does not increase proof coverage."
+}
