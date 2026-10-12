@@ -1,0 +1,58 @@
+{
+  "previous_checkpoint": "typed-api-prototype-v2335-state.json",
+  "status": "Retain the isolated conditional approximation-metadata bridge; runtime stays v2335",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "contract_decision": "p4-contract-decision-v173.json",
+  "accepted_cache_rule": "Warming may strengthen Unknown into Certified and reuse higher-precision proofs at zero work; no contradiction or weakening of an available certificate.",
+  "evidence_commits": [
+    "467569e05b0e8475df089e83f4e2ac63ba62102a",
+    "4e50b4aba045e2eed88033d71590a957de7cfc6b",
+    "8de1a1b380991834b6d6180139c49fdb520ef278"
+  ],
+  "retention_record": "approximation-metadata-retention-v2345.json",
+  "retention_record_sha256": "103ef0d5f7e81f757b26b40bc54bedbb3baf4c0ed4eb3e6b8dc318af51cef28f",
+  "input_audit": "approximation-metadata-input-audit-v2344/summary.json",
+  "input_audit_sha256": "4c616739428dae2489c3611b2de7c292c51bd024500f62d49b49d6e11323e9f2",
+  "conditional_proof": {
+    "verified_units": 662,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 137,
+    "open_obligation_groups": 13,
+    "acceptance_tests": 10,
+    "rejected_mutants": 255,
+    "passing_guard_baselines": 4,
+    "guard_source_scope": "Fresh v2338/v2339 runs before two README count fixes and one import reorder. The v2344 audit reconstructs all 133 affected invocation inputs, verifies identical imported paths and mutation commutation, and preserves original execution identities."
+  },
+  "historical_runtime_retention": "eager-bound-decoder-retention-v2335.json",
+  "historical_runtime_retention_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+  "fresh_guard_and_format_validation": "approximation-metadata-validation-v2341.json",
+  "original_import_order_format_failure_preserved": true,
+  "final_passing_format_phase": "typed-api-prototype-v2344-approximation-metadata-final-format",
+  "final_passing_format_result_sha256": "e945af2d2172841a41edbaf65e25b5267c582ec24c1fa2403ef47fae30d0ed6b",
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "coverage_limits": [
+    "The two new model lemmas prove closed one-unit interval endpoints and a valid bound from explicit metadata premises and actual exponent/constructor contracts. They cover both signs and an unavailable exponent. They do not verify the BigInt metadata producer, actual caller, approximation validity, real existence or atomic publication.",
+    "The final conditional target verifies 662 units, 98 production contracts and 137 model theorems. All 255 negative mutations, four passing baselines and ten acceptance tests passed before an import-order/count correction. The audit verifies identical function bodies, specifications, guard scripts, dependencies and tools, and reconstructs every affected invocation under the commuting import reorder. Thirteen whole-crate groups and fixed-baseline acceptance remain open.",
+    "Only four verification files differ from v2335. The first included-file formatting check failed on one import order; that result remains archived. The correction also fixes two stale README counts. The corrected full proof and both formatting commands pass. No ordinary runtime, build, corpus or probe source changes.",
+    "The v2335 runtime tests, strict Clippy/build checks, 39 capped phases, 4129 numerical cases and 648 public schedules remain historical evidence, applicable through the v2344 input audit. No new runtime, cost or replay processes are credited. The seven frozen probe executables and three linked libraries remain byte-identical to v2335.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "remaining_requirements": [
+    "Connect the actual normalized BigInt/BigUint metadata and sign imports to the conditional bit-length/all-ones/power-of-two premises, preserving the producer's short-circuit evaluation. Continue valid approximation production, independent real existence, caller preconditions and atomic publication. Exact-operation CPU/memory failures, the fixed pre-Verus baseline, all thirteen whole-crate groups and main/native/full-board admission remain open.",
+    "Preserve every original full-size regression, corpus, process cap, failure and retained tradeoff. Thread stress and conditional lemmas do not replace graph/producer/existence/atomic proofs.",
+    "Continue constructor/coefficient copies, exact-operation CPU/memory use and unshared expression growth before native combination and unchanged full-board admission.",
+    "All thirteen whole-crate groups and the fixed pre-Verus baseline remain open. Complete the whole properties.md plan and repository pre-push checks; no property/target completion follows from this isolated checkpoint."
+  ]
+}

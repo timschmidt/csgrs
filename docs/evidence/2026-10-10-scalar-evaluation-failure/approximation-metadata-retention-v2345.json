@@ -1,0 +1,136 @@
+{
+  "status": "Retain the isolated conditional approximation-metadata bridge; runtime stays v2335",
+  "runner_sha256": "24ae3c579e1e1ab28db2961cdeb3e23d5e3d88cd8685daf19c42ee0cfb149e3d",
+  "previous_checkpoint": "typed-api-prototype-v2335-state.json",
+  "previous_checkpoint_sha256": "7d840a2160d3e48baa67a3cc4ca2388f6270b141960bc0441f2df888fade7228",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "source_record": "typed-api-prototype-v2343-approximation-metadata-final-verus/source-hashes.json.gz",
+  "source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a",
+      "after": "0e4d7e01ca066aa50a41e771cf5536f4d5837195317a52942b924ea9d9e6f1d3"
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "before": "5e13ccdad986919f9bb91ce0e4d49f5fbd88bed13a69ff12ee4cff5e9954aa70",
+      "after": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+      "after": "a84fee0c6c57939a354285321ebb31344860dff19cb50d5ea8c19581bfa0384c"
+    },
+    "crates/hyperreal/verification/test_bound_rejections.py": {
+      "before": "ae12e4e1b438ce2c491dbb5325934630e34c80590b94ba330f337134e117e38a",
+      "after": "d0c9df855a1a2c4cffb9a75c255ddad36031325f531818059aedbbd5330d959d"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "proposal_protocol": "approximation-metadata-baseline-v2336/protocol.json",
+  "proposal_protocol_sha256": "3ff38316a4e86875ed07c4ee5b34445f84f48e246f3967098707a975476cea6e",
+  "documentation_correction": "approximation-metadata-count-correction-v2342/protocol.json",
+  "documentation_correction_sha256": "b46792dfcd12890cd63f4bf6505d2dec6c4cd0da6590674ef4dfa29c6c3f73df",
+  "input_audit": "approximation-metadata-input-audit-v2344/summary.json",
+  "input_audit_sha256": "4c616739428dae2489c3611b2de7c292c51bd024500f62d49b49d6e11323e9f2",
+  "conditional_proof": {
+    "verified_units": 662,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 137,
+    "open_obligation_groups": 13,
+    "acceptance_tests": 10,
+    "rejected_mutants": 255,
+    "passing_guard_baselines": 4,
+    "guard_source_scope": "Fresh v2338/v2339 runs before two README count fixes and one import reorder. The v2344 audit reconstructs all 133 affected invocation inputs, verifies identical imported paths and mutation commutation, and preserves original execution identities."
+  },
+  "proof_phases": [
+    "typed-api-prototype-v2337-approximation-metadata-verus",
+    "typed-api-prototype-v2343-approximation-metadata-final-verus"
+  ],
+  "fresh_guard_and_format_validation": "approximation-metadata-validation-v2341.json",
+  "fresh_guard_and_format_validation_sha256": "eec64d8ec55a83b278a4ad5618d9f0000309a1807ab684bd3d13682b03eb7f73",
+  "final_passing_format_phase": "typed-api-prototype-v2344-approximation-metadata-final-format",
+  "final_passing_format_result_sha256": "e945af2d2172841a41edbaf65e25b5267c582ec24c1fa2403ef47fae30d0ed6b",
+  "original_import_order_format_failure_preserved": true,
+  "historical_runtime_retention": "eager-bound-decoder-retention-v2335.json",
+  "historical_runtime_retention_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+  "historical_runtime_evidence_applicable": true,
+  "historical_runs_relabelled_as_fresh": 0,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "old_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "coverage_limits": [
+    "The two new model lemmas prove closed one-unit interval endpoints and a valid bound from explicit metadata premises and actual exponent/constructor contracts. They cover both signs and an unavailable exponent. They do not verify the BigInt metadata producer, actual caller, approximation validity, real existence or atomic publication.",
+    "The final conditional target verifies 662 units, 98 production contracts and 137 model theorems. All 255 negative mutations, four passing baselines and ten acceptance tests passed before an import-order/count correction. The audit verifies identical function bodies, specifications, guard scripts, dependencies and tools, and reconstructs every affected invocation under the commuting import reorder. Thirteen whole-crate groups and fixed-baseline acceptance remain open.",
+    "Only four verification files differ from v2335. The first included-file formatting check failed on one import order; that result remains archived. The correction also fixes two stale README counts. The corrected full proof and both formatting commands pass. No ordinary runtime, build, corpus or probe source changes.",
+    "The v2335 runtime tests, strict Clippy/build checks, 39 capped phases, 4129 numerical cases and 648 public schedules remain historical evidence, applicable through the v2344 input audit. No new runtime, cost or replay processes are credited. The seven frozen probe executables and three linked libraries remain byte-identical to v2335.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "next_priority": "Connect the actual normalized BigInt/BigUint metadata and sign imports to the conditional bit-length/all-ones/power-of-two premises, preserving the producer's short-circuit evaluation. Continue valid approximation production, independent real existence, caller preconditions and atomic publication. Exact-operation CPU/memory failures, the fixed pre-Verus baseline, all thirteen whole-crate groups and main/native/full-board admission remain open.",
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "checkpoint_requirement": "record_checkpoint_v4.py must verify every previous checkpoint artifact, current source, main guard and original worktree entry before creating v2345."
+}

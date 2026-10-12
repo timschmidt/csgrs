@@ -1,0 +1,8 @@
+{
+  "source_record_sha256": "090aedf5a30f3cbaf202a47a4c5deca5e437fbe2e248d23ed76004dda1303e39",
+  "changed_verification_files": 4,
+  "runtime_source_files_changed": 0,
+  "verification_started": false,
+  "proof_retained": false,
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json"
+}

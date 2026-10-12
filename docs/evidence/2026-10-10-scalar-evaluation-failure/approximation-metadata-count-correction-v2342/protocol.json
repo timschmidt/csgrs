@@ -1,0 +1,19 @@
+{
+  "status": "Frozen after passing guards and the retained import-order formatting failure, before correction",
+  "runner_sha256": "ad804f68390dd1b3645e9c65f3a543bb01716b9410de78eacc8c4618d21e326e",
+  "validation_sha256": "eec64d8ec55a83b278a4ad5618d9f0000309a1807ab684bd3d13682b03eb7f73",
+  "previous_source_record_sha256": "090aedf5a30f3cbaf202a47a4c5deca5e437fbe2e248d23ed76004dda1303e39",
+  "file": "crates/hyperreal/verification/README.md",
+  "before_sha256": "5c9fe64144a0397eebfe11587326ecbc8bd81439b6ae22c01ab8be85458fb725",
+  "after_sha256": "0e4d7e01ca066aa50a41e771cf5536f4d5837195317a52942b924ea9d9e6f1d3",
+  "model_file": "crates/hyperreal/verification/bound_denotation.rs",
+  "model_before_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+  "model_after_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1",
+  "old_import": "use vstd::arithmetic::power2::{lemma2_to64, pow2, lemma_pow2_strictly_increases};",
+  "new_import": "use vstd::arithmetic::power2::{lemma_pow2_strictly_increases, lemma2_to64, pow2};",
+  "format_failure": "typed-api-prototype-v2341-approximation-metadata-included-fmt",
+  "format_failure_result_sha256": "bd7dc1ab81533ad60dce759ede33167e47e56586e26f8862421afb47a9ca5b7a",
+  "correction_patch_sha256": "761ace25347dbc116be4b8329bb81e4a8a2198ced67bb9abdded21095e013da7",
+  "reason": "Sort the three imports as rustfmt requires and correct the model catalog from 135 to 137 and bound-denotation catalog from 28 to 30. Every function body, specification, test and runtime source stays identical.",
+  "required_followup": "Run the complete conditional proof and both formatting checks on corrected sources. Audit unchanged runtime inputs and reconstruct every affected guard input to show that the sole reordered import preserves its exact imported paths and commutes with each mutation. Historical guards retain their original source identities; no fresh guard run is inferred."
+}

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/usr/bin/python3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_candidate_proof_checks.py",
+    "typed-api-prototype-v2339-approximation-metadata-rejections",
+    "test_rejections.py"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source",
+  "source_hashes_sha256": "090aedf5a30f3cbaf202a47a4c5deca5e437fbe2e248d23ed76004dda1303e39",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache"
+  }
+}

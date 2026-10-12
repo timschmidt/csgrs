@@ -1,0 +1,1592 @@
+{
+  "status": "Unchanged runtime inputs and a checked import-only proof correction support evidence reuse",
+  "runner_sha256": "33846506c878e672136adb3d394b29c607b9c2075aae4033e60b088c8188e273",
+  "retained_checkpoint": "typed-api-prototype-v2335-state.json",
+  "retained_checkpoint_sha256": "7d840a2160d3e48baa67a3cc4ca2388f6270b141960bc0441f2df888fade7228",
+  "source_record": "typed-api-prototype-v2343-approximation-metadata-final-verus/source-hashes.json.gz",
+  "source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "previous_source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a",
+      "after": "0e4d7e01ca066aa50a41e771cf5536f4d5837195317a52942b924ea9d9e6f1d3"
+    },
+    "crates/hyperreal/verification/bound_denotation.rs": {
+      "before": "5e13ccdad986919f9bb91ce0e4d49f5fbd88bed13a69ff12ee4cff5e9954aa70",
+      "after": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+      "after": "a84fee0c6c57939a354285321ebb31344860dff19cb50d5ea8c19581bfa0384c"
+    },
+    "crates/hyperreal/verification/test_bound_rejections.py": {
+      "before": "ae12e4e1b438ce2c491dbb5325934630e34c80590b94ba330f337134e117e38a",
+      "after": "d0c9df855a1a2c4cffb9a75c255ddad36031325f531818059aedbbd5330d959d"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "conditional_proof": {
+    "verified_units": 662,
+    "errors": 0,
+    "production_contracts": 98,
+    "model_theorems": 137,
+    "open_obligation_groups": 13
+  },
+  "guard_validation_sha256": "eec64d8ec55a83b278a4ad5618d9f0000309a1807ab684bd3d13682b03eb7f73",
+  "guard_log_sha256": "9ce5d2933e9b162930faaa4299bc56dc826c7a4370dc13ced992f7b611bb8efa",
+  "fresh_guard_invocations": 259,
+  "fresh_rejected_mutations": 255,
+  "fresh_positive_baselines": 4,
+  "new_negative_controls": [
+    {
+      "name": "metadata magnitude separation",
+      "invocation_index": 185,
+      "mutated_source_sha256": "20bf75e546cb28223b07a51dd5f2851eaa0b61bfdccc3bfe3242c1c4a68d5076"
+    },
+    {
+      "name": "metadata endpoint bit length",
+      "invocation_index": 186,
+      "mutated_source_sha256": "e727f5da4edf16f1521e88dba401e3557c436cc99cb4049f60b261105bbc0f02"
+    },
+    {
+      "name": "metadata all-ones flag",
+      "invocation_index": 187,
+      "mutated_source_sha256": "0275300b8c6f9198fa1a8ece962976dd064cd9dce998ef87fb0248961d1f05ce"
+    },
+    {
+      "name": "metadata power-of-two flag",
+      "invocation_index": 188,
+      "mutated_source_sha256": "6e925f0f788d6ef7c06c3ef5161248e50c609e78bfa119fbce5ceea7ff8bc0cc"
+    },
+    {
+      "name": "metadata upper-binade carry",
+      "invocation_index": 189,
+      "mutated_source_sha256": "876b92aba027a3c82893596ddcf1998ada4295cc829cf3979c842c5fa1bfcb3d"
+    },
+    {
+      "name": "metadata magnitude import",
+      "invocation_index": 190,
+      "mutated_source_sha256": "be25bbf4e4c1aebc2448e35a34cdca737f3769c4f7ce3df1ad0d4a090356ee1d"
+    },
+    {
+      "name": "metadata approximation sign",
+      "invocation_index": 191,
+      "mutated_source_sha256": "a6e66db3e19721e8dc2c1a0b8cc4a6b0ac86364615b2aa06ba7140483adb40b6"
+    },
+    {
+      "name": "metadata approximation validity",
+      "invocation_index": 192,
+      "mutated_source_sha256": "508281c2f6fc3a5c5ca2a2e664d44c8d1749b5d477f95e43e1990ba64738b948"
+    },
+    {
+      "name": "metadata checked exponent correction",
+      "invocation_index": 193,
+      "mutated_source_sha256": "3d28edd7c49bf8769bb24f5eee3cdf2f55d3df0efeeffb699f40f162fb4758a5"
+    },
+    {
+      "name": "metadata exact binade boundaries",
+      "invocation_index": 194,
+      "mutated_source_sha256": "f5793d8ea020c5be03013ff4d3987cedcc0a593635555a7b88ab402802cdfcad"
+    }
+  ],
+  "acceptance_tests": 10,
+  "post_guard_difference": "Two README counts and the order of three distinct imports in one use statement changed. Every function body, specification, Python guard, manifest, lockfile and tool input is identical. Both formatting commands were rerun successfully after preserving the first import-order failure.",
+  "guard_import_correction": {
+    "old_import": "use vstd::arithmetic::power2::{lemma2_to64, pow2, lemma_pow2_strictly_increases};",
+    "new_import": "use vstd::arithmetic::power2::{lemma_pow2_strictly_increases, lemma2_to64, pow2};",
+    "identical_imported_paths": [
+      "lemma2_to64",
+      "lemma_pow2_strictly_increases",
+      "pow2"
+    ],
+    "reconstructed_model_variants": 40,
+    "affected_actual_invocations": [
+      {
+        "invocation_index": 104,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 105,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 106,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 107,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 108,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 109,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 110,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 111,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 112,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 113,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 114,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 115,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 116,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 117,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 118,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 119,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 120,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 121,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 122,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 123,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 124,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 125,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 126,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 127,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 128,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 129,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 130,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 131,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 132,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 133,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 134,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 135,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 136,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 137,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 138,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 139,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 140,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 141,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 142,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 143,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 144,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 145,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 146,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 147,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 148,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 149,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 150,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 151,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 152,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 153,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 154,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 155,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 156,
+        "file": "verification/bound_denotation.rs",
+        "variant": "sign certificate",
+        "actual_executed_input_sha256": "0547ee17db302546a917c787bcc97f506c497679787212eb0ff97f767b5bddf5",
+        "current_equivalent_input_sha256": "adfea03b5cedf76055cb81b4a318294b60036882d02a163e8076e21524894a4d"
+      },
+      {
+        "invocation_index": 157,
+        "file": "verification/bound_denotation.rs",
+        "variant": "approximation separation",
+        "actual_executed_input_sha256": "4800fc994dff46ee3bc00d327ac4cc70cb0db899d752f5d1b75cce923743d246",
+        "current_equivalent_input_sha256": "616425ec3f6bebff6a6769709f15e86e0b9ad1bfbd8d039ab2c53dcd70e07a76"
+      },
+      {
+        "invocation_index": 158,
+        "file": "verification/bound_denotation.rs",
+        "variant": "negation denotation",
+        "actual_executed_input_sha256": "2ff6e3616a689585962e5f1cd1e97dec5bebf8299942004cb9c5ccf538691ba9",
+        "current_equivalent_input_sha256": "a54c156be157fa5fc6739118c6cff9388e87722b8c950f8c7b47741b9e0e562d"
+      },
+      {
+        "invocation_index": 159,
+        "file": "verification/bound_denotation.rs",
+        "variant": "reciprocal sign",
+        "actual_executed_input_sha256": "b1a28846a9a7de6e9f0794322c6b951914865ba4cb2424c6fe1c6d091953e837",
+        "current_equivalent_input_sha256": "ee6053e28dc63e4f98dab8bf7c228bfd0ce1f6c591d2011dbfe7381a365f1b9d"
+      },
+      {
+        "invocation_index": 160,
+        "file": "verification/bound_denotation.rs",
+        "variant": "square sign",
+        "actual_executed_input_sha256": "414593b1e1404d834fb85c8d7c75b86129c0e467f96b5fe349be5fee6ca784ea",
+        "current_equivalent_input_sha256": "19d4bf614e89481cca59eec4451ea815ca9141ceb58e7cd3885fed56aac326eb"
+      },
+      {
+        "invocation_index": 161,
+        "file": "verification/bound_denotation.rs",
+        "variant": "product sign",
+        "actual_executed_input_sha256": "0193eb4ca72930dcb2051961597f202c5ba4396d31abf69d040da9389c61e0fa",
+        "current_equivalent_input_sha256": "52ad08545db8471ba45dc472b7446b53cfa19730abc7506730d165bef67142e8"
+      },
+      {
+        "invocation_index": 162,
+        "file": "verification/bound_denotation.rs",
+        "variant": "sum sign",
+        "actual_executed_input_sha256": "5c7a5e53d302ea91ca3a5157cf208b3944748ceb2d26a5d1ed61b1564ab4e855",
+        "current_equivalent_input_sha256": "cb9b44807a8673bc3126cc73f2d85a12cbb54beed8147b55d67337df5bc3d140"
+      },
+      {
+        "invocation_index": 163,
+        "file": "verification/bound_denotation.rs",
+        "variant": "binade separation",
+        "actual_executed_input_sha256": "f172fa02d73e2ea33e648cfe376b6e25a7c3fe90d89786e3e8be1045c8c36208",
+        "current_equivalent_input_sha256": "79bc5200fb5731414b6b892bb76b85b4943cae3cd1f0e60447bf407b06d8fb89"
+      },
+      {
+        "invocation_index": 164,
+        "file": "verification/bound_denotation.rs",
+        "variant": "square-root binade",
+        "actual_executed_input_sha256": "cd7c74c007eedf06dcbb0e2d5b93d0dd846224ca7fd0e4115061f6a6ab8125d4",
+        "current_equivalent_input_sha256": "bdd7ab04051027244e68efb4fd6e0b866de3c6ff8094dbfd935f2656feb2f25b"
+      },
+      {
+        "invocation_index": 165,
+        "file": "verification/bound_denotation.rs",
+        "variant": "zero certificate",
+        "actual_executed_input_sha256": "cdf6897183ffdac5fe9e51ae753cfafb684753fb07f711b548c83b6930d473c8",
+        "current_equivalent_input_sha256": "94f67ad18becca4bb0a4a7a60aa235daf2eb5536e3561129a8d718253404dacd"
+      },
+      {
+        "invocation_index": 166,
+        "file": "verification/bound_denotation.rs",
+        "variant": "binary scaling exponent",
+        "actual_executed_input_sha256": "c9d29cc4f5d7474817d2537a6057e38fc73cbe13a23abb982172392653f0514e",
+        "current_equivalent_input_sha256": "6e0c4df8463c33f3c7b64d7176f18947e49a0a2325d22ecaee2f4960cdb28fab"
+      },
+      {
+        "invocation_index": 167,
+        "file": "verification/bound_denotation.rs",
+        "variant": "mapped offset direction",
+        "actual_executed_input_sha256": "bbc6cb57ea638e137ac126fa9665da1304c1630100d37e064360426cdf6ec951",
+        "current_equivalent_input_sha256": "03d04698f3b0784a692f6d9705352a8308cf5ee288f97dfb5497e7dda18e1aac"
+      },
+      {
+        "invocation_index": 168,
+        "file": "verification/bound_denotation.rs",
+        "variant": "mapping callback",
+        "actual_executed_input_sha256": "c667de70063a158677ca4163ab98187c4eda3dfc8e2f9114aae694a1d9a6bbce",
+        "current_equivalent_input_sha256": "868b3439fe63d8f32d505adb770f26199431dad64f8cd4e0503f90e207d2ec88"
+      },
+      {
+        "invocation_index": 169,
+        "file": "verification/bound_denotation.rs",
+        "variant": "public positive sign",
+        "actual_executed_input_sha256": "06c6d8e32463eedb9ae06c51907bdf8b559478a4c945527d8abfadcf54e84057",
+        "current_equivalent_input_sha256": "29492f5c56fb4624a654fee4277d1d7c9deb14e9793d3454bfe4bbc7cbadaa67"
+      },
+      {
+        "invocation_index": 170,
+        "file": "verification/bound_denotation.rs",
+        "variant": "exported magnitude nonzero",
+        "actual_executed_input_sha256": "8447abde45a3123986663b6d3a10fda8101a396c9bcebf8bbbf55982e98420d0",
+        "current_equivalent_input_sha256": "77d4ae78ab012a9bd8eef340139cfca40de68706fd8ce219a8d540ad94fd2500"
+      },
+      {
+        "invocation_index": 171,
+        "file": "verification/bound_denotation.rs",
+        "variant": "inexact magnitude",
+        "actual_executed_input_sha256": "558017bc6ed314dba5145999e9d74cf8ea411405f559b848a3f8ae2d8e30173a",
+        "current_equivalent_input_sha256": "19322ad8ff80cc54d1c106e3b7a8ba53a3dc5054f27eeac36b7717106e8d0ffc"
+      },
+      {
+        "invocation_index": 172,
+        "file": "verification/bound_denotation.rs",
+        "variant": "upper exponent monotonicity",
+        "actual_executed_input_sha256": "db7c48ce143eaad457b6e6ffc32e5a43cb27641a3d541322b5251d3945ff1021",
+        "current_equivalent_input_sha256": "a1a7adbb6f118b3df742453e05d32ea2ba24aca6432541bf7e51ffdcca9a3fab"
+      },
+      {
+        "invocation_index": 173,
+        "file": "verification/bound_denotation.rs",
+        "variant": "clamped exponent exactness",
+        "actual_executed_input_sha256": "62efbd77b80b0ee5fc55a7dd41b9b36af11b0aed07bf8aefd7466f296fcf0acc",
+        "current_equivalent_input_sha256": "603bf96de38c4dee3ed96172ab158398ae5b8517e5c61a3e1d7f8b0442b6e209"
+      },
+      {
+        "invocation_index": 174,
+        "file": "verification/bound_denotation.rs",
+        "variant": "clamped upper certificate",
+        "actual_executed_input_sha256": "73c6a2c9918580e8eec111acc14e8f6ed93267f2f11ac80f0d43df7828f48b9f",
+        "current_equivalent_input_sha256": "af463c29ab610351e31a7a04e49e11856402b7957e11c6708e4e126da94232fd"
+      },
+      {
+        "invocation_index": 175,
+        "file": "verification/bound_denotation.rs",
+        "variant": "product upper carry",
+        "actual_executed_input_sha256": "7202b1d07d320f5f191d95ca6a37a848e73f60d53486615bd9ce991bca6f25b2",
+        "current_equivalent_input_sha256": "ef7d57a23d1d56c075ce01bf74e901fe00e406db1630b2d8d18f0b13bd3771a7"
+      },
+      {
+        "invocation_index": 176,
+        "file": "verification/bound_denotation.rs",
+        "variant": "sum upper carry",
+        "actual_executed_input_sha256": "c93642a786a51a3aa1f46ffa606956281f5d29492be3bdd0be6419da7b03a941",
+        "current_equivalent_input_sha256": "fc0d007f870570c79c8c4cd067aba248139b8a65af64b83fc1d77a24f0ddb181"
+      },
+      {
+        "invocation_index": 177,
+        "file": "verification/bound_denotation.rs",
+        "variant": "square-root upper exponent",
+        "actual_executed_input_sha256": "f8946c2f0d9bfa40f93107ffbcccae55a1e750c8667a254b3c63201a56b4a712",
+        "current_equivalent_input_sha256": "c05249ed861fc7179d6171c01ecdcde034345cbcf4eaedec0a4370787924da5c"
+      },
+      {
+        "invocation_index": 178,
+        "file": "verification/bound_denotation.rs",
+        "variant": "upper binary scaling direction",
+        "actual_executed_input_sha256": "e29fd63917904af95f379413dcf2fdc3c099f84439574564d6341cb69f03477f",
+        "current_equivalent_input_sha256": "5fc0e3dab7331b52219113d0cce0deb639d4aac85cd1d744e258e1ec9ae70cc6"
+      },
+      {
+        "invocation_index": 179,
+        "file": "verification/bound_denotation.rs",
+        "variant": "closed upper endpoint",
+        "actual_executed_input_sha256": "75898fdc19aaea3f4cc0ec7ec95c603fabd14a8b63c8030addafac1160ca1e4c",
+        "current_equivalent_input_sha256": "5530e072bb4ed1b9fe63a79a0d02787f73c4242379c083db1aa85a36da40757a"
+      },
+      {
+        "invocation_index": 180,
+        "file": "verification/bound_denotation.rs",
+        "variant": "closed exact lower endpoint",
+        "actual_executed_input_sha256": "8c17c1bef35b25d55ea561d5872098710c1e45aaecc2973d888d69f59b02249a",
+        "current_equivalent_input_sha256": "839964160114b6e9df1673fcf4e9642200c4d31730a5647f7ba92ebc5cdda2fe"
+      },
+      {
+        "invocation_index": 181,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unit-domain strict upper exponent",
+        "actual_executed_input_sha256": "d2902d04d2779929723c1ac54744e726e3e7a186507281f699a9bca320c0cd43",
+        "current_equivalent_input_sha256": "55cb58de89f048b7fe939f79804bebc016ffaa84918b1e20b19f93fe3bde31b4"
+      },
+      {
+        "invocation_index": 182,
+        "file": "verification/bound_denotation.rs",
+        "variant": "at-least-one needs a lower binade",
+        "actual_executed_input_sha256": "21178bf49b60acb580693931052d670a8594260c45f8a80a591e06c519f9323d",
+        "current_equivalent_input_sha256": "613b7c592438ad4fa26fd313da45def3fc8f20b65b68d6aa9de7b837d6cf5a76"
+      },
+      {
+        "invocation_index": 183,
+        "file": "verification/bound_denotation.rs",
+        "variant": "domain requires a valid incoming bound",
+        "actual_executed_input_sha256": "9aaea0bfb8b372c4add76f4246f432d49ab9c9af9209e3fbe64b1e24b308ecbf",
+        "current_equivalent_input_sha256": "8c622366c0074a64e8510b1a6fccddddce78fbc5e13ed10a9b593eee66073952"
+      },
+      {
+        "invocation_index": 184,
+        "file": "verification/bound_denotation.rs",
+        "variant": "domain requires an accepted certificate",
+        "actual_executed_input_sha256": "7672c2628cb09ac540a2f0244b47dabef7d2a0747630fbb65caacc85110cc257",
+        "current_equivalent_input_sha256": "1f2790409bae7cf202772ae9d18c45b70c6c9e99d4aa01a4f563e6661d34b3cc"
+      },
+      {
+        "invocation_index": 185,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata magnitude separation",
+        "actual_executed_input_sha256": "20bf75e546cb28223b07a51dd5f2851eaa0b61bfdccc3bfe3242c1c4a68d5076",
+        "current_equivalent_input_sha256": "489e2593b84aa1e772207e1b62afe15d5e46b6264f567ba9dc2e4cf96a2b5524"
+      },
+      {
+        "invocation_index": 186,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata endpoint bit length",
+        "actual_executed_input_sha256": "e727f5da4edf16f1521e88dba401e3557c436cc99cb4049f60b261105bbc0f02",
+        "current_equivalent_input_sha256": "556d5e98d368eaf130aee1091da761146c7894e65f4b2909e2ddbbd14bebf2ea"
+      },
+      {
+        "invocation_index": 187,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata all-ones flag",
+        "actual_executed_input_sha256": "0275300b8c6f9198fa1a8ece962976dd064cd9dce998ef87fb0248961d1f05ce",
+        "current_equivalent_input_sha256": "e7879b5bd641782e752b0cb8ab9c0fdcd35ea4da3c8dab38727414f28aeefac0"
+      },
+      {
+        "invocation_index": 188,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata power-of-two flag",
+        "actual_executed_input_sha256": "6e925f0f788d6ef7c06c3ef5161248e50c609e78bfa119fbce5ceea7ff8bc0cc",
+        "current_equivalent_input_sha256": "10c1a9bda56cd10429d5b2f5430078cfbdfd41b0122d93c43675bb797f7a3f9a"
+      },
+      {
+        "invocation_index": 189,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata upper-binade carry",
+        "actual_executed_input_sha256": "876b92aba027a3c82893596ddcf1998ada4295cc829cf3979c842c5fa1bfcb3d",
+        "current_equivalent_input_sha256": "49ee2fd2ba0b95dc162b1151709fe3251bf3cd2786d9d796ad55065d7efd8360"
+      },
+      {
+        "invocation_index": 190,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata magnitude import",
+        "actual_executed_input_sha256": "be25bbf4e4c1aebc2448e35a34cdca737f3769c4f7ce3df1ad0d4a090356ee1d",
+        "current_equivalent_input_sha256": "03ae1c891db86bcfc22853d27b58b7ef93bb06c8add34699ccb777d3fabb8c26"
+      },
+      {
+        "invocation_index": 191,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata approximation sign",
+        "actual_executed_input_sha256": "a6e66db3e19721e8dc2c1a0b8cc4a6b0ac86364615b2aa06ba7140483adb40b6",
+        "current_equivalent_input_sha256": "56771d44f2c18f5013448d881b4099bceff8ba776d78eb2e77c3b5efd1a16891"
+      },
+      {
+        "invocation_index": 192,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata approximation validity",
+        "actual_executed_input_sha256": "508281c2f6fc3a5c5ca2a2e664d44c8d1749b5d477f95e43e1990ba64738b948",
+        "current_equivalent_input_sha256": "7171404ac96d5ef9d8ebae51ea65fdf5bcfaa45e0e6a3e4ed438e0c2f98bdfd5"
+      },
+      {
+        "invocation_index": 193,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata checked exponent correction",
+        "actual_executed_input_sha256": "3d28edd7c49bf8769bb24f5eee3cdf2f55d3df0efeeffb699f40f162fb4758a5",
+        "current_equivalent_input_sha256": "389c97b504ef1d8c2730dc6b36c48697d3da8e1afac5af927a7b214ea421e213"
+      },
+      {
+        "invocation_index": 194,
+        "file": "verification/bound_denotation.rs",
+        "variant": "metadata exact binade boundaries",
+        "actual_executed_input_sha256": "f5793d8ea020c5be03013ff4d3987cedcc0a593635555a7b88ab402802cdfcad",
+        "current_equivalent_input_sha256": "b232088bf87f6d9f16a82e2e7c66f432cb79989304796cd909a27dbff8dfeb4b"
+      },
+      {
+        "invocation_index": 195,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 196,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 197,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 198,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 199,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 200,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 201,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 202,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 203,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 204,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 205,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 206,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 207,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 208,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 209,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 210,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 211,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 212,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 213,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 214,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 215,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 216,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 217,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 218,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 219,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 220,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 221,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 222,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 223,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 224,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 225,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 226,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 227,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 228,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 229,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 230,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 231,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 232,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 233,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 234,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 235,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      },
+      {
+        "invocation_index": 236,
+        "file": "verification/bound_denotation.rs",
+        "variant": "unmutated model",
+        "actual_executed_input_sha256": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+        "current_equivalent_input_sha256": "a85a11fc0f90eebe39892697ddae0d6f9314f35a897f79cf82b47f416cabd0a1"
+      }
+    ],
+    "basis": "The use statement only introduces the same three distinct names from the same path; no alias, visibility, attribute or executable expression changes. Reordering it commutes exactly with all 39 model mutations. All 133 affected actual invocation hashes map to these reconstructed variants. The corrected complete proof passes; the historical negative runs are not relabelled as current-source executions."
+  },
+  "fresh_final_format_phase": "typed-api-prototype-v2344-approximation-metadata-final-format",
+  "fresh_final_format_result_sha256": "e945af2d2172841a41edbaf65e25b5267c582ec24c1fa2403ef47fae30d0ed6b",
+  "earlier_format_failure_preserved": "typed-api-prototype-v2341-approximation-metadata-included-fmt",
+  "unchanged_proof_dependencies_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "unchanged_verifier_files": 3873,
+  "runtime_libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "1568590bacd2bad7bcb73f985dfb16add2c7a8dcd7aa8c1d68e03204b9de61d7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06"
+  },
+  "frozen_probe_binaries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/atan": "56bfa3f48cb50c21bebf1f3e31d59569c398e864ecd0cab87ca42ea06f09d3a8",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/acos": "3d3a422dd5b3f2742d7e503d030229575625cec20178dbcc231d49f3754b4595",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/integer": "29b220fe98231963281a9cbe6f84e42e8f2bcf1dce4c2a8dac255e5b775ae65b",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/inverse_trig": "84c4fb417eebadf4b0a5fe93239713eb7d78b0892384e51d958fc9822d1e71ed",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/normal_form": "923345bafce7a96a75bc500327afa7ad54c9819c17bb5230576882145e410d87",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/default": "8c0d6c1e78b04fa60cebbb72632fb6ebe4b492d6c35f135759ad3a4f3f60f31e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/eager-bound-decoder-binary-comparison-v2262/algebraic": "b090c2221934ebb7a5fcb76e69a93c2402b17b7a85f953691a123ca3246cb4cb"
+  },
+  "frozen_probe_sources_sha256": {
+    "typed-api-prototype-v1773-domain-predicate-atan-cost/probe.rs": "c0ecfb4edc91dc4ba25afbff5a8e1f6d496a818903e0762fbfdbd648f9a4942c",
+    "typed-api-prototype-v1779-domain-predicate-acos-cost/probe.rs": "5684b96a1b77c55e4cd0769ff6ebca3d88835355016ad8c48b297f710fd56527",
+    "typed-api-prototype-v1774-domain-predicate-integer-cost/probe.rs": "e7eb93152d7a7e3f121176cef8505ced7586b17ae91e2bad408fad456bbb06ea",
+    "typed-api-prototype-v1775-domain-predicate-inverse-cost/probe.rs": "ded23018a96bfe35de0d1b64c74dd334867245af94f7c88df6f63478a0cc86ff",
+    "typed-api-prototype-v1776-domain-predicate-normal-form-cost/probe.rs": "4131a5a91cde15352a18bf8fca890fb7b43992eab1f72771920f27f2cd9d60bb",
+    "typed-api-prototype-v1777-domain-predicate-default-cost/probe.rs": "dde22067eed3e9b89f7c7a6977e5d9559e618b1bbd6850089f8dc322e0482516",
+    "typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe.rs": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36"
+  },
+  "compiler_dependency_records": [
+    {
+      "file": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-74ad6915c70c2b5a.d",
+      "sha256": "604551bb8c4b6754659849ec8429855e8940d13b701f34f3be348a6571d0b1a8",
+      "source_inputs": [
+        "crates/hyperreal/src/lib.rs",
+        "crates/hyperreal/src/rational/mod.rs",
+        "crates/hyperreal/src/rational/arithmetic.rs",
+        "crates/hyperreal/src/rational/convert.rs",
+        "crates/hyperreal/src/rational/parse.rs",
+        "crates/hyperreal/src/verified/mod.rs",
+        "crates/hyperreal/src/verified/accumulate.rs",
+        "crates/hyperreal/src/verified/aggregate.rs",
+        "crates/hyperreal/src/verified/division.rs",
+        "crates/hyperreal/src/verified/dyadic.rs",
+        "crates/hyperreal/src/verified/fixed_gcd.rs",
+        "crates/hyperreal/src/verified/float.rs",
+        "crates/hyperreal/src/verified/fraction.rs",
+        "crates/hyperreal/src/verified/gcd.rs",
+        "crates/hyperreal/src/verified/lehmer.rs",
+        "crates/hyperreal/src/verified/limbs.rs",
+        "crates/hyperreal/src/verified/product.rs",
+        "crates/hyperreal/src/verified/word.rs",
+        "crates/hyperreal/src/structural.rs",
+        "crates/hyperreal/src/trace.rs",
+        "crates/hyperreal/src/dispatch_trace.rs",
+        "crates/hyperreal/src/computable/mod.rs",
+        "crates/hyperreal/src/computable/approximation.rs",
+        "crates/hyperreal/src/computable/budget.rs",
+        "crates/hyperreal/src/computable/constants.rs",
+        "crates/hyperreal/src/computable/format.rs",
+        "crates/hyperreal/src/computable/node.rs",
+        "crates/hyperreal/src/real/mod.rs",
+        "crates/hyperreal/src/real/approximation.rs",
+        "crates/hyperreal/src/real/arithmetic.rs",
+        "crates/hyperreal/src/real/arithmetic/decimal.rs",
+        "crates/hyperreal/src/real/arithmetic/scientific.rs",
+        "crates/hyperreal/src/real/constructors.rs",
+        "crates/hyperreal/src/real/convert.rs",
+        "crates/hyperreal/src/real/exact_set.rs",
+        "crates/hyperreal/src/real/facts.rs",
+        "crates/hyperreal/src/real/linear_combination.rs",
+        "crates/hyperreal/src/real/tests.rs",
+        "crates/hyperreal/src/simple.rs",
+        "crates/hyperreal/src/problem.rs",
+        "crates/hyperreal/src/serde.rs",
+        "crates/hyperreal/src/rational/arithmetic/representation.rs",
+        "crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs",
+        "crates/hyperreal/src/rational/arithmetic/barrett_division.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom8_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/construction.rs",
+        "crates/hyperreal/src/rational/arithmetic/aggregate_products.rs",
+        "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+        "crates/hyperreal/src/rational/arithmetic/squares_powers.rs",
+        "crates/hyperreal/src/rational/arithmetic/as_ref.rs",
+        "crates/hyperreal/src/rational/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/rational/arithmetic/ops.rs",
+        "crates/hyperreal/src/rational/arithmetic/comparison.rs",
+        "crates/hyperreal/src/rational/arithmetic/tests.rs",
+        "crates/hyperreal/src/computable/approximation/representation.rs",
+        "crates/hyperreal/src/computable/approximation/dispatch.rs",
+        "crates/hyperreal/src/computable/approximation/constants.rs",
+        "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+        "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+        "crates/hyperreal/src/computable/approximation/trig.rs",
+        "crates/hyperreal/src/computable/approximation/trig_operands.rs",
+        "crates/hyperreal/src/computable/approximation/logarithms.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/approximation/statistics.rs",
+        "crates/hyperreal/src/computable/node/bounds.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget.rs",
+        "crates/hyperreal/src/computable/node/symbolic_work.rs",
+        "crates/hyperreal/src/computable/node/representation.rs",
+        "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs",
+        "crates/hyperreal/src/computable/node/domain_certificates.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic.rs",
+        "crates/hyperreal/src/computable/node/trig_operands.rs",
+        "crates/hyperreal/src/computable/node/trig_domain.rs",
+        "crates/hyperreal/src/computable/node/domain_validation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse.rs",
+        "crates/hyperreal/src/computable/node/exp_trig.rs",
+        "crates/hyperreal/src/computable/node/logarithms.rs",
+        "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/node/algebra.rs",
+        "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+        "crates/hyperreal/src/computable/node/radical_tower.rs",
+        "crates/hyperreal/src/computable/node/approximation_queries.rs",
+        "crates/hyperreal/src/computable/node/scale.rs",
+        "crates/hyperreal/src/computable/node/tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs",
+        "crates/hyperreal/src/computable/node/linear_demand_tests.rs",
+        "crates/hyperreal/src/computable/node/fractional_separation_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_rescale_tests.rs",
+        "crates/hyperreal/src/computable/node/precision_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/certified_planning_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs",
+        "crates/hyperreal/src/computable/node/algebra_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_publication_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs",
+        "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/private_trig_range_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs",
+        "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/rational_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/integer_scale_tests.rs",
+        "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_bound_tests.rs",
+        "crates/hyperreal/src/real/arithmetic/classification.rs",
+        "crates/hyperreal/src/real/arithmetic/canonical_constants.rs",
+        "crates/hyperreal/src/real/arithmetic/representation.rs",
+        "crates/hyperreal/src/real/arithmetic/facts.rs",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+        "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+        "crates/hyperreal/src/real/arithmetic/linear_algebra.rs",
+        "crates/hyperreal/src/real/arithmetic/inversion.rs",
+        "crates/hyperreal/src/real/arithmetic/elementary_functions.rs",
+        "crates/hyperreal/src/real/arithmetic/structural_helpers.rs",
+        "crates/hyperreal/src/real/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/real/arithmetic/add_sub.rs",
+        "crates/hyperreal/src/real/arithmetic/mul_div.rs",
+        "crates/hyperreal/src/real/arithmetic/comparison.rs",
+        "crates/hyperreal/src/real/arithmetic/tests.rs"
+      ],
+      "changed_inputs": []
+    },
+    {
+      "file": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc.d",
+      "sha256": "e30163a3180ab4c444fc7cd24b042066157da7655e57e9be383c31408249e3b8",
+      "source_inputs": [
+        "crates/hyperreal/src/lib.rs",
+        "crates/hyperreal/src/rational/mod.rs",
+        "crates/hyperreal/src/rational/arithmetic.rs",
+        "crates/hyperreal/src/rational/convert.rs",
+        "crates/hyperreal/src/rational/parse.rs",
+        "crates/hyperreal/src/verified/mod.rs",
+        "crates/hyperreal/src/verified/accumulate.rs",
+        "crates/hyperreal/src/verified/aggregate.rs",
+        "crates/hyperreal/src/verified/division.rs",
+        "crates/hyperreal/src/verified/dyadic.rs",
+        "crates/hyperreal/src/verified/fixed_gcd.rs",
+        "crates/hyperreal/src/verified/float.rs",
+        "crates/hyperreal/src/verified/fraction.rs",
+        "crates/hyperreal/src/verified/gcd.rs",
+        "crates/hyperreal/src/verified/lehmer.rs",
+        "crates/hyperreal/src/verified/limbs.rs",
+        "crates/hyperreal/src/verified/product.rs",
+        "crates/hyperreal/src/verified/word.rs",
+        "crates/hyperreal/src/structural.rs",
+        "crates/hyperreal/src/trace.rs",
+        "crates/hyperreal/src/dispatch_trace.rs",
+        "crates/hyperreal/src/computable/mod.rs",
+        "crates/hyperreal/src/computable/approximation.rs",
+        "crates/hyperreal/src/computable/approximation/e_plan_tests.rs",
+        "crates/hyperreal/src/computable/approximation/precision_tests.rs",
+        "crates/hyperreal/src/computable/approximation/serialization_index_tests.rs",
+        "crates/hyperreal/src/computable/budget.rs",
+        "crates/hyperreal/src/computable/constants.rs",
+        "crates/hyperreal/src/computable/format.rs",
+        "crates/hyperreal/src/computable/node.rs",
+        "crates/hyperreal/src/real/mod.rs",
+        "crates/hyperreal/src/real/approximation.rs",
+        "crates/hyperreal/src/real/arithmetic.rs",
+        "crates/hyperreal/src/real/arithmetic/decimal.rs",
+        "crates/hyperreal/src/real/arithmetic/scientific.rs",
+        "crates/hyperreal/src/real/constructors.rs",
+        "crates/hyperreal/src/real/convert.rs",
+        "crates/hyperreal/src/real/exact_set.rs",
+        "crates/hyperreal/src/real/facts.rs",
+        "crates/hyperreal/src/real/linear_combination.rs",
+        "crates/hyperreal/src/real/normal_reference.rs",
+        "crates/hyperreal/src/real/tests.rs",
+        "crates/hyperreal/src/simple.rs",
+        "crates/hyperreal/src/problem.rs",
+        "crates/hyperreal/src/serde.rs",
+        "crates/hyperreal/src/rational/arithmetic/representation.rs",
+        "crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs",
+        "crates/hyperreal/src/rational/arithmetic/barrett_division.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom8_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/construction.rs",
+        "crates/hyperreal/src/rational/arithmetic/aggregate_products.rs",
+        "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+        "crates/hyperreal/src/rational/arithmetic/squares_powers.rs",
+        "crates/hyperreal/src/rational/arithmetic/as_ref.rs",
+        "crates/hyperreal/src/rational/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/rational/arithmetic/ops.rs",
+        "crates/hyperreal/src/rational/arithmetic/comparison.rs",
+        "crates/hyperreal/src/rational/arithmetic/tests.rs",
+        "crates/hyperreal/src/computable/approximation/representation.rs",
+        "crates/hyperreal/src/computable/approximation/dispatch.rs",
+        "crates/hyperreal/src/computable/approximation/constants.rs",
+        "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+        "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+        "crates/hyperreal/src/computable/approximation/trig.rs",
+        "crates/hyperreal/src/computable/approximation/trig_operands.rs",
+        "crates/hyperreal/src/computable/approximation/logarithms.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/approximation/statistics.rs",
+        "crates/hyperreal/src/computable/node/bounds.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget.rs",
+        "crates/hyperreal/src/computable/node/symbolic_work.rs",
+        "crates/hyperreal/src/computable/node/representation.rs",
+        "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs",
+        "crates/hyperreal/src/computable/node/domain_certificates.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic.rs",
+        "crates/hyperreal/src/computable/node/trig_operands.rs",
+        "crates/hyperreal/src/computable/node/trig_domain.rs",
+        "crates/hyperreal/src/computable/node/domain_validation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse.rs",
+        "crates/hyperreal/src/computable/node/exp_trig.rs",
+        "crates/hyperreal/src/computable/node/logarithms.rs",
+        "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/node/algebra.rs",
+        "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+        "crates/hyperreal/src/computable/node/radical_tower.rs",
+        "crates/hyperreal/src/computable/node/approximation_queries.rs",
+        "crates/hyperreal/src/computable/node/scale.rs",
+        "crates/hyperreal/src/computable/node/tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs",
+        "crates/hyperreal/src/computable/node/linear_demand_tests.rs",
+        "crates/hyperreal/src/computable/node/fractional_separation_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_rescale_tests.rs",
+        "crates/hyperreal/src/computable/node/precision_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/certified_planning_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs",
+        "crates/hyperreal/src/computable/node/algebra_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_publication_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs",
+        "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/private_trig_range_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs",
+        "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/rational_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/integer_scale_tests.rs",
+        "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_bound_tests.rs",
+        "crates/hyperreal/src/real/arithmetic/classification.rs",
+        "crates/hyperreal/src/real/arithmetic/canonical_constants.rs",
+        "crates/hyperreal/src/real/arithmetic/representation.rs",
+        "crates/hyperreal/src/real/arithmetic/facts.rs",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+        "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+        "crates/hyperreal/src/real/arithmetic/linear_algebra.rs",
+        "crates/hyperreal/src/real/arithmetic/inversion.rs",
+        "crates/hyperreal/src/real/arithmetic/elementary_functions.rs",
+        "crates/hyperreal/src/real/arithmetic/structural_helpers.rs",
+        "crates/hyperreal/src/real/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/real/arithmetic/add_sub.rs",
+        "crates/hyperreal/src/real/arithmetic/mul_div.rs",
+        "crates/hyperreal/src/real/arithmetic/comparison.rs",
+        "crates/hyperreal/src/real/arithmetic/tests.rs"
+      ],
+      "changed_inputs": []
+    },
+    {
+      "file": "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/debug/deps/hyperreal-563f75cd5535d588.d",
+      "sha256": "d46700c765cad13c2b8f3929cb9cea5620ae001f81c760f3dd126f9ec4735b53",
+      "source_inputs": [
+        "crates/hyperreal/src/lib.rs",
+        "crates/hyperreal/src/rational/mod.rs",
+        "crates/hyperreal/src/rational/arithmetic.rs",
+        "crates/hyperreal/src/rational/convert.rs",
+        "crates/hyperreal/src/rational/parse.rs",
+        "crates/hyperreal/src/verified/mod.rs",
+        "crates/hyperreal/src/verified/accumulate.rs",
+        "crates/hyperreal/src/verified/aggregate.rs",
+        "crates/hyperreal/src/verified/division.rs",
+        "crates/hyperreal/src/verified/dyadic.rs",
+        "crates/hyperreal/src/verified/fixed_gcd.rs",
+        "crates/hyperreal/src/verified/float.rs",
+        "crates/hyperreal/src/verified/fraction.rs",
+        "crates/hyperreal/src/verified/gcd.rs",
+        "crates/hyperreal/src/verified/lehmer.rs",
+        "crates/hyperreal/src/verified/limbs.rs",
+        "crates/hyperreal/src/verified/product.rs",
+        "crates/hyperreal/src/verified/word.rs",
+        "crates/hyperreal/src/structural.rs",
+        "crates/hyperreal/src/trace.rs",
+        "crates/hyperreal/src/dispatch_trace.rs",
+        "crates/hyperreal/src/computable/mod.rs",
+        "crates/hyperreal/src/computable/approximation.rs",
+        "crates/hyperreal/src/computable/approximation/e_plan_tests.rs",
+        "crates/hyperreal/src/computable/approximation/precision_tests.rs",
+        "crates/hyperreal/src/computable/approximation/serialization_index_tests.rs",
+        "crates/hyperreal/src/computable/budget.rs",
+        "crates/hyperreal/src/computable/constants.rs",
+        "crates/hyperreal/src/computable/format.rs",
+        "crates/hyperreal/src/computable/node.rs",
+        "crates/hyperreal/src/real/mod.rs",
+        "crates/hyperreal/src/real/approximation.rs",
+        "crates/hyperreal/src/real/arithmetic.rs",
+        "crates/hyperreal/src/real/arithmetic/decimal.rs",
+        "crates/hyperreal/src/real/arithmetic/scientific.rs",
+        "crates/hyperreal/src/real/constructors.rs",
+        "crates/hyperreal/src/real/convert.rs",
+        "crates/hyperreal/src/real/exact_set.rs",
+        "crates/hyperreal/src/real/facts.rs",
+        "crates/hyperreal/src/real/linear_combination.rs",
+        "crates/hyperreal/src/real/normal_reference.rs",
+        "crates/hyperreal/src/real/tests.rs",
+        "crates/hyperreal/src/simple.rs",
+        "crates/hyperreal/src/problem.rs",
+        "crates/hyperreal/src/serde.rs",
+        "crates/hyperreal/src/rational/arithmetic/representation.rs",
+        "crates/hyperreal/src/rational/arithmetic/algorithm_dispatch.rs",
+        "crates/hyperreal/src/rational/arithmetic/barrett_division.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom4_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom6_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/toom8_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/ntt_multiplication.rs",
+        "crates/hyperreal/src/rational/arithmetic/construction.rs",
+        "crates/hyperreal/src/rational/arithmetic/aggregate_products.rs",
+        "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+        "crates/hyperreal/src/rational/arithmetic/squares_powers.rs",
+        "crates/hyperreal/src/rational/arithmetic/as_ref.rs",
+        "crates/hyperreal/src/rational/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/rational/arithmetic/ops.rs",
+        "crates/hyperreal/src/rational/arithmetic/comparison.rs",
+        "crates/hyperreal/src/rational/arithmetic/tests.rs",
+        "crates/hyperreal/src/computable/approximation/representation.rs",
+        "crates/hyperreal/src/computable/approximation/dispatch.rs",
+        "crates/hyperreal/src/computable/approximation/constants.rs",
+        "crates/hyperreal/src/computable/approximation/arithmetic_kernels.rs",
+        "crates/hyperreal/src/computable/approximation/exp_sqrt.rs",
+        "crates/hyperreal/src/computable/approximation/trig.rs",
+        "crates/hyperreal/src/computable/approximation/trig_operands.rs",
+        "crates/hyperreal/src/computable/approximation/logarithms.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_trig.rs",
+        "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/approximation/statistics.rs",
+        "crates/hyperreal/src/computable/node/bounds.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget.rs",
+        "crates/hyperreal/src/computable/node/symbolic_work.rs",
+        "crates/hyperreal/src/computable/node/representation.rs",
+        "crates/hyperreal/src/computable/node/primitive_constructors.rs",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs",
+        "crates/hyperreal/src/computable/node/domain_certificates.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic.rs",
+        "crates/hyperreal/src/computable/node/trig_operands.rs",
+        "crates/hyperreal/src/computable/node/trig_domain.rs",
+        "crates/hyperreal/src/computable/node/domain_validation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse.rs",
+        "crates/hyperreal/src/computable/node/exp_trig.rs",
+        "crates/hyperreal/src/computable/node/logarithms.rs",
+        "crates/hyperreal/src/computable/node/roots_inverse_hyperbolic.rs",
+        "crates/hyperreal/src/computable/node/algebra.rs",
+        "crates/hyperreal/src/computable/node/quadratic_tower.rs",
+        "crates/hyperreal/src/computable/node/radical_tower.rs",
+        "crates/hyperreal/src/computable/node/approximation_queries.rs",
+        "crates/hyperreal/src/computable/node/scale.rs",
+        "crates/hyperreal/src/computable/node/tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_tests.rs",
+        "crates/hyperreal/src/computable/node/exp_relation_reuse_tests.rs",
+        "crates/hyperreal/src/computable/node/linear_demand_tests.rs",
+        "crates/hyperreal/src/computable/node/fractional_separation_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_rescale_tests.rs",
+        "crates/hyperreal/src/computable/node/precision_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_boundary_tests.rs",
+        "crates/hyperreal/src/computable/node/certified_planning_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_failure_tests.rs",
+        "crates/hyperreal/src/computable/node/algebra_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/cache_publication_tests.rs",
+        "crates/hyperreal/src/computable/node/magnitude_upper_bound_tests.rs",
+        "crates/hyperreal/src/computable/node/scaled_lower_magnitude_tests.rs",
+        "crates/hyperreal/src/computable/node/private_kernel_domain_tests.rs",
+        "crates/hyperreal/src/computable/node/private_trig_range_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_lattice_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_periodic_tests.rs",
+        "crates/hyperreal/src/computable/node/trig_operands_tests.rs",
+        "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/normal_form_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_leaf_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_trig_dag_tests.rs",
+        "crates/hyperreal/src/computable/node/structural_comparison_budget_tests.rs",
+        "crates/hyperreal/src/computable/node/algebraic_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/rational_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/inverse_constructor_preflight_tests.rs",
+        "crates/hyperreal/src/computable/node/integer_scale_tests.rs",
+        "crates/hyperreal/src/computable/node/log_range_probe_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_sign_tests.rs",
+        "crates/hyperreal/src/computable/node/domain_bound_tests.rs",
+        "crates/hyperreal/src/real/arithmetic/classification.rs",
+        "crates/hyperreal/src/real/arithmetic/canonical_constants.rs",
+        "crates/hyperreal/src/real/arithmetic/representation.rs",
+        "crates/hyperreal/src/real/arithmetic/facts.rs",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+        "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs",
+        "crates/hyperreal/src/real/arithmetic/linear_algebra.rs",
+        "crates/hyperreal/src/real/arithmetic/inversion.rs",
+        "crates/hyperreal/src/real/arithmetic/elementary_functions.rs",
+        "crates/hyperreal/src/real/arithmetic/structural_helpers.rs",
+        "crates/hyperreal/src/real/arithmetic/format_parse.rs",
+        "crates/hyperreal/src/real/arithmetic/add_sub.rs",
+        "crates/hyperreal/src/real/arithmetic/mul_div.rs",
+        "crates/hyperreal/src/real/arithmetic/comparison.rs",
+        "crates/hyperreal/src/real/arithmetic/tests.rs"
+      ],
+      "changed_inputs": []
+    }
+  ],
+  "retained_runtime_records_sha256": {
+    "eager-bound-decoder-candidate-validation-v2276.json": "408aa6537fb5441fdc0b241bb556ba0c43926efdb65ee6d20052523b75a49ee5",
+    "eager-bound-decoder-computation-review-v2279.json": "5d84ead73ac283ecbc3c349649335737e90e0d3c39068b7f2a28104f0010df2e",
+    "eager-bound-decoder-deterministic-replay-comparison-v2334.json": "afac103653c521a75d450ea04637504730dead6279a5b86e53faacaea194b5a1",
+    "eager-bound-decoder-domain-query-comparison-v2318.json": "150d017c66f667217a6814122d59ad26fdd17446c210a803aa6156ab877ba35f",
+    "eager-bound-decoder-public-fact-audit-v2334.json": "74bbfe17262786d9d0c9b7756350601817c2c39753960a4a727bf59b290efd2a",
+    "eager-bound-decoder-replay-validation-v2333.json": "bebbc75e850ed06f5d1a739176fb7e656310f221f4364f794d45807347ad4f8f",
+    "eager-bound-decoder-retention-v2335.json": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b"
+  },
+  "historical_runtime_evidence_applicable": true,
+  "historical_runs_relabelled_as_fresh": 0,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "original_whole_file_gate_passed": false,
+  "fresh_timing_gate_passed": false,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "scope": "This proof-only extension changes four verification inputs and no ordinary runtime/build/test/probe source. The three compiler dependency records and unchanged libraries/seven frozen probes corroborate that boundary for the recorded builds. Runtime tests, costs, caps and replays remain historical v2335 evidence with their original identities, ignored cases, warnings and limitations. The checkpoint retention guard must still hash-check all v2335 artifacts. No new timing, resource, main/native, full-board or whole-crate claim follows."
+}

@@ -1,0 +1,34 @@
+{
+  "status": "Frozen before the proof-only metadata bridge is applied or verified",
+  "runner_sha256": "a73f552c0415c8158cbdddf80638de1e9c0ba6f12838eca09f2bb8bf307ed928",
+  "proposal_sha256": "3ae8bf5bf349b4f5032cc80a6126335779658bca52a437c416c17295ee0e1eb4",
+  "base_commit": "8de1a1b380991834b6d6180139c49fdb520ef278",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "retained_runtime_checkpoint_sha256": "7d840a2160d3e48baa67a3cc4ca2388f6270b141960bc0441f2df888fade7228",
+  "retained_source_record": "typed-api-prototype-v2261-eager-bound-decoder-release-build/source-hashes.json.gz",
+  "retained_source_record_sha256": "cc51e3938c1cb6d772778a4683b7412812e234e69cfb1550d6b6e14120d264ad",
+  "retained_files_sha256": {
+    "crates/hyperreal/verification/bound_denotation.rs": "5e13ccdad986919f9bb91ce0e4d49f5fbd88bed13a69ff12ee4cff5e9954aa70",
+    "crates/hyperreal/verification/test_bound_rejections.py": "ae12e4e1b438ce2c491dbb5325934630e34c80590b94ba330f337134e117e38a",
+    "crates/hyperreal/verification/scope.json": "cfd63e9b064f88eaf1a6dc91de0d7bd85f51b470a49ad51c691fec94eb482a0d",
+    "crates/hyperreal/verification/README.md": "3fbfc6ffded099157d802e0e580857f656cf34233b69e30210cb477f144ca03a"
+  },
+  "candidate_files_sha256": {
+    "crates/hyperreal/verification/bound_denotation.rs": "681e7b91a3b5b3fa167876e6d8b6b5d5b29fe802e9ba24d70b13cce4df6a7447",
+    "crates/hyperreal/verification/test_bound_rejections.py": "d0c9df855a1a2c4cffb9a75c255ddad36031325f531818059aedbbd5330d959d",
+    "crates/hyperreal/verification/scope.json": "a84fee0c6c57939a354285321ebb31344860dff19cb50d5ea8c19581bfa0384c",
+    "crates/hyperreal/verification/README.md": "5c9fe64144a0397eebfe11587326ecbc8bd81439b6ae22c01ab8be85458fb725"
+  },
+  "source_record_sha256": "090aedf5a30f3cbaf202a47a4c5deca5e437fbe2e248d23ed76004dda1303e39",
+  "proposal_patch_sha256": "abdc653bd3eba3165475e0170837ba770674b3c591566b7b1e86e8ab6f8fb855",
+  "runtime_source_files_changed": 0,
+  "new_model_theorems": [
+    "computable_bounds::approximation_bit_pattern_endpoints",
+    "computable_bounds::approximation_metadata_produces_valid_bound"
+  ],
+  "new_negative_controls": 10,
+  "unchanged_production_contracts": 98,
+  "unchanged_open_obligation_groups": 13,
+  "gates": "Run the complete conditional proof, all acceptance/mutation guards including ten new controls, and applicable formatting/source-identity checks. Keep each failed proof attempt under its own phase. Reuse runtime tests/cost/replays only after a separate dependency/input audit confirms that all ordinary runtime source/build/probe inputs are identical to v2335; no new timing or absolute-resource claim follows.",
+  "scope": "Two conditional model lemmas connect bit-pattern premises and actual checked-exponent/constructor contracts. No actual BigInt method, producer caller, runtime metadata evaluation order, atomic publication or real-existence proof is added. All property/target statuses, resource failures, fixed baseline and main/native/full-board obligations remain unchanged."
+}

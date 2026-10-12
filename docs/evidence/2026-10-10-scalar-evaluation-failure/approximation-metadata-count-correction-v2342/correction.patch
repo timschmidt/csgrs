@@ -1,0 +1,31 @@
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -2,7 +2,7 @@
+ 
+ The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
+ The current proof target verifies ninety-eight production contracts (eighty-nine
+-functions and nine constants) and one hundred thirty-five arithmetic model theorems. The rest
++functions and nine constants) and one hundred thirty-seven arithmetic model theorems. The rest
+ of the crate is still awaiting implementation refinement proofs. A passing
+ Verus job must not be described as 100% verification of Hyperreal.
+ 
+@@ -82,7 +82,7 @@
+ The proof target also includes the production `computable/node/bounds.rs`
+ directly. Eighteen constructor, transformation and query contracts preserve the
+ typed bound state, exponent calculations and the distinction between zero and
+-an unavailable exponent. Twenty-eight denotation lemmas connect these checked
++an unavailable exponent. Thirty denotation lemmas connect these checked
+ contracts to sign, nonzero, upper-magnitude and exact real-binade certificates,
+ conditional on valid input bounds. Every available exponent bounds the magnitude
+ strictly below `2^(msd + 1)`; an exact exponent also proves `2^msd <= abs(value)`.
+--- a/crates/hyperreal/verification/bound_denotation.rs
++++ b/crates/hyperreal/verification/bound_denotation.rs
+@@ -5,7 +5,7 @@
+     approximates, binary_unit, binary_unit_composes, binary_unit_positive,
+     separated_approximation_certifies_sign,
+ };
+-use vstd::arithmetic::power2::{lemma2_to64, pow2, lemma_pow2_strictly_increases};
++use vstd::arithmetic::power2::{lemma_pow2_strictly_increases, lemma2_to64, pow2};
+ 
+ verus! {
+ pub(crate) open spec fn absolute(value: real) -> real {

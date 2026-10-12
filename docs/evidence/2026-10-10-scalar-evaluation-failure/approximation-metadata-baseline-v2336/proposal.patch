@@ -1,0 +1,164 @@
+--- a/crates/hyperreal/verification/bound_denotation.rs
++++ b/crates/hyperreal/verification/bound_denotation.rs
+@@ -5,7 +5,7 @@
+     approximates, binary_unit, binary_unit_composes, binary_unit_positive,
+     separated_approximation_certifies_sign,
+ };
+-use vstd::arithmetic::power2::lemma2_to64;
++use vstd::arithmetic::power2::{lemma2_to64, pow2, lemma_pow2_strictly_increases};
+ 
+ verus! {
+ pub(crate) open spec fn absolute(value: real) -> real {
+@@ -120,6 +120,96 @@
+         requires unit > 0real,
+             -unit <= approximation as real * unit - value <= unit;
+     constructor_preserves_certificates(sign, msd, exact_msd, value, result);
++}
++
++// Connect bit-pattern premises to the endpoint contract without allocating
++// endpoint integers. Actual BigUint metadata and producer callers remain open.
++proof fn approximation_bit_pattern_endpoints(
++    magnitude: nat, bits: u64, precision: i32,
++    all_ones: bool, power_of_two: bool, exponent: i32,
++)
++    requires bits > 1,
++        crate::magnitude_model::has_bit_length(magnitude, bits as nat),
++        all_ones == (magnitude + 1 == pow2(bits as nat)),
++        power_of_two == (magnitude == pow2((bits as nat - 1) as nat)),
++        call_ensures(crate::verified::word::checked_bit_length_msd,
++            (bits, if all_ones { 0u64 } else { 1u64 }, false, precision), Some(exponent)),
++    ensures magnitude > 1,
++        (magnitude as real + 1real) * binary_unit(precision as int)
++            < 2real * binary_unit(exponent as int),
++        !power_of_two && !all_ones ==> binary_unit(exponent as int)
++            <= (magnitude as real - 1real) * binary_unit(precision as int),
++{
++    let lower = pow2((bits as nat - 1) as nat);
++    let upper = pow2(bits as nat);
++    let unit = binary_unit(precision as int);
++    vstd::arithmetic::power::lemma_pow0(2);
++    lemma_pow2_strictly_increases(0, (bits as nat - 1) as nat);
++    assert(magnitude > 1);
++    binary_unit_positive(precision as int);
++    binary_unit_composes(precision as int, bits as int);
++    binary_unit_composes(precision as int, bits as int - 1);
++    assert(binary_unit(bits as int) == upper as real) by (nonlinear_arith)
++        requires binary_unit(bits as int) == upper as real / 1real;
++    assert(binary_unit(bits as int - 1) == lower as real) by (nonlinear_arith)
++        requires binary_unit(bits as int - 1) == lower as real / 1real;
++    if all_ones {
++        assert(exponent as int == precision as int + bits as int);
++        assert((magnitude as real + 1real) * unit < 2real * binary_unit(exponent as int))
++            by (nonlinear_arith)
++            requires unit > 0real, upper > 0,
++                magnitude + 1 == upper,
++                binary_unit(exponent as int) == unit * upper as real;
++    } else {
++        assert(exponent as int == precision as int + bits as int - 1);
++        assert(magnitude + 1 < upper);
++        binary_unit_successor(exponent as int);
++        assert((magnitude as real + 1real) * unit < 2real * binary_unit(exponent as int))
++            by (nonlinear_arith)
++            requires unit > 0real,
++                magnitude as real + 1real < upper as real,
++                2real * binary_unit(exponent as int) == unit * upper as real;
++        if !power_of_two {
++            assert(lower <= magnitude - 1);
++            assert(binary_unit(exponent as int) <= (magnitude as real - 1real) * unit)
++                by (nonlinear_arith)
++                requires unit > 0real, lower as real <= magnitude as real - 1real,
++                    binary_unit(exponent as int) == unit * lower as real;
++        }
++    }
++}
++
++// This is a conditional bridge through two actual production contracts. It
++// does not assert that BigInt imports or bound_from_approx establish its inputs.
++proof fn approximation_metadata_produces_valid_bound(
++    value: real, approximation: int, magnitude: nat, magnitude_bits: u64,
++    precision: i32, reaches_next_binade: bool, is_power_of_two: bool,
++    sign: Sign, msd: Option<i32>, exact_msd: bool, result: BoundInfo,
++)
++    requires magnitude_bits > 1,
++        magnitude as int == if approximation < 0 { -approximation } else { approximation },
++        crate::magnitude_model::has_bit_length(magnitude, magnitude_bits as nat),
++        reaches_next_binade == (magnitude + 1 == pow2(magnitude_bits as nat)),
++        is_power_of_two == (magnitude == pow2((magnitude_bits as nat - 1) as nat)),
++        sign == if approximation > 0 { Sign::Plus } else { Sign::Minus },
++        approximates(value, approximation, binary_unit(precision as int)),
++        call_ensures(crate::verified::word::checked_bit_length_msd,
++            (magnitude_bits, if reaches_next_binade { 0u64 } else { 1u64 }, false, precision), msd),
++        exact_msd == (msd.is_some() && !is_power_of_two && !reaches_next_binade),
++        call_ensures(BoundInfo::with_sign_msd, (sign, msd, exact_msd), result),
++    ensures bound_denotes(result, value),
++{
++    vstd::arithmetic::power::lemma_pow0(2);
++    lemma_pow2_strictly_increases(0, (magnitude_bits as nat - 1) as nat);
++    assert(magnitude > 1);
++    assert(approximation > 1 || approximation < -1);
++    assert(absolute(approximation as real) == magnitude as real);
++    if let Some(exponent) = msd {
++        approximation_bit_pattern_endpoints(magnitude, magnitude_bits, precision,
++            reaches_next_binade, is_power_of_two, exponent);
++    }
++    separated_approximation_yields_a_bound(value, approximation, binary_unit(precision as int),
++        sign, msd, exact_msd, result);
+ }
+ 
+ proof fn negation_preserves_bound_denotation(bound: BoundInfo, value: real, result: BoundInfo)
+--- a/crates/hyperreal/verification/test_bound_rejections.py
++++ b/crates/hyperreal/verification/test_bound_rejections.py
+@@ -171,6 +171,21 @@
+ ]
+ 
+ 
++# Conditional metadata premises and actual checked-exponent linkage must matter.
++MODEL_MUTATIONS += [
++    ('metadata magnitude separation', 'requires bits > 1,', 'requires bits > 0,'),
++    ('metadata endpoint bit length', 'crate::magnitude_model::has_bit_length(magnitude, bits as nat),', 'magnitude > 1,'),
++    ('metadata all-ones flag', 'all_ones == (magnitude + 1 == pow2(bits as nat)),', 'true,'),
++    ('metadata power-of-two flag', 'power_of_two == (magnitude == pow2((bits as nat - 1) as nat)),', 'true,'),
++    ('metadata upper-binade carry', '(bits, if all_ones { 0u64 } else { 1u64 }, false, precision), Some(exponent)),', '(bits, if all_ones { 1u64 } else { 1u64 }, false, precision), Some(exponent)),'),
++    ('metadata magnitude import', 'magnitude as int == if approximation < 0 { -approximation } else { approximation },', 'true,'),
++    ('metadata approximation sign', 'sign == if approximation > 0 { Sign::Plus } else { Sign::Minus },', 'sign == if approximation > 0 { Sign::Minus } else { Sign::Plus },'),
++    ('metadata approximation validity', 'approximates(value, approximation, binary_unit(precision as int)),', 'true,'),
++    ('metadata checked exponent correction', '(magnitude_bits, if reaches_next_binade { 0u64 } else { 1u64 }, false, precision), msd),', '(magnitude_bits, if reaches_next_binade { 0u64 } else { 1u64 }, true, precision), msd),'),
++    ('metadata exact binade boundaries', 'exact_msd == (msd.is_some() && !is_power_of_two && !reaches_next_binade),', 'exact_msd == msd.is_some(),'),
++]
++
++
+ def mutate_body(source, method, before, after):
+     anchor = 'fn ' + method + '('
+     if source.count(anchor) != 1:
+--- a/crates/hyperreal/verification/scope.json
++++ b/crates/hyperreal/verification/scope.json
+@@ -235,7 +235,9 @@
+     "computable_cache::decoded_bound_ignores_other_fields",
+     "computable_cache::decoded_bound_update_matches_certificate",
+     "computable_cache::decoded_sign_update_preserves_bound",
+-    "computable_cache::decoded_finite_real_update_preserves_bound"
++    "computable_cache::decoded_finite_real_update_preserves_bound",
++    "computable_bounds::approximation_bit_pattern_endpoints",
++    "computable_bounds::approximation_metadata_produces_valid_bound"
+   ],
+   "obligations": [
+     {
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -283,6 +283,16 @@
+ copied implementation supplies those contracts. Inexact planning magnitudes
+ have no claimed error bound here. Establishing valid inputs in the expression
+ graph, rational import, cache publication and all callers remains open.
++The numerical-bound metadata bridge connects explicit bit-length, all-ones
++and power-of-two premises to the closed one-unit interval endpoints. It uses
++the actual checked exponent and bound-constructor contracts, including an
++absent exponent and both signs. All-ones magnitudes require an upper-binade
++carry; exact binades exclude both power-of-two and all-ones endpoints.
++These are conditional model theorems. The actual BigInt metadata/import,
++bound_from_approx caller, valid approximation and publication invariant
++remain outside this proof boundary. No runtime code or metadata evaluation
++order changes, and all thirteen whole-crate obligation groups stay open.
++
+ Binary scaling shifts exact real binades by the same mathematical exponent.
+ The mapping refinement connects this fact to `map_msd` when its callback returns
+ the checked exponent sum; unrepresentable results retain valid sign and nonzero

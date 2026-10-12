@@ -1,0 +1,11 @@
+{
+  "source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "changed_files": [
+    "crates/hyperreal/verification/README.md",
+    "crates/hyperreal/verification/bound_denotation.rs"
+  ],
+  "changed_runtime_files": 0,
+  "changed_proof_bodies_and_specifications": 0,
+  "reordered_imports": 1,
+  "status": "Applied; final proof/input audit pending"
+}

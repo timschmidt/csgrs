@@ -1,0 +1,9 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/source/crates/hyperreal/verification/bound_denotation.rs:5:
+     approximates, binary_unit, binary_unit_composes, binary_unit_positive,
+     separated_approximation_certifies_sign,
+ };
+[31m-use vstd::arithmetic::power2::{lemma2_to64, pow2, lemma_pow2_strictly_increases};
+(B[m[32m+use vstd::arithmetic::power2::{lemma_pow2_strictly_increases, lemma2_to64, pow2};
+(B[m 
+ verus! {
+ pub(crate) open spec fn absolute(value: real) -> real {
