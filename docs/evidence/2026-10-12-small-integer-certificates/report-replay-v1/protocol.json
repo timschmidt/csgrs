@@ -1,0 +1,61 @@
+{
+  "scope": "Compare complete full-board JSON reports without normalizing any fields.\n\nThe frozen persistent-cache baseline and integer-leaf candidate read identical\nfull-resolution archives extracted to shared absolute input paths. Each board\nruns once per variant in a fresh CLI process, with the original four checks and\nminimum width. Both executables are built and bound before replay. This closes\na report comparison gap; it is not a matched application speedup experiment and\ndoes not replace the failed original 120-second worker CPU gate.\n",
+  "runner_sha256": "33bd7abe9e1dcef7990e6d3da19aa60b16d1e8697243669c6f3a68e2e714526f",
+  "preparation_sha256": "50b27f8d53d95c13339fff7287c006a0ff908db14e5e4451d0ad9d39894ae02b",
+  "native_result_sha256": "36fa766e14a40ad762802dc74ca1b877f770159797a25e1aaf03a4209664b58b",
+  "native_assessment_sha256": "a0adacf031d460aa94f39016b5efc5d2231ee897e0240ac7799f01a9facb443c",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/cost-v2-target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target"
+  },
+  "fixtures": [
+    {
+      "label": "cparti-fpga",
+      "zip": "CPArti FPGA dev board.zip",
+      "board": "CPArti FPGA dev board.kicad_pcb",
+      "expected_findings": 12,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "archive_sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+      "board_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "label": "hvp109a",
+      "zip": "HVP109A.zip",
+      "board": "HVP109A.kicad_pcb",
+      "expected_findings": 197,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "archive_sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+      "board_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  ],
+  "input_hashes_sha256": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+  "extracted_input_files": 108,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "expected_cli_exit_code": 1,
+  "exit_code_contract": "run_cli exits 1 when a complete report has active findings; JSON parsing and finding counts are checked separately.",
+  "normalization": null,
+  "runtime_admitted": false
+}

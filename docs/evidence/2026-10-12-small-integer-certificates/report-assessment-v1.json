@@ -1,0 +1,57 @@
+{
+  "scope": "Complete JSON report equality for exact integer-leaf reuse relative to the persistent-cache baseline. Both sources carry the same 35 pending native geometry changes.",
+  "decision": "complete-two-board-report-comparison-passed-runtime-admission-open",
+  "method": "Distinct independently built CLI executables read the same 108 extracted input files and absolute paths. Each board runs once per variant in a fresh process, with the original four smoke checks and 0.0762 minimum width. All JSON bytes and parsed values are compared, with no field normalization or filtering.",
+  "reports": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147909,
+      "candidate_bytes": 147909,
+      "baseline_sha256": "09f47e83d73f1137e5b0e56577e21e6718c56c60b46b65867c92de510c1bbc9f",
+      "candidate_sha256": "09f47e83d73f1137e5b0e56577e21e6718c56c60b46b65867c92de510c1bbc9f",
+      "violation_count": 12
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128818,
+      "candidate_bytes": 128818,
+      "baseline_sha256": "104f3f7b310cbe2a21a2ad5526a1c725d4490626a5e939ae960d6fc141370c59",
+      "candidate_sha256": "104f3f7b310cbe2a21a2ad5526a1c725d4490626a5e939ae960d6fc141370c59",
+      "violation_count": 197
+    }
+  ],
+  "cli_exit_status": "All four report processes exit 1, as required by run_cli for their active findings. Each output is a complete JSON report with the independently expected count (12 or 197). Build commands exit 0.",
+  "evidence_retention": "The complete raw JSON outputs are preserved losslessly as deterministic gzip files; uncompressed byte counts and SHA-256 hashes are recorded. Source, executable, original ZIP and extracted input identities are bound by protocol.json and binaries.json.",
+  "coverage_limits": "This verifies complete output identity for these two unchanged boards under these checks and settings. Runtime admission still requires the original full-board limit and broader consumer/default/feature checks. One replay per variant and board is not a matched application speedup experiment.",
+  "remaining_full_board_worker_cpu_seconds": 154.353265288,
+  "original_full_board_worker_cpu_limit_seconds": 120,
+  "next_step": "Use a separate diagnostic build of the current integer-leaf candidate to classify successful quadratic projections by root operation and locations of retained child certificates. Quantify the eligibility of a shallow consumer that reads existing certificates before doing arithmetic; preserve the original fallback and all unsupported/first/warm/cloned controls. Also retain unresolved scalar control-cost and memory observations, recognition-budget documentation, broader integration and the full properties plan.",
+  "artifacts_sha256": {
+    "report-replay-v1/binaries.json": "0c9387a85159aa34878e9e4107da6e756f19e48bc664fbbe2eb145ac34270c8c",
+    "report-replay-v1/build-baseline.stderr": "00adb26c14384d1f1722a26ec10a2928b70b86a0ede56337f584f13928c2e15e",
+    "report-replay-v1/build-baseline.stdout": "8d673aa4c2ff2baed0c242c535dac5cd39abd423711d8cf0e78e774a6a158a0b",
+    "report-replay-v1/build-candidate.stderr": "f1a0cae9f92c2611e9bc4e64b56f70678b82ec53b4ccc6f884f43387e508c44e",
+    "report-replay-v1/build-candidate.stdout": "c366621c6c585ee29e099bd3305e9ce935b0fc1ebe940b517e088bdb9ae58c48",
+    "report-replay-v1/commands.json": "8865d4ad04bc0ced14b97c2b6c1a6637ba03da9a6184e45dc8904d8b50256214",
+    "report-replay-v1/cparti-fpga-baseline.json.gz": "ac172651b652b8f156b0853d810081e3869b256142d0f0da7e1d967d4c685077",
+    "report-replay-v1/cparti-fpga-baseline.stderr": "59fb2495b8b90280f3c923730c0cd08c5d90a6b031289b3d3369afc9f8aafd67",
+    "report-replay-v1/cparti-fpga-candidate.json.gz": "ac172651b652b8f156b0853d810081e3869b256142d0f0da7e1d967d4c685077",
+    "report-replay-v1/cparti-fpga-candidate.stderr": "c3143af9aaffe043104d8a0d4c5f62b8c1157c3bff80edbeaa47aeb090fad3fe",
+    "report-replay-v1/hvp109a-baseline.json.gz": "b2464deb381acdeeb97389929f1dfb16cf8be0df3e169df9d455d41b459d9ede",
+    "report-replay-v1/hvp109a-baseline.stderr": "01e46bac8b6c7bfb6154e3b4f21a4ee96f0dd74a080349aca57bec94721e8529",
+    "report-replay-v1/hvp109a-candidate.json.gz": "b2464deb381acdeeb97389929f1dfb16cf8be0df3e169df9d455d41b459d9ede",
+    "report-replay-v1/hvp109a-candidate.stderr": "390184a68400f53c003aba7115932bc0a6bd0e30fe5fbd0140739c915ea10c5b",
+    "report-replay-v1/input-hashes.json.gz": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+    "report-replay-v1/protocol.json": "5eaa119a902bb3778f3430689392b77f38dda514ed7f323db42a180a0727193b",
+    "report-replay-v1/result.json": "83c2d08dbb54504be4d84b1390133ac7cbf5e014541dab26c41d27a97a7ba657",
+    "replay_reports_v1.py": "33bd7abe9e1dcef7990e6d3da19aa60b16d1e8697243669c6f3a68e2e714526f",
+    "native-assessment-v1.json": "a0adacf031d460aa94f39016b5efc5d2231ee897e0240ac7799f01a9facb443c"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

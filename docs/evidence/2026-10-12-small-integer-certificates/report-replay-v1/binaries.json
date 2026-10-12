@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/report-replay-v1/bins/baseline",
+    "sha256": "50c68d66cc2365fd073fb3711d440f7c3e770839273812d9b1f5b646f1fd24bd",
+    "bytes": 42871120,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/persistent-laurent-cache/candidate/source/crates/hyperdrc#0.3.0",
+    "fresh": false
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/report-replay-v1/bins/candidate",
+    "sha256": "04ec04ce767569255f8cb6272afcc6d5c704b1d3bc6f3218bccbfb6d24a576ba",
+    "bytes": 42847120,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc#0.3.0",
+    "fresh": false
+  }
+}
