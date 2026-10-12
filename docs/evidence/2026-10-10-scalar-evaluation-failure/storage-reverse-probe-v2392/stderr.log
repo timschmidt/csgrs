@@ -1,0 +1,17 @@
+error: `core::slice::iter::impl&%171::rposition` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-reverse-probe-v2392/probe.rs:26:5
+   |
+26 |     words.iter().rposition(|digit: &u32| *digit != 0)
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+...
+37 |     words.iter().rposition(|digit: &u64| *digit != 0)
+   |     -------------------------------------------------
+   |
+   = help: The following declaration may resolve this error:
+           pub assume_specification<'a, T, P> [<std::slice::Iter<'a, T> as std::iter::Iterator>::rposition] (_0: &mut std::slice::Iter<'a, T>, _1: P) -> std::option::Option<usize>
+           where
+           P: std::ops::FnMut(<std::slice::Iter<'a, T> as std::iter::Iterator>::Item,) + std::ops::FnOnce(<std::slice::Iter<'a, T> as std::iter::Iterator>::Item,) -> bool,
+           std::slice::Iter<'a, T>: std::marker::Sized + std::iter::ExactSizeIterator + std::iter::DoubleEndedIterator,;
+
+error: aborting due to 1 previous error
+

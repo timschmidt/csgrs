@@ -1,0 +1,36 @@
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/06-bit_count_u32/probe.rs:120:1
+    |
+120 | pub(crate) fn bit_count_u32(words: &[u32]) -> (result: u64)
+    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/06-bit_count_u32/probe.rs:122:13
+    |
+122 |       ensures result == word_bit_length_u32(words@),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+127 | /     if words.len() == 0 {
+128 | |         0
+129 | |     } else {
+130 | |         let count = words[words.len() - 1].leading_zeros();
+131 | |         words.len() as u64 * 32 + u64::from(count)
+132 | |     }
+    | |_____- at the end of the function body
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/06-bit_count_u32/probe.rs:124:9
+    |
+124 |           result > 0 ==> has_bit_length(word_value_u32(words@), result as nat),
+    |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+127 | /     if words.len() == 0 {
+128 | |         0
+129 | |     } else {
+130 | |         let count = words[words.len() - 1].leading_zeros();
+131 | |         words.len() as u64 * 32 + u64::from(count)
+132 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 2 previous errors
+

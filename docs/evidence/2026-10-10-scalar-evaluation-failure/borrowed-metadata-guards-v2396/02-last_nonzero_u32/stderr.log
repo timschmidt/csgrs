@@ -1,0 +1,20 @@
+note: while loop: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/02-last_nonzero_u32/probe.rs:50:5
+   |
+50 |     while length > 0
+   |     ^^^^^^^^^^^^^^^^
+
+error: invariant not satisfied at end of loop body
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/02-last_nonzero_u32/probe.rs:52:13
+   |
+52 |             forall|higher: int| length <= higher < words.len() ==> #[trigger] words@[higher] == 0,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: possible arithmetic underflow/overflow
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/02-last_nonzero_u32/probe.rs:58:9
+   |
+58 |         length -= 2;
+   |         ^^^^^^^^^^^
+
+error: aborting due to 2 previous errors
+

@@ -1,0 +1,11 @@
+{
+  "status": "Frozen before checking the executable borrowed-slice prototype",
+  "preparation_sha256": "2279bb04c430c53d882c2ca1642403d3cd0ec271edef36f7f285e8813a5c40c2",
+  "parent_proposal_sha256": "446ae735fa41a8b3bc46d3a64e8381fe792a74142b3207d97905d7ccb5946aa9",
+  "parent_runner_sha256": "961a51ac3f3cd63bd6efeec59a11d37d01e3fbfca5a5ab8eb4f45ae4cb8616dc",
+  "proposal_sha256": "7cae61e4d0e9cbc410e71ef9863e8393df3b73ca0744dec44456c45cfbc3391f",
+  "runner_sha256": "2c7fcc8041a29d58d4306d84d2bec772be2afb03bc72320dc6307b1084a09cb2",
+  "executable_functions": 12,
+  "source_changed": false,
+  "scope": "Six functions per native width: first different, last nonzero, logical normalization and three bit counts. All memory accesses and count arithmetic must verify using existing pinned contracts. This is a new implementation prototype, not a proof of the dependency's position/rposition/capacity/shrink bodies or an admitted runtime replacement. BigUint import, normalization allocation policy, actual callers, count-range premises, fixed-baseline correctness/cost/resource gates and whole-crate requirements remain. No new trusted assumptions or retained coverage credit."
+}

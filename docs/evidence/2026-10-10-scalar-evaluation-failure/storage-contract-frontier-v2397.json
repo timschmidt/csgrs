@@ -1,0 +1,175 @@
+{
+  "status": "Direct dependency-call proof limits established; borrowed-slice prototype and its controls pass",
+  "runner_sha256": "98539568b16ac97fe22ef5c9312a70ab0eefe4c5a3948ba8368c24d7e03c3e9a",
+  "retained_checkpoint": "typed-api-prototype-v2386-state.json",
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "retained_source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "candidate_sources_changed": false,
+  "main_sources_changed": false,
+  "source_files_verified": 24751,
+  "main_files_verified": 1167,
+  "retained_verified_units": 736,
+  "retained_production_contracts": 98,
+  "retained_model_theorems": 178,
+  "retained_negative_controls": 306,
+  "retained_positive_baselines": 7,
+  "whole_crate_obligation_groups_open": 13,
+  "new_retained_proof_units": 0,
+  "new_retained_model_theorems": 0,
+  "new_retained_production_contracts": 0,
+  "phases": {
+    "storage-forward-probe-v2387": {
+      "result_sha256": "e5521f836ebbf228c903a41a4b96960288a0863b3e6fd98d75d781948445a28f",
+      "probe_sha256": "911027679e127187283ff82686ab3a7ab227d36d2f41a4f99f27468c4049c3ca",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "only variables are supported here, not general patterns",
+      "seconds": 3.5001327330246568
+    },
+    "storage-reverse-probe-v2388": {
+      "result_sha256": "62bef0d58ab4ab84089158467721676607dc76548c28916c899cd5095218c61e",
+      "probe_sha256": "3974ae501a2707d0033b8ee8205e49106e8b660549ac5913528203a3896be8bf",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "only variables are supported here, not general patterns",
+      "seconds": 3.5290650380775332
+    },
+    "storage-shrink-probe-v2389": {
+      "result_sha256": "59b2e8b7e7e5c4a0725e0177c31be546ed07282294c74f011af44bf495f491d7",
+      "probe_sha256": "a8986814dda0081f5be62c8710fe45f5bec6dfdfbc595a1068b22707463c56fa",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "disambiguate by wrapping it in either `old` or `final`",
+      "seconds": 3.4881721530109644
+    },
+    "storage-truncate-probe-v2390": {
+      "result_sha256": "8169188a409818667496d3e7d91ff62a512a2775e80043d8c5f6b5a2bf67abf1",
+      "probe_sha256": "39562c660192f2f62d56a60de526a74facdacf5d7b3b093290e553ca890955d4",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "disambiguate by wrapping it in either `old` or `final`",
+      "seconds": 3.4454571530222893
+    },
+    "storage-forward-probe-v2391": {
+      "result_sha256": "79277bbdf9c18014529892fb16c54b25ea824585dcc4e32c5c1eda0dcd8feb66",
+      "probe_sha256": "180934042e1e58a556f87c06a5e29712b01a3a352aabe9d886236f2672facd29",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "::position` is not supported",
+      "seconds": 3.623471372295171
+    },
+    "storage-reverse-probe-v2392": {
+      "result_sha256": "13dd2787f0539079ecc361eb60ec3d1d293fa2d4fe774f49765c0267363fb1b5",
+      "probe_sha256": "e068adf00d1907937cfc820d8ebb1f2e74aa8c9e0275bf0b5adc3b6d57c79abc",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "::rposition` is not supported",
+      "seconds": 3.5380790890194476
+    },
+    "storage-shrink-probe-v2393": {
+      "result_sha256": "22cf2cfaed3a5f46e237186db5ad7a851c4708ba702b8e5b8d62c6bfbd39fa46",
+      "probe_sha256": "25d4ad0cb88bb4f7741709a475d4b583c1bf2220aaec7741fae50bfb8a750604",
+      "exit_code": 1,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": true,
+        "success": false
+      },
+      "diagnostic": "::shrink_to_fit` is not supported",
+      "seconds": 3.6573583777062595
+    },
+    "storage-truncate-probe-v2394": {
+      "result_sha256": "ed126f07862360a1761a2e52204eea200298851cd33123e61f9e779a2f9f74da",
+      "probe_sha256": "446ae735fa41a8b3bc46d3a64e8381fe792a74142b3207d97905d7ccb5946aa9",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 440,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "diagnostic": "",
+      "seconds": 7.978204426821321
+    },
+    "borrowed-metadata-probe-v2395": {
+      "result_sha256": "b9f5baace4af8e3fac7ca4515d3cc9ad6392ab4ee2d01a476b666bd98e78eb63",
+      "probe_sha256": "7cae61e4d0e9cbc410e71ef9863e8393df3b73ca0744dec44456c45cfbc3391f",
+      "exit_code": 0,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 454,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "diagnostic": "",
+      "seconds": 8.060956170782447
+    }
+  },
+  "prototype_guard_protocol_sha256": "7f2102a5172df6f4cad6ae7bd513cb6f957aad56aabbe77b74c212bc826b87b8",
+  "prototype_guard_result_sha256": "4408367409f79c47eb4dfdfa289b539e017987e4c2c7a907b173356fe4d1ed86",
+  "prototype_rejected_mutations": 12,
+  "prototype_positive_baselines": 1,
+  "prototype_executable_functions": 12,
+  "dependency_source_review": "numerical-bound-metadata-review-v2279-v2.json",
+  "dependency_source_review_sha256": "c3ea9b40e4669ca9608177480dc98d5f3f698a5defe9b6a54fcaface46344958",
+  "dependency_sources_sha256": {
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/biguint.rs": "bf69f80a59b528e0743390663f9a6a8f6d3edc8643a65c8d0f7f01a8f434f478",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/bigint.rs": "e5735688e1345396c21a7f5e8328bcdf77f5a0c7068028caa74063c68a3e4ef7",
+    "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/num-bigint-0.4.6/src/lib.rs": "70493e8293b769076d6a16df962a4913b74aa1925fe8bd448865da097ee2dbe1"
+  },
+  "pinned_specification_sources_inspected": {
+    "iter": {
+      "sha256": "80e2f82577ab83436fff078035941db5062253144e33701789982b887be48b40",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/iter.rs"
+    },
+    "slice": {
+      "sha256": "70a4bb5efc86fce44913a62af34bb314de30178fe8fe60fb1e3bb97d5d73d583",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/slice.rs"
+    },
+    "vec": {
+      "sha256": "60d801cbc8a38dbc13d758bf8330e62f403cfa79adab70bc964dbd56c5db4b9c",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/vec.rs"
+    }
+  },
+  "findings": [
+    "After separately resolving reference-pattern syntax, both native widths fail at the actual slice iterator position/rposition methods: the pinned verifier supplies no supported method contract for these calls.",
+    "After explicitly naming the mutable post-state, the actual capacity and shrink_to_fit calls also report unsupported methods. No local assume_specification or other proof escape hatch was added.",
+    "The direct Vec::truncate wrapper connects its existing pinned contract to the retained typed zero-suffix proof for both widths. Its 440-unit run includes existing imports and proves two harness functions, not the complete BigUint normalize implementation.",
+    "A separate twelve-function indexed-slice prototype verifies first/last matches, logical normalization and three native bit counts. Its 454-unit run includes existing imports. All twelve executable mutation controls fail with proof errors rather than frontend errors, while the unmutated baseline passes.",
+    "The indexed prototype is new code. It does not prove the original dependency iterator implementation, preserve its allocation/shrink policy by construction, establish the BigUint storage view or discharge actual metadata range/caller premises. It has not replaced runtime code or passed fixed-baseline runtime/cost/resource admission."
+  ],
+  "next_action": "Use the proved executable prototype to make a concrete same-source dependency integration candidate, or establish the missing iterator/allocator method proofs without local trust escape hatches. Bind the selected path to actual BigUint storage and allocation behavior, discharge count-range/caller premises, and run original fixed-baseline correctness, cost, memory and size gates before admitting any runtime change. Keep the current v2335 runtime and v2386 proof checkpoint until those gates pass.",
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "limits": "This milestone records capability failures and a guarded executable support prototype only. Retained counts and all thirteen whole-crate groups are unchanged. Preserve every failed attempt, historical resource/cost failure, pre-Verus baseline, original worktree entry, and main/native/full-board requirement. No property, target, backend or whole-crate completion is claimed."
+}

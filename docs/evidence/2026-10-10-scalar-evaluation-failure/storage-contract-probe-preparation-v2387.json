@@ -1,0 +1,60 @@
+{
+  "status": "Frozen before four sequential storage-contract probes",
+  "preparation_sha256": "b292f5356263224cfcff4b030cb3330597cf4ee4d5c7e6cf8112cab58ab55a71",
+  "parent_runner_sha256": "58dd9f516bc4828af7749ab040fb17d7a976f28f3732c3945e72213c7d8dfe8d",
+  "retained_checkpoint": "typed-api-prototype-v2386-state.json",
+  "probes": [
+    {
+      "kind": "forward",
+      "version": 2387,
+      "proposal": "storage-forward-proposal-v2387.rs",
+      "proposal_sha256": "911027679e127187283ff82686ab3a7ab227d36d2f41a4f99f27468c4049c3ca",
+      "runner": "probe_storage_forward_v2387.py",
+      "runner_sha256": "db881cfcac833e2c7b627b46dd2ca3a96bfb3ce493856abcb46727a6e1638431",
+      "phase": "storage-forward-probe-v2387"
+    },
+    {
+      "kind": "reverse",
+      "version": 2388,
+      "proposal": "storage-reverse-proposal-v2388.rs",
+      "proposal_sha256": "3974ae501a2707d0033b8ee8205e49106e8b660549ac5913528203a3896be8bf",
+      "runner": "probe_storage_reverse_v2388.py",
+      "runner_sha256": "81d686c2f1261c5b704303c959ed543b37ceb1fa46e785ccb20fc5161bb3abb4",
+      "phase": "storage-reverse-probe-v2388"
+    },
+    {
+      "kind": "shrink",
+      "version": 2389,
+      "proposal": "storage-shrink-proposal-v2389.rs",
+      "proposal_sha256": "a8986814dda0081f5be62c8710fe45f5bec6dfdfbc595a1068b22707463c56fa",
+      "runner": "probe_storage_shrink_v2389.py",
+      "runner_sha256": "b044d09cbb2375f64e45756f06bf1be701d9bceacc505bd019b6a426f473df98",
+      "phase": "storage-shrink-probe-v2389"
+    },
+    {
+      "kind": "truncate",
+      "version": 2390,
+      "proposal": "storage-truncate-proposal-v2390.rs",
+      "proposal_sha256": "39562c660192f2f62d56a60de526a74facdacf5d7b3b093290e553ca890955d4",
+      "runner": "probe_storage_truncate_v2390.py",
+      "runner_sha256": "c6490c60ba8a88b46f5fc430f12d2aef8b50d6d2123d1fa40a4c2ba43c76e234",
+      "phase": "storage-truncate-probe-v2390"
+    }
+  ],
+  "pinned_specification_sources_inspected": {
+    "iter": {
+      "sha256": "80e2f82577ab83436fff078035941db5062253144e33701789982b887be48b40",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/iter.rs"
+    },
+    "slice": {
+      "sha256": "70a4bb5efc86fce44913a62af34bb314de30178fe8fe60fb1e3bb97d5d73d583",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/slice.rs"
+    },
+    "vec": {
+      "sha256": "60d801cbc8a38dbc13d758bf8330e62f403cfa79adab70bc964dbd56c5db4b9c",
+      "url": "https://raw.githubusercontent.com/verus-lang/verus/671956ec527d3b7164779f767bdbfe769bedce6c/source/vstd/std_specs/vec.rs"
+    }
+  },
+  "source_changed": false,
+  "scope": "Probe the exact position, rposition, capacity/shrink and truncate call forms used by num-bigint 0.4.6 on both native widths. These wrappers are support harnesses, not imported production bodies or retained coverage. The truncate proof consumes the already-proved typed suffix premise. Add no assumptions, trusted method specifications or substitutions for an unsupported call. Preserve every result separately and run probes sequentially."
+}

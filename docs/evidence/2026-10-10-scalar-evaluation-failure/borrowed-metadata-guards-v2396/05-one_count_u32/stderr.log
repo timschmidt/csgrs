@@ -1,0 +1,17 @@
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/05-one_count_u32/probe.rs:101:13
+    |
+101 |       ensures has_odd_factor(word_value_u32(words@) + 1, result as nat),
+    |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+104 | /     match first_different_u32(words, u32::MAX) {
+105 | |         Some(index) => {
+106 | |             let count = words[index].trailing_ones();
+107 | |             proof {
+...   |
+116 | |         },
+117 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 1 previous error
+

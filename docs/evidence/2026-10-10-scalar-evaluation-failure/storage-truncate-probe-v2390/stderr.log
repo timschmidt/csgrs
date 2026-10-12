@@ -1,0 +1,18 @@
+error: to dereference a mutable reference parameter in a postcondition, disambiguate by wrapping it in either `old` or `final`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-truncate-probe-v2390/probe.rs:23:28
+   |
+23 |     ensures word_value_u32(words@) == word_value_u32(old(words)@), normalized_u32(words@),
+   |                            ^^^^^
+   |
+   = help: For information on the new mutable reference support, see: https://github.com/verus-lang/verus/blob/main/source/docs/migration-mut-ref.md
+
+error: to dereference a mutable reference parameter in a postcondition, disambiguate by wrapping it in either `old` or `final`
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-truncate-probe-v2390/probe.rs:34:28
+   |
+34 |     ensures word_value_u64(words@) == word_value_u64(old(words)@), normalized_u64(words@),
+   |                            ^^^^^
+   |
+   = help: For information on the new mutable reference support, see: https://github.com/verus-lang/verus/blob/main/source/docs/migration-mut-ref.md
+
+error: aborting due to 2 previous errors
+

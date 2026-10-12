@@ -1,0 +1,20 @@
+note: while loop: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/07-first_different_u64/probe.rs:144:5
+    |
+144 |     while index < words.len()
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: invariant not satisfied at end of loop body
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/07-first_different_u64/probe.rs:145:19
+    |
+145 |         invariant index <= words.len(),
+    |                   ^^^^^^^^^^^^^^^^^^^^
+
+error: possible arithmetic underflow/overflow
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/07-first_different_u64/probe.rs:152:9
+    |
+152 |         index += 2;
+    |         ^^^^^^^^^^
+
+error: aborting due to 2 previous errors
+

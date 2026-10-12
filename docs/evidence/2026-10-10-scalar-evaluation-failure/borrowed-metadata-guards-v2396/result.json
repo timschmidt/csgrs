@@ -1,0 +1,244 @@
+{
+  "protocol_sha256": "7f2102a5172df6f4cad6ae7bd513cb6f957aad56aabbe77b74c212bc826b87b8",
+  "runs": [
+    {
+      "index": 0,
+      "name": "baseline",
+      "exit_code": 0,
+      "seconds": 6.072739505209029,
+      "source_sha256": "7cae61e4d0e9cbc410e71ef9863e8393df3b73ca0744dec44456c45cfbc3391f",
+      "stdout_sha256": "7244488db4594d960706dd6b5072e4c447b6af983254e1df1df1fd8ec6c4a972",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "success": true,
+        "verified": 454,
+        "errors": 0,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 1,
+      "name": "first_different_u32",
+      "exit_code": 1,
+      "seconds": 5.611729464028031,
+      "source_sha256": "808f46a68fbe76127be6e709fbf3968e26badcd5bf0c9ffd185c444ab32b1244",
+      "stdout_sha256": "82cccdd69bebae71c38e74a8d7e0f1978ef2f7a59b2ea988413a2031cc8731c4",
+      "stderr_sha256": "dadc49a8597097dd572f48b0c011b7fe718f3efe9f0d61288f1e1cc98a9ad31d",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 2,
+      "name": "last_nonzero_u32",
+      "exit_code": 1,
+      "seconds": 5.551881308667362,
+      "source_sha256": "7b7b199c4c35bb7fd52798c0ea62d10f8e3d9eed6fbd21001dc8576b3d390263",
+      "stdout_sha256": "957df64d4392b713ef01a90dd7e8e62d3965d080e04fcd3391b5497e3a3abc82",
+      "stderr_sha256": "fb057f34f3d21f7a4fb8d892a52a9b7c7ceb572189efe2053b6c05eb2dd99742",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 3,
+      "name": "trim_zero_suffix_u32",
+      "exit_code": 1,
+      "seconds": 5.7559623322449625,
+      "source_sha256": "b1d1ef1a910ab803e7d594daabb94f99b21cafa0ae3e0ad32b6fddf12957ab26",
+      "stdout_sha256": "92afb6eb56a53f5eeaa1f33cb40c7aa64343dd35855a2890f5341796d5bd5423",
+      "stderr_sha256": "01b6b8bbf101ceab867491e19cfe02d8924cceb05f04ef2f66cb9b4c85fec460",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 4,
+      "name": "zero_count_u32",
+      "exit_code": 1,
+      "seconds": 5.74911795090884,
+      "source_sha256": "53ebfb40071fa2df48d4d8699f5f0759ad52b6de91091e3638d083e483cd6588",
+      "stdout_sha256": "691ca36d95de91f6d59222b04c88877a29167ad7938f850d0f3d0e08e1349003",
+      "stderr_sha256": "27c0a7d820bdd4cb8428c42ccc30169251de87e27e23a20684a165befd6b5fc7",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 5,
+      "name": "one_count_u32",
+      "exit_code": 1,
+      "seconds": 5.9204465500079095,
+      "source_sha256": "22ed5b1fd323aec50810db67a18bdd9ec7ddfd6598f85f89e2f0d5cd07335e7e",
+      "stdout_sha256": "9f42f20e5e0a733b1935cdab4c0536fdeae266fa50ed4580f8854bd29bd270ac",
+      "stderr_sha256": "e176cb5c21bd850c135b01b7b52b16303b1dfbda30cc8caf6f1f39e48c9f7e4d",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 6,
+      "name": "bit_count_u32",
+      "exit_code": 1,
+      "seconds": 5.533161102794111,
+      "source_sha256": "d27fd7e40adc5fcef0cc6796fb62193e4c59409ac9d4798e77c301b6b2e4f261",
+      "stdout_sha256": "21ea34780cec15255db36500cfecbf1e64809121472deb2a83b80b577c2cc7fe",
+      "stderr_sha256": "c8c5f504b8dfccfe423729fd35d0b4c375a217b42b08185753f5b1d86aa615ab",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 7,
+      "name": "first_different_u64",
+      "exit_code": 1,
+      "seconds": 5.724223039112985,
+      "source_sha256": "62e68d21819525fdac63d6c46e5251abe12ac3adf3431e31ad508b826da13bc2",
+      "stdout_sha256": "73d0716448f4ee316f49ba03ff605c90fc5098512b80f8a096976b923d007df6",
+      "stderr_sha256": "3fe4cd9585b7322c789800fc6604f7d2337bc47766c847e7bb69ffc7e237ef30",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 8,
+      "name": "last_nonzero_u64",
+      "exit_code": 1,
+      "seconds": 5.765660447068512,
+      "source_sha256": "7785230824cc8f51988c48173e50544038dbcc9beb320107a7d52403473d7c28",
+      "stdout_sha256": "980ce2b45498dfd9387ba1996620f69d88cbac8b3ea611141497712dfc001763",
+      "stderr_sha256": "aabeec4b4905ff8192edd5c2e9c893122540eb72cffbdffffb4c84d970d5cedc",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 9,
+      "name": "trim_zero_suffix_u64",
+      "exit_code": 1,
+      "seconds": 5.5991066000424325,
+      "source_sha256": "69a6742dc6896b69fa6cba7c9f2710734e141c35d4ac7944850edca31c903a5f",
+      "stdout_sha256": "d5af370a4ad31f2af0e9264c4c9782a60ae9b556e7a06ae0aa34e3f2598402b4",
+      "stderr_sha256": "0b2ba23ee1e75449757f9758b15c852d70010dbf51b73da8042b1949699ee3c8",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 10,
+      "name": "zero_count_u64",
+      "exit_code": 1,
+      "seconds": 5.449339791201055,
+      "source_sha256": "d5d35df01e6f94cafa3445b9da2a2f4e5dbac9cde467fc10fd2f16e6541e5580",
+      "stdout_sha256": "7bdceacea32b0bc6d041224e73a5f9d941892af43bf38dbd457c3b5633035965",
+      "stderr_sha256": "f55761dbf1693929f24b3a408cca196355bb0c33ecfaf4bf1bbd4c7fefb1c711",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 11,
+      "name": "one_count_u64",
+      "exit_code": 1,
+      "seconds": 5.439225523732603,
+      "source_sha256": "8600c91c388140deb45cdc2f80cf280bdecb5f5d59df86c46bee0df9a69c9cff",
+      "stdout_sha256": "8195da07dd8ede732095c959a5f5e7dd89c373d23145d0df76910aa6d99522e2",
+      "stderr_sha256": "5a56793463fc97c595a01a5deef9dc9f26ac465eee2d5cd9a0111b29f585b325",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    },
+    {
+      "index": 12,
+      "name": "bit_count_u64",
+      "exit_code": 1,
+      "seconds": 5.390917798969895,
+      "source_sha256": "840bd27dd5134076d882a3694dc263697264247226cfbc3a4e8399a747eafc81",
+      "stdout_sha256": "ecfd8de0af399f66e345b7a789e6e08e350f5a651bf9991359f50314c9f20452",
+      "stderr_sha256": "b56e466d62f87892fbeb1157812163849050f9454f1277f4121850cebd3eff6e",
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "success": false,
+        "verified": 453,
+        "errors": 1,
+        "is-verifying-entire-crate": true
+      },
+      "gate_passed": true
+    }
+  ],
+  "complete": true,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_proof_coverage_changed": false
+}

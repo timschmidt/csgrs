@@ -1,0 +1,32 @@
+{
+  "status": "Frozen before checking iterator calls with an explicit dereference closure",
+  "preparation_sha256": "5b2423fc372b7700dcddc3d108d5eb66715d25bbbafa1c61de1a241ccf87e5c2",
+  "probes": [
+    {
+      "kind": "forward",
+      "prior_phase": "storage-forward-probe-v2387",
+      "prior_result_sha256": "e5521f836ebbf228c903a41a4b96960288a0863b3e6fd98d75d781948445a28f",
+      "prior_proposal_sha256": "911027679e127187283ff82686ab3a7ab227d36d2f41a4f99f27468c4049c3ca",
+      "prior_runner_sha256": "db881cfcac833e2c7b627b46dd2ca3a96bfb3ce493856abcb46727a6e1638431",
+      "proposal": "storage-forward-proposal-v2391.rs",
+      "proposal_sha256": "180934042e1e58a556f87c06a5e29712b01a3a352aabe9d886236f2672facd29",
+      "runner": "probe_storage_forward_v2391.py",
+      "runner_sha256": "3077a1b9e9925699354bb223b5854f674c47ac8ad2d667d12fea2f7c6cfd1e2c",
+      "phase": "storage-forward-probe-v2391"
+    },
+    {
+      "kind": "reverse",
+      "prior_phase": "storage-reverse-probe-v2388",
+      "prior_result_sha256": "62bef0d58ab4ab84089158467721676607dc76548c28916c899cd5095218c61e",
+      "prior_proposal_sha256": "3974ae501a2707d0033b8ee8205e49106e8b660549ac5913528203a3896be8bf",
+      "prior_runner_sha256": "81d686c2f1261c5b704303c959ed543b37ceb1fa46e785ccb20fc5161bb3abb4",
+      "proposal": "storage-reverse-proposal-v2392.rs",
+      "proposal_sha256": "e068adf00d1907937cfc820d8ebb1f2e74aa8c9e0275bf0b5adc3b6d57c79abc",
+      "runner": "probe_storage_reverse_v2392.py",
+      "runner_sha256": "576725a08e66b80251a37a5a05de9c0cf71d01bd36ab708f0975f559e319f01e",
+      "phase": "storage-reverse-probe-v2392"
+    }
+  ],
+  "source_changed": false,
+  "change": "Expand the reference pattern on each primitive Copy word into a typed reference parameter and explicit dereference. Keep the iterator call and mathematical contract unchanged. This diagnostic probe is not credited as a proof of the dependency's original closure syntax or implementation; the original failures remain archived."
+}

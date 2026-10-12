@@ -1,0 +1,32 @@
+{
+  "status": "Frozen before the explicit mutable post-state probes",
+  "preparation_sha256": "0ff9c32e93d37dd722fef1dd9f20616c1af5f21c0d38e81bd289511c3074364f",
+  "probes": [
+    {
+      "kind": "shrink",
+      "prior_phase": "storage-shrink-probe-v2389",
+      "prior_result_sha256": "59b2e8b7e7e5c4a0725e0177c31be546ed07282294c74f011af44bf495f491d7",
+      "prior_proposal_sha256": "a8986814dda0081f5be62c8710fe45f5bec6dfdfbc595a1068b22707463c56fa",
+      "prior_runner_sha256": "b044d09cbb2375f64e45756f06bf1be701d9bceacc505bd019b6a426f473df98",
+      "proposal": "storage-shrink-proposal-v2393.rs",
+      "proposal_sha256": "25d4ad0cb88bb4f7741709a475d4b583c1bf2220aaec7741fae50bfb8a750604",
+      "runner": "probe_storage_shrink_v2393.py",
+      "runner_sha256": "4a8fdef7c5d5e860615c6a380281184daf2e0cf23b214f61962cb3535534391c",
+      "phase": "storage-shrink-probe-v2393"
+    },
+    {
+      "kind": "truncate",
+      "prior_phase": "storage-truncate-probe-v2390",
+      "prior_result_sha256": "8169188a409818667496d3e7d91ff62a512a2775e80043d8c5f6b5a2bf67abf1",
+      "prior_proposal_sha256": "39562c660192f2f62d56a60de526a74facdacf5d7b3b093290e553ca890955d4",
+      "prior_runner_sha256": "c6490c60ba8a88b46f5fc430f12d2aef8b50d6d2123d1fa40a4c2ba43c76e234",
+      "proposal": "storage-truncate-proposal-v2394.rs",
+      "proposal_sha256": "446ae735fa41a8b3bc46d3a64e8381fe792a74142b3207d97905d7ccb5946aa9",
+      "runner": "probe_storage_truncate_v2394.py",
+      "runner_sha256": "961a51ac3f3cd63bd6efeec59a11d37d01e3fbfca5a5ab8eb4f45ae4cb8616dc",
+      "phase": "storage-truncate-probe-v2394"
+    }
+  ],
+  "source_changed": false,
+  "change": "Wrap the mutable post-state word view in final(words), as required by the pinned toolchain. Preserve the old state and every statement in the operation body. No new assumption or library specification is introduced; the original failures remain archived."
+}

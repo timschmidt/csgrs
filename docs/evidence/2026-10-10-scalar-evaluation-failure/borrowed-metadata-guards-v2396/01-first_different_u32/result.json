@@ -1,0 +1,18 @@
+{
+  "index": 1,
+  "name": "first_different_u32",
+  "exit_code": 1,
+  "seconds": 5.611729464028031,
+  "source_sha256": "808f46a68fbe76127be6e709fbf3968e26badcd5bf0c9ffd185c444ab32b1244",
+  "stdout_sha256": "82cccdd69bebae71c38e74a8d7e0f1978ef2f7a59b2ea988413a2031cc8731c4",
+  "stderr_sha256": "dadc49a8597097dd572f48b0c011b7fe718f3efe9f0d61288f1e1cc98a9ad31d",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 453,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

@@ -1,0 +1,18 @@
+{
+  "index": 8,
+  "name": "last_nonzero_u64",
+  "exit_code": 1,
+  "seconds": 5.765660447068512,
+  "source_sha256": "7785230824cc8f51988c48173e50544038dbcc9beb320107a7d52403473d7c28",
+  "stdout_sha256": "980ce2b45498dfd9387ba1996620f69d88cbac8b3ea611141497712dfc001763",
+  "stderr_sha256": "aabeec4b4905ff8192edd5c2e9c893122540eb72cffbdffffb4c84d970d5cedc",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 453,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

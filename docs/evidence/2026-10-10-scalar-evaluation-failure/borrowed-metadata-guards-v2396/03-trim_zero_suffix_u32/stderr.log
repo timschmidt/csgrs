@@ -1,0 +1,10 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/03-trim_zero_suffix_u32/probe.rs:64:13
+   |
+63 | pub(crate) fn trim_zero_suffix_u32(words: &mut Vec<u32>)
+   | -------------------------------------------------------- at the end of the function body
+64 |     ensures word_value_u32(final(words)@) == word_value_u32(old(words)@),
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+
+error: aborting due to 1 previous error
+

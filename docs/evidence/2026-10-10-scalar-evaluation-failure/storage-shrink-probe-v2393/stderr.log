@@ -1,0 +1,30 @@
+error: `alloc::vec::impl&%1::capacity` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-shrink-probe-v2393/probe.rs:22:22
+   |
+22 |     if words.len() < words.capacity() / 4 {
+   |                      ^^^^^^^^^^^^^^^^
+...
+31 |     if words.len() < words.capacity() / 4 {
+   |                      ----------------
+   |
+   = help: The following declaration may resolve this error:
+           pub assume_specification<T, A> [std::vec::Vec::<T, A>::capacity] (_0: &std::vec::Vec<T, A>) -> usize
+           where
+           A: std::alloc::Allocator,;
+
+error: `alloc::vec::impl&%1::shrink_to_fit` is not supported (note: you may be able to add a Verus specification to this function with `assume_specification`) (note: the vstd library provides some specification for the Rust std library, but it is currently limited)
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-shrink-probe-v2393/probe.rs:23:9
+   |
+23 |         words.shrink_to_fit();
+   |         ^^^^^^^^^^^^^^^^^^^^^
+...
+32 |         words.shrink_to_fit();
+   |         ---------------------
+   |
+   = help: The following declaration may resolve this error:
+           pub assume_specification<T, A> [std::vec::Vec::<T, A>::shrink_to_fit] (_0: &mut std::vec::Vec<T, A>)
+           where
+           A: std::alloc::Allocator,;
+
+error: aborting due to 2 previous errors
+

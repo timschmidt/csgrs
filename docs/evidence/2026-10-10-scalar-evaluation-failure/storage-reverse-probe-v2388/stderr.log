@@ -1,0 +1,14 @@
+error: The verifier does not yet support the following Rust feature: only variables are supported here, not general patterns
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-reverse-probe-v2388/probe.rs:26:29
+   |
+26 |     words.iter().rposition(|&digit| digit != 0)
+   |                             ^^^^^^
+
+error: The verifier does not yet support the following Rust feature: only variables are supported here, not general patterns
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-reverse-probe-v2388/probe.rs:37:29
+   |
+37 |     words.iter().rposition(|&digit| digit != 0)
+   |                             ^^^^^^
+
+error: aborting due to 2 previous errors
+

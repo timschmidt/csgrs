@@ -1,0 +1,27 @@
+{
+  "status": "Frozen before primitive support probing",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/target/verus/0.2026.09.13.671956e/verus-x86-linux/verus",
+    "--edition=2024",
+    "--crate-type=lib",
+    "--no-cheating",
+    "--output-json",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/storage-reverse-probe-v2388/probe.rs"
+  ],
+  "runner_sha256": "81d686c2f1261c5b704303c959ed543b37ceb1fa46e785ccb20fc5161bb3abb4",
+  "probe_sha256": "3974ae501a2707d0033b8ee8205e49106e8b660549ac5913528203a3896be8bf",
+  "retained_checkpoint": "typed-api-prototype-v2386-state.json",
+  "retained_checkpoint_sha256": "6dabcb25b03a7a8769c432b926b3c4a35288ed43fd172e7a46d27503d8f68cb9",
+  "source_record_sha256": "67e3d14b5d7a319778d56b701498e97225c16134eca65bb14a7586c727f2fb5a",
+  "pinned_toolchain": {
+    "version": "0.2026.09.13.671956e",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c",
+    "rust_toolchain": "1.98.1-x86_64-unknown-linux-gnu",
+    "archive": "verus-0.2026.09.13.671956e-x86-linux.zip",
+    "url": "https://github.com/verus-lang/verus/releases/download/release/0.2026.09.13.671956e/verus-0.2026.09.13.671956e-x86-linux.zip",
+    "sha256": "08c85b96e0fbbbdcb1b3a9fa8943dce7598c3e7b343680820f649b4e1efda4b4"
+  },
+  "verifier_sha256": "2fe2fca366846ec5aaaaaf80edf061f7d19564c097cb9840c7638719e8bc1854",
+  "question": "Does the pinned verifier support the dependency's exact reverse call expression for u32/u64 storage, and can its existing contract prove the stated result?",
+  "scope": "Compile the actual retained verified helpers, magnitude model and bit-length model alongside the generic scan proposal. Use the pinned vstd axioms and no new trusted assumptions. Report verifier units separately from new proof functions; imported existing units are not new coverage. This support probe is not a production BigInt proof, a SOURCE change, a new retained theorem or runtime admission. Preserve a failure without changing completed artifacts."
+}

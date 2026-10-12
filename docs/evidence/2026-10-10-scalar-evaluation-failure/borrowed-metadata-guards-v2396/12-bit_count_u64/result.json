@@ -1,0 +1,18 @@
+{
+  "index": 12,
+  "name": "bit_count_u64",
+  "exit_code": 1,
+  "seconds": 5.390917798969895,
+  "source_sha256": "840bd27dd5134076d882a3694dc263697264247226cfbc3a4e8399a747eafc81",
+  "stdout_sha256": "ecfd8de0af399f66e345b7a789e6e08e350f5a651bf9991359f50314c9f20452",
+  "stderr_sha256": "b56e466d62f87892fbeb1157812163849050f9454f1277f4121850cebd3eff6e",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 453,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

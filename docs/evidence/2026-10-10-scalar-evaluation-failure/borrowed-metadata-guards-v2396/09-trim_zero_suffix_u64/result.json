@@ -1,0 +1,18 @@
+{
+  "index": 9,
+  "name": "trim_zero_suffix_u64",
+  "exit_code": 1,
+  "seconds": 5.5991066000424325,
+  "source_sha256": "69a6742dc6896b69fa6cba7c9f2710734e141c35d4ac7944850edca31c903a5f",
+  "stdout_sha256": "d5af370a4ad31f2af0e9264c4c9782a60ae9b556e7a06ae0aa34e3f2598402b4",
+  "stderr_sha256": "0b2ba23ee1e75449757f9758b15c852d70010dbf51b73da8042b1949699ee3c8",
+  "verification_results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 453,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true
+}

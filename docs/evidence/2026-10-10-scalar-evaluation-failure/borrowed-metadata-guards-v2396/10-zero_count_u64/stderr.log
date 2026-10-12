@@ -1,0 +1,22 @@
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/borrowed-metadata-guards-v2396/10-zero_count_u64/probe.rs:192:13
+    |
+192 |       ensures match result {
+    |  _____________^
+193 | |         Some(count) => has_odd_factor(word_value_u64(words@), count as nat)
+194 | |             && count < 64 * words.len(),
+195 | |         None => word_value_u64(words@) == 0,
+196 | |     },
+    | |_____^ failed this postcondition
+197 |   {
+198 | /     match first_different_u64(words, 0) {
+199 | |         Some(index) => {
+200 | |             let count = words[index].trailing_zeros();
+201 | |             proof {
+...   |
+210 | |         },
+211 | |     }
+    | |_____- at the end of the function body
+
+error: aborting due to 1 previous error
+
