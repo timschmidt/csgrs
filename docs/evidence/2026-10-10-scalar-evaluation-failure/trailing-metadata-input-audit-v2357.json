@@ -1,0 +1,182 @@
+{
+  "status": "Fresh metadata guards pass; disjoint old guards and unchanged runtime evidence remain applicable",
+  "runner_sha256": "8d706d76b83cd4098736d0d6d0b0cbfe604e849c79bd34730c252ddede2a0f60",
+  "previous_checkpoint": "typed-api-prototype-v2345-state.json",
+  "previous_checkpoint_sha256": "a75220d56a289d2e83e36a426fb6f1f04b808e684b0889e5d360924408d940b9",
+  "source_record": "typed-api-prototype-v2352-trailing-metadata-verus/source-hashes.json.gz",
+  "source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "source_files_verified": 24747,
+  "main_files_verified": 1167,
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "0e4d7e01ca066aa50a41e771cf5536f4d5837195317a52942b924ea9d9e6f1d3",
+      "after": "645d0dd57909ec9a70f4ecb958e0f09a146be256e1842528dfd4ad4de7a34195"
+    },
+    "crates/hyperreal/verification/bit_length_model.rs": {
+      "before": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+      "after": "2b203e4b81195594395272b899cabd8246ec774943e5331eaa8fa5fc75a112c2"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "a84fee0c6c57939a354285321ebb31344860dff19cb50d5ea8c19581bfa0384c",
+      "after": "cabef5a8805d1abf4b7a3e19ab4ed13f2b500348766c01ee08c017117168d90c"
+    },
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": {
+      "before": null,
+      "after": "3531a23197a89238b958184ca101dfae106494e642a207e933c5484f55349ba4"
+    },
+    "crates/hyperreal/verification/test_rejections.py": {
+      "before": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+      "after": "465280ee7ddb756ce84ea8183e8179a7f64db05282f815d8c74a1a1511619b20"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "conditional_proof": {
+    "verified_units": 682,
+    "errors": 0,
+    "production_contracts": 98,
+    "model_theorems": 143,
+    "open_obligation_groups": 13
+  },
+  "fresh_validation_record_sha256": "4ed65dd5527c148ad9b404f08c66632e2d99bb1b5ceb35c943f33a04e5c5a143",
+  "fresh_rejected_mutations": 12,
+  "fresh_positive_baselines": 1,
+  "fresh_guard_log_sha256": "a26a937acb1ef609fc263f188a06f15f25195b13025fdfce3ed55652df3afa24",
+  "fresh_mutations": [
+    {
+      "name": "trailing_zeros_factor_u32",
+      "invocation_index": 1,
+      "mutated_source_sha256": "6112bb2df87687be7ab46fa3af895c5927ce47246bb9768db90442904ce571a8"
+    },
+    {
+      "name": "trailing_ones_factor_u32",
+      "invocation_index": 2,
+      "mutated_source_sha256": "23a82417132d9247b04d9198fb58a589ce81d184ba4746762a81499a459511a7"
+    },
+    {
+      "name": "trailing_ones_factor_u32",
+      "invocation_index": 3,
+      "mutated_source_sha256": "f284a5579d283810c1a80284d8d73ee81f6d5f4f081d4d6b2cd97aa274c43375"
+    },
+    {
+      "name": "trailing_ones_factor_u64",
+      "invocation_index": 4,
+      "mutated_source_sha256": "c6b73ea47dd1086d4b61a87c92efbd6714f0f3b3d558fd5dc5b534fad2cfb479"
+    },
+    {
+      "name": "trailing_ones_factor_u64",
+      "invocation_index": 5,
+      "mutated_source_sha256": "4a4361ce48e5079762fa7e6b6de961ec90d70d127d1e045b064807dd853380e1"
+    },
+    {
+      "name": "odd_factor_of_power_is_unit",
+      "invocation_index": 6,
+      "mutated_source_sha256": "b753a2da5371788fb3cd1a2096769f1948d3e1ec43e3167d6d6636313ae5e769"
+    },
+    {
+      "name": "odd_factor_of_power_is_unit",
+      "invocation_index": 7,
+      "mutated_source_sha256": "a55a3d813385d71c0d538a40f7f82645230151faabb4c324c60b4dab99cb3fcd"
+    },
+    {
+      "name": "trailing_zeros_determine_power_of_two",
+      "invocation_index": 8,
+      "mutated_source_sha256": "f3269259aafdbc0d67774ed1d666a2b8f6c7fe54be4b056a878038170b259f92"
+    },
+    {
+      "name": "trailing_zeros_determine_power_of_two",
+      "invocation_index": 9,
+      "mutated_source_sha256": "b3c9aa6638f43dc15507ca393fe5a5ec1cc2ae48a8ae0709532fb3e400c7588b"
+    },
+    {
+      "name": "trailing_ones_determine_all_ones",
+      "invocation_index": 10,
+      "mutated_source_sha256": "16bf96c358f9411cddc62d8310dfc6d83cec1057970e3be9555d2ae18f3cadaa"
+    },
+    {
+      "name": "trailing_ones_determine_all_ones",
+      "invocation_index": 11,
+      "mutated_source_sha256": "bac167d49dfaf00a53f4e4d422978f933549f712fc0623436738d39e4fd8a27c"
+    },
+    {
+      "name": "trailing_ones_determine_all_ones",
+      "invocation_index": 12,
+      "mutated_source_sha256": "2037a1c6abbd4d84c8872095125d44731e0b90b2eb7ae86d6abea7f9d80aae62"
+    }
+  ],
+  "fresh_acceptance_tests": 10,
+  "included_format_files": 109,
+  "inherited_input_audit": "approximation-metadata-input-audit-v2344/summary.json",
+  "inherited_input_audit_sha256": "4c616739428dae2489c3611b2de7c292c51bd024500f62d49b49d6e11323e9f2",
+  "reused_rejected_mutations": 255,
+  "reused_positive_baselines": 4,
+  "total_applicable_rejected_mutations": 267,
+  "total_applicable_positive_baselines": 5,
+  "old_guard_reuse_basis": "None of the 259 prior actual invocation input sets imports bit_length_model.rs, the only changed Rust file. Every old guard module and all its Rust inputs remain as covered by v2344, including that audit's explicit import-order correction. Removing exactly the new entrypoint import and call restores its prior bytes. The new module defines its own independent guard group; its two top-level interpreter settings repeat the existing guard setup, and it invokes no proof at import time. Existing calls retain their original identities and rejection criteria.",
+  "old_entrypoint_sha256": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+  "current_entrypoint_sha256": "465280ee7ddb756ce84ea8183e8179a7f64db05282f815d8c74a1a1511619b20",
+  "unchanged_proof_dependencies_sha256": "b4ced632a3c39ea965f9104291315691c11fd602b2fa4cc77fc055db3679e1e9",
+  "historical_runtime_evidence_applicable": true,
+  "unchanged_frozen_probe_binaries": 7,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "prior_support_commit_files_verified": 29,
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "scope": "The six lemmas and twelve controls extend the conditional bit-count model only. BigUint normalization/storage, actual multiword scans, metadata ranges and imports, approximation producers, independent real existence, callers and concurrent publication remain open. No new runtime work or historical process relabelling occurs; every previous scope/resource/main/native/full-board limitation remains. The next checkpoint must still verify all previous artifacts."
+}

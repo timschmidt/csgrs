@@ -1,0 +1,12 @@
+Rejected incorrect bit metadata: trailing_zeros_factor_u32
+Rejected incorrect bit metadata: trailing_ones_factor_u32
+Rejected incorrect bit metadata: trailing_ones_factor_u32
+Rejected incorrect bit metadata: trailing_ones_factor_u64
+Rejected incorrect bit metadata: trailing_ones_factor_u64
+Rejected incorrect bit metadata: odd_factor_of_power_is_unit
+Rejected incorrect bit metadata: odd_factor_of_power_is_unit
+Rejected incorrect bit metadata: trailing_zeros_determine_power_of_two
+Rejected incorrect bit metadata: trailing_zeros_determine_power_of_two
+Rejected incorrect bit metadata: trailing_ones_determine_all_ones
+Rejected incorrect bit metadata: trailing_ones_determine_all_ones
+Rejected incorrect bit metadata: trailing_ones_determine_all_ones

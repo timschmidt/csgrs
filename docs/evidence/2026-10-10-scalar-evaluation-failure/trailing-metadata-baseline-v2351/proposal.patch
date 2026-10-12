@@ -1,0 +1,353 @@
+--- a/crates/hyperreal/verification/bit_length_model.rs
++++ b/crates/hyperreal/verification/bit_length_model.rs
+@@ -1,11 +1,11 @@
+ //! Connect the verified limb denotation to mathematical bit lengths.
+ //! BigUint storage normalization and the runtime import still need refinement.
++use crate::magnitude_model::has_bit_length;
++use crate::verified::limbs::{prefix, prefix_bound, value, weight};
++use vstd::arithmetic::div_mod::*;
++use vstd::arithmetic::power2::*;
+ use vstd::prelude::*;
+-use vstd::arithmetic::power2::*;
+-use vstd::arithmetic::div_mod::*;
+-use vstd::std_specs::bits::{u64_leading_zeros, axiom_u64_leading_zeros};
+-use crate::verified::limbs::{prefix, value, weight, prefix_bound};
+-use crate::magnitude_model::has_bit_length;
++use vstd::std_specs::bits::*;
+ 
+ verus! {
+ 
+@@ -109,4 +109,190 @@
+     }
+ }
+ 
+-}
++
++pub(crate) proof fn trailing_zeros_factor_u32(value: u32)
++    requires value > 0,
++    ensures
++        u32_trailing_zeros(value) < 32,
++        0 < (value >> u32_trailing_zeros(value)) <= value,
++        (value >> u32_trailing_zeros(value)) % 2 == 1,
++        value == (value >> u32_trailing_zeros(value)) * pow2(u32_trailing_zeros(value) as nat),
++{
++    axiom_u32_trailing_zeros(value);
++    let shift = u32_trailing_zeros(value) as u32;
++    let odd = value >> shift;
++    assert((value >> shift) % 2 == 1) by (bit_vector)
++        requires (value >> shift) & 1u32 == 1u32;
++    assert(0 < odd <= value) by (bit_vector)
++        requires odd == value >> shift, odd % 2 == 1;
++    vstd::bits::lemma_u32_mul_pow2_le_max_iff_max_shr(odd, shift, value);
++    vstd::bits::lemma_u32_shl_is_mul(odd, shift);
++    assert((value >> shift) << shift == value) by (bit_vector)
++        requires shift < 32, value << ((32 - shift) as u32) == 0;
++}
++
++pub(crate) proof fn trailing_ones_factor_u32(word: u32)
++    ensures
++        u32_trailing_ones(word) <= 32,
++        ({let unit = pow2(u32_trailing_ones(word) as nat);
++          let magnitude = word as nat + 1;
++          &&& magnitude / unit > 0
++          &&& (magnitude / unit) % 2 == 1
++          &&& magnitude == (magnitude / unit) * unit}),
++{
++    axiom_u32_trailing_ones(word);
++    let complement = !word;
++    axiom_u32_trailing_zeros(complement);
++    let shift = u32_trailing_ones(word) as nat;
++    lemma2_to64();
++    lemma_pow2_pos(shift);
++    let unit = pow2(shift);
++    let magnitude = word as nat + 1;
++    assert((word as u128) + (complement as u128) == u32::MAX as u128) by (bit_vector)
++        requires complement == !word;
++    if complement == 0 {
++        assert(shift == 32);
++        assert(magnitude == unit);
++        lemma_div_by_self(unit as int);
++    } else {
++        trailing_zeros_factor_u32(complement);
++        let odd = (complement >> u32_trailing_zeros(complement)) as nat;
++        let other = pow2((32 - shift) as nat);
++        lemma_pow2_adds(shift, (32 - shift) as nat);
++        assert(magnitude == (other as int - odd as int) * unit) by (nonlinear_arith)
++            requires word as nat + complement as nat == u32::MAX,
++                magnitude == word as nat + 1,
++                complement == odd * unit,
++                pow2(32) == u32::MAX as nat + 1,
++                pow2(32) == unit * other;
++        assert(other > odd) by (nonlinear_arith)
++            requires magnitude > 0, unit > 0,
++                magnitude == (other as int - odd as int) * unit;
++        let quotient = (other - odd) as nat;
++        lemma_fundamental_div_mod_converse_div(magnitude as int, unit as int, quotient as int, 0);
++        lemma_pow2_unfold((32 - shift) as nat);
++        let half = pow2((31 - shift) as nat);
++        lemma_fundamental_div_mod(odd as int, 2);
++        assert(quotient as int == 2 * (half as int - (odd as int) / 2 - 1) + 1);
++        lemma_mod_multiples_vanish(half as int - (odd as int) / 2 - 1, 1, 2);
++    }
++}
++
++
++pub(crate) proof fn trailing_ones_factor_u64(word: u64)
++    ensures
++        u64_trailing_ones(word) <= 64,
++        ({let unit = pow2(u64_trailing_ones(word) as nat);
++          let magnitude = word as nat + 1;
++          &&& magnitude / unit > 0
++          &&& (magnitude / unit) % 2 == 1
++          &&& magnitude == (magnitude / unit) * unit}),
++{
++    axiom_u64_trailing_ones(word);
++    let complement = !word;
++    axiom_u64_trailing_zeros(complement);
++    let shift = u64_trailing_ones(word) as nat;
++    lemma2_to64();
++    lemma_pow2_pos(shift);
++    let unit = pow2(shift);
++    let magnitude = word as nat + 1;
++    assert((word as u128) + (complement as u128) == u64::MAX as u128) by (bit_vector)
++        requires complement == !word;
++    if complement == 0 {
++        assert(shift == 64);
++        assert(magnitude == unit);
++        lemma_div_by_self(unit as int);
++    } else {
++        crate::verified::gcd::trailing_zeros_factor_u64(complement);
++        let odd = (complement >> u64_trailing_zeros(complement)) as nat;
++        let other = pow2((64 - shift) as nat);
++        lemma_pow2_adds(shift, (64 - shift) as nat);
++        assert(magnitude == (other as int - odd as int) * unit) by (nonlinear_arith)
++            requires word as nat + complement as nat == u64::MAX,
++                magnitude == word as nat + 1,
++                complement == odd * unit,
++                pow2(64) == u64::MAX as nat + 1,
++                pow2(64) == unit * other;
++        assert(other > odd) by (nonlinear_arith)
++            requires magnitude > 0, unit > 0,
++                magnitude == (other as int - odd as int) * unit;
++        let quotient = (other - odd) as nat;
++        lemma_fundamental_div_mod_converse_div(magnitude as int, unit as int, quotient as int, 0);
++        lemma_pow2_unfold((64 - shift) as nat);
++        let half = pow2((63 - shift) as nat);
++        lemma_fundamental_div_mod(odd as int, 2);
++        assert(quotient as int == 2 * (half as int - (odd as int) / 2 - 1) + 1);
++        lemma_mod_multiples_vanish(half as int - (odd as int) / 2 - 1, 1, 2);
++    }
++}
++
++// These arithmetic bridges consume an odd-factor certificate. Actual dependency
++// storage, first-match scans and machine-width metadata imports remain open.
++pub(crate) proof fn odd_factor_of_power_is_unit(odd: nat, shift: nat, exponent: nat)
++    requires odd > 0, odd % 2 == 1,
++        odd * pow2(shift) == pow2(exponent),
++    ensures odd == 1, shift == exponent,
++{
++    lemma_pow2_pos(shift);
++    lemma_pow2_pos(exponent);
++    if shift > exponent {
++        lemma_pow2_strictly_increases(exponent, shift);
++        assert(false) by (nonlinear_arith)
++            requires odd > 0, pow2(shift) > pow2(exponent),
++                pow2(shift) > 0, odd * pow2(shift) == pow2(exponent);
++    } else if shift < exponent {
++        let difference = (exponent - shift) as nat;
++        lemma_pow2_adds(shift, difference);
++        assert(odd == pow2(difference)) by (nonlinear_arith)
++            requires pow2(shift) > 0,
++                odd * pow2(shift) == pow2(exponent),
++                pow2(exponent) == pow2(shift) * pow2(difference);
++        lemma_pow2_unfold(difference);
++        let half = pow2((difference - 1) as nat);
++        lemma_mod_multiples_vanish(half as int, 0, 2);
++        assert(odd % 2 == 0);
++    } else {
++        assert(odd == 1) by (nonlinear_arith)
++            requires pow2(shift) > 0, odd * pow2(shift) == pow2(shift);
++    }
++}
++
++pub(crate) proof fn trailing_zeros_determine_power_of_two(
++    magnitude: nat, bits: nat, zeros: nat, odd: nat,
++)
++    requires has_bit_length(magnitude, bits),
++        odd > 0, odd % 2 == 1, magnitude == odd * pow2(zeros),
++    ensures (zeros == (bits - 1) as nat) == (magnitude == pow2((bits - 1) as nat)),
++{
++    let exponent = (bits - 1) as nat;
++    lemma_pow2_pos(exponent);
++    lemma_pow2_unfold(bits);
++    if zeros == exponent {
++        assert(odd < 2) by (nonlinear_arith)
++            requires magnitude == odd * pow2(exponent),
++                magnitude < 2 * pow2(exponent), pow2(exponent) > 0;
++        assert(odd == 1);
++    } else if magnitude == pow2(exponent) {
++        odd_factor_of_power_is_unit(odd, zeros, exponent);
++    }
++}
++
++pub(crate) proof fn trailing_ones_determine_all_ones(
++    magnitude: nat, bits: nat, ones: nat, odd: nat,
++)
++    requires has_bit_length(magnitude, bits),
++        odd > 0, odd % 2 == 1, magnitude + 1 == odd * pow2(ones),
++    ensures (ones == bits) == (magnitude + 1 == pow2(bits)),
++{
++    lemma_pow2_pos(bits);
++    if ones == bits {
++        assert(odd <= 1) by (nonlinear_arith)
++            requires magnitude + 1 == odd * pow2(bits),
++                magnitude + 1 <= pow2(bits), pow2(bits) > 0;
++        assert(odd == 1);
++    } else if magnitude + 1 == pow2(bits) {
++        odd_factor_of_power_is_unit(odd, ones, bits);
++    }
++}
++
++}
+--- a/crates/hyperreal/verification/test_rejections.py
++++ b/crates/hyperreal/verification/test_rejections.py
+@@ -13,6 +13,7 @@
+ from test_bound_rejections import main as reject_bound_mutations  # noqa: E402
+ from test_cache_rejections import main as reject_cache_mutations  # noqa: E402
+ from test_structural_rejections import main as reject_structural_mutations  # noqa: E402
++from test_bit_metadata_rejections import main as reject_bit_metadata_mutations  # noqa: E402
+ 
+ 
+ MODEL_FILES = {"magnitude_model.rs", "integer_approximation_model.rs", "real_approximation_model.rs"}
+@@ -214,6 +215,7 @@
+     reject_bound_mutations()
+     reject_cache_mutations()
+     reject_structural_mutations()
++    reject_bit_metadata_mutations()
+ 
+ 
+ if __name__ == "__main__":
+--- a/crates/hyperreal/verification/scope.json
++++ b/crates/hyperreal/verification/scope.json
+@@ -237,7 +237,13 @@
+     "computable_cache::decoded_sign_update_preserves_bound",
+     "computable_cache::decoded_finite_real_update_preserves_bound",
+     "computable_bounds::approximation_bit_pattern_endpoints",
+-    "computable_bounds::approximation_metadata_produces_valid_bound"
++    "computable_bounds::approximation_metadata_produces_valid_bound",
++    "bit_length_model::trailing_zeros_factor_u32",
++    "bit_length_model::trailing_ones_factor_u32",
++    "bit_length_model::trailing_ones_factor_u64",
++    "bit_length_model::odd_factor_of_power_is_unit",
++    "bit_length_model::trailing_zeros_determine_power_of_two",
++    "bit_length_model::trailing_ones_determine_all_ones"
+   ],
+   "obligations": [
+     {
+--- a/crates/hyperreal/verification/README.md
++++ b/crates/hyperreal/verification/README.md
+@@ -2,7 +2,7 @@
+ 
+ The goal is a Verus proof of **all Hyperreal behavior**. It is not complete.
+ The current proof target verifies ninety-eight production contracts (eighty-nine
+-functions and nine constants) and one hundred thirty-seven arithmetic model theorems. The rest
++functions and nine constants) and one hundred forty-three arithmetic model theorems. The rest
+ of the crate is still awaiting implementation refinement proofs. A passing
+ Verus job must not be described as 100% verification of Hyperreal.
+ 
+@@ -283,6 +283,14 @@
+ copied implementation supplies those contracts. Inexact planning magnitudes
+ have no claimed error bound here. Establishing valid inputs in the expression
+ graph, rational import, cache publication and all callers remains open.
++The bit-length model also derives native trailing-one factorizations for
++32-bit and 64-bit words, including an all-ones word plus one in unbounded
++arithmetic. Positive odd-factor certificates and exact bit length determine
++the power-of-two and all-ones flags. The 64-bit zero-factor proof is reused
++from the actual verified helper. BigUint storage and normalization, whole
++digit scans, metadata range checks and the bound producer's caller remain
++outside this conditional model boundary; runtime evaluation order is unchanged.
++
+ The numerical-bound metadata bridge connects explicit bit-length, all-ones
+ and power-of-two premises to the closed one-unit interval endpoints. It uses
+ the actual checked exponent and bound-constructor contracts, including an
+--- /dev/null
++++ b/crates/hyperreal/verification/test_bit_metadata_rejections.py
+@@ -0,0 +1,78 @@
++#!/usr/bin/env python3
++"""Reject defects in the conditional bit-count and bit-pattern model bridges."""
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++import tempfile
++
++sys.dont_write_bytecode = True
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
++from verify_verus import ROOT, verifier  # noqa: E402
++
++MUTATIONS = [
++    ("trailing_zeros_factor_u32", "(value >> u32_trailing_zeros(value)) % 2 == 1,",
++     "(value >> u32_trailing_zeros(value)) % 2 == 0,"),
++    ("trailing_ones_factor_u32", "u32_trailing_ones(word) <= 32,",
++     "u32_trailing_ones(word) < 32,"),
++    ("trailing_ones_factor_u32", "let magnitude = word as nat + 1;\n    assert((word as u128)",
++     "let magnitude = word as nat + 2;\n    assert((word as u128)"),
++    ("trailing_ones_factor_u64", "u64_trailing_ones(word) <= 64,",
++     "u64_trailing_ones(word) < 64,"),
++    ("trailing_ones_factor_u64", "let complement = !word;", "let complement = word;"),
++    ("odd_factor_of_power_is_unit", "odd % 2 == 1,", "true,"),
++    ("odd_factor_of_power_is_unit", "odd * pow2(shift) == pow2(exponent),\n    ensures odd == 1",
++     "odd * pow2(shift) == pow2(exponent + 1),\n    ensures odd == 1"),
++    ("trailing_zeros_determine_power_of_two", "ensures (zeros == (bits - 1) as nat)",
++     "ensures (zeros == bits)"),
++    ("trailing_zeros_determine_power_of_two", "requires has_bit_length(magnitude, bits),",
++     "requires bits > 0,"),
++    ("trailing_ones_determine_all_ones", "magnitude + 1 == odd * pow2(ones),",
++     "magnitude == odd * pow2(ones),"),
++    ("trailing_ones_determine_all_ones", "requires has_bit_length(magnitude, bits),",
++     "requires bits > 0,"),
++    ("trailing_ones_determine_all_ones", "ensures (ones == bits)",
++     "ensures (ones + 1 == bits)"),
++]
++
++
++def mutate_function(source, name, before, after):
++    anchor = "proof fn " + name + "("
++    assert source.count(anchor) == 1, name
++    start = source.index(anchor)
++    end = source.index("\n}\n", start) + 3
++    function = source[start:end]
++    assert function.count(before) == 1, (name, before)
++    return source[:start] + function.replace(before, after) + source[end:]
++
++
++def main():
++    verus = verifier()
++    with tempfile.TemporaryDirectory(prefix="hyperreal-bit-metadata-rejections-") as temporary:
++        root = Path(temporary)
++        shutil.copytree(ROOT / "src/verified", root / "verified")
++        for name in ["magnitude_model.rs", "bit_length_model.rs"]:
++            shutil.copy2(ROOT / "verification" / name, root / name)
++        (root / "lib.rs").write_text(
++            "#![feature(proc_macro_hygiene)]\nmod verified;\nmod magnitude_model;\nmod bit_length_model;\n")
++        model = root / "bit_length_model.rs"
++        original = model.read_text()
++        changes = [(name, mutate_function(original, name, before, after))
++                   for name, before, after in MUTATIONS]
++        command = [str(verus), "--edition=2024", "--crate-type=lib", "--no-cheating", str(root / "lib.rs")]
++        baseline = subprocess.run(command, capture_output=True, text=True)
++        if baseline.returncode:
++            sys.exit(f"Unmutated bit-metadata proofs failed:\n{baseline.stdout}{baseline.stderr}")
++        for name, changed in changes:
++            model.write_text(changed)
++            result = subprocess.run(command, capture_output=True, text=True)
++            model.write_text(original)
++            failures = ["postcondition not satisfied", "assertion failed",
++                        "requires not satisfied", "precondition not satisfied"]
++            if result.returncode == 0 or not any(message in result.stderr for message in failures):
++                sys.exit(f"Expected bit-metadata rejection for {name}:\n{result.stdout}{result.stderr}")
++            print(f"Rejected incorrect bit metadata: {name}", flush=True)
++
++
++if __name__ == "__main__":
++    main()

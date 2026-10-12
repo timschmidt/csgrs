@@ -1,0 +1,135 @@
+{
+  "status": "Retain the isolated conditional trailing-bit metadata models; runtime remains v2335",
+  "runner_sha256": "c7cd76f0384464239353cab72be14629bab791e10be9f47ca7b244e09c50c048",
+  "previous_checkpoint": "typed-api-prototype-v2345-state.json",
+  "previous_checkpoint_sha256": "a75220d56a289d2e83e36a426fb6f1f04b808e684b0889e5d360924408d940b9",
+  "retained_runtime_checkpoint": "typed-api-prototype-v2335-state.json",
+  "source_record": "typed-api-prototype-v2352-trailing-metadata-verus/source-hashes.json.gz",
+  "source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "changed_sources": {
+    "crates/hyperreal/verification/README.md": {
+      "before": "0e4d7e01ca066aa50a41e771cf5536f4d5837195317a52942b924ea9d9e6f1d3",
+      "after": "645d0dd57909ec9a70f4ecb958e0f09a146be256e1842528dfd4ad4de7a34195"
+    },
+    "crates/hyperreal/verification/bit_length_model.rs": {
+      "before": "2597d16583e77c4c2a9ab54ebcc67a2896a0df6307fda7b0489f07ebeca837c6",
+      "after": "2b203e4b81195594395272b899cabd8246ec774943e5331eaa8fa5fc75a112c2"
+    },
+    "crates/hyperreal/verification/scope.json": {
+      "before": "a84fee0c6c57939a354285321ebb31344860dff19cb50d5ea8c19581bfa0384c",
+      "after": "cabef5a8805d1abf4b7a3e19ab4ed13f2b500348766c01ee08c017117168d90c"
+    },
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": {
+      "before": null,
+      "after": "3531a23197a89238b958184ca101dfae106494e642a207e933c5484f55349ba4"
+    },
+    "crates/hyperreal/verification/test_rejections.py": {
+      "before": "c1524210d7004287bc8768cf953714af2a5d8b141c17dd17415e7cca1780fcf9",
+      "after": "465280ee7ddb756ce84ea8183e8179a7f64db05282f815d8c74a1a1511619b20"
+    }
+  },
+  "runtime_source_files_changed": 0,
+  "proposal_protocol": "trailing-metadata-baseline-v2351/protocol.json",
+  "proposal_protocol_sha256": "1a33b9ae5a394af4cb2e18b2433497313fbb081c5b29789604492425539dbcfc",
+  "preparation_failure": "trailing-metadata-preparation-failure-v2350.json",
+  "input_audit": "trailing-metadata-input-audit-v2357.json",
+  "input_audit_sha256": "f72fef1ddbd076cb7ebee657c4afd93ac1428d288fd586fd794398473b139605",
+  "conditional_proof": {
+    "verified_units": 682,
+    "errors": 0,
+    "listed_production_contracts": 98,
+    "listed_model_theorems": 143,
+    "open_obligation_groups": 13,
+    "fresh_acceptance_tests": 10,
+    "fresh_rejected_mutants": 12,
+    "fresh_passing_guard_baselines": 1,
+    "reused_rejected_mutants": 255,
+    "reused_passing_guard_baselines": 4,
+    "total_applicable_rejected_mutants": 267,
+    "total_applicable_passing_guard_baselines": 5
+  },
+  "fresh_validation_record": "trailing-metadata-validation-v2356.json",
+  "fresh_validation_record_sha256": "4ed65dd5527c148ad9b404f08c66632e2d99bb1b5ceb35c943f33a04e5c5a143",
+  "historical_runtime_retention": "eager-bound-decoder-retention-v2335.json",
+  "historical_runtime_retention_sha256": "b75ab5ee20c71fbc61d130f92ba8f9354461642ade9dde4d56ee1519c798089b",
+  "historical_runtime_evidence_applicable": true,
+  "historical_runs_relabelled_as_fresh": 0,
+  "fresh_runtime_test_processes": 0,
+  "fresh_cost_processes": 0,
+  "fresh_replay_cases": 0,
+  "original_whole_file_and_timing_failures_preserved": true,
+  "later_baseline_cpu_failures_preserved": [
+    {
+      "record": "integer-coarse-zero-cost-rejection-v2100.json",
+      "record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+      "failure": {
+        "name": "algebraic-26-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1214207550510764,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    },
+    {
+      "record": "bound-decoder-cost-rejection-v2247.json",
+      "record_sha256": "1bf546f654e3263c0c4053406e6fc2ac61ebe7f228d327e2616d7f25379fe813",
+      "failure": {
+        "name": "algebraic-18-baseline",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "exit_code": -24,
+        "wall_timeout": false,
+        "wall_seconds": 2.1235316330567002,
+        "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4
+      },
+      "original_gate_still_failed": true
+    }
+  ],
+  "coverage_limits": [
+    "Six new conditional model lemmas prove 32/64-bit word-plus-one factorizations and the power-of-two/all-ones decisions from bit length and positive odd factors. The u64 zero-factor proof is reused from the actual verified helper. BigUint storage/import, normalized multiword scans, length ranges, BigInt sign/magnitude imports and the actual bound producer remain open.",
+    "The full conditional target passes 682 units, 98 production contracts and 143 model theorems. Twelve new negatives and one baseline pass, with ten fresh acceptance checks and workspace/109-input formatting. The 255 old negatives/four baselines remain applicable under the v2357 disjoint-input audit, which inherits the explicit v2344 import-order correction. They are not relabelled as fresh current-source executions.",
+    "Five verification files change, including one new guard module. All ordinary runtime, build, test corpus and probe sources are unchanged. Historical v2335 runtime, cap, cost and replay evidence retains its original identities and limits; no new runtime/cost/replay process is credited.",
+    "The standalone support probes and their name-resolution failure remain separate from retained coverage. The reader's function-versus-unit count failure and the first nonunique mutation-anchor preparation also remain archived. Their corrections do not change theorem statements, gate criteria, historical outcomes or runtime source.",
+    "The nine runtime commands cover scalar configurations and five consumer crates, not complete repository CI. The 33 ignored cases and 14 inherited Cargo filename warnings are unchanged; both strict Clippy configurations have no warnings.",
+    "The 39 capped commands cover 156 top-level tests and one child under 192 MiB, CPU 2/3-second and four-second wall caps. The 648 public schedules retain those limits. Numerical replay limits are inherited unchanged, including older three-second wall limits without the later CPU guard. The 78 private-kernel cases check result shapes; 4129 is not a count of independent numerical oracles.",
+    "Deterministic samples, typed errors, work, facts and recorded allocations agree. Only measured durations and known executable paths are normalized. The 78 concurrent public cases compare setup/oracle/process contracts, with a separate observed-fact audit; thread stress is not exhaustive interleaving verification.",
+    "All seven frozen probe instruction/load layouts match v1836. The complete files differ in reviewed diagnostic/ELF/private-symbol metadata, and panic line numbers can change. The 194-reference audit is not exhaustive indirect-pointer analysis or a whole-program equivalence theorem. This evidence applies to these frozen compiler/target/build inputs.",
+    "The separately frozen unchanged-computation method supports differential cost qualification. Its 1017 matching historical successes remain older v1836 executions; no fresh timing workload or new timing pass is claimed. Both later v1836 algebraic SIGXCPU results at v2100/v2247 remain failures of the same retained program under original caps. The method does not repair them or guarantee absolute resource bounds.",
+    "Every earlier rejected variant, unresolved timing increase, original-cap failure, the retained integer-control tradeoff and the fixed pre-Verus baseline remain archived. No failed complete-file or measured-cost gate is relabeled passed. This retention uses the separate v2279 method and the new fresh correctness gates.",
+    "EvaluationBudget excludes aggregate bytes/time and unmetered exact algebraic work. Construction and structural inspection are outside query allowances. Reconstructed graphs discard sharing/caches while shared process constants may be warm. Exact-rational flags are checked for retention, not general recognition soundness.",
+    "Main retains the original scalar failure and all 49 original worktree entries. This is isolated retention only; native combination, full-board admission, all 39 properties, 14 targets, crate future work and complete pre-push verification remain in scope. No completion status or push follows."
+  ],
+  "next_priority": "Connect the proved word factors and flag decisions to normalized little-endian digit scans for both dependency widths, including empty/all-maximal storage and first nonzero/nonmaximal digits. Discharge actual storage, iterator, sign/magnitude import and u64 metadata range obligations while preserving the producer's short-circuit evaluation. Continue approximation truth, independent existence, caller and atomic publication proofs; all exact-operation resource failures, fixed-baseline and main/native/full-board requirements remain open.",
+  "main_runtime_admitted": false,
+  "all_39_properties_14_targets_and_crate_future_work_in_scope": true,
+  "checkpoint_requirement": "Verify every v2345 artifact, the current source, main guard and original worktree entries with record_checkpoint_v4.py before creating v2358."
+}

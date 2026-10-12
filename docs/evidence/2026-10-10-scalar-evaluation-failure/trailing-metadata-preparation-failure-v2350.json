@@ -1,0 +1,19 @@
+{
+  "status": "Preserve the failed preparation; no SOURCE edit or proof run occurred",
+  "failed_runner": "prepare_trailing_metadata_candidate_v2350.py",
+  "failed_runner_sha256": "849fce7f1b027d4629d9c32609c734db21bee0b064e573eb2f3ed955d46351e6",
+  "observed_exit_code": 1,
+  "observed_failure": "AssertionError at line 129: the exponent-link mutation also matched nonlinear-arithmetic premises inside the same function.",
+  "partial_directory": "trailing-metadata-baseline-v2350",
+  "partial_candidate_model_sha256": "2b203e4b81195594395272b899cabd8246ec774943e5331eaa8fa5fc75a112c2",
+  "old_guard_sha256": "ad00ca25de898645ec46131df13e3893237ae1306570173c182849592d5b2f22",
+  "new_guard": "trailing-metadata-guard-proposal-v2351.py",
+  "new_guard_sha256": "3531a23197a89238b958184ca101dfae106494e642a207e933c5484f55349ba4",
+  "corrected_runner": "prepare_trailing_metadata_candidate_v2351.py",
+  "corrected_runner_sha256": "bba568aa7cd5e266ed4d92a3aaae24a48ae430203b374bfa40ee663f37225341",
+  "repair_runner_sha256": "eafe161a54a0bc5797aaa25cb5d79f3d62643d0401791c544fbb36fbf03ef167",
+  "negative_controls": 12,
+  "correction": "Include the following ensures clause in the mutation anchor, selecting exactly the declared precondition. Keep all twelve intended defects and all theorem bodies unchanged.",
+  "source_changed": false,
+  "scope": "This was an anchor-uniqueness guard in preparation, not a Verus failure or runtime result. The partial candidate and failed helper remain unchanged."
+}

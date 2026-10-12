@@ -1,0 +1,36 @@
+{
+  "status": "Frozen before applying or verifying the model extension",
+  "runner_sha256": "bba568aa7cd5e266ed4d92a3aaae24a48ae430203b374bfa40ee663f37225341",
+  "retained_checkpoint": "typed-api-prototype-v2345-state.json",
+  "retained_checkpoint_sha256": "a75220d56a289d2e83e36a426fb6f1f04b808e684b0889e5d360924408d940b9",
+  "retained_source_record": "typed-api-prototype-v2343-approximation-metadata-final-verus/source-hashes.json.gz",
+  "retained_source_record_sha256": "4253d673d452689851b642eca7265783bc5b4849e905a842979f77467c8b4b57",
+  "base_commit": "92dff914846a44e14e67a1fc549ce4491f8d4ad3",
+  "support_milestone_sha256": "cb7f1d77fa8d4a632ae47ff7d7083e98761d64332c2622c4bd51265eff49a576",
+  "candidate_files_sha256": {
+    "crates/hyperreal/verification/bit_length_model.rs": "2b203e4b81195594395272b899cabd8246ec774943e5331eaa8fa5fc75a112c2",
+    "crates/hyperreal/verification/test_rejections.py": "465280ee7ddb756ce84ea8183e8179a7f64db05282f815d8c74a1a1511619b20",
+    "crates/hyperreal/verification/scope.json": "cabef5a8805d1abf4b7a3e19ab4ed13f2b500348766c01ee08c017117168d90c",
+    "crates/hyperreal/verification/README.md": "645d0dd57909ec9a70f4ecb958e0f09a146be256e1842528dfd4ad4de7a34195",
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py": "3531a23197a89238b958184ca101dfae106494e642a207e933c5484f55349ba4"
+  },
+  "new_source_files": [
+    "crates/hyperreal/verification/test_bit_metadata_rejections.py"
+  ],
+  "source_record_sha256": "57fe3139119d43abbdb76bcbee47c1f78245107a397d9c3672132d9d0eadd979",
+  "proposal_patch_sha256": "87c63a6827d0b7ee695be8b3273e5740607f0f3e4f7d61a1d6b0d07c2154f122",
+  "runtime_source_files_changed": 0,
+  "new_model_theorems": [
+    "bit_length_model::trailing_zeros_factor_u32",
+    "bit_length_model::trailing_ones_factor_u32",
+    "bit_length_model::trailing_ones_factor_u64",
+    "bit_length_model::odd_factor_of_power_is_unit",
+    "bit_length_model::trailing_zeros_determine_power_of_two",
+    "bit_length_model::trailing_ones_determine_all_ones"
+  ],
+  "new_negative_controls": 12,
+  "unchanged_production_contracts": 98,
+  "unchanged_open_obligation_groups": 13,
+  "gates": "Run the full conditional proof, twelve new negative controls and their positive baseline, acceptance checks and both formatting commands including the added bit-length model. Reuse old guards or runtime evidence only after auditing their compiled inputs, entrypoint-only additions, dependency/tool identities and unchanged ordinary runtime/build/probe sources. Preserve every failed phase. No simultaneous SOURCE mutation or overlapping validations.",
+  "scope": "Six conditional model lemmas only. The three new general flag lemmas have not been verified by the standalone support probes. BigUint storage/import, normalized multiword scans, machine metadata ranges, producer/caller/atomic and independent-existence obligations remain open. No runtime or property/target admission follows."
+}
