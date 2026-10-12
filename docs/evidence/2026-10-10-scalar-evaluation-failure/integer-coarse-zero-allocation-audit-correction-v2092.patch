@@ -1,0 +1,17 @@
+--- record_integer_coarse_zero_allocations.py
++++ record_integer_coarse_zero_allocations_v2.py
+@@ -38 +38 @@
+-    assert len(new_branch) == 16 and all(row["calls"] == row["bytes"] == row["largest"] == 0 for row in new_branch)
++    assert len(new_branch) == 16 and all((row["calls"], row["bytes"], row["largest"]) == (1, 40, 40) for row in new_branch)
+@@ -76 +76,2 @@
+-        "public_cases": 32, "raw_cases": 32, "fresh_zero_allocation_shortcut_cases": 16,
++        "public_cases": 32, "raw_cases": 32, "fresh_budgeted_shortcut_cases": 16,
++        "budgeted_shortcut_allocation_observation": {"calls": 1, "bytes": 40, "largest": 40},
+@@ -80,0 +82 @@
++        "prior_audit_correction": "integer-coarse-zero-allocation-audit-correction-v2092.json",
+@@ -82 +84 @@
+-            "Fresh counts measure the existing test allocator around individual public or raw integer approximation calls. Fixture construction and the independent oracle are outside that window. The tests also assert exact outputs, one consumed work unit for public calls, unchanged budgets for raw calls and no numeric cache publication.",
++            "Fresh counts measure the existing test allocator around individual public or raw integer approximation calls. Fixture construction and the independent oracle are outside that window. Public approx_with_budget enters BudgetScope inside the counter window; its 40-byte allocation remains included. The raw call does not enter that scope. Source inspection shows BudgetScope::enter creates an Rc<ActiveBudget>; allocation counts alone do not identify the allocating call site. The tests also assert exact outputs, one consumed work unit for public calls, unchanged budgets for raw calls and no numeric cache publication.",
+@@ -89 +91 @@
+-    print(json.dumps({"fresh_integer_allocation_cases": 64, "public_shortcut_zero_allocation_cases": 16,
++    print(json.dumps({"fresh_integer_allocation_cases": 64, "budgeted_shortcut_cases_with_one_40_byte_allocation": 16,

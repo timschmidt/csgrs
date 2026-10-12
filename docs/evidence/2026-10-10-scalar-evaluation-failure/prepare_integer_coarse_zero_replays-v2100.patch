@@ -1,0 +1,71 @@
+--- prepare_nth_root_enclosure_replays.py
++++ prepare_integer_coarse_zero_replays.py
+@@ -14 +14 @@
+-    out = E / "nth-root-enclosure-replay-protocol-v2022.json"
++    out = E / "integer-coarse-zero-replay-protocol-v2101.json"
+@@ -16 +16 @@
+-    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
++    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
+@@ -25,2 +25,2 @@
+-    build = "typed-api-prototype-v2007-nth-root-enclosure-release-build"
+-    unit = "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests"
++    build = "typed-api-prototype-v2086-integer-coarse-zero-release-build"
++    unit = "typed-api-prototype-v2084-integer-coarse-zero-scalar-tests"
+@@ -29 +29 @@
+-    for version, row in zip(range(2022, 2061), prior["caps"]):
++    for version, row in zip(range(2101, 2140), prior["caps"]):
+@@ -32 +32 @@
+-        caps.append({"phase": f"typed-api-prototype-v{version}-nth-root-enclosure-retained-cap",
++        caps.append({"phase": f"typed-api-prototype-v{version}-integer-coarse-zero-retained-cap",
+@@ -36,2 +36,2 @@
+-    for version, row in zip(range(2061, 2074), prior["numerical_replays"]):
+-        mapping[row["phase"]] = f"typed-api-prototype-v{version}-nth-root-enclosure-" + row["phase"].split("-domain-predicate-", 1)[1]
++    for version, row in zip(range(2140, 2153), prior["numerical_replays"]):
++        mapping[row["phase"]] = f"typed-api-prototype-v{version}-integer-coarse-zero-" + row["phase"].split("-domain-predicate-", 1)[1]
+@@ -62,2 +62,2 @@
+-    for version, row, runner in zip([2074, 2075], prior["public_replays"],
+-        ["reproduce_nth_root_public_reuse.py", "reproduce_nth_root_composed_reuse.py"]):
++    for version, row, runner in zip([2153, 2154], prior["public_replays"],
++        ["reproduce_integer_zero_public_reuse.py", "reproduce_integer_zero_composed_reuse.py"]):
+@@ -68 +68 @@
+-        after = "typed-api-prototype-v2014-nth-root-enclosure-atan-cost/summary.json"
++        after = "typed-api-prototype-v2093-integer-coarse-zero-atan-cost/summary.json"
+@@ -72 +72 @@
+-        protocol.update(status="Frozen unchanged corpus replay for the combined nth-root kernel and outlined-cache proposal",
++        protocol.update(status="Frozen unchanged corpus replay for the combined integer shortcut, root kernel and outlined-cache proposal",
+@@ -77 +77 @@
+-        name = f"nth-root-enclosure-{family}-protocol-v{version}.json"
++        name = f"integer-coarse-zero-{family}-protocol-v{version}.json"
+@@ -81 +81 @@
+-        phase = f"typed-api-prototype-v{version}-nth-root-enclosure-{family}"
++        phase = f"typed-api-prototype-v{version}-integer-coarse-zero-{family}"
+@@ -92,2 +92,2 @@
+-        "domain-predicate-replay-validation-v1834.json": "nth-root-enclosure-replay-validation-v2075.json"}
+-    fork("run_domain_predicate_replays.py", "run_nth_root_replays.py", {
++        "domain-predicate-replay-validation-v1834.json": "integer-coarse-zero-replay-validation-v2154.json"}
++    fork("run_domain_predicate_replays.py", "run_integer_zero_replays.py", {
+@@ -95,3 +95,3 @@
+-        "domain-predicate-candidate-validation-v1772.json": "nth-root-enclosure-candidate-validation-v2013.json",
+-        "domain-predicate-cost-orchestration-v1779.json": "nth-root-enclosure-cost-orchestration-v2020.json",
+-        '    assert costs["completed"] and costs["source_record_sha256"] == expected\n': '    assert costs["completed"] and costs["source_record_sha256"] == expected\n    cost_review = read(E / "nth-root-enclosure-cost-review-v2021.json")\n    controller = read(E / "nth-root-enclosure-cost-validation-v2021.json")\n    assert controller["complete"] and cost_review["local_timing_and_process_gates_passed"]\n    assert cost_review["source_record_sha256"] == controller["source_record_sha256"] == expected\n',
++        "domain-predicate-candidate-validation-v1772.json": "integer-coarse-zero-candidate-validation-v2092.json",
++        "domain-predicate-cost-orchestration-v1779.json": "integer-coarse-zero-cost-orchestration-v2099.json",
++        '    assert costs["completed"] and costs["source_record_sha256"] == expected\n': '    assert costs["completed"] and costs["source_record_sha256"] == expected\n    cost_review = read(E / "integer-coarse-zero-cost-review-v2100.json")\n    controller = read(E / "integer-coarse-zero-cost-validation-v2100.json")\n    assert controller["complete"] and cost_review["local_timing_and_process_gates_passed"]\n    assert cost_review["source_record_sha256"] == controller["source_record_sha256"] == expected\n',
+@@ -99 +99 @@
+-    fork("compare_domain_predicate_queries.py", "compare_nth_root_queries.py", {
++    fork("compare_domain_predicate_queries.py", "compare_integer_zero_queries.py", {
+@@ -101 +101 @@
+-        "domain-predicate-domain-query-comparison-v1819.json": "nth-root-enclosure-domain-query-comparison-v2060.json",
++        "domain-predicate-domain-query-comparison-v1819.json": "integer-coarse-zero-domain-query-comparison-v2139.json",
+@@ -103 +103 @@
+-    fork("compare_domain_predicate_replays.py", "compare_nth_root_replays.py", {
++    fork("compare_domain_predicate_replays.py", "compare_integer_zero_replays.py", {
+@@ -105 +105 @@
+-        "domain-predicate-deterministic-replay-comparison-v1835.json": "nth-root-enclosure-deterministic-replay-comparison-v2076.json",
++        "domain-predicate-deterministic-replay-comparison-v1835.json": "integer-coarse-zero-deterministic-replay-comparison-v2155.json",
+@@ -109 +109 @@
+-    fork("audit_domain_predicate_fact_retention.py", "audit_nth_root_fact_retention.py", {
++    fork("audit_domain_predicate_fact_retention.py", "audit_integer_zero_fact_retention.py", {
+@@ -111 +111 @@
+-        "domain-predicate-public-fact-audit-v1835.json": "nth-root-enclosure-public-fact-audit-v2076.json",
++        "domain-predicate-public-fact-audit-v1835.json": "integer-coarse-zero-public-fact-audit-v2155.json",

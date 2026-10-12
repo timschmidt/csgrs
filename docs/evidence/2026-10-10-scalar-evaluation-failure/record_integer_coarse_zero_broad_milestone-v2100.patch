@@ -1,0 +1,49 @@
+--- record_nth_root_enclosure_broad_milestone.py
++++ record_integer_coarse_zero_broad_milestone.py
+@@ -15 +15 @@
+-    broad = E / "nth-root-enclosure-broad-validation-v2013.json"
++    broad = E / "integer-coarse-zero-broad-validation-v2092.json"
+@@ -17,2 +17,2 @@
+-    validation = read(E / "nth-root-enclosure-candidate-validation-v2013.json")
+-    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
++    validation = read(E / "integer-coarse-zero-candidate-validation-v2092.json")
++    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
+@@ -20,0 +21 @@
++    assert proof["focused_tests"] == 5 and proof["root_control_tests"] == 3
+@@ -28,2 +29,2 @@
+-    out = E / "nth-root-enclosure-broad-milestone-v2013.json"
+-    ledger_record = E / "nth-root-enclosure-broad-ledger-v2013.json"
++    out = E / "integer-coarse-zero-broad-milestone-v2092.json"
++    ledger_record = E / "integer-coarse-zero-broad-ledger-v2092.json"
+@@ -33 +34 @@
+-        "source_record": "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz",
++        "source_record": "typed-api-prototype-v2086-integer-coarse-zero-release-build/source-hashes.json.gz",
+@@ -36,2 +37,2 @@
+-        "proof_record": "nth-root-enclosure-proof-validation-v2004.json",
+-        "proof_record_sha256": sha(E / "nth-root-enclosure-proof-validation-v2004.json"),
++        "proof_record": "integer-coarse-zero-proof-validation-v2083.json",
++        "proof_record_sha256": sha(E / "integer-coarse-zero-proof-validation-v2083.json"),
+@@ -40,2 +41,2 @@
+-        "next_cost_protocol": "nth-root-enclosure-cost-protocol-v2014.json",
+-        "next_replay_protocol": "nth-root-enclosure-replay-protocol-v2022.json",
++        "next_cost_protocol": "integer-coarse-zero-cost-protocol-v2093.json",
++        "next_replay_protocol": "integer-coarse-zero-replay-protocol-v2101.json",
+@@ -43,2 +44,2 @@
+-            "compare_nth_root_queries.py", "compare_nth_root_replays.py",
+-            "audit_nth_root_fact_retention.py", "nth-root-enclosure-replay-protocol-v2022.json"]},
++            "compare_integer_zero_queries.py", "compare_integer_zero_replays.py",
++            "audit_integer_zero_fact_retention.py", "integer-coarse-zero-replay-protocol-v2101.json"]},
+@@ -47,2 +48,2 @@
+-            "Source hashes match the fresh conditional verification (651 units) and ten fresh acceptance tests. The 247 rejected mutations and four passing guard baselines are reused from v1926 because all 44 proof/guard inputs and verifier identities are unchanged; zero mutations were rerun. The modified bigint kernel is outside Verus coverage. All thirteen whole-crate groups remain open.",
+-            "The combined kernel/selector change is still a proposal. Preserve all original capped fixtures, public reuse schedules, fixed cost baselines and older cost failures/tradeoffs; proof coverage alone cannot justify a runtime regression.",
++            "Source hashes match the fresh conditional verification (651 units) and ten fresh acceptance tests. The 247 rejected mutations and four passing guard baselines are reused from v1926 because all 44 proof/guard inputs and verifier identities are unchanged; zero mutations were rerun. The modified integer branch and bigint root kernel are outside Verus coverage. All thirteen whole-crate groups remain open.",
++            "The combined integer/kernel/selector change is still a proposal. Preserve all original capped fixtures, public reuse schedules, fixed cost baselines and older cost failures/tradeoffs; proof coverage alone cannot justify a runtime regression.",
+@@ -64 +65 @@
+-        "The v2005-v2013 broad checks pass on the exact v2003 source snapshot: "
++        "The v2084-v2092 broad checks pass on the exact v2082 source snapshot: "
+@@ -77 +78 @@
+-    old = ("The one-root enclosure prototype passes focused tests and refreshed conditional verification. "
++    old = ("The charged integer coarse-zero prototype passes existing focused tests and refreshed conditional verification. "
+@@ -83 +84 @@
+-        "The nine runtime validation commands pass on the combined kernel/selector source. Next run the frozen "
++        "The nine runtime validation commands pass on the combined integer/kernel/selector source. Next run the frozen "

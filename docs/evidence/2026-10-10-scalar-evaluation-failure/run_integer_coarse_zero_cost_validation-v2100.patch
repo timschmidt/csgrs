@@ -1,0 +1,37 @@
+--- run_nth_root_enclosure_cost_validation.py
++++ run_integer_coarse_zero_cost_validation.py
+@@ -16,3 +16,3 @@
+-    validation = read(E / "nth-root-enclosure-candidate-validation-v2013.json")
+-    broad = read(E / "nth-root-enclosure-broad-validation-v2013.json")
+-    protocol = read(E / "nth-root-enclosure-cost-protocol-v2014.json")
++    validation = read(E / "integer-coarse-zero-candidate-validation-v2092.json")
++    broad = read(E / "integer-coarse-zero-broad-validation-v2092.json")
++    protocol = read(E / "integer-coarse-zero-cost-protocol-v2093.json")
+@@ -23 +23 @@
+-    strategy = E / "nth-root-enclosure-cost-followup-strategy-v2021.json"
++    strategy = E / "integer-coarse-zero-cost-followup-strategy-v2100.json"
+@@ -25,2 +25,2 @@
+-    out = E / "nth-root-enclosure-cost-validation-v2021.json"
+-    logs = E / "nth-root-enclosure-cost-controller-v2021"
++    out = E / "integer-coarse-zero-cost-validation-v2100.json"
++    logs = E / "integer-coarse-zero-cost-controller-v2100"
+@@ -55,2 +55,2 @@
+-    assert run("standalone", "run_nth_root_enclosure_costs.py") == 0
+-    paired = run("paired", "replay_nth_root_enclosure_cost.py")
++    assert run("standalone", "run_integer_coarse_zero_costs.py") == 0
++    paired = run("paired", "replay_integer_coarse_zero_cost.py")
+@@ -59 +59 @@
+-    reviewed = run("initial-review", "record_nth_root_enclosure_initial_costs.py")
++    reviewed = run("initial-review", "record_integer_coarse_zero_initial_costs.py")
+@@ -61,2 +61,2 @@
+-    assert run("freeze-followup", "prepare_nth_root_enclosure_cost_followup.py") == 0
+-    followup = read(E / "nth-root-enclosure-cost-followup-protocol-v2021.json")
++    assert run("freeze-followup", "prepare_integer_coarse_zero_cost_followup.py") == 0
++    followup = read(E / "integer-coarse-zero-cost-followup-protocol-v2100.json")
+@@ -65,3 +65,3 @@
+-        assert run(f"followup-{index}", "replay_nth_root_enclosure_followup.py", str(index)) == 0
+-    assert run("final-review", "record_nth_root_enclosure_costs.py") == 0
+-    result = read(E / "nth-root-enclosure-cost-review-v2021.json")
++        assert run(f"followup-{index}", "replay_integer_coarse_zero_followup.py", str(index)) == 0
++    assert run("final-review", "record_integer_coarse_zero_costs.py") == 0
++    result = read(E / "integer-coarse-zero-cost-review-v2100.json")

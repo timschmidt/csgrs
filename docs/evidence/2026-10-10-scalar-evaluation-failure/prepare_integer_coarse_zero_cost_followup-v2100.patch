@@ -1,0 +1,23 @@
+--- prepare_nth_root_enclosure_cost_followup.py
++++ prepare_integer_coarse_zero_cost_followup.py
+@@ -13 +13 @@
+-    original_path = E / "nth-root-enclosure-initial-cost-review-v2021.json"
++    original_path = E / "integer-coarse-zero-initial-cost-review-v2100.json"
+@@ -18 +18 @@
+-    strategy_path = E / "nth-root-enclosure-cost-followup-strategy-v2021.json"
++    strategy_path = E / "integer-coarse-zero-cost-followup-strategy-v2100.json"
+@@ -27,3 +27,3 @@
+-    protocol = E / "nth-root-enclosure-cost-followup-protocol-v2021.json"
+-    runner = E / "replay_nth_root_enclosure_followup.py"
+-    provenance = E / "nth-root-enclosure-cost-followup-preparation-v2021.json"
++    protocol = E / "integer-coarse-zero-cost-followup-protocol-v2100.json"
++    runner = E / "replay_integer_coarse_zero_followup.py"
++    provenance = E / "integer-coarse-zero-cost-followup-preparation-v2100.json"
+@@ -32,2 +32,2 @@
+-        "output": "nth-root-enclosure-focused-cost-v2021",
+-        "prelude": "nth-root-enclosure-focused-cpu-prelude-v2021",
++        "output": "integer-coarse-zero-focused-cost-v2100",
++        "prelude": "integer-coarse-zero-focused-cpu-prelude-v2100",
+@@ -51 +51 @@
+-    prepared = read(E / "nth-root-enclosure-cost-protocol-v2014.json")["runner_forks"]["replay_nth_root_enclosure_cost.py"]
++    prepared = read(E / "integer-coarse-zero-cost-protocol-v2093.json")["runner_forks"]["replay_integer_coarse_zero_cost.py"]

@@ -1,0 +1,14 @@
+--- record_nth_root_enclosure_costs.py
++++ record_integer_coarse_zero_costs.py
+@@ -15 +15 @@
+-    out = E / "nth-root-enclosure-cost-review-v2021.json"
++    out = E / "integer-coarse-zero-cost-review-v2100.json"
+@@ -17 +17 @@
+-    original_path = E / "nth-root-enclosure-initial-cost-review-v2021.json"
++    original_path = E / "integer-coarse-zero-initial-cost-review-v2100.json"
+@@ -24 +24 @@
+-    protocol_path = E / "nth-root-enclosure-cost-followup-protocol-v2021.json"
++    protocol_path = E / "integer-coarse-zero-cost-followup-protocol-v2100.json"
+@@ -50 +50 @@
+-        preparation = read(E / "nth-root-enclosure-cost-followup-preparation-v2021.json")
++        preparation = read(E / "integer-coarse-zero-cost-followup-preparation-v2100.json")

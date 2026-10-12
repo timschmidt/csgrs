@@ -1,0 +1,23 @@
+--- record_nth_root_enclosure_cost_milestone.py
++++ record_integer_coarse_zero_cost_milestone.py
+@@ -15 +15 @@
+-    costs_path = E / "nth-root-enclosure-cost-review-v2021.json"
++    costs_path = E / "integer-coarse-zero-cost-review-v2100.json"
+@@ -19,2 +19,2 @@
+-    broad = read(E / "nth-root-enclosure-broad-milestone-v2013.json")
+-    controller_path = E / "nth-root-enclosure-cost-validation-v2021.json"
++    broad = read(E / "integer-coarse-zero-broad-milestone-v2092.json")
++    controller_path = E / "integer-coarse-zero-cost-validation-v2100.json"
+@@ -44,2 +44,2 @@
+-    out = E / "nth-root-enclosure-cost-milestone-v2021.json"
+-    ledger_record = E / "nth-root-enclosure-cost-ledger-v2021.json"
++    out = E / "integer-coarse-zero-cost-milestone-v2100.json"
++    ledger_record = E / "integer-coarse-zero-cost-ledger-v2100.json"
+@@ -59,2 +59,2 @@
+-        "next_replay_protocol": "nth-root-enclosure-replay-protocol-v2022.json",
+-        "next_replay_runner": "run_nth_root_replays.py",
++        "next_replay_protocol": "integer-coarse-zero-replay-protocol-v2101.json",
++        "next_replay_runner": "run_integer_zero_replays.py",
+@@ -86 +86 @@
+-        "The v2014-v2021 local cost gates pass on the unchanged combined kernel/selector source: "
++        "The v2093-v2100 local cost gates pass on the unchanged combined integer/kernel/selector source: "

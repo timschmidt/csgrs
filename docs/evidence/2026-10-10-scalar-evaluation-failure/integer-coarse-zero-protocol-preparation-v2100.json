@@ -1,0 +1,72 @@
+{
+  "status": "Frozen before candidate cost and replay execution; broad commands are in progress",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "runner_forks": {
+    "prepare_integer_coarse_zero_costs.py": {
+      "predecessor": "prepare_nth_root_enclosure_costs.py",
+      "predecessor_sha256": "bc72659d2231966c079b5029fd8a94b04426c8e045ce1868c219742dd2f99a64",
+      "fork_sha256": "46d5a09e26553c9f9c7bc93439e4080d979ad9365ab5c4c3a552901073bb1a3c",
+      "patch": "prepare_integer_coarse_zero_costs-v2100.patch",
+      "patch_sha256": "690c057081793919f9476e3ce280ff84c3392bdd2a1f0e0b8d86585d26dd19c8"
+    },
+    "prepare_integer_coarse_zero_replays.py": {
+      "predecessor": "prepare_nth_root_enclosure_replays.py",
+      "predecessor_sha256": "56b86e1bb9270e8597bfb13177d8d2c6a51b0f6dc35d2df52b99e7163c78b464",
+      "fork_sha256": "7d2be2bfc5ac31b043dd34a76df95fa2ed39457042e5cca1c19fff52cb83be89",
+      "patch": "prepare_integer_coarse_zero_replays-v2100.patch",
+      "patch_sha256": "09186258440dd84c529db4d1e27eb90a9e9692a8861fb28d85dc0c58d9f3d6eb"
+    },
+    "record_integer_coarse_zero_initial_costs.py": {
+      "predecessor": "record_nth_root_enclosure_initial_costs.py",
+      "predecessor_sha256": "e3cb8d7499b659d6c2eb9be0bf370305620902043a6a218a3870f0d2715c5fce",
+      "fork_sha256": "a0a2e0a7522c8be765e8a75591bf1b79439334a94b073b74a80e280522a6a801",
+      "patch": "record_integer_coarse_zero_initial_costs-v2100.patch",
+      "patch_sha256": "6d81367c22d68b01002ca395010e89872914d3726987f04f8179982ea1b5a4cf"
+    },
+    "prepare_integer_coarse_zero_cost_followup.py": {
+      "predecessor": "prepare_nth_root_enclosure_cost_followup.py",
+      "predecessor_sha256": "c3b5177fb577234bca34a500885f20d44170ca9af15a601c25f31595e7e6f5be",
+      "fork_sha256": "c9227c656d6baf19c8d0bae14f0892007a115bee6bc6846cc0bf563c818369db",
+      "patch": "prepare_integer_coarse_zero_cost_followup-v2100.patch",
+      "patch_sha256": "9605bd8c57112203e6da39fd0f9178a9385023a62305b9af8b10b178a7321dfa"
+    },
+    "record_integer_coarse_zero_costs.py": {
+      "predecessor": "record_nth_root_enclosure_costs.py",
+      "predecessor_sha256": "438f7a5cedb8f955cf82e0e7148d934b903860242a6664e5c881e8fc4f566caf",
+      "fork_sha256": "8a99f463f974b8555e21f7c5d61c419b062ba8bc4e34ca853fee64b2a5e50a3a",
+      "patch": "record_integer_coarse_zero_costs-v2100.patch",
+      "patch_sha256": "e8dae9a36cd032fae6d309c26ad4344efbb59bccafb796567b3daf1ef7e55d86"
+    },
+    "run_integer_coarse_zero_cost_validation.py": {
+      "predecessor": "run_nth_root_enclosure_cost_validation.py",
+      "predecessor_sha256": "e2fc03dcaa62a8f782883f455bf1fe9891b260df812a5570d3e6b32c807977fc",
+      "fork_sha256": "55c51bb0b2963b997cd68600c80f475ba942b09213cd67afb9f39575ac1b6699",
+      "patch": "run_integer_coarse_zero_cost_validation-v2100.patch",
+      "patch_sha256": "aac9314b7d65676ba4bcd20c4aa34ac87480ab4e329c10c0e33ab8f7e6dd97ec"
+    },
+    "record_integer_coarse_zero_cost_milestone.py": {
+      "predecessor": "record_nth_root_enclosure_cost_milestone.py",
+      "predecessor_sha256": "5548b074fb413d8201343a7e6d0bff4cfc754243ade8673b83bc95afe22e5f76",
+      "fork_sha256": "1da09d3331f403951f05b2d142b0dae783183ce8d45bb7d4329e880a34c8f592",
+      "patch": "record_integer_coarse_zero_cost_milestone-v2100.patch",
+      "patch_sha256": "7254e72f8ef346e66916ca0bbf91d4bcfd46910d951811996f76b2d4890ad3ca"
+    },
+    "record_integer_coarse_zero_broad_milestone.py": {
+      "predecessor": "record_nth_root_enclosure_broad_milestone.py",
+      "predecessor_sha256": "68575a68fac902a0f56caefcb4ed0b135b49532b9665013038c88f450d9ae415",
+      "fork_sha256": "cdd8cf5f6b16e22852331d50bbb792fcf37202009dd343f3eb16fea25990e1db",
+      "patch": "record_integer_coarse_zero_broad_milestone-v2100.patch",
+      "patch_sha256": "12b275a3e495103186daba59e2b4713cdb6fa7b516e243f9d1bb1d9b4954173e"
+    }
+  },
+  "preparer_sha256": "c1dcaaa63d53d20394869a7d4fa328d5ff5401fcec52f3bc43534510012db5b9",
+  "cost_protocol": "integer-coarse-zero-cost-protocol-v2093.json",
+  "cost_protocol_sha256": "612e89904d638a8d7a23248dd6c624ca252db0e3924bd08888ead3a414f4e94f",
+  "repeat_strategy": "integer-coarse-zero-cost-followup-strategy-v2100.json",
+  "repeat_strategy_sha256": "4c2ac9a0c18ed04755658594e775c71eab448bfb4f1d68fe644fca75a0a7256f",
+  "repeat_strategy_predecessor": "nth-root-enclosure-cost-followup-strategy-v2021.json",
+  "repeat_strategy_predecessor_sha256": "5e86614885d38e96933498c28443dad2535443d954c6472b60d1161b50fd6511",
+  "replay_protocol": "integer-coarse-zero-replay-protocol-v2101.json",
+  "replay_protocol_sha256": "9fbb2018b789d8b66e1c7f4c315ef04eacf1fc2f084363a0cbc4a7f64be065ff",
+  "scope": "Keep retained v1836, all 52 full-size cost fixtures, original 192 MiB/CPU 2-3-second/four-second wall limits, nine initial pairs and all-family 27-pair repeats. Keep all 39 caps, 4129 numerical cases, 648 public schedules and every receipt/fact audit; replay startup still requires the final cost gate to pass. No workload, threshold, assertion, precision or time/work budget is weakened. Preserve all earlier failures, including the v2021 integer timing rejection."
+}

@@ -1,0 +1,38 @@
+--- prepare_nth_root_enclosure_costs.py
++++ prepare_integer_coarse_zero_costs.py
+@@ -13 +13 @@
+-    out = E / "nth-root-enclosure-cost-protocol-v2014.json"
++    out = E / "integer-coarse-zero-cost-protocol-v2093.json"
+@@ -15,2 +15,2 @@
+-    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
+-    assert proof["source_record_sha256"] == "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3"
++    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
++    assert proof["source_record_sha256"] == "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
+@@ -34,2 +34,2 @@
+-               f"typed-api-prototype-v{new}-nth-root-enclosure-{name}-cost"
+-               for old, new, name in zip(range(1773, 1780), range(2014, 2021), names)}
++               f"typed-api-prototype-v{new}-integer-coarse-zero-{name}-cost"
++               for old, new, name in zip(range(1773, 1780), range(2093, 2100), names)}
+@@ -37,2 +37,2 @@
+-        "typed-api-prototype-v1766-domain-predicate-release-build": "typed-api-prototype-v2007-nth-root-enclosure-release-build",
+-        "typed-api-prototype-v1761-domain-predicate-verus": "typed-api-prototype-v2003-nth-root-enclosure-verus",
++        "typed-api-prototype-v1766-domain-predicate-release-build": "typed-api-prototype-v2086-integer-coarse-zero-release-build",
++        "typed-api-prototype-v1761-domain-predicate-verus": "typed-api-prototype-v2082-integer-coarse-zero-verus",
+@@ -41 +41 @@
+-    fork("run_domain_predicate_costs.py", "run_nth_root_enclosure_costs.py", {
++    fork("run_domain_predicate_costs.py", "run_integer_coarse_zero_costs.py", {
+@@ -43,3 +43,3 @@
+-        "typed-api-prototype-v1764-domain-predicate-scalar-tests": "typed-api-prototype-v2005-nth-root-enclosure-scalar-tests",
+-        "domain-predicate-cost-orchestration-v1779.json": "nth-root-enclosure-cost-orchestration-v2020.json",
+-        "conditional domain-predicate extraction": "combined nth-root kernel and outlined-cache proposal",
++        "typed-api-prototype-v1764-domain-predicate-scalar-tests": "typed-api-prototype-v2084-integer-coarse-zero-scalar-tests",
++        "domain-predicate-cost-orchestration-v1779.json": "integer-coarse-zero-cost-orchestration-v2099.json",
++        "conditional domain-predicate extraction": "combined integer shortcut, root kernel and outlined-cache proposal",
+@@ -50 +50 @@
+-    fork("replay_domain_predicate_cost.py", "replay_nth_root_enclosure_cost.py", {
++    fork("replay_domain_predicate_cost.py", "replay_integer_coarse_zero_cost.py", {
+@@ -52,2 +52,2 @@
+-        "domain-predicate-preconditioned-cost-v1780": "nth-root-enclosure-preconditioned-cost-v2021",
+-        "domain-predicate-cost-cpu-prelude-v1780": "nth-root-enclosure-cost-cpu-prelude-v2021",
++        "domain-predicate-preconditioned-cost-v1780": "integer-coarse-zero-preconditioned-cost-v2100",
++        "domain-predicate-cost-cpu-prelude-v1780": "integer-coarse-zero-cost-cpu-prelude-v2100",

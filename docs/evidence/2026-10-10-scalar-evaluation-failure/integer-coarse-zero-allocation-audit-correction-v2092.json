@@ -1,0 +1,18 @@
+{
+  "status": "Preserve failed audit assumption; runtime tests and their 128-byte ceiling passed",
+  "failed_helper": "record_integer_coarse_zero_allocations.py",
+  "failed_helper_sha256": "32a63c40cfac8409ee3b91314b8daa8fa94cce11592c2d6835279c2fd4715aac",
+  "failed_command": [
+    "python3",
+    "docs/evidence/2026-10-10-scalar-evaluation-failure/record_integer_coarse_zero_allocations.py"
+  ],
+  "exit_code": 1,
+  "failure": "AssertionError: expected zero allocations for all 16 public budgeted coarse-zero cases; observed one 40-byte allocation in every case",
+  "input_log": "typed-api-prototype-v2080-integer-coarse-zero-focused/stderr.log",
+  "input_log_sha256": "6e073522715d17c432c6a22e5e8adc3a84b923eb4f0a0ced25f4e07c917d5c1b",
+  "corrected_helper": "record_integer_coarse_zero_allocations_v2.py",
+  "corrected_helper_sha256": "fdaf8790e741a401a55c998552480df6575b7c97f002c2bc85bfcbf490cbe636",
+  "patch": "integer-coarse-zero-allocation-audit-correction-v2092.patch",
+  "patch_sha256": "f429511e04575c2f618153563e126cbe54e8d77a28088be942bcdaea34ebca0d",
+  "scope": "The first recorder conflated the raw numeric call with the public budgeted call, whose measurement window includes BudgetScope::enter. Keep that executed recorder unchanged. The corrected recorder reports the observed public allocation and retains the original 128-byte test ceiling, every case, all work/cache assertions and all timing gates. No runtime change or measurement rerun follows from this audit correction."
+}
