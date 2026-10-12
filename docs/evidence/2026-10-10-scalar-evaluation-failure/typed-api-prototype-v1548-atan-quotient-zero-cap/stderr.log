@@ -1,0 +1,16 @@
+atan zero-term public route=integer, bits=65, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 200, largest: 72 }
+atan zero-term public route=integer, bits=65, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 208, largest: 72 }
+atan zero-term public route=integer, bits=4097, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 704, largest: 520 }
+atan zero-term public route=integer, bits=4097, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 712, largest: 520 }
+atan zero-term public route=integer, bits=65537, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 8384, largest: 8200 }
+atan zero-term public route=integer, bits=65537, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 8392, largest: 8200 }
+atan zero-term public route=integer, bits=1000001, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 125192, largest: 125008 }
+atan zero-term public route=integer, bits=1000001, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 125200, largest: 125008 }
+atan zero-term public route=reciprocal, bits=65, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 88, largest: 40 }
+atan zero-term public route=reciprocal, bits=65, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 88, largest: 40 }
+atan zero-term public route=reciprocal, bits=4097, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 592, largest: 520 }
+atan zero-term public route=reciprocal, bits=4097, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 592, largest: 520 }
+atan zero-term public route=reciprocal, bits=65537, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }
+atan zero-term public route=reciprocal, bits=65537, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }
+atan zero-term public route=reciprocal, bits=1000001, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }
+atan zero-term public route=reciprocal, bits=1000001, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }

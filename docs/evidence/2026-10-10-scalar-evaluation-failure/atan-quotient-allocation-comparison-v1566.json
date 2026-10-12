@@ -1,0 +1,854 @@
+{
+  "magnitude_guard_source_sha256": "f904a928c9c10f8865a31148ab29671bb275a5cd83d6d86c3c7b43844c5303ff",
+  "quotient_guard_source_sha256": "c789297f8e3463ae9b76b28e48ad3106bb59426c9d96783fcdb57b9d154fe23d",
+  "same_answers_allowances_and_caches": true,
+  "unchanged_rows": 368,
+  "changed_allocation_rows": [
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 14, bytes: 424, largest: 104 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 15, bytes: 432, largest: 104 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 256, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 264, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 12, bytes: 536, largest: 256 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 13, bytes: 544, largest: 256 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 184, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 192, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 184, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 192, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 336, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 344, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 336, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 344, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 192, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 200, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 192, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 200, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 760, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 768, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 760, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 768, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 12, bytes: 1040, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 13, bytes: 1048, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 688, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 696, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 688, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 696, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 840, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 848, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 840, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 848, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 696, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 704, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 696, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 704, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 8440, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 8448, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 8440, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 8448, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 12, bytes: 8720, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 13, bytes: 8728, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 8368, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 8376, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 8368, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 8376, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 8520, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 8528, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 8520, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 8528, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 8376, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 8384, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 8376, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 8384, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 125248, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(2), consumed=3, remaining=5, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 125256, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 125248, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=3, remaining=29, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 12, bytes: 125256, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 12, bytes: 125528, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Err(Exhausted), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((4, 0)), allocations=Allocations { calls: 13, bytes: 125536, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 125176, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(2), consumed=2, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 125184, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 10, bytes: 125176, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=2, remaining=30, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 11, bytes: 125184, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 125328, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(-2), consumed=8, remaining=0, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 125336, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 13, bytes: 125328, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=8, remaining=24, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 14, bytes: 125336, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 125184, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(-2), consumed=6, remaining=2, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 125192, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1517-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1543-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 11, bytes: 125184, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=integer, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=6, remaining=26, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 12, bytes: 125192, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 152, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 160, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 152, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 160, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 224, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 232, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 224, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 232, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 656, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 664, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 656, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 664, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 728, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 736, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 728, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 736, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8336, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 8344, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8336, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 8344, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 8408, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 8416, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 8408, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 8416, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125144, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 125152, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125144, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 125152, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 125216, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=6, remaining=2, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 125224, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 7, bytes: 125216, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=6, remaining=26, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 8, bytes: 125224, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=4, remaining=4, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1518-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1544-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan numeric survey route=reciprocal, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=4, remaining=28, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=4097, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=65537, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=8, answer=Ok(0), consumed=2, remaining=6, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 128, largest: 72 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=false, preparation=None, units=32, answer=Ok(0), consumed=2, remaining=30, finite=true, before=None, after=Some((0, 0)), allocations=Allocations { calls: 5, bytes: 136, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=1, answer=Ok(0), consumed=1, remaining=0, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=8, answer=Ok(0), consumed=1, remaining=7, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1519-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1545-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 3, bytes: 56, largest: 40 }",
+      "quotient_guard": "atan numeric survey route=integral, bits=1000001, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(0), consumed=1, remaining=31, finite=true, before=Some((4, 0)), after=Some((0, 0)), allocations=Allocations { calls: 4, bytes: 64, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1520-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1546-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=23, remaining=9, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 37, bytes: 1968, largest: 256 }",
+      "quotient_guard": "atan numeric survey route=deferred, bits=65, negative=false, warm=false, preparation=None, units=32, answer=Ok(2), consumed=23, remaining=9, finite=true, before=None, after=Some((0, 2)), allocations=Allocations { calls: 38, bytes: 1976, largest: 256 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1520-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1546-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=21, remaining=11, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 31, bytes: 1616, largest: 256 }",
+      "quotient_guard": "atan numeric survey route=deferred, bits=65, negative=false, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(2), consumed=21, remaining=11, finite=true, before=Some((4, 0)), after=Some((0, 2)), allocations=Allocations { calls: 32, bytes: 1624, largest: 256 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1520-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1546-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=28, remaining=4, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 35, bytes: 1840, largest: 256 }",
+      "quotient_guard": "atan numeric survey route=deferred, bits=65, negative=true, warm=false, preparation=None, units=32, answer=Ok(-2), consumed=28, remaining=4, finite=true, before=None, after=Some((0, -2)), allocations=Allocations { calls: 36, bytes: 1848, largest: 256 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1520-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1546-atan-quotient-zero-cap",
+      "magnitude_guard": "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=26, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 34, bytes: 1768, largest: 256 }",
+      "quotient_guard": "atan numeric survey route=deferred, bits=65, negative=true, warm=true, preparation=Some(Ok(0)), units=32, answer=Ok(-2), consumed=26, remaining=6, finite=true, before=Some((4, 0)), after=Some((0, -2)), allocations=Allocations { calls: 35, bytes: 1776, largest: 256 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=65, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 10, bytes: 192, largest: 72 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=65, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 200, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=65, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 11, bytes: 200, largest: 72 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=65, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 208, largest: 72 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=4097, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 10, bytes: 696, largest: 520 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=4097, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 704, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=4097, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 11, bytes: 704, largest: 520 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=4097, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 712, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=65537, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 10, bytes: 8376, largest: 8200 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=65537, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 8384, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=65537, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 11, bytes: 8384, largest: 8200 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=65537, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 8392, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=1000001, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 10, bytes: 125184, largest: 125008 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=1000001, negative=false, answer=Ok(2), consumed=2, remaining=6, allocations=Allocations { calls: 11, bytes: 125192, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=integer, bits=1000001, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 11, bytes: 125192, largest: 125008 }",
+      "quotient_guard": "atan zero-term public route=integer, bits=1000001, negative=true, answer=Ok(-2), consumed=6, remaining=2, allocations=Allocations { calls: 12, bytes: 125200, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=65, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=65, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=65, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 5, bytes: 80, largest: 40 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=65, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 88, largest: 40 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=4097, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=4097, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=4097, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 5, bytes: 584, largest: 520 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=4097, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 592, largest: 520 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=65537, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=65537, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=65537, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 5, bytes: 8264, largest: 8200 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=65537, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 8272, largest: 8200 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=1000001, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=1000001, negative=false, answer=Ok(0), consumed=1, remaining=7, allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1522-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1548-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term public route=reciprocal, bits=1000001, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 5, bytes: 125072, largest: 125008 }",
+      "quotient_guard": "atan zero-term public route=reciprocal, bits=1000001, negative=true, answer=Ok(0), consumed=4, remaining=4, allocations=Allocations { calls: 6, bytes: 125080, largest: 125008 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=65, negative=false, answer=Ok(0), allocations=Allocations { calls: 4, bytes: 32, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=65, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=65, negative=true, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=4097, negative=false, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=4097, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=4097, negative=true, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=65537, negative=false, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=65537, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=65537, negative=true, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=1000001, negative=false, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    },
+    {
+      "magnitude_guard_phase": "typed-api-prototype-v1523-atan-zero-term-cap",
+      "quotient_guard_phase": "typed-api-prototype-v1549-atan-quotient-zero-cap",
+      "magnitude_guard": "atan zero-term dispatch bits=1000001, negative=true, answer=Ok(0), allocations=Allocations { calls: 2, bytes: 16, largest: 8 }",
+      "quotient_guard": "atan zero-term dispatch bits=1000001, negative=true, answer=Ok(0), allocations=Allocations { calls: 3, bytes: 24, largest: 8 }"
+    }
+  ],
+  "delta_per_changed_row": {
+    "calls": 1,
+    "bytes": 8,
+    "largest_request": 0
+  },
+  "earlier_read_only_comparison": "An inline diagnostic first asserted identical complete structured logs and failed. The stricter equality is false: the quotient guard performs one extra eight-byte allocation. All frozen allocation ceilings and non-allocation observation comparisons pass. No source, frozen test or phase output was changed."
+}

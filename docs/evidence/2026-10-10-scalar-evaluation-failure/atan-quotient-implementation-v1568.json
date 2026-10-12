@@ -1,0 +1,1155 @@
+{
+  "status": "Unretained isolated quotient-guard candidate; controlled comparison pending",
+  "baseline_record": "atan-zero-term-baseline-v1515.json",
+  "rejected_variant_record": "atan-magnitude-guard-rejection-v1541.json",
+  "source_record": "typed-api-prototype-v1554-atan-quotient-zero-release-build/source-hashes.json.gz",
+  "source_record_sha256": "c789297f8e3463ae9b76b28e48ad3106bb59426c9d96783fcdb57b9d154fe23d",
+  "production_changes_from_frozen_baseline": [
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs"
+  ],
+  "frozen_test_sources_unchanged": true,
+  "focus_record": "atan-quotient-zero-focus-v1565.json",
+  "caps_record": "atan-quotient-zero-caps-v1551.json",
+  "allocation_comparison_record": "atan-quotient-allocation-comparison-v1566.json",
+  "correctness_observations_preserved": {
+    "survey": 320,
+    "allocation": 24,
+    "independent_enclosures": 164
+  },
+  "scalar_tests": {
+    "passed": 1063,
+    "child_passed": 1
+  },
+  "strict_clippy_and_format_checks_pass": true,
+  "cost_processes": 468,
+  "complete_outputs_preserved": true,
+  "costs": {
+    "atan": {
+      "phase": "typed-api-prototype-v1555-atan-quotient-zero-cost",
+      "baseline_phase": "typed-api-prototype-v1514-atan-zero-term-baseline-cost",
+      "binary_sha256": "49a05b741f6355954f3c1975481666c006b034d57af3a91c65856fd73afc202b",
+      "binary_bytes": 6261552,
+      "summary_sha256": "2763d77c6af7c9e610d552107712a8d956a981c13426e1b0236ee03925d01ce5",
+      "cases": {
+        "small_integer": {
+          "iterations": 4096,
+          "elapsed_ns": [
+            12501424,
+            13444189,
+            13434940,
+            12544551,
+            13120481,
+            12713769,
+            13761158,
+            13149259,
+            14080756
+          ],
+          "median_ns": 13149259,
+          "checksums": [
+            5767488156499607552
+          ],
+          "output_bytes": [
+            161792
+          ],
+          "references": [
+            [
+              "467344063707082181071163562541907080498",
+              "-467344063707082181071163562541907080498"
+            ]
+          ]
+        },
+        "small_reciprocal": {
+          "iterations": 4096,
+          "elapsed_ns": [
+            11743676,
+            12095922,
+            13565841,
+            11989749,
+            11727637,
+            13540662,
+            12549991,
+            12894327,
+            12530042
+          ],
+          "median_ns": 12530042,
+          "checksums": [
+            12196652506430668800
+          ],
+          "output_bytes": [
+            157696
+          ],
+          "references": [
+            [
+              "67170228325401192858676624039028311153",
+              "-67170228325401192858676624039028311153"
+            ]
+          ]
+        },
+        "medium_integer": {
+          "iterations": 512,
+          "elapsed_ns": [
+            355415,
+            376454,
+            486617,
+            408002,
+            396213,
+            453738,
+            385424,
+            442369,
+            487847
+          ],
+          "median_ns": 408002,
+          "checksums": [
+            17735618227665768448
+          ],
+          "output_bytes": [
+            768
+          ],
+          "references": [
+            [
+              "2",
+              "-2"
+            ]
+          ]
+        },
+        "medium_reciprocal": {
+          "iterations": 512,
+          "elapsed_ns": [
+            195316,
+            283941,
+            323207,
+            217825,
+            253843,
+            328968,
+            303979,
+            341827,
+            268441
+          ],
+          "median_ns": 283941,
+          "checksums": [
+            17929487241888226816
+          ],
+          "output_bytes": [
+            512
+          ],
+          "references": [
+            [
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "wide_integer": {
+          "iterations": 64,
+          "elapsed_ns": [
+            189088,
+            220845,
+            281271,
+            253792,
+            246983,
+            302070,
+            263832,
+            332748,
+            290890
+          ],
+          "median_ns": 263832,
+          "checksums": [
+            14005786568699855360
+          ],
+          "output_bytes": [
+            96
+          ],
+          "references": [
+            [
+              "2",
+              "-2"
+            ]
+          ]
+        },
+        "wide_reciprocal": {
+          "iterations": 64,
+          "elapsed_ns": [
+            249383,
+            273111,
+            267422,
+            234724,
+            228724,
+            290051,
+            266822,
+            286300,
+            318018
+          ],
+          "median_ns": 267422,
+          "checksums": [
+            17266854238393641920
+          ],
+          "output_bytes": [
+            64
+          ],
+          "references": [
+            [
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "dense_integer": {
+          "iterations": 4,
+          "elapsed_ns": [
+            14249,
+            16188,
+            16918,
+            13389,
+            13649,
+            16649,
+            13759,
+            15289,
+            19039
+          ],
+          "median_ns": 15289,
+          "checksums": [
+            1540758119651360
+          ],
+          "output_bytes": [
+            6
+          ],
+          "references": [
+            [
+              "2",
+              "-2"
+            ]
+          ]
+        },
+        "dense_reciprocal": {
+          "iterations": 4,
+          "elapsed_ns": [
+            14529,
+            15949,
+            14699,
+            11549,
+            11659,
+            13849,
+            12619,
+            14749,
+            17859
+          ],
+          "median_ns": 14529,
+          "checksums": [
+            1548530289852
+          ],
+          "output_bytes": [
+            4
+          ],
+          "references": [
+            [
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "cached_integer_one": {
+          "iterations": 100000,
+          "elapsed_ns": [
+            7023469,
+            7668355,
+            7848912,
+            6814913,
+            7088744,
+            6975932,
+            7183658,
+            8164991,
+            8747741
+          ],
+          "median_ns": 7183658,
+          "checksums": [
+            6538784449528302592
+          ],
+          "output_bytes": [
+            200000
+          ],
+          "references": [
+            [
+              "-2",
+              "-2"
+            ]
+          ]
+        },
+        "cached_reciprocal_one": {
+          "iterations": 100000,
+          "elapsed_ns": [
+            4444636,
+            4209131,
+            4561617,
+            3673569,
+            3795460,
+            3929491,
+            3719495,
+            3809879,
+            3963189
+          ],
+          "median_ns": 3929491,
+          "checksums": [
+            3170163568771254112
+          ],
+          "output_bytes": [
+            100000
+          ],
+          "references": [
+            [
+              "0",
+              "0"
+            ]
+          ]
+        },
+        "cached_integer_many": {
+          "iterations": 100000,
+          "elapsed_ns": [
+            7534454,
+            7083215,
+            7479958,
+            7317189,
+            6863420,
+            7881300,
+            6851691,
+            7786987,
+            6582249
+          ],
+          "median_ns": 7317189,
+          "checksums": [
+            11270986196675597568
+          ],
+          "output_bytes": [
+            150000
+          ],
+          "references": [
+            [
+              "2",
+              "-2"
+            ]
+          ]
+        },
+        "cached_reciprocal_many": {
+          "iterations": 100000,
+          "elapsed_ns": [
+            4458515,
+            3606163,
+            4190493,
+            3787331,
+            3551987,
+            4168084,
+            3455393,
+            4671880,
+            3461673
+          ],
+          "median_ns": 3787331,
+          "checksums": [
+            3170163568771254112
+          ],
+          "output_bytes": [
+            100000
+          ],
+          "references": [
+            [
+              "0",
+              "0"
+            ]
+          ]
+        }
+      }
+    },
+    "integer": {
+      "phase": "typed-api-prototype-v1556-atan-quotient-integer-cost",
+      "baseline_phase": "typed-api-prototype-v1357-integer-scale-cost",
+      "binary_sha256": "6fee1d08e6d46e838c5841745cd8649c756c39977573f56eedd48025435f0df8",
+      "binary_bytes": 6239600,
+      "summary_sha256": "667862be7e84486f1f824d9a6953f448373b975f1765dbad4c0a6efebf7cba6d",
+      "cases": {
+        "small_fine": {
+          "iterations": 200000,
+          "elapsed_ns": [
+            8158601,
+            8080746,
+            8193019,
+            8078647,
+            10123987,
+            9943339,
+            8500288,
+            7981293,
+            7664565
+          ],
+          "median_ns": 8158601,
+          "checksums": [
+            81700000
+          ]
+        },
+        "small_coarse": {
+          "iterations": 200000,
+          "elapsed_ns": [
+            8396605,
+            8241356,
+            8740112,
+            7927507,
+            8860493,
+            9045960,
+            8495298,
+            8601741,
+            8022001
+          ],
+          "median_ns": 8495298,
+          "checksums": [
+            4300000
+          ]
+        },
+        "small_identity": {
+          "iterations": 200000,
+          "elapsed_ns": [
+            7289750,
+            6315507,
+            6796485,
+            7052117,
+            7439641,
+            6600418,
+            7074126,
+            6595788,
+            7024839
+          ],
+          "median_ns": 7024839,
+          "checksums": [
+            39100000
+          ]
+        },
+        "wide_coarse": {
+          "iterations": 10000,
+          "elapsed_ns": [
+            616548,
+            588989,
+            631247,
+            732519,
+            617048,
+            572550,
+            605258,
+            604109,
+            601879
+          ],
+          "median_ns": 605258,
+          "checksums": [
+            35000
+          ]
+        },
+        "wide_gap": {
+          "iterations": 10000,
+          "elapsed_ns": [
+            102683,
+            102663,
+            121332,
+            101413,
+            107563,
+            101493,
+            103233,
+            100903,
+            100914
+          ],
+          "median_ns": 102663,
+          "checksums": [
+            0
+          ]
+        },
+        "wide_halfway": {
+          "iterations": 10000,
+          "elapsed_ns": [
+            21521486,
+            19338716,
+            19011598,
+            19575129,
+            19501964,
+            19660713,
+            20826384,
+            20591170,
+            20539003
+          ],
+          "median_ns": 19660713,
+          "checksums": [
+            15000
+          ]
+        },
+        "wide_fine": {
+          "iterations": 10000,
+          "elapsed_ns": [
+            2246547,
+            2267954,
+            2185870,
+            2217608,
+            2254186,
+            2204609,
+            2164831,
+            2061869,
+            2162412
+          ],
+          "median_ns": 2204609,
+          "checksums": [
+            1969955000
+          ]
+        },
+        "wide_identity": {
+          "iterations": 10000,
+          "elapsed_ns": [
+            1314290,
+            1310580,
+            1047328,
+            1042328,
+            1112294,
+            1283872,
+            1072247,
+            1038929,
+            1237266
+          ],
+          "median_ns": 1112294,
+          "checksums": [
+            1966115000
+          ]
+        }
+      }
+    },
+    "inverse_trig": {
+      "phase": "typed-api-prototype-v1557-atan-quotient-inverse-cost",
+      "baseline_phase": "typed-api-prototype-v1358-integer-scale-inverse-cost",
+      "binary_sha256": "2faf914b39f2ac24179888a31dbe2d8663969fd7f11eb4456193f16866f3d83a",
+      "binary_bytes": 6921320,
+      "summary_sha256": "58b596fd739b3c832a88d2b93e995dfd471b934cbca471c118f1f62c8255280d",
+      "cases": {
+        "atan_small": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            51636,
+            46177,
+            47897,
+            47367,
+            46357,
+            48237,
+            66185,
+            59206,
+            49327
+          ],
+          "median_ns": 48237
+        },
+        "atan_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            59476,
+            52217,
+            58396,
+            54826,
+            54016,
+            60876,
+            59955,
+            59435,
+            54337
+          ],
+          "median_ns": 58396
+        },
+        "acos_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            137131,
+            107313,
+            110613,
+            114113,
+            108533,
+            116892,
+            113632,
+            106743,
+            108732
+          ],
+          "median_ns": 110613
+        },
+        "terms_small": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            77215,
+            76055,
+            102763,
+            77215,
+            80455,
+            94444,
+            79725,
+            71965,
+            75905
+          ],
+          "median_ns": 77215
+        },
+        "terms_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            84965,
+            87574,
+            83005,
+            90353,
+            80144,
+            83414,
+            92724,
+            78255,
+            77705
+          ],
+          "median_ns": 83414
+        },
+        "pi_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            44907,
+            57756,
+            58276,
+            46437,
+            58706,
+            55466,
+            45297,
+            64885,
+            46057
+          ],
+          "median_ns": 55466
+        }
+      }
+    },
+    "normal_form": {
+      "phase": "typed-api-prototype-v1558-atan-quotient-normal-form-cost",
+      "baseline_phase": "typed-api-prototype-v1359-integer-scale-normal-form-cost",
+      "binary_sha256": "09b699f10762aeac76522a760736ed0bd63d8bb96340e9c2c953f2c929fb13ce",
+      "binary_bytes": 6926312,
+      "summary_sha256": "690fef868c009f4d0f267fe5b977e6843a41481d6cb80504df12cad3315481ae",
+      "cases": {
+        "pi_small": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            319508,
+            256173,
+            258212,
+            257732,
+            332647,
+            320828,
+            289960,
+            274112,
+            352686
+          ],
+          "median_ns": 289960
+        },
+        "pi_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            411442,
+            342237,
+            330037,
+            332178,
+            325928,
+            319408,
+            325287,
+            320068,
+            326187
+          ],
+          "median_ns": 326187
+        },
+        "inverse_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            627757,
+            645916,
+            956114,
+            762288,
+            612878,
+            604899,
+            596019,
+            927127,
+            603338
+          ],
+          "median_ns": 627757
+        },
+        "rational_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            1669225,
+            1651877,
+            2067058,
+            1679075,
+            1589921,
+            1583102,
+            1644628,
+            1597341,
+            1598770
+          ],
+          "median_ns": 1644628
+        },
+        "atom_small": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            214175,
+            198096,
+            244663,
+            212505,
+            316228,
+            195897,
+            196646,
+            200597,
+            242853
+          ],
+          "median_ns": 212505
+        },
+        "atom_wide": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            260242,
+            206116,
+            204966,
+            250883,
+            210615,
+            253013,
+            248823,
+            213745,
+            205196
+          ],
+          "median_ns": 213745
+        }
+      }
+    },
+    "default": {
+      "phase": "typed-api-prototype-v1559-atan-quotient-default-cost",
+      "baseline_phase": "typed-api-prototype-v1360-integer-scale-default-cost",
+      "binary_sha256": "55b9e729581d46b729811f35d1ed712f7f5a2256c1aec0c9eb11963bee412a9f",
+      "binary_bytes": 6498904,
+      "summary_sha256": "d44c105374193dee08a77ac80ca449e87914abb02ef896d0194a297ba4d88b59",
+      "cases": {
+        "cold_sin": {
+          "iterations": 1000,
+          "elapsed_ns": [
+            2892362,
+            3097268,
+            2692546,
+            2701815,
+            2633260,
+            2557764,
+            3574125,
+            2553795,
+            2677077
+          ],
+          "median_ns": 2692546,
+          "checksums": [
+            "48446589196339771234345433656028547293000"
+          ]
+        },
+        "cold_opaque": {
+          "iterations": 1000,
+          "elapsed_ns": [
+            9421494,
+            9271664,
+            9032901,
+            9048180,
+            9007553,
+            8691334,
+            9861824,
+            8838545,
+            9425964
+          ],
+          "median_ns": 9048180,
+          "checksums": [
+            "336119334066307916527338510541633358361000"
+          ]
+        },
+        "shared_hot": {
+          "iterations": 100000,
+          "elapsed_ns": [
+            6759937,
+            6852260,
+            6863769,
+            6530123,
+            6752398,
+            7786676,
+            6611177,
+            6627526,
+            6713230
+          ],
+          "median_ns": 6752398,
+          "checksums": [
+            "1822106561045360310800000"
+          ]
+        },
+        "structural_cancel": {
+          "iterations": 500,
+          "elapsed_ns": [
+            6260570,
+            6086873,
+            5068952,
+            5474855,
+            6372253,
+            6509383,
+            5557599,
+            5711628,
+            4861547
+          ],
+          "median_ns": 5711628,
+          "checksums": [
+            "0"
+          ]
+        },
+        "domain_tree": {
+          "iterations": 32,
+          "elapsed_ns": [
+            10704396,
+            9366238,
+            9013182,
+            9378747,
+            9051870,
+            9041171,
+            9087537,
+            10174622,
+            9340320
+          ],
+          "median_ns": 9340320,
+          "checksums": [
+            "3942252038848585917153833328273408932693856"
+          ]
+        },
+        "nested_exp": {
+          "iterations": 1000,
+          "elapsed_ns": [
+            30480500,
+            28171449,
+            31161135,
+            27790145,
+            27183437,
+            27963004,
+            28849332,
+            27241223,
+            27127811
+          ],
+          "median_ns": 27963004,
+          "checksums": [
+            "785075653720095124153210888586912303996000"
+          ]
+        }
+      }
+    },
+    "algebraic": {
+      "phase": "typed-api-prototype-v1560-atan-quotient-algebraic-cost",
+      "baseline_phase": "typed-api-prototype-v1361-integer-scale-algebraic-cost",
+      "binary_sha256": "e89dfab37944c22673272bf62987373fd85efa47e9006a618093e6502babc131",
+      "binary_bytes": 6914904,
+      "summary_sha256": "bdf43424ddd12a805856a24701ab45fcaa4fb8f354c5eee5f0f80141dba57cf3",
+      "cases": {
+        "square_roots": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            151520,
+            110853,
+            131731,
+            111892,
+            109992,
+            109652,
+            114202,
+            111252,
+            106443
+          ],
+          "median_ns": 111252
+        },
+        "cube_roots": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            1227456,
+            1167470,
+            1284962,
+            1184859,
+            1192338,
+            1249114,
+            1176739,
+            1148771,
+            1152171
+          ],
+          "median_ns": 1184859
+        },
+        "fourth_roots": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            11821680,
+            11688469,
+            11840188,
+            13621296,
+            11930562,
+            11737845,
+            11755195,
+            11798981,
+            11836979
+          ],
+          "median_ns": 11821680
+        },
+        "reciprocals": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            198307,
+            199286,
+            206456,
+            213916,
+            199797,
+            196536,
+            199156,
+            205656,
+            208015
+          ],
+          "median_ns": 199797
+        },
+        "wide_256": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            270891,
+            277960,
+            281291,
+            279741,
+            342536,
+            273891,
+            266222,
+            280540,
+            273301
+          ],
+          "median_ns": 277960
+        },
+        "wide_1024_inverse": {
+          "iterations": 64,
+          "certified": 64,
+          "elapsed_ns": [
+            365295,
+            369535,
+            353865,
+            351766,
+            355716,
+            349316,
+            374965,
+            456929,
+            387253
+          ],
+          "median_ns": 365295
+        }
+      }
+    },
+    "acos": {
+      "phase": "typed-api-prototype-v1561-atan-quotient-acos-cost",
+      "baseline_phase": "typed-api-prototype-v1418-acos-warm-baseline-cost",
+      "binary_sha256": "3eacb865f17079e909301754e14c0a830d8a2e481ed28e144f2d459ad1b81046",
+      "binary_bytes": 6244904,
+      "summary_sha256": "a2e1974fa31ff9ca59da1d8855cff2e8e33911ff6204dc37e2aa7143430d248d",
+      "cases": {
+        "small_positive": {
+          "iterations": 2000,
+          "elapsed_ns": [
+            4991267,
+            4925322,
+            4812010,
+            4903004,
+            4278717,
+            4533269,
+            5071243,
+            4325434,
+            4585246
+          ],
+          "median_ns": 4812010,
+          "checksums": [
+            589225375048917280
+          ],
+          "output_bytes": [
+            38000
+          ],
+          "reference": [
+            "2307346854069416588"
+          ]
+        },
+        "small_negative": {
+          "iterations": 2000,
+          "elapsed_ns": [
+            4404439,
+            5608626,
+            4967650,
+            4379049,
+            5080422,
+            4789332,
+            4890895,
+            5078042,
+            4384859
+          ],
+          "median_ns": 4890895,
+          "checksums": [
+            6981356068566875136
+          ],
+          "output_bytes": [
+            40000
+          ],
+          "reference": [
+            "55644808810547566151"
+          ]
+        },
+        "mid_positive": {
+          "iterations": 300,
+          "elapsed_ns": [
+            2381877,
+            2392776,
+            2104356,
+            2348969,
+            2215268,
+            2038920,
+            2346059,
+            1914998,
+            1906310
+          ],
+          "median_ns": 2215268,
+          "checksums": [
+            17215049362319382292
+          ],
+          "output_bytes": [
+            300
+          ],
+          "reference": [
+            "0"
+          ]
+        },
+        "mid_negative": {
+          "iterations": 300,
+          "elapsed_ns": [
+            2700605,
+            2455942,
+            2084318,
+            2398535,
+            2053149,
+            2079238,
+            2417535,
+            2001723,
+            2238996
+          ],
+          "median_ns": 2238996,
+          "checksums": [
+            11116832649655165328
+          ],
+          "output_bytes": [
+            300
+          ],
+          "reference": [
+            "3"
+          ]
+        },
+        "wide_positive": {
+          "iterations": 4,
+          "elapsed_ns": [
+            1075611498,
+            1059582887,
+            1058146365,
+            1048893080,
+            1051631282,
+            1057883483,
+            1048540084,
+            1051841277,
+            1059156306
+          ],
+          "median_ns": 1057883483,
+          "checksums": [
+            1548530289852
+          ],
+          "output_bytes": [
+            4
+          ],
+          "reference": [
+            "0"
+          ]
+        },
+        "wide_negative": {
+          "iterations": 4,
+          "elapsed_ns": [
+            1081147308,
+            1051338451,
+            1069902379,
+            1049191228,
+            1051533558,
+            1049098945,
+            1044421436,
+            1063392146,
+            1057647919
+          ],
+          "median_ns": 1051533558,
+          "checksums": [
+            1631154109104
+          ],
+          "output_bytes": [
+            4
+          ],
+          "reference": [
+            "3"
+          ]
+        },
+        "cached_positive": {
+          "iterations": 20000,
+          "elapsed_ns": [
+            675824,
+            703642,
+            683193,
+            678723,
+            682223,
+            685293,
+            671954,
+            676814,
+            674084
+          ],
+          "median_ns": 678723,
+          "checksums": [
+            17030526626131355616
+          ],
+          "output_bytes": [
+            20000
+          ],
+          "reference": [
+            "0"
+          ]
+        },
+        "cached_negative": {
+          "iterations": 20000,
+          "elapsed_ns": [
+            1295471,
+            1330049,
+            1260784,
+            1238335,
+            1263643,
+            1254693,
+            1304740,
+            1240365,
+            1228556
+          ],
+          "median_ns": 1260784,
+          "checksums": [
+            16986712518039764352
+          ],
+          "output_bytes": [
+            20000
+          ],
+          "reference": [
+            "3"
+          ]
+        }
+      }
+    }
+  },
+  "comparison_protocol": "atan-quotient-comparison-protocol-v1567.json",
+  "reasoning": "Compute the existing integer quotient before its independent denominator square. When the quotient is zero, the old sum, power and term are zero, its loop is skipped without any charge/cancellation check, and final scaling returns zero. Nonzero terms retain the same exact arithmetic, with quotient and square evaluated in the opposite order. Existing precision, zero-denominator, endpoint and dispatch checks are unchanged.",
+  "limits": [
+    "The quotient guard uses one additional eight-byte allocation in 140 measured rows compared with the rejected magnitude guard; 368 structured rows are identical. The million-bit direct query uses 24 bytes versus the original 4801400.",
+    "Cooperative work units are not a byte/time bound; public rational queries retain input-sized denominator copies.",
+    "All original timings and the rejected variant remain retained. No controlled-comparison outcome, broad-stack or formal-proof rerun is claimed at this record.",
+    "No main runtime admission, push, full-board or whole-plan completion is claimed."
+  ]
+}

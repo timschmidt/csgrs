@@ -1,0 +1,10 @@
+{
+  "candidate_source_sha256": "c789297f8e3463ae9b76b28e48ad3106bb59426c9d96783fcdb57b9d154fe23d",
+  "status": "Follow-up method recorded before paired execution",
+  "selected_helper": "replay_atan_quotient_zero_preconditioned_cost.py",
+  "helper_sha256": "97f3ec9b9497fdc7496043a977398d012333d9672326dd15d66f4e51a7f8e777",
+  "comparison": "All 52 frozen fixtures, nine repetitions, alternating baseline/candidate order, fixed CPU affinity and identical 50000000-step dependent-integer preparation before every process. The same caps, inputs, checksums and output sizes are required.",
+  "reason": "The first variant established that CPU preparation materially changes several small-workload measurements but leaves its key cache regression. Use that same stronger control directly for the second variant. Preserve all original trials; no fixture selection or iteration/cap change.",
+  "prepared_but_not_executed": "replay_atan_quotient_zero_paired_cost.py; its unconditioned v1562 output is not claimed.",
+  "original_unpaired_measurements": "All seven-family original cost measurements remain required and retained; this controlled comparison supplements them."
+}
