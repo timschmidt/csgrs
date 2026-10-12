@@ -1,0 +1,61 @@
+{
+  "status": "Do not retain the combined integer/root/cache proposal after a baseline capped failure",
+  "source_record": "typed-api-prototype-v2082-integer-coarse-zero-verus/source-hashes.json.gz",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "proposal_patch": "integer-coarse-zero-proposal-v2083.patch",
+  "proposal_patch_sha256": "f54b1b6a8c6532bedb5c8da887c99fbf6804057cddd9c8e655570d1f66fb36f8",
+  "partial_cost_record": "integer-coarse-zero-partial-cost-review-v2100.json",
+  "cost_controller": "integer-coarse-zero-cost-validation-v2100.json",
+  "cost_controller_sha256": "0fd7d8b27dc0da0bd47ab53a83d4700c5a87aa6aaefa204174aac7a07a5c9186",
+  "failure": {
+    "name": "algebraic-26-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": -24,
+    "wall_timeout": false,
+    "wall_seconds": 2.1214207550510764,
+    "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "successful_cost_processes": 1348,
+  "failed_capped_cost_processes": 1,
+  "separate_cpu_preludes": 881,
+  "cost_gate_passed": false,
+  "runtime_retained": false,
+  "replays_started": false,
+  "main_runtime_admitted": false,
+  "passing_evidence": {
+    "focused_integer_tests": 5,
+    "root_controls": 3,
+    "verified_units": 651,
+    "fresh_rejected_mutations": 0,
+    "reused_rejected_mutations": 247,
+    "reused_passing_baselines": 4,
+    "fresh_acceptance_tests": 10,
+    "broad_commands": 9,
+    "fresh_integer_allocation_cases": 64
+  },
+  "allocation_review": "integer-coarse-zero-allocation-review-v2092.json",
+  "limits": [
+    "The failure is in the hash-identical retained v1836 baseline executable, not the new candidate. This identifies the failing binary, not an internal stage or a reason for the CPU consumption.",
+    "All successful processes preserve non-timing output fields and original caps. Partial and unstarted fixtures remain incomplete. A completed wide_gap median improvement does not pass the comparison, and the small_coarse increase remains unresolved because the original run did not complete.",
+    "The frozen timing-repeat rule cannot turn an original capped failure into a pass. No family repeats, replays or retention steps were started. Earlier baseline and candidate failures remain unchanged; a diagnostic or larger-cap run cannot replace this failure.",
+    "The integer shortcut and bigint root helper remain outside Verus coverage. All thirteen whole-crate groups, the fixed pre-Verus acceptance baseline and main/native/full-board admission remain open."
+  ],
+  "next_priority": "Diagnose the retained baseline's full-size algebraic CPU failure and its execution environment from preserved evidence before proposing a controlled next experiment. Keep every original fixture and cap, and preserve this failed comparison; do not rerun unchanged timings until a favorable result appears. The coarse-zero proposal remains unretained and the decoder, producer/existence/atomic and native/full-board obligations remain open.",
+  "partial_cost_record_sha256": "b9768741b90fc04f5c55550b89b64ff430abad67979d00f29aeb1f1aef3800d2"
+}

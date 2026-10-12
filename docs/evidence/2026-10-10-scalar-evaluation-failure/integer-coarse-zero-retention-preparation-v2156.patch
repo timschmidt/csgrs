@@ -1,0 +1,150 @@
+--- record_nth_root_enclosure_retention.py
++++ record_integer_coarse_zero_retention.py
+@@ -18 +18 @@
+-SOURCE_HASH = "f5fa38edebe8eb5ecdf831098567fab0cf0d8d6f588b56f1c93c4d5f56a5cac3"
++SOURCE_HASH = "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
+@@ -32,2 +32,2 @@
+-    outputs = [E / name for name in ["nth-root-enclosure-retention-v2077.json",
+-        "typed-api-prototype-v2077-metadata.json", "nth-root-enclosure-ledger-update-v2077.json"]]
++    outputs = [E / name for name in ["integer-coarse-zero-retention-v2156.json",
++        "typed-api-prototype-v2156-metadata.json", "integer-coarse-zero-ledger-update-v2156.json"]]
+@@ -35,2 +35,2 @@
+-    proof = read(E / "nth-root-enclosure-proof-validation-v2004.json")
+-    broad = read(E / "nth-root-enclosure-broad-validation-v2013.json")
++    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
++    broad = read(E / "integer-coarse-zero-broad-validation-v2092.json")
+@@ -38,2 +38,2 @@
+-    costs = read(E / "nth-root-enclosure-cost-review-v2021.json")
+-    plan_path = E / "nth-root-enclosure-replay-protocol-v2022.json"
++    costs = read(E / "integer-coarse-zero-cost-review-v2100.json")
++    plan_path = E / "integer-coarse-zero-replay-protocol-v2101.json"
+@@ -41,4 +41,4 @@
+-    replay = read(E / "nth-root-enclosure-replay-validation-v2075.json")
+-    queries = read(E / "nth-root-enclosure-domain-query-comparison-v2060.json")
+-    comparison = read(E / "nth-root-enclosure-deterministic-replay-comparison-v2076.json")
+-    facts = read(E / "nth-root-enclosure-public-fact-audit-v2076.json")
++    replay = read(E / "integer-coarse-zero-replay-validation-v2154.json")
++    queries = read(E / "integer-coarse-zero-domain-query-comparison-v2139.json")
++    comparison = read(E / "integer-coarse-zero-deterministic-replay-comparison-v2155.json")
++    facts = read(E / "integer-coarse-zero-public-fact-audit-v2155.json")
+@@ -51 +51 @@
+-    assert replay["runner_sha256"] == sha(E / "run_nth_root_replays.py")
++    assert replay["runner_sha256"] == sha(E / "run_integer_zero_replays.py")
+@@ -56 +56 @@
+-    assert proof["focused_tests"] == 3
++    assert proof["focused_tests"] == 5 and proof["root_control_tests"] == 3
+@@ -76 +76 @@
+-    for key in ["focused_phase", "fresh_verification_phase", "fresh_acceptance_phase"]:
++    for key in ["focused_phase", "root_control_phase", "fresh_verification_phase", "fresh_acceptance_phase"]:
+@@ -93,2 +93,2 @@
+-    expected_tests = {2005: (1076, 1, 0), 2010: (5860, 3, 33),
+-                      2011: (1061, 3, 0), 2012: (1076, 1, 0)}
++    expected_tests = {2084: (1076, 1, 0), 2089: (5860, 3, 33),
++                      2090: (1061, 3, 0), 2091: (1076, 1, 0)}
+@@ -163 +163 @@
+-    cost_controller_path = E / "nth-root-enclosure-cost-validation-v2021.json"
++    cost_controller_path = E / "integer-coarse-zero-cost-validation-v2100.json"
+@@ -165 +165 @@
+-    cost_milestone = read(E / "nth-root-enclosure-cost-milestone-v2021.json")
++    cost_milestone = read(E / "integer-coarse-zero-cost-milestone-v2100.json")
+@@ -169 +169 @@
+-    assert cost_milestone["cost_record_sha256"] == sha(E / "nth-root-enclosure-cost-review-v2021.json")
++    assert cost_milestone["cost_record_sha256"] == sha(E / "integer-coarse-zero-cost-review-v2100.json")
+@@ -171 +171 @@
+-    assert subprocess.check_output(["git", "show", "HEAD:" + str((E / "nth-root-enclosure-cost-review-v2021.json").relative_to(ROOT))], cwd=ROOT) == (E / "nth-root-enclosure-cost-review-v2021.json").read_bytes()
++    assert subprocess.check_output(["git", "show", "HEAD:" + str((E / "integer-coarse-zero-cost-review-v2100.json").relative_to(ROOT))], cwd=ROOT) == (E / "integer-coarse-zero-cost-review-v2100.json").read_bytes()
+@@ -183 +183 @@
+-    source_record = "typed-api-prototype-v2007-nth-root-enclosure-release-build/source-hashes.json.gz"
++    source_record = "typed-api-prototype-v2086-integer-coarse-zero-release-build/source-hashes.json.gz"
+@@ -190 +190 @@
+-    assert changed == proof["changed_sources_sha256"] and len(changed) == 8
++    assert changed == proof["changed_sources_sha256"] and len(changed) == 9
+@@ -194 +194 @@
+-    allocation_path = E / "nth-root-enclosure-allocation-study-v2021/summary.json"
++    allocation_path = E / "integer-coarse-zero-allocation-review-v2092.json"
+@@ -196,6 +196,16 @@
+-    assert allocation["source_record_sha256"] == SOURCE_HASH and allocation["guards_unchanged"]
+-    assert allocation["exact_endpoints_equal"] and allocation["counts_stable"]
+-    assert allocation["fixtures"] == 84 and allocation["kernel_calls"] == 504
+-    assert not allocation["increases"], "Review allocation increases before retention"
+-    for name, digest in allocation["artifacts_sha256"].items():
+-        assert sha(allocation_path.parent / name) == digest
++    assert allocation["source_record_sha256"] == SOURCE_HASH
++    assert allocation["public_cases"] == allocation["raw_cases"] == 32
++    assert allocation["fresh_budgeted_shortcut_cases"] == allocation["raw_zero_allocation_controls"] == 16
++    assert allocation["budgeted_shortcut_allocation_observation"] == {"calls": 1, "bytes": 40, "largest": 40}
++    assert allocation["maximum_observed_bytes"] <= 128 and allocation["fresh_root_allocation_measurements"] == 0
++    assert sha(E / allocation["focused_phase"] / "stdout.log") == allocation["focused_stdout_sha256"]
++    assert sha(E / allocation["focused_phase"] / "stderr.log") == allocation["focused_stderr_sha256"]
++    root_study_path = E / allocation["reused_copied_root_study"]
++    assert sha(root_study_path) == allocation["reused_copied_root_study_sha256"]
++    root_study = read(root_study_path)
++    assert root_study["counts_stable"] and root_study["exact_endpoints_equal"]
++    assert root_study["fixtures"] == 84 and root_study["kernel_calls"] == 504 and not root_study["increases"]
++    for name, digest in root_study["artifacts_sha256"].items():
++        assert sha(root_study_path.parent / name) == digest
++    assert sha(SOURCE / "crates/hyperreal/src/computable/approximation/exp_sqrt.rs") == allocation["root_kernel_sha256"]
++    assert sha(Path(allocation["unchanged_num_dependency"])) == allocation["num_dependency_sha256"]
+@@ -205 +215 @@
+-        "Ten fresh acceptance tests and 651 freshly verified units cover the unchanged conditional proof target. The 247 rejected mutations and four passing baselines are reused, with identical proof/guard inputs and dependency identities; zero new mutations were run. The bigint root kernel is outside Verus coverage. Its exact endpoints have focused inequality/differential tests and unchanged public MPFR cases. The fixed pre-Verus acceptance report remains pending. All earlier failed experiments remain immutable.",
++        "Ten fresh acceptance tests and 651 freshly verified units cover the unchanged conditional proof target. The 247 rejected mutations and four passing baselines are reused, with identical proof/guard inputs and dependency identities; zero new mutations were run. The changed integer branch and bigint root kernel are outside Verus coverage. Five unchanged integer tests cover exact signed rounding, precision, cancellation, work accounting and allocations; three unchanged root controls check endpoint inequalities, differential equality and public MPFR cases. The fixed pre-Verus acceptance report remains pending. All earlier failed experiments remain immutable.",
+@@ -212,2 +222,2 @@
+-        "The local cost baseline remains v1836. The outlined selector alone failed its original CPU cap at v1943. That failure, v1857 timing regressions, original-cap failures at v1638/v1710, the retained integer-control tradeoff and the fixed pre-Verus acceptance baseline remain unchanged; this combined-source run does not pass any earlier failed run.",
+-        "The 84-case copied-kernel allocation study records stable counts and identical endpoints across 504 helper calls. It measures allocation requests only, not production call-site behavior, live/peak memory, query work or time. All cases and its limitations remain recorded separately.",
++        "The local cost baseline remains v1836. The predecessor root/selector combination failed the wide_gap timing control at v2021; it remains rejected. The outlined selector alone failed its original CPU cap at v1943. That failure, v1857 timing regressions, original-cap failures at v1638/v1710, the retained integer-control tradeoff and the fixed pre-Verus acceptance baseline remain unchanged; this combined-source run does not pass any earlier failed run.",
++        "The fresh allocation audit records 32 public budgeted and 32 raw integer cases, all within the unchanged 128-byte ceiling. The 16 public coarse-zero cases record one 40-byte allocation with budget setup included; 16 corresponding raw cases allocate nothing. The historical 84-case copied-root study is reused only for its unchanged helper and num dependency, with no fresh root allocation run. Neither study measures live/peak memory or whole-board behavior. The failed zero-allocation audit assumption and its correction remain recorded.",
+@@ -218,0 +229 @@
++        "Connect the charged integer shortcut to its bit-length producer contracts. "
+@@ -226 +237 @@
+-        "status": "Retain the isolated one-root enclosure and conditionally proved outlined cache merge; main admission remains open",
++        "status": "Retain the isolated integer shortcut, one-root enclosure and conditionally proved outlined cache merge; main admission remains open",
+@@ -239,2 +250,2 @@
+-        "proof_record": "nth-root-enclosure-proof-validation-v2004.json",
+-        "proof_record_sha256": sha(E / "nth-root-enclosure-proof-validation-v2004.json"),
++        "proof_record": "integer-coarse-zero-proof-validation-v2083.json",
++        "proof_record_sha256": sha(E / "integer-coarse-zero-proof-validation-v2083.json"),
+@@ -243 +254 @@
+-            "fresh_passing_guard_baselines", "reused_rejected_mutants", "reused_passing_guard_baselines", "focused_tests"]},
++            "fresh_passing_guard_baselines", "reused_rejected_mutants", "reused_passing_guard_baselines", "focused_tests", "root_control_tests", "new_tests_added"]},
+@@ -246 +257 @@
+-        "replay_orchestration": "nth-root-enclosure-replay-validation-v2075.json",
++        "replay_orchestration": "integer-coarse-zero-replay-validation-v2154.json",
+@@ -248,3 +259,3 @@
+-        "domain_observation_comparison": "nth-root-enclosure-domain-query-comparison-v2060.json",
+-        "deterministic_replay_comparison": "nth-root-enclosure-deterministic-replay-comparison-v2076.json",
+-        "public_fact_audit": "nth-root-enclosure-public-fact-audit-v2076.json",
++        "domain_observation_comparison": "integer-coarse-zero-domain-query-comparison-v2139.json",
++        "deterministic_replay_comparison": "integer-coarse-zero-deterministic-replay-comparison-v2155.json",
++        "public_fact_audit": "integer-coarse-zero-public-fact-audit-v2155.json",
+@@ -252 +263 @@
+-        "cost_record": "nth-root-enclosure-cost-review-v2021.json",
++        "cost_record": "integer-coarse-zero-cost-review-v2100.json",
+@@ -255 +266 @@
+-        "decision": "Keep the one-root integer enclosure with identical tested endpoints, together with the same pure BoundCache::merge body included by Verus. The kernel change reduces duplicate root computation; it has finite numerical and allocation evidence, not a formal kernel proof. The outlined selector has conditional denotation, compatibility, certificate-retention and domain-retention proofs. All frozen deterministic observations, original-cap costs and prescribed repeats pass. This becomes the isolated retained baseline; main runtime admission remains open.",
++        "decision": "Keep the charged integer coarse-zero branch, the one-root enclosure with identical tested endpoints, and the same pure BoundCache::merge body included by Verus. The integer branch bypasses the scaling helper only after the same precision checks and work charge, under the helper's same strict zero predicate. The root change removes duplicate root computation. Both have finite numerical/allocation evidence and remain outside formal runtime coverage. The outlined selector has conditional denotation, compatibility, certificate-retention and domain-retention proofs. All frozen deterministic observations, original-cap costs and prescribed repeats pass. This becomes the isolated retained baseline; main runtime admission remains open.",
+@@ -262 +273 @@
+-        "typed-api-prototype-v2077-state.json"]
++        "typed-api-prototype-v2156-state.json"]
+@@ -275 +286 @@
+-        "The v2077 isolated checkpoint retains the one-root enclosure and outlined cached-bound merge "
++        "The v2156 isolated checkpoint retains the integer coarse-zero branch, one-root enclosure and outlined cached-bound merge "
+@@ -285,2 +296,5 @@
+-        "baseline remain explicit. The bigint kernel is outside Verus; its focused endpoint checks and "
+-        "84-case copied-kernel allocation study remain separate finite evidence. This changes only the isolated retained candidate. "
++        "baseline remain explicit. The integer branch and bigint kernel remain outside Verus. Five integer "
++        "tests, three root controls and 64 fresh public/raw allocation cases pass their unchanged "
++        "contracts. The public coarse-zero call records one 40-byte allocation with budget setup included. The "
++        "earlier 84-case copied-root study is reused only for its unchanged helper/dependency. "
++        "This changes only the isolated retained candidate. "
+@@ -295 +309 @@
+-        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v2077-state.json before production admission.", 1)
++        "Continue the isolated fallible scalar evaluator from typed-api-prototype-v2156-state.json before production admission.", 1)
+@@ -299 +313 @@
+-        "All capped/numerical/public replays and receipt/fact audits pass; the combined proposal is retained in v2077. " + next_priority, 1)
++        "All capped/numerical/public replays and receipt/fact audits pass; the combined proposal is retained in v2156. " + next_priority, 1)
+@@ -311 +325 @@
+-        "evidence_commits": ["dec6ce44ffc109de6f8f52d2ce253cec1cae5dbf", "85a24c007460551c9dee5746b68a192cb569b045", subprocess.check_output(["git", "log", "-1", "--format=%H", "--", str((E / "nth-root-enclosure-broad-milestone-v2013.json").relative_to(ROOT))], cwd=ROOT, text=True).strip(), subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()],
++        "evidence_commits": ["dec6ce44ffc109de6f8f52d2ce253cec1cae5dbf", "85a24c007460551c9dee5746b68a192cb569b045", "1c658dee658fb9395b8f9b11f0fd3012fbca513c", subprocess.check_output(["git", "log", "-1", "--format=%H", "--", str((E / "integer-coarse-zero-broad-milestone-v2092.json").relative_to(ROOT))], cwd=ROOT, text=True).strip(), subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()],
+@@ -342 +356 @@
+-        "retained_runtime_checkpoint": "typed-api-prototype-v2077-state.json", "main_runtime_admitted": False,
++        "retained_runtime_checkpoint": "typed-api-prototype-v2156-state.json", "main_runtime_admitted": False,

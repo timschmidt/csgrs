@@ -1,0 +1,1514 @@
+[
+  {
+    "name": "atan_small-0",
+    "command": {
+      "name": "atan_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01812237687408924,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "52326",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-1",
+    "command": {
+      "name": "atan_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017753612250089645,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49617",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-2",
+    "command": {
+      "name": "atan_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017727833706885576,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49166",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-3",
+    "command": {
+      "name": "atan_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017682367004454136,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47607",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-4",
+    "command": {
+      "name": "atan_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01782633690163493,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47607",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-5",
+    "command": {
+      "name": "atan_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017670797649770975,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "44857",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-6",
+    "command": {
+      "name": "atan_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01769655616953969,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "49187",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-7",
+    "command": {
+      "name": "atan_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01772158406674862,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "61506",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_small-8",
+    "command": {
+      "name": "atan_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01799971517175436,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "50246",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-0",
+    "command": {
+      "name": "atan_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033882264979183674,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "63825",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-1",
+    "command": {
+      "name": "atan_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03433670476078987,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "57666",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-2",
+    "command": {
+      "name": "atan_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034099691081792116,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "68395",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-3",
+    "command": {
+      "name": "atan_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03389997407793999,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "53946",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-4",
+    "command": {
+      "name": "atan_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03380608092993498,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55646",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-5",
+    "command": {
+      "name": "atan_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0339698800817132,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "51826",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-6",
+    "command": {
+      "name": "atan_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03390445373952389,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "55156",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-7",
+    "command": {
+      "name": "atan_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034201834350824356,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "90573",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "atan_wide-8",
+    "command": {
+      "name": "atan_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "atan",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034148627892136574,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "54947",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-0",
+    "command": {
+      "name": "acos_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06596864480525255,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108342",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-1",
+    "command": {
+      "name": "acos_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06633066991344094,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "136230",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-2",
+    "command": {
+      "name": "acos_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06646544113755226,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111582",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-3",
+    "command": {
+      "name": "acos_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06673517310991883,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107432",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-4",
+    "command": {
+      "name": "acos_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.0664367531426251,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "112222",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-5",
+    "command": {
+      "name": "acos_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06670687394216657,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "105163",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-6",
+    "command": {
+      "name": "acos_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06616654107347131,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "108312",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-7",
+    "command": {
+      "name": "acos_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06612737430259585,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "111813",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "acos_wide-8",
+    "command": {
+      "name": "acos_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06603946024551988,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "107702",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-0",
+    "command": {
+      "name": "terms_small-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03416181681677699,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "94683",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-1",
+    "command": {
+      "name": "terms_small-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01805006107315421,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83344",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-2",
+    "command": {
+      "name": "terms_small-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.017834097146987915,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "106642",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-3",
+    "command": {
+      "name": "terms_small-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03398363897576928,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73365",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-4",
+    "command": {
+      "name": "terms_small-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.034464125987142324,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73235",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-5",
+    "command": {
+      "name": "terms_small-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.018084330018609762,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "75025",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-6",
+    "command": {
+      "name": "terms_small-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.03381713107228279,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "92743",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-7",
+    "command": {
+      "name": "terms_small-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.01799146644771099,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "73975",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_small-8",
+    "command": {
+      "name": "terms_small-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "0",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.033996818121522665,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "78515",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-0",
+    "command": {
+      "name": "terms_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06620833929628134,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "88874",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-1",
+    "command": {
+      "name": "terms_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06667877594009042,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "100513",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-2",
+    "command": {
+      "name": "terms_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06661229114979506,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "91274",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-3",
+    "command": {
+      "name": "terms_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06606741808354855,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "89104",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-4",
+    "command": {
+      "name": "terms_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06573600135743618,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "98284",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-5",
+    "command": {
+      "name": "terms_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06598703376948833,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "82094",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-6",
+    "command": {
+      "name": "terms_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06562326801940799,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "83984",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-7",
+    "command": {
+      "name": "terms_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06591836921870708,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "102033",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "terms_wide-8",
+    "command": {
+      "name": "terms_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "terms",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.06589909875765443,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "99583",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-0",
+    "command": {
+      "name": "pi_wide-0",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.010263766162097454,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46427",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-1",
+    "command": {
+      "name": "pi_wide-1",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.00973616261035204,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47296",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-2",
+    "command": {
+      "name": "pi_wide-2",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005571317858994007,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "47747",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-3",
+    "command": {
+      "name": "pi_wide-3",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005542740225791931,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46727",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-4",
+    "command": {
+      "name": "pi_wide-4",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005468294955790043,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "46217",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-5",
+    "command": {
+      "name": "pi_wide-5",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005481644067913294,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "45497",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-6",
+    "command": {
+      "name": "pi_wide-6",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.005415899213403463,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "48946",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-7",
+    "command": {
+      "name": "pi_wide-7",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009894231334328651,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "59806",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  },
+  {
+    "name": "pi_wide-8",
+    "command": {
+      "name": "pi_wide-8",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2095-integer-coarse-zero-inverse-cost/probe",
+        "cost",
+        "pi",
+        "1024",
+        "64"
+      ],
+      "exit_code": 0,
+      "wall_seconds": 0.009715413674712181,
+      "wall_timeout": false,
+      "timeout_seconds": 4,
+      "address_space_cap_mib": 192,
+      "cpu_seconds": [
+        2,
+        3
+      ]
+    },
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "61706",
+      "iterations": 64,
+      "stage": "cost"
+    }
+  }
+]

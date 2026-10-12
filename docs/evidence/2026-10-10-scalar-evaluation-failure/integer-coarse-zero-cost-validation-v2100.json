@@ -1,0 +1,51 @@
+{
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "runner_sha256": "55c51bb0b2963b997cd68600c80f475ba942b09213cd67afb9f39575ac1b6699",
+  "followup_strategy_sha256": "4c2ac9a0c18ed04755658594e775c71eab448bfb4f1d68fe644fca75a0a7256f",
+  "complete": false,
+  "steps": [
+    {
+      "label": "standalone",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_integer_coarse_zero_costs.py"
+      ],
+      "helper_sha256": "6e16567daf6ea868a22fe021624b40806c22542b8bac79e1a55fda4faf39f781",
+      "exit_code": 0,
+      "seconds": 86.11269622202963,
+      "stdout": "integer-coarse-zero-cost-controller-v2100/standalone.stdout",
+      "stdout_sha256": "e91883974623db7211a13f0667e40a5a7f22964f502a33e8534992770b86a84a",
+      "stderr": "integer-coarse-zero-cost-controller-v2100/standalone.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "paired",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_integer_coarse_zero_cost.py"
+      ],
+      "helper_sha256": "c331be481b3e1f4b60b02c98669dff6f6f84f8902d01ce2859f98f16e09aad60",
+      "exit_code": 1,
+      "seconds": 204.06412594299763,
+      "stdout": "integer-coarse-zero-cost-controller-v2100/paired.stdout",
+      "stdout_sha256": "11d60a7650aba1cc93aabfd79c143addd52e53b9f92a5ff4ac86f2e8357ad576",
+      "stderr": "integer-coarse-zero-cost-controller-v2100/paired.stderr",
+      "stderr_sha256": "4dd868bd09f2ba3615ffae027acc6d684555c90b3054ef11f08dafd7dd265c02"
+    },
+    {
+      "label": "initial-review",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/record_integer_coarse_zero_initial_costs.py"
+      ],
+      "helper_sha256": "a0a2e0a7522c8be765e8a75591bf1b79439334a94b073b74a80e280522a6a801",
+      "exit_code": 0,
+      "seconds": 1.628064475953579,
+      "stdout": "integer-coarse-zero-cost-controller-v2100/initial-review.stdout",
+      "stdout_sha256": "63ae09c386d197657eadd1e56c92eaefa57f890d2ac742d349f7b4a3dd1d1b76",
+      "stderr": "integer-coarse-zero-cost-controller-v2100/initial-review.stderr",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "scope": "Sequential standalone and paired original-cap costs, original receipt audit, predeclared family repeats when needed, and final cost audit. No concurrent builds/tests/measurements or source edits; all unsuccessful steps remain recorded."
+}

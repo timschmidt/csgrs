@@ -1,0 +1,14 @@
+{
+  "status": "Prepared only; execution requires all frozen cost/replay gates and their audits to pass",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "predecessor": "record_nth_root_enclosure_retention.py",
+  "predecessor_sha256": "7de2480bd38c5e9d867b28b55df0c615b3d5a7641a55e01974760911a22e48cb",
+  "recorder": "record_integer_coarse_zero_retention.py",
+  "recorder_sha256": "e183d48d526306cda44d2931b6af12c544bd8578902c14b2bdb300d0160f90ab",
+  "patch": "integer-coarse-zero-retention-preparation-v2156.patch",
+  "patch_sha256": "0dcffaa66683beae550167f2a265e0c89bb9dfeca79d27f733c0fe2e73fafa18",
+  "preparer_sha256": "864ddb8379b1cb9c34476246537aae6c7462dd79db6a7655b87d9f04bc033a18",
+  "conditional_retention_checkpoint": "typed-api-prototype-v2156-state.json",
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "scope": "Preserve every frozen runtime, cost, cap, replay and fact-retention check. Account for nine source changes, five existing integer tests and three existing root controls. Audit fresh public/raw allocation observations, explicitly retain budget-scope allocations and distinguish the reused copied-root study. Preserve all prior failures and every property/target status; preparation neither retains nor admits the runtime."
+}
