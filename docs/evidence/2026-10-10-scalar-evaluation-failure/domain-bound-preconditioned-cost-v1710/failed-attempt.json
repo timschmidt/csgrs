@@ -1,0 +1,22 @@
+{
+  "name": "algebraic-18-baseline",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+    "cost",
+    "4",
+    "4",
+    "0",
+    "false",
+    "64"
+  ],
+  "exit_code": -24,
+  "wall_timeout": false,
+  "wall_seconds": 2.123118625022471,
+  "binary_sha256": "dc418ce47b95bdce8818046ead531d7b18f15acdba6c47481a26cb6d7abd85ba",
+  "address_space_bytes": 201326592,
+  "cpu_seconds_soft_hard": [
+    2,
+    3
+  ],
+  "wall_seconds_limit": 4
+}

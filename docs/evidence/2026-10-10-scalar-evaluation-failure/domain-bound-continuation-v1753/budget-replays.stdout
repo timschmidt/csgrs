@@ -1,0 +1,131 @@
+Inverse-trig budget probe built; no builds during capped workloads.
+completed atan 0
+completed atan 16
+completed atan 128
+completed atan 1024
+completed acos 0
+completed acos 16
+completed acos 128
+completed acos 1024
+completed terms 0
+completed terms 16
+completed terms 128
+completed terms 1024
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+{"numeric_observations": 960, "unknown_answers": 160, "certified_answers": 224, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7", "build_phase": "typed-api-prototype-v1696-domain-bound-release-build", "guards_unchanged": true, "mode": "replay"}
+inverse_trig 384 replayed
+Shared evaluation-budget probe built; no builds during capped replay.
+offset_pi 4096 sqrt2 completed
+offset_third 4096 sqrt2 completed
+shifted_plus_half 4096 sqrt2 completed
+offset_pi 4096 ln2 completed
+offset_third 4096 ln2 completed
+shifted_plus_half 4096 ln2 completed
+offset_pi 4096 tiny_sqrt2 completed
+offset_third 4096 tiny_sqrt2 completed
+shifted_plus_half 4096 tiny_sqrt2 completed
+offset_pi 4096 large_sqrt2 completed
+offset_third 4096 large_sqrt2 completed
+shifted_plus_half 4096 large_sqrt2 completed
+offset_pi 1048577 sqrt2 completed
+offset_third 1048577 sqrt2 completed
+shifted_plus_half 1048577 sqrt2 completed
+offset_pi 1048577 ln2 completed
+offset_third 1048577 ln2 completed
+shifted_plus_half 1048577 ln2 completed
+offset_pi 1048577 tiny_sqrt2 completed
+offset_third 1048577 tiny_sqrt2 completed
+shifted_plus_half 1048577 tiny_sqrt2 completed
+offset_pi 1048577 large_sqrt2 completed
+offset_third 1048577 large_sqrt2 completed
+shifted_plus_half 1048577 large_sqrt2 completed
+offset_pi 2147483647 sqrt2 completed
+offset_third 2147483647 sqrt2 completed
+shifted_plus_half 2147483647 sqrt2 completed
+offset_pi 2147483647 ln2 completed
+offset_third 2147483647 ln2 completed
+shifted_plus_half 2147483647 ln2 completed
+offset_pi 2147483647 tiny_sqrt2 completed
+offset_third 2147483647 tiny_sqrt2 completed
+shifted_plus_half 2147483647 tiny_sqrt2 completed
+offset_pi 2147483647 large_sqrt2 completed
+offset_third 2147483647 large_sqrt2 completed
+shifted_plus_half 2147483647 large_sqrt2 completed
+offset_third 2147483647 exp1 completed
+offset_third 2147483647 atan_half completed
+offset_third 2147483647 sqrt2_minus_one completed
+offset_third 2147483647 negative_sqrt2 completed
+offset_third 2147483647 exp100 completed
+factored_third 2147483647 sqrt2 completed
+split_third 2147483646 sqrt2 completed
+factored_third 2147483647 large_sqrt2 completed
+split_third 2147483646 large_sqrt2 completed
+sixth_via_extremes 0 sqrt2 completed
+deep_inverse_offsets 1048577 sqrt2 completed
+ordinary_third 0 sqrt2 completed
+{"cases": 384, "observations": 1536, "numeric_samples": 1536, "invalid_numeric_samples": 0, "incomplete_cases": 0, "typed_errors": 0}
+evaluation 384 replayed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 2 2 0 False
+completed 2 2 0 True
+completed 2 3 0 False
+completed 2 3 0 True
+completed 2 4 0 False
+completed 2 4 0 True
+completed 3 2 0 False
+completed 3 2 0 True
+completed 3 3 0 False
+completed 3 3 0 True
+completed 3 4 0 False
+completed 3 4 0 True
+completed 4 2 0 False
+completed 4 2 0 True
+completed 4 3 0 False
+completed 4 3 0 True
+completed 4 4 0 False
+completed 4 4 0 True
+completed 2 2 64 False
+completed 2 2 64 True
+completed 2 2 256 False
+completed 2 2 256 True
+completed 2 2 1024 False
+completed 2 2 1024 True
+{"numeric_observations": 576, "unknown_answers": 60, "certified_answers": 228, "zero_budget_retained_proofs": 288, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7", "build_phase": "typed-api-prototype-v1696-domain-bound-release-build", "guards_unchanged": true, "mode": "replay"}
+algebraic 288 replayed
+Algebraic shared-budget probe built; no builds during capped replay.
+completed 3 2 64 False
+completed 3 2 64 True
+completed 3 2 256 False
+completed 3 2 256 True
+completed 3 2 1024 False
+completed 3 2 1024 True
+completed 4 2 64 False
+completed 4 2 64 True
+completed 4 2 256 False
+completed 4 2 256 True
+completed 4 2 1024 False
+completed 4 2 1024 True
+{"numeric_observations": 288, "unknown_answers": 36, "certified_answers": 108, "zero_budget_retained_proofs": 144, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7", "build_phase": "typed-api-prototype-v1696-domain-bound-release-build", "guards_unchanged": true, "mode": "replay"}
+algebraic_wide 144 replayed
+Normal-form budget probe built; no builds during capped workloads.
+completed pi 0
+completed pi 16
+completed pi 128
+completed pi 1024
+completed inverse 0
+completed inverse 16
+completed inverse 128
+completed inverse 1024
+completed rational 0
+completed rational 16
+completed rational 128
+completed rational 1024
+completed atom 0
+completed atom 16
+completed atom 128
+completed atom 1024
+{"numeric_observations": 960, "unknown_answers": 165, "certified_answers": 219, "zero_budget_retained_proofs": 384, "incomplete_cases": 0, "invalid_samples": 0, "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7", "build_phase": "typed-api-prototype-v1696-domain-bound-release-build", "guards_unchanged": true, "mode": "replay"}
+normal_form 384 replayed

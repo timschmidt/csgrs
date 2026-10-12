@@ -1,0 +1,167 @@
+{
+  "status": "Prepared after preserving the incomplete fixed-CPU run and before these follow-up measurements",
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "previous_failed_run": "domain-bound-preconditioned-cost-v1710",
+  "failure": {
+    "name": "algebraic-18-baseline",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1636-domain-sign-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": -24,
+    "wall_timeout": false,
+    "wall_seconds": 2.123118625022471,
+    "binary_sha256": "dc418ce47b95bdce8818046ead531d7b18f15acdba6c47481a26cb6d7abd85ba",
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "failure_scope": "The retained v1672 baseline received SIGXCPU. No final receipt was emitted, so the interrupted stage is unobserved. The original process-cap failure remains unresolved.",
+  "initial_above_five_percent_increases": [
+    {
+      "family": "inverse_trig",
+      "arguments": [
+        "cost",
+        "acos",
+        "1024",
+        "64"
+      ],
+      "elapsed_ns": {
+        "baseline": [
+          109792,
+          126361,
+          110792,
+          108192,
+          110682,
+          121551,
+          111992,
+          176528,
+          115232
+        ],
+        "candidate": [
+          121362,
+          117402,
+          121312,
+          188467,
+          125681,
+          109642,
+          130751,
+          195457,
+          120322
+        ]
+      },
+      "median_ns": {
+        "baseline": 111992,
+        "candidate": 121362
+      },
+      "median_percent_change": 8.366669047789133
+    }
+  ],
+  "unchanged_inputs": "Frozen probes, harnesses, full-size inputs, query counts, checksums and executable hashes remain unchanged. Both versions use the same limits within each job. No original observation is replaced.",
+  "jobs": [
+    {
+      "output": "domain-bound-focused-cost-v1710",
+      "prelude": "domain-bound-focused-cpu-prelude-v1710",
+      "repetitions": 27,
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "wall_seconds": 4,
+      "selection": {
+        "inverse_trig": [
+          [
+            "cost",
+            "acos",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "atan",
+            "1024",
+            "64"
+          ],
+          [
+            "cost",
+            "pi",
+            "1024",
+            "64"
+          ]
+        ]
+      },
+      "scope": "Twenty-seven alternating-order repetitions of the above-five-percent inverse-trig acos cancellation control and the same-width atan and pi controls. Original 192 MiB, CPU 2/3 second and four-second wall limits remain. Initial and follow-up observations are both retained, with no universal speedup claim."
+    },
+    {
+      "output": "domain-bound-algebraic-cost-v1710",
+      "prelude": "domain-bound-algebraic-cpu-prelude-v1710",
+      "repetitions": 9,
+      "cpu_seconds": [
+        4,
+        5
+      ],
+      "wall_seconds": 8,
+      "selection": {
+        "algebraic": [
+          [
+            "cost",
+            "2",
+            "2",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "3",
+            "3",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "4",
+            "4",
+            "0",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "3",
+            "0",
+            "true",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "256",
+            "false",
+            "64"
+          ],
+          [
+            "cost",
+            "2",
+            "2",
+            "1024",
+            "true",
+            "64"
+          ]
+        ]
+      },
+      "scope": "Separate matched diagnostic for all six unchanged algebraic fixtures with nine alternating-order pairs, 192 MiB, equal CPU 4/5 second and eight-second wall limits. This does not pass or replace the original two-second baseline failure."
+    }
+  ]
+}

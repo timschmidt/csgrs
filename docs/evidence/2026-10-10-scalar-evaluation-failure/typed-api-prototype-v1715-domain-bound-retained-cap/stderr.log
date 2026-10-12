@@ -1,0 +1,12 @@
+domain sign public bits=65, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=65, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 312, largest: 72 }
+domain sign public bits=516, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=516, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 568, largest: 144 }
+domain sign public bits=2050, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=2050, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 1528, largest: 528 }
+domain sign public bits=4096, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=4096, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 9, bytes: 2808, largest: 1040 }
+domain sign public bits=4097, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=4097, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 3824, largest: 1040 }
+domain sign public bits=1000001, kind=Sqrt, answer=Ok(0), consumed=4, allocations=Allocations { calls: 2, bytes: 112, largest: 72 }
+domain sign public bits=1000001, kind=PrescaledLn, answer=Ok(0), consumed=7, allocations=Allocations { calls: 10, bytes: 875240, largest: 250016 }

@@ -1,0 +1,7 @@
+
+running 1 test
+test computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1073 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined", "--exact", "--nocapture", "--test-threads=1"], "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.015483977738767862}

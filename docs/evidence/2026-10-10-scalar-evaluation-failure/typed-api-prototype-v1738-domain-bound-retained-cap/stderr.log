@@ -1,0 +1,67 @@
+lazy coefficient bits=65, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65, side=0, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65, side=1, units=18446744073709551615, answer=Some(()), consumed=9, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65, side=2, units=18446744073709551615, answer=Some(()), consumed=25, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=0, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=1, units=18446744073709551615, answer=Some(()), consumed=16641, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=4097, side=2, units=18446744073709551615, answer=Some(()), consumed=66049, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=0, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=1, units=18446744073709551615, answer=Some(()), consumed=4198401, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=65537, side=2, units=18446744073709551615, answer=Some(()), consumed=16785409, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=0, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=0, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=1, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=1, units=18446744073709551615, answer=Some(()), consumed=976625001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=2, units=1, answer=None, consumed=0, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy coefficient bits=1000001, side=2, units=18446744073709551615, answer=Some(()), consumed=3906375001, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata cutpoints bits=65, depth=0, needed=4
+lazy metadata cutpoints bits=65, depth=80, needed=84
+lazy metadata cutpoints bits=256, depth=0, needed=10
+lazy metadata cutpoints bits=256, depth=80, needed=90
+lazy metadata cutpoints bits=4097, depth=0, needed=130
+lazy metadata cutpoints bits=4097, depth=80, needed=210
+lazy base bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy base bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=4097, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=4097, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=4097, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65537, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65537, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=65537, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=1000001, degree=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=1000001, degree=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy candidate bits=1000001, degree=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=65, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=65, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=4097, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=4097, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=65537, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=65537, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=1000001, negative=false, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+lazy metadata bits=1000001, negative=true, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+empty metadata kind=0, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+empty metadata kind=1, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+empty metadata kind=2, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+empty metadata kind=3, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }
+empty metadata kind=4, answer=None, allocations=Allocations { calls: 0, bytes: 0, largest: 0 }

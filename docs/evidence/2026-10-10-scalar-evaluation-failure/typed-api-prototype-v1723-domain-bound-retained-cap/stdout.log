@@ -1,0 +1,11 @@
+
+running 5 tests
+test computable::node::magnitude_upper_bound_tests::numeric_magnitude_contains_the_closed_upper_endpoint ... ok
+test computable::node::magnitude_upper_bound_tests::public_rational_graph_magnitudes_are_upper_bounds_in_both_query_orders ... ok
+test computable::node::magnitude_upper_bound_tests::publication_preserves_the_tightest_available_upper_bound ... ok
+test computable::node::magnitude_upper_bound_tests::scaled_real_magnitudes_include_non_dyadic_carries ... ok
+test computable::node::magnitude_upper_bound_tests::scaled_upper_exponents_round_before_the_final_range_check ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1069 filtered out; finished in 0.00s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::magnitude_upper_bound_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.021640995051711798}

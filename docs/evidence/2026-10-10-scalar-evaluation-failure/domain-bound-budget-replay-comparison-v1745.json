@@ -1,0 +1,137 @@
+{
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "cases": 1584,
+  "status": "All non-accounting observations identical or reviewed as strengthening",
+  "changes": [
+    {
+      "family": "inverse_trig",
+      "case": "case-99",
+      "path": "records.0.consumed",
+      "before": 9299,
+      "after": 9293,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-99",
+      "path": "records.0.remaining",
+      "before": 990701,
+      "after": 990707,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-107",
+      "path": "records.0.consumed",
+      "before": 9297,
+      "after": 9291,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-107",
+      "path": "records.0.remaining",
+      "before": 990703,
+      "after": 990709,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-123",
+      "path": "records.0.consumed",
+      "before": 9395,
+      "after": 9389,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-123",
+      "path": "records.0.remaining",
+      "before": 990605,
+      "after": 990611,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-131",
+      "path": "records.0.consumed",
+      "before": 9393,
+      "after": 9387,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-131",
+      "path": "records.0.remaining",
+      "before": 990607,
+      "after": 990613,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-147",
+      "path": "records.0.consumed",
+      "before": 10252,
+      "after": 10246,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-147",
+      "path": "records.0.remaining",
+      "before": 989748,
+      "after": 989754,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-155",
+      "path": "records.0.consumed",
+      "before": 10250,
+      "after": 10244,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-155",
+      "path": "records.0.remaining",
+      "before": 989750,
+      "after": 989756,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-171",
+      "path": "records.0.consumed",
+      "before": 17196,
+      "after": 17190,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-171",
+      "path": "records.0.remaining",
+      "before": 982804,
+      "after": 982810,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-179",
+      "path": "records.0.consumed",
+      "before": 17194,
+      "after": 17188,
+      "classification": "work-accounting change"
+    },
+    {
+      "family": "inverse_trig",
+      "case": "case-179",
+      "path": "records.0.remaining",
+      "before": 982806,
+      "after": 982812,
+      "classification": "work-accounting change"
+    }
+  ],
+  "unreviewed": [],
+  "limits": "Each frozen replay independently checks its own mathematical oracle and retained zero-work proofs. This comparison also requires every previously definite sign to remain identical; numeric representatives may differ only within the independently checked one-unit contract. Work charges remain implementation-defined."
+}

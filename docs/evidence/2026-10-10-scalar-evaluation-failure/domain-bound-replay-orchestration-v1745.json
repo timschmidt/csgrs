@@ -1,0 +1,90 @@
+{
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "complete": true,
+  "results": [
+    {
+      "family": "inverse_trig",
+      "phase": "typed-api-prototype-v1741-domain-bound-inverse-replay",
+      "baseline": "typed-api-prototype-v1640-domain-sign-inverse-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_inverse_trig_budget.py",
+        "typed-api-prototype-v1696-domain-bound-release-build",
+        "typed-api-prototype-v1741-domain-bound-inverse-replay",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.574527995660901,
+      "expected_cases": 384,
+      "summary_sha256": "b82d1e37c947c819f2e76527deaf9eb8c5c13c69cfc93b3a00f5f11257257148"
+    },
+    {
+      "family": "evaluation",
+      "phase": "typed-api-prototype-v1742-domain-bound-evaluation-replay",
+      "baseline": "typed-api-prototype-v1641-domain-sign-evaluation-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_evaluation_budget.py",
+        "typed-api-prototype-v1696-domain-bound-release-build",
+        "typed-api-prototype-v1742-domain-bound-evaluation-replay",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests"
+      ],
+      "exit_code": 0,
+      "seconds": 7.1961643300019205,
+      "expected_cases": 384,
+      "summary_sha256": "2155da3f25ef4e8ff31b41083facc85d72c6b15ed280b29f504286413be668b0"
+    },
+    {
+      "family": "algebraic",
+      "phase": "typed-api-prototype-v1743-domain-bound-algebraic-replay",
+      "baseline": "typed-api-prototype-v1642-domain-sign-algebraic-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_budget_v2.py",
+        "typed-api-prototype-v1696-domain-bound-release-build",
+        "typed-api-prototype-v1743-domain-bound-algebraic-replay",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 9.675403333734721,
+      "expected_cases": 288,
+      "summary_sha256": "2064eeb7d81c163e0cb92b871e4e026133e378c3f487137375d24fded7db46c9"
+    },
+    {
+      "family": "algebraic_wide",
+      "phase": "typed-api-prototype-v1744-domain-bound-algebraic-wide-replay",
+      "baseline": "typed-api-prototype-v1643-domain-sign-algebraic-wide-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_algebraic_wide_budget.py",
+        "typed-api-prototype-v1696-domain-bound-release-build",
+        "typed-api-prototype-v1744-domain-bound-algebraic-wide-replay",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 36.91410039784387,
+      "expected_cases": 144,
+      "summary_sha256": "fc21c5ea573b635fb17e044680204f9dc1107ec9c15e254ed40923c7a24cfeb8"
+    },
+    {
+      "family": "normal_form",
+      "phase": "typed-api-prototype-v1745-domain-bound-normal-form-replay",
+      "baseline": "typed-api-prototype-v1644-domain-sign-normal-form-replay",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/reproduce_normal_form_budget.py",
+        "typed-api-prototype-v1696-domain-bound-release-build",
+        "typed-api-prototype-v1745-domain-bound-normal-form-replay",
+        "typed-api-prototype-v1694-domain-bound-scalar-tests",
+        "replay"
+      ],
+      "exit_code": 0,
+      "seconds": 6.107664932962507,
+      "expected_cases": 384,
+      "summary_sha256": "fc401c827f6ad40b0162b0419ed6bea17d4af3243e724664b53a518081fdb5ca"
+    }
+  ]
+}

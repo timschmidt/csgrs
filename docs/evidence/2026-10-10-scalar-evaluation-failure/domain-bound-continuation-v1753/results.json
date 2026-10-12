@@ -1,0 +1,62 @@
+{
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "complete": true,
+  "steps": [
+    {
+      "label": "standalone-costs",
+      "helper": "run_domain_bound_costs.py",
+      "helper_sha256": "b71e0d59edbf6c39aa622e5aaca1c8be3421241cfea0441782ea1cf5e931f168",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_domain_bound_costs.py"
+      ],
+      "exit_code": 0,
+      "seconds": 96.09002889599651
+    },
+    {
+      "label": "paired-costs",
+      "helper": "replay_domain_bound_cost.py",
+      "helper_sha256": "225e88a47320ec91aba914f72961bd9a7f8dac5326c67e901efa0d5b8cc4af6e",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/replay_domain_bound_cost.py"
+      ],
+      "exit_code": 1,
+      "seconds": 182.00932825310156
+    },
+    {
+      "label": "budget-replays",
+      "helper": "run_domain_bound_replays.py",
+      "helper_sha256": "951b58fb82ca34338a5312e7d423943b3e5ef55671a1c4fd4c7eac2db566958f",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/run_domain_bound_replays.py"
+      ],
+      "exit_code": 0,
+      "seconds": 66.50904221693054
+    },
+    {
+      "label": "compare-budget-replays",
+      "helper": "compare_domain_bound_budget_replays.py",
+      "helper_sha256": "214929fdf89313aefb90be265f5f095bd03b698d94619305d79f1f77e18be466",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/compare_domain_bound_budget_replays.py"
+      ],
+      "exit_code": 0,
+      "seconds": 0.07328655105084181
+    },
+    {
+      "label": "remaining-caps-and-replays",
+      "helper": "validate_domain_bound_remaining.py",
+      "helper_sha256": "264ef7c2c436e3a6f05efcc1be9acc19d7fda79452eee7dcb3e06371d6d61d73",
+      "command": [
+        "/usr/bin/python3",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/validate_domain_bound_remaining.py"
+      ],
+      "exit_code": 0,
+      "seconds": 178.76874620933086
+    }
+  ],
+  "limits": "A failed cost comparison remains failed; unrelated replay and cap gates continue. No failed phase is rerun or overwritten."
+}

@@ -1,0 +1,12 @@
+
+running 6 tests
+test computable::node::trig_operands_tests::symbolic_pi_operands_cancellation_and_poles_keep_domains ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_keep_existing_algebraic_certificates ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_limits_decline_without_false_periods ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_match_independent_enclosures ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_observed_stops_preserve_retry_and_facts ... ok
+test computable::node::trig_operands_tests::symbolic_pi_operands_preserve_nonlinear_atoms_and_wrappers ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 1068 filtered out; finished in 0.45s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::trig_operands_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.4789189649745822}

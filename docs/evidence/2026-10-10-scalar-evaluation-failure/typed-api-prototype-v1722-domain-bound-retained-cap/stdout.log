@@ -1,0 +1,13 @@
+
+running 7 tests
+test computable::node::private_kernel_domain_tests::exact_trig_poles_return_domain_errors_at_every_precision ... ok
+test computable::node::private_kernel_domain_tests::inverse_series_range_fallback_preserves_observed_stops ... ok
+test computable::node::private_kernel_domain_tests::nearby_trig_poles_match_directed_enclosures ... ok
+test computable::node::private_kernel_domain_tests::raw_asinh_coarse_samples_match_directed_enclosures ... ok
+test computable::node::private_kernel_domain_tests::raw_inverse_series_match_directed_enclosures ... ok
+test computable::node::private_kernel_domain_tests::trig_pole_domain_checks_preserve_observed_stops ... ok
+test computable::node::private_kernel_domain_tests::trig_zero_certificates_retain_facts_and_bound_coefficient_work ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 1067 filtered out; finished in 0.02s
+
+{"command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc", "computable::node::private_kernel_domain_tests::", "--nocapture", "--test-threads=1"], "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2", "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617", "address_space_bytes": 201326592, "cpu_seconds_soft_hard": [2, 3], "wall_seconds_limit": 4, "exit_code": 0, "wall_timeout": false, "seconds": 0.04483901197090745}

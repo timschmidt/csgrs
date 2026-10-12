@@ -1,0 +1,63 @@
+{
+  "status": "Source review and remaining coverage, not a new runtime or proof result",
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "reviewed_source_sections": {
+    "crates/hyperreal/src/computable/node/domain_certificates.rs": {
+      "sha256": "9fec5899532f406f0f896d332e198fd6f266582a660dd13fc548e799db9811a0",
+      "scope": "Complete file, including the new cached-bound helper and all existence-guarded callers."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "c836bd312c7b9dde852ce2b29df295d799d54369043ac896b474bf3ae9e9497f",
+      "scope": "Complete file, including requirement acceptance and bottom-up existence validation."
+    },
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+      "scope": "certify_unit_interval, immediate_sign, approximation entry checks and structural_facts sections."
+    },
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": {
+      "sha256": "84e13b4e5a7cb1f10893aea8133144e5c62d65b3a26461cd715f4fb56306172c",
+      "scope": "cached_bound/store_bound, bound_from_approx, shallow-bound traversal, unit_interval_sign, acosh_sign and bounded-rational entry/leaf recognition sections."
+    },
+    "crates/hyperreal/src/computable/node/representation.rs": {
+      "sha256": "f10eca5ed83b32237e47ed18d77a7b80dff39ce0709e520c68ab70c9bb575be8",
+      "scope": "AtomicFacts masks, bound encoding/decoding, snapshot, publication merge/CAS, finite-real flag and exact-sign publication sections."
+    },
+    "crates/hyperreal/src/computable/node/cache_publication_tests.rs": {
+      "sha256": "afef5b789902bf44620d67dc38fb7ec71f2a92b2ef791339411b271fac34be03",
+      "scope": "Deterministic delayed Unknown/sign and bound-publication schedules, independent proof injections, delayed coarse approximation and numeric magnitude endpoint controls."
+    },
+    "crates/hyperreal/src/computable/node/cache_rescale_tests.rs": {
+      "sha256": "770ac4dda59414145524be0365b68aba547c5e34a6890e0da0bc4846d569c22c",
+      "scope": "Eight-thread direct EvaluationCache publication stress test."
+    },
+    "crates/hyperreal/src/computable/node/evaluation_budget_tests.rs": {
+      "sha256": "d14708ce37f6f4a5684af3146e27e80663c690af5826568cdf86684052be3e05",
+      "scope": "High-precision sign reuse and eight-thread allowance debit/request-scope tests."
+    },
+    "crates/hyperreal/src/computable/approximation/inverse_trig.rs": {
+      "sha256": "0e3f4cb3a99d0e5a1ac9b8ba407f05d4ed4c2c77c3e066030374acd831bb3fec",
+      "scope": "asin_computable, asin_deferred and acos_positive interval-proof consumers."
+    },
+    "crates/hyperreal/src/computable/approximation/inverse_hyperbolic.rs": {
+      "sha256": "da9eb2724ffe25678a8b6fe3222678f26dd77d8e26c4d71fa0f062f7b75c7ccc",
+      "scope": "atanh_direct interval-proof consumer."
+    }
+  },
+  "findings": [
+    "The new helper reads one previously published bound; it does not publish facts, walk the graph or canonicalize a coefficient. Independent existence remains a caller precondition verified in every changed call site.",
+    "Atomic bound publication merges tighter upper estimates and exact binades while retaining the independent sign, finite-real and construction bits. Exact-sign publication refuses to replace an existing Valid fact with Unknown. These runtime methods remain outside the conditional Verus target.",
+    "certify_unit_interval also returns an exact rational witness used by asin_deferred and acos_positive for rational dispatch. A future bound shortcut must preserve boundary/rational dispatch behavior and available facts; replacing that return with None is not justified solely by domain membership.",
+    "unit_interval_sign, small-argument series checks and acosh_sign retain separate recognition/planning logic. Some ask for exact exponents where an upper magnitude might suffice, but no further change is admitted or measured here.",
+    "The existing direct cache stress test publishes exact dyadic values through a private cache primitive, and the concurrent budget test stresses internal charge(1). Deterministic publication tests use private hooks and in some cases independently justified injected proofs. These are useful scoped checks, not complete public concurrent evaluation coverage.",
+    "The retained 1100-bit sign-reuse test constructs its cancellation graph through private raw Add/Negate helpers. Ordinary public construction plus serialization/reconstruction and concurrent shared-allowance schedules remain distinct coverage to add."
+  ],
+  "next_priority_after_current_gates": "Exercise public concurrent and reconstructed high-precision proof reuse, including exact independent enclosures, spent shared budgets, retained signs/magnitudes and typed invalid-domain controls. Preserve deterministic publication tests and distinguish probabilistic thread stress from exhaustive interleavings.",
+  "other_open_requirements": [
+    "Complete the current broad/default/debug, original capped groups, unchanged cost controls and 4129 retained replay cases before a final scalar retention decision.",
+    "Preserve the retained baseline integer-control tradeoff and its original CPU-guard failure; a later timing diagnostic cannot replace those observations.",
+    "Log smooth-prime factoring, constructor reachability, lazy Laurent and quadratic-tower coefficient copies, composed-function interruption and exact-operation resource use remain source-review targets.",
+    "Implementation-connected domain/cache proofs and all thirteen whole-crate proof groups remain open.",
+    "Native-prototype combination, unchanged full-board admission, all 39 properties, 14 targets and crate future work remain in scope. Main runtime remains unchanged with its original scalar failure and 49 preexisting entries."
+  ],
+  "resolved_comment_issue": "The log-range setup comment now describes the direct ln(4/3) path accurately. All test behavior and previous archived sources are preserved."
+}

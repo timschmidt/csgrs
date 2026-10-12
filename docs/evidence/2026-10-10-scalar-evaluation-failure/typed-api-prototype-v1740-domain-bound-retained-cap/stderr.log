@@ -1,0 +1,114 @@
+constructor opaque cutpoints kind=0, bits=8, reversed=false, needed=879
+constructor opaque cutpoints kind=0, bits=8, reversed=true, needed=868
+constructor opaque cutpoints kind=0, bits=65, reversed=false, needed=873
+constructor opaque cutpoints kind=0, bits=65, reversed=true, needed=870
+constructor opaque cutpoints kind=0, bits=256, reversed=false, needed=1038
+constructor opaque cutpoints kind=0, bits=256, reversed=true, needed=1038
+constructor opaque cutpoints kind=1, bits=8, reversed=false, needed=130
+constructor opaque cutpoints kind=1, bits=8, reversed=true, needed=130
+constructor opaque cutpoints kind=1, bits=65, reversed=false, needed=150
+constructor opaque cutpoints kind=1, bits=65, reversed=true, needed=147
+constructor opaque cutpoints kind=1, bits=256, reversed=false, needed=220
+constructor opaque cutpoints kind=1, bits=256, reversed=true, needed=220
+constructor cutpoints bits=8, reversed=false, needed=71
+constructor cutpoints bits=8, reversed=true, needed=71
+constructor cutpoints bits=65, reversed=false, needed=80
+constructor cutpoints bits=65, reversed=true, needed=80
+constructor cutpoints bits=256, reversed=false, needed=112
+constructor cutpoints bits=256, reversed=true, needed=114
+constructor domain diagnostic kind=0, bits=8, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=868
+constructor domain diagnostic kind=0, bits=8, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=868
+constructor domain diagnostic kind=0, bits=65, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=873
+constructor domain diagnostic kind=0, bits=65, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=870
+constructor domain diagnostic kind=0, bits=256, reversed=false, finite=false, answer=None, second=Some(Positive), unlimited=Some(Positive), cold_unlimited=None, consumed=1038
+constructor domain diagnostic kind=0, bits=256, reversed=true, finite=false, answer=None, second=Some(Negative), unlimited=Some(Negative), cold_unlimited=None, consumed=1038
+constructor domain diagnostic kind=1, bits=8, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=130
+constructor domain diagnostic kind=1, bits=8, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=130
+constructor domain diagnostic kind=1, bits=65, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=150
+constructor domain diagnostic kind=1, bits=65, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=147
+constructor domain diagnostic kind=1, bits=256, reversed=false, finite=true, answer=Some(Positive), second=Some(Positive), unlimited=Some(Positive), cold_unlimited=Some(Positive), consumed=220
+constructor domain diagnostic kind=1, bits=256, reversed=true, finite=true, answer=Some(Negative), second=Some(Negative), unlimited=Some(Negative), cold_unlimited=Some(Negative), consumed=220
+constructor public opaque kind=0, bits=4097, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=4097, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=false, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=4097, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=false, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=0, bits=4097, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 17, bytes: 992, largest: 256 }, allocations=Allocations { calls: 17, bytes: 992, largest: 256 }
+constructor public opaque kind=0, bits=4097, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=true, units=48, answer=None, consumed=48, control=Allocations { calls: 23, bytes: 1160, largest: 256 }, allocations=Allocations { calls: 23, bytes: 1160, largest: 256 }
+constructor public opaque kind=0, bits=4097, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=0, bits=65537, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=0, bits=1000001, reversed=true, units=64, answer=None, consumed=64, control=Allocations { calls: 29, bytes: 1328, largest: 256 }, allocations=Allocations { calls: 29, bytes: 1328, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=false, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=false, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=false, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=false, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=false, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=false, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=true, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=true, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=true, units=48, answer=None, consumed=39, control=Allocations { calls: 18, bytes: 1448, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=4097, reversed=true, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=65537, reversed=true, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public opaque kind=1, bits=1000001, reversed=true, units=64, answer=None, consumed=39, control=Allocations { calls: 24, bytes: 1688, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=false, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=false, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=false, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=false, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=false, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=false, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=false, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=false, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=false, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=false, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=true, units=32, answer=None, consumed=32, control=Allocations { calls: 9, bytes: 872, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=true, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=true, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=true, units=40, answer=None, consumed=36, control=Allocations { calls: 12, bytes: 992, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=true, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=true, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=true, units=48, answer=None, consumed=36, control=Allocations { calls: 15, bytes: 1112, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=4097, reversed=true, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=65537, reversed=true, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor public pi bits=1000001, reversed=true, units=64, answer=None, consumed=36, control=Allocations { calls: 21, bytes: 1828, largest: 256 }, allocations=Allocations { calls: 9, bytes: 872, largest: 256 }
+constructor raw integer bits=4097, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=false, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=false, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=false, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=false, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=false, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=false, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=false, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=false, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=false, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=false, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=true, units=24, answer=None, consumed=24, control=Allocations { calls: 8, bytes: 800, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=true, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=true, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=true, units=32, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 1240, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=true, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=true, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=true, units=40, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=4097, reversed=true, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=65537, reversed=true, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }
+constructor raw integer bits=1000001, reversed=true, units=48, answer=None, consumed=25, control=Allocations { calls: 19, bytes: 968, largest: 256 }, allocations=Allocations { calls: 8, bytes: 800, largest: 256 }

@@ -1,0 +1,11 @@
+{
+  "status": "Recorder-only count correction; no validation or measurement changed",
+  "failed_helper": "record_domain_bound_retention.py",
+  "failed_helper_sha256": "f264c11c2e30fb3d7aa881d4eaf90bedd1fb21c7c4cddaca07d379d12a12ae16",
+  "exit_code": 1,
+  "failure": "Expected eighteen changed accounting fields; the immutable receipt comparison contains sixteen fields across eight queries.",
+  "replacement_helper": "record_domain_bound_retention_v2.py",
+  "replacement_helper_sha256": "e8fe33d8e4c9b7637e47683b21cb71f4963b081111b315146d42670732c9c37f",
+  "raw_comparison_sha256": "2a9a5a8996c2cab09b61c85101e9a28a8868445fe90e4a154a0b2942ac3d1f76",
+  "test_and_runtime_inputs_unchanged": true
+}

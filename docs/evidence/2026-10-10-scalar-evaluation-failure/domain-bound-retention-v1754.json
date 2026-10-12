@@ -1,0 +1,3153 @@
+{
+  "status": "Retain the isolated cached magnitude-domain completeness extension; main runtime admission and the original cost guard remain open",
+  "source_record": "typed-api-prototype-v1696-domain-bound-release-build/source-hashes.json.gz",
+  "source_record_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+  "baseline": "domain-bound-baseline-v1683.json",
+  "implementation": "domain-bound-focused-implementation-v1698.json",
+  "fresh_cargo_and_format_validations": {
+    "typed-api-prototype-v1684-domain-bound-candidate-build": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 19.634976575151086,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1694-domain-bound-scalar-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 7.1592339761555195,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1074,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 1,
+        "child_process_passed": 1,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1074,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1074,
+            "status": "ok",
+            "passed": 1074,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc)"
+          }
+        ],
+        "child_batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          }
+        ],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1695-domain-bound-clippy": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 32.204432998318225,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1696-domain-bound-release-build": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 69.90754435118288,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1697-domain-bound-workspace-fmt": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 11.53997613908723,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1698-domain-bound-included-fmt": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.7019130969420075,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1699-domain-bound-stack-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 960.3786706458777,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 118,
+        "top_level_passed": 5858,
+        "top_level_failed": 0,
+        "top_level_ignored": 33,
+        "child_process_batches": 3,
+        "child_process_passed": 3,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hypercurve": {
+            "unit_and_integration": 2456,
+            "doctests": 1,
+            "failed": 0,
+            "ignored": 33
+          },
+          "hyperdrc": {
+            "unit_and_integration": 1614,
+            "doctests": 3,
+            "failed": 0,
+            "ignored": 0
+          },
+          "hyperlattice": {
+            "unit_and_integration": 205,
+            "doctests": 1,
+            "failed": 0,
+            "ignored": 0
+          },
+          "hyperlimit": {
+            "unit_and_integration": 363,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          },
+          "hyperreal": {
+            "unit_and_integration": 1187,
+            "doctests": 28,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1743,
+            "status": "ok",
+            "passed": 1737,
+            "failed": 0,
+            "ignored": 6,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve-7e7040971416c8bd)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/bbox_initial_pair.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/bbox_initial_pair-3d8e98fb2f4ac73d)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/contour_area_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/contour_area_normal_form-f54d5caac0ba03e2)"
+          },
+          {
+            "declared_tests": 9,
+            "status": "ok",
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/exact_structural_facts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exact_structural_facts-6e7651921e120c5a)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_adversarial_polygons.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_adversarial_polygons-69b75d2c6a88e4c6)"
+          },
+          {
+            "declared_tests": 13,
+            "status": "ok",
+            "passed": 13,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_analytic_parallel_region.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_analytic_parallel_region-2cc4b60ee072f624)"
+          },
+          {
+            "declared_tests": 12,
+            "status": "ok",
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_arc_bezier.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_arc_bezier-2a37bbc1b0307d51)"
+          },
+          {
+            "declared_tests": 10,
+            "status": "ok",
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_bbox.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_bbox-3e19f68dc53b4ba0)"
+          },
+          {
+            "declared_tests": 28,
+            "status": "ok",
+            "passed": 28,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_bezier_algebraic_parameter.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_bezier_algebraic_parameter-2e2ceb1b0b72397e)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_bezier_evaluation.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_bezier_evaluation-4c43973cfa498f88)"
+          },
+          {
+            "declared_tests": 48,
+            "status": "ok",
+            "passed": 48,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_bezier_fit_offset.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_bezier_fit_offset-4189c550794bb237)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_circle_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_circle_predicates-392d43f51966cf36)"
+          },
+          {
+            "declared_tests": 34,
+            "status": "ok",
+            "passed": 23,
+            "failed": 0,
+            "ignored": 11,
+            "target": "Running tests/hypercurve_composed_workloads.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_composed_workloads-0b0a1c32ea35bbdf)"
+          },
+          {
+            "declared_tests": 14,
+            "status": "ok",
+            "passed": 14,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_contour.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_contour-83244481e367039e)"
+          },
+          {
+            "declared_tests": 49,
+            "status": "ok",
+            "passed": 49,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve-20b2f207a664f776)"
+          },
+          {
+            "declared_tests": 60,
+            "status": "ok",
+            "passed": 60,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_intersection.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_intersection-c1a78fb5f57f3b5e)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_point.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_point-e6093eaf4e77d48c)"
+          },
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_range.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_range-80ee7de343222613)"
+          },
+          {
+            "declared_tests": 39,
+            "status": "ok",
+            "passed": 39,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_region_boolean.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_region_boolean-43fe07e6f4b3ff15)"
+          },
+          {
+            "declared_tests": 11,
+            "status": "ok",
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_region_boolean_fuzz.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_region_boolean_fuzz-9181b2c4fe5d5303)"
+          },
+          {
+            "declared_tests": 108,
+            "status": "ok",
+            "passed": 108,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_region_promotion.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_region_promotion-104509414baa738d)"
+          },
+          {
+            "declared_tests": 18,
+            "status": "ok",
+            "passed": 15,
+            "failed": 0,
+            "ignored": 3,
+            "target": "Running tests/hypercurve_curve_region_stroke.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_region_stroke-df7850f499f8c5d1)"
+          },
+          {
+            "declared_tests": 38,
+            "status": "ok",
+            "passed": 38,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_curve_string.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_curve_string-2af5eff78ad790ca)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_derivative_completeness.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_derivative_completeness-3ab2a8bea465a275)"
+          },
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_dispatch_trace.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_dispatch_trace-3dd17f09fcc89e73)"
+          },
+          {
+            "declared_tests": 13,
+            "status": "ok",
+            "passed": 13,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_events.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_events-9fdafed6cf960322)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_exact_closure.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_exact_closure-67d6a94ecbf1b27a)"
+          },
+          {
+            "declared_tests": 21,
+            "status": "ok",
+            "passed": 21,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_fragments.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_fragments-70cb10b02f087a19)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_fuzz_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_fuzz_regressions-5238afe3a01a2a61)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_geo_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_geo_regressions-1eb8060e4055fe24)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_nurbs_interpolation.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_nurbs_interpolation-4386b887f1826ba0)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_offset.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_offset-3bd3b162d1b9a686)"
+          },
+          {
+            "declared_tests": 20,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 13,
+            "target": "Running tests/hypercurve_open_path_compositions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_open_path_compositions-effebd0cb2585a03)"
+          },
+          {
+            "declared_tests": 12,
+            "status": "ok",
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_path_closure.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_path_closure-8051c52ebfeebd2f)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_pcb_boolean_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_pcb_boolean_regressions-a7bde6103153d1ef)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_pr59_shape_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_pr59_shape_regressions-e7ee079a079cf04c)"
+          },
+          {
+            "declared_tests": 22,
+            "status": "ok",
+            "passed": 22,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_rational_bezier.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_rational_bezier-b941e8cdc6c1218c)"
+          },
+          {
+            "declared_tests": 15,
+            "status": "ok",
+            "passed": 15,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_reconstruct.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_reconstruct-a3e7a57eb5868716)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_self_contacts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_self_contacts-08a0fcd0d50ae124)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_split.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_split-265f177ef16b3db7)"
+          },
+          {
+            "declared_tests": 34,
+            "status": "ok",
+            "passed": 34,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_stationary_fillets.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_stationary_fillets-e072df805d84aa39)"
+          },
+          {
+            "declared_tests": 20,
+            "status": "ok",
+            "passed": 20,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_svg.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_svg-0078fe6a1afa22f0)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/hypercurve_triangulation.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hypercurve_triangulation-6eb06a73c8746154)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/line_constant_coordinates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/line_constant_coordinates-54845403fc2146cc)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/line_fragment_orientation.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/line_fragment_orientation-d3e175bf8fa9798c)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/pathological_benchmark_fixture.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/pathological_benchmark_fixture-b4a03bc0a24f7344)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/ray_filter_extreme_coordinates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/ray_filter_extreme_coordinates-dbda3f6589b572dd)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-32e4aa91997a94be)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/work_budget.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/work_budget-2359fcc1bc1aac12)"
+          },
+          {
+            "declared_tests": 1559,
+            "status": "ok",
+            "passed": 1559,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperdrc-77b4d0eb0566e8ca)"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperdrc-c6820798176bc9a6)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/artifact_numeric_keys.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/artifact_numeric_keys-c451eea340c13c31)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/diagnostic_formatting.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/diagnostic_formatting-7f067a3fecd7ea79)"
+          },
+          {
+            "declared_tests": 33,
+            "status": "ok",
+            "passed": 33,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/kicad_pad_sources.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/kicad_pad_sources-4d05fc2b3fcd733a)"
+          },
+          {
+            "declared_tests": 14,
+            "status": "ok",
+            "passed": 14,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/kicad_rule_export.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/kicad_rule_export-b5b93882f59eec52)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-a5650460483813d4)"
+          },
+          {
+            "declared_tests": 19,
+            "status": "ok",
+            "passed": 19,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperlattice-8c2434e95db37307)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_borrowed_owned.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_borrowed_owned-e4d3dd99bdda63b1)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_constraint_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_constraint_props-806305cd266b36f4)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_matrix_invariants.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_matrix_invariants-e64c7932eb8ea3a0)"
+          },
+          {
+            "declared_tests": 8,
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-6e301384e32ff35c)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-2a2a7d4291f88370)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_scalar_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_scalar_semantics-94e394c047bbd534)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/api_surface_coverage-891fd95ce8bc1a12)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/borrowed_ops.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/borrowed_ops-c96ebd03b41aed6a)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/complex.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/complex-5532bf2400dbc9cf)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/diagnostic_display.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/diagnostic_display-0f972eae0008ae35)"
+          },
+          {
+            "declared_tests": 10,
+            "status": "ok",
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/geometric.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/geometric-8dd2d20a12db990a)"
+          },
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/gmp_benchmark_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_benchmark_coverage-66ede476d862cb27)"
+          },
+          {
+            "declared_tests": 67,
+            "status": "ok",
+            "passed": 67,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/matrix.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/matrix-4ea51a7142bb5fc0)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/matrix_api_surface_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/matrix_api_surface_coverage-555354e72b0322e7)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-09b00c7e7d56e5b4)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-460678eeb362ba47)"
+          },
+          {
+            "declared_tests": 16,
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/scalar.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/scalar-b721fed2d3cd191c)"
+          },
+          {
+            "declared_tests": 21,
+            "status": "ok",
+            "passed": 21,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/vector.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/vector-d468518c4f42293b)"
+          },
+          {
+            "declared_tests": 252,
+            "status": "ok",
+            "passed": 252,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperlimit-32c71035315bb668)"
+          },
+          {
+            "declared_tests": 10,
+            "status": "ok",
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_degeneracies.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_degeneracies-d15722e6b0a84f22)"
+          },
+          {
+            "declared_tests": 14,
+            "status": "ok",
+            "passed": 14,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_predicates-89e7f751eecae9c2)"
+          },
+          {
+            "declared_tests": 19,
+            "status": "ok",
+            "passed": 19,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-b5943da6c71032e3)"
+          },
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/batch.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/batch-7eb0920608f4a213)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/classification_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/classification_contracts-3888fdd8ac820b85)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/composite_policy.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/composite_policy-d7ee07808ae8f8ed)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/exactcore_xinwei.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exactcore_xinwei-e2ecdd450908b42f)"
+          },
+          {
+            "declared_tests": 9,
+            "status": "ok",
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/halfspace_feasibility.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/halfspace_feasibility-8160b0805cba9ad7)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/nd_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/nd_predicates-e1b4a7e5e451dc6e)"
+          },
+          {
+            "declared_tests": 3,
+            "status": "ok",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/promoted_mesh_helpers.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/promoted_mesh_helpers-2448d780f4881d52)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-ba104969c445f220)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-e00ab034f671ac86)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/retained_report_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/retained_report_contracts-ec5f37a40ca8382b)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/robust_parity.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/robust_parity-0ee9631683c337f2)"
+          },
+          {
+            "declared_tests": 18,
+            "status": "ok",
+            "passed": 18,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/support_dop.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/support_dop-c1019f073ff9bcbf)"
+          },
+          {
+            "declared_tests": 1074,
+            "status": "ok",
+            "passed": 1074,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-9eb7e6107cc350ed)"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-f5c6f36c9a9f45d6)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-20672a9f756ebf84)"
+          },
+          {
+            "declared_tests": 10,
+            "status": "ok",
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-40adf1a43e94cd63)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_semantics-b2e037996a6c4c55)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/calculator_diagnostics-3483d188636de633)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_decimal-1263cec3f06e639c)"
+          },
+          {
+            "declared_tests": 12,
+            "status": "ok",
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_scientific-38d69d0193c83234)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/cli-4122fec14eb5a73c)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exact_quadratic_normal_form-5351c89fcaff574b)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/fixed_decimal-d3a66dd8657dedc8)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_api_coverage-067ff9e1155cf682)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/multiquadratic_normal_form-2fcdd37d17a97d21)"
+          },
+          {
+            "declared_tests": 10,
+            "status": "ok",
+            "passed": 10,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numeric_roundtrip_formats-0d15f79a0157573b)"
+          },
+          {
+            "declared_tests": 16,
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numerical_cross_reference-f4a52e13bb405750)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/precision_limits-13ed8a5a55a9bb20)"
+          },
+          {
+            "declared_tests": 9,
+            "status": "ok",
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/public_numeric_semantics-2ae786102af8a90e)"
+          },
+          {
+            "declared_tests": 8,
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/rational_oracle-f0d3fad7e4987898)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-a44595811adac125)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme_metadata-6d3bce36a1cdaebc)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-6746ab0ccc48a569)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hypercurve"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperdrc"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperdrc"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperlattice"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperlimit"
+          },
+          {
+            "declared_tests": 28,
+            "status": "ok",
+            "passed": 28,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperreal"
+          }
+        ],
+        "child_batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          }
+        ],
+        "ignored_test_lines": [
+          "test bezier_offset::conversion_tests::benchmark_correlated_circle_partition_offset_driver ... ignored, manual performance checkpoint driver",
+          "test bezier_offset::conversion_tests::benchmark_independent_oblique_chord_cap_offset_driver ... ignored, manual performance checkpoint driver",
+          "test bezier_offset::conversion_tests::benchmark_nested_chord_mapped_cap_offset_driver ... ignored, manual performance checkpoint driver",
+          "test bezier_offset::conversion_tests::benchmark_nonendpoint_rational_mapped_cap_offset_driver ... ignored, manual performance checkpoint driver",
+          "test bezier_offset::conversion_tests::benchmark_pair_mapped_lens_offset_driver ... ignored, manual performance checkpoint driver",
+          "test bezier_offset::conversion_tests::selected_fiber_genuinely_analytic_contacts_complete_region_booleans ... ignored, long exact end-to-end benchmark; about 326 seconds in an unoptimized all-feature build",
+          "test bevel_then_round_erosion_of_a_weight_six_conic_completes ... ignored, open: recursive quadratic tower signs of a twice-eroded weight-6 conic are too slow",
+          "test beveled_rational_seed_double_inward_offset_completes ... ignored, endpoint identity: six recursive promotions take over a minute",
+          "test booleans_then_double_round_erosion_completes ... ignored, slow: two round erosions after Booleans take about seventy-five seconds",
+          "test chamfered_conic_round_then_miter_inward_offset_completes ... ignored, open: opposite-sheet double root in a chord/parallel band incidence",
+          "test filleted_boolean_miter_erosion_completes ... ignored, open: degree-40 selected fiber over a degree-14 field needs a cheaper complete isolator",
+          "test filleted_union_miter_dilation_completes ... ignored, open: adjacent tangent chord/parallel junction in boundary reconstruction",
+          "test miter_eroded_ring_miter_erosion_completes ... ignored, open: repeated miter chord/parallel projection over recursive fields",
+          "test nested_xor_miter_dilation_completes ... ignored, open: degree-14 recursive chord/parallel enumerator in a miter offset",
+          "test repeated_inward_miter_offset_of_a_weighted_quadratic_completes ... ignored, open: scalar promotion of a recursive projective parameter in repeated miter offset",
+          "test weighted_conic_miter_bevel_bevel_offsets_complete ... ignored, slow: about a minute in the final bevel offset",
+          "test wide_weighted_conic_miter_bevel_bevel_offsets_complete ... ignored, open: chord-pair side test of a correlated pair point in a bevel band",
+          "test exact_path_stroke_preserves_an_even_multiplicity_stationary_source ... ignored, long exact degree-four end-to-end regression; about 24 seconds in release mode",
+          "test exact_path_stroke_splits_a_nonuniform_rational_source_cusp ... ignored, long exact rational-cusp end-to-end regression; run explicitly in release mode",
+          "test exact_path_stroke_splits_an_interior_source_cusp ... ignored, long exact end-to-end source-cusp regression; run explicitly in release mode",
+          "test bevel_stroke_of_a_filleted_hyperbola_pair_completes ... ignored, open: selected cusp-semicircle/parallel fiber isolation is too slow for fillet-trimmed hyperbolas",
+          "test chamfered_cubic_line_bevel_stroke_round_trips ... ignored, open: chord/parallel incidence over a recursive quadratic tower is too slow",
+          "test chamfered_quadratic_bevel_stroke_round_trips ... ignored, open: equal recursive projective parameters are compared by refinement",
+          "test chamfered_rational_nurbs_miter_stroke_completes ... ignored, open: recursive chord/parallel dense projection is too slow",
+          "test chamfered_spline_bevel_stroke_round_trips ... ignored, open: chord/parallel tangent sign over a recursive quadratic tower is too slow",
+          "test miter_stroke_of_a_filleted_heavy_rational_cubic_completes ... ignored, open: selected-fiber fillet tangency in a high-weight rational stroke is too slow",
+          "test mixed_cubic_arc_miter_stroke_completes ... ignored, slow: high-degree parallel/parallel resultants take about three minutes",
+          "test mixed_family_miter_stroke_round_trips ... ignored, slow: the mixed-family miter stroke round trip takes about two minutes",
+          "test refilleting_a_filleted_vertex_completes ... ignored, open: fillet of a tangent junction left by an earlier fillet",
+          "test round_stroke_of_a_filleted_heavy_nurbs_path_completes ... ignored, open: a filleted heavy NURBS round stroke is too slow",
+          "test round_stroke_of_a_filleted_nurbs_pair_completes ... ignored, open: tangent-junction double root in selected cusp-semicircle/parallel isolation",
+          "test stroke_fillet_stroke_of_a_cubic_arc_path_completes ... ignored, open: point equality over recursive quadratic fields in a repeated stroke is too slow",
+          "test trimmed_chamfered_arc_cubic_bevel_stroke_completes ... ignored, open: recursive tower refinement while rebuilding the stroke region"
+        ]
+      }
+    },
+    "typed-api-prototype-v1700-domain-bound-default-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 22.151616653893143,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 21,
+        "top_level_passed": 1059,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 3,
+        "child_process_passed": 3,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1036,
+            "doctests": 23,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 941,
+            "status": "ok",
+            "passed": 941,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-4234254b1d45f4c0)"
+          },
+          {
+            "declared_tests": 6,
+            "status": "ok",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_props-23fbfb7cef5ee581)"
+          },
+          {
+            "declared_tests": 8,
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_regressions-5d04d217656421b6)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/adversarial_semantics-58675a723c625f67)"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/calculator_diagnostics-ef064cc07ef2d04f)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_decimal-70cdb742d44f70fc)"
+          },
+          {
+            "declared_tests": 12,
+            "status": "ok",
+            "passed": 12,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/checked_scientific-c0a643059fb8dee3)"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/cli-2de71b6772144cd0)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/exact_quadratic_normal_form-2b06dd32d996fe94)"
+          },
+          {
+            "declared_tests": 5,
+            "status": "ok",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/fixed_decimal-851c01731054de6e)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/gmp_api_coverage-d2fe8e97878365c4)"
+          },
+          {
+            "declared_tests": 7,
+            "status": "ok",
+            "passed": 7,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/multiquadratic_normal_form-5a8898b00f5a2c4f)"
+          },
+          {
+            "declared_tests": 0,
+            "status": "ok",
+            "passed": 0,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numeric_roundtrip_formats-67b8aa72c4c5f7ba)"
+          },
+          {
+            "declared_tests": 16,
+            "status": "ok",
+            "passed": 16,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/numerical_cross_reference-af795541e14f3ef3)"
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/precision_limits-6feea55c62b10a74)"
+          },
+          {
+            "declared_tests": 9,
+            "status": "ok",
+            "passed": 9,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/public_numeric_semantics-957b7ccaec5dc726)"
+          },
+          {
+            "declared_tests": 8,
+            "status": "ok",
+            "passed": 8,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/rational_oracle-523dc6e3ab602e66)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme-07bcd81331b412f5)"
+          },
+          {
+            "declared_tests": 2,
+            "status": "ok",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/readme_metadata-c60fc91560bcc0ff)"
+          },
+          {
+            "declared_tests": 4,
+            "status": "ok",
+            "passed": 4,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/real_representations-f48380d1329521e3)"
+          },
+          {
+            "declared_tests": 23,
+            "status": "ok",
+            "passed": 23,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Doc-tests hyperreal"
+          }
+        ],
+        "child_batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          }
+        ],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1701-domain-bound-debug-tests": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 79.32310874667019,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 1,
+        "top_level_passed": 1074,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 1,
+        "child_process_passed": 1,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {
+          "hyperreal": {
+            "unit_and_integration": 1074,
+            "doctests": 0,
+            "failed": 0,
+            "ignored": 0
+          }
+        },
+        "batches": [
+          {
+            "declared_tests": 1074,
+            "status": "ok",
+            "passed": 1074,
+            "failed": 0,
+            "ignored": 0,
+            "target": "Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/debug/deps/hyperreal-563f75cd5535d588)"
+          }
+        ],
+        "child_batches": [
+          {
+            "declared_tests": 1,
+            "status": "ok",
+            "passed": 1,
+            "failed": 0,
+            "ignored": 0
+          }
+        ],
+        "ignored_test_lines": []
+      }
+    },
+    "typed-api-prototype-v1702-domain-bound-minimal-clippy": {
+      "result": {
+        "exit_code": 0,
+        "seconds": 6.096222463995218,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "tests": {
+        "top_level_batches": 0,
+        "top_level_passed": 0,
+        "top_level_failed": 0,
+        "top_level_ignored": 0,
+        "child_process_batches": 0,
+        "child_process_passed": 0,
+        "child_process_failed": 0,
+        "child_process_ignored": 0,
+        "per_crate": {},
+        "batches": [],
+        "child_batches": [],
+        "ignored_test_lines": []
+      }
+    }
+  },
+  "fresh_capped_validations": {
+    "typed-api-prototype-v1685-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1685-domain-bound-candidate-cap",
+      "test": "domain_bound_retained_unit_proofs_precede_recognition",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1138939782977104,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_retained_unit_proofs_precede_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020960392896085978
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1686-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1686-domain-bound-candidate-cap",
+      "test": "domain_bound_retained_lower_proofs_precede_recognition",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.093206497374922,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_retained_lower_proofs_precede_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016118143685162067
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1687-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1687-domain-bound-candidate-cap",
+      "test": "domain_bound_required_domain_reuses_available_proofs",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0797706679441035,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_required_domain_reuses_available_proofs",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.017432495020329952
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1688-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1688-domain-bound-candidate-cap",
+      "test": "domain_bound_upper_estimates_do_not_prove_lower_bounds",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1129762707278132,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_upper_estimates_do_not_prove_lower_bounds",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.0160817070864141
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1689-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1689-domain-bound-candidate-cap",
+      "test": "domain_bound_endpoints_and_invalid_descendants_remain_typed",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0787169998511672,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_endpoints_and_invalid_descendants_remain_typed",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01644087303429842
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1690-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1690-domain-bound-candidate-cap",
+      "test": "domain_bound_public_asin_cutpoints",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.144141263794154,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_asin_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.045313284266740084
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1691-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1691-domain-bound-candidate-cap",
+      "test": "domain_bound_public_acos_cutpoints",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.118425747845322,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_acos_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04429625393822789
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1692-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1692-domain-bound-candidate-cap",
+      "test": "domain_bound_public_atanh_cutpoints",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1414651279337704,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_atanh_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04600226599723101
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1693-domain-bound-candidate-cap": {
+      "phase": "typed-api-prototype-v1693-domain-bound-candidate-cap",
+      "test": "domain_bound_public_fine_retries_preserve_cached_facts",
+      "expected_exit_code": 0,
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1151474718935788,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_bound_tests::domain_bound_public_fine_retries_preserve_cached_facts",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02113194204866886
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1711-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1711-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1611-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1313773621805012,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_canonical_leaves_need_no_coefficient_copy",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.029593408573418856
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1712-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1712-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1612-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0850335522554815,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_retained_child_proof_precedes_recognition",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016473359894007444
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1713-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1713-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1613-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0976106179878116,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_invalid_descendants_remain_undefined",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.015483977738767862
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1714-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1714-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1614-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0940191149711609,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_zero_and_negative_boundaries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.01653418503701687
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1715-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1715-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1615-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.121628160122782,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_public_queries_reuse_cheap_leaf_domains",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.022454629186540842
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1716-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1716-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1616-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1138457250781357,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::domain_sign_tests::domain_sign_computed_leaf_proof_is_retained",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02181663317605853
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1717-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1717-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1617-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1056605358608067,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_budget_cutpoints",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04421440605074167
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1718-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1718-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1618-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1574099939316511,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_public_construction_routes",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07698068721219897
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1719-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1719-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1619-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0936441314406693,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_stored_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021915226243436337
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1720-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1720-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1620-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1538915671408176,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_asinh_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07683461718261242
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1721-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1721-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1621-domain-sign-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1042255451902747,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::log_range_probe_tests::log_range_real_serialized_successful_retries",
+          "--exact",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.028163136914372444
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1722-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1722-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1645-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1141660120338202,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::private_kernel_domain_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04483901197090745
+      },
+      "test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1723-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1723-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1646-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1342031573876739,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::magnitude_upper_bound_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021640995051711798
+      },
+      "test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1724-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1724-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1647-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1353207109495997,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::cache_publication_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020983499940484762
+      },
+      "test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1725-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1725-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1648-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1825375212356448,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::fractional_separation_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07756562670692801
+      },
+      "test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1726-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1726-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1649-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.085511769168079,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::scaled_lower_magnitude_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.016485209111124277
+      },
+      "test_counts": {
+        "top_level_passed": 1,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1727-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1727-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1650-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.159105138387531,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::private_trig_range_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.07648340193554759
+      },
+      "test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1728-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1728-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1651-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1404343703761697,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_lattice_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04430574970319867
+      },
+      "test_counts": {
+        "top_level_passed": 5,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1729-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1729-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1652-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 2.1858990658074617,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_periodic_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 1.080351092852652
+      },
+      "test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1730-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1730-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1653-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.6030316352844238,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::trig_operands_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.4789189649745822
+      },
+      "test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1731-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1731-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1654-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0984591897577047,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::evaluation_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.02099059894680977
+      },
+      "test_counts": {
+        "top_level_passed": 7,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1732-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1732-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1655-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1147061549127102,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04636372812092304
+      },
+      "test_counts": {
+        "top_level_passed": 4,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1733-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1733-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1656-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0993288909085095,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::normal_form_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020350384060293436
+      },
+      "test_counts": {
+        "top_level_passed": 8,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1734-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1734-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1657-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1054149032570422,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.021251581143587828
+      },
+      "test_counts": {
+        "top_level_passed": 9,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1735-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1735-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1658-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1304626539349556,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_leaf_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020769235212355852
+      },
+      "test_counts": {
+        "top_level_passed": 6,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1736-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1736-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1659-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.0863423417322338,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_trig_dag_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.020752386189997196
+      },
+      "test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 1
+      }
+    },
+    "typed-api-prototype-v1737-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1737-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1660-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1501909806393087,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::structural_comparison_budget_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04555812384933233
+      },
+      "test_counts": {
+        "top_level_passed": 14,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1738-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1738-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1661-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1075850040651858,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::algebraic_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.043642085045576096
+      },
+      "test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1739-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1739-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1662-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.1362529969774187,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::rational_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.04513801168650389
+      },
+      "test_counts": {
+        "top_level_passed": 10,
+        "child_process_passed": 0
+      }
+    },
+    "typed-api-prototype-v1740-domain-bound-retained-cap": {
+      "phase": "typed-api-prototype-v1740-domain-bound-retained-cap",
+      "baseline_phase": "typed-api-prototype-v1663-domain-sign-retained-cap",
+      "result": {
+        "exit_code": 0,
+        "seconds": 1.3532259478233755,
+        "source_unchanged": true,
+        "main_unchanged": true,
+        "status": "isolated prototype validation; not runtime admission"
+      },
+      "cap": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+          "computable::node::inverse_constructor_preflight_tests::",
+          "--nocapture",
+          "--test-threads=1"
+        ],
+        "binary_sha256": "6a0c6c1745d079786f82620a4f2dfb3541c7a45889932fa94ba0b2c5da9411e2",
+        "helper_sha256": "15aeb2646f69af11385ebf272832cb3f6c573f66667f09843fc65e8598876617",
+        "address_space_bytes": 201326592,
+        "cpu_seconds_soft_hard": [
+          2,
+          3
+        ],
+        "wall_seconds_limit": 4,
+        "exit_code": 0,
+        "wall_timeout": false,
+        "seconds": 0.27745199017226696
+      },
+      "test_counts": {
+        "top_level_passed": 11,
+        "child_process_passed": 0
+      }
+    }
+  },
+  "capped_test_counts": {
+    "new_focused": 9,
+    "retained_domain_sign": 11,
+    "other_retained": 136,
+    "retained_child": 1,
+    "total_top_level": 156
+  },
+  "replays": {
+    "typed-api-prototype-v1741-domain-bound-inverse-replay": {
+      "cases": 384,
+      "summary_sha256": "b82d1e37c947c819f2e76527deaf9eb8c5c13c69cfc93b3a00f5f11257257148",
+      "summary": {
+        "cases": 384,
+        "numeric_observations": 960,
+        "unknown_answers": 160,
+        "certified_answers": 224,
+        "zero_budget_retained_proofs": 384,
+        "incomplete_cases": 0,
+        "invalid_samples": 0,
+        "scope": "Four exact atan/asin-acos/commuted-atan/pi identities at four coefficient widths, cold and numerically warmed requests, three exact perturbations and four allowances. Each definitive sign agrees with the exact identity; unlimited retry certifies it and a later zero-budget query retains the proof. Python Fraction and Rug independently check each numerical observation against the exact rational perturbation. A finite public/serialized corpus, not an allocation/time proof.",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "mode": "replay"
+      }
+    },
+    "typed-api-prototype-v1742-domain-bound-evaluation-replay": {
+      "cases": 384,
+      "summary_sha256": "2155da3f25ef4e8ff31b41083facc85d72c6b15ed280b29f504286413be668b0",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 384,
+        "observations": 1536,
+        "numeric_samples": 1536,
+        "invalid_numeric_samples": 0,
+        "incomplete_cases": 0,
+        "typed_errors": 0,
+        "warm_zero_budget_checks": 384,
+        "cold_zero_budget_exhaustions": 384,
+        "scope": "New budgeted APIs on 48 symbolic angle fixtures with nine finite non-rational residuals, four trig families and serialized/public controls. Includes sqrt(2), ln(2), exp(1), atan(1/2), sqrt(2)-1, signed/scaled sqrt(2), and exp(100); lattice/non-lattice periodic coefficients, nearby poles, factored/distributed arithmetic, cancelled extreme offsets and 64 offset wrappers. Four-query schedule shares one allowance of one million work units. A prior zero-unit request is typed or reuses an already available constructor cache; a later zero-unit request must reuse the completed cache and retain every established sign. All returned samples are independently enclosed. Directed 1024-bit MPFR pi and residual enclosures feed exact derivative-one sin/cos intervals and exact quotient bounds. Each process is capped at 192 MiB, CPU 2/3 seconds and wall 4 seconds. Scoped evidence, not an exhaustive proof or matched benchmark."
+      }
+    },
+    "typed-api-prototype-v1743-domain-bound-algebraic-replay": {
+      "cases": 288,
+      "summary_sha256": "2064eeb7d81c163e0cb92b871e4e026133e378c3f487137375d24fded7db46c9",
+      "summary": {
+        "cases": 288,
+        "numeric_observations": 576,
+        "unknown_answers": 60,
+        "certified_answers": 228,
+        "zero_budget_retained_proofs": 288,
+        "incomplete_cases": 0,
+        "invalid_samples": 0,
+        "scope": "24 exact principal-root product identities, including reciprocal forms and 64/256/1024-bit rational factors, three exact perturbations and four allowances. Numerical warmup precedes the explicit shared allowance. Independent rational oracles check both approximations; every definite sign must agree, and an unlimited retry must certify and retain the result at zero budget. This is a scoped accounting/certificate replay, not a wall-time or memory proof.",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "mode": "replay"
+      }
+    },
+    "typed-api-prototype-v1744-domain-bound-algebraic-wide-replay": {
+      "cases": 144,
+      "summary_sha256": "fc21c5ea573b635fb17e044680204f9dc1107ec9c15e254ed40923c7a24cfeb8",
+      "summary": {
+        "cases": 144,
+        "numeric_observations": 288,
+        "unknown_answers": 36,
+        "certified_answers": 108,
+        "zero_budget_retained_proofs": 144,
+        "incomplete_cases": 0,
+        "invalid_samples": 0,
+        "scope": "12 additional cube/fourth-root product identities with 64/256/1024-bit rational factors and reciprocal forms, three exact perturbations and four allowances. A 65536-bit numerical warmup precedes the explicit shared allowance; the larger precision floor retains conservative field-degree proofs when the 4096-bit dependency search declines. Independent rational oracles check both approximations; every definite sign must agree, and an unlimited retry must certify and retain the result at zero budget. This is a scoped accounting/certificate replay, not a wall-time or memory proof.",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "mode": "replay"
+      }
+    },
+    "typed-api-prototype-v1745-domain-bound-normal-form-replay": {
+      "cases": 384,
+      "summary_sha256": "fc401c827f6ad40b0162b0419ed6bea17d4af3243e724664b53a518081fdb5ca",
+      "summary": {
+        "cases": 384,
+        "numeric_observations": 960,
+        "unknown_answers": 165,
+        "certified_answers": 219,
+        "zero_budget_retained_proofs": 384,
+        "incomplete_cases": 0,
+        "invalid_samples": 0,
+        "scope": "Four exact polynomial/surd-inverse/rational/opaque-atom identities at four coefficient widths, cold and numerically warmed requests, three exact perturbations and four allowances. Each definitive sign agrees with the exact identity; unlimited retry certifies it and a later zero-budget query retains the proof. Python Fraction and Rug independently check each numerical observation against the exact rational perturbation. A finite public/serialized corpus, not an allocation/time proof.",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "mode": "replay"
+      }
+    },
+    "typed-api-prototype-v1746-domain-bound-replay": {
+      "cases": 415,
+      "summary_sha256": "d8578e6e98667734861a6b13fc1e0caa9dbce6ae1388a383d1ab1cdfd01e1cbf",
+      "summary": {
+        "build_record_sha256": "9aeca8c9f4eb6c13cae356df3cde237b6feb6d749ae907b46b19b12d12274110",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "guards_unchanged": true,
+        "ordinary_cases": 400,
+        "invalid_first_contracts": 0,
+        "invalid_retries": 0,
+        "typed_interruption_errors": 300,
+        "scope": "Original scalar failure/control and curve-scope workloads. The curve scope can contain a typed scalar Err; its existing counters still do not bound scalar work. This is not admission of the prototype or a total resource guarantee."
+      }
+    },
+    "typed-api-prototype-v1747-domain-bound-precision-replay": {
+      "cases": 60,
+      "summary_sha256": "eb335a917c405879d1e08b5f847b3ebf79e5c14466974ca49061d68f9825c0e6",
+      "summary": {
+        "status": "exploratory precision audit of unadmitted prototype",
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "probe_sha256": "b207dfe33cc21db9d170e0ecf08dac9459a025bb21fd689cada82394cef77b1a",
+        "guards_unchanged": true,
+        "cases": 60,
+        "valid_cases": 60
+      }
+    },
+    "typed-api-prototype-v1748-domain-bound-private-kernel-replay": {
+      "cases": 78,
+      "summary_sha256": "8cf36b5645dfce7d64d59850162bc66167e2eefb7748a18cb35a87721db6818d",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 78,
+        "incomplete_cases": 0,
+        "unexpected_result_shapes": 0,
+        "scope": "Termination and typed-domain result-shape witnesses only. The zero trigonometric denominators follow exact pi-multiple identities; perturbed and inverse-function inputs are mathematically in domain. Successful finite samples are not credited with verified numerical accuracy. Independent enclosures and constructor-valid controls remain required for repair validation."
+      }
+    },
+    "typed-api-prototype-v1749-domain-bound-private-trig-replay": {
+      "cases": 600,
+      "summary_sha256": "6f7c087adb4e3099ef8ddbb44d85506853f6807ec886cc2c51d894929449727a",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 600,
+        "numeric_samples": 2400,
+        "invalid_numeric_samples": 0,
+        "incomplete_cases": 0,
+        "typed_errors": 0,
+        "scope": "Four serialized private trig node families, exact-rational input matrix, ordinary constructor controls and repeated precision orders. Passing samples are checked against independent exact-rational alternating-series enclosures. This does not establish all private kernel ranges, exact poles, concurrency or aggregate work bounds."
+      }
+    },
+    "typed-api-prototype-v1750-domain-bound-private-trig-wide-replay": {
+      "cases": 384,
+      "summary_sha256": "d5232185b9b713001766772789d935eb2982dc583e41509a2c44b6f357413eba",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 384,
+        "numeric_samples": 1536,
+        "invalid_numeric_samples": 0,
+        "incomplete_cases": 0,
+        "typed_errors": 0,
+        "scope": "Six serialized trig node families and equivalent public controls, sixteen signed exact dyadic inputs from 31.5 through 1048576, two initial precisions and four-query schedules. Directed 1024-bit MPFR sin/cos enclosures are converted to exact rationals; sinc/cosc bounds use exact rational division/subtraction. Each process is capped at 192 MiB, CPU 2/3 seconds and wall 4 seconds. This is scoped correctness/resource evidence, not an exhaustive range proof or a matched benchmark."
+      }
+    },
+    "typed-api-prototype-v1751-domain-bound-trig-scale-replay": {
+      "cases": 168,
+      "summary_sha256": "df5c78a451745d0f46b470f519f2476fb78b52b4ee7617eeb368bb480f66aae9",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 168,
+        "incomplete_cases": 0,
+        "invalid_samples": 0,
+        "valid_samples": 672,
+        "numeric_samples": 504,
+        "scope": "Exact half-pi lattice identities with symbolic binary offsets, cancellation, distributed rational coefficients and deep wrappers. Every returned one-unit interval must contain the exact integer oracle; poles require DivideByZero. Every process uses the unchanged 192 MiB, CPU 2/3-second, wall 4-second caps. This is scoped correctness/resource evidence, not exhaustive symbolic completeness or a benchmark."
+      }
+    },
+    "typed-api-prototype-v1752-domain-bound-trig-residual-replay": {
+      "cases": 456,
+      "summary_sha256": "1d2de86687f32642e2ba9b779b1281abebbc7b98df6992a9fa167c7fce29dc58",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 456,
+        "observations": 1824,
+        "numeric_samples": 1824,
+        "invalid_numeric_samples": 0,
+        "incomplete_cases": 0,
+        "typed_errors": 0,
+        "scope": "57 symbolic angle fixtures, four trig families and serialized/public controls. Includes non-lattice multiples, finite residuals +/-1/1024 and +/-1000, nearby poles, factored/distributed arithmetic, signed multiples, cancelled extreme offsets, and 64 offset wrappers. Four-query cold/warm precision schedule; directed 1024-bit MPFR of independently reduced angles plus an exact derivative-one interval and exact quotient bounds. Each process is capped at 192 MiB, CPU 2/3 seconds and wall 4 seconds. Scoped correctness/resource evidence, not an exhaustive proof or matched benchmark."
+      }
+    },
+    "typed-api-prototype-v1753-domain-bound-trig-nonrational-replay": {
+      "cases": 384,
+      "summary_sha256": "7ad5440acb4c813b5a13efbd037eaf7625c96c4a28292aa0eee9a3460a6b0f58",
+      "summary": {
+        "source_hashes_sha256": "77f0d0c9d5232b48c71dc1db236e398579486cc4b4b9fb0935ab3d6e4f698eb7",
+        "build_phase": "typed-api-prototype-v1696-domain-bound-release-build",
+        "guards_unchanged": true,
+        "cases": 384,
+        "observations": 1536,
+        "numeric_samples": 1536,
+        "invalid_numeric_samples": 0,
+        "incomplete_cases": 0,
+        "typed_errors": 0,
+        "scope": "48 symbolic angle fixtures with nine finite non-rational residuals, four trig families and serialized/public controls. Includes sqrt(2), ln(2), exp(1), atan(1/2), sqrt(2)-1, signed/scaled sqrt(2), and exp(100); lattice/non-lattice periodic coefficients, nearby poles, factored/distributed arithmetic, cancelled extreme offsets and 64 offset wrappers. Four-query cold/warm schedule. Directed 1024-bit MPFR pi and residual enclosures feed exact derivative-one sin/cos intervals and exact quotient bounds. Each process is capped at 192 MiB, CPU 2/3 seconds and wall 4 seconds. Scoped evidence, not an exhaustive proof or matched benchmark."
+      }
+    }
+  },
+  "replay_cases": 4129,
+  "focused_replay_comparison": {
+    "record": "domain-bound-budget-replay-comparison-v1745.json",
+    "cases": 1584,
+    "all_non_accounting_observations_identical": true,
+    "changed_accounting_fields": 16,
+    "reduced_consumption_rows": 8,
+    "increased_consumption_rows": 0
+  },
+  "public_domain_comparison": {
+    "record": "domain-bound-query-comparison-v1693.json",
+    "cases": 1584,
+    "successful_queries_before_after": [
+      415,
+      453
+    ],
+    "new_completions": 38,
+    "lost_completions_or_definite_signs": 0,
+    "reduced_consumption_rows": 396,
+    "increased_consumption_rows": 8
+  },
+  "private_domain_completions_before_after": [
+    4,
+    56
+  ],
+  "stack_warning_comparison": {
+    "baseline_phase": "typed-api-prototype-v1627-domain-sign-stack-tests",
+    "unchanged_warning_lines": [
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/allocation_profile.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/basic.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/readme_quickstart.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp",
+      "warning: output filename collision at /home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/examples/write_benchmarks_md.dwp"
+    ]
+  },
+  "cost_record": "domain-bound-cost-review-v1710.json",
+  "initial_and_followup_acos_percent": [
+    8.366669047789133,
+    2.4520468393818273
+  ],
+  "decision": "After independent existence checks, retained upper bounds prove strict unit-range membership and retained positive exact binades prove x >= 1 before coefficient recognition. Keep the measured completeness gain: 52 previously exhausting private proof queries and 38 additional public query schedules complete at unchanged allowances. All prior successful samples and definite signs remain. This implements the accepted strengthening-only cache rule; main admission stays separate.",
+  "limits": [
+    "The new nine test bodies were frozen against the retained v1672 runtime before implementation. The three expected baseline proof-order failures remain archived. Private raw-wrapper diagnostics and their internal lower-bound existence preparation are not public API coverage.",
+    "The public domain survey explicitly prewarms pi; other global constants evolve in its frozen process order. Its 1584 queries, 36 fine retries and 144 zero-work cached queries use independent directed numerical enclosures, without a globally cold-process claim.",
+    "The original fixed-CPU comparison stopped on the retained v1672 baseline SIGXCPU after 864 successful processes. The interrupted stage is unknown. The equal larger-cap algebraic diagnostic does not pass or replace that failure; the earlier v1638 baseline failure also remains preserved.",
+    "Cost evidence comprises 1602 successful processes, one failed baseline process and 1135 separate CPU preparations. The sole initial above-five-percent increase changes from 8.37 to 2.45 percent in the predeclared 27-pair repeat; keep both observations. No uniform speedup is claimed, and the older v1672 integer tradeoff remains retained.",
+    "Public domain-query consumption decreases in 396 rows and increases in eight; 434 allocation observations change as more evaluation becomes reachable. The zero-allocation claim applies only to the 56 focused private proof queries. EvaluationBudget excludes bytes, time and unmetered algebraic helpers.",
+    "The 78 private-kernel replay cases check result shapes. The 4129-case total is not a count of independent numerical oracle checks. The separate 1584-case retained replay comparison changes only sixteen accounting fields, all eight consumption rows decreasing by six.",
+    "Full-stack tests retain 33 ignored tests and fourteen unchanged Cargo example-filename warnings. Both strict Clippy configurations pass without warnings. The checks cover the recorded five-crate stack, not every CI job or full-board admission.",
+    "The prior log-range warmup comment is corrected without changing any setup, expression, order or assertion. All previously archived source snapshots remain immutable.",
+    "All 44 prior conditional proof and guard inputs remain unchanged. No fresh Verus run is claimed. The new cached-bound helper and runtime domain traversal are outside that proof target; all thirteen whole-crate obligation groups remain open.",
+    "Main retains its original scalar failure and all 49 preexisting worktree entries. Native combination, whole-board admission, all 39 properties, 14 targets and crate future work remain open. No push occurred."
+  ],
+  "remaining_source_review": "domain-bound-deferred-review-v1702.json",
+  "next_priority": "Public concurrent and reconstructed high-precision proof reuse with independent enclosures, spent shared allowances and retained facts; distinguish thread stress from exhaustive interleavings."
+}

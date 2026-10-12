@@ -1,0 +1,974 @@
+[
+  {
+    "before": "inverse_trig-0-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-0-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-1-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-2-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-3-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-4-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-5-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-6-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-7-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-8-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-9-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-10-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-11-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-12-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-13-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-14-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-15-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-16-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-17-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-18-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-19-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-20-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-21-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-22-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-23-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-24-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-25-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-26-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-27-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-28-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-29-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-30-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-31-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-32-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-33-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-34-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-35-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-36-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-37-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-38-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-39-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-40-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-41-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-42-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-43-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-44-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-45-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-46-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-47-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-48-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-49-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-50-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-51-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-52-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-53-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-54-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-55-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-56-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-57-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-58-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-59-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-60-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-61-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-62-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-63-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-64-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-65-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-66-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-67-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-68-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-69-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-70-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-71-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-72-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-73-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-74-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-75-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-76-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-77-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-78-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-79-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-baseline",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  },
+  {
+    "before": "inverse_trig-80-candidate",
+    "stdout": "748378381850860437\n",
+    "stderr": "",
+    "exit_code": 0
+  }
+]
