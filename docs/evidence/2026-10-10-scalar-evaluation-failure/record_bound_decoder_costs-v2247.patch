@@ -1,0 +1,20 @@
+--- record_integer_coarse_zero_costs.py
++++ record_bound_decoder_costs.py
+@@ -15 +15 @@
+-    out = E / "integer-coarse-zero-cost-review-v2100.json"
++    out = E / "bound-decoder-cost-review-v2247.json"
+@@ -17 +17 @@
+-    original_path = E / "integer-coarse-zero-initial-cost-review-v2100.json"
++    original_path = E / "bound-decoder-initial-cost-review-v2247.json"
+@@ -24 +24 @@
+-    protocol_path = E / "integer-coarse-zero-cost-followup-protocol-v2100.json"
++    protocol_path = E / "bound-decoder-cost-followup-protocol-v2247.json"
+@@ -50 +50 @@
+-        preparation = read(E / "integer-coarse-zero-cost-followup-preparation-v2100.json")
++        preparation = read(E / "bound-decoder-cost-followup-preparation-v2247.json")
+@@ -106 +106 @@
+-        "status": "Original-cap local cost controls and prescribed repeats pass" if passed else "Persistent timing increases require review; do not retain the combined proposal",
++        "status": "Original-cap local cost controls and prescribed repeats pass" if passed else "Persistent timing increases require review; do not retain the decoder proposal",
+@@ -126 +126 @@
+-            "The combined proposal still awaits capped, numerical and public replays and receipt/fact audits. General graph/atomic proofs, all thirteen whole-crate groups, main/native/full-board admission and the full properties plan remain open.",
++            "The decoder proposal still awaits capped, numerical and public replays and receipt/fact audits. General graph/atomic proofs, all thirteen whole-crate groups, main/native/full-board admission and the full properties plan remain open.",

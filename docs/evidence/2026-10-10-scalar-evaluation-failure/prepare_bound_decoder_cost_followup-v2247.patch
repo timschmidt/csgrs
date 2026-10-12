@@ -1,0 +1,23 @@
+--- prepare_integer_coarse_zero_cost_followup.py
++++ prepare_bound_decoder_cost_followup.py
+@@ -13 +13 @@
+-    original_path = E / "integer-coarse-zero-initial-cost-review-v2100.json"
++    original_path = E / "bound-decoder-initial-cost-review-v2247.json"
+@@ -18 +18 @@
+-    strategy_path = E / "integer-coarse-zero-cost-followup-strategy-v2100.json"
++    strategy_path = E / "bound-decoder-cost-followup-strategy-v2247.json"
+@@ -27,3 +27,3 @@
+-    protocol = E / "integer-coarse-zero-cost-followup-protocol-v2100.json"
+-    runner = E / "replay_integer_coarse_zero_followup.py"
+-    provenance = E / "integer-coarse-zero-cost-followup-preparation-v2100.json"
++    protocol = E / "bound-decoder-cost-followup-protocol-v2247.json"
++    runner = E / "replay_bound_decoder_followup.py"
++    provenance = E / "bound-decoder-cost-followup-preparation-v2247.json"
+@@ -32,2 +32,2 @@
+-        "output": "integer-coarse-zero-focused-cost-v2100",
+-        "prelude": "integer-coarse-zero-focused-cpu-prelude-v2100",
++        "output": "bound-decoder-focused-cost-v2247",
++        "prelude": "bound-decoder-focused-cpu-prelude-v2247",
+@@ -51 +51 @@
+-    prepared = read(E / "integer-coarse-zero-cost-protocol-v2093.json")["runner_forks"]["replay_integer_coarse_zero_cost.py"]
++    prepared = read(E / "bound-decoder-cost-protocol-v2240.json")["runner_forks"]["replay_bound_decoder_cost.py"]

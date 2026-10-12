@@ -1,0 +1,31 @@
+{
+  "status": "All seven probe binaries differ; fresh cost fallback frozen before measurements",
+  "source_record": "typed-api-prototype-v2174-bound-decoder-release-build/source-hashes.json.gz",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "inputs_sha256": {
+    "bound-decoder-binary-comparison-v2181/summary.json": "9e4d2754535733a3fc23fe9549d8780fb59e232f855570c67eb10e611f61151b",
+    "bound-decoder-cost-qualification-v2181.json": "7eb9f8f7789db7502805fdbc9c2f79130b535cd5ee3f460cffbd340659fae7db",
+    "bound-decoder-cost-protocol-preparation-v2247.json": "934e350be78ea77166689789168a2720e4c3cd1684bd6abd5c3c16729459e2eb",
+    "bound-decoder-measured-replay-protocol-v2247.json": "49de99c9315368c413a4c62367cdf63523b7b25aca74573e0bcd5c78d19f3820"
+  },
+  "identical_binaries": 0,
+  "changed_families": [
+    "atan",
+    "acos",
+    "integer",
+    "inverse_trig",
+    "normal_form",
+    "default",
+    "algebraic"
+  ],
+  "new_timing_processes": 0,
+  "reused_cost_receipts": 0,
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "retained_runtime_checkpoint_sha256": "41c1a789a3705059067a9e1cbaef9f9c3090744f00a5490b65ba7736bca4c627",
+  "runtime_retained": false,
+  "main_runtime_admitted": false,
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "next_priority": "Run the frozen v2240-v2247 original-cap decoder cost comparison and all prescribed family-wide repeats; complete the unchanged capped/numerical/public replays and fact audits only if those costs pass. All seven compiled probes differ, so the identity reuse route remains unqualified. Preserve all earlier failures, the fixed pre-Verus baseline and open producer/existence/atomic and main/native/full-board requirements.",
+  "limits": "Different executable bytes establish neither a timing regression nor its cause. The conditional decoder proof and nine broad passes stand, but runtime retention requires the frozen original-cap costs and subsequent replays. No property/target or whole-crate obligation is closed; the previous failed experiments and resource limits remain explicit."
+}

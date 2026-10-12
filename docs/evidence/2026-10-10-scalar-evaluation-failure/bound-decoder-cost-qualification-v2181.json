@@ -1,0 +1,21 @@
+{
+  "method": "complete-executable-identity",
+  "qualified_for_unchanged_probe_fixtures": false,
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "binary_comparison": "bound-decoder-binary-comparison-v2181/summary.json",
+  "binary_comparison_sha256": "9e4d2754535733a3fc23fe9549d8780fb59e232f855570c67eb10e611f61151b",
+  "identical_binaries": 0,
+  "changed_families": [
+    "atan",
+    "acos",
+    "integer",
+    "inverse_trig",
+    "normal_form",
+    "default",
+    "algebraic"
+  ],
+  "new_timing_processes": 0,
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "runtime_retained": false,
+  "decision": "No fixture receipts are reused for the changed executables. The initial identity-gated replay runner cannot start. Fresh original-cap cost measurements and any prescribed family-wide repeats must pass before a separately forked measured-cost replay runner may start. Binary difference alone does not demonstrate a performance regression or its cause."
+}

@@ -1,0 +1,19 @@
+--- record_integer_coarse_zero_initial_costs.py
++++ record_bound_decoder_initial_costs.py
+@@ -17 +17 @@
+-    out = E / "integer-coarse-zero-initial-cost-review-v2100.json"
++    out = E / "bound-decoder-initial-cost-review-v2247.json"
+@@ -19 +19 @@
+-    protocol_path = E / "integer-coarse-zero-cost-protocol-v2093.json"
++    protocol_path = E / "bound-decoder-cost-protocol-v2240.json"
+@@ -28 +28 @@
+-    standalone = read(E / "integer-coarse-zero-cost-orchestration-v2099.json")
++    standalone = read(E / "bound-decoder-cost-orchestration-v2246.json")
+@@ -68,2 +68,2 @@
+-    phase = E / "integer-coarse-zero-preconditioned-cost-v2100"
+-    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_integer_coarse_zero_cost.py"]["fork_sha256"]
++    phase = E / "bound-decoder-preconditioned-cost-v2247"
++    assert sha(phase / "reproduce.py") == protocol["runner_forks"]["replay_bound_decoder_cost.py"]["fork_sha256"]
+@@ -127 +127 @@
+-            "The combined integer/kernel/selector proposal provides no new completeness gain to justify a runtime regression. The fixed pre-Verus acceptance baseline, earlier cost failures/tradeoff and main/full-board admission remain separate open obligations.",
++            "The proved bound-decoder proposal provides no new completeness gain to justify a runtime regression. The fixed pre-Verus acceptance baseline, earlier cost failures/tradeoff and main/full-board admission remain separate open obligations.",

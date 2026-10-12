@@ -1,0 +1,41 @@
+--- prepare_integer_coarse_zero_costs.py
++++ prepare_bound_decoder_costs.py
+@@ -13 +13 @@
+-    out = E / "integer-coarse-zero-cost-protocol-v2093.json"
++    out = E / "bound-decoder-cost-protocol-v2240.json"
+@@ -15,2 +15,2 @@
+-    proof = read(E / "integer-coarse-zero-proof-validation-v2083.json")
+-    assert proof["source_record_sha256"] == "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62"
++    proof = read(E / "bound-decoder-proof-validation-v2171.json")
++    assert proof["source_record_sha256"] == "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162"
+@@ -34,2 +34,2 @@
+-               f"typed-api-prototype-v{new}-integer-coarse-zero-{name}-cost"
+-               for old, new, name in zip(range(1773, 1780), range(2093, 2100), names)}
++               f"typed-api-prototype-v{new}-bound-decoder-{name}-cost"
++               for old, new, name in zip(range(1773, 1780), range(2240, 2247), names)}
+@@ -37,2 +37,2 @@
+-        "typed-api-prototype-v1766-domain-predicate-release-build": "typed-api-prototype-v2086-integer-coarse-zero-release-build",
+-        "typed-api-prototype-v1761-domain-predicate-verus": "typed-api-prototype-v2082-integer-coarse-zero-verus",
++        "typed-api-prototype-v1766-domain-predicate-release-build": "typed-api-prototype-v2174-bound-decoder-release-build",
++        "typed-api-prototype-v1761-domain-predicate-verus": "typed-api-prototype-v2169-bound-decoder-verus",
+@@ -41 +41 @@
+-    fork("run_domain_predicate_costs.py", "run_integer_coarse_zero_costs.py", {
++    fork("run_domain_predicate_costs.py", "run_bound_decoder_costs.py", {
+@@ -43,3 +43,3 @@
+-        "typed-api-prototype-v1764-domain-predicate-scalar-tests": "typed-api-prototype-v2084-integer-coarse-zero-scalar-tests",
+-        "domain-predicate-cost-orchestration-v1779.json": "integer-coarse-zero-cost-orchestration-v2099.json",
+-        "conditional domain-predicate extraction": "combined integer shortcut, root kernel and outlined-cache proposal",
++        "typed-api-prototype-v1764-domain-predicate-scalar-tests": "typed-api-prototype-v2172-bound-decoder-scalar-tests",
++        "domain-predicate-cost-orchestration-v1779.json": "bound-decoder-cost-orchestration-v2246.json",
++        "conditional domain-predicate extraction": "proved bound-decoder proposal",
+@@ -50 +50 @@
+-    fork("replay_domain_predicate_cost.py", "replay_integer_coarse_zero_cost.py", {
++    fork("replay_domain_predicate_cost.py", "replay_bound_decoder_cost.py", {
+@@ -52,2 +52,2 @@
+-        "domain-predicate-preconditioned-cost-v1780": "integer-coarse-zero-preconditioned-cost-v2100",
+-        "domain-predicate-cost-cpu-prelude-v1780": "integer-coarse-zero-cost-cpu-prelude-v2100",
++        "domain-predicate-preconditioned-cost-v1780": "bound-decoder-preconditioned-cost-v2247",
++        "domain-predicate-cost-cpu-prelude-v1780": "bound-decoder-cost-cpu-prelude-v2247",
+@@ -78 +78 @@
+-        "status": "Frozen before building or measuring cost binaries for this combined proposal; all prior failed comparisons and diagnostics remain separate",
++        "status": "Frozen before running fresh standalone or paired cost measurements; the earlier seven-binary static comparison found no complete executable identity, so reuse is unavailable. All prior failed comparisons and diagnostics remain separate",

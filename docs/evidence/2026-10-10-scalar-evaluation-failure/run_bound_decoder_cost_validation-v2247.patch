@@ -1,0 +1,37 @@
+--- run_integer_coarse_zero_cost_validation.py
++++ run_bound_decoder_cost_validation.py
+@@ -16,3 +16,3 @@
+-    validation = read(E / "integer-coarse-zero-candidate-validation-v2092.json")
+-    broad = read(E / "integer-coarse-zero-broad-validation-v2092.json")
+-    protocol = read(E / "integer-coarse-zero-cost-protocol-v2093.json")
++    validation = read(E / "bound-decoder-candidate-validation-v2180.json")
++    broad = read(E / "bound-decoder-broad-validation-v2180.json")
++    protocol = read(E / "bound-decoder-cost-protocol-v2240.json")
+@@ -23 +23 @@
+-    strategy = E / "integer-coarse-zero-cost-followup-strategy-v2100.json"
++    strategy = E / "bound-decoder-cost-followup-strategy-v2247.json"
+@@ -25,2 +25,2 @@
+-    out = E / "integer-coarse-zero-cost-validation-v2100.json"
+-    logs = E / "integer-coarse-zero-cost-controller-v2100"
++    out = E / "bound-decoder-cost-validation-v2247.json"
++    logs = E / "bound-decoder-cost-controller-v2247"
+@@ -55,2 +55,2 @@
+-    assert run("standalone", "run_integer_coarse_zero_costs.py") == 0
+-    paired = run("paired", "replay_integer_coarse_zero_cost.py")
++    assert run("standalone", "run_bound_decoder_costs.py") == 0
++    paired = run("paired", "replay_bound_decoder_cost.py")
+@@ -59 +59 @@
+-    reviewed = run("initial-review", "record_integer_coarse_zero_initial_costs.py")
++    reviewed = run("initial-review", "record_bound_decoder_initial_costs.py")
+@@ -61,2 +61,2 @@
+-    assert run("freeze-followup", "prepare_integer_coarse_zero_cost_followup.py") == 0
+-    followup = read(E / "integer-coarse-zero-cost-followup-protocol-v2100.json")
++    assert run("freeze-followup", "prepare_bound_decoder_cost_followup.py") == 0
++    followup = read(E / "bound-decoder-cost-followup-protocol-v2247.json")
+@@ -65,3 +65,3 @@
+-        assert run(f"followup-{index}", "replay_integer_coarse_zero_followup.py", str(index)) == 0
+-    assert run("final-review", "record_integer_coarse_zero_costs.py") == 0
+-    result = read(E / "integer-coarse-zero-cost-review-v2100.json")
++        assert run(f"followup-{index}", "replay_bound_decoder_followup.py", str(index)) == 0
++    assert run("final-review", "record_bound_decoder_costs.py") == 0
++    result = read(E / "bound-decoder-cost-review-v2247.json")

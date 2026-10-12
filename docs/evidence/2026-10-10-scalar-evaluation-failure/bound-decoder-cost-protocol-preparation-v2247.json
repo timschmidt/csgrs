@@ -1,0 +1,51 @@
+{
+  "status": "Frozen before any fresh decoder cost measurement",
+  "source_record_sha256": "80bb17679a0891ff93eba8ed10b9f63c205f3ccb39e35dbb3e187e23bb0b7162",
+  "runner_forks": {
+    "prepare_bound_decoder_costs.py": {
+      "predecessor": "prepare_integer_coarse_zero_costs.py",
+      "predecessor_sha256": "46d5a09e26553c9f9c7bc93439e4080d979ad9365ab5c4c3a552901073bb1a3c",
+      "fork_sha256": "2ae6db70c5d2ebdadbde7e72dda42a0824ef4d3c62a1ebdf9815904bab38a3a7",
+      "patch": "prepare_bound_decoder_costs-v2247.patch",
+      "patch_sha256": "ae265bb4c1a5ee82735366a80f84da58cfa9c6e965751b753c5063e679cfcbc8"
+    },
+    "record_bound_decoder_initial_costs.py": {
+      "predecessor": "record_integer_coarse_zero_initial_costs.py",
+      "predecessor_sha256": "a0a2e0a7522c8be765e8a75591bf1b79439334a94b073b74a80e280522a6a801",
+      "fork_sha256": "5dd209611546302026aff5d7685c58b687bd6eb382fd5cce993c23ddbfc2a140",
+      "patch": "record_bound_decoder_initial_costs-v2247.patch",
+      "patch_sha256": "03a3628ee541d10ff1b96fb1859b7102af8a6d5fb646d896e32df3ce592b682c"
+    },
+    "prepare_bound_decoder_cost_followup.py": {
+      "predecessor": "prepare_integer_coarse_zero_cost_followup.py",
+      "predecessor_sha256": "c9227c656d6baf19c8d0bae14f0892007a115bee6bc6846cc0bf563c818369db",
+      "fork_sha256": "9bc477c4a4a419d3544b1bad927f33dad359933679d62a9410e5c10f82b45b00",
+      "patch": "prepare_bound_decoder_cost_followup-v2247.patch",
+      "patch_sha256": "5562e9065320c1fc6b4c128d0b06a49671b522b711762b86e9c31c727ccff1ba"
+    },
+    "record_bound_decoder_costs.py": {
+      "predecessor": "record_integer_coarse_zero_costs.py",
+      "predecessor_sha256": "8a99f463f974b8555e21f7c5d61c419b062ba8bc4e34ca853fee64b2a5e50a3a",
+      "fork_sha256": "88023eeca333369657373095506c6735d45858982b5d4a880dd77ff15744605e",
+      "patch": "record_bound_decoder_costs-v2247.patch",
+      "patch_sha256": "44090405702051c578d28abb23efb1ff2b20328f26c1120c5bbfbaaccf0348a3"
+    },
+    "run_bound_decoder_cost_validation.py": {
+      "predecessor": "run_integer_coarse_zero_cost_validation.py",
+      "predecessor_sha256": "55c51bb0b2963b997cd68600c80f475ba942b09213cd67afb9f39575ac1b6699",
+      "fork_sha256": "87029e2ff81bace5e512b97cb7db80be4ad1b3deb842373395170c211c518056",
+      "patch": "run_bound_decoder_cost_validation-v2247.patch",
+      "patch_sha256": "50d778be11f2828fa03dda3ae1b07d7e19086817419c8f70d430761626690202"
+    }
+  },
+  "preparer_sha256": "4e5adb12f27fe6c6a142d5fd0f47e4a1a8a8582026ff0c2dc516445f2a05abc0",
+  "cost_protocol": "bound-decoder-cost-protocol-v2240.json",
+  "cost_protocol_sha256": "a7fc7988d2780875311ef85ef18e5d6f0a9f14381a8487e0c032356561dc3e0a",
+  "repeat_strategy": "bound-decoder-cost-followup-strategy-v2247.json",
+  "repeat_strategy_sha256": "6d130f40e00b99da3555119e17e66284dedf76f7d112c57ef565001e1001a8bd",
+  "repeat_strategy_predecessor": "integer-coarse-zero-cost-followup-strategy-v2100.json",
+  "repeat_strategy_predecessor_sha256": "4c2ac9a0c18ed04755658594e775c71eab448bfb4f1d68fe644fca75a0a7256f",
+  "identity_qualification": "bound-decoder-cost-qualification-v2181.json",
+  "identity_qualification_sha256": "7eb9f8f7789db7502805fdbc9c2f79130b535cd5ee3f460cffbd340659fae7db",
+  "scope": "Keep retained v1836 and all 52 full-size fixtures, 468 standalone processes, nine initial pairs, original 192 MiB/CPU 2-3-second/four-second wall caps, identical CPU preludes, and the predeclared 27-pair repeat for every fixture in each initially regressing family. No workload, threshold, assertion, precision, time or work budget changes. All previous failures and the fixed pre-Verus baseline remain explicit. No runtime retention follows from preparation."
+}
