@@ -1,0 +1,26 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe",
+    "cost",
+    "4",
+    "4",
+    "0",
+    "false",
+    "64"
+  ],
+  "pid": 16,
+  "address_space_bytes": [
+    201326592,
+    201326592
+  ],
+  "cpu_seconds": [
+    2,
+    3
+  ],
+  "affinity": [
+    0
+  ],
+  "wrapper_user_seconds_before_exec": 0.019136999999999998,
+  "wrapper_system_seconds_before_exec": 0.0050349999999999995,
+  "limits_apply_to_original_executable_after_exec": true
+}

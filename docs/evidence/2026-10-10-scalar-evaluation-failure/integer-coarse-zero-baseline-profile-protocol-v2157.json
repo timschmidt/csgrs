@@ -1,0 +1,109 @@
+{
+  "status": "Frozen before either diagnostic; no runtime or acceptance change",
+  "source_record": "typed-api-prototype-v2082-integer-coarse-zero-verus/source-hashes.json.gz",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "rejection_record": "integer-coarse-zero-cost-rejection-v2100.json",
+  "rejection_record_sha256": "2d0a4ef33259495a01ec14a8262c45e4983ad1ad28b8b5a755715a321f57b8d5",
+  "runner": "profile_integer_coarse_zero_baseline.py",
+  "runner_sha256": "9dbc1154c36a549561dba95956f5ccb9504b7aac178230174ec935b08250e5d1",
+  "generator_sha256": "0197da2b57d8bc3f713bbeedc980abeff7920dcaffecef8bdf11509ab79d8109",
+  "output": "integer-coarse-zero-baseline-profile-v2157",
+  "perf": "/usr/bin/perf",
+  "perf_sha256": "119bd4d17e7724f8c8982a8ea8fe35e2e12144e3f1b3a0dff59501c9a6a90780",
+  "perf_version": "perf version 7.2.5-100.fc43.x86_64",
+  "cpu": 0,
+  "address_space_bytes": 201326592,
+  "cpu_seconds": [
+    2,
+    3
+  ],
+  "wall_seconds": 4,
+  "prelude": "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-coarse-zero-cost-cpu-prelude-v2100",
+  "prelude_sha256": "fa8cf871d96381d2310f1fb6d5d884148478fafbc0783c644ac4dc98fcfe5f4e",
+  "prelude_iterations": 50000000,
+  "runs": [
+    {
+      "which": "baseline",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+      "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "arguments": [
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "original_probe": "typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe.rs",
+      "original_probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+      "command": [
+        "/usr/bin/perf",
+        "record",
+        "-q",
+        "-e",
+        "cpu-clock:u",
+        "-F",
+        "99",
+        "--call-graph",
+        "dwarf,8192",
+        "-m",
+        "64",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2157/baseline.perf.data",
+        "--",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ]
+    },
+    {
+      "which": "candidate",
+      "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe",
+      "binary_sha256": "3277f6e49bc4efc5a3b1e7740fd5ab20c4f5f32b60a11af4b5b75985c9551411",
+      "arguments": [
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "original_probe": "typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe.rs",
+      "original_probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+      "command": [
+        "/usr/bin/perf",
+        "record",
+        "-q",
+        "-e",
+        "cpu-clock:u",
+        "-F",
+        "99",
+        "--call-graph",
+        "dwarf,8192",
+        "-m",
+        "64",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2157/candidate.perf.data",
+        "--",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ]
+    }
+  ],
+  "limits": [
+    "Exactly one planned software-event profile per hash-identical original executable, baseline then candidate; no rebuild or source changes, workload reduction, cap increase, retry, host-policy change or original-gate override.",
+    "Both use the unchanged 64-value fourth-root/four-factor workload and the original numerical and exact-zero assertions. Each workload and its perf parent inherit the original address-space and CPU caps; the four-second supervisor deadline also includes profiler startup and shutdown.",
+    "Sampling userspace CPU-clock at 99 Hz with DWARF stack capture is diagnostic instrumentation with overhead. Symbol weights apply only to these runs, not the interrupted earlier run, and do not establish an uninstrumented speedup or a kernel's exclusive causal contribution.",
+    "Aggregate child-tree user/system time includes the profiler and workload. It is not the workload's standalone CPU time. Snapshots are contemporary host observations, not historical telemetry or proof of the earlier failure's cause.",
+    "An unavailable profiler is recorded and stops the diagnostic, without escalation or a substitute favorable attempt. A successful diagnostic cannot replace the failed original comparison or trigger retention. All earlier failures and all thirteen whole-crate proof groups remain open."
+  ]
+}

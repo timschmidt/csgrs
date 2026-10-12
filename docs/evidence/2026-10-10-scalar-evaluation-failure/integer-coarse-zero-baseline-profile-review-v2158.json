@@ -1,0 +1,150 @@
+{
+  "status": "Diagnostic profiles explain sampled work only; original cost gate remains failed",
+  "source_record": "typed-api-prototype-v2082-integer-coarse-zero-verus/source-hashes.json.gz",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "inputs_sha256": {
+    "integer-coarse-zero-baseline-profile-protocol-v2157.json": "e4e6158a61737af9caf50e1a04f83f77fba4dc83c5c220da1c34852a1fabc8f3",
+    "integer-coarse-zero-baseline-profile-v2157/summary.json": "79286f82c81da462229c3e84bec7ef20c8e564ca23661465f0f98066999ab86c",
+    "integer-coarse-zero-baseline-profile-protocol-v2158.json": "c7d75f2700c15620ad2adf1cb0435fa4045637ac11e758c50a81d62035fb74f2",
+    "integer-coarse-zero-baseline-profile-v2158/summary.json": "62f69357219de31ec9f30e7e46df37ac8198fe29970bc2bfaaccfc605e7439d0"
+  },
+  "setup_loader_failures": 1,
+  "successful_workload_profiles": 2,
+  "separate_cpu_preludes": 3,
+  "profiles": [
+    {
+      "which": "baseline",
+      "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "samples_including_launcher": 180,
+      "lost_samples": 0,
+      "exclusive_symbol_percent": {
+        "num_bigint::biguint::division::div_rem_core": 67.22,
+        "num_bigint::biguint::multiplication::mac3": 25.0
+      },
+      "all_reported_symbol_percent": {
+        "num_bigint::biguint::division::div_rem_core": 67.22,
+        "num_bigint::biguint::multiplication::mac3": 25.0,
+        "num_bigint::biguint::subtraction::sub2": 1.67,
+        "cfree@GLIBC_2.2.5": 1.11,
+        "malloc": 1.11,
+        "num_bigint::biguint::multiplication::sub_sign": 1.11,
+        "<num_bigint::biguint::BigUint as num_integer::roots::Roots>::nth_root::{closure#0}": 0.56,
+        "_Py_dict_lookup": 0.56,
+        "__memcmp_avx2_movbe": 0.56,
+        "num_bigint::biguint::addition::add2": 0.56,
+        "unlink_chunk.isra.0": 0.56
+      },
+      "wall_seconds_including_profiler": 1.9115960882045329,
+      "child_tree_user_seconds": 1.8456009999999998,
+      "child_tree_system_seconds": 0.03589,
+      "receipt": {
+        "certified": 64,
+        "elapsed_ns": "11879125",
+        "iterations": 64,
+        "stage": "cost"
+      },
+      "effective_workload_limits": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "pid": 11,
+        "address_space_bytes": [
+          201326592,
+          201326592
+        ],
+        "cpu_seconds": [
+          2,
+          3
+        ],
+        "affinity": [
+          0
+        ],
+        "wrapper_user_seconds_before_exec": 0.014492999999999999,
+        "wrapper_system_seconds_before_exec": 0.007737,
+        "limits_apply_to_original_executable_after_exec": true
+      }
+    },
+    {
+      "which": "candidate",
+      "binary_sha256": "3277f6e49bc4efc5a3b1e7740fd5ab20c4f5f32b60a11af4b5b75985c9551411",
+      "samples_including_launcher": 95,
+      "lost_samples": 0,
+      "exclusive_symbol_percent": {
+        "num_bigint::biguint::division::div_rem_core": 68.42,
+        "num_bigint::biguint::multiplication::mac3": 26.32
+      },
+      "all_reported_symbol_percent": {
+        "num_bigint::biguint::division::div_rem_core": 68.42,
+        "num_bigint::biguint::multiplication::mac3": 26.32,
+        "<&serde_json::value::Value as serde_core::ser::Serialize>::serialize::<serde_json::value::ser::Serializer>": 1.05,
+        "<alloc::vec::Vec<u64>>::resize": 1.05,
+        "<hyperreal::rational::arithmetic::Rational>::retained_secondary_product": 1.05,
+        "_Py_dict_lookup": 1.05,
+        "vectorcall_method.lto_priv.0": 1.05
+      },
+      "wall_seconds_including_profiler": 1.0142820421606302,
+      "child_tree_user_seconds": 0.9804400000000002,
+      "child_tree_system_seconds": 0.029071,
+      "receipt": {
+        "certified": 64,
+        "elapsed_ns": "11969319",
+        "iterations": 64,
+        "stage": "cost"
+      },
+      "effective_workload_limits": {
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe",
+          "cost",
+          "4",
+          "4",
+          "0",
+          "false",
+          "64"
+        ],
+        "pid": 16,
+        "address_space_bytes": [
+          201326592,
+          201326592
+        ],
+        "cpu_seconds": [
+          2,
+          3
+        ],
+        "affinity": [
+          0
+        ],
+        "wrapper_user_seconds_before_exec": 0.019136999999999998,
+        "wrapper_system_seconds_before_exec": 0.0050349999999999995,
+        "limits_apply_to_original_executable_after_exec": true
+      }
+    }
+  ],
+  "source_files_verified": 24746,
+  "main_files_verified": 1167,
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "original_cost_gate_passed": false,
+  "runtime_retained": false,
+  "observations": [
+    "The first perf parent failed in the dynamic loader at 192 MiB, before launching a workload. The fork places the original limits on the actual executable via a recorded exec wrapper and bounds the profiler separately.",
+    "The baseline and candidate each complete the same 64-value fixture with all original numerical and sign assertions. Sampled userspace instruction pointers mostly name bigint division and multiplication in both runs. The original executable bytes are unchanged.",
+    "Contemporary snapshots report powersave with balance_performance and variable frequency; visible cgroup ancestors report cpu.max=max 100000. These observations neither recover historical CPU frequency nor prove why the original process crossed its CPU limit.",
+    "DWARF call chains include unresolved numeric addresses. The report supports exclusive instruction-pointer symbol weights; it does not reliably isolate a caller, individual root kernel, construction/warmup/query stage or the earlier failure stage."
+  ],
+  "limits": [
+    "Exactly one planned software-event profile per hash-identical original executable, baseline then candidate; no rebuild or source changes, workload reduction, cap increase, retry, host-policy change or original-gate override.",
+    "Both use the unchanged 64-value fourth-root/four-factor workload and original numerical/zero assertions. The launcher applies the original 192 MiB and CPU 2/3-second caps immediately before exec of the hash-identical workload; its small startup CPU consumption also counts against that same limit. The profiler separately has a 1 GiB address-space and CPU 4/5-second limit. The unchanged four-second supervisor deadline includes profiler startup, the complete workload and profiler shutdown.",
+    "Sampling userspace CPU-clock at 99 Hz with DWARF stack capture is diagnostic instrumentation with overhead. Symbol weights apply only to these runs, not the interrupted earlier run, and do not establish an uninstrumented speedup or a kernel's exclusive causal contribution.",
+    "Aggregate child-tree user/system time includes the profiler and workload. It is not the workload's standalone CPU time. Snapshots are contemporary host observations, not historical telemetry or proof of the earlier failure's cause.",
+    "An unavailable profiler is recorded and stops the diagnostic, without escalation or a substitute favorable attempt. A successful diagnostic cannot replace the failed original comparison or trigger retention. All earlier failures and all thirteen whole-crate proof groups remain open.",
+    "The first profiler process failed in the dynamic loader at its mistakenly shared 192 MiB cap, before it could launch the baseline. Preserve that failure. This fork corrects which process receives each limit; it does not rerun a completed or failed benchmark process, change the original acceptance protocol, or remove profiler/wrapper overhead from the diagnostic.",
+    "One diagnostic per executable, with launcher/profiler overhead and only 180/95 samples including launcher events. No significance test, steady-state timing pass, peak-memory measurement, uniform speedup or historical failure attribution is established.",
+    "The completed wide_gap improvement and unresolved small_coarse increase remain partial cost evidence. All earlier gates and failures remain unchanged. Restoring v1836 is the next action, not yet performed by this recorder."
+  ],
+  "next_priority": "Restore all nine unretained source changes to the exact v1836 checkpoint, preserving the proposals, proofs, allocation studies and every failed cost gate. Verify restored source identity and run scalar/release/format/proof checks. Then connect the actual cache-word decoder to its specification from that retained base; do not start another unchanged cost trial or treat the successful profiles as admission. The decoder, producer/existence/atomic and native/full-board obligations remain open."
+}

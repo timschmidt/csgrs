@@ -1,0 +1,360 @@
+[
+  {
+    "which": "baseline",
+    "command": [
+      "/usr/bin/perf",
+      "record",
+      "-q",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "99",
+      "--call-graph",
+      "dwarf,8192",
+      "-m",
+      "64",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2158/baseline.perf.data",
+      "--",
+      "/usr/bin/python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/exec_integer_coarse_zero_profile_workload.py",
+      "exec",
+      "baseline"
+    ],
+    "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 1.9115960882045329,
+    "child_tree_user_seconds": 1.8456009999999998,
+    "child_tree_system_seconds": 0.03589,
+    "prelude_exit_code": 0,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11879125",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "environment_after": {
+      "wall_time_ns": 1791803595694447312,
+      "affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "uname": [
+        "Linux",
+        "fedora",
+        "7.2.5-100.fc43.x86_64",
+        "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+        "x86_64"
+      ],
+      "files": {
+        "/proc/loadavg": {
+          "text": "1.99 1.91 2.73 3/4282 11\n"
+        },
+        "/proc/pressure/cpu": {
+          "text": "some avg10=0.00 avg60=0.00 avg300=0.00 total=24563170857\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+        },
+        "/proc/self/cgroup": {
+          "text": "0::/user.slice/user-1000.slice/session-2.scope\n"
+        },
+        "/proc/sys/kernel/perf_event_paranoid": {
+          "text": "2\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/boost": {
+          "text": "1\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_avg_freq": {
+          "text": "4325095\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference": {
+          "text": "balance_performance\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq": {
+          "text": "4325095\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver": {
+          "text": "amd-pstate-epp\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor": {
+          "text": "powersave\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq": {
+          "text": "4552952\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq": {
+          "text": "1755355\n"
+        },
+        "/sys/fs/cgroup/cpu.max": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/cpu.max'"
+        },
+        "/sys/fs/cgroup/cpu.stat": {
+          "text": "usage_usec 7216196428012\nuser_usec 5692180847966\nsystem_usec 1524015580046\nnice_usec 1582248385\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/cpuset.cpus.effective": {
+          "text": "0-15\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.stat": {
+          "text": "usage_usec 6444486961568\nuser_usec 5676342674903\nsystem_usec 768144286665\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.stat": {
+          "text": "usage_usec 6444459640059\nuser_usec 5676327277339\nsystem_usec 768132362720\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.stat": {
+          "text": "usage_usec 3739871697931\nuser_usec 3489620629586\nsystem_usec 250251068344\nnice_usec 11184195\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective'"
+        }
+      }
+    },
+    "workload_launcher_ran": true,
+    "effective_workload_limits": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "pid": 11,
+      "address_space_bytes": [
+        201326592,
+        201326592
+      ],
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "affinity": [
+        0
+      ],
+      "wrapper_user_seconds_before_exec": 0.014492999999999999,
+      "wrapper_system_seconds_before_exec": 0.007737,
+      "limits_apply_to_original_executable_after_exec": true
+    },
+    "perf_data_bytes": 1548772,
+    "report_command": [
+      "/usr/bin/perf",
+      "report",
+      "--stdio",
+      "--no-children",
+      "--sort",
+      "symbol",
+      "--percent-limit",
+      "0.5",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2158/baseline.perf.data"
+    ],
+    "report_exit_code": 0
+  },
+  {
+    "which": "candidate",
+    "command": [
+      "/usr/bin/perf",
+      "record",
+      "-q",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "99",
+      "--call-graph",
+      "dwarf,8192",
+      "-m",
+      "64",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2158/candidate.perf.data",
+      "--",
+      "/usr/bin/python3",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/exec_integer_coarse_zero_profile_workload.py",
+      "exec",
+      "candidate"
+    ],
+    "binary_sha256": "3277f6e49bc4efc5a3b1e7740fd5ab20c4f5f32b60a11af4b5b75985c9551411",
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 1.0142820421606302,
+    "child_tree_user_seconds": 0.9804400000000002,
+    "child_tree_system_seconds": 0.029071,
+    "prelude_exit_code": 0,
+    "receipt": {
+      "certified": 64,
+      "elapsed_ns": "11969319",
+      "iterations": 64,
+      "stage": "cost"
+    },
+    "environment_after": {
+      "wall_time_ns": 1791803596895256271,
+      "affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "uname": [
+        "Linux",
+        "fedora",
+        "7.2.5-100.fc43.x86_64",
+        "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+        "x86_64"
+      ],
+      "files": {
+        "/proc/loadavg": {
+          "text": "1.99 1.91 2.73 3/4281 16\n"
+        },
+        "/proc/pressure/cpu": {
+          "text": "some avg10=0.00 avg60=0.00 avg300=0.00 total=24563172459\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+        },
+        "/proc/self/cgroup": {
+          "text": "0::/user.slice/user-1000.slice/session-2.scope\n"
+        },
+        "/proc/sys/kernel/perf_event_paranoid": {
+          "text": "2\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/boost": {
+          "text": "1\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_avg_freq": {
+          "text": "4325018\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference": {
+          "text": "balance_performance\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq": {
+          "text": "4325018\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver": {
+          "text": "amd-pstate-epp\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor": {
+          "text": "powersave\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq": {
+          "text": "4552952\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq": {
+          "text": "1755355\n"
+        },
+        "/sys/fs/cgroup/cpu.max": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/cpu.max'"
+        },
+        "/sys/fs/cgroup/cpu.stat": {
+          "text": "usage_usec 7216201120725\nuser_usec 5692185031385\nsystem_usec 1524016089340\nnice_usec 1582248385\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/cpuset.cpus.effective": {
+          "text": "0-15\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.stat": {
+          "text": "usage_usec 6444491580316\nuser_usec 5676346868761\nsystem_usec 768144711555\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.stat": {
+          "text": "usage_usec 6444464256425\nuser_usec 5676331469739\nsystem_usec 768132786685\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.stat": {
+          "text": "usage_usec 3739873153637\nuser_usec 3489621946013\nsystem_usec 250251207624\nnice_usec 11184195\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective'"
+        }
+      }
+    },
+    "workload_launcher_ran": true,
+    "effective_workload_limits": {
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v2098-integer-coarse-zero-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "pid": 16,
+      "address_space_bytes": [
+        201326592,
+        201326592
+      ],
+      "cpu_seconds": [
+        2,
+        3
+      ],
+      "affinity": [
+        0
+      ],
+      "wrapper_user_seconds_before_exec": 0.019136999999999998,
+      "wrapper_system_seconds_before_exec": 0.0050349999999999995,
+      "limits_apply_to_original_executable_after_exec": true
+    },
+    "perf_data_bytes": 832692,
+    "report_command": [
+      "/usr/bin/perf",
+      "report",
+      "--stdio",
+      "--no-children",
+      "--sort",
+      "symbol",
+      "--percent-limit",
+      "0.5",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2158/candidate.perf.data"
+    ],
+    "report_exit_code": 0
+  }
+]

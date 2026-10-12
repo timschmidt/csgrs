@@ -1,0 +1,1 @@
+/usr/bin/perf: error while loading shared libraries: libkrb5.so.3: failed to map segment from shared object

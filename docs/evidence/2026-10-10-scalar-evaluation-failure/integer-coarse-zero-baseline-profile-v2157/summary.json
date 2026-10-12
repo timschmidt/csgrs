@@ -1,0 +1,173 @@
+{
+  "protocol": "integer-coarse-zero-baseline-profile-protocol-v2157.json",
+  "protocol_sha256": "e4e6158a61737af9caf50e1a04f83f77fba4dc83c5c220da1c34852a1fabc8f3",
+  "source_record_sha256": "e093cd7ed95ae15ecb66d04cd76beb89b04aa205971330f4b2794db4190ded62",
+  "before_guard": {
+    "source_files_verified": 24746,
+    "main_files_verified": 1167,
+    "executables_verified": 2
+  },
+  "after_guard": {
+    "source_files_verified": 24746,
+    "main_files_verified": 1167,
+    "executables_verified": 2
+  },
+  "attempted_profiles": 1,
+  "planned_profiles": 2,
+  "attempts": [
+    {
+      "which": "baseline",
+      "command": [
+        "/usr/bin/perf",
+        "record",
+        "-q",
+        "-e",
+        "cpu-clock:u",
+        "-F",
+        "99",
+        "--call-graph",
+        "dwarf,8192",
+        "-m",
+        "64",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2157/baseline.perf.data",
+        "--",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+        "cost",
+        "4",
+        "4",
+        "0",
+        "false",
+        "64"
+      ],
+      "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+      "exit_code": 127,
+      "wall_timeout": false,
+      "wall_seconds": 0.004066170658916235,
+      "child_tree_user_seconds": 0.0010690000000000005,
+      "child_tree_system_seconds": 0.0021529999999999995,
+      "prelude_exit_code": 0,
+      "receipt": null,
+      "environment_after": {
+        "wall_time_ns": 1791803464369542009,
+        "affinity": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15
+        ],
+        "uname": [
+          "Linux",
+          "fedora",
+          "7.2.5-100.fc43.x86_64",
+          "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+          "x86_64"
+        ],
+        "files": {
+          "/proc/loadavg": {
+            "text": "2.00 1.93 2.87 3/4238 10\n"
+          },
+          "/proc/pressure/cpu": {
+            "text": "some avg10=0.00 avg60=0.00 avg300=0.01 total=24562984083\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+          },
+          "/proc/self/cgroup": {
+            "text": "0::/user.slice/user-1000.slice/session-2.scope\n"
+          },
+          "/proc/sys/kernel/perf_event_paranoid": {
+            "text": "2\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/boost": {
+            "text": "1\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_avg_freq": {
+            "text": "4325136\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference": {
+            "text": "balance_performance\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq": {
+            "text": "4325136\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver": {
+            "text": "amd-pstate-epp\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor": {
+            "text": "powersave\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq": {
+            "text": "4552952\n"
+          },
+          "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq": {
+            "text": "1755355\n"
+          },
+          "/sys/fs/cgroup/cpu.max": {
+            "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/cpu.max'"
+          },
+          "/sys/fs/cgroup/cpu.stat": {
+            "text": "usage_usec 7215929941023\nuser_usec 5691963730553\nsystem_usec 1523966210470\nnice_usec 1582246405\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+          },
+          "/sys/fs/cgroup/cpuset.cpus.effective": {
+            "text": "0-15\n"
+          },
+          "/sys/fs/cgroup/user.slice/cpu.max": {
+            "text": "max 100000\n"
+          },
+          "/sys/fs/cgroup/user.slice/cpu.stat": {
+            "text": "usage_usec 6444229523541\nuser_usec 5676125307126\nsystem_usec 768104216414\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+          },
+          "/sys/fs/cgroup/user.slice/cpuset.cpus.effective": {
+            "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/cpuset.cpus.effective'"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.max": {
+            "text": "max 100000\n"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.stat": {
+            "text": "usage_usec 6444202199649\nuser_usec 5676109908104\nsystem_usec 768092291545\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective": {
+            "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective'"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.max": {
+            "text": "max 100000\n"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.stat": {
+            "text": "usage_usec 3739837270284\nuser_usec 3489596193196\nsystem_usec 250241077088\nnice_usec 11184195\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+          },
+          "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective": {
+            "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective'"
+          }
+        }
+      },
+      "perf_data_bytes": 0
+    }
+  ],
+  "original_cost_gate_passed": false,
+  "runtime_retained": false,
+  "limits": [
+    "Exactly one planned software-event profile per hash-identical original executable, baseline then candidate; no rebuild or source changes, workload reduction, cap increase, retry, host-policy change or original-gate override.",
+    "Both use the unchanged 64-value fourth-root/four-factor workload and the original numerical and exact-zero assertions. Each workload and its perf parent inherit the original address-space and CPU caps; the four-second supervisor deadline also includes profiler startup and shutdown.",
+    "Sampling userspace CPU-clock at 99 Hz with DWARF stack capture is diagnostic instrumentation with overhead. Symbol weights apply only to these runs, not the interrupted earlier run, and do not establish an uninstrumented speedup or a kernel's exclusive causal contribution.",
+    "Aggregate child-tree user/system time includes the profiler and workload. It is not the workload's standalone CPU time. Snapshots are contemporary host observations, not historical telemetry or proof of the earlier failure's cause.",
+    "An unavailable profiler is recorded and stops the diagnostic, without escalation or a substitute favorable attempt. A successful diagnostic cannot replace the failed original comparison or trigger retention. All earlier failures and all thirteen whole-crate proof groups remain open."
+  ],
+  "artifacts_sha256": {
+    "attempts.json": "190b79ced4ee3c7d9a4c4925f4d5e5dbcf88cffbd3032a141c27cb8a78e2dd88",
+    "baseline-prelude.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "baseline-prelude.stdout": "037231a608e20ea885591c585afdca58d85567b10465b61ede89a6fa5eacf960",
+    "baseline.stderr": "f40b6ad9c3e52549e2b0b9c017fe6487cb38b843ec0933d670a460b27749df10",
+    "baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "environment-before.json": "d3f56d5d68bb2be6d11b1d761966e579c6838a92e27c4b58fd906e2694d5b72e"
+  }
+}

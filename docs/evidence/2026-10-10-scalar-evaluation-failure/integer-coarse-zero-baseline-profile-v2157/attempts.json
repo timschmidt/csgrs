@@ -1,0 +1,139 @@
+[
+  {
+    "which": "baseline",
+    "command": [
+      "/usr/bin/perf",
+      "record",
+      "-q",
+      "-e",
+      "cpu-clock:u",
+      "-F",
+      "99",
+      "--call-graph",
+      "dwarf,8192",
+      "-m",
+      "64",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/integer-coarse-zero-baseline-profile-v2157/baseline.perf.data",
+      "--",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/typed-api-prototype-v1778-domain-predicate-algebraic-cost/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "binary_sha256": "9cb819f9850068822ae6a1bd0d404b6f5203839d493044438deaa62e3d92173b",
+    "exit_code": 127,
+    "wall_timeout": false,
+    "wall_seconds": 0.004066170658916235,
+    "child_tree_user_seconds": 0.0010690000000000005,
+    "child_tree_system_seconds": 0.0021529999999999995,
+    "prelude_exit_code": 0,
+    "receipt": null,
+    "environment_after": {
+      "wall_time_ns": 1791803464369542009,
+      "affinity": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15
+      ],
+      "uname": [
+        "Linux",
+        "fedora",
+        "7.2.5-100.fc43.x86_64",
+        "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+        "x86_64"
+      ],
+      "files": {
+        "/proc/loadavg": {
+          "text": "2.00 1.93 2.87 3/4238 10\n"
+        },
+        "/proc/pressure/cpu": {
+          "text": "some avg10=0.00 avg60=0.00 avg300=0.01 total=24562984083\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=0\n"
+        },
+        "/proc/self/cgroup": {
+          "text": "0::/user.slice/user-1000.slice/session-2.scope\n"
+        },
+        "/proc/sys/kernel/perf_event_paranoid": {
+          "text": "2\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/boost": {
+          "text": "1\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_avg_freq": {
+          "text": "4325136\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference": {
+          "text": "balance_performance\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq": {
+          "text": "4325136\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver": {
+          "text": "amd-pstate-epp\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor": {
+          "text": "powersave\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq": {
+          "text": "4552952\n"
+        },
+        "/sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq": {
+          "text": "1755355\n"
+        },
+        "/sys/fs/cgroup/cpu.max": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/cpu.max'"
+        },
+        "/sys/fs/cgroup/cpu.stat": {
+          "text": "usage_usec 7215929941023\nuser_usec 5691963730553\nsystem_usec 1523966210470\nnice_usec 1582246405\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/cpuset.cpus.effective": {
+          "text": "0-15\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpu.stat": {
+          "text": "usage_usec 6444229523541\nuser_usec 5676125307126\nsystem_usec 768104216414\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpu.stat": {
+          "text": "usage_usec 6444202199649\nuser_usec 5676109908104\nsystem_usec 768092291545\nnice_usec 41535179\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/cpuset.cpus.effective'"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.max": {
+          "text": "max 100000\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpu.stat": {
+          "text": "usage_usec 3739837270284\nuser_usec 3489596193196\nsystem_usec 250241077088\nnice_usec 11184195\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0\n"
+        },
+        "/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective": {
+          "error": "[Errno 2] No such file or directory: '/sys/fs/cgroup/user.slice/user-1000.slice/session-2.scope/cpuset.cpus.effective'"
+        }
+      }
+    },
+    "perf_data_bytes": 0
+  }
+]

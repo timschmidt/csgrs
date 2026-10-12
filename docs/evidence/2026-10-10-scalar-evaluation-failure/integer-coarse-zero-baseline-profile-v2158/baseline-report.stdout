@@ -1,0 +1,121 @@
+# To display the perf.data header info, please use --header/--header-only options.
+#
+#
+# Total Lost Samples: 0
+#
+# Samples: 180  of event 'cpu-clock:u'
+# Event count (approx.): 1818181800
+#
+# Overhead  Symbol                                                                                  IPC   [IPC Coverage]
+# ........  ......................................................................................  ....................
+#
+    67.22%  [.] num_bigint::biguint::division::div_rem_core                                         -      -            
+    25.00%  [.] num_bigint::biguint::multiplication::mac3                                           -      -            
+            |          
+            |--2.78%--0x2a
+            |          
+            |--1.67%--0x15f
+            |          
+            |--1.67%--0x7f
+            |          
+            |--1.67%--0x15
+            |          
+            |--1.11%--num_bigint::biguint::multiplication::mul3
+            |          
+            |--1.11%--num_bigint::biguint::multiplication::mac3
+            |          |          
+            |           --0.56%--num_bigint::biguint::multiplication::mul3
+            |                     0xab
+            |          
+            |--0.56%--0x7fa2faa37abf
+            |          
+            |--0.56%--num_bigint::biguint::multiplication::sub_sign
+            |          0x12
+            |          
+            |--0.56%--0xac
+            |          
+            |--0.56%--0xab
+            |          
+            |--0.56%--0x40
+            |          
+            |--0.56%--0x30
+            |          
+             --0.56%--0x10
+
+     1.67%  [.] num_bigint::biguint::subtraction::sub2                                              -      -            
+            |          
+            |--1.11%--0x55
+            |          
+             --0.56%--0xa7
+
+     1.11%  [.] cfree@GLIBC_2.2.5                                                                   -      -            
+            |          
+             --0.56%--cfree@GLIBC_2.2.5
+                       num_bigint::biguint::multiplication::mac3
+                       num_bigint::biguint::multiplication::mac3
+                       num_bigint::biguint::multiplication::mul3
+                       0x300
+
+     1.11%  [.] malloc                                                                              -      -            
+            |
+            ---num_bigint::biguint::multiplication::sub_sign
+               |          
+               |--0.56%--num_bigint::biguint::multiplication::sub_sign
+               |          num_bigint::biguint::multiplication::sub_sign
+               |          
+                --0.56%--0xaf
+
+     1.11%  [.] num_bigint::biguint::multiplication::sub_sign                                       -      -            
+     0.56%  [.] <num_bigint::biguint::BigUint as num_integer::roots::Roots>::nth_root::{closure#0}  -      -            
+            |
+            ---0x21
+
+     0.56%  [.] _Py_dict_lookup                                                                     -      -            
+            |
+            ---PyDict_GetItemRef
+               _PyObject_GenericGetAttrWithDict
+               _Py_module_getattro
+               PyObject_GetAttr
+               _PyObject_GetMethodStackRef.constprop.0
+               _PyEval_EvalFrameDefault
+               _PyFunction_Vectorcall
+               object_vacall.lto_priv.0
+               PyObject_CallMethodObjArgs
+               import_find_and_load
+               PyImport_ImportModuleLevelObject
+               _PyEval_ImportName
+               _PyEval_EvalFrameDefault
+               _PyEval_Vector
+               PyEval_EvalCode
+               run_mod.lto_priv.0
+               _PyRun_String.constprop.0
+               builtin_exec.lto_priv.0
+               _PyEval_EvalFrameDefault
+               _PyEval_Vector
+               PyEval_EvalCode
+               builtin_exec.lto_priv.0
+               _PyEval_EvalFrameDefault
+               _PyFunction_Vectorcall
+               object_vacall.lto_priv.0
+               PyObject_CallMethodObjArgs
+               import_find_and_load
+               PyImport_ImportModuleLevelObject
+               builtin___import__.lto_priv.0
+               PyObject_CallFunction
+               PyImport_Import
+               PyImport_ImportModule
+               init_interp_main.lto_priv.0
+               Py_InitializeFromConfig
+               pymain_init
+
+     0.56%  [.] __memcmp_avx2_movbe                                                                 -      -            
+     0.56%  [.] num_bigint::biguint::addition::add2                                                 -      -            
+            |
+            ---0xab
+
+     0.56%  [.] unlink_chunk.isra.0                                                                 -      -            
+
+
+#
+# (Tip: To show assembler sample context control flow use perf record -b / perf report --samples 10 and then browse context)
+#
