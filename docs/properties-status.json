@@ -43,7 +43,10 @@
       "remaining": "Diagnose remaining layer-sanity and cache fallback costs. First-query/opaque controls, retained memory, full consumer/default/integration suites, independent cache frontiers and complete report replay remain required. No matched application speedup or runtime admission is claimed.",
       "runtime_admitted": false,
       "native_evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/native-assessment-v1.json",
-      "native_qualification": "Twelve curve and 26 DRC focused regressions pass. The separate copper-neck test passes its unchanged 60-second check assertion. The complete two-board smoke fails its unchanged 120-second worker limit at 159.882472765 seconds, preserving 12/197 finding counts."
+      "native_qualification": "Twelve curve and 26 DRC focused regressions pass. The separate copper-neck test passes its unchanged 60-second check assertion. The complete two-board smoke fails its unchanged 120-second worker limit at 159.882472765 seconds, preserving 12/197 finding counts.",
+      "diagnostic_evidence": "docs/evidence/2026-10-12-persistent-laurent-cache/diagnostic-assessment-v2.json",
+      "diagnostic": "Complete-board counters record 19296432 quadratic projection calls, including 1973751 unsuccessful original retries. No retry succeeded on these boards; the separate deterministic term-limit regression still requires fallback. Timer data is instrumented and is not matched performance evidence.",
+      "next_step": "Evaluate a narrow quadratic-coefficient consumer to reduce allocation in successful queries, preserving fallback, proof publication and ownership. Public recognition-budget wording and all prior runtime admission gates remain open."
     }
   },
   "status_meanings": {
