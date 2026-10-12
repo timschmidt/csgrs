@@ -1,0 +1,17 @@
+note: verifying module bigint
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-metadata-guards-v2451/negative-denotation-reversed/src/bigint.rs:975:13
+    |
+975 | /             self.metadata_normalized() ==> match result {
+976 | |                 Sign::Minus => self.metadata_value() < 0,
+977 | |                 Sign::NoSign => self.metadata_value() == 0,
+978 | |                 Sign::Plus => self.metadata_value() > 0,
+979 | |             },
+    | |_____________^ failed this postcondition
+...
+988 |           self.sign
+    |           --------- at the end of the function body
+
+error: aborting due to 1 previous error
+

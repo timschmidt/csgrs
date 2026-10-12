@@ -1,0 +1,32 @@
+note: verifying module bigint
+
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-metadata-guards-v2451/sign-always-zero/src/bigint.rs:982:5
+    |
+982 |     pub fn sign(&self) -> Sign {
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-metadata-guards-v2451/sign-always-zero/src/bigint.rs:974:17
+    |
+974 |         ensures result == self.metadata_sign(),
+    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+988 |         Sign::NoSign
+    |         ------------ at the end of the function body
+
+error: postcondition not satisfied
+   --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-metadata-guards-v2451/sign-always-zero/src/bigint.rs:975:13
+    |
+975 | /             self.metadata_normalized() ==> match result {
+976 | |                 Sign::Minus => self.metadata_value() < 0,
+977 | |                 Sign::NoSign => self.metadata_value() == 0,
+978 | |                 Sign::Plus => self.metadata_value() > 0,
+979 | |             },
+    | |_____________^ failed this postcondition
+...
+988 |           Sign::NoSign
+    |           ------------ at the end of the function body
+
+error: aborting due to 2 previous errors
+

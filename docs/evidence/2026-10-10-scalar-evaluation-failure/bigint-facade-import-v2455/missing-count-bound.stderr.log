@@ -1,0 +1,13 @@
+error: precondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/missing-count-bound.rs:32:5
+   |
+32 |     magnitude.bits()
+   |     ^^^^^^^^^^^^^^^^
+   |
+  ::: /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/vendor/num-bigint/src/biguint/metadata_impl.rs:31:46
+   |
+31 |         requires self.metadata_normalized(), self.metadata_storage_bits() <= u64::MAX,
+   |                                              ---------------------------------------- failed precondition
+
+error: aborting due to 1 previous error
+

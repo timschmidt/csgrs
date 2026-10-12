@@ -1,0 +1,7 @@
+{
+  "previous_runner_sha256": "36909a54fd8b6dc87d03d9771ae27ae8c897c23542835b8e4d79962a3ab81da4",
+  "runner_sha256": "79524677d56251d6993cd8d5da02c46560ce52ab4195b4842f3cb1f5fdfa4fa1",
+  "harness_sha256": "fec5bae224bbcbf6d6012022d17342aa2f27a878e209e49062e55a094a88af17",
+  "native_fixture_formula": "65536 words * 3 signs + 130 multiword lengths * 2 padding forms * 3 signs = 197388; four paired constructions/operations each = 789552 comparisons.",
+  "production_source_changed": false
+}

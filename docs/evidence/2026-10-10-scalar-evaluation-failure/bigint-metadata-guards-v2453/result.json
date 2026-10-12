@@ -1,0 +1,151 @@
+{
+  "protocol_sha256": "623e1f0f28b0adbc85b8ba193eb16f1e1cdb3a2365dcf8c1efd490a6c888d6f0",
+  "runs": [
+    {
+      "name": "baseline",
+      "kind": "baseline",
+      "exit_code": 0,
+      "seconds": 3.3293406539596617,
+      "verification_results": {
+        "encountered-error": false,
+        "encountered-vir-error": false,
+        "verified": 3,
+        "errors": 0,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": false,
+      "stdout_sha256": "83b8bbead9f09c85b42c33eb7214a787372ac580b27f3973a3eb7993fb2fcb59",
+      "stderr_sha256": "c47ddd4872552fd6a4b98a16c9a01c93d63b3b266356973f6ceacdc62fcd74d3",
+      "original_gate_passed": false,
+      "original_phase": "bigint-metadata-guards-v2451",
+      "accepted_exact_module_note": true
+    },
+    {
+      "name": "sign-always-zero",
+      "kind": "executable",
+      "exit_code": 1,
+      "seconds": 2.5394091000780463,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "3e5cfda1a5df888880c77b2657f03d5a110e09bf2afd0e19ef177ead60c260b7",
+      "stderr_sha256": "a0e79ed3dabfe0b076d3579d2301d35d75628b56832adb98db2aaef426d035a9"
+    },
+    {
+      "name": "sign-reversed",
+      "kind": "executable",
+      "exit_code": 1,
+      "seconds": 2.332914860919118,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "67561250bfa1efbb5c909f46af9f1dffa0caf820370a16f123c3727fcefa1aea",
+      "stderr_sha256": "fc858712c7483abf8c81f091b02617ee23c55e129ca9c9b299b390784d8ea92c"
+    },
+    {
+      "name": "magnitude-view-offset",
+      "kind": "representation",
+      "exit_code": 1,
+      "seconds": 2.3068856769241393,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "ff8670e8b3cd435cb69e56a03a9afc747bf06800a470d946e8682be9feb25926",
+      "stderr_sha256": "8e60ae0fc5091ce96d3f377a9bc41809f69a17b37dd62c3fceee85c91c04198c"
+    },
+    {
+      "name": "storage-view-offset",
+      "kind": "representation",
+      "exit_code": 1,
+      "seconds": 2.366161360871047,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "d86eb5039f1ce95ff3cbf1d9f2c98e6167a9af8b31fee6ffff5cc3c9bfab461c",
+      "stderr_sha256": "25d641fe812eb6dcec3fb6e58d3af13771b6d1120f3794121fda752ab4ced1a8"
+    },
+    {
+      "name": "negative-denotation-reversed",
+      "kind": "representation",
+      "exit_code": 1,
+      "seconds": 2.3844694159924984,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "1724b764498a7850bfb250efa55d2e31a14668d77236262399a7ffae3704a98b",
+      "stderr_sha256": "7aff96c8821bf6ffdbbd0206b0fabf91b829e7007a8fcfa20b495f673e87dced"
+    },
+    {
+      "name": "missing-sign-consistency",
+      "kind": "representation",
+      "exit_code": 1,
+      "seconds": 2.3184348549693823,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 1,
+        "errors": 2,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "4d57c540e57799b9b7f4ca1dfd41054e0c9f085d70b1d752943998edf09d2bee",
+      "stderr_sha256": "bd7d09ef4da9e7005556406586c636615e9ce38e98cde4c2cc2a467670cdcb85"
+    },
+    {
+      "name": "missing-magnitude-normalization",
+      "kind": "representation",
+      "exit_code": 1,
+      "seconds": 2.378985241986811,
+      "verification_results": {
+        "encountered-error": true,
+        "encountered-vir-error": false,
+        "verified": 2,
+        "errors": 1,
+        "is-verifying-entire-crate": false
+      },
+      "gate_passed": true,
+      "real_proof_failure": true,
+      "stdout_sha256": "f4623b122a45a02c322bbfca90950ad9cc42d3cf041c229007200e3e59a80123",
+      "stderr_sha256": "a5a18b32687e65f6bd7cff07fb05ed14ad39a9751e41a0ed40c9a2b5a6d4b3a0"
+    }
+  ],
+  "complete": true,
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "base_unchanged": true,
+  "tooling_unchanged": true,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

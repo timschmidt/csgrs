@@ -1,0 +1,34 @@
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/sign-reversed.rs:12:1
+   |
+12 | pub fn signed_polarity(value: &BigInt) -> (result: i8)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/sign-reversed.rs:14:13
+   |
+14 |       ensures result == -1 <==> value.metadata_value() < 0,
+   |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+18 | /     match value.sign() {
+19 | |         Sign::Minus => 1,
+20 | |         Sign::NoSign => 0,
+21 | |         Sign::Plus => 1,
+22 | |     }
+   | |_____- at the end of the function body
+
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/sign-reversed.rs:16:9
+   |
+16 |           result == 1 <==> value.metadata_value() > 0,
+   |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+17 |   {
+18 | /     match value.sign() {
+19 | |         Sign::Minus => 1,
+20 | |         Sign::NoSign => 0,
+21 | |         Sign::Plus => 1,
+22 | |     }
+   | |_____- at the end of the function body
+
+error: aborting due to 2 previous errors
+

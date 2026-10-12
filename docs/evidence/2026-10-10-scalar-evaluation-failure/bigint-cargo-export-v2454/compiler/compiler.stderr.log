@@ -1,0 +1,4 @@
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/target/verification-dependencies/debug/deps/num_bigint-2252027f8222fdc7.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/target/verification-dependencies/debug/deps/num_bigint-2252027f8222fdc7.d","emit":"dep-info"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/target/verification-dependencies/debug/deps/libnum_bigint-2252027f8222fdc7.rmeta","emit":"metadata"}
+{"$message_type":"artifact","artifact":"/home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/target/verification-dependencies/debug/deps/libnum_bigint-2252027f8222fdc7.rlib","emit":"link"}

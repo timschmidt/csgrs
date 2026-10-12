@@ -1,0 +1,8 @@
+{
+  "unexecuted_predecessor_sha256": "2368e8195c7aa910a58f9e11ed9d4715e00db900de98c79db75c576ee5012dd4",
+  "runner_sha256": "f49398707cb3821d57c6250f4b78f91fb21c148e482032e998baa264893e7e24",
+  "wrapper_sha256": "ac5795342ca895b149dd6330f894bb7b7c3a053a8628ffcb8058812c77f76d03",
+  "change": "Depend on the corrected guard reader and completed seven controls. Reuse the unchanged prepared compiler wrapper. The prior Cargo driver was never executed.",
+  "prior_cargo_driver_executed": false,
+  "source_changed": false
+}

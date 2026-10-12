@@ -1,0 +1,12 @@
+{
+  "prior_wrapper_sha256": "14413b1ad57145065ccf51dabc86676c50a0f6209eeffea0d6112a84689064cb",
+  "prior_runner_sha256": "23795ef898939be665862b311221f4ee20e3f10fb2536c5e704112406290a41a",
+  "wrapper_sha256": "ac5795342ca895b149dd6330f894bb7b7c3a053a8628ffcb8058812c77f76d03",
+  "runner_sha256": "2368e8195c7aa910a58f9e11ed9d4715e00db900de98c79db75c576ee5012dd4",
+  "changes": [
+    "Use the exact newly proved BigInt vendor input, copying its lib.rs and bigint.rs into the existing matched fixture layout.",
+    "Require the fresh BigInt metadata guards to pass before Cargo execution.",
+    "Expect 453 verified units, including the earlier 450 and the two getters plus generated Sign clone."
+  ],
+  "source_changed": false
+}

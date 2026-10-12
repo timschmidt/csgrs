@@ -1,0 +1,11 @@
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/magnitude-bits-zero.rs:27:13
+   |
+27 |     ensures absolute(value.metadata_value()) == 0 <==> bits == 0,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+32 |     0
+   |     - at the end of the function body
+
+error: aborting due to 1 previous error
+

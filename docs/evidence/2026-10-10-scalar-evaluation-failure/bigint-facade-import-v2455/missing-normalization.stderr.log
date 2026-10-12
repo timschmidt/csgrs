@@ -1,0 +1,38 @@
+note: function body check: not all errors may have been reported; rerun with a higher value for --multiple-errors to find other potential errors in this function
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/missing-normalization.rs:25:1
+   |
+25 | pub fn magnitude_bits(value: &BigInt) -> (bits: u64)
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/missing-normalization.rs:27:13
+   |
+27 |     ensures absolute(value.metadata_value()) == 0 <==> bits == 0,
+   |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ failed this postcondition
+...
+32 |     magnitude.bits()
+   |     ---------------- at the end of the function body
+
+error: postcondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/missing-normalization.rs:28:9
+   |
+28 | /         bits > 0 ==> pow2((bits - 1) as nat) <= absolute(value.metadata_value())
+29 | |             && absolute(value.metadata_value()) < pow2(bits as nat),
+   | |___________________________________________________________________^ failed this postcondition
+...
+32 |       magnitude.bits()
+   |       ---------------- at the end of the function body
+
+error: precondition not satisfied
+  --> /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-facade-import-v2455/missing-normalization.rs:32:5
+   |
+32 |     magnitude.bits()
+   |     ^^^^^^^^^^^^^^^^
+   |
+  ::: /home/tim/Documents/GitHub/workspace/csgrs/target/bigint-cargo-export-v2454/vendor/num-bigint/src/biguint/metadata_impl.rs:31:18
+   |
+31 |         requires self.metadata_normalized(), self.metadata_storage_bits() <= u64::MAX,
+   |                  -------------------------- failed precondition
+
+error: aborting due to 3 previous errors
+

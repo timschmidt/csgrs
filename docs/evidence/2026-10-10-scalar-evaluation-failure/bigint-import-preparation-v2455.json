@@ -1,0 +1,12 @@
+{
+  "previous_runner_sha256": "55976b58133b16126b45328029cfa0b3a439710036377a71d2b53cb3e1789cf1",
+  "runner_sha256": "18e5c6da287b17a5ce050dc4f7434a987a5aa3d593952114d9d402e52dff814a",
+  "caller_sha256": "8d0358e107a7d4f0db22048e1a86005259ac4ddf417c78423336a558ba2bcd8b",
+  "cases": {
+    "caller_functions": 2,
+    "positive_baselines": 1,
+    "executable_mutations": 2,
+    "missing_premise_mutations": 2
+  },
+  "source_changed": false
+}

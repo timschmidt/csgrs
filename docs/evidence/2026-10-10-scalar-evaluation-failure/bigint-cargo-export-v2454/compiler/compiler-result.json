@@ -1,0 +1,22 @@
+{
+  "exit_code": 0,
+  "seconds": 7.011194180697203,
+  "verification_results": {
+    "encountered-error": false,
+    "encountered-vir-error": false,
+    "success": true,
+    "verified": 453,
+    "errors": 0,
+    "is-verifying-entire-crate": true
+  },
+  "gate_passed": true,
+  "warnings": 0,
+  "inherited_jobserver_descriptors": [
+    3,
+    5
+  ],
+  "stdout_sha256": "bee6c4b2a92d91cddbb64c3634617ead6a9ed3773f0a42a31ce2a00a0bc3f388",
+  "stderr_sha256": "24415fa34c43ed8be0bed524ac7de09ce2d3c86cc1152c4b9dd7e05805daa8bd",
+  "export_sha256": "5947b3d46e152ed103feab1fae849d39484b03161ec4277ec9f29d868d5f624a",
+  "compiler_invocation_sha256": "859ab63fa88a1811278ebbf317b883109dc5d61b40be3ddede309085fa47600a"
+}

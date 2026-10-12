@@ -1,0 +1,39 @@
+{
+  "protocol_sha256": "6e135d04a08dad5d19b525a654c882726c687e9381e29c936b4bf717105e03f3",
+  "runs": [
+    {
+      "name": "format",
+      "exit_code": 0,
+      "seconds": 0.01684829406440258,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "compile",
+      "exit_code": 0,
+      "seconds": 0.13086651405319571,
+      "gate_passed": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "execute",
+      "exit_code": 0,
+      "seconds": 0.3485991321504116,
+      "gate_passed": true,
+      "stdout_sha256": "7539edbfd077cf1ee558008b9d2868a84d33dbfc1016dd3d7c1043c50523a41b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "complete": true,
+  "binary_sha256": "38b59d8c985ceda9347ba2039ed628fd20223d8b675f5181ff96188d3d65ed63",
+  "source_unchanged": true,
+  "main_unchanged": true,
+  "dependency_inputs_unchanged": true,
+  "corpus_source_unchanged_during_validation": true,
+  "fresh_scalar_runtime_tests": 0,
+  "fresh_dependency_corpus_executions": 1,
+  "retained_coverage_changed": false,
+  "runtime_admitted": false
+}

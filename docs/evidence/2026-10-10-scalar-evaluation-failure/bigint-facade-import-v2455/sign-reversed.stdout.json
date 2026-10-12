@@ -1,0 +1,98 @@
+{
+  "func-details": {
+    "num_bigint::biguint::impl&%24::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power::pow": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%25::sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_requires": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::arithmetic::power2::pow2": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "bigint_facade_caller::absolute": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "vstd::function::axiom_fn_mut_call_ensures": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_sign": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "bigint_facade_caller::magnitude_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_value": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%24::metadata_storage_bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "bigint_facade_caller::signed_polarity": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%38::metadata_normalized": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::bigint::impl&%25::magnitude": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::magnitude_model::has_bit_length": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    },
+    "num_bigint::biguint::impl&%23::bits": {
+      "obligation_proof_notes": [],
+      "failed_proof_notes": []
+    }
+  },
+  "verification-results": {
+    "encountered-error": true,
+    "encountered-vir-error": false,
+    "success": false,
+    "verified": 1,
+    "errors": 1,
+    "is-verifying-entire-crate": true
+  },
+  "verus": {
+    "profile": "release",
+    "version": "0.2026.09.13.671956e",
+    "platform": {
+      "os": "linux",
+      "arch": "x86_64"
+    },
+    "toolchain": "1.98.1-x86_64-unknown-linux-gnu (overridden by environment variable RUSTUP_TOOLCHAIN)",
+    "commit": "671956ec527d3b7164779f767bdbfe769bedce6c"
+  }
+}
