@@ -1,0 +1,22 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-algebraic-stage-diagnostic-v2000/probe",
+    "cost",
+    "4",
+    "4",
+    "0",
+    "false",
+    "64"
+  ],
+  "exit_code": 0,
+  "wall_timeout": false,
+  "wall_seconds": 1.8179145529866219,
+  "binary_sha256": "0759585fb7100e7c527dc79a13d584c5272aac902f8f0bca2d8bb7a25ad13062",
+  "cpu": 0,
+  "address_space_bytes": 201326592,
+  "cpu_seconds_soft_hard": [
+    2,
+    3
+  ],
+  "wall_seconds_limit": 4
+}

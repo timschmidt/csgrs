@@ -1,0 +1,2105 @@
+{
+  "status": "Separately instrumented stage diagnostic completed",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "protocol_sha256": "ed99cb41987805d8660a00f15d6e708eb5738152a6c5f0bd5e2fd446974f9922",
+  "runner_sha256": "c1abacce935b80ab4532425b01c7696bbd69563b57e679b14292ca14298ba380",
+  "guards_unchanged": true,
+  "diagnostic_completed": true,
+  "receipt": {
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-algebraic-stage-diagnostic-v2000/probe",
+      "cost",
+      "4",
+      "4",
+      "0",
+      "false",
+      "64"
+    ],
+    "exit_code": 0,
+    "wall_timeout": false,
+    "wall_seconds": 1.8179145529866219,
+    "binary_sha256": "0759585fb7100e7c527dc79a13d584c5272aac902f8f0bca2d8bb7a25ad13062",
+    "cpu": 0,
+    "address_space_bytes": 201326592,
+    "cpu_seconds_soft_hard": [
+      2,
+      3
+    ],
+    "wall_seconds_limit": 4
+  },
+  "cost_receipt": {
+    "certified": 64,
+    "elapsed_ns": "11576586",
+    "iterations": 64,
+    "stage": "cost"
+  },
+  "markers": [
+    {
+      "diagnostic_stage": "start",
+      "iteration": null,
+      "system_ticks": 0,
+      "user_ticks": 0,
+      "wall_ns": "32358"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 0,
+      "system_ticks": 0,
+      "user_ticks": 0,
+      "wall_ns": "111823"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 0,
+      "system_ticks": 0,
+      "user_ticks": 0,
+      "wall_ns": "257993"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 0,
+      "system_ticks": 0,
+      "user_ticks": 2,
+      "wall_ns": "28633257"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 1,
+      "system_ticks": 0,
+      "user_ticks": 2,
+      "wall_ns": "28686213"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 1,
+      "system_ticks": 0,
+      "user_ticks": 2,
+      "wall_ns": "28768498"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 1,
+      "system_ticks": 0,
+      "user_ticks": 5,
+      "wall_ns": "57686864"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 2,
+      "system_ticks": 0,
+      "user_ticks": 5,
+      "wall_ns": "57751810"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 2,
+      "system_ticks": 0,
+      "user_ticks": 5,
+      "wall_ns": "57836414"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 2,
+      "system_ticks": 0,
+      "user_ticks": 8,
+      "wall_ns": "85540984"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 3,
+      "system_ticks": 0,
+      "user_ticks": 8,
+      "wall_ns": "85590051"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 3,
+      "system_ticks": 0,
+      "user_ticks": 8,
+      "wall_ns": "85671085"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 3,
+      "system_ticks": 0,
+      "user_ticks": 11,
+      "wall_ns": "113357587"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 4,
+      "system_ticks": 0,
+      "user_ticks": 11,
+      "wall_ns": "113407013"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 4,
+      "system_ticks": 0,
+      "user_ticks": 11,
+      "wall_ns": "113486978"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 4,
+      "system_ticks": 0,
+      "user_ticks": 13,
+      "wall_ns": "141335288"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 5,
+      "system_ticks": 0,
+      "user_ticks": 13,
+      "wall_ns": "141386314"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 5,
+      "system_ticks": 0,
+      "user_ticks": 13,
+      "wall_ns": "141468869"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 5,
+      "system_ticks": 0,
+      "user_ticks": 16,
+      "wall_ns": "169078065"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 6,
+      "system_ticks": 0,
+      "user_ticks": 16,
+      "wall_ns": "169127072"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 6,
+      "system_ticks": 0,
+      "user_ticks": 16,
+      "wall_ns": "169206957"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 6,
+      "system_ticks": 0,
+      "user_ticks": 19,
+      "wall_ns": "196918126"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 7,
+      "system_ticks": 0,
+      "user_ticks": 19,
+      "wall_ns": "196968263"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 7,
+      "system_ticks": 0,
+      "user_ticks": 19,
+      "wall_ns": "197057207"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 7,
+      "system_ticks": 0,
+      "user_ticks": 22,
+      "wall_ns": "224753177"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 8,
+      "system_ticks": 0,
+      "user_ticks": 22,
+      "wall_ns": "224803004"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 8,
+      "system_ticks": 0,
+      "user_ticks": 22,
+      "wall_ns": "224890528"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 8,
+      "system_ticks": 0,
+      "user_ticks": 25,
+      "wall_ns": "252588409"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 9,
+      "system_ticks": 0,
+      "user_ticks": 25,
+      "wall_ns": "252638735"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 9,
+      "system_ticks": 0,
+      "user_ticks": 25,
+      "wall_ns": "252720589"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 9,
+      "system_ticks": 0,
+      "user_ticks": 27,
+      "wall_ns": "280415820"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 10,
+      "system_ticks": 0,
+      "user_ticks": 27,
+      "wall_ns": "280464237"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 10,
+      "system_ticks": 0,
+      "user_ticks": 27,
+      "wall_ns": "280544481"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 10,
+      "system_ticks": 0,
+      "user_ticks": 30,
+      "wall_ns": "308288469"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 11,
+      "system_ticks": 0,
+      "user_ticks": 30,
+      "wall_ns": "308342505"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 11,
+      "system_ticks": 0,
+      "user_ticks": 30,
+      "wall_ns": "308431919"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 11,
+      "system_ticks": 0,
+      "user_ticks": 33,
+      "wall_ns": "336178006"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 12,
+      "system_ticks": 0,
+      "user_ticks": 33,
+      "wall_ns": "336227763"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 12,
+      "system_ticks": 0,
+      "user_ticks": 33,
+      "wall_ns": "336309347"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 12,
+      "system_ticks": 0,
+      "user_ticks": 36,
+      "wall_ns": "364323326"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 13,
+      "system_ticks": 0,
+      "user_ticks": 36,
+      "wall_ns": "364373833"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 13,
+      "system_ticks": 0,
+      "user_ticks": 36,
+      "wall_ns": "364455717"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 13,
+      "system_ticks": 0,
+      "user_ticks": 38,
+      "wall_ns": "392107041"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 14,
+      "system_ticks": 0,
+      "user_ticks": 38,
+      "wall_ns": "392156477"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 14,
+      "system_ticks": 0,
+      "user_ticks": 38,
+      "wall_ns": "392237092"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 14,
+      "system_ticks": 0,
+      "user_ticks": 41,
+      "wall_ns": "420162117"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 15,
+      "system_ticks": 0,
+      "user_ticks": 41,
+      "wall_ns": "420212703"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 15,
+      "system_ticks": 0,
+      "user_ticks": 41,
+      "wall_ns": "420294338"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 15,
+      "system_ticks": 0,
+      "user_ticks": 44,
+      "wall_ns": "448046035"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 16,
+      "system_ticks": 0,
+      "user_ticks": 44,
+      "wall_ns": "448096801"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 16,
+      "system_ticks": 0,
+      "user_ticks": 44,
+      "wall_ns": "448178596"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 16,
+      "system_ticks": 0,
+      "user_ticks": 47,
+      "wall_ns": "475903324"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 17,
+      "system_ticks": 0,
+      "user_ticks": 47,
+      "wall_ns": "475953401"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 17,
+      "system_ticks": 0,
+      "user_ticks": 47,
+      "wall_ns": "476033565"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 17,
+      "system_ticks": 0,
+      "user_ticks": 50,
+      "wall_ns": "504211233"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 18,
+      "system_ticks": 0,
+      "user_ticks": 50,
+      "wall_ns": "504262870"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 18,
+      "system_ticks": 0,
+      "user_ticks": 50,
+      "wall_ns": "504345104"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 18,
+      "system_ticks": 0,
+      "user_ticks": 52,
+      "wall_ns": "532576018"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 19,
+      "system_ticks": 0,
+      "user_ticks": 52,
+      "wall_ns": "532627544"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 19,
+      "system_ticks": 0,
+      "user_ticks": 52,
+      "wall_ns": "532708879"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 19,
+      "system_ticks": 0,
+      "user_ticks": 55,
+      "wall_ns": "560541830"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 20,
+      "system_ticks": 0,
+      "user_ticks": 55,
+      "wall_ns": "560592447"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 20,
+      "system_ticks": 0,
+      "user_ticks": 55,
+      "wall_ns": "560672631"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 20,
+      "system_ticks": 0,
+      "user_ticks": 58,
+      "wall_ns": "588316196"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 21,
+      "system_ticks": 0,
+      "user_ticks": 58,
+      "wall_ns": "588365672"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 21,
+      "system_ticks": 0,
+      "user_ticks": 58,
+      "wall_ns": "588445557"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 21,
+      "system_ticks": 0,
+      "user_ticks": 61,
+      "wall_ns": "616159466"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 22,
+      "system_ticks": 0,
+      "user_ticks": 61,
+      "wall_ns": "616209033"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 22,
+      "system_ticks": 0,
+      "user_ticks": 61,
+      "wall_ns": "616287747"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 22,
+      "system_ticks": 0,
+      "user_ticks": 64,
+      "wall_ns": "643970749"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 23,
+      "system_ticks": 0,
+      "user_ticks": 64,
+      "wall_ns": "644020526"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 23,
+      "system_ticks": 0,
+      "user_ticks": 64,
+      "wall_ns": "644099990"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 23,
+      "system_ticks": 0,
+      "user_ticks": 66,
+      "wall_ns": "671832308"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 24,
+      "system_ticks": 0,
+      "user_ticks": 66,
+      "wall_ns": "671889994"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 24,
+      "system_ticks": 0,
+      "user_ticks": 66,
+      "wall_ns": "671970379"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 24,
+      "system_ticks": 0,
+      "user_ticks": 69,
+      "wall_ns": "699584685"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 25,
+      "system_ticks": 0,
+      "user_ticks": 69,
+      "wall_ns": "699633632"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 25,
+      "system_ticks": 0,
+      "user_ticks": 69,
+      "wall_ns": "699712296"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 25,
+      "system_ticks": 0,
+      "user_ticks": 72,
+      "wall_ns": "727385399"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 26,
+      "system_ticks": 0,
+      "user_ticks": 72,
+      "wall_ns": "727435415"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 26,
+      "system_ticks": 0,
+      "user_ticks": 72,
+      "wall_ns": "727515000"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 26,
+      "system_ticks": 0,
+      "user_ticks": 75,
+      "wall_ns": "755174163"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 27,
+      "system_ticks": 0,
+      "user_ticks": 75,
+      "wall_ns": "755224149"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 27,
+      "system_ticks": 0,
+      "user_ticks": 75,
+      "wall_ns": "755304154"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 27,
+      "system_ticks": 0,
+      "user_ticks": 77,
+      "wall_ns": "782981076"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 28,
+      "system_ticks": 0,
+      "user_ticks": 77,
+      "wall_ns": "783030442"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 28,
+      "system_ticks": 0,
+      "user_ticks": 77,
+      "wall_ns": "783110617"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 28,
+      "system_ticks": 0,
+      "user_ticks": 80,
+      "wall_ns": "810965937"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 29,
+      "system_ticks": 0,
+      "user_ticks": 80,
+      "wall_ns": "811016983"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 29,
+      "system_ticks": 0,
+      "user_ticks": 80,
+      "wall_ns": "811098198"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 29,
+      "system_ticks": 0,
+      "user_ticks": 83,
+      "wall_ns": "838864164"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 30,
+      "system_ticks": 0,
+      "user_ticks": 83,
+      "wall_ns": "838915100"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 30,
+      "system_ticks": 0,
+      "user_ticks": 83,
+      "wall_ns": "838995575"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 30,
+      "system_ticks": 0,
+      "user_ticks": 86,
+      "wall_ns": "866659098"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 31,
+      "system_ticks": 0,
+      "user_ticks": 86,
+      "wall_ns": "866707274"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 31,
+      "system_ticks": 0,
+      "user_ticks": 86,
+      "wall_ns": "866786199"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 31,
+      "system_ticks": 0,
+      "user_ticks": 88,
+      "wall_ns": "894422674"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 32,
+      "system_ticks": 0,
+      "user_ticks": 88,
+      "wall_ns": "894470930"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 32,
+      "system_ticks": 0,
+      "user_ticks": 88,
+      "wall_ns": "894549135"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 32,
+      "system_ticks": 0,
+      "user_ticks": 91,
+      "wall_ns": "922161431"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 33,
+      "system_ticks": 0,
+      "user_ticks": 91,
+      "wall_ns": "922209688"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 33,
+      "system_ticks": 0,
+      "user_ticks": 91,
+      "wall_ns": "922287953"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 33,
+      "system_ticks": 0,
+      "user_ticks": 94,
+      "wall_ns": "950005142"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 34,
+      "system_ticks": 0,
+      "user_ticks": 94,
+      "wall_ns": "950055488"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 34,
+      "system_ticks": 0,
+      "user_ticks": 94,
+      "wall_ns": "950135803"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 34,
+      "system_ticks": 0,
+      "user_ticks": 97,
+      "wall_ns": "978108045"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 35,
+      "system_ticks": 0,
+      "user_ticks": 97,
+      "wall_ns": "978158901"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 35,
+      "system_ticks": 0,
+      "user_ticks": 97,
+      "wall_ns": "978239306"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 35,
+      "system_ticks": 0,
+      "user_ticks": 99,
+      "wall_ns": "1005892419"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 36,
+      "system_ticks": 0,
+      "user_ticks": 99,
+      "wall_ns": "1005941406"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 36,
+      "system_ticks": 0,
+      "user_ticks": 99,
+      "wall_ns": "1006020521"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 36,
+      "system_ticks": 0,
+      "user_ticks": 102,
+      "wall_ns": "1033698273"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 37,
+      "system_ticks": 0,
+      "user_ticks": 102,
+      "wall_ns": "1033748569"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 37,
+      "system_ticks": 0,
+      "user_ticks": 102,
+      "wall_ns": "1033828454"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 37,
+      "system_ticks": 0,
+      "user_ticks": 105,
+      "wall_ns": "1061767128"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 38,
+      "system_ticks": 0,
+      "user_ticks": 105,
+      "wall_ns": "1061816924"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 38,
+      "system_ticks": 0,
+      "user_ticks": 105,
+      "wall_ns": "1061909398"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 38,
+      "system_ticks": 0,
+      "user_ticks": 108,
+      "wall_ns": "1090776808"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 39,
+      "system_ticks": 0,
+      "user_ticks": 108,
+      "wall_ns": "1090831865"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 39,
+      "system_ticks": 0,
+      "user_ticks": 108,
+      "wall_ns": "1090934158"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 39,
+      "system_ticks": 0,
+      "user_ticks": 111,
+      "wall_ns": "1118757979"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 40,
+      "system_ticks": 0,
+      "user_ticks": 111,
+      "wall_ns": "1118807986"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 40,
+      "system_ticks": 0,
+      "user_ticks": 111,
+      "wall_ns": "1118896600"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 40,
+      "system_ticks": 0,
+      "user_ticks": 113,
+      "wall_ns": "1146733321"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 41,
+      "system_ticks": 0,
+      "user_ticks": 113,
+      "wall_ns": "1146784488"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 41,
+      "system_ticks": 0,
+      "user_ticks": 113,
+      "wall_ns": "1146872811"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 41,
+      "system_ticks": 0,
+      "user_ticks": 116,
+      "wall_ns": "1174663056"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 42,
+      "system_ticks": 0,
+      "user_ticks": 116,
+      "wall_ns": "1174713632"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 42,
+      "system_ticks": 0,
+      "user_ticks": 116,
+      "wall_ns": "1174795427"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 42,
+      "system_ticks": 0,
+      "user_ticks": 119,
+      "wall_ns": "1202626388"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 43,
+      "system_ticks": 0,
+      "user_ticks": 119,
+      "wall_ns": "1202677225"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 43,
+      "system_ticks": 0,
+      "user_ticks": 119,
+      "wall_ns": "1202758969"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 43,
+      "system_ticks": 0,
+      "user_ticks": 122,
+      "wall_ns": "1230452650"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 44,
+      "system_ticks": 0,
+      "user_ticks": 122,
+      "wall_ns": "1230502836"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 44,
+      "system_ticks": 0,
+      "user_ticks": 122,
+      "wall_ns": "1230583211"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 44,
+      "system_ticks": 0,
+      "user_ticks": 124,
+      "wall_ns": "1258479708"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 45,
+      "system_ticks": 0,
+      "user_ticks": 124,
+      "wall_ns": "1258531454"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 45,
+      "system_ticks": 0,
+      "user_ticks": 124,
+      "wall_ns": "1258612679"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 45,
+      "system_ticks": 0,
+      "user_ticks": 127,
+      "wall_ns": "1286358246"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 46,
+      "system_ticks": 0,
+      "user_ticks": 127,
+      "wall_ns": "1286408273"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 46,
+      "system_ticks": 0,
+      "user_ticks": 127,
+      "wall_ns": "1286489137"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 46,
+      "system_ticks": 0,
+      "user_ticks": 130,
+      "wall_ns": "1314190547"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 47,
+      "system_ticks": 0,
+      "user_ticks": 130,
+      "wall_ns": "1314239884"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 47,
+      "system_ticks": 0,
+      "user_ticks": 130,
+      "wall_ns": "1314320548"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 47,
+      "system_ticks": 0,
+      "user_ticks": 133,
+      "wall_ns": "1342199267"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 48,
+      "system_ticks": 0,
+      "user_ticks": 133,
+      "wall_ns": "1342250353"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 48,
+      "system_ticks": 0,
+      "user_ticks": 133,
+      "wall_ns": "1342331398"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 48,
+      "system_ticks": 0,
+      "user_ticks": 136,
+      "wall_ns": "1369937444"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 49,
+      "system_ticks": 0,
+      "user_ticks": 136,
+      "wall_ns": "1369985021"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 49,
+      "system_ticks": 0,
+      "user_ticks": 136,
+      "wall_ns": "1370063506"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 49,
+      "system_ticks": 0,
+      "user_ticks": 138,
+      "wall_ns": "1397706260"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 50,
+      "system_ticks": 0,
+      "user_ticks": 138,
+      "wall_ns": "1397755627"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 50,
+      "system_ticks": 0,
+      "user_ticks": 138,
+      "wall_ns": "1397834941"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 50,
+      "system_ticks": 0,
+      "user_ticks": 141,
+      "wall_ns": "1425681392"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 51,
+      "system_ticks": 0,
+      "user_ticks": 141,
+      "wall_ns": "1425732168"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 51,
+      "system_ticks": 0,
+      "user_ticks": 141,
+      "wall_ns": "1425812163"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 51,
+      "system_ticks": 0,
+      "user_ticks": 144,
+      "wall_ns": "1453655353"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 52,
+      "system_ticks": 0,
+      "user_ticks": 144,
+      "wall_ns": "1453706460"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 52,
+      "system_ticks": 0,
+      "user_ticks": 144,
+      "wall_ns": "1453787544"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 52,
+      "system_ticks": 0,
+      "user_ticks": 146,
+      "wall_ns": "1481505673"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 53,
+      "system_ticks": 0,
+      "user_ticks": 146,
+      "wall_ns": "1481555450"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 53,
+      "system_ticks": 0,
+      "user_ticks": 146,
+      "wall_ns": "1481636074"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 53,
+      "system_ticks": 0,
+      "user_ticks": 150,
+      "wall_ns": "1513116906"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 54,
+      "system_ticks": 0,
+      "user_ticks": 150,
+      "wall_ns": "1513168902"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 54,
+      "system_ticks": 0,
+      "user_ticks": 150,
+      "wall_ns": "1513251896"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 54,
+      "system_ticks": 0,
+      "user_ticks": 153,
+      "wall_ns": "1542690248"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 55,
+      "system_ticks": 0,
+      "user_ticks": 153,
+      "wall_ns": "1542742524"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 55,
+      "system_ticks": 0,
+      "user_ticks": 153,
+      "wall_ns": "1542826818"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 55,
+      "system_ticks": 0,
+      "user_ticks": 155,
+      "wall_ns": "1571505172"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 56,
+      "system_ticks": 0,
+      "user_ticks": 155,
+      "wall_ns": "1571557048"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 56,
+      "system_ticks": 0,
+      "user_ticks": 155,
+      "wall_ns": "1571639662"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 56,
+      "system_ticks": 0,
+      "user_ticks": 158,
+      "wall_ns": "1599474644"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 57,
+      "system_ticks": 0,
+      "user_ticks": 158,
+      "wall_ns": "1599525830"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 57,
+      "system_ticks": 0,
+      "user_ticks": 158,
+      "wall_ns": "1599607054"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 57,
+      "system_ticks": 0,
+      "user_ticks": 161,
+      "wall_ns": "1627333673"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 58,
+      "system_ticks": 0,
+      "user_ticks": 161,
+      "wall_ns": "1627383450"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 58,
+      "system_ticks": 0,
+      "user_ticks": 161,
+      "wall_ns": "1627463384"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 58,
+      "system_ticks": 0,
+      "user_ticks": 164,
+      "wall_ns": "1655211401"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 59,
+      "system_ticks": 0,
+      "user_ticks": 164,
+      "wall_ns": "1655269427"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 59,
+      "system_ticks": 0,
+      "user_ticks": 164,
+      "wall_ns": "1655365621"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 59,
+      "system_ticks": 0,
+      "user_ticks": 166,
+      "wall_ns": "1683176304"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 60,
+      "system_ticks": 0,
+      "user_ticks": 166,
+      "wall_ns": "1683224360"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 60,
+      "system_ticks": 0,
+      "user_ticks": 166,
+      "wall_ns": "1683303165"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 60,
+      "system_ticks": 0,
+      "user_ticks": 169,
+      "wall_ns": "1710909722"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 61,
+      "system_ticks": 0,
+      "user_ticks": 169,
+      "wall_ns": "1710957918"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 61,
+      "system_ticks": 0,
+      "user_ticks": 169,
+      "wall_ns": "1711036213"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 61,
+      "system_ticks": 0,
+      "user_ticks": 172,
+      "wall_ns": "1738957838"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 62,
+      "system_ticks": 0,
+      "user_ticks": 172,
+      "wall_ns": "1739009525"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 62,
+      "system_ticks": 0,
+      "user_ticks": 172,
+      "wall_ns": "1739089799"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 62,
+      "system_ticks": 0,
+      "user_ticks": 175,
+      "wall_ns": "1766734853"
+    },
+    {
+      "diagnostic_stage": "before_fixture",
+      "iteration": 63,
+      "system_ticks": 0,
+      "user_ticks": 175,
+      "wall_ns": "1766783600"
+    },
+    {
+      "diagnostic_stage": "after_fixture",
+      "iteration": 63,
+      "system_ticks": 1,
+      "user_ticks": 175,
+      "wall_ns": "1766875594"
+    },
+    {
+      "diagnostic_stage": "after_warmup",
+      "iteration": 63,
+      "system_ticks": 1,
+      "user_ticks": 177,
+      "wall_ns": "1794475881"
+    },
+    {
+      "diagnostic_stage": "before_queries",
+      "iteration": null,
+      "system_ticks": 1,
+      "user_ticks": 177,
+      "wall_ns": "1794523948"
+    },
+    {
+      "diagnostic_stage": "after_queries",
+      "iteration": null,
+      "system_ticks": 1,
+      "user_ticks": 179,
+      "wall_ns": "1806149860"
+    }
+  ],
+  "stage_observations": {
+    "fixture": [
+      {
+        "iteration": 0,
+        "wall_ns": 146170,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 1,
+        "wall_ns": 82285,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 2,
+        "wall_ns": 84604,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 3,
+        "wall_ns": 81034,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 4,
+        "wall_ns": 79965,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 5,
+        "wall_ns": 82555,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 6,
+        "wall_ns": 79885,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 7,
+        "wall_ns": 88944,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 8,
+        "wall_ns": 87524,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 9,
+        "wall_ns": 81854,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 10,
+        "wall_ns": 80244,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 11,
+        "wall_ns": 89414,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 12,
+        "wall_ns": 81584,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 13,
+        "wall_ns": 81884,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 14,
+        "wall_ns": 80615,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 15,
+        "wall_ns": 81635,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 16,
+        "wall_ns": 81795,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 17,
+        "wall_ns": 80164,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 18,
+        "wall_ns": 82234,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 19,
+        "wall_ns": 81335,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 20,
+        "wall_ns": 80184,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 21,
+        "wall_ns": 79885,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 22,
+        "wall_ns": 78714,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 23,
+        "wall_ns": 79464,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 24,
+        "wall_ns": 80385,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 25,
+        "wall_ns": 78664,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 26,
+        "wall_ns": 79585,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 27,
+        "wall_ns": 80005,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 28,
+        "wall_ns": 80175,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 29,
+        "wall_ns": 81215,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 30,
+        "wall_ns": 80475,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 31,
+        "wall_ns": 78925,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 32,
+        "wall_ns": 78205,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 33,
+        "wall_ns": 78265,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 34,
+        "wall_ns": 80315,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 35,
+        "wall_ns": 80405,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 36,
+        "wall_ns": 79115,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 37,
+        "wall_ns": 79885,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 38,
+        "wall_ns": 92474,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 39,
+        "wall_ns": 102293,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 40,
+        "wall_ns": 88614,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 41,
+        "wall_ns": 88323,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 42,
+        "wall_ns": 81795,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 43,
+        "wall_ns": 81744,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 44,
+        "wall_ns": 80375,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 45,
+        "wall_ns": 81225,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 46,
+        "wall_ns": 80864,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 47,
+        "wall_ns": 80664,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 48,
+        "wall_ns": 81045,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 49,
+        "wall_ns": 78485,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 50,
+        "wall_ns": 79314,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 51,
+        "wall_ns": 79995,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 52,
+        "wall_ns": 81084,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 53,
+        "wall_ns": 80624,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 54,
+        "wall_ns": 82994,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 55,
+        "wall_ns": 84294,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 56,
+        "wall_ns": 82614,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 57,
+        "wall_ns": 81224,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 58,
+        "wall_ns": 79934,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 59,
+        "wall_ns": 96194,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 60,
+        "wall_ns": 78805,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 61,
+        "wall_ns": 78295,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 62,
+        "wall_ns": 80274,
+        "cpu_ticks": 0
+      },
+      {
+        "iteration": 63,
+        "wall_ns": 91994,
+        "cpu_ticks": 1
+      }
+    ],
+    "warmup": [
+      {
+        "iteration": 0,
+        "wall_ns": 28375264,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 1,
+        "wall_ns": 28918366,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 2,
+        "wall_ns": 27704570,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 3,
+        "wall_ns": 27686502,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 4,
+        "wall_ns": 27848310,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 5,
+        "wall_ns": 27609196,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 6,
+        "wall_ns": 27711169,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 7,
+        "wall_ns": 27695970,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 8,
+        "wall_ns": 27697881,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 9,
+        "wall_ns": 27695231,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 10,
+        "wall_ns": 27743988,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 11,
+        "wall_ns": 27746087,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 12,
+        "wall_ns": 28013979,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 13,
+        "wall_ns": 27651324,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 14,
+        "wall_ns": 27925025,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 15,
+        "wall_ns": 27751697,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 16,
+        "wall_ns": 27724728,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 17,
+        "wall_ns": 28177668,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 18,
+        "wall_ns": 28230914,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 19,
+        "wall_ns": 27832951,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 20,
+        "wall_ns": 27643565,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 21,
+        "wall_ns": 27713909,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 22,
+        "wall_ns": 27683002,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 23,
+        "wall_ns": 27732318,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 24,
+        "wall_ns": 27614306,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 25,
+        "wall_ns": 27673103,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 26,
+        "wall_ns": 27659163,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 27,
+        "wall_ns": 27676922,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 28,
+        "wall_ns": 27855320,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 29,
+        "wall_ns": 27765966,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 30,
+        "wall_ns": 27663523,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 31,
+        "wall_ns": 27636475,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 32,
+        "wall_ns": 27612296,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 33,
+        "wall_ns": 27717189,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 34,
+        "wall_ns": 27972242,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 35,
+        "wall_ns": 27653113,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 36,
+        "wall_ns": 27677752,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 37,
+        "wall_ns": 27938674,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 38,
+        "wall_ns": 28867410,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 39,
+        "wall_ns": 27823821,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 40,
+        "wall_ns": 27836721,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 41,
+        "wall_ns": 27790245,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 42,
+        "wall_ns": 27830961,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 43,
+        "wall_ns": 27693681,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 44,
+        "wall_ns": 27896497,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 45,
+        "wall_ns": 27745567,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 46,
+        "wall_ns": 27701410,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 47,
+        "wall_ns": 27878719,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 48,
+        "wall_ns": 27606046,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 49,
+        "wall_ns": 27642754,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 50,
+        "wall_ns": 27846451,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 51,
+        "wall_ns": 27843190,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 52,
+        "wall_ns": 27718129,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 53,
+        "wall_ns": 31480832,
+        "cpu_ticks": 4
+      },
+      {
+        "iteration": 54,
+        "wall_ns": 29438352,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 55,
+        "wall_ns": 28678354,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 56,
+        "wall_ns": 27834982,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 57,
+        "wall_ns": 27726619,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 58,
+        "wall_ns": 27748017,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 59,
+        "wall_ns": 27810683,
+        "cpu_ticks": 2
+      },
+      {
+        "iteration": 60,
+        "wall_ns": 27606557,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 61,
+        "wall_ns": 27921625,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 62,
+        "wall_ns": 27645054,
+        "cpu_ticks": 3
+      },
+      {
+        "iteration": 63,
+        "wall_ns": 27600287,
+        "cpu_ticks": 2
+      }
+    ],
+    "queries": [
+      {
+        "iteration": null,
+        "wall_ns": 11625912,
+        "cpu_ticks": 2
+      }
+    ]
+  },
+  "stage_totals": {
+    "fixture": {
+      "completed_intervals": 64,
+      "wall_ns": 5325130,
+      "cpu_ticks": 1
+    },
+    "warmup": {
+      "completed_intervals": 64,
+      "wall_ns": 1785842622,
+      "cpu_ticks": 177
+    },
+    "queries": {
+      "completed_intervals": 1,
+      "wall_ns": 11625912,
+      "cpu_ticks": 2
+    }
+  },
+  "clock_ticks_per_second": 100,
+  "last_marker": {
+    "diagnostic_stage": "after_queries",
+    "iteration": null,
+    "system_ticks": 1,
+    "user_ticks": 179,
+    "wall_ns": "1806149860"
+  },
+  "next_expected_marker": null,
+  "other_stderr": [],
+  "runtime_retained": false,
+  "original_cost_failure_still_failed": true,
+  "limits": [
+    "One candidate-only instrumented run under the original caps; no retry, larger-cap substitution, matched benchmark or acceptance decision.",
+    "Keep all 64 fourth-root/four-factor fixtures, their warm precision -16384, sign query and independent zero/sample assertions. The original fixture functions are byte-identical.",
+    "Markers read Linux process CPU ticks and wall time and write stderr. Instrumentation has overhead; phase differences include it and are diagnostic observations only.",
+    "This run may identify its own unfinished stage or observed work distribution. It cannot identify the stage of the earlier uninstrumented failure retroactively.",
+    "The retained baseline executable is intact, but its former shared hyperreal rlib has been replaced by subsequent candidate builds. This uses only the current hash-verified candidate libraries and makes no baseline stage comparison.",
+    "The v1943 failure, unretained selector, v1836 retained runtime, thirteen open proof groups and full properties-plan scope remain unchanged."
+  ],
+  "artifacts_sha256": {
+    "build.json": "23bdc77a2fd33ab163c5cfed1b6c8f042acea9ad55f1419a188ebea1076af22e",
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "prelude.json": "c7b98dbfbac3f35940c1e4a11831fbf421e0d829991bfb6a0f3d8e983a1596a7",
+    "probe.rs": "db993509a41b816f5b9ab24e04e1ad5ff242174dd2f3b27dc0b56a3b99cf6324",
+    "probe.stderr": "a353de614d39406b0d58041d7a10ddc58aeec21dcc2aff12c28e2105beb5feba",
+    "probe.stdout": "2e5c7ecb46acd360ac7b1e0131be4657729d53ee9ac19c65d504b7d0f8f0685e",
+    "protocol.json": "ed99cb41987805d8660a00f15d6e708eb5738152a6c5f0bd5e2fd446974f9922",
+    "receipt.json": "5b4861d9a1a287b40347ecbabc02d59570601a069d0c8f8b54ab324efaba443e",
+    "runner.py": "c1abacce935b80ab4532425b01c7696bbd69563b57e679b14292ca14298ba380"
+  }
+}

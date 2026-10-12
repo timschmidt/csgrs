@@ -1,0 +1,9 @@
+{
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-focused-cpu-prelude-v1943"
+  ],
+  "exit_code": 0,
+  "stdout": "748378381850860437\n",
+  "stderr": "",
+  "binary_sha256": "fa8cf871d96381d2310f1fb6d5d884148478fafbc0783c644ac4dc98fcfe5f4e"
+}

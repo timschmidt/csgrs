@@ -1,0 +1,75 @@
+{
+  "status": "Frozen before compiling or running this separately instrumented diagnostic",
+  "source_record": "typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "rejection_record": "cache-state-merge-cost-rejection-v1943.json",
+  "rejection_record_sha256": "9b3fd75c5e2810813e06faefbe6bff56d0d108707d7cc675deec91969e805718",
+  "original_probe": "typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe.rs",
+  "original_probe_sha256": "3a361a03d80ca492abbb9f0e9dfc455e378e52d1468cedca61b51e62d8ce3c36",
+  "probe": "cache-state-algebraic-stage-probe-v2000.rs",
+  "probe_sha256": "db993509a41b816f5b9ab24e04e1ad5ff242174dd2f3b27dc0b56a3b99cf6324",
+  "patch": "cache-state-algebraic-stage-probe-v2000.patch",
+  "patch_sha256": "43c5ec6b5ee4d9edd09c430675c28e7f5ee23a967f1e1b5d43b85e304717b7b4",
+  "runner": "diagnose_cache_state_algebraic_stages.py",
+  "runner_sha256": "c1abacce935b80ab4532425b01c7696bbd69563b57e679b14292ca14298ba380",
+  "generator_sha256": "08d36435bf04a8fef2e65d924b99d97c2c85e9cd1932b95e8834cf1c7bd64be3",
+  "output": "cache-state-algebraic-stage-diagnostic-v2000",
+  "build_command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "-D",
+    "warnings",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-state-algebraic-stage-probe-v2000.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+    "--extern",
+    "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+    "--extern",
+    "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-algebraic-stage-diagnostic-v2000/probe"
+  ],
+  "format_command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-state-algebraic-stage-probe-v2000.rs"
+  ],
+  "libraries_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib": "290519f04e447c36e2a7a9acbd27ae39be36d24ee6f7db1cb89d0e7994dd6b5e",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib": "81a6b97b969063a264904f8bbdae15878dec0020015a720a1c8d346a6b72cde4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib": "0a4cc864fdb514f202ee3f2021d5762549fac2d8bd31956d928cfbb010bb7c06"
+  },
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-algebraic-stage-diagnostic-v2000/probe",
+    "cost",
+    "4",
+    "4",
+    "0",
+    "false",
+    "64"
+  ],
+  "address_space_bytes": 201326592,
+  "cpu_seconds": [
+    2,
+    3
+  ],
+  "wall_seconds": 4,
+  "cpu": 0,
+  "clock_ticks_per_second": 100,
+  "prelude": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-merge-focused-cpu-prelude-v1943",
+  "prelude_sha256": "fa8cf871d96381d2310f1fb6d5d884148478fafbc0783c644ac4dc98fcfe5f4e",
+  "prelude_iterations": 50000000,
+  "diagnostic_processes": 1,
+  "limits": [
+    "One candidate-only instrumented run under the original caps; no retry, larger-cap substitution, matched benchmark or acceptance decision.",
+    "Keep all 64 fourth-root/four-factor fixtures, their warm precision -16384, sign query and independent zero/sample assertions. The original fixture functions are byte-identical.",
+    "Markers read Linux process CPU ticks and wall time and write stderr. Instrumentation has overhead; phase differences include it and are diagnostic observations only.",
+    "This run may identify its own unfinished stage or observed work distribution. It cannot identify the stage of the earlier uninstrumented failure retroactively.",
+    "The retained baseline executable is intact, but its former shared hyperreal rlib has been replaced by subsequent candidate builds. This uses only the current hash-verified candidate libraries and makes no baseline stage comparison.",
+    "The v1943 failure, unretained selector, v1836 retained runtime, thirteen open proof groups and full properties-plan scope remain unchanged."
+  ]
+}

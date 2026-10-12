@@ -1,0 +1,77 @@
+{
+  "status": "Candidate-only stage diagnostic and source review; no runtime retention",
+  "source_record": "typed-api-prototype-v1924-cache-state-merge-verus/source-hashes.json.gz",
+  "source_record_sha256": "555cf4a48df68e021119c107412824b5879baf48e252c6fb1c8d2bc22baf1c59",
+  "protocol": "cache-state-algebraic-stage-protocol-v2000.json",
+  "protocol_sha256": "ed99cb41987805d8660a00f15d6e708eb5738152a6c5f0bd5e2fd446974f9922",
+  "summary": "cache-state-algebraic-stage-diagnostic-v2000/summary.json",
+  "summary_sha256": "602fffeadf1313f3a7eaba08caef7109e6f15e605915aec24a3ed11837c565b0",
+  "rejection_record": "cache-state-merge-cost-rejection-v1943.json",
+  "rejection_record_sha256": "9b3fd75c5e2810813e06faefbe6bff56d0d108707d7cc675deec91969e805718",
+  "diagnostic_processes": 1,
+  "separate_cpu_preludes": 1,
+  "original_process_caps_preserved": true,
+  "stage_totals": {
+    "fixture": {
+      "completed_intervals": 64,
+      "wall_ns": 5325130,
+      "cpu_ticks": 1
+    },
+    "warmup": {
+      "completed_intervals": 64,
+      "wall_ns": 1785842622,
+      "cpu_ticks": 177
+    },
+    "queries": {
+      "completed_intervals": 1,
+      "wall_ns": 11625912,
+      "cpu_ticks": 2
+    }
+  },
+  "clock_ticks_per_second": 100,
+  "warmup_share_of_measured_stage_wall_time": 0.9905973476951381,
+  "reviewed_sources": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": {
+      "sha256": "b617365156c6c0efefb4e282545931f1fd91822e454ed5156a1a8265e1a51c67",
+      "scope": "approx_signal entry, finite-real validation, cached value/tower dispatch and iterative Add/Negate/Offset traversal; sign_until refinement and algebraic-separation decision."
+    },
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": {
+      "sha256": "48feb1650215623e8cb7e1636743f8040a57337d5fdc8c195a0e50e5668f980b",
+      "scope": "cached_quadratic_tower_approximation, including its reuse-only contract; inspected supported NthRoot degree-two arms, without claiming a runtime trace."
+    },
+    "crates/hyperreal/src/computable/node/domain_validation.rs": {
+      "sha256": "d5d7a365802ed456714f34afc8b6b4c6d025c98293ea37b9896e2990293bf957",
+      "scope": "Bottom-up finite-real traversal and the bounded-degree/nonnegative NthRoot domain check."
+    },
+    "crates/hyperreal/src/computable/approximation/dispatch.rs": {
+      "sha256": "7e1c3ed6db09ef456f596ee7b1cafaa2bf70361feb06e8f5b54baae0e4ea9352",
+      "scope": "Approximation::approximate entry and NthRoot dispatch."
+    },
+    "crates/hyperreal/src/computable/approximation/exp_sqrt.rs": {
+      "sha256": "825d9356e86d0a9ffa80a291f536d46abc05db056659fc667140cb458b5109b5",
+      "scope": "Complete direct nth_root kernel, including range/sign/precision guards, fallback and adjacent integer-root enclosure."
+    }
+  },
+  "reviewed_nth_root_body": "fn nth_root(\n    signal: &Option<Signal>,\n    c: &Computable,\n    degree: u32,\n    p: Precision,\n) -> Result<BigInt, Problem> {\n    let p = crate::computable::checked_approximation_precision(p)?;\n\n    Ok({\n        // The only construction and deserialization paths validate this range.\n        // Retain a release-mode guard because approximation kernels are the final\n        // trust boundary for an expression graph.\n        assert!(\n            (3..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE).contains(&degree),\n            \"invalid direct nth-root degree {degree}\"\n        );\n        if c.planning_sign_and_msd().0 == Some(Sign::Minus) {\n            return Err(Problem::NotANumber);\n        }\n\n        // Let t = root(c, degree) * 2^-p and z = t * 2^GUARD_BITS. Asking the\n        // child for precision degree * (p - GUARD_BITS) produces an integer A\n        // within one of z^degree. Therefore floor_root(max(A - 1, 0)) and\n        // ceil_root(A + 1) enclose z. An integer interval of width two crosses at\n        // most two nonnegative perfect powers, so rounding its midpoint after the\n        // guard-bit shift stays strictly within one unit of t.\n        const GUARD_BITS: Precision = 4;\n        let Some(child_precision) = p\n            .checked_sub(GUARD_BITS)\n            .and_then(|precision| precision.checked_mul(Precision::try_from(degree).ok()?))\n        else {\n            // The public bounded-degree constructor makes this reachable only for\n            // an extreme precision request. Preserve total behavior through the\n            // established exp/ln kernel rather than wrapping precision arithmetic.\n            return c\n                .clone()\n                .ln()\n                .multiply(Computable::rational(\n                    Rational::from_bigint_fraction(BigInt::one(), BigUint::from(degree)).unwrap(),\n                ))\n                .exp()\n                .approx_signal(signal, p);\n        };\n\n        let approximation = c.approx_signal(signal, child_precision)?;\n        if approximation < -BigInt::one() {\n            return Err(Problem::NotANumber);\n        }\n        if approximation <= BigInt::one() {\n            return Ok(BigInt::zero());\n        }\n\n        let lower_power = approximation.magnitude() - BigUint::one();\n        let upper_power = approximation.magnitude() + BigUint::one();\n        let lower = lower_power.nth_root(degree);\n        let mut upper = upper_power.nth_root(degree);\n        if upper.pow(degree) < upper_power {\n            upper += BigUint::one();\n        }\n\n        let rounding = BigUint::one() << usize::try_from(GUARD_BITS).unwrap();\n        BigInt::from((lower + upper + rounding) >> usize::try_from(GUARD_BITS + 1).unwrap())\n    })\n}\n\n",
+  "proposal_not_implemented": {
+    "current_operations": "For integer sample A > 1, the kernel computes floor_root(A - 1), floor_root(A + 1), and one power to obtain ceil_root(A + 1).",
+    "candidate_operations": "For A >= 2 and degree d >= 3, compute r = floor_root(A + 1) and q = r^d once. The lower endpoint is r if q < A, otherwise r - 1; the upper endpoint is r if q = A + 1, otherwise r + 1.",
+    "mathematical_argument_to_verify": "When q < A, q <= A - 1 and (r + 1)^d > A + 1, so r is the lower floor root. Otherwise q >= A >= 2 implies r >= 2; the gap r^d - (r - 1)^d is at least 3, so (r - 1)^d <= q - 3 <= A - 2 < A - 1 < q, giving lower root r - 1. The upper endpoint follows from the definition of r. These are the same endpoints as the current kernel; no approximation tolerance is changed.",
+    "limits": "This is a source-based optimization hypothesis, not an implemented change, a production proof or measured kernel attribution. Preserve the A <= 1 branch and all existing constructor, domain and extreme-precision behavior."
+  },
+  "retained_runtime_checkpoint": "typed-api-prototype-v1836-state.json",
+  "runtime_retained": false,
+  "original_cost_failure_still_failed": true,
+  "limits": [
+    "One candidate-only instrumented run under the original caps; no retry, larger-cap substitution, matched benchmark or acceptance decision.",
+    "Keep all 64 fourth-root/four-factor fixtures, their warm precision -16384, sign query and independent zero/sample assertions. The original fixture functions are byte-identical.",
+    "Markers read Linux process CPU ticks and wall time and write stderr. Instrumentation has overhead; phase differences include it and are diagnostic observations only.",
+    "This run may identify its own unfinished stage or observed work distribution. It cannot identify the stage of the earlier uninstrumented failure retroactively.",
+    "The retained baseline executable is intact, but its former shared hyperreal rlib has been replaced by subsequent candidate builds. This uses only the current hash-verified candidate libraries and makes no baseline stage comparison.",
+    "The v1943 failure, unretained selector, v1836 retained runtime, thirteen open proof groups and full properties-plan scope remain unchanged.",
+    "Observed stage wall totals include instrumentation overhead and are not a matched performance comparison. CPU ticks have the recorded host clock resolution.",
+    "The warmup marker brackets the complete approx/sample call, including validation, cache work and all kernels. It does not isolate direct nth-root execution or retroactively locate the original SIGXCPU.",
+    "The diagnostic changes no candidate source. The conditional merge proof and nine runtime checks still have their prior scope; decoder/producer/existence/atomic/caller obligations, all thirteen proof groups, main/native/full-board admission and the full 39-property/14-target/crate-future-work scope remain open."
+  ],
+  "next_priority": "Prototype deriving the adjacent direct nth-root enclosure from one integer root, after freezing the current unretained source. Prove equivalence of both integer endpoints, retain every range/domain/precision guard and independent existence check, and exercise perfect-power neighbors, small magnitudes, all supported degrees and wide inputs. The stage diagnostic identifies aggregate warming work, not the cost of an individual kernel. Evaluate any concrete change on the unchanged full-size fixtures and original caps, preserving the v1943 failure and all earlier failures. Keep the outlined selector unretained until all fresh cost and replay gates pass."
+}

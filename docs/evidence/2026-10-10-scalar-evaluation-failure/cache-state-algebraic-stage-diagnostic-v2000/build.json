@@ -1,0 +1,21 @@
+{
+  "command": [
+    "rustc",
+    "--edition=2024",
+    "-O",
+    "-D",
+    "warnings",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-10-scalar-evaluation-failure/cache-state-algebraic-stage-probe-v2000.rs",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps",
+    "--extern",
+    "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libhyperreal-74ad6915c70c2b5a.rlib",
+    "--extern",
+    "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+    "--extern",
+    "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/scalar-evaluation-candidate/target/release/deps/librug-3d33bb73cd141873.rlib",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-state-algebraic-stage-diagnostic-v2000/probe"
+  ],
+  "exit_code": 0
+}

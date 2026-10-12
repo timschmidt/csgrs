@@ -1,0 +1,56 @@
+--- typed-api-prototype-v1941-cache-state-merge-algebraic-cost/probe.rs
++++ cache-state-algebraic-stage-probe-v2000.rs
+@@ -90,6 +90,19 @@
+     result.to_string()
+ }
+ 
++fn diagnostic_mark(stage: &str, iteration: Option<usize>, start: &Instant) {
++    let stat = std::fs::read_to_string("/proc/self/stat").unwrap();
++    let fields: Vec<_> = stat.rsplit_once(')').unwrap().1.split_whitespace().collect();
++    let user_ticks: u64 = fields[11].parse().unwrap();
++    let system_ticks: u64 = fields[12].parse().unwrap();
++    eprintln!(
++        "{}",
++        json!({"diagnostic_stage":stage, "iteration":iteration,
++            "wall_ns":start.elapsed().as_nanos().to_string(),
++            "user_ticks":user_ticks, "system_ticks":system_ticks})
++    );
++}
++
+ fn main() {
+     let args: Vec<String> = std::env::args().skip(1).collect();
+     let degree: u32 = args[1].parse().unwrap();
+@@ -98,23 +111,31 @@
+     let inverse: bool = args[4].parse().unwrap();
+     if args[0] == "cost" {
+         let iterations: usize = args[5].parse().unwrap();
++        let diagnostic_start = Instant::now();
++        diagnostic_mark("start", None, &diagnostic_start);
+         let values: Vec<_> = (0..iterations)
+-            .map(|_| {
++            .map(|index| {
++                diagnostic_mark("before_fixture", Some(index), &diagnostic_start);
+                 let value = fixture(degree, count, bits, inverse, 0);
++                diagnostic_mark("after_fixture", Some(index), &diagnostic_start);
+                 sample(&value, -16384, 0, None);
++                diagnostic_mark("after_warmup", Some(index), &diagnostic_start);
+                 value
+             })
+             .collect();
++        diagnostic_mark("before_queries", None, &diagnostic_start);
+         let start = Instant::now();
+         let mut certified = 0;
+         for value in &values {
+             assert_eq!(black_box(value.sign_until(-16384)), Some(RealSign::Zero));
+             certified += 1;
+         }
++        let query_elapsed = start.elapsed();
++        diagnostic_mark("after_queries", None, &diagnostic_start);
+         println!(
+             "{}",
+             json!({"stage":"cost", "iterations":iterations, "certified":certified,
+-            "elapsed_ns":start.elapsed().as_nanos().to_string()})
++            "elapsed_ns":query_elapsed.as_nanos().to_string()})
+         );
+         return;
+     }
