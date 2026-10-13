@@ -1148,7 +1148,7 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "advance-closed-certificate-memo-to-native-investigation-with-scalar-regressions-open",
+      "status": "native-validation-running-scalar-regressions-open",
       "evidence": [
         "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json",
@@ -1157,7 +1157,7 @@
         "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Execute the prepared nine native validation phases serially, including solver/curve/DRC tests, strict four-crate checks and both original full-fixture assertions. Native controls and complete reports remain subsequent work. Scalar regressions remain open; no runtime is admitted.",
+      "next_step": "Complete native validation and independent assessment, then execute fixed native controls serially. Review every scalar/native adverse row before report follow-up or retention. Original assertions and all 35 pending native entries remain in scope.",
       "runtime_admitted": false,
       "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1243,7 +1243,11 @@
         "Some large apparent integer gains depend on variable baseline timings. Signed-word construction has ratio of medians 0.625348 but median paired ratio 1.041420 and is slower in three pairs. These statistics do not establish a large speedup.",
         "All three all-five-slower phases have identical requested-memory counters. The allocation savings elsewhere do not explain or excuse these timing costs. No causal attribution or statistical significance is established."
       ],
-      "retention_requirement": "Review native results together with every scalar adverse row and inherited native tradeoff. A native timing improvement alone does not dismiss scalar regressions. Do not admit a lower-rung improvement at the expense of a higher rung; meaningful regressions must be resolved before retention."
+      "retention_requirement": "Review native results together with every scalar adverse row and inherited native tradeoff. A native timing improvement alone does not dismiss scalar regressions. Do not admit a lower-rung improvement at the expense of a higher rung; meaningful regressions must be resolved before retention.",
+      "followup_protocols": {
+        "native_controls": "Prepared and committed: 20 endpoint cost processes, 10 broad operation processes and six final-coordinate abort processes. Samples remain fixed.",
+        "reports": "Prepared, not executed: four full-board CLI report runs, fresh production targets and shared original input paths; compare every byte and separately record historical parent differences."
+      }
     }
   },
   "status_meanings": {

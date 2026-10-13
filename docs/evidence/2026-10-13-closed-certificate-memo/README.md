@@ -77,10 +77,15 @@ of medians of 0.625348, but a median paired ratio of 1.041420 and is slower in
 three pairs. These descriptive statistics establish neither statistical
 significance nor an application speedup. All adverse rows remain in the evidence.
 
-The candidate remains unadmitted. Nine native validation phases are prepared:
+The candidate remains unadmitted. Nine native validation phases are running serially:
 strict four-crate Clippy, solver tests, focused endpoint controls, full curve/DRC
 tests, four-crate docs, a bound DRC executable and both original assertions.
-They have not run. A native gain alone will not dismiss scalar regressions;
+The prepared native cost controls retain the declared 36-process sample set,
+and a separate replay protocol compares both complete reports and production
+CLI sizes. These follow-up runners have not executed. The earlier endpoint
+reports predate the P4 parent, so historical equality is checked and recorded
+separately from the baseline/candidate comparison, without normalizing any field.
+A native gain alone will not dismiss scalar regressions;
 meaningful regressions must be resolved before retention. Fixed endpoint/broad/final-abort
 controls, complete report bytes, production CLI size and the original full-board
 120-second worker-CPU and 60-second neck check-body limits remain required.
