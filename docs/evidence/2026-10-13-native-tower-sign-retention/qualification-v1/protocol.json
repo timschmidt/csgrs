@@ -1,0 +1,262 @@
+{
+  "scope": "Qualify the frozen endpoint/P4 combination sequentially in a fresh target.\n\nThe existing complete-board and copper-neck assertions run separately after\nall other tests. Their original fixtures, limits and metrics are unchanged.\nAll timings here are whole subprocess wall observations; only assertion output\ncan establish either internal gate measurement. This is not a paired benchmark.\n",
+  "runner_sha256": "902f5d2aa81fa67eacc4935d98b9b0179a378fad5e9b52329085008edc04442f",
+  "assessor_sha256": "ff386edd31d55317e1fc88be942c6e46239c3ddcc49907d1a4cd5ce64ea0a34b",
+  "preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cargo": "cargo 1.98.1 (797e8a9bc 2026-08-05)\n",
+  "inherited_rustflags": null,
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      null
+    ],
+    [
+      "build-scalar-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      null
+    ],
+    [
+      "sign-regressions",
+      [
+        "{hyperreal}",
+        "quadratic_tower_sign_retention_tests",
+        "--test-threads=1"
+      ],
+      [
+        11,
+        0,
+        1
+      ]
+    ],
+    [
+      "cache-frontiers",
+      [
+        "{hyperreal}",
+        "persistent_laurent_cache_tests",
+        "--test-threads=1"
+      ],
+      [
+        6,
+        0,
+        1
+      ]
+    ],
+    [
+      "scalar-library",
+      [
+        "{hyperreal}",
+        "--test-threads=2"
+      ],
+      [
+        874,
+        0,
+        1
+      ]
+    ],
+    [
+      "scalar-doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      [
+        28,
+        0,
+        1
+      ]
+    ],
+    [
+      "strict-stack-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      null
+    ],
+    [
+      "solver-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersolve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      [
+        974,
+        0,
+        10
+      ]
+    ],
+    [
+      "endpoint-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_proof_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      [
+        5,
+        0,
+        1
+      ]
+    ],
+    [
+      "curve-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      [
+        2494,
+        33,
+        51
+      ]
+    ],
+    [
+      "drc-tests-except-separate-gates",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ],
+      [
+        1644,
+        0,
+        10
+      ]
+    ],
+    [
+      "stack-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ],
+      null
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      null
+    ]
+  ],
+  "gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time"
+    }
+  ],
+  "command_timeout_seconds": 1800,
+  "test_count_basis": "Endpoint parent 863 scalar library tests plus eleven admitted tests. Other suites retain their previous inventories. Focused counts overlap full suites.",
+  "gate_duration_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration.",
+  "native_runtime_admitted": false
+}

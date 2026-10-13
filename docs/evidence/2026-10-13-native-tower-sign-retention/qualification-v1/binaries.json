@@ -1,0 +1,38 @@
+{
+  "hyperreal": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "27b5969c05e842ce9d1304525ae557605ed387a2ebeb5e1407a9fb3ed5766d89",
+    "bytes": 10214424,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperreal#0.13.1",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    }
+  }
+}

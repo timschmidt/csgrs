@@ -1,0 +1,30 @@
+[
+  {
+    "name": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 1
+  },
+  {
+    "name": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 1
+  },
+  {
+    "name": "scalar-library",
+    "passed": 874,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 1
+  },
+  {
+    "name": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 1
+  }
+]

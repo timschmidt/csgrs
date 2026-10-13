@@ -1,0 +1,45 @@
+{
+  "status": "qualification-runner-stopped-after-successful-solver-tests",
+  "runner_sha256": "902f5d2aa81fa67eacc4935d98b9b0179a378fad5e9b52329085008edc04442f",
+  "completed_commands": 8,
+  "all_completed_commands_exit_zero": true,
+  "failed_assertion": "solver result-group inventory",
+  "expected": {
+    "passed": 974,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 10
+  },
+  "observed": {
+    "passed": 974,
+    "failed": 0,
+    "ignored": 0,
+    "groups": 11
+  },
+  "cause": "The prior main qualification used --lib --tests and counted ten groups. This combined command also runs an empty doctest group. All 974 actual solver tests pass.",
+  "correction": "Version 2 changes only that inventory expectation, reuses the eight verified successful phases and resumes the seven unexecuted phases. Source, fixtures, commands, tests and limits stay unchanged.",
+  "runtime_failure": false,
+  "native_gates_executed": false,
+  "artifacts_sha256": {
+    "qualification-v1/binaries.json": "55d62b1c3201cd5da39e3709617465206731d951fab188086d33b7e77d1ac5df",
+    "qualification-v1/build-scalar-tests.stderr": "ff5e66fe7a89d77597925e17fd8c621c800be3938615841ed3b4edafb64d12a5",
+    "qualification-v1/build-scalar-tests.stdout": "ba39cfea38301c10e8003c74f3288ae01cd5ff79e08a5847b80371238c2cbfb7",
+    "qualification-v1/cache-frontiers.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/cache-frontiers.stdout": "9395ad4c909dbe9325b92bcbb9ffa2c70ca48eca1aba997195486b6f883a7585",
+    "qualification-v1/commands.json": "a10d35b6e6eab519afecbddac858f98bafc84c6263c01e9f0606929f1aa40563",
+    "qualification-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/protocol.json": "03ecba9e5d71238fc4e92b81873235cb97c658b590362c257d3a04568f6775ba",
+    "qualification-v1/scalar-doctests.stderr": "638a26019e8c3241a35ad552e1164238b200c1d78bb5c498709980a380e2dddf",
+    "qualification-v1/scalar-doctests.stdout": "88f9f6a2b9b8fc6d549b802a65836be67dced644ac59bdcbb14a557926d5bd86",
+    "qualification-v1/scalar-library.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/scalar-library.stdout": "fa824e797e0382b59fa9f1681c04909303d8b7dca1fc622b64550056f66a2df9",
+    "qualification-v1/sign-regressions.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/sign-regressions.stdout": "8460b859b5e06846eaf514b6c0fce72d1f085eca9c6a35cb0369e49c06fba4b9",
+    "qualification-v1/solver-tests.stderr": "f852a1094d443ea979da0ac12311a43fa67fd084de72fd74b32928aeeb1fd5cd",
+    "qualification-v1/solver-tests.stdout": "d04c5ac941ca3e70adcb63834bc645c3c1e1ae4af27c60e9dce645b3a4654f02",
+    "qualification-v1/strict-stack-clippy.stderr": "7691b484b669d02881f072ee38488a35d84a508c2462b8ebd30ee2ec4d17148e",
+    "qualification-v1/strict-stack-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/tests.json": "cece9f2e4212a47d0976e09b894ad68c043ef3a0edfdf0114985db908de3b45d"
+  }
+}

@@ -14,4 +14,14 @@ its 120-second worker CPU limit and the copper-neck assertion keeps its
 This is a combination check, not an additional performance optimization. Native
 cost/report review and all prior endpoint tradeoffs remain open. All 35 pending
 native entries and the complete properties, targets and future-work plan remain
-in scope. The preparation and qualification runners have not yet executed.
+in scope.
+
+Preparation froze the combined 10,131-file source with exactly the admitted
+three-file delta. The first eight qualification commands pass: formatting,
+scalar build, eleven sign regressions, six cache controls, 874 scalar library
+tests, 28 doctests, strict stack Clippy and 974 solver tests. The runner then
+stopped on its result-group count: the solver command includes an additional
+empty doctest group. `qualification-failure-v1.json` preserves that inventory
+error. Version 2 reuses the eight verified successful phases and corrects only
+the expected group count before executing the seven remaining native phases.
+The continuation is prepared but has not executed.
