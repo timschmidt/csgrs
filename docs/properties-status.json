@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Fork the integer-leaf parent into separate source/target directories; swap only the two existing conjunction operands. Cover absent/equal/different provenance, shared/independently equal geometry, error ordering, reused arrangement indices, retained cache facts and clones. Run complete curve validation, original native caps, complete report replay and measured cost/memory/size controls before any admission."
+      "next_step": "Run the frozen paired metadata-control probe and complete unnormalized report replay from separate source/target directories; keep every original limit and prior failed result."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -130,10 +130,51 @@
       "runtime_admitted": false
     },
     "isolated_region_metadata_first": {
-      "status": "prototype-preflight-passed-complete-validation-running",
-      "evidence": "docs/evidence/2026-10-12-region-metadata-first/preflight-v1.json",
-      "source_delta": "The isolated integer-leaf parent changes only the two existing duplicate-validation conjunction operands at runtime. Three metadata/error-order/cache regressions and strict release all-feature/all-target curve/DRC Clippy pass.",
-      "remaining": "Complete curve validation, original native assertions, fixed paired operation costs, and full report bytes remain pending. Main runtime is unchanged.",
+      "status": "isolated-correctness-passed-cost-and-report-qualification-pending",
+      "evidence": "docs/evidence/2026-10-12-region-metadata-first/validation-assessment-v1.json",
+      "validation": {
+        "metadata-regressions": {
+          "summaries": 1,
+          "passed": 3,
+          "failed": 0,
+          "ignored": 0
+        },
+        "curve-tests": {
+          "summaries": 51,
+          "passed": 2489,
+          "failed": 0,
+          "ignored": 33
+        },
+        "drc-regressions": {
+          "summaries": 1,
+          "passed": 26,
+          "failed": 0,
+          "ignored": 0
+        }
+      },
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "passed": false,
+          "observed_assertion_seconds": 146.02494178,
+          "process_wall_seconds": 148.12913945596665,
+          "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check wall time",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 145.9845999921672,
+          "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+        }
+      ],
+      "next_step": "Run the frozen paired metadata-control probe and complete unnormalized report replay from separate source/target directories; keep every original limit and prior failed result.",
       "runtime_admitted": false
     }
   },
