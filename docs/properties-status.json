@@ -645,7 +645,7 @@
         "scope": "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json",
         "task": "The retained-projection diagnostic is complete. Prepare the private temporary inline-storage experiment from this frozen uninstrumented source; keep persistent certificate fields and opaque atom vectors unchanged. Counts are not speedup or allocation evidence.",
         "diagnostic_completed": true,
-        "storage_source_runner_or_measurements_prepared": false
+        "storage_source_runner_or_measurements_prepared": true
       },
       "native_runtime_admitted": false
     },
@@ -673,7 +673,24 @@
       },
       "result": "Root-only reuse is uncommon. Recursive copies are predominantly single-term and single-radical; this motivates a temporary-storage experiment, not a speedup claim. Original board gate still fails; no native runtime is admitted.",
       "preserved_failure": "Preparation v1 stopped before compilation after rustfmt moved optional commas. Its never-compiled source is archived. Version 2 preserves all original tokens outside seven explicit instrumentation/test changes.",
-      "next_step": "Compare a matched Vec baseline with separate temporary radical, polynomial-term and combined inline-storage variants from the uninstrumented endpoint/P4 parent. Qualify correctness, ownership and proof retention before fixed cost measurements. Persistent certificates, opaque atom vectors, all original budgets and full native limits remain unchanged.",
+      "next_step": "Four matched temporary-storage variants are prepared and undergoing sequential scalar qualification; see temporary_laurent_storage. No cost measurements or runtime admission yet.",
+      "runtime_admitted": false
+    },
+    "temporary_laurent_storage": {
+      "status": "four-isolated-variants-frozen-scalar-qualification-running",
+      "evidence": [
+        "docs/evidence/2026-10-13-temporary-laurent-storage/preparation-v1/protocol.json"
+      ],
+      "variants": [
+        "baseline",
+        "radicals",
+        "terms",
+        "both"
+      ],
+      "scope": "Private temporary radical and/or Laurent-term vectors use one inline slot. The uninstrumented endpoint/P4 parent, persistent certificates, opaque atom vectors, arithmetic, original retries, all recognition bounds and original native assertions are preserved.",
+      "preparation": "Four 10,132-file sources and separate fresh targets. Each source changes only algebra.rs, one shared eight-test module, the hyperreal manifest and the root lockfile. All package versions/checksums match the parent; only the same direct no-feature SmallVec dependency is added.",
+      "qualification": "Sequential qualification is running; no result or resource claim yet. Every variant runs shared frontier/ownership/math tests, inherited P4/cache tests, default/all-feature libraries, doctests, strict Clippy and docs. Private/persistent layouts are recorded separately.",
+      "next_step": "Complete qualification, review any failures, then execute a closed fixed scalar timing/allocation/size schedule. Only supported variants advance to complete native gates and native/report/size controls.",
       "runtime_admitted": false
     }
   },
