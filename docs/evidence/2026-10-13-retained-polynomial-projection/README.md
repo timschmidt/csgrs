@@ -25,7 +25,7 @@ failed reused-certificate pass after releasing its memo. No recognition pass,
 cache fact, approximation, dependency, public API or budget is added. P4 permits
 stronger cached facts, never contradictions or weaker available facts.
 
-Preparation verifies the exact five method edits and added helper definitions,
+Version 2 preparation passed. It verifies the exact five method edits and added helper definitions,
 recovers the recursive control's original tokens, and records three complete
 source maps and delta archives. Shared historical tests remain identical.
 Six new shared tests cover public projection queries, exact shape boundaries,
@@ -34,7 +34,7 @@ Three additional private tests cover owned/retained projection shapes,
 opaque ownership, payload immutability and release. Five inherited view tests
 remain in both experimental variants.
 
-Qualification will run 42 sequential commands: shared and inherited controls,
+Qualification is running 42 sequential commands: shared and inherited controls,
 default/all-feature scalar libraries, doctests, formatting, strict
 default/all-feature/all-target Clippy and warning-denied scalar docs. Counts
 overlap and do not establish full-workflow coverage. Type layouts, memo counts

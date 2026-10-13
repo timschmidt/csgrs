@@ -1,0 +1,1872 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -1,3 +1,18 @@
++#[cfg(test)]
++mod projection_tests;
++
++#[cfg(test)]
++mod shared_radical_tests;
++
++#[cfg(test)]
++mod memo_publication_tests;
++
++#[cfg(test)]
++mod temporary_storage_tests;
++
++mod retained_polynomial;
++use retained_polynomial::PiLaurentValue;
++
+ #[derive(Clone)]
+ struct PiAtanLinearForm {
+     constant: Rational,
+@@ -159,20 +174,29 @@
+     }
+ 
+     fn multiply(self, other: &Self) -> Option<Self> {
+-        if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
+-            || (!other.atoms.is_empty() && !self.radicals.is_empty())
++        self.multiply_parts(&other.rational, &other.radicals, &other.atoms)
++    }
++
++    fn multiply_parts(
++        self,
++        other_rational: &Rational,
++        other_radicals: &[(Rational, Rational)],
++        other_atoms: &[(Computable, Rational)],
++    ) -> Option<Self> {
++        if (!self.atoms.is_empty() && (!other_radicals.is_empty() || !other_atoms.is_empty()))
++            || (!other_atoms.is_empty() && !self.radicals.is_empty())
+         {
+             return None;
+         }
+-        let mut result = Self::rational(&self.rational * &other.rational);
++        let mut result = Self::rational(&self.rational * other_rational);
+         for (radicand, coefficient) in &self.radicals {
+-            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;
+-        }
+-        for (radicand, coefficient) in &other.radicals {
++            result.insert_radical(radicand.clone(), coefficient * other_rational)?;
++        }
++        for (radicand, coefficient) in other_radicals {
+             result.insert_radical(radicand.clone(), coefficient * &self.rational)?;
+         }
+         for (left, left_coefficient) in self.radicals {
+-            for (right, right_coefficient) in &other.radicals {
++            for (right, right_coefficient) in other_radicals {
+                 let coefficient = &left_coefficient * right_coefficient;
+                 if left == *right {
+                     result.rational = result.rational + coefficient * &left;
+@@ -183,9 +207,9 @@
+             }
+         }
+         for (atom, coefficient) in self.atoms {
+-            result.insert_atom(atom, coefficient * &other.rational);
+-        }
+-        for (atom, coefficient) in &other.atoms {
++            result.insert_atom(atom, coefficient * other_rational);
++        }
++        for (atom, coefficient) in other_atoms {
+             result.insert_atom(atom.clone(), coefficient * &self.rational);
+         }
+         Some(result)
+@@ -454,18 +478,13 @@
+     fn project_pi_laurent_polynomial<T>(
+         &self,
+         budget: usize,
+-        project: impl Fn(PiLaurentPolynomial) -> Option<T>,
++        project: impl Fn(PiLaurentValue) -> Option<T>,
+     ) -> Option<T> {
+         let mut memo = None;
+         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+         let mut reused = false;
+         if let Some(value) = self
+-            .pi_laurent_polynomial_retained::<true>(
+-                budget,
+-                &mut remaining_work,
+-                &mut memo,
+-                &mut reused,
+-            )
++            .pi_laurent_value_retained::<true>(budget, &mut remaining_work, &mut memo, &mut reused)
+             .and_then(&project)
+         {
+             return Some(value);
+@@ -480,7 +499,9 @@
+         // before retrying so it cannot change the original sharing decisions.
+         drop(memo);
+         if reused {
+-            self.pi_laurent_polynomial(budget).and_then(project)
++            self.pi_laurent_polynomial(budget)
++                .map(PiLaurentValue::Owned)
++                .and_then(project)
+         } else {
+             None
+         }
+@@ -508,7 +529,18 @@
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+         reused: &mut bool,
+     ) -> Option<PiLaurentPolynomial> {
+-        if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {
++        self.pi_laurent_value_retained::<RETAIN>(budget, remaining_work, memo, reused)
++            .map(PiLaurentValue::into_polynomial)
++    }
++
++    fn pi_laurent_value_retained<const RETAIN: bool>(
++        &self,
++        budget: usize,
++        remaining_work: &mut usize,
++        memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
++        reused: &mut bool,
++    ) -> Option<PiLaurentValue> {
++        if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_value() {
+             *reused = true;
+             return Some(polynomial);
+         }
+@@ -519,7 +551,7 @@
+                 .as_ref()
+                 .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))
+         {
+-            return value.clone();
++            return value.clone().map(PiLaurentValue::Owned);
+         }
+         if budget == 0 || *remaining_work == 0 {
+             return None;
+@@ -565,26 +597,16 @@
+         } else {
+             let expanded = (|| match &self.internal.approximation {
+                 Approximation::Add(left, right) => left
+-                    .pi_laurent_polynomial_retained::<RETAIN>(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                        reused,
+-                    )?
+-                    .add(right.pi_laurent_polynomial_retained::<RETAIN>(
++                    .pi_laurent_value_retained::<RETAIN>(budget - 1, remaining_work, memo, reused)?
++                    .add(right.pi_laurent_value_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+                         reused,
+                     )?),
+                 Approximation::Multiply(left, right) => left
+-                    .pi_laurent_polynomial_retained::<RETAIN>(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                        reused,
+-                    )?
+-                    .multiply(right.pi_laurent_polynomial_retained::<RETAIN>(
++                    .pi_laurent_value_retained::<RETAIN>(budget - 1, remaining_work, memo, reused)?
++                    .multiply(right.pi_laurent_value_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+@@ -592,7 +614,7 @@
+                     )?),
+                 Approximation::Negate(child) => Some(
+                     child
+-                        .pi_laurent_polynomial_retained::<RETAIN>(
++                        .pi_laurent_value_retained::<RETAIN>(
+                             budget - 1,
+                             remaining_work,
+                             memo,
+@@ -602,7 +624,7 @@
+                 ),
+                 Approximation::Offset(child, shift) => Some(
+                     child
+-                        .pi_laurent_polynomial_retained::<RETAIN>(
++                        .pi_laurent_value_retained::<RETAIN>(
+                             budget - 1,
+                             remaining_work,
+                             memo,
+@@ -611,15 +633,10 @@
+                         .scaled(Self::power_of_two_rational(*shift)),
+                 ),
+                 Approximation::Inverse(child) => child
+-                    .pi_laurent_polynomial_retained::<RETAIN>(
+-                        budget - 1,
+-                        remaining_work,
+-                        memo,
+-                        reused,
+-                    )?
++                    .pi_laurent_value_retained::<RETAIN>(budget - 1, remaining_work, memo, reused)?
+                     .inverse_monomial(),
+                 Approximation::Square(child) => {
+-                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(
++                    let child = child.pi_laurent_value_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+@@ -628,12 +645,13 @@
+                     child.clone().multiply(child)
+                 }
+                 Approximation::Sqrt(child) => {
+-                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(
++                    let child = child.pi_laurent_value_retained::<RETAIN>(
+                         budget - 1,
+                         remaining_work,
+                         memo,
+                         reused,
+                     )?;
++                    let child = child.into_polynomial();
+                     let radicand = match child.terms.as_slice() {
+                         [] => Rational::zero(),
+                         [(0, coefficient)]
+@@ -663,7 +681,7 @@
+                     {
+                         sum = sum.add(
+                             coefficient
+-                                .pi_laurent_polynomial_retained::<RETAIN>(
++                                .pi_laurent_value_retained::<RETAIN>(
+                                     budget - 1,
+                                     remaining_work,
+                                     memo,
+@@ -703,22 +721,12 @@
+                 self.internal.cache.store_pi_laurent_polynomial(polynomial);
+             }
+         }
+-        result
++        result.map(PiLaurentValue::Owned)
+     }
+ 
+     pub(crate) fn bounded_laurent_rational(&self, budget: usize) -> Option<Rational> {
+-        let rational = self.project_pi_laurent_polynomial(budget, |polynomial| match polynomial
+-            .terms
+-            .as_slice()
+-        {
+-            [] => Some(Rational::zero()),
+-            [(0, coefficient)]
+-                if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+-            {
+-                Some(coefficient.rational.clone())
+-            }
+-            _ => None,
+-        })?;
++        let rational = self
++            .project_pi_laurent_polynomial(budget, |polynomial| polynomial.rational_multiple(0))?;
+         // A successful symbolic proof remains valid for every clone. Retain
+         // its sign so later predicates do not rebuild the same normal form.
+         self.internal
+@@ -729,6 +737,7 @@
+ 
+     pub(crate) fn compact_pi_laurent(&self) -> Option<Self> {
+         let polynomial = self.project_pi_laurent_polynomial(64, |polynomial| {
++            let polynomial = polynomial.into_polynomial();
+             // Rebuild only coefficients in the admitted rational/radical basis.
+             // An opaque remainder may hide an arbitrarily large graph, including
+             // one left opaque after the recognition budget was exhausted.
+@@ -1239,15 +1248,7 @@
+     }
+ 
+     fn pi_laurent_rational_multiple(&self) -> Option<Rational> {
+-        self.project_pi_laurent_polynomial(48, |polynomial| match polynomial.terms.as_slice() {
+-            [] => Some(Rational::zero()),
+-            [(1, coefficient)]
+-                if coefficient.radicals.is_empty() && coefficient.atoms.is_empty() =>
+-            {
+-                Some(coefficient.rational.clone())
+-            }
+-            _ => None,
+-        })
++        self.project_pi_laurent_polynomial(48, |polynomial| polynomial.rational_multiple(1))
+     }
+ 
+     fn retained_pi_rational_multiple(&self, budget: usize) -> Option<Rational> {
+--- a/crates/hyperreal/src/computable/node/memo_publication_tests.rs
++++ b/crates/hyperreal/src/computable/node/memo_publication_tests.rs
+@@ -0,0 +1,154 @@
++use super::*;
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn closed_expression() -> Computable {
++    raw(Approximation::Add(
++        raw(Approximation::Ratio(Rational::new(3))),
++        raw(Approximation::Sqrt(raw(Approximation::Ratio(
++            Rational::new(13),
++        )))),
++    ))
++}
++
++fn assert_closed(value: &PiLaurentPolynomial) {
++    assert_eq!(value.terms.len(), 1);
++    assert_eq!(value.terms[0].0, 0);
++    let coefficient = &value.terms[0].1;
++    assert_eq!(coefficient.rational, Rational::new(3));
++    assert_eq!(
++        coefficient.radicals.as_slice(),
++        [(Rational::new(13), Rational::one())]
++    );
++    assert!(coefficient.atoms.is_empty());
++}
++
++#[test]
++fn published_closed_value_survives_zero_work_reuse_and_releases_owners() {
++    let value = closed_expression();
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let owners = Arc::strong_count(&value.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&first);
++    assert!(!reused);
++    assert_closed(&value.internal.cache.pi_laurent_polynomial().unwrap());
++    assert_eq!(Arc::strong_count(&value.internal), owners);
++    let entries = memo.as_ref().map_or(0, Vec::len);
++    println!("CLOSED_MEMO_INVENTORY\tretained\t{entries}");
++    // A fresh zero-work query must use the published certificate, independent
++    // of whether the original query kept a redundant local copy.
++    drop(memo);
++    drop(first);
++    let mut empty_memo = None;
++    work = 0;
++    let warm = clone
++        .pi_laurent_polynomial_retained::<true>(0, &mut work, &mut empty_memo, &mut reused)
++        .unwrap();
++    assert_closed(&warm);
++    assert!(reused);
++    assert_eq!(work, 0);
++    assert!(empty_memo.is_none());
++    assert!(value.cached().is_none());
++    assert!(clone.cached().is_none());
++    drop(warm);
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn original_recognizer_keeps_zero_work_query_memo_reuse() {
++    let value = closed_expression();
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<false>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&first);
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    assert_eq!(memo.as_ref().unwrap().len(), 1);
++    println!("CLOSED_MEMO_INVENTORY\toriginal\t1");
++    work = 0;
++    let second = clone
++        .pi_laurent_polynomial_retained::<false>(0, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&second);
++    assert!(!reused);
++    assert_eq!(work, 0);
++    assert!(clone.cached().is_none());
++    drop(first);
++    drop(second);
++    drop(memo);
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn rejected_opaque_publication_preserves_memo_and_releases_every_owner() {
++    let opaque = raw(Approximation::AtanRational(
++        Rational::fraction(3, 7).unwrap(),
++    ));
++    let opaque_weak = Arc::downgrade(&opaque.internal);
++    let value = raw(Approximation::Add(
++        opaque.clone(),
++        raw(Approximation::Ratio(Rational::one())),
++    ));
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let owners = Arc::strong_count(&opaque.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_eq!(first.terms.len(), 1);
++    assert_eq!(first.terms[0].1.rational, Rational::one());
++    assert_eq!(first.terms[0].1.atoms.len(), 1);
++    assert_eq!(first.terms[0].1.atoms[0].1, Rational::one());
++    assert!(Computable::internal_structural_eq(
++        &first.terms[0].1.atoms[0].0,
++        &opaque
++    ));
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    assert_eq!(memo.as_ref().unwrap().len(), 2);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners + 3);
++    println!("CLOSED_MEMO_INVENTORY\topaque\t2");
++    work = 0;
++    let second = clone
++        .pi_laurent_polynomial_retained::<true>(0, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_eq!(second.terms[0].1.atoms.len(), 1);
++    assert!(!reused);
++    assert_eq!(work, 0);
++    drop(first);
++    drop(second);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners + 2);
++    drop(memo);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners);
++    assert!(clone.cached().is_none());
++    drop(clone);
++    drop(value);
++    drop(opaque);
++    assert!(weak.upgrade().is_none());
++    assert!(opaque_weak.upgrade().is_none());
++}
+--- a/crates/hyperreal/src/computable/node/projection_tests.rs
++++ b/crates/hyperreal/src/computable/node/projection_tests.rs
+@@ -0,0 +1,222 @@
++use super::*;
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn rational(value: Rational) -> Computable {
++    raw(Approximation::Ratio(value))
++}
++
++fn add(left: Computable, right: Computable) -> Computable {
++    raw(Approximation::Add(left, right))
++}
++
++fn multiply(left: Computable, right: Computable) -> Computable {
++    raw(Approximation::Multiply(left, right))
++}
++
++fn root(value: i64) -> Computable {
++    raw(Approximation::Sqrt(rational(Rational::new(value))))
++}
++
++fn warm(value: &Computable) {
++    let mut work = 512;
++    let polynomial = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut None, &mut false)
++        .unwrap();
++    assert!(ClosedPiLaurentPolynomial::from_polynomial(&polynomial).is_some());
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    assert!(value.cached().is_none());
++}
++
++#[test]
++fn rational_and_zero_queries_reuse_closed_forms_at_zero_depth() {
++    for numerator in [-7, 0, 5] {
++        let expected = Rational::fraction(numerator, 13).unwrap();
++        let value = add(rational(expected.clone()), rational(Rational::zero()));
++        let clone = value.clone();
++        assert!(value.bounded_laurent_rational(0).is_none());
++        warm(&value);
++        for query in [&value, &clone, &value] {
++            assert_eq!(query.bounded_laurent_rational(0), Some(expected.clone()));
++            assert_eq!(
++                query.exact_quadratic_surd_parts(),
++                Some((expected.clone(), Rational::zero(), None))
++            );
++            assert_eq!(
++                query.pi_laurent_rational_multiple(),
++                (numerator == 0).then(Rational::zero)
++            );
++            assert!(
++                matches!(query.internal.facts.exact_sign(), ExactSignCache::Valid(sign) if sign == expected.sign())
++            );
++            assert!(query.cached().is_none());
++        }
++    }
++}
++
++#[test]
++fn pi_powers_preserve_rational_and_pi_projection_boundaries() {
++    for power in [-2_i16, -1, 0, 1, 2] {
++        for numerator in [-3, 0, 2] {
++            let scale = Rational::fraction(numerator, 7).unwrap();
++            let mut factor = rational(Rational::one());
++            let pi = if power < 0 {
++                raw(Approximation::Inverse(Computable::pi()))
++            } else {
++                Computable::pi()
++            };
++            for _ in 0..power.unsigned_abs() {
++                factor = multiply(factor, pi.clone());
++            }
++            let value = multiply(rational(scale.clone()), factor);
++            let clone = value.clone();
++            warm(&value);
++            for query in [&value, &clone] {
++                assert_eq!(
++                    query.bounded_laurent_rational(0),
++                    (numerator == 0 || power == 0).then(|| scale.clone())
++                );
++                assert_eq!(
++                    query.pi_laurent_rational_multiple(),
++                    (numerator == 0 || power == 1).then(|| scale.clone())
++                );
++                assert_eq!(
++                    query.exact_quadratic_surd_parts(),
++                    (numerator == 0 || power == 0).then(|| (scale.clone(), Rational::zero(), None))
++                );
++                assert!(query.cached().is_none());
++            }
++        }
++    }
++}
++
++#[test]
++fn affine_surd_queries_return_exact_signed_components() {
++    for constant in [0, 3] {
++        for scale in [-2, 1] {
++            for radicand in [2, 13] {
++                let value = add(
++                    rational(Rational::new(constant)),
++                    multiply(rational(Rational::new(scale)), root(radicand)),
++                );
++                let clone = value.clone();
++                warm(&value);
++                for query in [&value, &clone] {
++                    assert_eq!(
++                        query.exact_quadratic_surd_parts(),
++                        Some((
++                            Rational::new(constant),
++                            Rational::new(scale),
++                            Some(Rational::new(radicand))
++                        ))
++                    );
++                    assert_eq!(
++                        query.exact_pure_quadratic_surd(),
++                        (constant == 0).then(|| (Rational::new(scale), Rational::new(radicand)))
++                    );
++                    assert!(query.bounded_laurent_rational(0).is_none());
++                    assert!(query.pi_laurent_rational_multiple().is_none());
++                    assert!(query.cached().is_none());
++                }
++            }
++        }
++    }
++}
++
++#[test]
++fn multiradical_and_mixed_power_forms_decline_until_exact_cancellation() {
++    let sum = add(root(2), root(3));
++    let sum_clone = sum.clone();
++    warm(&sum);
++    assert!(sum.exact_quadratic_surd_parts().is_none());
++    assert!(sum.bounded_laurent_rational(0).is_none());
++    let mixed = add(sum_clone, Computable::pi());
++    let mixed_clone = mixed.clone();
++    warm(&mixed);
++    assert!(mixed.exact_quadratic_surd_parts().is_none());
++    assert!(mixed.pi_laurent_rational_multiple().is_none());
++    let cancelled = add(
++        raw(Approximation::Square(sum.clone())),
++        rational(Rational::new(-5)),
++    );
++    let clone = cancelled.clone();
++    warm(&cancelled);
++    for query in [&cancelled, &clone] {
++        assert_eq!(
++            query.exact_quadratic_surd_parts(),
++            Some((Rational::zero(), Rational::new(2), Some(Rational::new(6))))
++        );
++        assert!(query.bounded_laurent_rational(0).is_none());
++        assert!(query.cached().is_none());
++    }
++    assert!(sum.cached().is_none());
++    assert!(mixed_clone.cached().is_none());
++}
++
++#[test]
++fn published_rational_sign_survives_high_precision_and_zero_depth_queries() {
++    for numerator in [-7, 0, 3] {
++        let expected = Rational::fraction(numerator, 17).unwrap();
++        let value = add(
++            add(
++                raw(Approximation::Square(root(13))),
++                rational(Rational::new(-13)),
++            ),
++            rational(expected.clone()),
++        );
++        let clone = value.clone();
++        warm(&value);
++        assert_eq!(value.bounded_laurent_rational(0), Some(expected.clone()));
++        let _ = clone.approx(-1100);
++        for query in [&clone, &value, &clone] {
++            assert_eq!(query.bounded_laurent_rational(0), Some(expected.clone()));
++            assert_eq!(
++                query.exact_quadratic_surd_parts(),
++                Some((expected.clone(), Rational::zero(), None))
++            );
++            assert!(
++                matches!(query.internal.facts.exact_sign(), ExactSignCache::Valid(sign) if sign == expected.sign())
++            );
++        }
++    }
++}
++
++#[test]
++fn concurrent_projections_keep_exact_outputs_and_release_the_graph() {
++    let value = add(
++        rational(Rational::new(3)),
++        multiply(rational(Rational::new(2)), root(13)),
++    );
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    warm(&value);
++    let expected = (Rational::new(3), Rational::new(2), Some(Rational::new(13)));
++    std::thread::scope(|scope| {
++        for _ in 0..8 {
++            let value = &value;
++            let expected = &expected;
++            scope.spawn(move || {
++                for _ in 0..8 {
++                    assert_eq!(value.exact_quadratic_surd_parts().as_ref(), Some(expected));
++                    assert!(value.bounded_laurent_rational(0).is_none());
++                    assert!(value.pi_laurent_rational_multiple().is_none());
++                }
++            });
++        }
++    });
++    let output = clone.exact_quadratic_surd_parts().unwrap();
++    assert!(value.cached().is_none());
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++    assert_eq!(output, expected);
++}
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -140,7 +140,7 @@
+ struct CachedEvaluation {
+     approximation: Option<CachedApproximation>,
+     quadratic_tower: Option<Box<Tower>>,
+-    pi_laurent_polynomial: Option<Box<ClosedPiLaurentPolynomial>>,
++    pi_laurent_polynomial: Option<Arc<ClosedPiLaurentPolynomial>>,
+     /// The iterated radical-tower sign reduction declined this root.
+     radical_tower_declined: bool,
+ }
+@@ -261,6 +261,17 @@
+         guard.quadratic_tower.as_deref().cloned()
+     }
+ 
++    fn pi_laurent_value(&self) -> Option<PiLaurentValue> {
++        let guard = self
++            .cell()?
++            .read()
++            .unwrap_or_else(|error| error.into_inner());
++        Some(PiLaurentValue::Retained(Arc::clone(
++            guard.pi_laurent_polynomial.as_ref()?,
++        )))
++    }
++
++    #[cfg(test)]
+     fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {
+         let guard = self
+             .cell()?
+@@ -278,7 +289,7 @@
+             .write()
+             .unwrap_or_else(|error| error.into_inner());
+         if guard.pi_laurent_polynomial.is_none() {
+-            guard.pi_laurent_polynomial = Some(Box::new(closed));
++            guard.pi_laurent_polynomial = Some(Arc::new(closed));
+         }
+     }
+ 
+--- a/crates/hyperreal/src/computable/node/retained_polynomial.rs
++++ b/crates/hyperreal/src/computable/node/retained_polynomial.rs
+@@ -0,0 +1,611 @@
++use super::*;
++
++// Only immutable closed certificates share storage. Scratch polynomials keep
++// their original ownership, including every opaque Computable reference.
++#[derive(Clone)]
++pub(super) enum PiLaurentValue {
++    Owned(PiLaurentPolynomial),
++    Retained(Arc<ClosedPiLaurentPolynomial>),
++}
++
++impl PiLaurentValue {
++    pub(super) fn rational_multiple(&self, power: i16) -> Option<Rational> {
++        match self {
++            Self::Owned(polynomial) => project_rational_multiple(&polynomial.terms, power),
++            Self::Retained(polynomial) => project_rational_multiple(&polynomial.terms, power),
++        }
++    }
++
++    pub(super) fn quadratic_parts(&self) -> Option<(Rational, Rational, Option<Rational>)> {
++        match self {
++            Self::Owned(polynomial) => project_quadratic_parts(&polynomial.terms),
++            Self::Retained(polynomial) => project_quadratic_parts(&polynomial.terms),
++        }
++    }
++
++    pub(super) fn into_polynomial(self) -> PiLaurentPolynomial {
++        match self {
++            Self::Owned(polynomial) => polynomial,
++            Self::Retained(polynomial) => polynomial.to_polynomial(),
++        }
++    }
++
++    pub(super) fn add(self, other: Self) -> Option<PiLaurentPolynomial> {
++        self.into_polynomial().add(other.into_polynomial())
++    }
++
++    pub(super) fn scaled(self, scale: Rational) -> PiLaurentPolynomial {
++        self.into_polynomial().scaled(scale)
++    }
++
++    pub(super) fn inverse_monomial(self) -> Option<PiLaurentPolynomial> {
++        self.into_polynomial().inverse_monomial()
++    }
++
++    pub(super) fn multiply(self, other: Self) -> Option<PiLaurentPolynomial> {
++        let left = self.into_polynomial();
++        match other {
++            Self::Owned(right) => left.multiply(right),
++            Self::Retained(right) => left.multiply_closed(&right),
++        }
++    }
++}
++
++// Projection borrows coefficient data without constructing another normal
++// form. Closed coefficients cannot contain opaque expression owners.
++trait ProjectionCoefficient {
++    fn rational_part(&self) -> &Rational;
++    fn radical_terms(&self) -> &[(Rational, Rational)];
++    fn has_atoms(&self) -> bool;
++}
++
++impl ProjectionCoefficient for RadicalCoefficient {
++    fn rational_part(&self) -> &Rational {
++        &self.rational
++    }
++
++    fn radical_terms(&self) -> &[(Rational, Rational)] {
++        &self.radicals
++    }
++
++    fn has_atoms(&self) -> bool {
++        !self.atoms.is_empty()
++    }
++}
++
++impl ProjectionCoefficient for ClosedRadicalCoefficient {
++    fn rational_part(&self) -> &Rational {
++        &self.rational
++    }
++
++    fn radical_terms(&self) -> &[(Rational, Rational)] {
++        &self.radicals
++    }
++
++    fn has_atoms(&self) -> bool {
++        false
++    }
++}
++
++fn project_rational_multiple<C: ProjectionCoefficient>(
++    terms: &[(i16, C)],
++    power: i16,
++) -> Option<Rational> {
++    match terms {
++        [] => Some(Rational::zero()),
++        [(actual_power, coefficient)]
++            if *actual_power == power
++                && coefficient.radical_terms().is_empty()
++                && !coefficient.has_atoms() =>
++        {
++            Some(coefficient.rational_part().clone())
++        }
++        _ => None,
++    }
++}
++
++fn project_quadratic_parts<C: ProjectionCoefficient>(
++    terms: &[(i16, C)],
++) -> Option<(Rational, Rational, Option<Rational>)> {
++    match terms {
++        [] => Some((Rational::zero(), Rational::zero(), None)),
++        [(0, coefficient)] if !coefficient.has_atoms() => match coefficient.radical_terms() {
++            [] => Some((coefficient.rational_part().clone(), Rational::zero(), None)),
++            [(radicand, scale)] => Some((
++                coefficient.rational_part().clone(),
++                scale.clone(),
++                Some(radicand.clone()),
++            )),
++            _ => None,
++        },
++        _ => None,
++    }
++}
++
++impl PiLaurentPolynomial {
++    fn multiply_closed(self, other: &ClosedPiLaurentPolynomial) -> Option<Self> {
++        let mut product = Self { terms: Vec::new() };
++        if let [(right_power, right_coefficient)] = other.terms.as_slice() {
++            // Match the owned algorithm's consumption and insertion order.
++            for (left_power, left_coefficient) in self.terms {
++                product.insert(
++                    left_power.checked_add(*right_power)?,
++                    left_coefficient.multiply_parts(
++                        &right_coefficient.rational,
++                        &right_coefficient.radicals,
++                        &[],
++                    )?,
++                )?;
++            }
++            return Some(product);
++        }
++        for (left_power, left_coefficient) in self.terms {
++            for (right_power, right_coefficient) in &other.terms {
++                product.insert(
++                    left_power.checked_add(*right_power)?,
++                    left_coefficient.clone().multiply_parts(
++                        &right_coefficient.rational,
++                        &right_coefficient.radicals,
++                        &[],
++                    )?,
++                )?;
++            }
++        }
++        Some(product)
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    type Snapshot = Vec<(i16, Rational, Vec<(Rational, Rational)>)>;
++
++    fn raw(approximation: Approximation) -> Computable {
++        Computable {
++            internal: Arc::new(Node::new(
++                approximation,
++                BoundCache::Invalid,
++                ExactSignCache::Unknown,
++            )),
++            signal: None,
++        }
++    }
++
++    fn surd() -> PiLaurentPolynomial {
++        let mut coefficient = RadicalCoefficient::radical(Rational::new(2), Rational::new(13));
++        coefficient.rational = Rational::new(3);
++        PiLaurentPolynomial::monomial(0, coefficient)
++    }
++
++    fn snapshot(polynomial: &PiLaurentPolynomial) -> Snapshot {
++        polynomial
++            .terms
++            .iter()
++            .map(|(power, coefficient)| {
++                assert!(coefficient.atoms.is_empty());
++                (
++                    *power,
++                    coefficient.rational.clone(),
++                    coefficient.radicals.clone(),
++                )
++            })
++            .collect()
++    }
++
++    fn wrap(polynomial: PiLaurentPolynomial, retained: bool) -> PiLaurentValue {
++        if retained {
++            PiLaurentValue::Retained(Arc::new(
++                ClosedPiLaurentPolynomial::from_polynomial(&polynomial).unwrap(),
++            ))
++        } else {
++            PiLaurentValue::Owned(polynomial)
++        }
++    }
++
++    #[test]
++    fn cache_views_share_closed_buffers_and_outlive_the_graph() {
++        let value = raw(Approximation::Add(
++            Computable::rational(Rational::new(3)),
++            Computable::sqrt_rational(Rational::new(13)),
++        ));
++        let clone = value.clone();
++        let weak_node = Arc::downgrade(&value.internal);
++        let owners = Arc::strong_count(&value.internal);
++        let mut work = 512;
++        let mut reused = false;
++        let first = value
++            .pi_laurent_value_retained::<true>(64, &mut work, &mut None, &mut reused)
++            .unwrap();
++        assert!(matches!(first, PiLaurentValue::Owned(_)));
++        let view = value.internal.cache.pi_laurent_value().unwrap();
++        let PiLaurentValue::Retained(closed) = &view else {
++            panic!("a successful closed cache read must share its immutable payload");
++        };
++        let weak_payload = Arc::downgrade(closed);
++        let mut zero_work = 0;
++        let mut second_reused = false;
++        let second = value
++            .pi_laurent_value_retained::<true>(0, &mut zero_work, &mut None, &mut second_reused)
++            .unwrap();
++        let PiLaurentValue::Retained(second_closed) = &second else {
++            panic!("a zero-work cache hit must retain the same closed payload");
++        };
++        assert!(Arc::ptr_eq(closed, second_closed));
++        assert_eq!(closed.terms.as_ptr(), second_closed.terms.as_ptr());
++        assert_eq!(
++            closed.terms[0].1.radicals.as_ptr(),
++            second_closed.terms[0].1.radicals.as_ptr()
++        );
++        assert!(second_reused);
++        assert_eq!(zero_work, 0);
++        assert_eq!(Arc::strong_count(&value.internal), owners);
++        assert!(value.cached().is_none());
++        let mut owned = view.clone().into_polynomial();
++        assert_ne!(
++            owned.terms[0].1.radicals.as_ptr(),
++            closed.terms[0].1.radicals.as_ptr()
++        );
++        owned.terms[0].1.rational = Rational::new(97);
++        assert_eq!(closed.terms[0].1.rational, Rational::new(3));
++        drop(first);
++        drop(clone);
++        drop(value);
++        assert!(weak_node.upgrade().is_none());
++        assert_eq!(
++            snapshot(&second.clone().into_polynomial()),
++            vec![(
++                0,
++                Rational::new(3),
++                vec![(Rational::new(13), Rational::one())]
++            )]
++        );
++        drop(view);
++        assert!(weak_payload.upgrade().is_some());
++        drop(second);
++        assert!(weak_payload.upgrade().is_none());
++        println!(
++            "RETAINED_POLYNOMIAL_LAYOUT\t{}\t{}",
++            std::mem::size_of::<PiLaurentValue>(),
++            std::mem::size_of::<CachedEvaluation>()
++        );
++    }
++
++    #[test]
++    fn all_owned_and_retained_combinations_preserve_exact_arithmetic() {
++        let expected = snapshot(&surd());
++        for left_retained in [false, true] {
++            for right_retained in [false, true] {
++                let left = wrap(surd(), left_retained);
++                let right = wrap(surd(), right_retained);
++                let product = left.clone().multiply(right.clone()).unwrap();
++                assert_eq!(
++                    snapshot(&product),
++                    vec![(
++                        0,
++                        Rational::new(61),
++                        vec![(Rational::new(13), Rational::new(12))]
++                    )]
++                );
++                let inverse = right.clone().inverse_monomial().unwrap();
++                assert_eq!(
++                    snapshot(&inverse),
++                    vec![(
++                        0,
++                        Rational::fraction(-3, 43).unwrap(),
++                        vec![(Rational::new(13), Rational::fraction(2, 43).unwrap())]
++                    )]
++                );
++                let identity = PiLaurentValue::Owned(inverse)
++                    .multiply(right.clone())
++                    .unwrap();
++                assert_eq!(snapshot(&identity), vec![(0, Rational::one(), vec![])]);
++                let negative = right.clone().scaled(Rational::new(-1));
++                assert!(
++                    left.clone()
++                        .add(PiLaurentValue::Owned(negative))
++                        .unwrap()
++                        .terms
++                        .is_empty()
++                );
++                assert!(left.clone().scaled(Rational::zero()).terms.is_empty());
++                assert_eq!(snapshot(&left.into_polynomial()), expected);
++                assert_eq!(snapshot(&right.into_polynomial()), expected);
++            }
++        }
++    }
++
++    #[test]
++    fn borrowed_products_preserve_order_and_both_frontiers() {
++        let roots = [2, 3, 5, 7, 11, 13, 17, 19];
++        for width in [0, 1, 2, 8] {
++            for radical_width in [0, 1, 2, 8] {
++                let mut left = PiLaurentPolynomial { terms: Vec::new() };
++                for index in 0..width {
++                    let mut coefficient = RadicalCoefficient::rational(Rational::new(3));
++                    for root in &roots[..radical_width] {
++                        coefficient
++                            .insert_radical(Rational::new(*root), Rational::new(2))
++                            .unwrap();
++                    }
++                    left.insert(index * 2 - 7, coefficient).unwrap();
++                }
++                for right in [surd(), left.clone()] {
++                    let expected = left.clone().multiply(right.clone()).map(|p| snapshot(&p));
++                    for retained_left in [false, true] {
++                        let actual = wrap(left.clone(), retained_left)
++                            .multiply(wrap(right.clone(), true))
++                            .map(|p| snapshot(&p));
++                        assert_eq!(
++                            actual, expected,
++                            "width={width}, radical_width={radical_width}"
++                        );
++                    }
++                }
++            }
++        }
++        for (left, right) in [(i16::MAX, 1), (i16::MIN, -1)] {
++            let monomial = |power| {
++                PiLaurentPolynomial::monomial(power, RadicalCoefficient::rational(Rational::one()))
++            };
++            assert!(
++                wrap(monomial(left), true)
++                    .multiply(wrap(monomial(right), true))
++                    .is_none()
++            );
++        }
++        assert!(
++            wrap(
++                PiLaurentPolynomial::monomial(
++                    i16::MIN,
++                    RadicalCoefficient::rational(Rational::one())
++                ),
++                true
++            )
++            .inverse_monomial()
++            .is_none()
++        );
++        let mut full = PiLaurentPolynomial { terms: Vec::new() };
++        for power in 0..8 {
++            full.insert(power, RadicalCoefficient::rational(Rational::one()))
++                .unwrap();
++        }
++        assert!(
++            wrap(full, true)
++                .add(wrap(
++                    PiLaurentPolynomial::monomial(8, RadicalCoefficient::rational(Rational::one())),
++                    true
++                ))
++                .is_none()
++        );
++        let mut coefficient = RadicalCoefficient::rational(Rational::zero());
++        for root in roots {
++            coefficient
++                .insert_radical(Rational::new(root), Rational::one())
++                .unwrap();
++        }
++        assert!(
++            wrap(PiLaurentPolynomial::monomial(0, coefficient), true)
++                .add(wrap(
++                    PiLaurentPolynomial::monomial(
++                        0,
++                        RadicalCoefficient::radical(Rational::one(), Rational::new(23))
++                    ),
++                    true
++                ))
++                .is_none()
++        );
++    }
++
++    #[test]
++    fn concurrent_cache_reads_mutate_only_materialized_owned_values() {
++        let value = raw(Approximation::Add(
++            Computable::rational(Rational::new(3)),
++            Computable::sqrt_rational(Rational::new(13)),
++        ));
++        let clone = value.clone();
++        let mut work = 512;
++        value
++            .pi_laurent_value_retained::<true>(64, &mut work, &mut None, &mut false)
++            .unwrap();
++        let retained = value.internal.cache.pi_laurent_value().unwrap();
++        std::thread::scope(|scope| {
++            for index in 1..=8 {
++                let value = &value;
++                scope.spawn(move || {
++                    for _ in 0..8 {
++                        let read = value.internal.cache.pi_laurent_value().unwrap();
++                        assert!(matches!(read, PiLaurentValue::Retained(_)));
++                        let changed = read.scaled(Rational::new(-index));
++                        assert_eq!(changed.terms[0].1.rational, Rational::new(-3 * index));
++                        assert_eq!(changed.terms[0].1.radicals[0].1, Rational::new(-index));
++                    }
++                });
++            }
++        });
++        assert_eq!(
++            snapshot(&retained.into_polynomial()),
++            vec![(
++                0,
++                Rational::new(3),
++                vec![(Rational::new(13), Rational::one())]
++            )]
++        );
++        assert!(clone.cached().is_none());
++    }
++
++    #[test]
++    fn closed_right_operands_preserve_opaque_left_owners_and_declines() {
++        let atom = raw(Approximation::AtanRational(
++            Rational::fraction(3, 7).unwrap(),
++        ));
++        let weak = Arc::downgrade(&atom.internal);
++        let owners = Arc::strong_count(&atom.internal);
++        let left = || {
++            PiLaurentValue::Owned(PiLaurentPolynomial::monomial(
++                0,
++                RadicalCoefficient::atom(atom.clone()),
++            ))
++        };
++        let rational = wrap(
++            PiLaurentPolynomial::monomial(0, RadicalCoefficient::rational(Rational::new(2))),
++            true,
++        );
++        let product = left().multiply(rational).unwrap();
++        assert_eq!(product.terms[0].1.atoms.len(), 1);
++        assert!(Computable::internal_structural_eq(
++            &product.terms[0].1.atoms[0].0,
++            &atom
++        ));
++        assert_eq!(product.terms[0].1.atoms[0].1, Rational::new(2));
++        assert_eq!(Arc::strong_count(&atom.internal), owners + 1);
++        assert!(ClosedPiLaurentPolynomial::from_polynomial(&product).is_none());
++        drop(product);
++        assert_eq!(Arc::strong_count(&atom.internal), owners);
++        assert!(left().multiply(wrap(surd(), true)).is_none());
++        assert_eq!(Arc::strong_count(&atom.internal), owners);
++        drop(atom);
++        assert!(weak.upgrade().is_none());
++    }
++
++    #[cfg(test)]
++    mod projection_tests {
++        use super::*;
++
++        fn wrap(polynomial: PiLaurentPolynomial, retained: bool) -> PiLaurentValue {
++            if retained {
++                PiLaurentValue::Retained(Arc::new(
++                    ClosedPiLaurentPolynomial::from_polynomial(&polynomial).unwrap(),
++                ))
++            } else {
++                PiLaurentValue::Owned(polynomial)
++            }
++        }
++
++        #[test]
++        fn zero_rational_powers_and_multiple_terms_keep_exact_projection_shapes() {
++            for retained in [false, true] {
++                for numerator in [-3, 0, 7] {
++                    for power in [i16::MIN, -1, 0, 1, i16::MAX] {
++                        let rational = Rational::fraction(numerator, 11).unwrap();
++                        let value = wrap(
++                            PiLaurentPolynomial::monomial(
++                                power,
++                                RadicalCoefficient::rational(rational.clone()),
++                            ),
++                            retained,
++                        );
++                        for requested_power in [0, 1] {
++                            let expected = (numerator == 0 || power == requested_power)
++                                .then(|| rational.clone());
++                            assert_eq!(value.rational_multiple(requested_power), expected);
++                        }
++                        let expected = (numerator == 0 || power == 0)
++                            .then(|| (rational.clone(), Rational::zero(), None));
++                        assert_eq!(value.quadratic_parts(), expected);
++                    }
++                }
++                for powers in [[-1, 0], [0, 1], [1, 2]] {
++                    let value = wrap(
++                        PiLaurentPolynomial {
++                            terms: powers
++                                .into_iter()
++                                .map(|power| {
++                                    (power, RadicalCoefficient::rational(Rational::new(3)))
++                                })
++                                .collect(),
++                        },
++                        retained,
++                    );
++                    assert!(value.rational_multiple(0).is_none());
++                    assert!(value.rational_multiple(1).is_none());
++                    assert!(value.quadratic_parts().is_none());
++                }
++            }
++        }
++
++        #[test]
++        fn quadratic_and_opaque_coefficients_preserve_acceptance_and_owner_counts() {
++            for retained in [false, true] {
++                for width in [1, 2, 8] {
++                    let mut coefficient = RadicalCoefficient::rational(Rational::new(3));
++                    for root in [2, 3, 5, 7, 11, 13, 17, 19].into_iter().take(width) {
++                        coefficient
++                            .insert_radical(Rational::new(root), Rational::fraction(-5, 7).unwrap())
++                            .unwrap();
++                    }
++                    let value = wrap(PiLaurentPolynomial::monomial(0, coefficient), retained);
++                    assert!(value.rational_multiple(0).is_none());
++                    assert!(value.rational_multiple(1).is_none());
++                    let expected = (width == 1).then(|| {
++                        (
++                            Rational::new(3),
++                            Rational::fraction(-5, 7).unwrap(),
++                            Some(Rational::new(2)),
++                        )
++                    });
++                    assert_eq!(value.quadratic_parts(), expected);
++                }
++            }
++            let atom = Computable {
++                internal: Arc::new(Node::new(
++                    Approximation::AtanRational(Rational::fraction(3, 7).unwrap()),
++                    BoundCache::Invalid,
++                    ExactSignCache::Unknown,
++                )),
++                signal: None,
++            };
++            let weak = Arc::downgrade(&atom.internal);
++            let owners = Arc::strong_count(&atom.internal);
++            let value = PiLaurentPolynomial::monomial(0, RadicalCoefficient::atom(atom.clone()));
++            assert!(ClosedPiLaurentPolynomial::from_polynomial(&value).is_none());
++            let value = PiLaurentValue::Owned(value);
++            assert!(value.rational_multiple(0).is_none());
++            assert!(value.rational_multiple(1).is_none());
++            assert!(value.quadratic_parts().is_none());
++            assert_eq!(Arc::strong_count(&atom.internal), owners + 1);
++            drop(value);
++            assert_eq!(Arc::strong_count(&atom.internal), owners);
++            drop(atom);
++            assert!(weak.upgrade().is_none());
++        }
++
++        #[test]
++        fn projected_components_do_not_retain_or_mutate_the_closed_payload() {
++            let mut coefficient = RadicalCoefficient::radical(Rational::new(2), Rational::new(13));
++            coefficient.rational = Rational::new(3);
++            let polynomial = PiLaurentPolynomial::monomial(0, coefficient);
++            let closed = Arc::new(ClosedPiLaurentPolynomial::from_polynomial(&polynomial).unwrap());
++            let weak = Arc::downgrade(&closed);
++            let term_pointer = closed.terms.as_ptr();
++            let radical_pointer = closed.terms[0].1.radicals.as_ptr();
++            let value = PiLaurentValue::Retained(closed.clone());
++            let projected = value.quadratic_parts().unwrap();
++            assert!(value.rational_multiple(0).is_none());
++            assert!(value.rational_multiple(1).is_none());
++            assert_eq!(closed.terms.as_ptr(), term_pointer);
++            assert_eq!(closed.terms[0].1.radicals.as_ptr(), radical_pointer);
++            assert_eq!(closed.terms[0].1.rational, Rational::new(3));
++            drop(value);
++            drop(closed);
++            assert!(weak.upgrade().is_none());
++            assert_eq!(
++                projected,
++                (Rational::new(3), Rational::new(2), Some(Rational::new(13)))
++            );
++            let polynomial = PiLaurentPolynomial::monomial(
++                1,
++                RadicalCoefficient::rational(Rational::fraction(-7, 3).unwrap()),
++            );
++            let closed = Arc::new(ClosedPiLaurentPolynomial::from_polynomial(&polynomial).unwrap());
++            let weak = Arc::downgrade(&closed);
++            let value = PiLaurentValue::Retained(closed);
++            let multiple = value.rational_multiple(1).unwrap();
++            assert!(value.rational_multiple(0).is_none());
++            assert!(value.quadratic_parts().is_none());
++            drop(value);
++            assert!(weak.upgrade().is_none());
++            assert_eq!(multiple, Rational::fraction(-7, 3).unwrap());
++        }
++    }
++}
+--- a/crates/hyperreal/src/computable/node/shared_radical_tests.rs
++++ b/crates/hyperreal/src/computable/node/shared_radical_tests.rs
+@@ -0,0 +1,175 @@
++use super::*;
++
++const ROOTS: [i64; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
++
++fn coefficient(width: usize) -> RadicalCoefficient {
++    let mut result = RadicalCoefficient::rational(Rational::new(29));
++    for (index, root) in ROOTS[..width].iter().enumerate() {
++        result
++            .insert_radical(
++                Rational::new(*root),
++                Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++    }
++    result
++}
++
++fn components(value: &RadicalCoefficient) -> (Rational, Vec<(Rational, Rational)>) {
++    assert!(value.atoms.is_empty());
++    (value.rational.clone(), value.radicals.to_vec())
++}
++
++#[test]
++fn closed_views_isolate_scaling_cancellation_and_frontier_failures() {
++    for width in [1, 2, 8] {
++        let source = PiLaurentPolynomial::monomial(0, coefficient(width));
++        let expected = components(&source.terms[0].1);
++        let closed = ClosedPiLaurentPolynomial::from_polynomial(&source).unwrap();
++        let first = closed.to_polynomial();
++        let second = closed.to_polynomial();
++        if width == 1 {
++            let source_shared =
++                source.terms[0].1.radicals.as_ptr() == closed.terms[0].1.radicals.as_ptr();
++            let views_shared = closed.terms[0].1.radicals.as_ptr()
++                == first.terms[0].1.radicals.as_ptr()
++                && first.terms[0].1.radicals.as_ptr() == second.terms[0].1.radicals.as_ptr();
++            println!(
++                "RADICAL_STORAGE_SHARING\t{}\t{}",
++                u8::from(source_shared),
++                u8::from(views_shared)
++            );
++        }
++        let scale = Rational::fraction(-3, 11).unwrap();
++        let scaled = first.scaled(scale.clone());
++        assert_eq!(scaled.terms[0].1.rational, &expected.0 * &scale);
++        assert_eq!(
++            scaled.terms[0].1.radicals.as_slice(),
++            expected
++                .1
++                .iter()
++                .map(|(root, amount)| (root.clone(), amount * &scale))
++                .collect::<Vec<_>>()
++        );
++        let mut cancelled = second;
++        cancelled.terms[0]
++            .1
++            .insert_radical(Rational::new(2), Rational::new(-1))
++            .unwrap();
++        assert_eq!(cancelled.terms[0].1.radicals.as_slice(), &expected.1[1..]);
++        let mut frontier = closed.to_polynomial();
++        if width == 8 {
++            assert!(
++                frontier.terms[0]
++                    .1
++                    .insert_radical(Rational::new(23), Rational::new(1))
++                    .is_none()
++            );
++            assert_eq!(components(&frontier.terms[0].1), expected);
++        }
++        assert_eq!(components(&source.terms[0].1), expected);
++        assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++        assert!(
++            closed
++                .to_polynomial()
++                .scaled(Rational::zero())
++                .terms
++                .is_empty()
++        );
++        assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++    }
++}
++
++#[test]
++fn consuming_cached_products_and_inverses_preserves_live_certificates() {
++    let mut value = RadicalCoefficient::radical(Rational::new(2), Rational::new(13));
++    value.rational = Rational::new(3);
++    let source = PiLaurentPolynomial::monomial(0, value);
++    let expected = components(&source.terms[0].1);
++    let closed = ClosedPiLaurentPolynomial::from_polynomial(&source).unwrap();
++    let product = closed
++        .to_polynomial()
++        .multiply(closed.to_polynomial())
++        .unwrap();
++    assert_eq!(product.terms[0].1.rational, Rational::new(61));
++    assert_eq!(
++        product.terms[0].1.radicals.as_slice(),
++        [(Rational::new(13), Rational::new(12))].as_slice()
++    );
++    let inverse = closed.to_polynomial().inverse_monomial().unwrap();
++    assert_eq!(
++        inverse.terms[0].1.rational,
++        Rational::fraction(-3, 43).unwrap()
++    );
++    assert_eq!(
++        inverse.terms[0].1.radicals.as_slice(),
++        [(Rational::new(13), Rational::fraction(2, 43).unwrap())].as_slice()
++    );
++    let identity = inverse.multiply(closed.to_polynomial()).unwrap();
++    assert_eq!(identity.terms[0].1.rational, Rational::one());
++    assert!(identity.terms[0].1.radicals.is_empty());
++    assert_eq!(components(&source.terms[0].1), expected);
++    assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++}
++
++#[test]
++fn concurrent_cached_views_mutate_independently_and_outlive_the_graph() {
++    let value = Computable {
++        internal: Arc::new(Node::new(
++            Approximation::Add(
++                Computable::rational(Rational::new(3)),
++                Computable::sqrt_rational(Rational::new(13)),
++            ),
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    };
++    let weak = Arc::downgrade(&value.internal);
++    let clone = value.clone();
++    let mut work = 512;
++    let mut reused = false;
++    let original = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut None, &mut reused)
++        .unwrap();
++    let expected = (Rational::new(3), vec![(Rational::new(13), Rational::one())]);
++    assert_eq!(components(&original.terms[0].1), expected);
++    std::thread::scope(|scope| {
++        for index in 1..=8 {
++            let value = &value;
++            let expected = &expected;
++            scope.spawn(move || {
++                for _ in 0..8 {
++                    let mut work = 0;
++                    let mut reused = false;
++                    let view = value
++                        .pi_laurent_polynomial_retained::<true>(
++                            0,
++                            &mut work,
++                            &mut None,
++                            &mut reused,
++                        )
++                        .unwrap();
++                    assert!(reused);
++                    assert_eq!(work, 0);
++                    assert_eq!(components(&view.terms[0].1), *expected);
++                    let changed = view.scaled(Rational::new(-index));
++                    assert_eq!(changed.terms[0].1.rational, Rational::new(-3 * index));
++                    assert_eq!(changed.terms[0].1.radicals[0].1, Rational::new(-index));
++                }
++            });
++        }
++    });
++    assert_eq!(components(&original.terms[0].1), expected);
++    assert!(value.cached().is_none());
++    let view = value.internal.cache.pi_laurent_polynomial().unwrap();
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++    assert_eq!(components(&original.terms[0].1), expected);
++    assert_eq!(components(&view.terms[0].1), expected);
++    let negated = view.scaled(Rational::new(-1));
++    assert_eq!(negated.terms[0].1.rational, Rational::new(-3));
++    assert_eq!(negated.terms[0].1.radicals[0].1, Rational::new(-1));
++    assert_eq!(components(&original.terms[0].1), expected);
++}
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1309,23 +1309,8 @@
+         // Project the shared bounded normal form after cancellation. Requiring
+         // every intermediate expression to use one radical would miss exact
+         // quadratic values assembled from independent geometric directions.
+-        let value = self.project_pi_laurent_polynomial(64, |polynomial| {
+-            match polynomial.terms.as_slice() {
+-                [] => Some((Rational::zero(), Rational::zero(), None)),
+-                [(0, coefficient)] if coefficient.atoms.is_empty() => {
+-                    match coefficient.radicals.as_slice() {
+-                        [] => Some((coefficient.rational.clone(), Rational::zero(), None)),
+-                        [(radicand, scale)] => Some((
+-                            coefficient.rational.clone(),
+-                            scale.clone(),
+-                            Some(radicand.clone()),
+-                        )),
+-                        _ => None,
+-                    }
+-                }
+-                _ => None,
+-            }
+-        })?;
++        let value =
++            self.project_pi_laurent_polynomial(64, |polynomial| polynomial.quadratic_parts())?;
+         crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+         Some(value)
+     }
+--- a/crates/hyperreal/src/computable/node/temporary_storage_tests.rs
++++ b/crates/hyperreal/src/computable/node/temporary_storage_tests.rs
+@@ -0,0 +1,355 @@
++use super::*;
++
++const ROOTS: [i64; 9] = [2, 3, 5, 7, 11, 13, 17, 19, 23];
++
++fn empty() -> PiLaurentPolynomial {
++    PiLaurentPolynomial::monomial(0, RadicalCoefficient::rational(Rational::zero()))
++}
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn atom(index: i64) -> Computable {
++    raw(Approximation::AtanRational(
++        Rational::fraction(index + 1, 37).unwrap(),
++    ))
++}
++
++fn components(value: &RadicalCoefficient) -> (Rational, Vec<(Rational, Rational)>) {
++    assert!(value.atoms.is_empty());
++    (value.rational.clone(), value.radicals.to_vec())
++}
++
++#[test]
++fn radical_frontiers_cancel_and_regrow_in_order() {
++    let mut value = RadicalCoefficient::rational(Rational::zero());
++    for (index, root) in ROOTS[..8].iter().enumerate() {
++        value
++            .insert_radical(
++                Rational::new(*root),
++                Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++        assert_eq!(value.radicals.len(), index + 1);
++    }
++    let before = components(&value);
++    assert!(
++        value
++            .insert_radical(Rational::new(23), Rational::one())
++            .is_none()
++    );
++    assert_eq!(components(&value), before);
++    // Existing identities and zero entries remain allowed at the full frontier.
++    value
++        .insert_radical(Rational::new(23), Rational::zero())
++        .unwrap();
++    value
++        .insert_radical(Rational::one(), Rational::new(41))
++        .unwrap();
++    for (index, root) in ROOTS[..8].iter().enumerate().rev() {
++        value
++            .insert_radical(
++                Rational::new(*root),
++                -Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++        assert_eq!(value.radicals.len(), index);
++    }
++    assert_eq!(value.rational, Rational::new(41));
++    for root in [23, 3, 2] {
++        value
++            .insert_radical(Rational::new(root), Rational::new(-7))
++            .unwrap();
++    }
++    assert_eq!(
++        value.radicals.as_slice(),
++        [23, 3, 2]
++            .map(|root| (Rational::new(root), Rational::new(-7)))
++            .as_slice()
++    );
++}
++
++#[test]
++fn polynomial_frontiers_stay_sorted_after_cancel_and_regrow() {
++    let mut value = empty();
++    for power in [7, -4, 3, -2, 5, 0, 1, -6] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(3)))
++            .unwrap();
++    }
++    assert_eq!(
++        value.terms.iter().map(|(p, _)| *p).collect::<Vec<_>>(),
++        [-6, -4, -2, 0, 1, 3, 5, 7]
++    );
++    assert!(
++        value
++            .insert(9, RadicalCoefficient::rational(Rational::one()))
++            .is_none()
++    );
++    assert_eq!(value.terms.len(), 8);
++    value
++        .insert(9, RadicalCoefficient::rational(Rational::zero()))
++        .unwrap();
++    for power in [0, 7, -6, 3, -2, 5, 1, -4] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(-3)))
++            .unwrap();
++    }
++    assert!(value.terms.is_empty());
++    for power in [5, -5, 0] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(11)))
++            .unwrap();
++    }
++    assert_eq!(
++        value.terms.iter().map(|(p, _)| *p).collect::<Vec<_>>(),
++        [-5, 0, 5]
++    );
++}
++
++#[test]
++fn closed_roundtrips_preserve_scaled_single_and_spilled_forms() {
++    for width in [0, 1, 2, 8] {
++        for radical_width in [0, 1, 2, 8] {
++            let mut value = empty();
++            for index in 0..width {
++                let mut coefficient = RadicalCoefficient::rational(Rational::new(41));
++                for root in &ROOTS[..radical_width] {
++                    coefficient
++                        .insert_radical(Rational::new(*root), Rational::fraction(5, 7).unwrap())
++                        .unwrap();
++                }
++                value.insert(index * 2 - 7, coefficient).unwrap();
++            }
++            for numerator in [0, -3, 2] {
++                let scale = Rational::fraction(numerator, 11).unwrap();
++                let scaled = value.clone().scaled(scale);
++                let closed = ClosedPiLaurentPolynomial::from_polynomial(&scaled).unwrap();
++                let restored = closed.to_polynomial();
++                drop(closed);
++                assert_eq!(
++                    restored.terms.len(),
++                    if numerator == 0 {
++                        0
++                    } else {
++                        usize::try_from(width).unwrap()
++                    }
++                );
++                for (index, (power, coefficient)) in restored.terms.iter().enumerate() {
++                    assert_eq!(*power, i16::try_from(index).unwrap() * 2 - 7);
++                    assert_eq!(
++                        coefficient.rational,
++                        Rational::fraction(41 * numerator, 11).unwrap()
++                    );
++                    assert_eq!(coefficient.radicals.len(), radical_width);
++                    for ((root, amount), expected_root) in coefficient.radicals.iter().zip(ROOTS) {
++                        assert_eq!(*root, Rational::new(expected_root));
++                        assert_eq!(*amount, Rational::fraction(5 * numerator, 77).unwrap());
++                    }
++                    assert!(coefficient.atoms.is_empty());
++                }
++                // A second copy remains independent after the first is released.
++                let again = ClosedPiLaurentPolynomial::from_polynomial(&restored).unwrap();
++                drop(restored);
++                assert_eq!(again.to_polynomial().terms.len(), scaled.terms.len());
++            }
++        }
++    }
++}
++
++#[test]
++fn radical_products_and_inverses_keep_exact_coefficients() {
++    let left = RadicalCoefficient::rational(Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::new(3),
++            Rational::new(5),
++        ))
++        .unwrap();
++    let right = RadicalCoefficient::rational(Rational::new(7))
++        .add(RadicalCoefficient::radical(
++            Rational::new(-2),
++            Rational::new(5),
++        ))
++        .unwrap();
++    assert_eq!(
++        components(&left.multiply(&right).unwrap()),
++        (
++            Rational::new(-16),
++            vec![(Rational::new(5), Rational::new(17))]
++        )
++    );
++    let two_roots = RadicalCoefficient::radical(Rational::one(), Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::one(),
++            Rational::new(3),
++        ))
++        .unwrap();
++    assert_eq!(
++        components(&two_roots.clone().multiply(&two_roots).unwrap()),
++        (Rational::new(5), vec![(Rational::new(6), Rational::new(2))])
++    );
++    assert!(two_roots.inverse().is_none());
++    let unit = RadicalCoefficient::rational(Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::one(),
++            Rational::new(3),
++        ))
++        .unwrap();
++    let inverse = unit.clone().inverse().unwrap();
++    assert_eq!(
++        components(&inverse),
++        (
++            Rational::new(2),
++            vec![(Rational::new(3), Rational::new(-1))]
++        )
++    );
++    assert_eq!(
++        components(&unit.multiply(&inverse).unwrap()),
++        (Rational::one(), vec![])
++    );
++    assert!(
++        RadicalCoefficient::rational(Rational::zero())
++            .inverse()
++            .is_none()
++    );
++    assert!(RadicalCoefficient::atom(atom(0)).inverse().is_none());
++    let opaque = RadicalCoefficient::atom(atom(1));
++    assert!(opaque.clone().multiply(&opaque).is_none());
++    assert!(
++        opaque
++            .multiply(&RadicalCoefficient::radical(
++                Rational::one(),
++                Rational::new(2)
++            ))
++            .is_none()
++    );
++}
++
++#[test]
++fn polynomial_products_cancel_cross_terms_and_keep_power_limits() {
++    let make = |sign| {
++        PiLaurentPolynomial::monomial(
++            1,
++            RadicalCoefficient::radical(Rational::one(), Rational::new(2)),
++        )
++        .add(PiLaurentPolynomial::monomial(
++            0,
++            RadicalCoefficient::radical(Rational::new(sign), Rational::new(3)),
++        ))
++        .unwrap()
++    };
++    let product = make(1).multiply(make(-1)).unwrap();
++    assert_eq!(product.terms.len(), 2);
++    assert_eq!(product.terms[0].0, 0);
++    assert_eq!(components(&product.terms[0].1), (Rational::new(-3), vec![]));
++    assert_eq!(product.terms[1].0, 2);
++    assert_eq!(components(&product.terms[1].1), (Rational::new(2), vec![]));
++    assert!(product.inverse_monomial().is_none());
++    assert!(empty().inverse_monomial().is_none());
++    let monomial =
++        |power| PiLaurentPolynomial::monomial(power, RadicalCoefficient::rational(Rational::one()));
++    assert!(monomial(i16::MAX).multiply(monomial(1)).is_none());
++    assert!(monomial(i16::MIN).multiply(monomial(-1)).is_none());
++    assert!(monomial(i16::MIN).inverse_monomial().is_none());
++    assert_eq!(monomial(-7).inverse_monomial().unwrap().terms[0].0, 7);
++}
++
++#[test]
++fn opaque_owners_are_released_on_clear_cancellation_and_decline() {
++    for width in [1, 2, 8] {
++        let mut value = empty();
++        let mut weak = Vec::new();
++        for index in 0..width {
++            let owner = atom(index);
++            weak.push(Arc::downgrade(&owner.internal));
++            value
++                .insert(
++                    i16::try_from(index).unwrap(),
++                    RadicalCoefficient::atom(owner),
++                )
++                .unwrap();
++        }
++        assert!(ClosedPiLaurentPolynomial::from_polynomial(&value).is_none());
++        let clone = value.clone();
++        assert!(weak.iter().all(|owner| owner.strong_count() == 2));
++        let cleared = clone.scaled(Rational::zero());
++        assert!(cleared.terms.is_empty());
++        assert!(weak.iter().all(|owner| owner.strong_count() == 1));
++        drop(cleared);
++        if width == 8 {
++            let extra = atom(17);
++            let extra_weak = Arc::downgrade(&extra.internal);
++            assert!(value.insert(9, RadicalCoefficient::atom(extra)).is_none());
++            assert!(extra_weak.upgrade().is_none());
++        }
++        for index in (0..width).rev() {
++            let mut opposite = value.terms[usize::try_from(index).unwrap()].1.clone();
++            opposite.scale_in_place(&Rational::new(-1));
++            value
++                .insert(i16::try_from(index).unwrap(), opposite)
++                .unwrap();
++            assert!(weak[usize::try_from(index).unwrap()].upgrade().is_none());
++        }
++        assert!(value.terms.is_empty());
++        assert!(weak.iter().all(|owner| owner.upgrade().is_none()));
++    }
++    let owner = atom(19);
++    let weak = Arc::downgrade(&owner.internal);
++    let left = PiLaurentPolynomial::monomial(i16::MAX, RadicalCoefficient::atom(owner));
++    let right = PiLaurentPolynomial::monomial(1, RadicalCoefficient::rational(Rational::one()));
++    assert!(left.multiply(right).is_none());
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts() {
++    let opaque = atom(5);
++    let root = Computable::sqrt_rational(Rational::new(13));
++    let sum = raw(Approximation::Add(
++        raw(Approximation::Add(Computable::pi(), root)),
++        opaque.clone(),
++    ));
++    let expression = raw(Approximation::Add(
++        raw(Approximation::Add(
++            sum.clone(),
++            raw(Approximation::Negate(Computable::pi())),
++        )),
++        raw(Approximation::Negate(opaque)),
++    ));
++    let clone = expression.clone();
++    let expected = Some((Rational::zero(), Rational::one(), Some(Rational::new(13))));
++    for query in [&expression, &clone, &expression] {
++        assert_eq!(query.exact_quadratic_surd_parts(), expected);
++        assert!(sum.exact_quadratic_surd_parts().is_none());
++        assert!(query.cached().is_none());
++    }
++}
++
++#[test]
++fn temporary_and_persistent_layouts_are_reported_separately() {
++    println!(
++        "TEMPORARY_LAURENT_LAYOUT\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
++        std::mem::size_of::<Rational>(),
++        std::mem::size_of::<RadicalCoefficient>(),
++        std::mem::size_of::<PiLaurentPolynomial>(),
++        std::mem::size_of::<ClosedRadicalCoefficient>(),
++        std::mem::size_of::<ClosedPiLaurentPolynomial>(),
++        std::mem::size_of::<Computable>(),
++        std::mem::size_of::<Node>(),
++    );
++    println!(
++        "CACHED_EVALUATION_LAYOUT\t{}",
++        std::mem::size_of::<CachedEvaluation>()
++    );
++    // The persistent representation still owns only closed rational data.
++    let closed = ClosedPiLaurentPolynomial::from_polynomial(&empty()).unwrap();
++    let _: Vec<(i16, ClosedRadicalCoefficient)> = closed.terms;
++}

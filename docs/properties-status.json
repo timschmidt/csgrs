@@ -1792,7 +1792,7 @@
       "native_executed": false
     },
     "retained_polynomial_projection": {
-      "status": "v1-format-recovery-failure-preserved-v2-inputs-recorded",
+      "status": "v2-sources-frozen-scalar-qualification-running",
       "evidence": "docs/evidence/2026-10-13-retained-polynomial-projection",
       "scope": "Three fresh variants: unchanged endpoint/P4 baseline, rejected recursive-view control and direct rational/pi/quadratic projection from owned or retained slices. Only five consumer/wrapper methods and private projection definitions change from the recursive runtime.",
       "controls": "Six new shared public-query controls, fourteen unchanged shared storage/memo/alias tests, inherited cache/P4 checks, five recursive-view controls and three projected helper controls. All configurations and focused counts overlap.",
@@ -1802,12 +1802,28 @@
         "Borrowed projection may change generated code and binary size.",
         "Root retained-copy counts do not predict application improvement."
       ],
-      "next_step": "Freeze all three sources, complete 42 scalar qualification commands, then run the predeclared eighteen preflights and ninety measurements with unchanged probes. Preserve all three contrasts, sharing one closed sample set; do not extend earlier samples.",
+      "next_step": "Finish all 42 sequential qualification commands, independently verify their evidence, then run eighteen preflights and ninety fixed scalar measurements only if qualification passes.",
       "native_limits": "120-second full-board worker CPU and 60-second copper-neck check-body wall; no fixture or limit change.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation_v1": "Stopped before compilation when rustfmt removed one optional trailing comma and collapsed one projection closure. Both rewrites are explicitly accounted for; all other source bytes and mathematical tests match the declared inputs. All three generated sources remain frozen; qualification and costs were not executed.",
-      "preparation_v2": "Fresh sources must match all formatted v1 source maps exactly. Only expected formatting fragments and evidence paths change; qualification and cost controls remain unchanged."
+      "preparation_v2": {
+        "status": "passed",
+        "source_counts": {
+          "baseline": 10135,
+          "recursive": 10136,
+          "projected": 10136
+        },
+        "source_maps_equal_formatted_v1": true,
+        "source_changes_from_parent": {
+          "baseline": 5,
+          "recursive": 7,
+          "projected": 8
+        },
+        "baseline_and_recursive_runtime_preserved": true,
+        "only_declared_projection_changes": true,
+        "main_and_pending_native_unchanged": true
+      }
     }
   },
   "status_meanings": {
