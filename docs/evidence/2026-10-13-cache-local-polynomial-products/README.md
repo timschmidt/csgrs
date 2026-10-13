@@ -1,6 +1,6 @@
 This experiment tests a typed borrowed multiplication operation inside the
-original Box-backed polynomial cache. The inputs and fixed protocol are
-recorded before preparation, compilation or measurement. No runtime is admitted.
+original Box-backed polynomial cache. The inputs and fixed protocol were
+committed before execution. Preparation passed and both source maps are frozen. No runtime is admitted.
 
 The previous [direct-projection experiment](../2026-10-13-retained-polynomial-projection/README.md)
 passed its scoped correctness checks but was rejected after fixed scalar costs.
@@ -45,7 +45,7 @@ opaque left operand that owns the same node whose closed cache is borrowed.
 Shared projection/storage/memo/alias tests and inherited cache/P4 controls
 remain unchanged.
 
-The planned qualification has 28 sequential commands across two fresh
+Qualification is running 28 sequential commands across two fresh
 targets: focused controls, default/all-feature scalar libraries, 28 doctests
 per variant, formatting, strict default/all-feature/all-target Clippy and
 warning-denied docs. Counts overlap. Existing layouts, memo counts, ordinary

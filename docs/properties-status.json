@@ -2055,7 +2055,7 @@
       "native_executed": false
     },
     "cache_local_polynomial_products": {
-      "status": "prototype-inputs-recorded-preparation-and-qualification-pending",
+      "status": "sources-frozen-scalar-qualification-running",
       "evidence": "docs/evidence/2026-10-13-cache-local-polynomial-products",
       "contract": "Typed multiplication borrows a closed right operand under the original Box-backed cache read lock, returns an owned product, and returns the unchanged left polynomial on a miss. No Arc payload or recursive result enum. Cache-hit decline marks reuse; cache misses enter the preserved original recognizer body once.",
       "source_review": "Product coefficient operations use Rational arithmetic and immutable structural comparison; inspected helpers do not evaluate expressions or call EvaluationCache. The typed method accepts no arbitrary callback. The parent retains the borrowed node, and the guard must be released before recursion, publication and return. Scoped inspection is not a whole-crate formal proof.",
@@ -2064,9 +2064,24 @@
         "Dispatch, temporary Result moves and code generation may regress cold paths or probe size."
       ],
       "controls": "Twenty unchanged shared tests plus inherited cache/P4 controls; eight candidate tests cover exact products, frontiers, misses, zero work, fallback accounting, concurrent readers/writers, poison recovery and opaque self-reference. Fresh qualification will run 28 commands; counts overlap.",
-      "next_step": "Commit inputs, freeze two fresh sources using rustfmt check without source edits, then complete qualification and fixed twelve-preflight/sixty-measurement scalar costs. Original native gates and complete admission controls remain mandatory.",
+      "next_step": "Finish all 28 qualification commands, independently assess the logs and source bindings, then run the fixed scalar costs only if qualification passes.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation": {
+        "status": "passed",
+        "source_counts": {
+          "baseline": 10135,
+          "candidate": 10136
+        },
+        "source_changes_from_parent": {
+          "baseline": 5,
+          "candidate": 7
+        },
+        "baseline_byte_identical_to_prior_control": true,
+        "original_recognizer_body_recovered": true,
+        "shared_math_tests_unchanged": true,
+        "main_and_pending_native_unchanged": true
+      }
     }
   },
   "status_meanings": {
