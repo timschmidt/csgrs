@@ -1,10 +1,13 @@
 This experiment tests direct rational, pi and quadratic projection from a
-retained Laurent polynomial. Its inputs are recorded before preparation,
-qualification or measurement. No runtime is admitted.
+retained Laurent polynomial. Version 1 stopped during preparation on two rustfmt rewrites in the recovery
+check, before compilation. The original inputs, failure and generated sources
+are preserved. Version 2 records the corrected formatting expectations before
+execution and requires its three source maps to match the formatted version 1
+maps exactly. No mathematical or test change is involved; no runtime is admitted.
 
 Three fresh sources distinguish the unchanged endpoint/P4 baseline, the
 previously rejected recursive-view control, and that control with direct
-projection. The [scope](scope-v1.json) binds the source review and fixed cost
+projection. The [scope](scope-v2.json) binds the source review and fixed cost
 protocol. Earlier samples remain closed. This comparison neither admits the
 recursive control nor attributes its earlier timing regressions to copying.
 
@@ -50,3 +53,8 @@ that count is not a timing or savings estimate. Scalar results alone cannot
 establish native performance. The original board worker-CPU limit of 120
 seconds and copper-neck check-body-wall limit of 60 seconds remain mandatory,
 along with native correctness, cost, report and production-size controls.
+
+The [failure assessment](preparation-failure-assessment-v1.json) records the
+removed optional trailing comma and equivalent closure formatting. Version 1
+ran no qualification or costs. Its partial preparation files and complete
+frozen source maps remain available alongside the new runners.

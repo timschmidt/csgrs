@@ -1,0 +1,69 @@
+{
+  "status": "preparation-source-recovery-failed-on-two-rustfmt-rewrites-before-compilation",
+  "failure_sha256": "b24cdcd952a6c90c18f42957d4b1d509aceb3c241a0b81fb0310465294e810ed",
+  "executed_runner_sha256": "69c2d48c153c1cc41863588e76919b904d32842ec8deb1ff8cd78cb5ec7a5ad6",
+  "assessment_script_sha256": "91e99a1de87ff75c1de17c7cefc955bd8f014526d68c0f50f6d5a2e35aaf9776",
+  "formatting_rewrites": [
+    {
+      "before": ".pi_laurent_value_retained::<true>(\n                budget,\n                &mut remaining_work,\n                &mut memo,\n                &mut reused,\n            )",
+      "after": ".pi_laurent_value_retained::<true>(budget, &mut remaining_work, &mut memo, &mut reused)"
+    },
+    {
+      "before": "let rational = self.project_pi_laurent_polynomial(budget, |polynomial| {\n            polynomial.rational_multiple(0)\n        })?;",
+      "after": "let rational = self\n            .project_pi_laurent_polynomial(budget, |polynomial| polynomial.rational_multiple(0))?;"
+    }
+  ],
+  "source_variants": {
+    "baseline": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection/baseline/source",
+      "source_files": 10135,
+      "source_hashes_sha256": "84972327c510a6a4c20f6bd86374932e4a89f93dcbe2e472aa1c11c0f959e665",
+      "delta_archive_sha256": "50cd8e705628fc9e8659f8ab2c03ba172f103ca71f68e73e43e1aa1a65043bc9",
+      "changes": {
+        "crates/hyperreal/src/computable/node/shared_radical_tests.rs": "1c306fafefd3b0d95fa5cb4d277cd9d77ff8700065f3af8f369b6ec4086a3b8c",
+        "crates/hyperreal/src/computable/node/memo_publication_tests.rs": "7f207f98fa394c176b829f0a5d7862d321d14fbe4e6b76384f0b53e678fef094",
+        "crates/hyperreal/src/computable/node/algebra.rs": "cc4c749118a35f900b7524375811451312de0d0e96cb9c65664ba28b7043009d",
+        "crates/hyperreal/src/computable/node/temporary_storage_tests.rs": "9b38412d0e2e1e02bd5b6e16f3e100f020379914d3e13ae02ff0c926e094d68c",
+        "crates/hyperreal/src/computable/node/projection_tests.rs": "2ea289b3b09c2830c2d8583f351c11494ab1747fb66c8755a445af8edffa88b8"
+      }
+    },
+    "recursive": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection/recursive/source",
+      "source_files": 10136,
+      "source_hashes_sha256": "e611e2408a1555df49ff1ece51ff7ca2a1913ac0b20a33d64bc6b5b55b102b88",
+      "delta_archive_sha256": "0b1a5687fce1e22f248594b4418251366d39e44781124d205c9eeb58890e00df",
+      "changes": {
+        "crates/hyperreal/src/computable/node/shared_radical_tests.rs": "1c306fafefd3b0d95fa5cb4d277cd9d77ff8700065f3af8f369b6ec4086a3b8c",
+        "crates/hyperreal/src/computable/node/memo_publication_tests.rs": "7f207f98fa394c176b829f0a5d7862d321d14fbe4e6b76384f0b53e678fef094",
+        "crates/hyperreal/src/computable/node/representation.rs": "ab961bb6b174694823826f28f56b486fcd174a41ec0b1f5873a94666a0c39348",
+        "crates/hyperreal/src/computable/node/algebra.rs": "29cd0050586ef91aa8d97c0bb9a0bcc17d0b2eda2c6e70061a78ce89eb609732",
+        "crates/hyperreal/src/computable/node/temporary_storage_tests.rs": "9b38412d0e2e1e02bd5b6e16f3e100f020379914d3e13ae02ff0c926e094d68c",
+        "crates/hyperreal/src/computable/node/retained_polynomial.rs": "e10a6480368b1d962ca78e12e3d25b7a4f44110b00c12a8905fecdbadfbd6b78",
+        "crates/hyperreal/src/computable/node/projection_tests.rs": "2ea289b3b09c2830c2d8583f351c11494ab1747fb66c8755a445af8edffa88b8"
+      }
+    },
+    "projected": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection/projected/source",
+      "source_files": 10136,
+      "source_hashes_sha256": "ca6fd83a9da8841bd0698d6a6d430412f04a4bdbf8b9609da3130a63e8322908",
+      "delta_archive_sha256": "47c590603b00756cb34073fc32e6e9e14c1e232be3b7eac1c8d0e71de20b27d1",
+      "changes": {
+        "crates/hyperreal/src/computable/node/shared_radical_tests.rs": "1c306fafefd3b0d95fa5cb4d277cd9d77ff8700065f3af8f369b6ec4086a3b8c",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "3dbb0f165cd9b46ad417d8b94e35d1d809cea5593e8c6bcca8133a7222ba3d55",
+        "crates/hyperreal/src/computable/node/memo_publication_tests.rs": "7f207f98fa394c176b829f0a5d7862d321d14fbe4e6b76384f0b53e678fef094",
+        "crates/hyperreal/src/computable/node/representation.rs": "ab961bb6b174694823826f28f56b486fcd174a41ec0b1f5873a94666a0c39348",
+        "crates/hyperreal/src/computable/node/algebra.rs": "df41f329aa2e2a36132f4c721fdd0c59ad34889327b5ced8d4c8adc36a0224a2",
+        "crates/hyperreal/src/computable/node/temporary_storage_tests.rs": "9b38412d0e2e1e02bd5b6e16f3e100f020379914d3e13ae02ff0c926e094d68c",
+        "crates/hyperreal/src/computable/node/retained_polynomial.rs": "1d3db2c6ace643d42d38e1a7dc6d2cc03b07f99a1f4a76d05080a2bd12b09023",
+        "crates/hyperreal/src/computable/node/projection_tests.rs": "2ea289b3b09c2830c2d8583f351c11494ab1747fb66c8755a445af8edffa88b8"
+      }
+    }
+  },
+  "all_other_source_bytes_match_declared_inputs": true,
+  "mathematical_code_changed": false,
+  "tests_changed": false,
+  "qualification_executed": false,
+  "costs_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

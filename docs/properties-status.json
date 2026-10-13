@@ -1792,7 +1792,7 @@
       "native_executed": false
     },
     "retained_polynomial_projection": {
-      "status": "inputs-recorded-preparation-and-qualification-pending",
+      "status": "v1-format-recovery-failure-preserved-v2-inputs-recorded",
       "evidence": "docs/evidence/2026-10-13-retained-polynomial-projection",
       "scope": "Three fresh variants: unchanged endpoint/P4 baseline, rejected recursive-view control and direct rational/pi/quadratic projection from owned or retained slices. Only five consumer/wrapper methods and private projection definitions change from the recursive runtime.",
       "controls": "Six new shared public-query controls, fourteen unchanged shared storage/memo/alias tests, inherited cache/P4 checks, five recursive-view controls and three projected helper controls. All configurations and focused counts overlap.",
@@ -1805,7 +1805,9 @@
       "next_step": "Freeze all three sources, complete 42 scalar qualification commands, then run the predeclared eighteen preflights and ninety measurements with unchanged probes. Preserve all three contrasts, sharing one closed sample set; do not extend earlier samples.",
       "native_limits": "120-second full-board worker CPU and 60-second copper-neck check-body wall; no fixture or limit change.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation_v1": "Stopped before compilation when rustfmt removed one optional trailing comma and collapsed one projection closure. Both rewrites are explicitly accounted for; all other source bytes and mathematical tests match the declared inputs. All three generated sources remain frozen; qualification and costs were not executed.",
+      "preparation_v2": "Fresh sources must match all formatted v1 source maps exactly. Only expected formatting fragments and evidence paths change; qualification and cost controls remain unchanged."
     }
   },
   "status_meanings": {

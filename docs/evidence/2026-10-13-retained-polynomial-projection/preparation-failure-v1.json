@@ -1,0 +1,5 @@
+{
+  "runner_sha256": "69c2d48c153c1cc41863588e76919b904d32842ec8deb1ff8cd78cb5ec7a5ad6",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-retained-polynomial-projection/prepare_v1.py\", line 180, in <module>\n    main()\n    ~~~~^^\n  File \"/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-retained-polynomial-projection/prepare_v1.py\", line 118, in main\n    assert recovered.count(compact(edit['after'])) == 1\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "partial_sources_frozen": true
+}
