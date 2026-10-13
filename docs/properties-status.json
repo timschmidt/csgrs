@@ -2277,6 +2277,32 @@
         "status": "not-executed-for-rejected-candidate"
       },
       "main_and_35_pending_native_paths_unchanged": true
+    },
+    "same_radicand_product_coverage": {
+      "status": "diagnostic-inputs-prepared-qualification-and-coverage-pending",
+      "evidence": "docs/evidence/2026-10-13-same-radicand-product-coverage",
+      "source_review": "The original multiplier inserts left-linear and then right-linear radical terms before nested products. For one radical per operand, no atoms and equal non-unit radicands, at most one output radical remains; exact conjugates can cancel it. The current code repeats insertion and creates new result storage. A future direct kernel would need to preserve arithmetic order, zero-skipping behavior and private noncanonical inputs, rather than just an algebraic identity. No kernel is prepared.",
+      "diagnostic": "Count all multiplier entries and one-radical/no-atom inputs using lengths. Piggyback on the existing radicand comparison branches without another scalar comparison. Count stored output radical lengths immediately before the unchanged successful return. Fixed atomic counters own no scalars and add no mathematical operations or cache queries/writes.",
+      "planned_controls": {
+        "calibration_tests": 2,
+        "site_tests": 3,
+        "inherited_cache_tests": 6,
+        "inherited_P4_tests": 11,
+        "all_feature_scalar_library": 879,
+        "scalar_doctests": 28,
+        "endpoint_tests": 5,
+        "format_strict_four_crate_clippy_and_scalar_docs": true,
+        "counts_overlap": true
+      },
+      "limits": [
+        "Atomic synchronization and diagnostic branches change costs; counts are not time shares, allocation counts or a savings prediction.",
+        "Input vector lengths alone do not prove the proposed direct-kernel preconditions, including reduced non-unit radicands.",
+        "This is focused instrumentation qualification, not all workflows or a whole-crate formal proof.",
+        "The 35 original native paths and endpoint/P4 parent remain unadmitted and unchanged."
+      ],
+      "next_step": "Freeze committed inputs in a separate source, qualify the counters, and observe one unchanged complete-board assertion. Review coverage before preparing any runtime candidate.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
