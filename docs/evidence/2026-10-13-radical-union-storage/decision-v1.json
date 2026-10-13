@@ -1,0 +1,712 @@
+{
+  "status": "reject-radical-union-storage-feature-only-change-not-admitted",
+  "qualification_sha256": "74054b450202bb384335d437fdd6766bf5ec46bee438b77788a364ba662bd723",
+  "cost_assessment_sha256": "8f2b205dfb8126d484d9299a7cc17bd7ea680358218ee650b8dfb4f18793956a",
+  "cost_result_sha256": "267ed88bec02093d9ea73540c43fcea1e7ba90a3d3e7255ed99cff961b3a9e8e",
+  "decision_runner_sha256": "3fee4fb2e01a887684c60adf5a5de646dda4eda7a8afd5864c8a015077b55326",
+  "decision": "Reject the radical-only union-storage candidate. It preserves the seven measured layouts and reduces requested allocations, but repeated scalar slowdowns remain against both controls. The performance-before-memory ladder does not support admission on these data. The feature-only control also has mixed costs, unchanged requested memory and larger probes; it is not admitted as a separate optimization.",
+  "closed_sample_set": {
+    "measurement_processes": 90,
+    "preflight_processes": 18,
+    "blocks": 5,
+    "timing_inputs_per_phase": 4096,
+    "allocation_inputs_per_phase": 1000,
+    "extended": false,
+    "all_witnesses_and_inventories_match": true,
+    "comparisons_reuse_same_samples": true
+  },
+  "summary": {
+    "feature_vs_baseline": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 2,
+      "at_least_four_slower_rows": 10,
+      "all_five_faster_rows": 6,
+      "at_least_four_faster_rows": 13,
+      "ratio_of_medians_above_one_rows": 38,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        872,
+        992
+      ]
+    },
+    "radicals_vs_baseline": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 13,
+      "at_least_four_slower_rows": 30,
+      "all_five_faster_rows": 7,
+      "at_least_four_faster_rows": 17,
+      "ratio_of_medians_above_one_rows": 45,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 36,
+          "increased_rows": 0,
+          "min_delta": -8142,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 36,
+          "increased_rows": 0,
+          "min_delta": -309280,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 33,
+          "increased_rows": 0,
+          "min_delta": -144,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        9424,
+        10568
+      ]
+    },
+    "radicals_vs_feature": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 9,
+      "at_least_four_slower_rows": 26,
+      "all_five_faster_rows": 5,
+      "at_least_four_faster_rows": 14,
+      "ratio_of_medians_above_one_rows": 36,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 36,
+          "increased_rows": 0,
+          "min_delta": -8142,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 36,
+          "increased_rows": 0,
+          "min_delta": -309280,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 33,
+          "increased_rows": 0,
+          "min_delta": -144,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        8552,
+        9584
+      ]
+    }
+  },
+  "selected_adverse_and_variable_rows": [
+    {
+      "comparison": "feature_vs_baseline",
+      "reference": "baseline",
+      "variant": "feature",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_construction",
+      "reference_ns": [
+        5077032,
+        4845178,
+        4903144,
+        4861397,
+        4959110
+      ],
+      "candidate_ns": [
+        8487929,
+        8068768,
+        5201704,
+        7995533,
+        4881196
+      ],
+      "reference_median_ns": 4903144,
+      "candidate_median_ns": 7995533,
+      "ratio_of_medians": 1.6306951213343928,
+      "block_ratios": [
+        1.6718289347004314,
+        1.6653192101507932,
+        1.0608915422430996,
+        1.6446986329238282,
+        0.9842887130956967
+      ],
+      "median_block_ratio": 1.6446986329238282,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        4845178,
+        5077032
+      ],
+      "candidate_range_ns": [
+        4881196,
+        8487929
+      ]
+    },
+    {
+      "comparison": "radicals_vs_baseline",
+      "reference": "baseline",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_construction",
+      "reference_ns": [
+        5077032,
+        4845178,
+        4903144,
+        4861397,
+        4959110
+      ],
+      "candidate_ns": [
+        4768283,
+        8508017,
+        4843719,
+        4799641,
+        4893115
+      ],
+      "reference_median_ns": 4903144,
+      "candidate_median_ns": 4843719,
+      "ratio_of_medians": 0.9878802254227084,
+      "block_ratios": [
+        0.9391871077432642,
+        1.755976147831927,
+        0.9878802254227084,
+        0.9872966556732561,
+        0.9866921685544382
+      ],
+      "median_block_ratio": 0.9872966556732561,
+      "slower_blocks": 1,
+      "faster_blocks": 4,
+      "reference_range_ns": [
+        4845178,
+        5077032
+      ],
+      "candidate_range_ns": [
+        4768283,
+        8508017
+      ]
+    },
+    {
+      "comparison": "radicals_vs_feature",
+      "reference": "feature",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_construction",
+      "reference_ns": [
+        8487929,
+        8068768,
+        5201704,
+        7995533,
+        4881196
+      ],
+      "candidate_ns": [
+        4768283,
+        8508017,
+        4843719,
+        4799641,
+        4893115
+      ],
+      "reference_median_ns": 7995533,
+      "candidate_median_ns": 4843719,
+      "ratio_of_medians": 0.6058031403284809,
+      "block_ratios": [
+        0.5617722532787445,
+        1.0544381744524072,
+        0.9311792827888707,
+        0.6002903121030205,
+        1.002441819586839
+      ],
+      "median_block_ratio": 0.9311792827888707,
+      "slower_blocks": 2,
+      "faster_blocks": 3,
+      "reference_range_ns": [
+        4881196,
+        8487929
+      ],
+      "candidate_range_ns": [
+        4768283,
+        8508017
+      ]
+    },
+    {
+      "comparison": "feature_vs_baseline",
+      "reference": "baseline",
+      "variant": "feature",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_first",
+      "reference_ns": [
+        3857655,
+        3949009,
+        4010066,
+        3860515,
+        3898653
+      ],
+      "candidate_ns": [
+        6926225,
+        6762166,
+        3857396,
+        6540362,
+        3890494
+      ],
+      "reference_median_ns": 3898653,
+      "candidate_median_ns": 6540362,
+      "ratio_of_medians": 1.6775953130478656,
+      "block_ratios": [
+        1.7954495671593236,
+        1.7123703693762156,
+        0.9619283074143917,
+        1.6941682651148875,
+        0.9979072259059731
+      ],
+      "median_block_ratio": 1.6941682651148875,
+      "slower_blocks": 3,
+      "faster_blocks": 2,
+      "reference_range_ns": [
+        3857655,
+        4010066
+      ],
+      "candidate_range_ns": [
+        3857396,
+        6926225
+      ]
+    },
+    {
+      "comparison": "radicals_vs_baseline",
+      "reference": "baseline",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_first",
+      "reference_ns": [
+        3857655,
+        3949009,
+        4010066,
+        3860515,
+        3898653
+      ],
+      "candidate_ns": [
+        4003355,
+        6802634,
+        3930721,
+        3996567,
+        3905772
+      ],
+      "reference_median_ns": 3898653,
+      "candidate_median_ns": 3996567,
+      "ratio_of_medians": 1.025114828121405,
+      "block_ratios": [
+        1.037769059182327,
+        1.7226180036561072,
+        0.9802135426199968,
+        1.0352419301569868,
+        1.0018260152929743
+      ],
+      "median_block_ratio": 1.0352419301569868,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        3857655,
+        4010066
+      ],
+      "candidate_range_ns": [
+        3905772,
+        6802634
+      ]
+    },
+    {
+      "comparison": "radicals_vs_feature",
+      "reference": "feature",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_first",
+      "reference_ns": [
+        6926225,
+        6762166,
+        3857396,
+        6540362,
+        3890494
+      ],
+      "candidate_ns": [
+        4003355,
+        6802634,
+        3930721,
+        3996567,
+        3905772
+      ],
+      "reference_median_ns": 6540362,
+      "candidate_median_ns": 3996567,
+      "ratio_of_medians": 0.6110620482474823,
+      "block_ratios": [
+        0.5779995596446837,
+        1.0059844730224015,
+        1.0190089376356486,
+        0.6110620482474823,
+        1.0039270077270392
+      ],
+      "median_block_ratio": 1.0039270077270392,
+      "slower_blocks": 3,
+      "faster_blocks": 2,
+      "reference_range_ns": [
+        3857396,
+        6926225
+      ],
+      "candidate_range_ns": [
+        3905772,
+        6802634
+      ]
+    },
+    {
+      "comparison": "feature_vs_baseline",
+      "reference": "baseline",
+      "variant": "feature",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "reference_ns": [
+        6051666,
+        5922385,
+        6012528,
+        5921104,
+        6153298
+      ],
+      "candidate_ns": [
+        5880637,
+        5892666,
+        5904985,
+        5879288,
+        5938983
+      ],
+      "reference_median_ns": 6012528,
+      "candidate_median_ns": 5892666,
+      "ratio_of_medians": 0.9800646250628687,
+      "block_ratios": [
+        0.9717385262174085,
+        0.9949819202905587,
+        0.9821135136501651,
+        0.9929378034907004,
+        0.9651707100810004
+      ],
+      "median_block_ratio": 0.9821135136501651,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        5921104,
+        6153298
+      ],
+      "candidate_range_ns": [
+        5879288,
+        5938983
+      ]
+    },
+    {
+      "comparison": "radicals_vs_baseline",
+      "reference": "baseline",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "reference_ns": [
+        6051666,
+        5922385,
+        6012528,
+        5921104,
+        6153298
+      ],
+      "candidate_ns": [
+        6404992,
+        6593289,
+        10598284,
+        6269501,
+        6279120
+      ],
+      "reference_median_ns": 6012528,
+      "candidate_median_ns": 6404992,
+      "ratio_of_medians": 1.065274373774226,
+      "block_ratios": [
+        1.0583849141707424,
+        1.113282739977222,
+        1.762700148756064,
+        1.058839871753646,
+        1.0204478963963715
+      ],
+      "median_block_ratio": 1.058839871753646,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        5921104,
+        6153298
+      ],
+      "candidate_range_ns": [
+        6269501,
+        10598284
+      ]
+    },
+    {
+      "comparison": "radicals_vs_feature",
+      "reference": "feature",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "reference_ns": [
+        5880637,
+        5892666,
+        5904985,
+        5879288,
+        5938983
+      ],
+      "candidate_ns": [
+        6404992,
+        6593289,
+        10598284,
+        6269501,
+        6279120
+      ],
+      "reference_median_ns": 5892666,
+      "candidate_median_ns": 6404992,
+      "ratio_of_medians": 1.086942989811403,
+      "block_ratios": [
+        1.0891663607190853,
+        1.1188974566011378,
+        1.7948028657143076,
+        1.066370791837379,
+        1.0572719268602049
+      ],
+      "median_block_ratio": 1.0891663607190853,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        5879288,
+        5938983
+      ],
+      "candidate_range_ns": [
+        6269501,
+        10598284
+      ]
+    },
+    {
+      "comparison": "feature_vs_baseline",
+      "reference": "baseline",
+      "variant": "feature",
+      "suite": "rational",
+      "name": "conjugate_product_warm",
+      "reference_ns": [
+        2894582,
+        2820297,
+        2872863,
+        2819547,
+        2808878
+      ],
+      "candidate_ns": [
+        3111977,
+        2835796,
+        2864003,
+        2814587,
+        2837106
+      ],
+      "reference_median_ns": 2820297,
+      "candidate_median_ns": 2837106,
+      "ratio_of_medians": 1.005960010594629,
+      "block_ratios": [
+        1.0751041082961201,
+        1.0054955205072373,
+        0.9969159684955391,
+        0.9982408521652592,
+        1.0100495642744185
+      ],
+      "median_block_ratio": 1.0054955205072373,
+      "slower_blocks": 3,
+      "faster_blocks": 2,
+      "reference_range_ns": [
+        2808878,
+        2894582
+      ],
+      "candidate_range_ns": [
+        2814587,
+        3111977
+      ]
+    },
+    {
+      "comparison": "radicals_vs_baseline",
+      "reference": "baseline",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "conjugate_product_warm",
+      "reference_ns": [
+        2894582,
+        2820297,
+        2872863,
+        2819547,
+        2808878
+      ],
+      "candidate_ns": [
+        3102447,
+        3184712,
+        4602475,
+        3353020,
+        3008404
+      ],
+      "reference_median_ns": 2820297,
+      "candidate_median_ns": 3184712,
+      "ratio_of_medians": 1.1292115688525002,
+      "block_ratios": [
+        1.0718117503667197,
+        1.1292115688525002,
+        1.6020516815455523,
+        1.1892052162989304,
+        1.0710340570149361
+      ],
+      "median_block_ratio": 1.1292115688525002,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        2808878,
+        2894582
+      ],
+      "candidate_range_ns": [
+        3008404,
+        4602475
+      ]
+    },
+    {
+      "comparison": "radicals_vs_feature",
+      "reference": "feature",
+      "variant": "radicals",
+      "suite": "rational",
+      "name": "conjugate_product_warm",
+      "reference_ns": [
+        3111977,
+        2835796,
+        2864003,
+        2814587,
+        2837106
+      ],
+      "candidate_ns": [
+        3102447,
+        3184712,
+        4602475,
+        3353020,
+        3008404
+      ],
+      "reference_median_ns": 2837106,
+      "candidate_median_ns": 3184712,
+      "ratio_of_medians": 1.1225213298339929,
+      "block_ratios": [
+        0.9969376380352426,
+        1.123039880160632,
+        1.6070077440561341,
+        1.1913008906812972,
+        1.060377722933158
+      ],
+      "median_block_ratio": 1.123039880160632,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        2814587,
+        3111977
+      ],
+      "candidate_range_ns": [
+        3008404,
+        4602475
+      ]
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "feature": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "actual_smallvec_scalar_features": {
+    "baseline": [],
+    "feature": [
+      "union"
+    ],
+    "radicals": [
+      "union"
+    ]
+  },
+  "limits": [
+    "The three pairwise contrasts reuse the same closed sample set; they are not independent additional measurements. Candidate results must be considered against both controls.",
+    "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+    "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Equal private type sizes do not establish equal total memory or eventual reclamation.",
+    "The union feature can affect other native dependency consumers. Native feature bindings, native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open.",
+    "Feature-only reciprocal timings have substantial within-source variation. For reciprocal construction, the ratio of medians favors the radical candidate by 0.6058 versus the feature control, while the median paired ratio is 0.9312. These are different statistics, not independent evidence of a large speedup. All samples and adverse comparisons are retained.",
+    "The same-size layout and requested-heap savings establish that union storage removes the earlier nonunion memory penalties in these scalar probes. They do not identify the cause of the remaining timing differences.",
+    "This is a retention decision for the measured workloads, not a universal claim about inline storage. No native gate, native cost control, full-report replay or production CLI build was executed for these rejected variants.",
+    "The uninstrumented parent still fails the original board assertion at 133.31248412 worker-CPU seconds against 120. Its separate 60-second copper-neck check-body assertion passes. These are parent results."
+  ],
+  "next_step": {
+    "status": "source-review-pending",
+    "task": "Keep the parent and all completed storage trials frozen. Review ownership at the recursive closed-certificate copy boundary for a way to avoid copying unchanged radical arrays without changing polynomial arithmetic, node ownership, recognition budgets or the original retry. Establish mutation and release requirements before preparing any candidate.",
+    "motivation": "The earlier diagnostic observed 35,239,829 recursive closed-certificate copies, including 30,843,135 single-radical copies. This is call coverage, not an allocation count or measured speedup. Inline-slot experiments have now failed their scalar cost gates despite heap savings.",
+    "candidate_prepared": false
+  },
+  "runtime_admitted": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

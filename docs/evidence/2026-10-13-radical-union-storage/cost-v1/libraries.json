@@ -1,0 +1,120 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "0b56c12a35966c764d4c95fc684f8e037e342de6684647c5e6abb1a1c44b57f7",
+    "bytes": 11694248,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": []
+  },
+  "feature": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/cost-target/release/libhyperreal.rlib",
+    "sha256": "4939708e7044fa6e2decee149e54bf3f15f06783711ba0dff5ec79675043e07f",
+    "bytes": 11702120,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": [
+      "union"
+    ]
+  },
+  "radicals": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/cost-target/release/libhyperreal.rlib",
+    "sha256": "09cb1ff234836dd8de1985ae9dd3f0a1abd183128a1698865cb671d6f15d8e27",
+    "bytes": 11728812,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": [
+      "union"
+    ]
+  }
+}

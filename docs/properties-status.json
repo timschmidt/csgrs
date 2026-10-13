@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. The three nonunion inline-storage variants are rejected after fixed scalar costs. Prepare the separately controlled radical-only union-storage hypothesis from the uninstrumented parent; all 35 pending entries, native tradeoffs, full reports and original limits remain open. See temporary_laurent_storage."
+      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. Nonunion and union inline-storage candidates are rejected after fixed scalar costs. Review recursive closed-certificate copy ownership for a distinct candidate. All 35 pending entries, native tradeoffs, full reports and original limits remain open. See radical_union_storage."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -642,15 +642,15 @@
       ],
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
-        "scope": "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json",
-        "task": "Keep this uninstrumented combined parent frozen. The four-source temporary-storage comparison is complete and rejects all three nonunion candidates. Next prepare a separate radical-only union-storage experiment with an explicit feature-only control, preserving all original proofs, owners, retries, budgets and native assertions.",
-        "retained_projection_diagnostic_and_nonunion_storage_comparison_complete": true,
-        "union_storage_source_runner_or_measurements_prepared": true
+        "scope": "docs/evidence/2026-10-13-radical-union-storage/decision-v1.json",
+        "task": "Keep the parent and all completed storage trials frozen. Review ownership at the recursive closed-certificate copy boundary for a way to avoid copying unchanged radical arrays without changing polynomial arithmetic, node ownership, recognition budgets or the original retry. Establish mutation and release requirements before preparing any candidate.",
+        "retained_projection_diagnostic_and_both_storage_comparisons_complete": true,
+        "replacement_candidate_prepared": false
       },
       "native_runtime_admitted": false
     },
     "retained_quadratic_projection_coverage": {
-      "status": "coverage-recorded-temporary-inline-storage-experiment-next",
+      "status": "coverage-recorded-both-inline-storage-experiments-rejected",
       "evidence": [
         "docs/evidence/2026-10-13-retained-quadratic-projection/preparation-failure-v1.json",
         "docs/evidence/2026-10-13-retained-quadratic-projection/preparation-v2/protocol.json",
@@ -673,7 +673,7 @@
       },
       "result": "Root-only reuse is uncommon. Recursive copies are predominantly single-term and single-radical; this motivates a temporary-storage experiment, not a speedup claim. Original board gate still fails; no native runtime is admitted.",
       "preserved_failure": "Preparation v1 stopped before compilation after rustfmt moved optional commas. Its never-compiled source is archived. Version 2 preserves all original tokens outside seven explicit instrumentation/test changes.",
-      "next_step": "The completed temporary-storage experiment rejects all three nonunion variants despite allocation-call savings: repeated scalar slowdowns and larger layouts remain. A separately controlled radical-only union-storage hypothesis is source-reviewed but not prepared; see temporary_laurent_storage.",
+      "next_step": "Both nonunion and union storage experiments are complete and rejected after fixed scalar costs. Recursive copy coverage still motivates examining ownership at the closed-certificate conversion boundary, subject to the unchanged proof, owner, retry and budget contracts. See radical_union_storage.",
       "runtime_admitted": false
     },
     "temporary_laurent_storage": {
@@ -693,7 +693,7 @@
       "scope": "Private temporary radical and/or Laurent-term vectors use one inline slot. The uninstrumented endpoint/P4 parent, persistent certificates, opaque atom vectors, arithmetic, original retries, all recognition bounds and original native assertions are preserved.",
       "preparation": "Four 10,132-file sources and separate fresh targets. Each source changes only algebra.rs, one shared eight-test module, the hyperreal manifest and the root lockfile. All package versions/checksums match the parent; only the same direct no-feature SmallVec dependency is added.",
       "qualification": "Each variant passes eight new storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
-      "next_step": "The distinct radical-only union-storage experiment is prepared and undergoing scalar qualification with an unchanged Vec baseline and a Vec feature-only control. See radical_union_storage. The completed nonunion sources and 120-process sample set remain frozen and rejected.",
+      "next_step": "The distinct radical-only union-storage experiment also completed scalar qualification and fixed costs. It removes the prior layout/heap-byte penalties but retains repeated slowdowns against both controls, so it is rejected. Both completed sample sets stay frozen. See radical_union_storage.",
       "runtime_admitted": false,
       "layouts": {
         "baseline": {
@@ -954,10 +954,12 @@
       "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions."
     },
     "radical_union_storage": {
-      "status": "three-sources-pass-scalar-qualification-fixed-costs-next",
+      "status": "reject-radical-union-storage-feature-only-change-not-admitted",
       "evidence": [
         "docs/evidence/2026-10-13-radical-union-storage/preparation-v1/protocol.json",
-        "docs/evidence/2026-10-13-radical-union-storage/correctness-v1.json"
+        "docs/evidence/2026-10-13-radical-union-storage/correctness-v1.json",
+        "docs/evidence/2026-10-13-radical-union-storage/cost-assessment-v1.json",
+        "docs/evidence/2026-10-13-radical-union-storage/decision-v1.json"
       ],
       "variants": [
         "baseline",
@@ -965,8 +967,13 @@
         "radicals"
       ],
       "scope": "Compare unchanged Vec, Vec with the SmallVec union feature, and radical-only inline storage with union. Terms, persistent certificates and opaque atoms remain Vec. Use the uninstrumented endpoint/P4 parent and exactly the prior eight storage tests; preserve all arithmetic, limits, original retries, proof monotonicity and owner release.",
-      "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and private layouts will be bound by qualification.",
-      "next_step": "Execute the frozen five-block scalar comparison: 18 preflights and 90 measurements, retaining all three pairwise contrasts. All recorded layouts now match baseline; this is not total-memory or speedup evidence. Review all adverse rows before native follow-up.",
+      "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and all seven matching private layouts are bound by completed qualification.",
+      "next_step": {
+        "status": "source-review-pending",
+        "task": "Keep the parent and all completed storage trials frozen. Review ownership at the recursive closed-certificate copy boundary for a way to avoid copying unchanged radical arrays without changing polynomial arithmetic, node ownership, recognition budgets or the original retry. Establish mutation and release requirements before preparing any candidate.",
+        "motivation": "The earlier diagnostic observed 35,239,829 recursive closed-certificate copies, including 30,843,135 single-radical copies. This is call coverage, not an allocation count or measured speedup. Inline-slot experiments have now failed their scalar cost gates despite heap savings.",
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "qualification": "Each variant passes eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
       "layouts": {
@@ -1006,6 +1013,138 @@
         "radicals": [
           "union"
         ]
+      },
+      "decision": "Reject the radical-only union-storage candidate. It preserves the seven measured layouts and reduces requested allocations, but repeated scalar slowdowns remain against both controls. The performance-before-memory ladder does not support admission on these data. The feature-only control also has mixed costs, unchanged requested memory and larger probes; it is not admitted as a separate optimization.",
+      "costs": {
+        "feature_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 2,
+          "at_least_four_slower_rows": 10,
+          "all_five_faster_rows": 6,
+          "at_least_four_faster_rows": 13,
+          "ratio_of_medians_above_one_rows": 38,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            872,
+            992
+          ]
+        },
+        "radicals_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 13,
+          "at_least_four_slower_rows": 30,
+          "all_five_faster_rows": 7,
+          "at_least_four_faster_rows": 17,
+          "ratio_of_medians_above_one_rows": 45,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 36,
+              "increased_rows": 0,
+              "min_delta": -8142,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 36,
+              "increased_rows": 0,
+              "min_delta": -309280,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 33,
+              "increased_rows": 0,
+              "min_delta": -144,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            9424,
+            10568
+          ]
+        },
+        "radicals_vs_feature": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 9,
+          "at_least_four_slower_rows": 26,
+          "all_five_faster_rows": 5,
+          "at_least_four_faster_rows": 14,
+          "ratio_of_medians_above_one_rows": 36,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 36,
+              "increased_rows": 0,
+              "min_delta": -8142,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 36,
+              "increased_rows": 0,
+              "min_delta": -309280,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 33,
+              "increased_rows": 0,
+              "min_delta": -144,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            8552,
+            9584
+          ]
+        }
       }
     }
   },

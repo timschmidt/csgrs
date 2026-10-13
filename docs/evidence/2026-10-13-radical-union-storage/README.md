@@ -32,13 +32,43 @@ coefficient 56, polynomial 24, persistent coefficient 32, persistent polynomial
 eight coefficient bytes. These equal type sizes establish neither equal total
 memory nor faster execution.
 
-The prepared fixed comparison runs 18 preflights and 90 measurement processes
+The fixed comparison completed 18 preflights and 90 measurement processes
 in five predeclared three-source blocks, with separate timing/allocation
-executables and fresh targets. All builds finish before measurements. It will assess the radical candidate
-against both the unchanged baseline and the feature-only control, and assess
-the feature-only control against baseline. Supported variants still require
-native qualification, fixed endpoint/broad/abort controls, complete report
-identity, production CLI sizes and the original full-fixture assertions.
+executables and fresh targets. All builds finished before measurements. Every
+mathematical witness and representation inventory matches. The three pairwise
+contrasts reuse this one closed sample set; no earlier samples were extended.
+See [cost-assessment-v1.json](cost-assessment-v1.json) for all samples, paired
+ratios, ratios of medians, ranges, memory fields and probe sizes.
+
+| Comparison | Phases slower in all five blocks | Phases slower in at least four | Phases faster in all five | Probe size increase |
+| --- | ---: | ---: | ---: | ---: |
+| Feature control / baseline | 2 / 68 | 10 / 68 | 6 / 68 | 872–992 bytes |
+| Radical candidate / baseline | 13 / 68 | 30 / 68 | 7 / 68 | 9,424–10,568 bytes |
+| Radical candidate / feature control | 9 / 68 | 26 / 68 | 5 / 68 | 8,552–9,584 bytes |
+
+Against both controls, the candidate reduces allocation calls and allocated
+bytes in 36 of 68 phases, and peak requested bytes in 33. No measured memory
+field increases; retained requested-byte deltas match throughout. All memory
+deltas repeat identically in the five blocks. Per 1,000 inputs, the largest
+reductions are 8,142 calls, 309,280 allocated bytes and 144 peak bytes. The
+feature-only control changes none of these memory counters.
+
+Repeated scalar slowdowns remain. Warm conjugate products take median
+688.549 / 692.653 / 777.518 ns per input for baseline / feature / radicals;
+the candidate is slower in five and four paired blocks, respectively. Cloned
+opaque linear atoms are slower in all five blocks against both controls.
+The feature control's reciprocal timings vary substantially, so large ratios
+of medians for those rows cannot be treated as robust candidate gains. Every
+sample remains in the evidence. These descriptive results establish neither
+statistical significance nor an application speedup.
+
+[decision-v1.json](decision-v1.json) rejects the radical candidate: the
+performance-before-memory ladder does not support retaining these slowdowns
+for the heap savings. The feature-only change is also unadmitted. No native
+qualification, native cost controls, full-report replay or production CLI
+build was run for these variants. Those obligations remain open for any future
+supported candidate. The next investigation reviews ownership at the recursive
+closed-certificate copy boundary; no replacement candidate is prepared.
 
 The native parent remains unadmitted: its original board assertion fails at
 133.31248412 seconds of worker CPU against 120; its separate 60-second neck
