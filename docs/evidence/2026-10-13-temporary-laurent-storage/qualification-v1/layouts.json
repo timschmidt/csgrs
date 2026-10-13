@@ -1,0 +1,38 @@
+{
+  "baseline": {
+    "Rational": 8,
+    "RadicalCoefficient": 56,
+    "PiLaurentPolynomial": 24,
+    "ClosedRadicalCoefficient": 32,
+    "ClosedPiLaurentPolynomial": 24,
+    "Computable": 16,
+    "Node": 56
+  },
+  "radicals": {
+    "Rational": 8,
+    "RadicalCoefficient": 64,
+    "PiLaurentPolynomial": 24,
+    "ClosedRadicalCoefficient": 32,
+    "ClosedPiLaurentPolynomial": 24,
+    "Computable": 16,
+    "Node": 56
+  },
+  "terms": {
+    "Rational": 8,
+    "RadicalCoefficient": 56,
+    "PiLaurentPolynomial": 80,
+    "ClosedRadicalCoefficient": 32,
+    "ClosedPiLaurentPolynomial": 24,
+    "Computable": 16,
+    "Node": 56
+  },
+  "both": {
+    "Rational": 8,
+    "RadicalCoefficient": 64,
+    "PiLaurentPolynomial": 88,
+    "ClosedRadicalCoefficient": 32,
+    "ClosedPiLaurentPolynomial": 24,
+    "Computable": 16,
+    "Node": 56
+  }
+}

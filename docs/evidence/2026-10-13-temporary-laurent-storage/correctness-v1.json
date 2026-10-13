@@ -1,0 +1,308 @@
+{
+  "status": "four-variants-pass-scoped-scalar-qualification-costs-next",
+  "assessor_sha256": "974de016dc04b83a6c7d63e1141eacaf4c695c2239d942f882fa7f408bcb3061",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "terms",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "terms": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 80,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "both": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 88,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "smallvec_features": [],
+  "locked_package_inventory_unchanged": true,
+  "source_parent_and_main_unchanged": true,
+  "all_40_commands_passed": true,
+  "qualification": "Each variant passes eight new storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "remaining": "Fixed scalar time/allocation/size controls, native qualification and original full-fixture gates, endpoint/broad/abort controls, complete report bytes and production CLI size. Larger temporary layouts are not total-memory savings; no runtime is admitted.",
+  "artifacts_sha256": {
+    "qualification-v1/baseline-all-feature-clippy.stderr": "a148776cd0b2f522e17e2f68ef46d162b69e7ecc9392ea81fe0eb88628f24962",
+    "qualification-v1/baseline-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-all-feature-library.stderr": "e3150d48050cd87f527c53b1db5f521eb65ddf3468aa8e6ebf2fc444aad14034",
+    "qualification-v1/baseline-all-feature-library.stdout": "c8e6fd2ef5d340ca2d4d2a3c1c0c398ae502f55c0948ff7cd6b4c636ba6c665a",
+    "qualification-v1/baseline-cache-frontiers.stderr": "e3150d48050cd87f527c53b1db5f521eb65ddf3468aa8e6ebf2fc444aad14034",
+    "qualification-v1/baseline-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/baseline-default-clippy.stderr": "2e97382b342843e292f82a6428818c1ebccb62708160988550bb9a5186568f50",
+    "qualification-v1/baseline-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-default-library.stderr": "466aa4a798f4e7757be7887c71a0cb6652dec99bfa8d983b0cea5ffbebbc44dc",
+    "qualification-v1/baseline-default-library.stdout": "495660202fea10393a19ef760ed970654a58d0bec7cb9b184397d2ff81b0a285",
+    "qualification-v1/baseline-docs.stderr": "cba495cffc1f8e97486845d9ce0d35f02e61d5d988088dcbe5aafc972cda70d5",
+    "qualification-v1/baseline-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-doctests.stderr": "304b1f8f72fa9b6a54b7166496b36d62817ca2aad98443262a24e59dbb577527",
+    "qualification-v1/baseline-doctests.stdout": "3dc25161682f0b42c483e0c4f3615213b66128ef19412c32b93a629d1a55427d",
+    "qualification-v1/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-sign-regressions.stderr": "0292d93c4ab495777db75a6a46fe92e729135097badca285ee3d90d09c9a7a28",
+    "qualification-v1/baseline-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/baseline-storage-regressions.stderr": "33b0e16941bf39f6f1f0da19a9c92b57d73ee20b00abb4b17a10e25f413b2712",
+    "qualification-v1/baseline-storage-regressions.stdout": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+    "qualification-v1/both-all-feature-clippy.stderr": "bbf861254ef215ab33f8a85e0b1e0f046286e2bd61d55d1136458c685f39e67a",
+    "qualification-v1/both-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/both-all-feature-library.stderr": "a7bf9ea9e5369250ca5539222f0378d75a3f6f9b125d13795396b2564061dafd",
+    "qualification-v1/both-all-feature-library.stdout": "cffd9bc8011b4cbf33e7074aecfe87f84c8adcedceb291ba71dd1c6ca29e7db8",
+    "qualification-v1/both-cache-frontiers.stderr": "c86c229567c15f0e68ba6330c589fdc8e7bb4895a4d13b522db626c4dcadb3e4",
+    "qualification-v1/both-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/both-default-clippy.stderr": "9dd6b3715b5601f305ef882e4869f8cdfa4e1fcafdb56c5a40e2e8aabb109fc4",
+    "qualification-v1/both-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/both-default-library.stderr": "18ed4456b4b6b25a85e6b91b3fe5a6f37f69eb0907b65d0a8197dd8a50fa6207",
+    "qualification-v1/both-default-library.stdout": "8dfa25b2a6a0234ccb84ef123efcecf0abab51092a9f42aa91f746c5a6e230f7",
+    "qualification-v1/both-docs.stderr": "a1616192955759f498175584665864dad28ff5952371dbc43b3537cf7ecea68e",
+    "qualification-v1/both-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/both-doctests.stderr": "c7e918ecd4ec5f3ee0be8d8be56dc2322d4236864bad8375c954d7fcd9e0382e",
+    "qualification-v1/both-doctests.stdout": "36f3f5c44c8ca72016fba2a7f20f8cfaa119f622a3120795dd886644b3a7ae49",
+    "qualification-v1/both-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/both-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/both-sign-regressions.stderr": "a7bf9ea9e5369250ca5539222f0378d75a3f6f9b125d13795396b2564061dafd",
+    "qualification-v1/both-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/both-storage-regressions.stderr": "57d30b46a4d4eb29a6023f46a1e82cf8cfd889663e2adb0c8e62d133a6e5e849",
+    "qualification-v1/both-storage-regressions.stdout": "cbd575c88ccb7d379b7afaff2efd52751c58204fcd7cac124fbff2c4730ad9e2",
+    "qualification-v1/commands.json": "28857ab511b992321552035096bb0045ea4aa651ac385d9164bd93d6b6673cad",
+    "qualification-v1/layouts.json": "0fa8570dbdb7cfaa24735dccd026216a3387b5a2b2bdab1ad3577c6b5d0d3544",
+    "qualification-v1/protocol.json": "43775201f6c2ea019f4db41c6256bd8f341a74a4c2ae9db1dec72d5d3baf55de",
+    "qualification-v1/radicals-all-feature-clippy.stderr": "1f1260c1e072e03734364db2f464df41840f49a9188a3e981fd86db50df574df",
+    "qualification-v1/radicals-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-all-feature-library.stderr": "643030094b61a2cb7f5a65ec30c91ef6625df063b03dd4c12cdff7edf544a3a3",
+    "qualification-v1/radicals-all-feature-library.stdout": "75f0559fdb83c659c4c37debb622dd40d205067f5323bd873119fdfeb97e3e8c",
+    "qualification-v1/radicals-cache-frontiers.stderr": "643030094b61a2cb7f5a65ec30c91ef6625df063b03dd4c12cdff7edf544a3a3",
+    "qualification-v1/radicals-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/radicals-default-clippy.stderr": "b55b9d17f5d3c79ac4e2774ce727408d4baed9519c6398b30c9aa9286d6dbc85",
+    "qualification-v1/radicals-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-default-library.stderr": "f4150d101a067628f3955732c6eeefd43f0bc6459b6f78e2a89b19b09258c7b0",
+    "qualification-v1/radicals-default-library.stdout": "9400e950380e3b6f8a64d8f69b02c5fa298bf0a798781bf8f06dfe4d1867122c",
+    "qualification-v1/radicals-docs.stderr": "82bb80cc7428a56cc1e2b4e6ccc098d8e78b27496218979e37d8c80de16b4079",
+    "qualification-v1/radicals-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-doctests.stderr": "d7736ed955d0ad6993aaea8a4a41f8cac1869c40ef28d1027e6cff263429149f",
+    "qualification-v1/radicals-doctests.stdout": "c80525f40c3f8d404118c100aa9196c8e0c50a374af742e9c7ca51a78656db63",
+    "qualification-v1/radicals-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-sign-regressions.stderr": "33f9cb4dfb175ee8927433617e43b0a4fedac06afd24cf344aa6a2188f8e5696",
+    "qualification-v1/radicals-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/radicals-storage-regressions.stderr": "65a6050738e8d27a17d53c0d64e49a413c02cb8ab93c9a0316403b22059b6060",
+    "qualification-v1/radicals-storage-regressions.stdout": "7ea43b77bd95169a3de599e6b269c8af0c1b50687a24eada2c0e6f37aa2a1085",
+    "qualification-v1/result.json": "40b29625366288da6f76da3073ece92005e5fd648b2c4ce0582b546d01985845",
+    "qualification-v1/smallvec-features.json": "f11235506a39f7d26fd046dd6389a73143b5a57d5a95da874f18bc6b8ad6e1c3",
+    "qualification-v1/terms-all-feature-clippy.stderr": "5cb500dd3d7271d9a6f7248b635fc738ac71308fe7ed60ff8d884a02e648ddce",
+    "qualification-v1/terms-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/terms-all-feature-library.stderr": "648749b9de4c402f6e63b8edc39864189a1b1e82e0e569e54efc72dd1d4ed70a",
+    "qualification-v1/terms-all-feature-library.stdout": "1d2d5e2dc85052ac605f5ea847af594729b0a8d1442500b0aa452e9690183a2b",
+    "qualification-v1/terms-cache-frontiers.stderr": "dbd1ec367981f1f4234dd6de8bd610d50738b87c99edc33d5dac224976a3ebbe",
+    "qualification-v1/terms-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/terms-default-clippy.stderr": "e05380ea3e3dd8744a8d0e6ae3bd44d51f6ad34af25c1f529473df4df33b5cb7",
+    "qualification-v1/terms-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/terms-default-library.stderr": "7328fc30f72a5b912e1d52ba14593b011ca69fc7aed22d0460c33ad0f7ccded8",
+    "qualification-v1/terms-default-library.stdout": "745417ac205b7eead0496c799c4a2dc9a1d5b63dd2f8877e17c32de0fd810753",
+    "qualification-v1/terms-docs.stderr": "55e2b3a8811f109756dc90a50514970ff7b93240a7cad5cedb4a2545be1da3dc",
+    "qualification-v1/terms-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/terms-doctests.stderr": "1ed62c4afb7766a5b20b3d4883b6afde8b6839124419880dca734ec56fb2f900",
+    "qualification-v1/terms-doctests.stdout": "0bee881a5bdab70efbe2cc547eaf28abc89e9de8444a46a710f4a6fa72d56309",
+    "qualification-v1/terms-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/terms-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/terms-sign-regressions.stderr": "b739601a2b9f8277939380c3448e653f4c557698df16535c44d6f2b03fccd790",
+    "qualification-v1/terms-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/terms-storage-regressions.stderr": "5ef2a566a14d1808916ac4bccbaa918fa24a74a5d69ead1082cba61f1bad833f",
+    "qualification-v1/terms-storage-regressions.stdout": "42ff038daf011131b25537c05c7b911b89587d0f19c7c521ae6aa5bd3de1b2d4",
+    "qualification-v1/tests.json": "4360e8b098f1cbabcffcaf92e41f6d25192d82bd179159f5b56b8702a3508994"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

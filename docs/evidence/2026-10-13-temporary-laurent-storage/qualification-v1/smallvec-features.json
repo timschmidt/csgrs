@@ -1,0 +1,90 @@
+{
+  "baseline": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+      "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+      "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+      "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+      "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+      "features": []
+    }
+  ],
+  "radicals": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+      "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+      "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+      "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+      "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+      "features": []
+    }
+  ],
+  "terms": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+      "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+      "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+      "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+      "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+      "features": []
+    }
+  ],
+  "both": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+      "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+      "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+      "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+      "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+      "features": []
+    }
+  ]
+}
