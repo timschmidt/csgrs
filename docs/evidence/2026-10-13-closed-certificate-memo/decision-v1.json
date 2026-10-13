@@ -1,0 +1,1260 @@
+{
+  "status": "reject-closed-certificate-memo-on-unresolved-scalar-and-native-costs",
+  "decision_runner_sha256": "d5c9e22d1b50ebf9733e1bcf16f8eee0655576520a0dc1ecbc1517903121c15c",
+  "inputs_sha256": {
+    "preparation-v1/protocol.json": "8010428cf8e80ccb68523ec30731cf9013e3dd00c0e327a8020e859c4d034807",
+    "correctness-v1.json": "419a22699c068b8a34d19102dd2e7d82a9d53ef0de943cc0d47835940251a523",
+    "cost-assessment-v1.json": "6db3000a1f9ec300295ddab41f96a14a5db1df1129fdb49db8f70585d8c4b271",
+    "scalar-decision-v1.json": "3860a09c4f5dac45ad7ccd76dc0126af7a2c44f7aad9c9eb5c9993c5c35a0863",
+    "native-assessment-v1.json": "ff5510b77fd429d3ee6dc36809ba0938aca41efa956c572fc23fc1e27e93b1c8",
+    "native-controls-assessment-v1.json": "46fb5d84b51afbba9ec8a8afbeffdddbe58cb8a3ec68875299967359cd8a7a06",
+    "native-controls-v1/result.json": "67558ee0086f221d00670fb51725131b3c1a903b441d819d734b67951b74d395",
+    "replay_reports_v1.py": "2348841819873003bd9bd3475c241b3d683b9d5c0c32bc123f6993403e7b9418",
+    "assess_reports_v1.py": "d2696f3ca3209139bf39b154eba6d55c5b6d2ad6cd696e203f04933f881b0366"
+  },
+  "decision": "Reject this memo-publication candidate. It removes a redundant closed-result copy and reduces requested allocations while preserving the tested facts and ownership controls. Three scalar phases, five endpoint phases and eighteen broad operations are slower in every fixed pair, and the original full-board assertion still fails. These unresolved performance costs prevent retention under the performance-before-memory ladder. The native gains and smaller probes do not erase adverse rows.",
+  "closed_sample_sets": {
+    "scalar": {
+      "measurement_processes": 60,
+      "preflight_processes": 12,
+      "blocks": 5,
+      "timing_inputs_per_phase": 4096,
+      "allocation_inputs_per_phase": 1000,
+      "extended": false,
+      "all_witnesses_and_inventories_match": true
+    },
+    "native": {
+      "endpoint_measurement_processes": 20,
+      "broad_measurement_processes": 10,
+      "final_abort_processes": 6,
+      "preflight_processes": 4,
+      "blocks": 5,
+      "final_abort_blocks": 3,
+      "timing_inputs_per_phase": 8192,
+      "allocation_inputs_per_phase": 1000,
+      "extended": false,
+      "all_witnesses_and_receipts_match": true
+    }
+  },
+  "scalar_summary": {
+    "timing_rows": 68,
+    "memory_rows": 68,
+    "all_five_slower_rows": 3,
+    "at_least_four_slower_rows": 7,
+    "all_five_faster_rows": 7,
+    "at_least_four_faster_rows": 28,
+    "ratio_of_medians_above_one_rows": 16,
+    "memory_fields": {
+      "allocation_calls": {
+        "reduced_rows": 21,
+        "increased_rows": 0,
+        "min_delta": -3000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "allocated_bytes": {
+        "reduced_rows": 21,
+        "increased_rows": 0,
+        "min_delta": -352000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "retained_bytes_delta": {
+        "reduced_rows": 0,
+        "increased_rows": 0,
+        "min_delta": 0,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "peak_bytes_delta": {
+        "reduced_rows": 17,
+        "increased_rows": 0,
+        "min_delta": -352,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      }
+    },
+    "probe_binary_delta_bytes_range": [
+      -216,
+      -208
+    ]
+  },
+  "endpoint_summary": {
+    "timing_rows": 48,
+    "all_five_slower_rows": 5,
+    "at_least_four_slower_rows": 12,
+    "all_five_faster_rows": 8,
+    "at_least_four_faster_rows": 18,
+    "ratio_of_medians_above_one_rows": 21
+  },
+  "broad_summary": {
+    "timing_rows": 231,
+    "all_five_slower_rows": 18,
+    "at_least_four_slower_rows": 58,
+    "all_five_faster_rows": 9,
+    "at_least_four_faster_rows": 49,
+    "ratio_of_medians_above_one_rows": 129
+  },
+  "endpoint_memory": {
+    "allocation_calls": {
+      "reduced_rows": 6,
+      "increased_rows": 0,
+      "min_delta": -13857,
+      "max_delta": 0,
+      "all_five_deltas_equal": true
+    },
+    "allocated_bytes": {
+      "reduced_rows": 6,
+      "increased_rows": 0,
+      "min_delta": -1718784,
+      "max_delta": 0,
+      "all_five_deltas_equal": true
+    },
+    "retained_bytes_delta": {
+      "reduced_rows": 0,
+      "increased_rows": 0,
+      "min_delta": 0,
+      "max_delta": 0,
+      "all_five_deltas_equal": true
+    },
+    "peak_bytes_delta": {
+      "reduced_rows": 5,
+      "increased_rows": 0,
+      "min_delta": -440,
+      "max_delta": 0,
+      "all_five_deltas_equal": true
+    }
+  },
+  "native_probe_binary_sizes": {
+    "time": {
+      "baseline_bytes": 8593832,
+      "candidate_bytes": 8593592,
+      "byte_delta": -240
+    },
+    "memory": {
+      "baseline_bytes": 8596192,
+      "candidate_bytes": 8595952,
+      "byte_delta": -240
+    },
+    "broad": {
+      "baseline_bytes": 26358384,
+      "candidate_bytes": 26358136,
+      "byte_delta": -248
+    },
+    "abort": {
+      "baseline_bytes": 8530808,
+      "candidate_bytes": 8530576,
+      "byte_delta": -232
+    }
+  },
+  "scalar_slower_in_all_five_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "affine_surd_first",
+      "reference_ns": [
+        1994573,
+        1860052,
+        1795498,
+        1883871,
+        1882760
+      ],
+      "candidate_ns": [
+        1999573,
+        2096396,
+        3158233,
+        2084607,
+        1997093
+      ],
+      "reference_median_ns": 1882760,
+      "candidate_median_ns": 2084607,
+      "ratio_of_medians": 1.1072080350124285,
+      "block_ratios": [
+        1.0025068022077908,
+        1.1270631143645446,
+        1.7589732764948778,
+        1.1065550666685777,
+        1.0607262741932058
+      ],
+      "median_block_ratio": 1.1065550666685777,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1795498,
+        1994573
+      ],
+      "candidate_range_ns": [
+        1997093,
+        3158233
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "affine_surd_warm",
+      "reference_ns": [
+        1669696,
+        1549924,
+        1533415,
+        1551164,
+        1608260
+      ],
+      "candidate_ns": [
+        1680804,
+        1740520,
+        2607721,
+        1690135,
+        1630608
+      ],
+      "reference_median_ns": 1551164,
+      "candidate_median_ns": 1690135,
+      "ratio_of_medians": 1.089591429403983,
+      "block_ratios": [
+        1.0066527080378704,
+        1.1229711908454867,
+        1.7005970334188723,
+        1.089591429403983,
+        1.0138957631228782
+      ],
+      "median_block_ratio": 1.089591429403983,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1533415,
+        1669696
+      ],
+      "candidate_range_ns": [
+        1630608,
+        2607721
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_construction",
+      "reference_ns": [
+        3273356,
+        3261087,
+        3241518,
+        3287194,
+        3215029
+      ],
+      "candidate_ns": [
+        3283955,
+        3319442,
+        3345030,
+        3530218,
+        3622411
+      ],
+      "reference_median_ns": 3261087,
+      "candidate_median_ns": 3345030,
+      "ratio_of_medians": 1.0257408036032158,
+      "block_ratios": [
+        1.003237961284993,
+        1.0178943401387328,
+        1.0319331868587496,
+        1.0739305316327543,
+        1.126711765274901
+      ],
+      "median_block_ratio": 1.0319331868587496,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3215029,
+        3287194
+      ],
+      "candidate_range_ns": [
+        3283955,
+        3622411
+      ]
+    }
+  ],
+  "endpoint_slower_in_all_five_blocks": [
+    {
+      "name": "copied_endpoint_coordinates_first",
+      "samples_ns": {
+        "baseline": [
+          717811,
+          723711,
+          717621,
+          715991,
+          728520
+        ],
+        "candidate": [
+          738800,
+          741159,
+          731950,
+          732799,
+          738779
+        ]
+      },
+      "block_ratios": [
+        1.0292402874851458,
+        1.024109071162384,
+        1.0199673643887233,
+        1.0234751554139647,
+        1.0140819744138803
+      ],
+      "median_block_ratio": 1.0234751554139647,
+      "ratio_of_medians": 1.0292110318732925,
+      "ranges_ns": {
+        "baseline": [
+          715991,
+          728520
+        ],
+        "candidate": [
+          731950,
+          741159
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "approximate_non_endpoint_warm",
+      "samples_ns": {
+        "baseline": [
+          10181122,
+          10077469,
+          10192511,
+          10074029,
+          10113846
+        ],
+        "candidate": [
+          11064911,
+          10184122,
+          10257427,
+          10765512,
+          10219599
+        ]
+      },
+      "block_ratios": [
+        1.086806640761205,
+        1.010583312139189,
+        1.0063689899378083,
+        1.068640163731909,
+        1.0104562596662041
+      ],
+      "median_block_ratio": 1.010583312139189,
+      "ratio_of_medians": 1.01419647876782,
+      "ranges_ns": {
+        "baseline": [
+          10074029,
+          10192511
+        ],
+        "candidate": [
+          10184122,
+          11064911
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "approximate_non_endpoint_cloned",
+      "samples_ns": {
+        "baseline": [
+          10097328,
+          9984656,
+          10176372,
+          10076379,
+          10044371
+        ],
+        "candidate": [
+          11206772,
+          10135425,
+          10236658,
+          10436245,
+          10162273
+        ]
+      },
+      "block_ratios": [
+        1.1098750085171047,
+        1.0151000695467125,
+        1.0059241151954743,
+        1.0357138214035022,
+        1.0117381168019381
+      ],
+      "median_block_ratio": 1.0151000695467125,
+      "ratio_of_medians": 1.0159064084429537,
+      "ranges_ns": {
+        "baseline": [
+          9984656,
+          10176372
+        ],
+        "candidate": [
+          10135425,
+          11206772
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "near_endpoint_off_circle_warm",
+      "samples_ns": {
+        "baseline": [
+          10942390,
+          10681108,
+          10825418,
+          10628942,
+          10802760
+        ],
+        "candidate": [
+          12095711,
+          11499722,
+          11075020,
+          11379420,
+          11773113
+        ]
+      },
+      "block_ratios": [
+        1.105399368876452,
+        1.076641299760287,
+        1.023057031146511,
+        1.0706070274915416,
+        1.0898245448385413
+      ],
+      "median_block_ratio": 1.076641299760287,
+      "ratio_of_medians": 1.0645170308328613,
+      "ranges_ns": {
+        "baseline": [
+          10628942,
+          10942390
+        ],
+        "candidate": [
+          11075020,
+          12095711
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "near_endpoint_off_circle_cloned",
+      "samples_ns": {
+        "baseline": [
+          10493991,
+          10364580,
+          10358460,
+          10314652,
+          10698966
+        ],
+        "candidate": [
+          11712797,
+          13959493,
+          13662983,
+          11886235,
+          11842048
+        ]
+      },
+      "block_ratios": [
+        1.1161432290155384,
+        1.3468459889353934,
+        1.3190168229640313,
+        1.1523641321103222,
+        1.106840418036659
+      ],
+      "median_block_ratio": 1.1523641321103222,
+      "ratio_of_medians": 1.1468129919398566,
+      "ranges_ns": {
+        "baseline": [
+          10314652,
+          10698966
+        ],
+        "candidate": [
+          11712797,
+          13959493
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    }
+  ],
+  "broad_slower_in_all_five_blocks": [
+    {
+      "name": "operation_drill_circle_and_bounds",
+      "samples_ns": {
+        "baseline": [
+          11863427,
+          11859177,
+          11910933,
+          12263879,
+          11812640
+        ],
+        "candidate": [
+          12252790,
+          12072393,
+          12159486,
+          17342481,
+          11925063
+        ]
+      },
+      "block_ratios": [
+        1.0328204489309876,
+        1.0179789879179644,
+        1.0208676348024122,
+        1.4141105762703627,
+        1.0095171782091048
+      ],
+      "median_block_ratio": 1.0208676348024122,
+      "ratio_of_medians": 1.0249556051552389,
+      "ranges_ns": {
+        "baseline": [
+          11812640,
+          12263879
+        ],
+        "candidate": [
+          11925063,
+          17342481
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_bounds",
+      "samples_ns": {
+        "baseline": [
+          5057843,
+          5024425,
+          5063903,
+          5764975,
+          5074912
+        ],
+        "candidate": [
+          5141848,
+          5144557,
+          5171075,
+          8558283,
+          5134418
+        ]
+      },
+      "block_ratios": [
+        1.0166088587565885,
+        1.0239096015962026,
+        1.0211639124999037,
+        1.4845308088933604,
+        1.0117255235164668
+      ],
+      "median_block_ratio": 1.0211639124999037,
+      "ratio_of_medians": 1.0159272403124626,
+      "ranges_ns": {
+        "baseline": [
+          5024425,
+          5764975
+        ],
+        "candidate": [
+          5134418,
+          8558283
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_replacement_and_bounds",
+      "samples_ns": {
+        "baseline": [
+          230274,
+          228604,
+          230105,
+          232274,
+          230445
+        ],
+        "candidate": [
+          240873,
+          249713,
+          234733,
+          386694,
+          235544
+        ]
+      },
+      "block_ratios": [
+        1.0460277756064515,
+        1.0923387167328655,
+        1.020112557310793,
+        1.6648182749683564,
+        1.0221267547571005
+      ],
+      "median_block_ratio": 1.0460277756064515,
+      "ratio_of_medians": 1.0460277756064515,
+      "ranges_ns": {
+        "baseline": [
+          228604,
+          232274
+        ],
+        "candidate": [
+          234733,
+          386694
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_construct_polygon_and_area_17",
+      "samples_ns": {
+        "baseline": [
+          11488122,
+          11614103,
+          11517310,
+          11873026,
+          11390059
+        ],
+        "candidate": [
+          11955500,
+          11828099,
+          11656001,
+          14799455,
+          11725576
+        ]
+      },
+      "block_ratios": [
+        1.0406835860552317,
+        1.0184255297202032,
+        1.0120419611871174,
+        1.2464770985930629,
+        1.029457002812716
+      ],
+      "median_block_ratio": 1.029457002812716,
+      "ratio_of_medians": 1.0269845128767048,
+      "ranges_ns": {
+        "baseline": [
+          11390059,
+          11873026
+        ],
+        "candidate": [
+          11656001,
+          14799455
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_construct_polygon_and_area_128",
+      "samples_ns": {
+        "baseline": [
+          11741305,
+          11795841,
+          11706878,
+          11982888,
+          11653581
+        ],
+        "candidate": [
+          12014496,
+          11991767,
+          11910283,
+          20008108,
+          11772243
+        ]
+      },
+      "block_ratios": [
+        1.0232675158340576,
+        1.0166097525390516,
+        1.0173748287118052,
+        1.6697233588430436,
+        1.0101824494977123
+      ],
+      "median_block_ratio": 1.0173748287118052,
+      "ratio_of_medians": 1.0213317003518774,
+      "ranges_ns": {
+        "baseline": [
+          11653581,
+          11982888
+        ],
+        "candidate": [
+          11772243,
+          20008108
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_uncertain_polygon_bounds",
+      "samples_ns": {
+        "baseline": [
+          400502,
+          384554,
+          401023,
+          397293,
+          384634
+        ],
+        "candidate": [
+          432270,
+          415472,
+          418821,
+          699022,
+          406772
+        ]
+      },
+      "block_ratios": [
+        1.0793204528316962,
+        1.0803996317812323,
+        1.0443814943282554,
+        1.7594621601689433,
+        1.0575560142889084
+      ],
+      "median_block_ratio": 1.0793204528316962,
+      "ratio_of_medians": 1.0541867085501129,
+      "ranges_ns": {
+        "baseline": [
+          384554,
+          401023
+        ],
+        "candidate": [
+          406772,
+          699022
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_stencil_unresolved_radius",
+      "samples_ns": {
+        "baseline": [
+          2357749,
+          2363268,
+          2366418,
+          2453642,
+          2413785
+        ],
+        "candidate": [
+          2379487,
+          2407375,
+          2372487,
+          3787381,
+          2429303
+        ]
+      },
+      "block_ratios": [
+        1.0092198109298318,
+        1.018663562490585,
+        1.0025646356645361,
+        1.5435752240954468,
+        1.0064289072970458
+      ],
+      "median_block_ratio": 1.0092198109298318,
+      "ratio_of_medians": 1.017307593164014,
+      "ranges_ns": {
+        "baseline": [
+          2357749,
+          2453642
+        ],
+        "candidate": [
+          2372487,
+          3787381
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_affine_rectangle_identity",
+      "samples_ns": {
+        "baseline": [
+          322568,
+          325348,
+          324128,
+          317618,
+          309879
+        ],
+        "candidate": [
+          343746,
+          348326,
+          341567,
+          601819,
+          326728
+        ]
+      },
+      "block_ratios": [
+        1.0656543736514472,
+        1.0706259144054981,
+        1.0538028186395498,
+        1.8947887084485135,
+        1.0543728358488313
+      ],
+      "median_block_ratio": 1.0656543736514472,
+      "ratio_of_medians": 1.0656543736514472,
+      "ranges_ns": {
+        "baseline": [
+          309879,
+          325348
+        ],
+        "candidate": [
+          326728,
+          601819
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_affine_quadratic_cap",
+      "samples_ns": {
+        "baseline": [
+          549642,
+          564321,
+          560981,
+          549312,
+          549613
+        ],
+        "candidate": [
+          570421,
+          574081,
+          571291,
+          910818,
+          557812
+        ]
+      },
+      "block_ratios": [
+        1.0378046073626106,
+        1.0172951210392667,
+        1.0183785190585777,
+        1.6581068682278923,
+        1.0149177694122955
+      ],
+      "median_block_ratio": 1.0183785190585777,
+      "ratio_of_medians": 1.0393874558348888,
+      "ranges_ns": {
+        "baseline": [
+          549312,
+          564321
+        ],
+        "candidate": [
+          557812,
+          910818
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_drill_spacing_unknown_threshold",
+      "samples_ns": {
+        "baseline": [
+          1373546,
+          1361697,
+          1367556,
+          1360476,
+          1372716
+        ],
+        "candidate": [
+          1401594,
+          1846953,
+          1393084,
+          2241516,
+          1379946
+        ]
+      },
+      "block_ratios": [
+        1.0204201388231628,
+        1.3563612169227075,
+        1.0186668772613334,
+        1.6475968705070871,
+        1.0052669306688347
+      ],
+      "median_block_ratio": 1.0204201388231628,
+      "ratio_of_medians": 1.0248896571694321,
+      "ranges_ns": {
+        "baseline": [
+          1360476,
+          1373546
+        ],
+        "candidate": [
+          1379946,
+          2241516
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_duplicate_layers_forward",
+      "samples_ns": {
+        "baseline": [
+          1420163,
+          1378175,
+          1410403,
+          1429062,
+          1400604
+        ],
+        "candidate": [
+          1468009,
+          1396424,
+          2229237,
+          1523576,
+          1488408
+        ]
+      },
+      "block_ratios": [
+        1.0336904989075197,
+        1.013241424347416,
+        1.5805673981124544,
+        1.0661370885238008,
+        1.062690096558342
+      ],
+      "median_block_ratio": 1.062690096558342,
+      "ratio_of_medians": 1.0553068874640794,
+      "ranges_ns": {
+        "baseline": [
+          1378175,
+          1429062
+        ],
+        "candidate": [
+          1396424,
+          2229237
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_point_return_huge_radius",
+      "samples_ns": {
+        "baseline": [
+          29868,
+          28698,
+          30378,
+          28938,
+          29728
+        ],
+        "candidate": [
+          31108,
+          30728,
+          30728,
+          30018,
+          30418
+        ]
+      },
+      "block_ratios": [
+        1.0415160037498326,
+        1.0707366366994215,
+        1.011521495819343,
+        1.037321169396641,
+        1.0232104413347685
+      ],
+      "median_block_ratio": 1.037321169396641,
+      "ratio_of_medians": 1.0336383207750268,
+      "ranges_ns": {
+        "baseline": [
+          28698,
+          30378
+        ],
+        "candidate": [
+          30018,
+          31108
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_fixture_access_huge_centers",
+      "samples_ns": {
+        "baseline": [
+          197706,
+          193667,
+          203977,
+          199206,
+          198896
+        ],
+        "candidate": [
+          199836,
+          202386,
+          204546,
+          294560,
+          203756
+        ]
+      },
+      "block_ratios": [
+        1.0107735728809444,
+        1.045020576556667,
+        1.0027895301921295,
+        1.478670321175065,
+        1.024434880540584
+      ],
+      "median_block_ratio": 1.024434880540584,
+      "ratio_of_medians": 1.024434880540584,
+      "ranges_ns": {
+        "baseline": [
+          193667,
+          203977
+        ],
+        "candidate": [
+          199836,
+          294560
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_fixture_access_huge_diameters",
+      "samples_ns": {
+        "baseline": [
+          1093085,
+          1087025,
+          1091586,
+          1085585,
+          1097995
+        ],
+        "candidate": [
+          1155201,
+          1096685,
+          1344037,
+          1089265,
+          1105684
+        ]
+      },
+      "block_ratios": [
+        1.0568263218322453,
+        1.0088866401416712,
+        1.231269913685225,
+        1.0033898773472367,
+        1.0070027641291628
+      ],
+      "median_block_ratio": 1.0088866401416712,
+      "ratio_of_medians": 1.0129151528143454,
+      "ranges_ns": {
+        "baseline": [
+          1085585,
+          1097995
+        ],
+        "candidate": [
+          1089265,
+          1344037
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_rectangle_construct_subnormal",
+      "samples_ns": {
+        "baseline": [
+          4129846,
+          4109328,
+          4138666,
+          4148185,
+          4202122
+        ],
+        "candidate": [
+          4559917,
+          4418647,
+          4400738,
+          4200752,
+          4577516
+        ]
+      },
+      "block_ratios": [
+        1.1041372971292391,
+        1.0752724046364759,
+        1.063322819478547,
+        1.012672289206002,
+        1.0893343886731512
+      ],
+      "median_block_ratio": 1.0752724046364759,
+      "ratio_of_medians": 1.067650059221981,
+      "ranges_ns": {
+        "baseline": [
+          4109328,
+          4202122
+        ],
+        "candidate": [
+          4200752,
+          4577516
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_rectangle_construct_quarter_turn",
+      "samples_ns": {
+        "baseline": [
+          4224690,
+          4264878,
+          4282317,
+          4220341,
+          4217471
+        ],
+        "candidate": [
+          4704238,
+          4408947,
+          4319514,
+          4274757,
+          4489823
+        ]
+      },
+      "block_ratios": [
+        1.1135108138111909,
+        1.0337803332240687,
+        1.008686185539277,
+        1.0128937448419453,
+        1.064577088971092
+      ],
+      "median_block_ratio": 1.0337803332240687,
+      "ratio_of_medians": 1.0436143243646279,
+      "ranges_ns": {
+        "baseline": [
+          4217471,
+          4282317
+        ],
+        "candidate": [
+          4274757,
+          4704238
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_pad_chamfer_construct_all",
+      "samples_ns": {
+        "baseline": [
+          9875223,
+          9774020,
+          9992345,
+          9741832,
+          9733073
+        ],
+        "candidate": [
+          10200681,
+          10033412,
+          10061610,
+          9931629,
+          9897912
+        ]
+      },
+      "block_ratios": [
+        1.0329570279071165,
+        1.0265389266647704,
+        1.0069318062977208,
+        1.0194826804650297,
+        1.016935966677739
+      ],
+      "median_block_ratio": 1.0194826804650297,
+      "ratio_of_medians": 1.0265389266647704,
+      "ranges_ns": {
+        "baseline": [
+          9733073,
+          9992345
+        ],
+        "candidate": [
+          9897912,
+          10200681
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    },
+    {
+      "name": "operation_pad_chamfer_construct_diamond",
+      "samples_ns": {
+        "baseline": [
+          5240171,
+          5220672,
+          5133698,
+          5230871,
+          5085461
+        ],
+        "candidate": [
+          5348683,
+          5310406,
+          5258100,
+          5254490,
+          5195474
+        ]
+      },
+      "block_ratios": [
+        1.0207077211793278,
+        1.017188208721023,
+        1.024232434397193,
+        1.0045153092094987,
+        1.0216328470516243
+      ],
+      "median_block_ratio": 1.0207077211793278,
+      "ratio_of_medians": 1.007169192012063,
+      "ranges_ns": {
+        "baseline": [
+          5085461,
+          5240171
+        ],
+        "candidate": [
+          5195474,
+          5348683
+        ]
+      },
+      "slower_blocks": 5,
+      "faster_blocks": 0
+    }
+  ],
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "variant": "candidate",
+      "passed": false,
+      "observed_assertion_seconds": 132.328922579,
+      "process_wall_seconds": 133.6844756482169,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "variant": "candidate",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 120.63621033122763,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    }
+  ],
+  "reports": {
+    "status": "prepared-not-executed-after-cost-rejection",
+    "complete_report_identity_established": false,
+    "production_cli_size_measured": false,
+    "reason": "Further report and production-size qualification cannot resolve the existing cost rejection. The prepared runners remain preserved and unexecuted."
+  },
+  "limits": [
+    "The three all-five-slower scalar phases and all other scalar adverse rows remain open. Native gains do not erase those costs or alone authorize retention.",
+    "Five fixed baseline/candidate blocks describe this run; no confidence intervals, universal regression bounds or extension of prior samples is claimed. Every adverse sample is retained.",
+    "Construction, first, warm and cloned queries are separate rows. First uses fresh graphs within a process that can share constants; cloned query timing excludes cloning.",
+    "Allocation counters cover requested Rust bytes, excluding native C heaps. Retained and peak bytes are phase-relative, not eventual process reclamation.",
+    "The historical cost-probe abort is attached to an intermediate. Effective final-coordinate abortion is checked separately by the unchanged 210-row receipt probe.",
+    "All 231 broad rows are preserved historical witnesses, not new proofs. Full report bytes and original native limits are separate requirements.",
+    "The baseline already includes the isolated endpoint changes and admitted P4 repair. These costs cannot erase the inherited endpoint trial tradeoffs or establish a speedup over main.",
+    "Affine-surd first and warm queries are slower in all five pairs: ratios of medians 1.107208 and 1.089591. Opaque-decline construction is also slower in all five pairs, ratio of medians 1.025741. The full arrays and ranges remain attached.",
+    "Rational radical-Laurent construction is slower in four pairs, with a ratio of medians 1.153210 and variable samples. It is an adverse result, not discarded as noise.",
+    "Some large apparent integer gains depend on variable baseline timings. Signed-word construction has ratio of medians 0.625348 but median paired ratio 1.041420 and is slower in three pairs. These statistics do not establish a large speedup.",
+    "All three all-five-slower phases have identical requested-memory counters. The allocation savings elsewhere do not explain or excuse these timing costs. No causal attribution or statistical significance is established.",
+    "Endpoint cloned near-endpoint off-circle queries are slower in all five pairs: ratio of medians 1.146813 and median paired ratio 1.152364. Warm queries for that family are also slower in every pair, with ratio of medians 1.064517. These adverse rows have unchanged requested-memory counters.",
+    "Some native samples vary substantially within each source, including the fourth broad block. Every block remains in the assessment. No causal attribution, statistical significance or universal slowdown is claimed.",
+    "Six endpoint phases reduce allocation calls and allocated bytes, and five reduce peak requested bytes. Retained requested-byte deltas match across all 48 phases and all five pairs. These counters do not measure native C heaps or prove equal total memory.",
+    "Four native probe binaries shrink by 232 to 248 bytes. These are probe sizes, not production CLI sizes.",
+    "The candidate board assertion fails at 132.328922579 worker-CPU seconds against 120. The separate neck assertion passes its original 60-second check-body wall limit without printing that internal passing duration. Whole-process wall times and historical standalone gates are not matched application benchmarks."
+  ],
+  "next_step": {
+    "status": "source-review-pending",
+    "task": "Keep this candidate, the parent and every completed trial frozen. Review the recursive persistent-certificate read path for unnecessary reconstruction of immutable rational/radical storage. Establish mutation, aliasing, ownership-release and original-retry requirements before preparing a distinct candidate. Do not use this rejected memo change in that baseline.",
+    "motivation": "The retained-projection diagnostic observed 35,239,829 recursive closed-certificate copies, including 30,843,135 single-radical copies. This is call coverage, not allocation counts, time share or an expected speedup. The memo-publication experiment does not eliminate reconstruction on subsequent cache reads.",
+    "candidate_prepared": false
+  },
+  "source_parent_main_unchanged": true,
+  "runtime_admitted": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

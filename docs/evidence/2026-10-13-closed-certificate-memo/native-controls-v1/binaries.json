@@ -1,0 +1,42 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+    "sha256": "02d53e2037941a096e7f6231e5b599d3f5e1c8f3ee39902a9c28c918275e7681",
+    "bytes": 8593832
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+    "sha256": "a226aae9cecf69faa959fda1209149cb013eef496fe559fc82579a78c5659abf",
+    "bytes": 8596192
+  },
+  "baseline-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-abort",
+    "sha256": "b6f6bea849c30b8c8756f95f4020b5d40004698b8ee83562d10718e2ab6f92cb",
+    "bytes": 8530808
+  },
+  "baseline-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad",
+    "sha256": "e917b0d3ceaae5661e13313f2effc653b51ef92bf338101da1177f160efd654e",
+    "bytes": 26358384
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+    "sha256": "ad50a202a84dc12349eae79c368fa15214e3c0fded24c577538ec23b9dd63729",
+    "bytes": 8593592
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+    "sha256": "46f8e0ae516f966945307f0984656ed53d72a205ea9007e524a65b946429e10a",
+    "bytes": 8595952
+  },
+  "candidate-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-abort",
+    "sha256": "e2583abce5b6404c0785d951642cc40b370711f2e91eaf25eff2fe098433b209",
+    "bytes": 8530576
+  },
+  "candidate-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad",
+    "sha256": "bf3c42f71d9bf37334c5879146cad6bb4e2d967954ff831b68f92a813820f8ad",
+    "bytes": 26358136
+  }
+}

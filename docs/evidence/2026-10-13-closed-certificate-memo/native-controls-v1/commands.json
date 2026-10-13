@@ -1,0 +1,942 @@
+[
+  {
+    "name": "build-libraries-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 118.75233365595341,
+    "stdout_sha256": "be5addfe243a9d1caa7ef872e8dd694923642710e5cd86492f91860c16e9661d",
+    "stderr_sha256": "c2f51e96c3cedc9b843928ef5cd5fc9871e2435a1f0afc8959233aeda911c581"
+  },
+  {
+    "name": "build-libraries-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 120.78590720379725,
+    "stdout_sha256": "51530965e74ff7ed22f4d422044c0d52cd1b7b866141d2c694bb19435e2d9227",
+    "stderr_sha256": "1ebafca5f3a9f7c2949e370a3382eb5367b731f706885612e2dd27f835c2bce0"
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7877451688982546,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.84714345773682,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7700174152851105,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.9837388689629734,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8044918719679117,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8213748536072671,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8061021505855024,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-closed-certificate-memo/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.8894910709932446,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2877953671850264,
+    "stdout_sha256": "5637f3ba2bb71bc4686261ea3114950fe767ae02d155cdb3cc54d2d91c081d93",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2754576629959047,
+    "stdout_sha256": "1ea65d4584a06a40485106c40169109e7f36e1dc661a735e30a87e1961a739d8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2356139849871397,
+    "stdout_sha256": "1aab8c551c446addfcbd493551b45fc6e1b39743f075f0a12f92e899e61a22b6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2723036892712116,
+    "stdout_sha256": "bdfc9ce246c3fd500412119fe9445cb39eb002d45278b6113ec089e40667196a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2658250741660595,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2407319629564881,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2529336870647967,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2706114053726196,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.269632191862911,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2372329230420291,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.197824212256819,
+    "stdout_sha256": "8ef31280287a12f725dd6aab6f65c8720c741efac2cf6fe9642eed9efed2bb1a",
+    "stderr_sha256": "b5f7cccfb47db0e00d13946f276ef83e338807ebfa73fbf15ef6717766068b9f"
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.212973802816123,
+    "stdout_sha256": "62a752005e8ec0bb73246ce7be16949ce83e9fb6964b274eee0e62dae2062d78",
+    "stderr_sha256": "f65ce5afcb732cecda1bfcb3c1e85a20f77500a311e03fd82ca5c735d296acd6"
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.474576696753502,
+    "stdout_sha256": "febcb378522cd5163495a2af5ff3408628e7b6b61ac8e4f825d5da393826d90d",
+    "stderr_sha256": "e567edce3d4d2c25c84ce20fa9869c73d8a0be35613bfecb23bba6da883f2f04"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.22885425388813,
+    "stdout_sha256": "969c774dbd599ae5bf3f60cd156e8c95ff98d99786a883c478bc5b70d70aaf42",
+    "stderr_sha256": "4f52237a25dbde7f58ecdd95563c697015453f838959484e21341bb79c5114d6"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.44531869282946,
+    "stdout_sha256": "72e99329b0b1b8972a9f080d5040a7d12d6af39d1f8c43c1ce0efd3428452589",
+    "stderr_sha256": "bf7fbaf6469899387b013358c45e21e24ecbc9d1b19928cbeccca21026e01a08"
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.18436878407374,
+    "stdout_sha256": "e9dbc81b27fb20428e914067a097c04df2e8618d12b1478fdb8c367b417cc3dd",
+    "stderr_sha256": "f0d99caa8ca832d05c8d935ac8c08a35ca5410b0a0efe2ef49161d406f08e269"
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.435028908308595,
+    "stdout_sha256": "812e5c04c8a3cc8ec2fa4bf4b4e4de101cb3261de70c36309acfe31b685f12e7",
+    "stderr_sha256": "9245a3824abd4f515d48966234bd688a0f2694ddfb33a5d41121d6f0bab203d9"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.509777722880244,
+    "stdout_sha256": "277418299d0005b37ed73c87f6b473080bd04cd027ae8272ecc64b26d2de4a39",
+    "stderr_sha256": "161a9500662210a35812f26d611455380c3b940057bead849202d1b22ed0cc7a"
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.257762472145259,
+    "stdout_sha256": "2bfa7b14dc016a1c84aba282566eeb7f2ec6635b498970324a5c1f9b2b6d0ccf",
+    "stderr_sha256": "21e07578468fc66a9d6d6b855e30ed2fb06175010ba71fdb01def0a1e78fe35f"
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.1437806356698275,
+    "stdout_sha256": "eaffc57e79b696693da9e12df53067665ca4d47ea18f76595920d410f080ddc8",
+    "stderr_sha256": "e33b5e37dc668e344e4987c8222d326763ef3441f2b08a04ec34ff83d7621a86"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8612137623131275,
+    "stdout_sha256": "068e9c0f939231005e1e741e5200164ffe1123dab7e6fe4f0550cd375b11af09",
+    "stderr_sha256": "85282dab33de4bba26ccfe123a03b7e7b1d1b4ab6c118b08ae9b30bddbb8f5ac"
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6323128757067025,
+    "stdout_sha256": "1b5737866b06dd6f59176bde250f97e8b543ce8da504918346a48b9462a134a4",
+    "stderr_sha256": "303d032e604628c3c0816a86aafed8211e1ef48168e721c591c06db530884a98"
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5949346688576043,
+    "stdout_sha256": "d98671980528ba943b9fef9a9b1251c2be14b0f02ac12b8f190f4663ae823cf4",
+    "stderr_sha256": "de6d7cb1d404088a51a4bc2d978d38ad18d8bdd4f4cec28e31d596793390d63e"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.688520872965455,
+    "stdout_sha256": "c803c6738718da813eeb5698aadccca210f2c784147e50a63709c2bf41451864",
+    "stderr_sha256": "7de0c2db7cb36aff3507228369d3bc248888afd509c2dc32f15400f1326c7ee5"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.620616378262639,
+    "stdout_sha256": "5fb48ac143baa4b18cec33e977eb3bd86d38b256e0203f99f63c562903358ab3",
+    "stderr_sha256": "70c1b85d258efd72807890867437131875a8a116169cdf41b4f9f0f8fdbdcf2a"
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7097529070451856,
+    "stdout_sha256": "631ebee3aaf8cd84f4c116edf028094cc12bd71c3e790d31748d9cbfa4ce6e71",
+    "stderr_sha256": "4043f8ff4e1dd70914e90911c1d03178aee60e8e8b0dc6d79591511d778c3bbf"
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6052851788699627,
+    "stdout_sha256": "a1e9f02467f095e9db915dacd68fd4dd7d6af12decd55dcf67ffe0248ac64970",
+    "stderr_sha256": "ecbcda86560e2257851f5e0d47f65f6ba245490663ec2a2bf805a5dc75bafe4a"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6383229340426624,
+    "stdout_sha256": "0e04956f07ec5076f39897bf582bbb389311dc8e33dfe38a6e7acffe3efe8197",
+    "stderr_sha256": "73cd70ccc8c8a585fad29528b7f7e87e0f80baa86751cc65a19b3b3e899ec840"
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6278920988552272,
+    "stdout_sha256": "b8030ee0078c8803090202c26ede91ef8210c53d1e4a67cddc98e5321b03d694",
+    "stderr_sha256": "4ed8ac4b37e95d2ec3845e9a36797372bcc2b733eff35a7194cf7c214bc90e7c"
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6491553918458521,
+    "stdout_sha256": "0e2200a04fca772ca5edc32309fa83b0ec89353220d209d7fe29175d06a34545",
+    "stderr_sha256": "2400f4f4c0daf9dba3f7dd5583a835a78dbacaaa2b9653541ad7fead284ae72d"
+  },
+  {
+    "name": "broad-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.689357348252088,
+    "stdout_sha256": "024dba921d5c8b2b694de18b6879316cd1b12167fc42ea5066de5982514c9189",
+    "stderr_sha256": "cb8bd5375fdcf181f09795763fa72fff6382f6d63544365ee75d88fc5e112730"
+  },
+  {
+    "name": "broad-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.524960889015347,
+    "stdout_sha256": "ceaa149b8e88b19445076d2a82edfbf1a0d04aacf94579abdacd24048e8bef84",
+    "stderr_sha256": "791c2c70e4d0bd0bba9ef55a808aae9ac553da090dc65ff1e782463d925a0b33"
+  },
+  {
+    "name": "broad-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.50798908341676,
+    "stdout_sha256": "619a0ae4c7dfc6d81b62c072478bfcbf01b2e28cfd635d2cedaca569307d0a93",
+    "stderr_sha256": "d436882f8061e45ac77531e3e037c5c5a45e6c3a0dcd3670d129254bbc703ce1"
+  },
+  {
+    "name": "broad-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.482193691190332,
+    "stdout_sha256": "43c821c5ab15971d7792a6bbf377c67269fd8b654b9c4db5a2915cd058c958d1",
+    "stderr_sha256": "8de775d5aa4ce085011f01cbd2803c358c81f0d0871479985d2bd3a638dd6911"
+  },
+  {
+    "name": "broad-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.436787485145032,
+    "stdout_sha256": "2bb7ad197c1884e296558b916ac834ba83f2b200dc0650354d333cf09dadd2a4",
+    "stderr_sha256": "860d4ae727df66b6c94998f18e223a0c6f1460fb874129c8daa0f57f2a560910"
+  },
+  {
+    "name": "broad-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.553019406273961,
+    "stdout_sha256": "17178ad2d6f637051f5bf622a42ef4b5cecd909a02d0c2ef7bbd2d24902b7451",
+    "stderr_sha256": "2c5897baab9d16198148a516c3110c389a227558a5fba21b058f9fb5fd56abf8"
+  },
+  {
+    "name": "broad-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.9908638168126345,
+    "stdout_sha256": "7e4ef4c87d51b86a66bf7497573fe7d06dd6e2dcb28af6f7e312f2ef101c3263",
+    "stderr_sha256": "eaa1ab0f0443a375b972d91a2717762a1441f3032048b85b6deabe8a7ee78f9a"
+  },
+  {
+    "name": "broad-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.123355803079903,
+    "stdout_sha256": "40bdcd9a9f5f17f47b79911a49be03fe16afabab15b0e5e2ffa7427d4c3e2921",
+    "stderr_sha256": "8d177b53c1d746d05da898a19010c93d22fee60f76a3d40f89092c312c65478a"
+  },
+  {
+    "name": "broad-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.672074523288757,
+    "stdout_sha256": "8d7b32dbe6e7d4626f27fb1c7fc6f4e54cd99d1717013be8f3aab23f11070936",
+    "stderr_sha256": "a99b1b4636e222b78b0039f6cba8a33a7611af9eaed11692017d2bcd44016237"
+  },
+  {
+    "name": "broad-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.542118503246456,
+    "stdout_sha256": "8da6f8ef2625a968cc26401040636268154e1f5797a93292df13c05979444cb3",
+    "stderr_sha256": "5d933e035be1f1047f45f948aa4e69b51fab5468d72b492afa656c49b1dcb030"
+  }
+]

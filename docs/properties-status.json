@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The memo candidate passes scalar and native functional qualification, but its original board assertion fails at 132.328922579 worker-CPU seconds / 120. Its separate original neck assertion passes. Fixed native controls are next, with scalar regressions, inherited tradeoffs, all 35 pending entries and complete-report obligations still open. See closed_certificate_memo."
+      "next_step": "The closed-certificate memo candidate is rejected after fixed scalar/native costs; its original board assertion also fails at 132.328922579 worker-CPU seconds / 120. Review persistent-certificate reconstruction from the frozen uninstrumented parent before preparing another candidate. All 35 pending entries, inherited tradeoffs and original limits remain open."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -1147,17 +1147,19 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "native-correctness-passes-original-board-limit-fails-fixed-controls-next",
+      "status": "reject-closed-certificate-memo-on-unresolved-scalar-and-native-costs",
       "evidence": [
         "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/correctness-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/cost-assessment-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json",
-        "docs/evidence/2026-10-13-closed-certificate-memo/native-assessment-v1.json"
+        "docs/evidence/2026-10-13-closed-certificate-memo/native-assessment-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/native-controls-assessment-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/decision-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Execute the prepared fixed native comparison: 20 endpoint, 10 broad and six final-coordinate abort processes. Keep the original failed board assertion and every scalar/native adverse row open. Complete report replay and production-size verification remain prepared but unexecuted; no runtime is admitted.",
+      "next_step": "Keep this candidate, the parent and every completed trial frozen. Review the recursive persistent-certificate read path for unnecessary reconstruction of immutable rational/radical storage. Establish mutation, aliasing, ownership-release and original-retry requirements before preparing a distinct candidate. Do not use this rejected memo change in that baseline.",
       "runtime_admitted": false,
       "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1236,17 +1238,18 @@
           -208
         ]
       },
-      "decision": "The exact source change demonstrably removes a redundant closed-result memo copy while preserving opaque ownership, original memo reuse, retry behavior and every tested fact. Twenty-one phases reduce allocation calls/bytes, seventeen reduce peak requested bytes, and all six probe executables are smaller. Timing is mixed: seven phases are faster in every block and twenty-eight in at least four, but three phases are slower in every block and seven in at least four. This supports investigating native impact, not retaining the change or declaring the scalar performance concerns resolved.",
+      "decision": "Reject this memo-publication candidate. It removes a redundant closed-result copy and reduces requested allocations while preserving the tested facts and ownership controls. Three scalar phases, five endpoint phases and eighteen broad operations are slower in every fixed pair, and the original full-board assertion still fails. These unresolved performance costs prevent retention under the performance-before-memory ladder. The native gains and smaller probes do not erase adverse rows.",
       "unresolved_costs": [
         "Affine-surd first and warm queries are slower in all five pairs: ratios of medians 1.107208 and 1.089591. Opaque-decline construction is also slower in all five pairs, ratio of medians 1.025741. The full arrays and ranges remain attached.",
         "Rational radical-Laurent construction is slower in four pairs, with a ratio of medians 1.153210 and variable samples. It is an adverse result, not discarded as noise.",
         "Some large apparent integer gains depend on variable baseline timings. Signed-word construction has ratio of medians 0.625348 but median paired ratio 1.041420 and is slower in three pairs. These statistics do not establish a large speedup.",
-        "All three all-five-slower phases have identical requested-memory counters. The allocation savings elsewhere do not explain or excuse these timing costs. No causal attribution or statistical significance is established."
+        "All three all-five-slower phases have identical requested-memory counters. The allocation savings elsewhere do not explain or excuse these timing costs. No causal attribution or statistical significance is established.",
+        "Five endpoint phases and eighteen broad operations are slower in all five pairs. Near-endpoint off-circle warm/cloned ratios of medians are 1.064517/1.146813, with unchanged requested-memory counters. Native variation, gains and adverse rows are all preserved; allocation savings do not resolve the performance costs."
       ],
       "retention_requirement": "Review native results together with every scalar adverse row and inherited native tradeoff. A native timing improvement alone does not dismiss scalar regressions. Do not admit a lower-rung improvement at the expense of a higher rung; meaningful regressions must be resolved before retention.",
       "followup_protocols": {
-        "native_controls": "Prepared and committed: 20 endpoint cost processes, 10 broad operation processes and six final-coordinate abort processes. Samples remain fixed.",
-        "reports": "Prepared, not executed: four full-board CLI report runs, fresh production targets and shared original input paths; compare every byte and separately record historical parent differences."
+        "native_controls": "Completed and independently assessed: 20 endpoint, ten broad and six final-coordinate abort processes; all original samples are preserved.",
+        "reports": "Prepared but not executed after the cost rejection. Complete candidate report-byte identity and production CLI size are not established."
       },
       "native_tests": [
         {
@@ -1306,7 +1309,78 @@
           "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
         }
       ],
-      "native_checks": "Strict release all-feature/all-target Clippy and warning-denied docs pass for hyperreal, hypersolve, hypercurve and hyperdrc. Original fixtures and limits are unchanged. The passing neck assertion does not print its check-body time."
+      "native_checks": "Strict release all-feature/all-target Clippy and warning-denied docs pass for hyperreal, hypersolve, hypercurve and hyperdrc. Original fixtures and limits are unchanged. The passing neck assertion does not print its check-body time.",
+      "native_costs": {
+        "endpoint": {
+          "timing_rows": 48,
+          "all_five_slower_rows": 5,
+          "at_least_four_slower_rows": 12,
+          "all_five_faster_rows": 8,
+          "at_least_four_faster_rows": 18,
+          "ratio_of_medians_above_one_rows": 21
+        },
+        "broad": {
+          "timing_rows": 231,
+          "all_five_slower_rows": 18,
+          "at_least_four_slower_rows": 58,
+          "all_five_faster_rows": 9,
+          "at_least_four_faster_rows": 49,
+          "ratio_of_medians_above_one_rows": 129
+        },
+        "endpoint_memory": {
+          "allocation_calls": {
+            "reduced_rows": 6,
+            "increased_rows": 0,
+            "min_delta": -13857,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 6,
+            "increased_rows": 0,
+            "min_delta": -1718784,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 0,
+            "increased_rows": 0,
+            "min_delta": 0,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 5,
+            "increased_rows": 0,
+            "min_delta": -440,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_sizes": {
+          "time": {
+            "baseline_bytes": 8593832,
+            "candidate_bytes": 8593592,
+            "byte_delta": -240
+          },
+          "memory": {
+            "baseline_bytes": 8596192,
+            "candidate_bytes": 8595952,
+            "byte_delta": -240
+          },
+          "broad": {
+            "baseline_bytes": 26358384,
+            "candidate_bytes": 26358136,
+            "byte_delta": -248
+          },
+          "abort": {
+            "baseline_bytes": 8530808,
+            "candidate_bytes": 8530576,
+            "byte_delta": -232
+          }
+        }
+      },
+      "native_cost_identity": "All 36 fixed native processes and four preflights complete. Endpoint identities, all 231 broad witnesses per process and all 210 final-coordinate abort receipts per process match. Historical broad witnesses also match. Both scalar and native sample sets are closed without extension."
     }
   },
   "status_meanings": {

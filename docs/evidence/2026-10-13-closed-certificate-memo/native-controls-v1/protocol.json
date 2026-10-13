@@ -1,0 +1,155 @@
+{
+  "scope": "Fixed native costs and receipts for baseline and closed-certificate memo candidate.\n\nBoth frozen source trees use new, separate native-control Cargo targets.\nAll builds finish before probes execute. Historical probes remain byte-for-byte\nunchanged. Time has no allocation wrapper; memory counts requested Rust bytes.\nFive baseline/candidate blocks are fixed in advance; no extension is planned. Native\ngate failures remain recorded and this run cannot authorize runtime admission.\n",
+  "runner_sha256": "2fb4bf15a0d30cd3df94afb4a975f24e7177b928676a27f01f8dc21dabb98f4a",
+  "preparation_sha256": "8010428cf8e80ccb68523ec30731cf9013e3dd00c0e327a8020e859c4d034807",
+  "validation_sha256": "5d377a19d32141ff3f8dd93a338d850a43aa486c2882b0c306be8aa218c8bee6",
+  "native_assessment_sha256": "ff5510b77fd429d3ee6dc36809ba0938aca41efa956c572fc23fc1e27e93b1c8",
+  "scalar_decision_sha256": "3860a09c4f5dac45ad7ccd76dc0126af7a2c44f7aad9c9eb5c9993c5c35a0863",
+  "assessor_sha256": "b1704d75c8553592312ac901ceb6d3f7254e3b5bcf99f3a5118e7e6176538648",
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target"
+  },
+  "historical_probe_inputs": {
+    "arc_cost.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc_endpoint_cost_probe.rs",
+      "sha256": "87bda9e1cabf99df2824ca9cca640fe6be837a4ec6310975b3b47ad7a7d43740"
+    },
+    "final_abort.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-final-abort/probe.rs",
+      "sha256": "187357bc79cde9068fb6d7afd2a9ae7f64b29640e63aee8a11711f94ddee5181"
+    },
+    "affine_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/affine_probe.rs",
+      "sha256": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e"
+    },
+    "authored_center_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/authored_center_probe.rs",
+      "sha256": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda"
+    },
+    "dense_cluster_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/dense_cluster_probe.rs",
+      "sha256": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421"
+    },
+    "fixture_access_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/fixture_access_probe.rs",
+      "sha256": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95"
+    },
+    "ipc_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/ipc_probe.rs",
+      "sha256": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574"
+    },
+    "layer_order_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/layer_order_probe.rs",
+      "sha256": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7"
+    },
+    "native_drill_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/native_drill_probe.rs",
+      "sha256": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2"
+    },
+    "operation_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/operation_probe.rs",
+      "sha256": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4"
+    },
+    "pad_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/pad_probe.rs",
+      "sha256": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa"
+    },
+    "point_consumer_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/point_consumer_probe.rs",
+      "sha256": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4"
+    },
+    "rectangle_probe.rs": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/arc-endpoint-production-replay/probe_sources/rectangle_probe.rs",
+      "sha256": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+    }
+  },
+  "probe_sha256": {
+    "arc_cost.rs": "87bda9e1cabf99df2824ca9cca640fe6be837a4ec6310975b3b47ad7a7d43740",
+    "final_abort.rs": "187357bc79cde9068fb6d7afd2a9ae7f64b29640e63aee8a11711f94ddee5181",
+    "affine_probe.rs": "afa4be6bf258f42e4a5ac9cf8d947bf9bd057aa5d8efbbf897f1826d2dc1161e",
+    "authored_center_probe.rs": "bc7efd2c70d5a86b3412d5f435bcf1c846936f2fe49bec5e3fc7c30232c59fda",
+    "dense_cluster_probe.rs": "78661e9564294b4a8efee9324118b6bc520b91a43ab63911bdea602593e7e421",
+    "fixture_access_probe.rs": "a96b532091e6648cb4583e45d40bd517a40cc8faf75c1dfa8599cf271cfb7d95",
+    "ipc_probe.rs": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574",
+    "layer_order_probe.rs": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7",
+    "native_drill_probe.rs": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2",
+    "operation_probe.rs": "e8c672dfcc64b73cc912d804e39aab17c8d9c9532341be9f7b49e4fe950970e4",
+    "pad_probe.rs": "93965c81cdb9bbbca7a435bfa797cd9a034b065c379ba5570dd246320decb8aa",
+    "point_consumer_probe.rs": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4",
+    "rectangle_probe.rs": "8313616b2b8488076ab25ea95e29c9a65674ef61e5aa5353d018d27a0c85026c"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "fixed_block_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "fixed_blocks": 5,
+  "time_inputs_per_family": 8192,
+  "memory_inputs_per_family": 1000,
+  "preflight_inputs": 42,
+  "arc_families": 12,
+  "arc_query_phases": [
+    "first",
+    "warm",
+    "cloned"
+  ],
+  "also_measure_construction": true,
+  "broad_witness_rows_per_process": 231,
+  "final_abort_rows_per_process": 210,
+  "final_abort_blocks": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "cpu": 0,
+  "process_timeout_seconds": 1800,
+  "historical_abort_limit": "The cost probe attaches abort to an intermediate expression. Its uncertain-result control is retained as-is; effective final-coordinate abortion is checked separately by final_abort.rs.",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3456.900\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "runtime_admitted": false
+}

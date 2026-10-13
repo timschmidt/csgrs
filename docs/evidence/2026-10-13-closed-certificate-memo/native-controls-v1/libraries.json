@@ -1,0 +1,114 @@
+{
+  "baseline": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhypercurve.rlib",
+      "sha256": "8c88ebeaad59be6ed6b1fc2ff33c9901e7c52dd68c3ff8b40b573a5d08b6102f",
+      "bytes": 48758258,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "7627df02cbd5a3b8b61381445b9278a41dbc03d829e4ca915f9d7297bc8dcb35",
+      "bytes": 11433852,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/libhyperdrc.rlib",
+      "sha256": "f673154118684019556383acccb63416e08ff4226e3f2eee54860f6532962500",
+      "bytes": 26566150,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "7033f1c1292469824d8feb4dd3ab096d31c386604fe6d30118c5f94475b9eb69",
+      "bytes": 4001288,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/baseline/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "d04fc21dc12650356f8b8b766965f80be06cbf8ad00da669fa13550bd4dda93f",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  },
+  "candidate": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhypercurve.rlib",
+      "sha256": "cdf8ffdbb1a21e42edac82e2c59f68669ad9cae49a71364e756e5120c9d78a67",
+      "bytes": 48758506,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "1919af9cf7592268d9d16f3a8121708c84b7f0eff8c58f4b78353bead73293bd",
+      "bytes": 11433654,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/libhyperdrc.rlib",
+      "sha256": "da957a72244b45643c2c7728fd9c383a510eebba4acdd6733863c2a38dc01fb9",
+      "bytes": 26566390,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "20be21c3a137d5e11f509bed6a33ba8cc8792b27a98dec072de271e4bad0d98e",
+      "bytes": 4001360,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "946cbee05e0c99a1d9b6d0bf008e2ddb5051fd4808f8db733af14dfb8fe9e4fc",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  }
+}

@@ -91,15 +91,45 @@ process wall time includes setup and is a different metric. These are standalone
 gate outcomes, not a matched application-speedup result. See
 [native-assessment-v1.json](native-assessment-v1.json).
 
-The prepared native cost controls retain the declared 36-process sample set,
-and a separate replay protocol compares both complete reports and production
-CLI sizes. These follow-up runners have not executed. The earlier endpoint
-reports predate the P4 parent, so historical equality is checked and recorded
-separately from the baseline/candidate comparison, without normalizing any field.
-A native gain alone will not dismiss scalar regressions;
-meaningful regressions must be resolved before retention. Fixed endpoint/broad/final-abort
-controls, complete report bytes, production CLI size and the original full-board
-120-second worker-CPU and 60-second neck check-body limits remain required.
-The parent still fails the board assertion at 133.31248412 seconds. All 39
-properties, 14 targets and crate-specific future work
-remain in scope.
+The fixed native comparison completed all 36 declared processes: 20 endpoint
+timing/allocation runs, ten broad-operation runs and six final-coordinate abort
+runs, after four preflights. Every endpoint identity, all 231 broad witnesses
+per process and all 210 abort receipts per process agree across sources. The
+broad witnesses also match the historical corpus. Both sources and their
+artifacts pass the independent checks in
+[native-controls-assessment-v1.json](native-controls-assessment-v1.json).
+
+| Native timing group | Phases | Slower in all five pairs | Slower in at least four | Faster in all five | Faster in at least four |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Endpoint | 48 | 5 | 12 | 8 | 18 |
+| Broad operations | 231 | 18 | 58 | 9 | 49 |
+
+Near-endpoint off-circle warm and cloned queries are slower in every pair,
+with ratios of medians of 1.064517 and 1.146813. Their median paired ratios are
+1.076641 and 1.152364. Their requested-memory counters are unchanged. Native
+samples include substantial within-source variation; all samples, ranges and
+adverse rows remain recorded. These are descriptive results, not a claim of
+statistical significance or a matched application speedup.
+
+Six endpoint phases reduce allocation calls and allocated bytes, and five reduce
+peak requested bytes. No counter increases; retained requested-byte deltas match
+in all 48 phases. Every memory delta repeats across the five pairs. Per 1,000
+inputs, the largest reductions are 13,857 calls, 1,718,784 allocated bytes and
+440 peak bytes. Four native probe binaries shrink by 232–248 bytes; production
+CLI sizes were not measured.
+
+[decision-v1.json](decision-v1.json) rejects this version. Removing redundant
+memo copies preserves the tested facts and reduces allocations, but the
+unresolved scalar and native slowdowns prevent retention under the
+performance-before-memory ladder. The original board assertion also remains
+failed. Neither fixed sample set was extended. The complete-report replay and
+production-size runners remain prepared and unexecuted after this rejection;
+complete report-byte identity is not established for this candidate.
+
+The next source review returns to reconstruction of immutable rational/radical
+storage on recursive persistent-cache reads. It must establish mutation,
+aliasing, release and original-retry requirements before preparing another
+candidate from the frozen parent. This rejected memo change will not become
+that baseline. The main runtime and all 35 pending native entries remain
+unchanged. The parent still fails the board assertion at 133.31248412 seconds.
+All 39 properties, 14 targets and crate-specific future work remain in scope.
