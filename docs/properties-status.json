@@ -82,7 +82,7 @@
       "native_result": "Twelve curve and 26 DRC focused tests plus strict consumer Clippy pass. The unchanged copper-neck check passes its 60-second assertion. Full-board worker CPU remains above the original 120-second limit at 154.353265288 seconds, with 12/197 findings.",
       "report_evidence": "docs/evidence/2026-10-12-small-integer-certificates/report-assessment-v1.json",
       "report_result": "Complete unnormalized JSON reports are byte-identical against the persistent-cache baseline: CPArti 147909 bytes / 12 findings and HVP109A 128818 bytes / 197 findings. Both sources use the same pending native geometry. Four fresh CLI processes preserve all 108 extracted input files.",
-      "next_step": "Prototype consuming the existing owned Laurent coefficient when merging equal exponents, avoiding its temporary vector clone. Preserve arithmetic order, radical/atom limits, recursive memo ownership at traversal boundaries and original fallback. Use the same three fixed cost probes, focused cache/frontier regressions and original native gates before any admission. Earlier inline-vector experiments remain rejected."
+      "next_step": "Run the prepared separate frame-pointer profile of the frozen integer-leaf parent on the complete original smoke test. Attribute remaining work to callers and preserve original limits; do not inherit the rejected merge change. Continue the full properties and future-work scope."
     },
     "isolated_quadratic_eligibility": {
       "status": "diagnostic-complete-shallow-path-not-advanced",
@@ -107,7 +107,9 @@
       "runtime_admitted": false,
       "native_evidence": "docs/evidence/2026-10-12-laurent-coefficient-merge/native-assessment-v1.json",
       "native_result": "Twelve focused curve and 26 DRC tests and strict consumer Clippy pass. The unchanged full-board gate fails at 165.086329211 worker CPU seconds / 120. The separate copper-neck check fails at 63.677895054 wall seconds / 60.",
-      "next_step": "Finish complete unnormalized report comparison against the frozen integer-leaf parent. Keep this version rejected, preserve all adverse scalar samples and native failures, and start further performance investigation from the parent rather than silently inheriting this merge change."
+      "next_step": "Run the prepared separate frame-pointer profile of the frozen integer-leaf parent on the complete original smoke test. Attribute remaining work to callers and preserve original limits; do not inherit the rejected merge change. Continue the full properties and future-work scope.",
+      "report_evidence": "docs/evidence/2026-10-12-laurent-coefficient-merge/report-assessment-v1.json",
+      "report_result": "Both full unnormalized reports are byte-identical against the integer-leaf parent: CPArti 147892 bytes / 12 findings and HVP109A 128807 bytes / 197 findings. All 108 extracted inputs remain unchanged. Cost rejection is unchanged."
     }
   },
   "status_meanings": {
