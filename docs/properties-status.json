@@ -1636,6 +1636,31 @@
         "The failed v1 qualification and corrected v2 qualification remain distinct. No v1 costs ran and no v1 pass was relabelled as a v2 execution."
       ],
       "native_executed": false
+    },
+    "retained_polynomial_views": {
+      "status": "inputs-prepared-source-freeze-and-qualification-next",
+      "evidence": [
+        "docs/evidence/2026-10-13-retained-polynomial-views/scope-v1.json"
+      ],
+      "contract": "Keep existing owned scratch polynomials and graph-free closed payloads. A cache read clones one Arc to the whole immutable closed polynomial. Read-only multiplication right operands borrow its rational and radical slices; other existing consuming algorithms and projections recover ordinary owned polynomials before use.",
+      "ownership": "A private PiLaurentValue enum distinguishes Owned(PiLaurentPolynomial) from Retained(Arc<ClosedPiLaurentPolynomial>). Only the existing cache publication allocates a shared header. Closed coefficients still contain only Rational and Vec<(Rational, Rational)> and cannot own Computable nodes. Scratch creation/cloning and original local memo entries retain their current Vec behavior.",
+      "operations": {
+        "cache": "Clone Arc under the read lock, release the guard before arithmetic; immutable payload survives independently of the node. Existing once-only write publication uses Arc instead of Box.",
+        "multiply": "Materialize the left operand. Owned right operands use the original polynomial algorithm; retained right operands use the same insertion/power-check sequence over closed fields. Both call one coefficient multiplication body with borrowed rational/radical/atom parts.",
+        "add_scale_inverse_sqrt": "Materialize retained operands and call the original owned algorithms. No arithmetic, cancellation, traversal, or bound shortcut is added.",
+        "projection": "The existing wrapper materializes its returned polynomial before invoking unchanged rational/pi/quadratic/compacting projection logic. This version does not implement the previously deferred root-only shortcut.",
+        "memo": "The normalizer computes ordinary owned results and inserts the original deep clone into the original local memo before publication. Retained cache hits return early as before. Opaque Computable counts and first-memo release before retry must be unchanged."
+      },
+      "cost_risks": [
+        "An Arc publication adds reference-count header bytes compared with the original Box, and cached views use atomic clone/drop.",
+        "The new private result enum and borrowing dispatch may change layout, inlining and binary size. Layouts must be recorded, not assumed.",
+        "Left and other consuming operands still reconstruct ordinary vectors; this proposal does not eliminate every retained copy.",
+        "Prior recursive-copy counts are coverage, not allocation measurements, time shares or promised savings."
+      ],
+      "controls": "Both sources retain eight storage, three memo and three alias mathematical controls, plus the six inherited cache and eleven P4 controls. The previous radical-sharing inventory must be 0/0 in both: these ordinary to_polynomial conversions still copy. Candidate-specific controls will exercise actual retained whole-polynomial reads, live aliases, mutation, consuming arithmetic, graph/buffer release and concurrency.",
+      "next_step": "Prepare and freeze both source trees, verify exact parent-token recovery and borrowed operation order, then execute the full 26-command scalar qualification before the predeclared fixed cost trial. All native requirements and original limits remain open.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
