@@ -3924,14 +3924,26 @@
       }
     },
     "drc_process_allocator": {
-      "status": "candidate-original-gates-pass-await-fixed-application-costs",
-      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/qualification-assessment-v3.json",
-      "result": "Independent assessment verifies 34 distinct commands (27 reused unchanged, 7 continuation commands), both 1646-test DRC suites, allocator controls, strict Clippy/docs and allocator linkage. Baseline board fails at 132.223696162 worker CPU seconds / 120; candidate passes that original limit. Both variants pass the 60-second copper-neck body gate. No complete application cost set or report comparison yet.",
-      "next_step": "Execute the committed fixed application costs V2 with 4 preflights, 20 board samples and 10 batches of 50 help processes, then independently assess reports, timing, RSS, startup and binary size.",
+      "status": "retain-isolated-drc-allocator-with-startup-tradeoff-await-combined-admission-review",
+      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/decision-v1.json",
+      "result": "Both original candidate gates pass. All 24 complete reports preserve exact bytes, JSON values and earlier endpoint/metadata reports. Five fixed blocks: both boards have lower wall time, total CPU and peak RSS in every pair; median CPU ratios are 0.7925801012 and 0.8472712996. Help startup wall/CPU are higher in all five pairs (median wall ratio 1.2158747947, 2.4075 to 2.9272 ms). CLI size grows 158256 bytes; test binary grows 21608. Keep isolated pending combined admission review; all samples and preparation/reader failures are preserved.",
+      "next_step": {
+        "action": "Review combined native admission against the current main worktree before promoting this isolated allocator candidate or its inherited cache/curve changes.",
+        "inventory": "docs/evidence/2026-10-13-drc-process-allocator/admission-boundary-inventory-v1.json",
+        "inventory_sha256": "477902df1658fdeb2fc3cb3c2116e0a6531833ea43daf1ccfd4a12abd212300f",
+        "bounded_review": [
+          "Read the exact diffs and necessary caller context for the eight inherited kernel paths and three inherited regression files identified in the inventory. Compare relevant documentation separately; the source-hash inventory is not credited as source reading.",
+          "Map each inherited change to its preserved correctness, cache ownership/publication/budget and fixed cost evidence. Preserve all earlier adverse scalar/native rows and the original mandatory fallback/frontiers; allocator gains in DRC cannot erase library-consumer tradeoffs.",
+          "Review the six allocator-related paths and the added direct native build dependency, with the measured startup and executable-size costs explicit. Independently linked library consumers retain their own allocator; current runtime coverage is Linux x86-64 only.",
+          "Specify remaining combined admission checks and any distinct unresolved comparison before changing main. Do not extend or rerun this closed five-block sample to remove adverse rows. The 35 user-authorized pending native paths remain in scope and must be reconciled, including the two overlapping curve files."
+        ],
+        "new_runtime_prototype_prepared": false,
+        "additional_measurements_executed": false
+      },
       "source_review_complete": true,
       "prototype_prepared": true,
       "qualification_executed": true,
-      "conditional_costs_executed": false,
+      "conditional_costs_executed": true,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_admitted": false,
       "plan_complete": false,
@@ -4035,14 +4047,188 @@
         "cli": {
           "baseline_bytes": 42848680,
           "candidate_bytes": 43006936,
-          "delta_bytes": 158256
+          "candidate_minus_baseline_bytes": 158256
         },
         "test": {
           "baseline_bytes": 54162984,
           "candidate_bytes": 54184592,
-          "delta_bytes": 21608
+          "candidate_minus_baseline_bytes": 21608
         }
-      }
+      },
+      "application_assessment": "docs/evidence/2026-10-13-drc-process-allocator/application-assessment-v2.json",
+      "application_version": 2,
+      "complete_reports": [
+        {
+          "fixture": "cparti-fpga",
+          "complete_reports": 12,
+          "bytes": 147892,
+          "sha256": "43558fbdf1a416705acd6423bbc3574f94dc640cf3b35d204d0be6bc1858d960",
+          "findings": 12,
+          "all_current_reports_byte_and_value_identical": true,
+          "identical_to_prior_endpoint_and_metadata_reports": true
+        },
+        {
+          "fixture": "hvp109a",
+          "complete_reports": 12,
+          "bytes": 128807,
+          "sha256": "3217a0418584ad64cd9e9175864068a24eeeb75b6fc6c34b3fc9ce4563a71617",
+          "findings": 197,
+          "all_current_reports_byte_and_value_identical": true,
+          "identical_to_prior_endpoint_and_metadata_reports": true
+        }
+      ],
+      "closed_sample": {
+        "preflight_board_runs": 4,
+        "board_measurements": 20,
+        "startup_measurements": 10,
+        "startup_processes": 500,
+        "blocks": [
+          [
+            "baseline",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "baseline"
+          ],
+          [
+            "baseline",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "baseline"
+          ],
+          [
+            "baseline",
+            "candidate"
+          ]
+        ],
+        "sample_extension_or_filtering": false,
+        "ratios_are_descriptive_not_significance_claims": true
+      },
+      "comparisons": [
+        {
+          "fixture": "cparti-fpga",
+          "metric": "process_wall_seconds",
+          "unit": "seconds",
+          "baseline_median": 107.46154130343348,
+          "candidate_median": 85.16619224566966,
+          "ratio_of_medians": 0.7925271796092184,
+          "median_paired_ratio": 0.7914539600829196,
+          "paired_ratio_range": [
+            0.7882630109499291,
+            0.8014273746354966
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "cparti-fpga",
+          "metric": "cpu_seconds",
+          "unit": "seconds",
+          "baseline_median": 106.74,
+          "candidate_median": 84.60000000000001,
+          "ratio_of_medians": 0.7925801011804385,
+          "median_paired_ratio": 0.7924422933730454,
+          "paired_ratio_range": [
+            0.7880546714098482,
+            0.8013640238704177
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "cparti-fpga",
+          "metric": "max_rss_kib",
+          "unit": "KiB",
+          "baseline_median": 1891904,
+          "candidate_median": 1773996,
+          "ratio_of_medians": 0.9376775988633673,
+          "median_paired_ratio": 0.9376517054440582,
+          "paired_ratio_range": [
+            0.9373286114488081,
+            0.9425378229776835
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "hvp109a",
+          "metric": "process_wall_seconds",
+          "unit": "seconds",
+          "baseline_median": 25.65168601507321,
+          "candidate_median": 21.72834895318374,
+          "ratio_of_medians": 0.8470534428191553,
+          "median_paired_ratio": 0.8469525651212263,
+          "paired_ratio_range": [
+            0.8374473048075325,
+            0.8643081340358212
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "hvp109a",
+          "metric": "cpu_seconds",
+          "unit": "seconds",
+          "baseline_median": 25.470000000000002,
+          "candidate_median": 21.580000000000002,
+          "ratio_of_medians": 0.8472712995681193,
+          "median_paired_ratio": 0.8486040110106174,
+          "paired_ratio_range": [
+            0.837490257209665,
+            0.8637083993660856
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "hvp109a",
+          "metric": "max_rss_kib",
+          "unit": "KiB",
+          "baseline_median": 532516,
+          "candidate_median": 524528,
+          "ratio_of_medians": 0.9849995117517596,
+          "median_paired_ratio": 0.9850940165805598,
+          "paired_ratio_range": [
+            0.9829638921647424,
+            0.9871364275034
+          ],
+          "candidate_higher_blocks": 0,
+          "candidate_lower_blocks": 5
+        },
+        {
+          "fixture": "startup-help",
+          "metric": "wall_seconds",
+          "unit": "seconds per process",
+          "baseline_median": 0.002407499337568879,
+          "candidate_median": 0.0029272177629172803,
+          "ratio_of_medians": 1.215874794745829,
+          "median_paired_ratio": 1.2181111070446655,
+          "paired_ratio_range": [
+            1.138442730665155,
+            1.2662752419169894
+          ],
+          "candidate_higher_blocks": 5,
+          "candidate_lower_blocks": 0
+        },
+        {
+          "fixture": "startup-help",
+          "metric": "cpu_seconds",
+          "unit": "seconds per process",
+          "baseline_median": 0.00227829999999976,
+          "candidate_median": 0.0027784800000008403,
+          "ratio_of_medians": 1.2195408857486427,
+          "median_paired_ratio": 1.2280045550095746,
+          "paired_ratio_range": [
+            1.1463196242812865,
+            1.2745590801041573
+          ],
+          "candidate_higher_blocks": 5,
+          "candidate_lower_blocks": 0
+        }
+      ]
     }
   },
   "status_meanings": {
