@@ -1,0 +1,56 @@
+{
+  "decision": "isolated-zero-radical-guards-pass-scalar-correctness-await-fixed-costs",
+  "assessor_sha256": "f6240148e3bca50d8f928bababff869a4da402c303f18c4494a572316fd30bde",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "zero-radical-regressions",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "zero-radical-regressions",
+      "passed": 7,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "scalar-library",
+      "passed": 870,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "implementation": "Skip only the two borrowed radical linear loops when the opposite rational scale is stored zero. The baseline has the original runtime body and identical seven-test module.",
+  "preserved_source": "Removing the two guard statements and test declaration recovers the original multiplier exactly. Unsupported products, nonzero operations, radical cross-products, opaque ownership and operations, insertion order, recognition budgets, retained normal forms and mandatory original fallback are unchanged.",
+  "regression_scope": "Forty rational-scaling component cases in both directions; nine independently expanded mixed-radical products with cancellation and insertion order; eight/nine-term pure cross-product frontier and earlier linear declines; unsupported opaque cross-products; zero/nonzero opaque-owner release; child warming and cloned pure-radical product facts; scaled opaque cancellation. The same seven functions pass on the original baseline. Six existing cache-frontier functions remain included in the full scalar total.",
+  "checks": "Full release all-feature scalar library and doctests, strict all-target/all-feature scalar Clippy, workspace formatting and warning-denied scalar docs pass.",
+  "limits": "Focused test counts overlap the 870 library results. These checks do not establish a performance or memory improvement, default/all-workflow consumer qualification, universal cache semantics, complete report identity or either original native limit.",
+  "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes with five fixed baseline/candidate blocks and dedicated targets. Preserve every adverse row; advance only if scalar costs support native qualification.",
+  "evidence_sha256": {
+    "preparation-v1/protocol.json": "4d6df8de3bf13743ebcdb0817631a28b80eea92690671807280c474684496cff",
+    "validation-v1/protocol.json": "3a4f67a6081136bbada3434a92eadc6ea566f72d2850299166afa5937d3a2aae",
+    "validation-v1/result.json": "6a7c168cb3672ab950bf327110583d804a55c8d9be4beadc016e264a6a715c18",
+    "validation-v1/commands.json": "2e0111182b2fcc6e3985f772a5c557cc60fb34030337314f0210161c81befc94"
+  },
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

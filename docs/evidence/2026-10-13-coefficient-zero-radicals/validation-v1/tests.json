@@ -1,0 +1,37 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "zero-radical-regressions",
+    "passed": 7,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "zero-radical-regressions",
+    "passed": 7,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "scalar-library",
+    "passed": 870,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  }
+]

@@ -30,20 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": {
-        "name": "coefficient-zero-radicals",
-        "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
-        "change": "Guard only the existing two borrowed radical linear loops with the opposite rational constant being nonzero. Keep the rational product, unsupported-product guard, radical cross-products, both opaque loops, term insertion order, normal-form budgets and original retry unchanged.",
-        "source_reasoning": "Rational multiplication by stored zero returns the shared zero before canonicalization, product-cache lookup or publication. insert_radical immediately accepts and discards that zero before inspecting the radicand or term limit. The skipped radicand clone only increments its Arc count; the original vector remains owned through the unchanged cross-product loop. Thus the guard removes zero temporaries and radicand clone/drop pairs without changing nonzero arithmetic, input owners or certificate publication.",
-        "qualification": [
-          "Fresh baseline and candidate from the frozen endpoint source, both with identical new tests and separate qualification/cost targets. No diagnostic counters, rejected scaling, merge or prepass code.",
-          "Exact zero/positive/negative rational scaling in both directions for radical, opaque and mixed coefficients; independent mixed-radical component products and cancellation; eight/nine-term success/decline; unsupported opaque products; zero and nonzero owner release; cold/warm/cloned facts.",
-          "The existing six retained-cache regressions include the mandatory original retry. Full scalar release all-feature library tests, 28 doctests, strict all-target/all-feature Clippy, formatting and warning-denied docs.",
-          "Three unchanged scalar probe suites with fixed five paired blocks, time and allocation modes, construction/first/warm/cloned/opaque and mixed-field controls; no extension to remove adverse rows.",
-          "Only a candidate supported by scalar costs advances to full native tests, five fixed native endpoint/broad blocks and effective final-abort controls, original 120-second board worker CPU and separate 60-second neck check-body wall assertions. Complete unnormalized reports and production binary size remain required for retention."
-        ],
-        "cost_risks": "Two extra stored-sign branches affect nonzero and empty-vector cases. Zero multiplication is already cheap; no allocation or runtime improvement follows from coverage alone. The existing endpoint parent remains unadmitted and its earlier timing/memory tradeoffs remain open."
-      }
+      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes with five fixed baseline/candidate blocks and dedicated targets. Preserve every adverse row; advance only if scalar costs support native qualification."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -515,6 +502,13 @@
         ],
         "cost_risks": "Two extra stored-sign branches affect nonzero and empty-vector cases. Zero multiplication is already cheap; no allocation or runtime improvement follows from coverage alone. The existing endpoint parent remains unadmitted and its earlier timing/memory tradeoffs remain open."
       },
+      "runtime_admitted": false
+    },
+    "isolated_zero_radical_guards": {
+      "status": "isolated-zero-radical-guards-pass-scalar-correctness-await-fixed-costs",
+      "evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/correctness-v1.json",
+      "result": "The two stored-zero guards pass seven shared baseline/candidate regressions, 870 candidate all-feature release scalar library results and 28 doctests, strict scalar Clippy, formatting and warning-denied docs. Focused counts overlap the full library suite.",
+      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes with five fixed baseline/candidate blocks and dedicated targets. Preserve every adverse row; advance only if scalar costs support native qualification.",
       "runtime_admitted": false
     }
   },

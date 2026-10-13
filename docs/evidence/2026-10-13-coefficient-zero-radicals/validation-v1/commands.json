@@ -1,0 +1,252 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.368599492125213,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-zero-radical-regressions",
+    "variant": "baseline",
+    "phase": "zero-radical-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "coefficient_zero_radical_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.6020097467117,
+    "stdout_sha256": "0f940489e0717cf129a176cc20311f0584262b9184c7577ab5d218be56c3e895",
+    "stderr_sha256": "5b68db5735e8b662f1fd66a06ffb08099dabddc138f03457e3bd998042a12b77"
+  },
+  {
+    "name": "candidate-format",
+    "variant": "candidate",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.412489463109523,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-zero-radical-regressions",
+    "variant": "candidate",
+    "phase": "zero-radical-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "coefficient_zero_radical_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.53128463914618,
+    "stdout_sha256": "0f940489e0717cf129a176cc20311f0584262b9184c7577ab5d218be56c3e895",
+    "stderr_sha256": "e54edfd1e7bb5bc44fee416a889daacc68d23a1e34d1a18b556df87cd8d34446"
+  },
+  {
+    "name": "candidate-cache-frontiers",
+    "variant": "candidate",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16048989398404956,
+    "stdout_sha256": "acb2f56149161bc846e89efaf701194fecd2105cc41552b61b0b5c41f5014f35",
+    "stderr_sha256": "e5c7f275585944d363a35c423d84a79ea36cbe8d0ed097275213110fc3bc9511"
+  },
+  {
+    "name": "candidate-strict-clippy",
+    "variant": "candidate",
+    "phase": "strict-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.865937363822013,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "bc5b95eb8fe2f323fd1a638fa57c99ca859fc02c1ec0a591a3ac146a0efe88b7"
+  },
+  {
+    "name": "candidate-scalar-library",
+    "variant": "candidate",
+    "phase": "scalar-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.487288092728704,
+    "stdout_sha256": "2e8de75be69a0e0e95f931c76997d274e9ea4c60a7fc9831d57f50c473857af0",
+    "stderr_sha256": "2429abb0cf99aa97c0c514caa7f202f401a0b69c5af90ba9accd512f226b4f22"
+  },
+  {
+    "name": "candidate-scalar-doctests",
+    "variant": "candidate",
+    "phase": "scalar-doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.415540790650994,
+    "stdout_sha256": "4600777c016782d50208307284f84ea757271b779db8ea5cc7a82f28d4942115",
+    "stderr_sha256": "9609e7b68624ea5d36159c3ab6153c94cf67baa93d4cee68de74f081d8c6e812"
+  },
+  {
+    "name": "candidate-scalar-docs",
+    "variant": "candidate",
+    "phase": "scalar-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 6.270210713148117,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "16d6f1b73ac71dfada6de0f0045daba3c90c5ec203715bf36b188832d5fff9b4"
+  }
+]

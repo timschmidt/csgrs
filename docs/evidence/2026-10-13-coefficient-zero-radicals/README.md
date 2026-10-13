@@ -23,5 +23,11 @@ remove adverse rows. Unsupported scalar costs settle rejection; a supported
 candidate still needs full native tests, fixed native controls, both original
 limits, complete reports and binary-size evidence before retention.
 
+[Scalar qualification](correctness-v1.json) passes: all seven regressions on
+baseline and candidate, 870 candidate library results, 28 doctests, strict
+scalar Clippy, formatting and warning-denied docs. Focused regressions overlap
+the full library total. The fixed cost runner and assessor are prepared; costs
+have not yet run.
+
 Preparation and results are committed separately. No runtime change is admitted;
 the endpoint parent's earlier tradeoffs and the full properties plan stay open.

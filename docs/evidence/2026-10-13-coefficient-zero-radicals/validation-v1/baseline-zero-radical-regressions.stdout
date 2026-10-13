@@ -1,0 +1,12 @@
+
+running 7 tests
+test computable::node::coefficient_zero_radical_tests::mixed_radical_products_preserve_exact_components_and_insertion_order ... ok
+test computable::node::coefficient_zero_radical_tests::pure_radical_cross_products_keep_the_eight_nine_term_frontier ... ok
+test computable::node::coefficient_zero_radical_tests::pure_radical_product_facts_survive_child_warming_and_cloning ... ok
+test computable::node::coefficient_zero_radical_tests::rational_scaling_preserves_exact_components_in_both_directions ... ok
+test computable::node::coefficient_zero_radical_tests::scaled_opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts ... ok
+test computable::node::coefficient_zero_radical_tests::unsupported_symbolic_cross_products_keep_their_declines ... ok
+test computable::node::coefficient_zero_radical_tests::zero_and_nonzero_scaling_release_opaque_owners_in_both_directions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 863 filtered out; finished in 0.00s
+

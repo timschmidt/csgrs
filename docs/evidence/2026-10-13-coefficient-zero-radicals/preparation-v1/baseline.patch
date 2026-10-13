@@ -1,0 +1,311 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -1,3 +1,6 @@
++#[cfg(test)]
++mod coefficient_zero_radical_tests;
++
+ #[derive(Clone)]
+ struct PiAtanLinearForm {
+     constant: Rational,
+--- a/crates/hyperreal/src/computable/node/coefficient_zero_radical_tests.rs
++++ b/crates/hyperreal/src/computable/node/coefficient_zero_radical_tests.rs
+@@ -0,0 +1,299 @@
++use super::*;
++
++#[test]
++fn mixed_radical_products_preserve_exact_components_and_insertion_order() {
++    // (a + 2 sqrt(2) + 3 sqrt(3)) (b - 5 sqrt(2) + 7 sqrt(5)).
++    // Independent integer coefficients give the complete expected expansion.
++    for a in [0, 2, -3] {
++        for b in [0, 5, -5] {
++            let left = RadicalCoefficient {
++                rational: Rational::new(a),
++                radicals: vec![
++                    (Rational::new(2), Rational::new(2)),
++                    (Rational::new(3), Rational::new(3)),
++                ],
++                atoms: Vec::new(),
++            };
++            let right = RadicalCoefficient {
++                rational: Rational::new(b),
++                radicals: vec![
++                    (Rational::new(2), Rational::new(-5)),
++                    (Rational::new(5), Rational::new(7)),
++                ],
++                atoms: Vec::new(),
++            };
++            let product = left.multiply(&right).unwrap();
++            assert_eq!(product.rational, Rational::new(a * b - 20));
++            let expected = [
++                (2, 2 * b - 5 * a),
++                (3, 3 * b),
++                (5, 7 * a),
++                (10, 14),
++                (6, -15),
++                (15, 21),
++            ]
++            .into_iter()
++            .filter(|(_, coefficient)| *coefficient != 0)
++            .map(|(radicand, coefficient)| (Rational::new(radicand), Rational::new(coefficient)))
++            .collect::<Vec<_>>();
++            assert_eq!(product.radicals, expected, "a={a}, b={b}");
++            assert!(product.atoms.is_empty());
++        }
++    }
++}
++
++#[test]
++fn pure_radical_cross_products_keep_the_eight_nine_term_frontier() {
++    let radicals = |values: &[i64]| RadicalCoefficient {
++        rational: Rational::zero(),
++        radicals: values
++            .iter()
++            .map(|value| (Rational::new(*value), Rational::one()))
++            .collect(),
++        atoms: Vec::new(),
++    };
++    let eight = radicals(&[2, 3])
++        .multiply(&radicals(&[5, 7, 11, 13]))
++        .unwrap();
++    assert!(eight.rational.is_zero());
++    assert!(eight.atoms.is_empty());
++    assert_eq!(
++        eight.radicals,
++        [10, 14, 22, 26, 15, 21, 33, 39]
++            .into_iter()
++            .map(|radicand| (Rational::new(radicand), Rational::one()))
++            .collect::<Vec<_>>()
++    );
++    assert!(
++        radicals(&[2, 3, 5])
++            .multiply(&radicals(&[7, 11, 13]))
++            .is_none()
++    );
++    // Nonzero linear contributions can still fill the limit before cross-products.
++    let mut right = radicals(&[23, 29, 31]);
++    right.rational = Rational::one();
++    for constant in [0, 1] {
++        let mut left = radicals(&[2, 3, 5, 7, 11, 13, 17, 19]);
++        left.rational = Rational::new(constant);
++        assert!(left.multiply(&right).is_none());
++    }
++}
++
++#[test]
++fn pure_radical_product_facts_survive_child_warming_and_cloning() {
++    for a in [-2, 1, 3] {
++        for b in [-1, 2] {
++            let first =
++                Computable::sqrt_rational(Rational::new(2)).multiply_rational(Rational::new(a));
++            let second =
++                Computable::sqrt_rational(Rational::new(3)).multiply_rational(Rational::new(b));
++            let left = raw(Approximation::Add(first.clone(), second.clone()));
++            let right = raw(Approximation::Add(
++                first,
++                raw(Approximation::Negate(second)),
++            ));
++            let make = || raw(Approximation::Multiply(left.clone(), right.clone()));
++            let cold = make();
++            let expected = Some(Rational::new(2 * a * a - 3 * b * b));
++            assert_eq!(cold.bounded_laurent_rational(64), expected);
++            assert!(cold.cached().is_none());
++            let _ = left.exact_quadratic_surd_parts();
++            let _ = right.exact_quadratic_surd_parts();
++            assert!(left.internal.cache.pi_laurent_polynomial().is_some());
++            assert!(right.internal.cache.pi_laurent_polynomial().is_some());
++            let warm = make();
++            let clone = warm.clone();
++            for query in [&warm, &clone, &warm] {
++                assert_eq!(query.bounded_laurent_rational(64), expected);
++                assert!(query.cached().is_none());
++            }
++        }
++    }
++}
++
++const RADICALS: [(i64, i64); 8] = [
++    (2, -3),
++    (3, 5),
++    (5, 7),
++    (7, -11),
++    (11, 13),
++    (13, -17),
++    (17, 19),
++    (19, -23),
++];
++const ATOMS: [i64; 4] = [-5, 11, 17, -19];
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn atom(index: usize) -> Computable {
++    raw(Approximation::AtanRational(
++        Rational::fraction(index as i64 + 1, 37).unwrap(),
++    ))
++}
++
++fn coefficient(shape: usize) -> RadicalCoefficient {
++    RadicalCoefficient {
++        rational: Rational::new(21),
++        radicals: if shape & 1 != 0 {
++            RADICALS
++                .into_iter()
++                .map(|(d, b)| (Rational::new(d), Rational::new(b)))
++                .collect()
++        } else {
++            Vec::new()
++        },
++        atoms: if shape & 2 != 0 {
++            ATOMS
++                .into_iter()
++                .enumerate()
++                .map(|(index, b)| (atom(index), Rational::new(b)))
++                .collect()
++        } else {
++            Vec::new()
++        },
++    }
++}
++
++#[test]
++fn rational_scaling_preserves_exact_components_in_both_directions() {
++    for shape in 0..4 {
++        for (numerator, denominator) in [(0, 1), (1, 1), (-1, 1), (3, 7), (-17, 13)] {
++            for reverse in [false, true] {
++                let value = coefficient(shape);
++                let scale = RadicalCoefficient::rational(
++                    Rational::fraction(numerator, denominator).unwrap(),
++                );
++                let result = if reverse {
++                    scale.multiply(&value)
++                } else {
++                    value.multiply(&scale)
++                }
++                .unwrap();
++                assert_eq!(
++                    result.rational,
++                    Rational::fraction(21 * numerator, denominator).unwrap()
++                );
++                let expected_radicals = if numerator != 0 && shape & 1 != 0 {
++                    RADICALS
++                        .into_iter()
++                        .map(|(d, b)| {
++                            (
++                                Rational::new(d),
++                                Rational::fraction(b * numerator, denominator).unwrap(),
++                            )
++                        })
++                        .collect()
++                } else {
++                    Vec::new()
++                };
++                assert_eq!(result.radicals, expected_radicals);
++                if numerator == 0 || shape & 2 == 0 {
++                    assert!(result.atoms.is_empty());
++                } else {
++                    assert_eq!(result.atoms.len(), ATOMS.len());
++                    for (index, (actual_atom, actual_coefficient)) in
++                        result.atoms.iter().enumerate()
++                    {
++                        assert!(Computable::internal_structural_eq(
++                            actual_atom,
++                            &atom(index)
++                        ));
++                        assert_eq!(
++                            *actual_coefficient,
++                            Rational::fraction(ATOMS[index] * numerator, denominator).unwrap()
++                        );
++                    }
++                }
++            }
++        }
++    }
++}
++
++#[test]
++fn unsupported_symbolic_cross_products_keep_their_declines() {
++    for left in 1..4 {
++        for right in 1..4 {
++            if left == 1 && right == 1 {
++                continue;
++            }
++            assert!(coefficient(left).multiply(&coefficient(right)).is_none());
++        }
++    }
++}
++
++#[test]
++fn zero_and_nonzero_scaling_release_opaque_owners_in_both_directions() {
++    for numerator in [0, -3] {
++        for reverse in [false, true] {
++            let value = coefficient(3);
++            let weak = value
++                .atoms
++                .iter()
++                .map(|(atom, _)| Arc::downgrade(&atom.internal))
++                .collect::<Vec<_>>();
++            let scale = RadicalCoefficient::rational(Rational::fraction(numerator, 7).unwrap());
++            let result = if reverse {
++                let result = scale.multiply(&value).unwrap();
++                drop(value);
++                result
++            } else {
++                value.multiply(&scale).unwrap()
++            };
++            let expected_owners = usize::from(numerator != 0);
++            assert!(
++                weak.iter()
++                    .all(|owner| owner.strong_count() == expected_owners)
++            );
++            if numerator == 0 {
++                assert!(result.is_zero());
++            }
++            drop(result);
++            assert!(weak.iter().all(|owner| owner.upgrade().is_none()));
++        }
++    }
++}
++
++#[test]
++fn scaled_opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts() {
++    for reverse in [false, true] {
++        let scale = Rational::fraction(-3, 7).unwrap();
++        let multiply = |value: Computable| {
++            let scalar = Computable::rational(scale.clone());
++            if reverse {
++                raw(Approximation::Multiply(scalar, value))
++            } else {
++                raw(Approximation::Multiply(value, scalar))
++            }
++        };
++        let opaque = atom(0);
++        let radical = Computable::sqrt_rational(Rational::new(13));
++        let sum = raw(Approximation::Add(
++            raw(Approximation::Add(Computable::pi(), radical)),
++            opaque.clone(),
++        ));
++        let value = raw(Approximation::Add(
++            raw(Approximation::Add(
++                multiply(sum.clone()),
++                raw(Approximation::Negate(multiply(Computable::pi()))),
++            )),
++            raw(Approximation::Negate(multiply(opaque))),
++        ));
++        let expected = Some((Rational::zero(), scale.clone(), Some(Rational::new(13))));
++        assert_eq!(value.exact_quadratic_surd_parts(), expected);
++        assert!(sum.exact_quadratic_surd_parts().is_none());
++        let cloned = value.clone();
++        for query in [&value, &cloned, &value] {
++            assert_eq!(query.exact_quadratic_surd_parts(), expected);
++            assert!(query.cached().is_none());
++        }
++    }
++}
