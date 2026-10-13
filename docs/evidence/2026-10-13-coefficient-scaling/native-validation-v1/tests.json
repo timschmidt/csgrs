@@ -1,0 +1,34 @@
+[
+  {
+    "variant": "right",
+    "phase": "curve-tests",
+    "passed": 2494,
+    "failed": 0,
+    "ignored": 33,
+    "result_groups": 51
+  },
+  {
+    "variant": "right",
+    "phase": "drc-tests-except-separate-gates",
+    "passed": 1644,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 10
+  },
+  {
+    "variant": "both",
+    "phase": "curve-tests",
+    "passed": 2494,
+    "failed": 0,
+    "ignored": 33,
+    "result_groups": 51
+  },
+  {
+    "variant": "both",
+    "phase": "drc-tests-except-separate-gates",
+    "passed": 1644,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 10
+  }
+]

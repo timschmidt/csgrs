@@ -1,0 +1,18 @@
+{
+  "right": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "5b0c867db54bba8cad7af390d0632e7786b71d9616e40053bbfde7f1e1feb9e8",
+    "bytes": 54167448,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source/crates/hyperdrc#0.3.0"
+  },
+  "both": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "6021cd6c06dd23dfc35fcba64ce5ba914474eb23b1ee93425a9019037273b7e2",
+    "bytes": 54167944,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source/crates/hyperdrc#0.3.0"
+  }
+}

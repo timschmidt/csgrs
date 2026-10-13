@@ -1,0 +1,408 @@
+[
+  {
+    "name": "right-strict-consumer-clippy",
+    "variant": "right",
+    "phase": "strict-consumer-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 40.94994014920667,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "984f5624dc4ece34536f574c817c2b3ce104939cf3cc038a64dc1d97b70569fb"
+  },
+  {
+    "name": "right-curve-tests",
+    "variant": "right",
+    "phase": "curve-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 1079.247998610139,
+    "stdout_sha256": "6d189706b116817dbf5d3bb4053394f1c3de2945bcb0124de6173a4732662510",
+    "stderr_sha256": "995d15beb216c519a2236f805460e987b9750071f8cac091a8f9d7a895decfad"
+  },
+  {
+    "name": "right-drc-tests-except-separate-gates",
+    "variant": "right",
+    "phase": "drc-tests-except-separate-gates",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 329.70269034570083,
+    "stdout_sha256": "e6b1f6f59ca2d6f8596754904bb4a4ce1fb11cd6fbfed2a86c6aa52fb5abb7d8",
+    "stderr_sha256": "dc532523ab5d36303087935a0e50139ec97621a94ce475f9b815c285497c8627"
+  },
+  {
+    "name": "right-consumer-docs",
+    "variant": "right",
+    "phase": "consumer-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 37.27545401081443,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f6c281a40f411ff8e842bf338dc01418fd47439ce2f50565145560d0a9541fa2"
+  },
+  {
+    "name": "right-build-board-tests",
+    "variant": "right",
+    "phase": "build-board-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.23734912415966392,
+    "stdout_sha256": "1623ffbf38050ffbd6b12b14ce27dcf0f205aa0a9b10d9427532c9850fbd7488",
+    "stderr_sha256": "6b1c8cbe0bd9cb3b12baa322a9182419af04da4050d3affc7c9798b1b46e30b5"
+  },
+  {
+    "name": "right-full-board",
+    "variant": "right",
+    "phase": "full-board",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 101,
+    "seconds": 136.09671183628961,
+    "stdout_sha256": "dd732fb0c06e00fcb161b507e462980fc3390badeaadbd0ddcef9c2c73685aa3",
+    "stderr_sha256": "d94d06a5003d0e965b2d0821fe0c9bef6ae2f74ad48aa3ddcc57c87b281f3a21"
+  },
+  {
+    "name": "right-copper-neck",
+    "variant": "right",
+    "phase": "copper-neck",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 127.49625317566097,
+    "stdout_sha256": "1c154a5286f35ba1e4dad0775210649affe795972f693b9eeaba23f3d874be99",
+    "stderr_sha256": "c68dda470d1040b29911c6e224835bde07ca150b882e7ef0a3b7204767f3be90"
+  },
+  {
+    "name": "both-strict-consumer-clippy",
+    "variant": "both",
+    "phase": "strict-consumer-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 45.81038644723594,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c319195a23bda5e351c97d5fe7ab26982de937efbfa1f19f6aa344f2b96d023b"
+  },
+  {
+    "name": "both-curve-tests",
+    "variant": "both",
+    "phase": "curve-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 1074.7309709158726,
+    "stdout_sha256": "3468a2f55782ffa6dcb51fbfb2fcf027037e940e9cc780f5c88f55303c0023c4",
+    "stderr_sha256": "aee99b60fde8c605addfb7f3c7856b408fdb2e95f6831e912927d3aa5636e0b9"
+  },
+  {
+    "name": "both-drc-tests-except-separate-gates",
+    "variant": "both",
+    "phase": "drc-tests-except-separate-gates",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 322.29122609319165,
+    "stdout_sha256": "77172977145b96aa4896410096b75c6e5e1b59e2ed665b6a446e83b5022ee983",
+    "stderr_sha256": "aee5e0ab7a26f9aaa108068f6c2b7c85de363540205c5d2e87a0feed5bb222d7"
+  },
+  {
+    "name": "both-consumer-docs",
+    "variant": "both",
+    "phase": "consumer-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 36.614983349107206,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6270315ec9c24b2efd7d114eddc9d00ba9a01abcfe20c56d5bb379c7abcc1f94"
+  },
+  {
+    "name": "both-build-board-tests",
+    "variant": "both",
+    "phase": "build-board-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.17207977594807744,
+    "stdout_sha256": "aaf2ed5fc01e0523c0018d0dc57f43acd40e67a03b6db65475d5933a28046ad2",
+    "stderr_sha256": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384"
+  },
+  {
+    "name": "both-full-board",
+    "variant": "both",
+    "phase": "full-board",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 101,
+    "seconds": 138.90158676775172,
+    "stdout_sha256": "d19b267911170d21dcbfd950bdade59550bc215f6d492f1ad14c46b1e8ead92a",
+    "stderr_sha256": "081ba7a9c95dc08c3c26d4a6ece56a1e4de87cb8ad62e2c23dc7aaa5ab5d19e6"
+  },
+  {
+    "name": "both-copper-neck",
+    "variant": "both",
+    "phase": "copper-neck",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 122.77485628472641,
+    "stdout_sha256": "65c42060667a04d0b6104922786f5d130490956ab3228234018301b0f4f603d7",
+    "stderr_sha256": "283d4af87aa2a988c61fe996fee41d89213916e14d05b084220643590f941e8e"
+  }
+]

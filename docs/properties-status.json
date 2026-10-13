@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes, with five preregistered three-variant blocks and dedicated cost targets. Keep every adverse row. Advance only supported variants to native and complete-report qualification."
+      "next_step": "Complete the preregistered fixed native controls and complete unnormalized report comparison. Preserve all scalar and inherited endpoint tradeoffs and every failed original native assertion; neither variant is admitted."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -352,13 +352,93 @@
       "runtime_admitted": false
     },
     "isolated_coefficient_scaling": {
-      "status": "advance-both-isolated-variants-to-native-qualification-no-runtime-admission",
-      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/scalar-decision-v1.json",
+      "status": "native-qualification-recorded-await-fixed-controls-and-complete-reports",
+      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/native-assessment-v1.json",
       "result": "Right-scalar and bidirectional variants each pass 867 scalar library results, 28 doctests, four included new regressions and six included cache-frontier regressions. The four new tests also pass on the unchanged runtime baseline. Clippy, formatting and warning-denied docs pass.",
-      "next_step": "Qualify right and both separately with strict consumer Clippy, full all-feature curve and DRC tests/docs, and the unchanged complete-board 120-second worker-CPU and copper-neck 60-second check-wall-time assertions. Keep gate failures. Then run fixed native endpoint/broad controls and replay complete unnormalized reports against the same baseline; bind every binary to its source, target, features and hash. No extension of the completed scalar samples.",
+      "next_step": "Complete the preregistered fixed native controls and complete unnormalized report comparison. Preserve all scalar and inherited endpoint tradeoffs and every failed original native assertion; neither variant is admitted.",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-13-coefficient-scaling/cost-assessment-v1.json",
-      "cost_summary": "All 90 fixed processes preserve witnesses and inventories. No allocation field increases in any sample; retained requested bytes match. Right saves allocations/bytes in six rows; both reduces bytes in eighteen. Each has one all-five slower timing row and further adverse four-block rows, retained in full."
+      "cost_summary": "All 90 fixed processes preserve witnesses and inventories. No allocation field increases in any sample; retained requested bytes match. Right saves allocations/bytes in six rows; both reduces bytes in eighteen. Each has one all-five slower timing row and further adverse four-block rows, retained in full.",
+      "native_tests": [
+        {
+          "variant": "right",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "right",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        },
+        {
+          "variant": "both",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "both",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        }
+      ],
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "right",
+          "passed": false,
+          "observed_assertion_seconds": 134.799982328,
+          "process_wall_seconds": 136.09671183628961,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "right",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 127.49625317566097,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "both",
+          "passed": false,
+          "observed_assertion_seconds": 137.672192623,
+          "process_wall_seconds": 138.90158676775172,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "both",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 122.77485628472641,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        }
+      ]
     }
   },
   "status_meanings": {

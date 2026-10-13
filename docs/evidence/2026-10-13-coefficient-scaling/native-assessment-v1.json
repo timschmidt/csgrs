@@ -1,0 +1,133 @@
+{
+  "decision": "native-qualification-recorded-await-fixed-controls-and-complete-reports",
+  "assessor_sha256": "1786391416258b940bf856d16d673d522123efb035a1ad98db596a5be99d2fce",
+  "test_counts": [
+    {
+      "variant": "right",
+      "phase": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "result_groups": 51
+    },
+    {
+      "variant": "right",
+      "phase": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    },
+    {
+      "variant": "both",
+      "phase": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "result_groups": 51
+    },
+    {
+      "variant": "both",
+      "phase": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    }
+  ],
+  "strict_consumer_clippy_passed_for_both": true,
+  "warning_denied_scalar_curve_drc_docs_passed_for_both": true,
+  "formatting": "Previously passed on the same unchanged source in validation-v1.",
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "variant": "right",
+      "passed": false,
+      "observed_assertion_seconds": 134.799982328,
+      "process_wall_seconds": 136.09671183628961,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "variant": "right",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 127.49625317566097,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "variant": "both",
+      "passed": false,
+      "observed_assertion_seconds": 137.672192623,
+      "process_wall_seconds": 138.90158676775172,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "variant": "both",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 122.77485628472641,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    }
+  ],
+  "all_original_gates_passed": false,
+  "limits": [
+    "Full all-feature release curve and DRC suites ran, with the two named DRC limits executed separately. This does not qualify every workspace/default/feature/workflow combination.",
+    "The 33 ignored curve results remain ignored, not covered by this run.",
+    "The native assertions retain their original metrics and limits. Process wall times include setup and cannot replace assertion measurements.",
+    "The original complete boards produced 12 and 197 findings. This test output does not compare complete report bytes.",
+    "Standalone native gates do not establish a matched application speedup. Scalar and inherited endpoint timing tradeoffs remain open."
+  ],
+  "artifacts_sha256": {
+    "native-validation-v1/binaries.json": "4d62e967c7c96e75828f04a963508d43be205151c1b2f1912e9404245d9b1896",
+    "native-validation-v1/both-build-board-tests.stderr": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384",
+    "native-validation-v1/both-build-board-tests.stdout": "aaf2ed5fc01e0523c0018d0dc57f43acd40e67a03b6db65475d5933a28046ad2",
+    "native-validation-v1/both-consumer-docs.stderr": "6270315ec9c24b2efd7d114eddc9d00ba9a01abcfe20c56d5bb379c7abcc1f94",
+    "native-validation-v1/both-consumer-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/both-copper-neck.stderr": "283d4af87aa2a988c61fe996fee41d89213916e14d05b084220643590f941e8e",
+    "native-validation-v1/both-copper-neck.stdout": "65c42060667a04d0b6104922786f5d130490956ab3228234018301b0f4f603d7",
+    "native-validation-v1/both-curve-tests.stderr": "aee99b60fde8c605addfb7f3c7856b408fdb2e95f6831e912927d3aa5636e0b9",
+    "native-validation-v1/both-curve-tests.stdout": "3468a2f55782ffa6dcb51fbfb2fcf027037e940e9cc780f5c88f55303c0023c4",
+    "native-validation-v1/both-drc-tests-except-separate-gates.stderr": "aee5e0ab7a26f9aaa108068f6c2b7c85de363540205c5d2e87a0feed5bb222d7",
+    "native-validation-v1/both-drc-tests-except-separate-gates.stdout": "77172977145b96aa4896410096b75c6e5e1b59e2ed665b6a446e83b5022ee983",
+    "native-validation-v1/both-full-board.stderr": "081ba7a9c95dc08c3c26d4a6ece56a1e4de87cb8ad62e2c23dc7aaa5ab5d19e6",
+    "native-validation-v1/both-full-board.stdout": "d19b267911170d21dcbfd950bdade59550bc215f6d492f1ad14c46b1e8ead92a",
+    "native-validation-v1/both-strict-consumer-clippy.stderr": "c319195a23bda5e351c97d5fe7ab26982de937efbfa1f19f6aa344f2b96d023b",
+    "native-validation-v1/both-strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/commands.json": "2d34f98db13bf92fac2a2203d3d294a3aad387d596e4584b43032728f7702918",
+    "native-validation-v1/protocol.json": "c7fd642128fb441d29aec87c947b08f41b4b140e775c81eb0a8346a7496b2d95",
+    "native-validation-v1/result.json": "92bd030dddeee7c21cef042d5fbe1d4e7945d2ef14a7c5489cd28c7a33a99ad8",
+    "native-validation-v1/right-build-board-tests.stderr": "6b1c8cbe0bd9cb3b12baa322a9182419af04da4050d3affc7c9798b1b46e30b5",
+    "native-validation-v1/right-build-board-tests.stdout": "1623ffbf38050ffbd6b12b14ce27dcf0f205aa0a9b10d9427532c9850fbd7488",
+    "native-validation-v1/right-consumer-docs.stderr": "f6c281a40f411ff8e842bf338dc01418fd47439ce2f50565145560d0a9541fa2",
+    "native-validation-v1/right-consumer-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/right-copper-neck.stderr": "c68dda470d1040b29911c6e224835bde07ca150b882e7ef0a3b7204767f3be90",
+    "native-validation-v1/right-copper-neck.stdout": "1c154a5286f35ba1e4dad0775210649affe795972f693b9eeaba23f3d874be99",
+    "native-validation-v1/right-curve-tests.stderr": "995d15beb216c519a2236f805460e987b9750071f8cac091a8f9d7a895decfad",
+    "native-validation-v1/right-curve-tests.stdout": "6d189706b116817dbf5d3bb4053394f1c3de2945bcb0124de6173a4732662510",
+    "native-validation-v1/right-drc-tests-except-separate-gates.stderr": "dc532523ab5d36303087935a0e50139ec97621a94ce475f9b815c285497c8627",
+    "native-validation-v1/right-drc-tests-except-separate-gates.stdout": "e6b1f6f59ca2d6f8596754904bb4a4ce1fb11cd6fbfed2a86c6aa52fb5abb7d8",
+    "native-validation-v1/right-full-board.stderr": "d94d06a5003d0e965b2d0821fe0c9bef6ae2f74ad48aa3ddcc57c87b281f3a21",
+    "native-validation-v1/right-full-board.stdout": "dd732fb0c06e00fcb161b507e462980fc3390badeaadbd0ddcef9c2c73685aa3",
+    "native-validation-v1/right-strict-consumer-clippy.stderr": "984f5624dc4ece34536f574c817c2b3ce104939cf3cc038a64dc1d97b70569fb",
+    "native-validation-v1/right-strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/tests.json": "9eef27ad7db2ccea0a40de223127310f77664058ff11c7017cba3826f921e081"
+  },
+  "main_and_all_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
