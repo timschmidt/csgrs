@@ -1,3 +1,6 @@
+#[cfg(test)]
+mod quadratic_tower_sign_retention_tests;
+
 impl Real {
     /// Rebuild this value from its exact quadratic-tower reduction.
     ///
@@ -5,7 +8,8 @@ impl Real {
     /// arithmetic graph while their reduced field basis remains fixed. This
     /// returns an equal, shallow `Real`, including a rational payload when the
     /// radicals cancel. Principal-root branches and the outer rational scale
-    /// are preserved; no numerical approximation is used.
+    /// are preserved; no numerical approximation is used. An already retained
+    /// exact sign remains available to subsequent lower-precision queries.
     ///
     /// `None` means this reduction did not cover the expression. It
     /// does not limit the original exact value or its subsequent operations.
@@ -30,6 +34,14 @@ impl Real {
             // check, so reconstruction cannot start scalar refinement.
             radicand.quadratic_tower_sign()?;
             compact += quadratic(odd)? * radicand.sqrt().ok()?;
+        }
+        if matches!(compact.class, Irrational) {
+            // Before applying our outer scale, the reconstructed Real equals
+            // our computable payload. Its own rational scale can have either
+            // sign, so transfer the proof to its payload with that correction.
+            compact
+                .computable_ref()
+                .retain_sign_of_scaled_tower_source(self.computable_ref(), compact.rational.sign());
         }
         compact *= Self::new(self.rational.clone());
         if let Some(signal) = self.abort_signal() {

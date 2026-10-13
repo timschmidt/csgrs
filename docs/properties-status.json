@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Keep rejected coefficient changes out of runtime. The unchanged endpoint parent remains unadmitted; original native limits, timing/memory tradeoffs and all 35 pending entries remain open. The separate main-based P4 sign-retention repair passes scalar/direct-solver correctness and awaits fixed costs and retention review."
+      "next_step": "Keep rejected coefficient changes out of runtime. Fork the unchanged endpoint parent and layer the now-admitted P4 repair, using the verified next-native-inputs-v1.json record and fresh main guards. The combined fork has not run. Original native limits, earlier timing/memory tradeoffs and all 35 pending entries remain open."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -586,22 +586,26 @@
       "qualification": "Two separately built all-feature scalar libraries and 24 fresh observation processes. Version 1 compile failure is preserved; version 2 changes exactly one output-format escape brace.",
       "result": "Each source has 12 immediate-sign weakenings, eight persisting at requested precisions 0 and -512, 12 exact equality witnesses and no definite contradictions. Main and unchanged endpoint baseline observations agree. Original and original-clone signs remain available.",
       "source_review": "Real::compact_quadratic_tower rebuilds even + odd*sqrt(radicand), applies its original rational scale and copies abort state, but does not transfer an already available sign to the new expression. Computable::quadratic_tower_parts retains the reduction without publishing its sign. The separate Pi-Laurent compactor explicitly transfers a retained exact sign after equal reconstruction. This explains the observed loss; it is not a contradictory mathematical result.",
-      "next_step": "The isolated repair now passes scoped correctness. See quadratic_tower_sign_retention_repair for the fixed-cost and retention work remaining.",
+      "next_step": "The reproduced sign-loss defect has a scoped main repair; see quadratic_tower_sign_retention_repair and its explicit qualification, accepted costs and remaining scope.",
       "runtime_admitted": false
     },
     "quadratic_tower_sign_retention_repair": {
-      "status": "isolated-scoped-correctness-passed-await-fixed-costs",
+      "status": "retained-scoped-main-repair",
       "evidence": [
         "docs/evidence/2026-10-13-quadratic-tower-sign-retention/correctness-v1.json",
         "docs/evidence/2026-10-13-quadratic-tower-sign-retention/preparation-v4/protocol.json",
-        "docs/evidence/2026-10-13-quadratic-tower-sign-retention/qualification-v5/result.json"
+        "docs/evidence/2026-10-13-quadratic-tower-sign-retention/qualification-v5/result.json",
+        "docs/evidence/2026-10-13-quadratic-tower-sign-retention/cost-assessment-v3.json",
+        "docs/evidence/2026-10-13-quadratic-tower-sign-retention/retention-v1.json"
       ],
-      "source": "target/quadratic-tower-sign-retention/candidate-v4/source",
+      "source": "main worktree; exact tested candidate-v4 bytes",
       "implementation": "Transfers a retained root sign across equal quadratic-tower reconstruction, correcting for the rebuilt payload rational scale before applying the original outer scale. Unknown transfers no sign; no new cache field, owner, numeric refinement or recognition budget. Runtime bytes match candidate-v3.",
       "qualification": "The unchanged baseline retains six failing regressions and five passing controls. Candidate passes eleven focused tests, 983 all-feature scalar results, 878 default results, 28 doctests, 974 solver results, strict scalar/solver Clippy, formatting and scalar docs. Configuration totals overlap. Twelve fresh public probe cases retain all previously lost signs, prove zero difference and preserve original facts.",
       "preserved_failures": "Two preparation format checks, same-name Cargo executable selection and an incorrect denested-input normalization expectation remain archived. Both denested and genuinely nested normalization inputs now pass controls on unchanged baseline and candidate.",
-      "next_step": "Freeze and run five fixed paired blocks of timing, allocation and probe-size observations using separate baseline/candidate cost targets. The prepared fifteen-family compaction probe has not been compiled or executed. Report all stronger facts, adverse rows and limits; decide scoped admission after evidence review. Broader/native qualification remains to be assessed against the exact repair scope.",
-      "runtime_admitted": false
+      "next_step": "Layer the admitted repair onto a fresh fork of the unchanged endpoint parent before further native work. The verified input record is docs/evidence/2026-10-13-quadratic-tower-sign-retention/next-native-inputs-v1.json. The combined fork, tests, original native gates and cost/report review have not run.",
+      "runtime_admitted": true,
+      "costs": "Twenty fixed measurement processes and four preflights preserve all value witnesses and never weaken paired fact counts. Five timing rows are slower in all five pairs; the largest ratio of medians is 1.126724. One construction phase adds 20 allocation calls, 832 allocated bytes and 560 retained/peak bytes per 1000 inputs; the other 59 allocation rows match in every field/pair. Probe binaries add 552/560 bytes. All samples and adverse rows are retained; no application speedup or universal resource claim.",
+      "retention": "Accepted as a scoped P4 completeness repair with these explicit lower-priority resource costs. The three main files match the qualified source, main formatting passes, and all 35 native entries remain byte-identical."
     }
   },
   "status_meanings": {
