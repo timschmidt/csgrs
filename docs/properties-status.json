@@ -128,6 +128,13 @@
       "original_full_board": "168.485821121 worker CPU seconds / original 120; failed. Both boards completed with 12 and 197 findings. Complete report identity is not checked here.",
       "next_step": "Fork the integer-leaf parent into separate source/target directories; swap only the two existing conjunction operands. Cover absent/equal/different provenance, shared/independently equal geometry, error ordering, reused arrangement indices, retained cache facts and clones. Run complete curve validation, original native caps, complete report replay and measured cost/memory/size controls before any admission.",
       "runtime_admitted": false
+    },
+    "isolated_region_metadata_first": {
+      "status": "prototype-preflight-passed-complete-validation-running",
+      "evidence": "docs/evidence/2026-10-12-region-metadata-first/preflight-v1.json",
+      "source_delta": "The isolated integer-leaf parent changes only the two existing duplicate-validation conjunction operands at runtime. Three metadata/error-order/cache regressions and strict release all-feature/all-target curve/DRC Clippy pass.",
+      "remaining": "Complete curve validation, original native assertions, fixed paired operation costs, and full report bytes remain pending. Main runtime is unchanged.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
