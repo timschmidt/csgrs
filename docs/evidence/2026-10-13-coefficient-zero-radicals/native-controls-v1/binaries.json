@@ -1,0 +1,42 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+    "sha256": "94833b768fbfcd1169c60e8046cc602314b070df28c2093139096bc6e67e492a",
+    "bytes": 8593912
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+    "sha256": "8ad299a6c16bbed454b158e267b988d507e26881ff1643fb594adbe23939d4e1",
+    "bytes": 8596256
+  },
+  "baseline-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-abort",
+    "sha256": "8ba565331004818c8c2e3eb784eb5be28ce8799ad42a439f32d65bab5a6315c3",
+    "bytes": 8530872
+  },
+  "baseline-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad",
+    "sha256": "796578591ef560d5849cfe8b7031c4cfc14a5b19e252e4ab84186e6b8712d676",
+    "bytes": 26357728
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+    "sha256": "8e519ec3971fa2b9c59151a3deeda2bd2d9d30bcf8775a90c9c7a929a5ac5fc1",
+    "bytes": 8593944
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+    "sha256": "54c7e0ac7cad970be369dc4afdf9e404611391d927c60ec14da905b4cec5298f",
+    "bytes": 8596296
+  },
+  "candidate-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-abort",
+    "sha256": "48dedb1f3dcb3f366f5e6123599c0f4ff5da33978fc91cb34e91dd87807e6905",
+    "bytes": 8530912
+  },
+  "candidate-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad",
+    "sha256": "6b38197e0fd1f18e02bcc031de255eccf88249216f02aad61f1ebf5ecce6b1e9",
+    "bytes": 26357752
+  }
+}

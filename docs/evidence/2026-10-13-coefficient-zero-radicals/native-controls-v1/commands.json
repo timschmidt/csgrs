@@ -1,0 +1,942 @@
+[
+  {
+    "name": "build-libraries-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 124.3569000409916,
+    "stdout_sha256": "77f5d85a480127e626e5d811224242fd6d6910f0ee953a26678c8379dd1774e4",
+    "stderr_sha256": "aa38648bb3346ca4e79f61a63b280ca7f5ea59af83f22e9ce82a9245d0ac48fb"
+  },
+  {
+    "name": "build-libraries-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 124.78862275136635,
+    "stdout_sha256": "02ae62859bf1d819cfb66bf19d33098f2839a18af0addc4ee4450a48c0c2da6a",
+    "stderr_sha256": "92d9d8a15dea0cbc053b59078bec278a77745f3fc96b15fd4819698630dc7c60"
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7503400188870728,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.834777460899204,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7455804739147425,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.132614620961249,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8080557161010802,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.8466310016810894,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.796625847928226,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-zero-radicals/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.065573190804571,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.236417192965746,
+    "stdout_sha256": "ca8afec8282a99461eaadb7647802d017a81c8cf4c26a30b691bf1817f8ee85e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.256015304941684,
+    "stdout_sha256": "2f70001d3e83485aed4405f7b54785c79725a5d6e8ee35e81f15f7ab6a77459b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2626190627925098,
+    "stdout_sha256": "2f1d3c16703b1b5a81d93bfe9a218b0a1c5f0a12776b3ea9f990de2f40c29b4e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2567847319878638,
+    "stdout_sha256": "763be733f30a635fcda23859d1d8b092668cd9b30e83b2bbf6a3c45bf6fd99ea",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2351233921945095,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2346496940590441,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2363363690674305,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2382758068852127,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2377760908566415,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.2465797499753535,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.298429924994707,
+    "stdout_sha256": "a2baf2b309b777e431cd3ddcc45a3fb7dda4a5cb23289930b12998fb5b2d7fb8",
+    "stderr_sha256": "4e5908bac6a24e729c799f9930223d222d9008a865b3a072aee4b5a9440f3eb0"
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.262700506020337,
+    "stdout_sha256": "d22d378beeb44509a29bdc66a309039463518005d04d639984d947a18f685a68",
+    "stderr_sha256": "f967bbfd407660efb87b3749dbbde2fa5eadd8a0c999ef6e5d0a98de46fbf48a"
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.265289128758013,
+    "stdout_sha256": "c22ed99670aa8d4567b676b5f9a6adcec1f6c8ae8e5d7fabf8a72fc5d4685645",
+    "stderr_sha256": "70bd18808f222d702ed4b08646a692617582ff00c80401c7a234232df6f819d9"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.24684578878805,
+    "stdout_sha256": "6a5eee3f845b84c1810d3e28d71e92271718a2cfdeca3aeb26d94088d10aea7b",
+    "stderr_sha256": "068727da1a0b3dc87e0a9d82c48cb23ebe92968ab154b052017030cf80826658"
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.130851891823113,
+    "stdout_sha256": "f89599ace91295652d5d644820e196528d0c0d9350e599834504de3fb985f860",
+    "stderr_sha256": "139602fbdc1028beba9d3447669acb9cac90fbfdec7c9d25151dabc7f2f6f93c"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.1902121072635055,
+    "stdout_sha256": "93b79617a8c02219f022776feac4c8c181c3045a38f08b4142f9e8c199fd9014",
+    "stderr_sha256": "edb34a29ee0c8248f713d50854d06f988161073de630744881fd012a5221f1de"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.26118011912331,
+    "stdout_sha256": "75a0b0e627b4e39aac8be87ef536bd6db42f0e780a69019168ed15f541874058",
+    "stderr_sha256": "78e8cd3f16bf512b42fc9c602fc23bb43361f38594cc60c811ad124b0b34a1c4"
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.195291849784553,
+    "stdout_sha256": "017389a67915e1b4733d8434997c212dc8a9f1542885e560711e99e55ad8aa4f",
+    "stderr_sha256": "133e97d6138e538c9c07b357f7ef5870b6fa205eefe6d944cd611e6459f91af2"
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.514212855603546,
+    "stdout_sha256": "9ad068f28389b19d7f8e539b87b4e6afcfed80083b6f885c5fd082ffbfbb3c27",
+    "stderr_sha256": "167f440abc7c2eb7fc994b39e0da31393bbbaddf12fb161555ae6b662f2e9bf4"
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.255280923098326,
+    "stdout_sha256": "68016ab45c27b2d8758398a646788496415ed04bdc48e964016b04c85e0fed63",
+    "stderr_sha256": "e337383fffeb8f3a4e4b5a45cc561dfa3e24f8883e7a0e338bb7a04ea729742f"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6284854928962886,
+    "stdout_sha256": "936ea68a0d79d43eaf763f3cadba5ce070fc9cafa5608700ad4a6b1920e0ad39",
+    "stderr_sha256": "a55ce6c9bb012d0150c2f36285bc2c8d81d34f7a5719470e61d87c44bbbbc09a"
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.7270847870968282,
+    "stdout_sha256": "3a3ccbb152860d3eb524afef933e7998dba66af6e9e1c78daacc8279bd272ab3",
+    "stderr_sha256": "d8e46b9c30aaab421debb735385a8875f6d5d292badec1ea0021cd8d11cfdcc1"
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.685370845720172,
+    "stdout_sha256": "75287f3cbbbfee7d22558f88230ac979e12fa81c020ddfb0615754c7413bdb84",
+    "stderr_sha256": "7e6e4c3a8d13391f3c8d5735e89e3b25d790ea91262860a6a144aa7c9fca9692"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6793338293209672,
+    "stdout_sha256": "3d56568dbe5d34419db1990e48211c31dc40595bce369f27ab890e7a33b3d59c",
+    "stderr_sha256": "18492c67f61b3dfd769e8aaf65e9b33f36f673ce3ae176738033a2ad8adfd75e"
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6928746639750898,
+    "stdout_sha256": "24d20e20660ac4e304df24375902dca3d17d625c2b0c43dae86a0ecaa3f80ad9",
+    "stderr_sha256": "f7b0a8d8aa3602d841c2a6714c8a330d57b307ed06a2aacd97e557bd11cbeac8"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.617759115062654,
+    "stdout_sha256": "2c9f022e8bd9a7158112163a7ae5940ac9e689d83ca65f75808f2933aab494a2",
+    "stderr_sha256": "dfe1bac20b99a6d5b31aa59bff839898f0e8baf639d55a0108a88be61744fd19"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6461305972188711,
+    "stdout_sha256": "df6d2394f1ccabde5a3ee36a7d85651097f1aea5a1984f358d8d65d87a8a7bbd",
+    "stderr_sha256": "f6c9eec7e662256d43ec00eb0706e0261a85c8e2768a444581683297449a8587"
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6541660982184112,
+    "stdout_sha256": "7131caa7e16b58dfbb23179e0c1866488f3721a9fcee332f6676eb5447784fe8",
+    "stderr_sha256": "11604d9c4b36c48b7539a41471dfb8a6da19870c87f2a58a71de8460247a0d49"
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6615117858164012,
+    "stdout_sha256": "2d9acf560f8950b0506689a1cd8776d4dede0d0780e45969b94e7b5da6f62b6d",
+    "stderr_sha256": "d7c3cfccdd851e70e6bc5b6dbf9243197985881d2de06f9a21d6dd5c936384db"
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6627262430265546,
+    "stdout_sha256": "efafe0807b693e0ae733714685e0eed0bbec65b21b4ffd1f6bfc7c8077e406df",
+    "stderr_sha256": "089164f6fb428eeb16710045295cf00404f3607302be370db8b685aaf58f5b81"
+  },
+  {
+    "name": "broad-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.970287017058581,
+    "stdout_sha256": "33fe33a860a28bc10a0f30a05438b1dd50e8a27cea251df7876eaaab9f0f4be3",
+    "stderr_sha256": "f75c9faa874c802458a3b39cff343ca7fd2149b232363f6ae7caacdb82233ee4"
+  },
+  {
+    "name": "broad-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.873905710875988,
+    "stdout_sha256": "c2227d1ef1f3c301d2e93e3f9af7ed635efb19073143ba572956b5ad929981b9",
+    "stderr_sha256": "1fbed12fe83befea41521f4ef32165910dea6b36ef5800453cef02b8a26c62cd"
+  },
+  {
+    "name": "broad-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.64022725308314,
+    "stdout_sha256": "ed03f49bc776217729b67d452965555531ef41e976ecc76da80bf3cf068e7ac0",
+    "stderr_sha256": "df8bfe894e82df3499ed345aa3730eae7f442cac43f1f5891331b25219b9fa80"
+  },
+  {
+    "name": "broad-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.906829302199185,
+    "stdout_sha256": "c6a074cecde01812e2430c45e791431b7aed9ac92aa234e5850fd3da003ecdd2",
+    "stderr_sha256": "f23e50cb699fd945beaa2bc2238831c2275a087018e80c242eeacb5c81ed4210"
+  },
+  {
+    "name": "broad-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.726071979384869,
+    "stdout_sha256": "677722e380014298fb1e243bc1c3b83d400caf4b1e4549a08051e9450ed08245",
+    "stderr_sha256": "eb900adaddb000a07acf472d0d433d7bac96450ff083e12513d5e359f6baeaaf"
+  },
+  {
+    "name": "broad-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.089023877400905,
+    "stdout_sha256": "7672fde3b26f8a47062f5659901dd406bed25f7fd7989574b3a542357f35e4df",
+    "stderr_sha256": "68fdaf55bcf8078b4b950258925236b90d67a78cb940c984d8be31e04e9c17ad"
+  },
+  {
+    "name": "broad-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.415052847005427,
+    "stdout_sha256": "19c340e00cd21df4f06f38dfce8b909e4166aced805b0d9e5bf25a5d23063f19",
+    "stderr_sha256": "807838afd0673c4a5217e8f342206b4bebec652f813ace874f338cae70578ee1"
+  },
+  {
+    "name": "broad-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.652644364628941,
+    "stdout_sha256": "e6e018c916c5c05744a2daf82c3d1d3866f33c6912946d245ae841e6f6753b3e",
+    "stderr_sha256": "6ef04fb5c14caa2ff9bec60b5f0b1e3335e1944eb0c2d49f2ad8379e12c1b320"
+  },
+  {
+    "name": "broad-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.658442709129304,
+    "stdout_sha256": "56faf9780fb3e7fea3bca4171b93b313f04da68b428d272460b3d31790ead370",
+    "stderr_sha256": "d85f485413695d7e50ebb9ae3352f94a5782755762efb9fa4bdc47a7729d7d05"
+  },
+  {
+    "name": "broad-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/native-controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.693711830303073,
+    "stdout_sha256": "2b9332e0bcbbef573b498d1c3433cb2a40f847926c7ac578544dcaedbda906bf",
+    "stderr_sha256": "e5a0f66c2035bb44632886190eda16bc68ac8fccc862597f5445de66495d5418"
+  }
+]

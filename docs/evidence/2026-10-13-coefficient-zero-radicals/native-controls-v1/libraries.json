@@ -1,0 +1,114 @@
+{
+  "baseline": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhypercurve.rlib",
+      "sha256": "dd9baddf5fb9d14218b12366b41349f64c30cabc11967c5756870c777721189d",
+      "bytes": 48758746,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "05cdfcd806d6cf2d5cd65dcdf68df6a5d013639b93f3e6c8e5dc22d9bbba4651",
+      "bytes": 11432214,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/libhyperdrc.rlib",
+      "sha256": "530b0e598fee076f4b287f16d698e459c6b64c88ccac765a94e6f557c201ee62",
+      "bytes": 26566630,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "7937ae39b85ba6db8c2610350ddadf3d7758e94a5af10fc1a7451469e58c4190",
+      "bytes": 4001424,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "a73ca32688d137c71f51a03a74b55ec46cad505565ce936ddfad1d32d53f0804",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  },
+  "candidate": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhypercurve.rlib",
+      "sha256": "b80e7c2ea0e18fb61b88e540a4523c8a6f6f1f4e662e4f8ab1ec0e3b860d5968",
+      "bytes": 48758986,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "400d7766d3f46c20cc8dc467080d2c42f79edfaad77868287e1710c394415d2f",
+      "bytes": 11432280,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/libhyperdrc.rlib",
+      "sha256": "494ef33bd76914f5e203aa5727c98758bcfebfe976b5ee5c0bd710b191a7b797",
+      "bytes": 26566870,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "74b30e88f318f34d9e50a5e18ef4f6ad56e03ee1dd35b72958eb0bf53ca9104b",
+      "bytes": 4001488,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "2bb34410f4a78ed59390c3211fabee2eedc5962a847ffd1a61c4c3bcf39f49a4",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  }
+}
