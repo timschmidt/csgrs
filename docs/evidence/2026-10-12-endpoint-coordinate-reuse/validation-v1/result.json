@@ -1,0 +1,179 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.625467324163765,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "endpoint-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_proof_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 119.20460327202454,
+      "sources_unchanged": true,
+      "stdout_sha256": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+      "stderr_sha256": "d239f7488d77bf94d8db6578a9ad37d716268e7832b907d4de80f6ee82686175"
+    },
+    {
+      "name": "strict-consumer-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 40.44165132800117,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "56654fa47a9f345a3a848e1a283f5fe9021ae0204990b626c0df0891ebbee73f"
+    },
+    {
+      "name": "curve-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 1022.1951730251312,
+      "sources_unchanged": true,
+      "stdout_sha256": "79e696441cea25d2cb43cf3641f2ea8fda2a7f70800fa5fdee91c5433f7eb9c3",
+      "stderr_sha256": "2675679c93760b24c252a9bc13d5e60b5381499eb238553005d1562ae318fe36"
+    },
+    {
+      "name": "drc-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 117.09279544372112,
+      "sources_unchanged": true,
+      "stdout_sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+      "stderr_sha256": "337ee1d76cd30982f8aeec896e03c24f53468dbe2efe9fcde826bde92b8c6805"
+    },
+    {
+      "name": "scalar-curve-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "seconds": 25.183486477006227,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "386cbb9f674deaab377f90d1c447662513f28e27977f4f4a91db2541638173ce"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 30.619539657142013,
+      "sources_unchanged": true,
+      "stdout_sha256": "b7f960f307594658807fc4b76089ad0db65e3c2edbfe6abb21e4c9774213a31d",
+      "stderr_sha256": "57973a02d247ca5d999d9c24b7177e7a384d8ae262facc7ebe874940d195125c"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 140.4096494456753,
+      "sources_unchanged": true,
+      "stdout_sha256": "37bd4f656f53cc386a50a092d7a6ce88936b14c74fb303296367b350a6972733",
+      "stderr_sha256": "934afbeaccd5ec497ccb64f6d7802b00227409a81c4a33fa6c4b994ed8c1e076"
+    },
+    {
+      "name": "copper-neck",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 128.07579052913934,
+      "sources_unchanged": true,
+      "stdout_sha256": "c9abde1cd932fbec4e34f296726d87f5bc8dbd740072686b254ae2892cb6ddb4",
+      "stderr_sha256": "ff20931ef1ebe662ae3aad61edd5a77136cd29ee45b4d94b8014d223cb10f081"
+    }
+  ],
+  "complete": true,
+  "all_passed": false,
+  "runtime_admitted": false
+}

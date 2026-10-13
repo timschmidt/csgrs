@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Complete the running full curve suite, focused DRC tests, warning-denied scalar/curve docs and both unchanged native gates; then execute the prepared fixed paired cost, 231-witness, effective final-abort and full-report protocols. Preserve all failed gates and adverse timing rows. No runtime admission yet."
+      "next_step": "Run the fixed paired public arc-cost probe, all 231 historical capability witnesses, effective final-coordinate abort receipts and complete unnormalized report replay from separate source/target directories. Preserve all original limits, failed gates and control timing tradeoffs."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -214,12 +214,51 @@
       "runtime_admitted": false
     },
     "isolated_endpoint_coordinate_reuse": {
-      "status": "isolated-endpoint-proof-preflight-passed-full-qualification-running",
-      "evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/preflight-assessment-v1.json",
-      "implementation": "Private coordinate_equality retains the same lazy x/y zero facts. contains_endpoint keeps both early positive checks, then reuses a known negative only while edge preview and approximate terminals are inactive. Unknown retries, all approximate/preview retries and the later whole endpoint call remain. No owners are retained and global Point2 PartialEq is unchanged.",
-      "qualification": "These are focused regressions, strict release all-feature all-target curve/DRC Clippy and formatting only. The full curve suite is still running. No native, full-report, cost or universal completeness claim is made by this checkpoint.",
-      "documentation": "Normal-form APIs now describe at most two 512-expansion recognition passes and distinguish that bound from integer operand sizes; no rejected eight-node quadratic prepass is described or inherited.",
-      "next_step": "Complete the running full curve suite, focused DRC tests, warning-denied scalar/curve docs and both unchanged native gates; then execute the prepared fixed paired cost, 231-witness, effective final-abort and full-report protocols. Preserve all failed gates and adverse timing rows. No runtime admission yet.",
+      "status": "isolated-correctness-passed-cost-and-report-qualification-pending",
+      "evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/validation-assessment-v1.json",
+      "validation": {
+        "endpoint-regressions": {
+          "summaries": 1,
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        },
+        "curve-tests": {
+          "summaries": 51,
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33
+        },
+        "drc-regressions": {
+          "summaries": 1,
+          "passed": 26,
+          "failed": 0,
+          "ignored": 0
+        }
+      },
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "passed": false,
+          "observed_assertion_seconds": 138.312559051,
+          "process_wall_seconds": 140.4096494456753,
+          "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check wall time",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 128.07579052913934,
+          "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+        }
+      ],
+      "next_step": "Run the fixed paired public arc-cost probe, all 231 historical capability witnesses, effective final-coordinate abort receipts and complete unnormalized report replay from separate source/target directories. Preserve all original limits, failed gates and control timing tradeoffs.",
       "runtime_admitted": false
     }
   },

@@ -1,0 +1,84 @@
+{
+  "decision": "isolated-correctness-passed-cost-and-report-qualification-pending",
+  "source_delta": "A private tri-state point helper preserves the original lazy coordinate facts. Endpoint classification reuses only certified negatives in exact non-preview contexts; all unknown retries, approximate/preview retries and later whole endpoint calls remain. Global PartialEq is unchanged. Five regressions and accurate inherited two-pass recognition-budget documentation are added; no layouts or limits change.",
+  "test_counts": {
+    "endpoint-regressions": {
+      "summaries": 1,
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    "curve-tests": {
+      "summaries": 51,
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33
+    },
+    "drc-regressions": {
+      "summaries": 1,
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "count_overlap": "The five endpoint regressions are included again in the full curve suite; do not add them to its total.",
+  "strict_curve_and_drc_clippy_passed": true,
+  "warning_denied_scalar_and_curve_docs_passed": true,
+  "workspace_formatting_passed": true,
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "passed": false,
+      "observed_assertion_seconds": 138.312559051,
+      "process_wall_seconds": 140.4096494456753,
+      "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check wall time",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 128.07579052913934,
+      "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+    }
+  ],
+  "all_original_native_gates_passed": false,
+  "limits": [
+    "The complete curve suite and 26 focused DRC regressions ran. This is not the complete DRC suite or every workflow combination.",
+    "Observed original-board counts are 12 and 197. Complete report bytes are not compared by these test runs.",
+    "These standalone original-cap results are not a matched application-speedup comparison.",
+    "Five regression functions check named coordinate, endpoint, policy, clone, abort and shared-budget scenarios. They do not establish universal cache or equality completeness."
+  ],
+  "next_step": "Run the fixed paired public arc-cost probe, all 231 historical capability witnesses, effective final-coordinate abort receipts and complete unnormalized report replay from separate source/target directories. Preserve all original limits, failed gates and control timing tradeoffs.",
+  "artifacts_sha256": {
+    "validation-v1/binary.json": "64ea8932716e7e2551d49771d8db672ef788db8fbbd26075652208f5dcbac565",
+    "validation-v1/build-board-tests.stderr": "57973a02d247ca5d999d9c24b7177e7a384d8ae262facc7ebe874940d195125c",
+    "validation-v1/build-board-tests.stdout": "b7f960f307594658807fc4b76089ad0db65e3c2edbfe6abb21e4c9774213a31d",
+    "validation-v1/copper-neck.stderr": "ff20931ef1ebe662ae3aad61edd5a77136cd29ee45b4d94b8014d223cb10f081",
+    "validation-v1/copper-neck.stdout": "c9abde1cd932fbec4e34f296726d87f5bc8dbd740072686b254ae2892cb6ddb4",
+    "validation-v1/curve-tests.stderr": "2675679c93760b24c252a9bc13d5e60b5381499eb238553005d1562ae318fe36",
+    "validation-v1/curve-tests.stdout": "79e696441cea25d2cb43cf3641f2ea8fda2a7f70800fa5fdee91c5433f7eb9c3",
+    "validation-v1/drc-regressions.stderr": "337ee1d76cd30982f8aeec896e03c24f53468dbe2efe9fcde826bde92b8c6805",
+    "validation-v1/drc-regressions.stdout": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "validation-v1/endpoint-regressions.stderr": "d239f7488d77bf94d8db6578a9ad37d716268e7832b907d4de80f6ee82686175",
+    "validation-v1/endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "validation-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/full-board.stderr": "934afbeaccd5ec497ccb64f6d7802b00227409a81c4a33fa6c4b994ed8c1e076",
+    "validation-v1/full-board.stdout": "37bd4f656f53cc386a50a092d7a6ce88936b14c74fb303296367b350a6972733",
+    "validation-v1/protocol.json": "ce7a51768d7a31086bd54b497d0ae2b34bb43680cff71b0ca7d3e13503868d0f",
+    "validation-v1/result.json": "0008e37564664948e8ae2f3d62c67cf09c88ab1ee428bc2ef405ee5f9d0faa91",
+    "validation-v1/scalar-curve-docs.stderr": "386cbb9f674deaab377f90d1c447662513f28e27977f4f4a91db2541638173ce",
+    "validation-v1/scalar-curve-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/strict-consumer-clippy.stderr": "56654fa47a9f345a3a848e1a283f5fe9021ae0204990b626c0df0891ebbee73f",
+    "validation-v1/strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
