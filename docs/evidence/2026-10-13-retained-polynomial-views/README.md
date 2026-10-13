@@ -45,8 +45,18 @@ precede every probe; timing and allocation use separate executables. Every
 phase, sample, adverse result, layout and probe size remains in scope. Neither
 the source design nor old recursive-copy counts prove an improvement.
 
-See [scope-v1.json](scope-v1.json) for the contract and cost risks. Preparation
-and qualification have not run. Native validation, original board and neck
+Version 1 preparation stopped before compilation because rustfmt folded three
+calls and removed optional trailing argument commas. The exact-token guard
+rejected those generated fragments. The failed run, both formatted source
+trees and their hashes remain preserved. An independent
+[failure assessment](preparation-failure-assessment-v1.json) recovers every
+parent token after explicitly accounting for those three commas.
+
+Version 2 changes only the preparation's expected call fragments. Fresh source
+maps must exactly match the preserved formatted version 1 trees, including
+every Rust and mathematical test byte. Qualification and costs have not run.
+See [scope-v2.json](scope-v2.json) for the correction, contract and cost risks.
+Native validation, original board and neck
 limits, endpoint/broad/abort controls, complete report bytes and production CLI
 size remain requirements before runtime admission. Main runtime and all 35
 pending native entries remain unchanged. All 39 properties, 14 targets and

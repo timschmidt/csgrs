@@ -1,0 +1,49 @@
+{
+  "status": "preparation-stopped-before-compilation-on-three-formatting-commas",
+  "runner_sha256": "398080c3f6abed6f4cab488a96c0eb0693d7079c0cd28ed259f9134817a6731d",
+  "failure_sha256": "96979940b5ed74ad742cb8005a00c8c0cc677762d77ebb627e5a102cfe1e0a3b",
+  "stderr_sha256": "297d5b47b5892495dc3b751131b0f175420bd5b7e057fa201044863a9e684fed",
+  "source_counts": {
+    "baseline": 10134,
+    "candidate": 10135
+  },
+  "sources_preserved": true,
+  "parent_tokens_recovered_after_explicit_formatting_accounting": true,
+  "source_formatting_difference": {
+    "before": "                    .pi_laurent_value_retained::<RETAIN>(\n                        budget - 1,\n                        remaining_work,\n                        memo,\n                        reused,\n                    )?",
+    "after": "                    .pi_laurent_value_retained::<RETAIN>(budget - 1, remaining_work, memo, reused)?",
+    "occurrences": 3,
+    "non_whitespace_token_edits": [
+      [
+        "delete",
+        ",",
+        ""
+      ],
+      [
+        "delete",
+        ",",
+        ""
+      ],
+      [
+        "delete",
+        ",",
+        ""
+      ]
+    ]
+  },
+  "baseline_and_candidate_math_tests_preserved": true,
+  "candidate_helper_unchanged": true,
+  "qualification_executed": false,
+  "costs_executed": false,
+  "main_and_native_unchanged": true,
+  "artifacts_sha256": {
+    "failed-preparation-v1/baseline-changes.json": "025a5442dfb74d6a59b890fc18944d9f56235cc5f254fc2465a99d6e1621dbc3",
+    "failed-preparation-v1/baseline-delta.tar.gz": "72e299c32475cb6477b99d05f2f484da92be3b6003eef88a291bdd84918e4332",
+    "failed-preparation-v1/baseline-source-hashes.json.gz": "814a0562523327290a03e22ad2ef647d2283e4c6f1a98b0fbb854e898c15d34e",
+    "failed-preparation-v1/candidate-changes.json": "39897b7b545744023f0f459c70def6250524cd7b60e4929da7546712bb8fe752",
+    "failed-preparation-v1/candidate-delta.tar.gz": "6a8ec6944aa811aa4e28c5cd7e8f3049464ca592f213e22bc60c274e7ce7e71e",
+    "failed-preparation-v1/candidate-source-hashes.json.gz": "05f2dcbef1143284bee7b8cac7036264f91a3d8546ebbf612d27d4c6ac873c91"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

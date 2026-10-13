@@ -1,0 +1,8 @@
+{
+  "crates/hyperreal/src/computable/node/algebra.rs": "a38cffb31d85e5fd68c94f2b5b0c4a7f2926fc41093d9dc83b99f5fa83476228",
+  "crates/hyperreal/src/computable/node/memo_publication_tests.rs": "7f207f98fa394c176b829f0a5d7862d321d14fbe4e6b76384f0b53e678fef094",
+  "crates/hyperreal/src/computable/node/representation.rs": "ab961bb6b174694823826f28f56b486fcd174a41ec0b1f5873a94666a0c39348",
+  "crates/hyperreal/src/computable/node/retained_polynomial.rs": "e10a6480368b1d962ca78e12e3d25b7a4f44110b00c12a8905fecdbadfbd6b78",
+  "crates/hyperreal/src/computable/node/shared_radical_tests.rs": "1c306fafefd3b0d95fa5cb4d277cd9d77ff8700065f3af8f369b6ec4086a3b8c",
+  "crates/hyperreal/src/computable/node/temporary_storage_tests.rs": "9b38412d0e2e1e02bd5b6e16f3e100f020379914d3e13ae02ff0c926e094d68c"
+}
