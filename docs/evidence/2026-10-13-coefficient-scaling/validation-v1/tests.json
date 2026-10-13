@@ -1,0 +1,65 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "scaling-regressions",
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "right",
+    "phase": "scaling-regressions",
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "right",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "right",
+    "phase": "scalar-library",
+    "passed": 867,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "right",
+    "phase": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "both",
+    "phase": "scaling-regressions",
+    "passed": 4,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "both",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "both",
+    "phase": "scalar-library",
+    "passed": 867,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "both",
+    "phase": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  }
+]

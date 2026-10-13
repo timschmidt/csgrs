@@ -1,0 +1,448 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.515321229118854,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-scaling-regressions",
+    "variant": "baseline",
+    "phase": "scaling-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "coefficient_scale_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.916525962296873,
+    "stdout_sha256": "5390eedb9d6f1a111031d533b10c662cc5d3ea88fba1f13ad89a48e77126c4dd",
+    "stderr_sha256": "eb5ea79f6c64d3c63f1e1be38f9231e6cba0dd9156ee221a823171a7fe69bc5e"
+  },
+  {
+    "name": "right-format",
+    "variant": "right",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.919111630413681,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "right-scaling-regressions",
+    "variant": "right",
+    "phase": "scaling-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "coefficient_scale_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 27.289730876218528,
+    "stdout_sha256": "5390eedb9d6f1a111031d533b10c662cc5d3ea88fba1f13ad89a48e77126c4dd",
+    "stderr_sha256": "7ee88a923702cfba3927192ae1e5a732ed6ab3a5f1c99f3e76be6acf36a191bc"
+  },
+  {
+    "name": "right-cache-frontiers",
+    "variant": "right",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.20583074213936925,
+    "stdout_sha256": "2cff221b0dd678bc2030e380f893c01c2187ee42a2b22600973a6e3c80d059f0",
+    "stderr_sha256": "dff8162055727677d722e2ccd7656e4de8fb59a59ef2aa549babedcc09431820"
+  },
+  {
+    "name": "right-strict-clippy",
+    "variant": "right",
+    "phase": "strict-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.97916180593893,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "3e493ca02fbc6dd55eefa676d1dd4232dd6bc06774f1527fcafa9db750f2c86d"
+  },
+  {
+    "name": "right-scalar-library",
+    "variant": "right",
+    "phase": "scalar-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.5504350629635155,
+    "stdout_sha256": "d04add42f1d537b17923bc5bb3d21944110a509c402220f6ebb0eff1f2a163f6",
+    "stderr_sha256": "abd82fbce97ef0521170e7110868fdc5de3e5aa44914c5d0e5a2436c40ee4329"
+  },
+  {
+    "name": "right-scalar-doctests",
+    "variant": "right",
+    "phase": "scalar-doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.761570292059332,
+    "stdout_sha256": "9f92423257a6a7baa9f9d97e782e967254a04f4e3f5cec9c645320218550bd23",
+    "stderr_sha256": "11a60743cc041175d5615059caba7c9807b7b45bb08649e7695ea5d04068bc99"
+  },
+  {
+    "name": "right-scalar-docs",
+    "variant": "right",
+    "phase": "scalar-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 6.170084717683494,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "5a8b707e09955d00aa6929fccadea65dfc1fcd3195bc57af7a3b5b40b6112045"
+  },
+  {
+    "name": "both-format",
+    "variant": "both",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.496774757280946,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "both-scaling-regressions",
+    "variant": "both",
+    "phase": "scaling-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "coefficient_scale_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.613245395943522,
+    "stdout_sha256": "5390eedb9d6f1a111031d533b10c662cc5d3ea88fba1f13ad89a48e77126c4dd",
+    "stderr_sha256": "b6875d0ca2c806b4cc3df34513f461e02e0f0f72d5a358e0a48f74e00a59782a"
+  },
+  {
+    "name": "both-cache-frontiers",
+    "variant": "both",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16242825100198388,
+    "stdout_sha256": "2cff221b0dd678bc2030e380f893c01c2187ee42a2b22600973a6e3c80d059f0",
+    "stderr_sha256": "d300f50941fa508a9c6d9149fd0f2739aa8792d004fa01dffbfacf93453ec565"
+  },
+  {
+    "name": "both-strict-clippy",
+    "variant": "both",
+    "phase": "strict-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.227974710986018,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "24fc54d6a047c30020f60ff2b9b5f84561a57e6573d7d2e8c69baee12b4f6c11"
+  },
+  {
+    "name": "both-scalar-library",
+    "variant": "both",
+    "phase": "scalar-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.573358824942261,
+    "stdout_sha256": "cb9761a3384df2b9baced867f3c244fb4169f254c8263a6d9ebca2c252b75165",
+    "stderr_sha256": "a580dc3ad2a8859c0c56895c94d175f7f81ea01d03e12391263db83721d242fa"
+  },
+  {
+    "name": "both-scalar-doctests",
+    "variant": "both",
+    "phase": "scalar-doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.566830612253398,
+    "stdout_sha256": "1f5f26ba55ac6ea4353b3255866cde2947eea27a163c081f98f2968e2c615bc3",
+    "stderr_sha256": "c236a38027106e9b672a1072a51cb8a7818fb3e7eb4aa3f6373999f37d317df1"
+  },
+  {
+    "name": "both-scalar-docs",
+    "variant": "both",
+    "phase": "scalar-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 6.236852171365172,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a83b06cfb899c23f6252e0310562ed1d7cde5e6b7bf551dc9f93cb8858d963de"
+  }
+]

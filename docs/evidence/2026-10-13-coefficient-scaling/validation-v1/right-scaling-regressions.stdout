@@ -1,0 +1,9 @@
+
+running 4 tests
+test computable::node::coefficient_scale_tests::opaque_owners_are_released_after_both_scaling_directions ... ok
+test computable::node::coefficient_scale_tests::rational_scaling_preserves_exact_components_in_both_directions ... ok
+test computable::node::coefficient_scale_tests::scaled_opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts ... ok
+test computable::node::coefficient_scale_tests::unsupported_symbolic_cross_products_keep_their_declines ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 863 filtered out; finished in 0.00s
+

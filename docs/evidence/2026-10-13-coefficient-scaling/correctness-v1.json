@@ -1,0 +1,88 @@
+{
+  "decision": "both-isolated-scaling-variants-pass-scalar-correctness-await-fixed-costs",
+  "assessor_sha256": "d41a9b8045ff2bfe080e2937159f83930b300058be723e014e6b6e28b2dec73e",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "scaling-regressions",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "right",
+      "phase": "scaling-regressions",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "right",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "right",
+      "phase": "scalar-library",
+      "passed": 867,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "right",
+      "phase": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "scaling-regressions",
+      "passed": 4,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "scalar-library",
+      "passed": 867,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "both",
+      "phase": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "implementation": {
+    "baseline": "Original runtime body plus the shared four-test module.",
+    "right": "Consume and scale the left coefficient when the right coefficient has no radical/opaque vectors.",
+    "both": "Also clone and scale the borrowed right coefficient when only the left is rational. This can change scalar operand/cache work and requires its own cost evidence."
+  },
+  "preserved_source": "The general coefficient multiplication body, ordered polynomial insertion, recognition budgets, retained normal-form cache and mandatory original fallback are unchanged. The two candidate deltas contain only the multiplier branches and the shared test module.",
+  "regression_scope": "Forty exact component cases in both directions; unsupported symbolic cross-product declines; opaque-owner reclamation; cold/warm/cloned cancellation to a quadratic certificate. The same four functions pass on the unchanged baseline. Six prior cache-frontier functions remain included in each full scalar total.",
+  "checks": "Both candidates pass full release all-feature scalar library and doctests, strict all-target scalar Clippy, workspace formatting and warning-denied scalar documentation.",
+  "limits": "Focused test counts overlap the 867 library results. This does not establish performance, memory, default/all-workflow consumer qualification, universal cache semantics, complete report identity or either original native limit.",
+  "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes, with five preregistered three-variant blocks and dedicated cost targets. Keep every adverse row. Advance only supported variants to native and complete-report qualification.",
+  "evidence_sha256": {
+    "preparation-v1/protocol.json": "02182838d4f67ebf2dc9782cda86b9c170dc77eb40e5d99c73e4f24a4a04926f",
+    "validation-v1/protocol.json": "971e76809cfafc1fb873ea6df9d6869210bdaa5b6f17ed46a18e4c70d27002c7",
+    "validation-v1/result.json": "29436f160c31f99d000308c1830924c728159827536e82dbe0d86f2498f4741b",
+    "validation-v1/commands.json": "b6e46f0f0c1072ca53edbef5baad25fb3a58d9e729a57aafdea2ebb41af50484"
+  },
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
