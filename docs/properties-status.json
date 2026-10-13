@@ -1638,9 +1638,11 @@
       "native_executed": false
     },
     "retained_polynomial_views": {
-      "status": "inputs-prepared-source-freeze-and-qualification-next",
+      "status": "v1-formatting-failure-preserved-v2-preparation-inputs-ready",
       "evidence": [
-        "docs/evidence/2026-10-13-retained-polynomial-views/scope-v1.json"
+        "docs/evidence/2026-10-13-retained-polynomial-views/scope-v1.json",
+        "docs/evidence/2026-10-13-retained-polynomial-views/preparation-failure-assessment-v1.json",
+        "docs/evidence/2026-10-13-retained-polynomial-views/scope-v2.json"
       ],
       "contract": "Keep existing owned scratch polynomials and graph-free closed payloads. A cache read clones one Arc to the whole immutable closed polynomial. Read-only multiplication right operands borrow its rational and radical slices; other existing consuming algorithms and projections recover ordinary owned polynomials before use.",
       "ownership": "A private PiLaurentValue enum distinguishes Owned(PiLaurentPolynomial) from Retained(Arc<ClosedPiLaurentPolynomial>). Only the existing cache publication allocates a shared header. Closed coefficients still contain only Rational and Vec<(Rational, Rational)> and cannot own Computable nodes. Scratch creation/cloning and original local memo entries retain their current Vec behavior.",
@@ -1658,9 +1660,10 @@
         "Prior recursive-copy counts are coverage, not allocation measurements, time shares or promised savings."
       ],
       "controls": "Both sources retain eight storage, three memo and three alias mathematical controls, plus the six inherited cache and eleven P4 controls. The previous radical-sharing inventory must be 0/0 in both: these ordinary to_polynomial conversions still copy. Candidate-specific controls will exercise actual retained whole-polynomial reads, live aliases, mutation, consuming arithmetic, graph/buffer release and concurrency.",
-      "next_step": "Prepare and freeze both source trees, verify exact parent-token recovery and borrowed operation order, then execute the full 26-command scalar qualification before the predeclared fixed cost trial. All native requirements and original limits remain open.",
+      "next_step": "Prepare fresh v2 sources with the three explicit formatted call fragments and require their maps to match the preserved v1 formatted sources byte-for-byte. Then run all 26 scalar qualification commands before fixed costs. V1 sources and failure remain frozen.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation_v1": "Stopped before compilation when rustfmt folded three calls and removed optional trailing commas. Both formatted 10,134/10,135-file sources are preserved; independent accounting recovers all original parent tokens. No Rust or mathematical test input correction is needed."
     }
   },
   "status_meanings": {
