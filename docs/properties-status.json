@@ -3232,7 +3232,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "borrowed_same_radicand_fields": {
-      "status": "borrowed-field-review-and-inputs-prepared-not-qualified",
+      "status": "three-sources-frozen-qualification-next",
       "evidence": "docs/evidence/2026-10-13-borrowed-same-radicand-fields",
       "source_review": "scope-v1.json",
       "contract": {
@@ -3314,9 +3314,18 @@
         "Mutable field reborrows must preserve arithmetic, payload identity, drop order and monotone proof retention; qualification and fixed costs remain necessary.",
         "Static symbol/frame observations are not total-memory or causal timing evidence."
       ],
-      "next_step": "Freeze and commit all three sources, execute 42 qualification commands, and run the fixed costs only if qualification passes.",
+      "next_step": "Run all 42 qualification commands in fresh targets, independently assess their results, then execute the declared fixed scalar costs only if qualified.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation": {
+        "evidence": "preparation-v1/protocol.json",
+        "source_files_per_variant": 10136,
+        "baseline_and_outlined_byte_identical_to_previous_qualified_sources": true,
+        "only_variant_difference": "crates/hyperreal/src/computable/node/algebra.rs",
+        "arithmetic_substitutions_and_general_fallback_verified": true,
+        "shared_tests": 28,
+        "main_and_35_pending_native_paths_unchanged": true
+      }
     }
   },
   "status_meanings": {

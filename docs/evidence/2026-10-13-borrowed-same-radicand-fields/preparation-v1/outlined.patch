@@ -1,0 +1,53 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -173,11 +173,50 @@
+             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+     }
+ 
++    // Called only after multiply proves singleton radical vectors, empty atom
++    // vectors, and equal non-unit radicands. Neither input changes before this
++    // call, so both index operations below are in bounds by construction.
++    #[inline(never)]
++    fn multiply_same_radicand(mut self, other: &Self) -> Self {
++        let (left, left_coefficient) = &self.radicals[0];
++        let (right, right_coefficient) = &other.radicals[0];
++        // Keep the original arithmetic and insertion order.
++        let rational = &self.rational * &other.rational;
++        let mut linear = left_coefficient * &other.rational;
++        let right_linear = right_coefficient * &self.rational;
++        let take_right = linear.sign() == Sign::NoSign;
++        if take_right {
++            linear = right_linear;
++        } else if right_linear.sign() != Sign::NoSign {
++            linear = linear + right_linear;
++        }
++        let cross = left_coefficient * right_coefficient;
++        let rational = rational + cross * left;
++        if linear.sign() == Sign::NoSign {
++            return Self::rational(rational);
++        }
++        if take_right {
++            // Ordinary insertion selects the first surviving payload,
++            // including distinct equal-valued right radicand storage.
++            self.radicals[0].0 = right.clone();
++        }
++        self.rational = rational;
++        self.radicals[0].1 = linear;
++        self.atoms = Vec::new();
++        self
++    }
++
+     fn multiply(self, other: &Self) -> Option<Self> {
+         if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
+             || (!other.atoms.is_empty() && !self.radicals.is_empty())
+         {
+             return None;
++        }
++        if let ([(left, _)], [(right, _)]) = (self.radicals.as_slice(), other.radicals.as_slice())
++            && left == right
++            && !left.is_one()
++        {
++            return Some(self.multiply_same_radicand(other));
+         }
+         let mut result = Self::rational(&self.rational * &other.rational);
+         for (radicand, coefficient) in &self.radicals {

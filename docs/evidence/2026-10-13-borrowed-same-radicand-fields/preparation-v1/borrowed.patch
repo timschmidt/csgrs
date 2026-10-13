@@ -1,0 +1,69 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -173,11 +173,65 @@
+             .retain(|(_, coefficient)| coefficient.sign() != Sign::NoSign);
+     }
+ 
+-    fn multiply(self, other: &Self) -> Option<Self> {
++    // The caller proves equal non-unit radicands and empty atom vectors.
++    // Checked element borrows keep vector indexing out of this helper.
++    // Some holds the rational result on cancellation; None means the borrowed
++    // fields now contain the product with one surviving radical.
++    #[inline(never)]
++    fn multiply_same_radicand_fields(
++        constant: &mut Rational,
++        left: &mut (Rational, Rational),
++        other_constant: &Rational,
++        right: &(Rational, Rational),
++        atoms: &mut Vec<(Computable, Rational)>,
++    ) -> Option<Rational> {
++        let (left, left_coefficient) = left;
++        let (right, right_coefficient) = right;
++        let rational = &*constant * other_constant;
++        let mut linear = &*left_coefficient * other_constant;
++        let right_linear = right_coefficient * &*constant;
++        let take_right = linear.sign() == Sign::NoSign;
++        if take_right {
++            linear = right_linear;
++        } else if right_linear.sign() != Sign::NoSign {
++            linear = linear + right_linear;
++        }
++        let cross = &*left_coefficient * right_coefficient;
++        let rational = rational + cross * &*left;
++        if linear.sign() == Sign::NoSign {
++            return Some(rational);
++        }
++        if take_right {
++            // Ordinary insertion selects the first surviving payload,
++            // including distinct equal-valued right radicand storage.
++            *left = right.clone();
++        }
++        *constant = rational;
++        *left_coefficient = linear;
++        *atoms = Vec::new();
++        None
++    }
++
++    fn multiply(mut self, other: &Self) -> Option<Self> {
+         if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))
+             || (!other.atoms.is_empty() && !self.radicals.is_empty())
+         {
+             return None;
++        }
++        if let ([left], [right]) = (self.radicals.as_mut_slice(), other.radicals.as_slice())
++            && left.0 == right.0
++            && !left.0.is_one()
++        {
++            if let Some(rational) = Self::multiply_same_radicand_fields(
++                &mut self.rational,
++                left,
++                &other.rational,
++                right,
++                &mut self.atoms,
++            ) {
++                return Some(Self::rational(rational));
++            }
++            return Some(self);
+         }
+         let mut result = Self::rational(&self.rational * &other.rational);
+         for (radicand, coefficient) in &self.radicals {

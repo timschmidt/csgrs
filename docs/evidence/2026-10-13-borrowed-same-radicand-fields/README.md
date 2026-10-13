@@ -54,3 +54,10 @@ remain 120 seconds of board worker CPU and 60 seconds of neck check-body wall.
 The full plan remains active, with all 39 properties, 14 targets and crate
 future work in scope. Main runtime, the original 35 pending native paths and
 individual property/target statuses are protected by the source guards.
+
+Preparation passed. Each frozen source contains 10,136 files. Baseline and
+outlined match their previously qualified sources byte for byte; only the
+declared algebra file differs across variants. Shared-test identity, reviewed
+arithmetic substitutions, original general fallback recovery, manifest/lockfile
+identity and all parent/main/native source guards pass. Source records are
+committed before compilation.
