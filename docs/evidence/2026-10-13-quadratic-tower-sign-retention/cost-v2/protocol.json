@@ -1,0 +1,100 @@
+{
+  "scope": "Five fixed paired blocks of direct compaction timing and allocation costs.\n\nTwo sources, separate fresh Cargo targets, two separately linked probe modes.\nAll builds end before four preflights and twenty measurement processes. Exact\nvalue witnesses must agree; sign availability may only strengthen. Sampling\nnever extends to discard adverse rows. Requested precisions and original native\ngates are unchanged; this is a scalar microbenchmark, not an application gate.\n",
+  "runner_sha256": "bbc123924b7d113e3cecae12b7621c225d6260ae8f270955a4e8d7e1e914cd07",
+  "metadata_update_sha256": "b968d13c4c46561a37b288bf41cdb434880a3fcc945a66865b7384b7fb6b1816",
+  "prior_guard_failure_sha256": "57bb8e323cce46daed2d73e8f9c9af1f859dec367dce57089cb132ab89b607e6",
+  "assessor_sha256": "1021ec6fa8879577a6be02ea2e0a41576ba949d89f9e2bc53d404411c5a16236",
+  "probe_sha256": "0859ea968f264b283fd1d8b96ad2d5a17a992feab36c471ba134595f56dab52e",
+  "correctness_sha256": "6ee51e45a811750cd030fadcd140147a89b293c3cde76cc6cb130b4ff86bd77f",
+  "qualification_result_sha256": "31d6079af8ab93d37ff3c180745da5322257eb70acb77dfff58ab0d33dc8a750",
+  "preparation_sha256": "15a312c0b63e22abcbad4427f79ea1b9279e3c58d7c222e7b9326036cb8afb0a",
+  "baseline_protocol_sha256": "172d762d3f75c67d483463a778214ec9abd177080910e776f39dd8b7087f312b",
+  "source_manifests_sha256": {
+    "baseline-v1/original-source-hashes.json.gz": "237d2d20d2acfc18fe9e5575e5b758d5867cebd94d472ff99b76db8d239670cc",
+    "baseline-v1/baseline-source-hashes.json.gz": "6299a6c3add0e29c9af0429d5fb76ffb5c80b4731ec4f667f4b8028826149ca0",
+    "preparation-v4/control-source-hashes.json.gz": "bc72baf3c98675b99c421e90b3180c7a7e86985f73144d9790ab099619d951cf",
+    "preparation-v4/candidate-source-hashes.json.gz": "9c20afabc15306d0cec57f33c597d9c3c1ad1605d857d023b1b6601c529592ac"
+  },
+  "variants": {
+    "baseline": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline-control-v2/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v2/baseline-target"
+    },
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v2/candidate-target"
+    }
+  },
+  "families": [
+    "quadratic",
+    "denested_tower",
+    "nested_tower",
+    "negative_normalized_tower",
+    "denested_tiny_linear",
+    "denested_tiny_square",
+    "nested_tiny_linear",
+    "nested_tiny_square",
+    "biquadratic_tiny_linear",
+    "biquadratic_tiny_square",
+    "rational_cancellation",
+    "zero_cancellation",
+    "opaque_decline",
+    "outside_tower_decline",
+    "aborted_known_tower"
+  ],
+  "phases": [
+    "construct_and_prove_source",
+    "first_compaction",
+    "warm_compaction",
+    "cloned_compaction"
+  ],
+  "fixed_block_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "time_inputs": 4096,
+  "memory_inputs": 1000,
+  "preflight_inputs": 42,
+  "preflight_processes": 4,
+  "measured_processes": 20,
+  "rows_per_mode": 60,
+  "witnesses_per_process": 45,
+  "cpu": 0,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3439.938\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "timeout_seconds": 1800,
+  "limits": "Sources are constructed and proved before first compaction; first does not mean a process-wide cold cache. Equality checks and fact observations occur outside timed/allocation phases and before subsequent warm/cloned phases. Counts describe requested Rust allocations. Probe size includes linked artifact/path effects and is not production executable size.",
+  "runtime_admitted": false
+}

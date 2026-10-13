@@ -1,0 +1,21 @@
+{
+  "status": "cost-probe-integer-width-compile-failure-before-sampling",
+  "runner_sha256": "bbc123924b7d113e3cecae12b7621c225d6260ae8f270955a4e8d7e1e914cd07",
+  "probe_sha256": "0859ea968f264b283fd1d8b96ad2d5a17a992feab36c471ba134595f56dab52e",
+  "cause": "The probe explicitly cast its small numerator to i32, but Rational::fraction requires i64. Both bound libraries built successfully; no preflight or measurement executed.",
+  "correction": "Probe v2 changes only the bounded numerator cast from i32 to i64. Version 3 reuses the two completed source-bound libraries, links four new binaries, and retains the same families, phases, counts and fixed pair order.",
+  "artifacts_sha256": {
+    "cost-v2/build-artifacts.json": "45440787b881e402fe37fbb1de57016f0353a94b0da9638f1d3dddfe4e65193e",
+    "cost-v2/build-baseline.stderr": "749929648748de965c3f0a5b6a942e4b46333cab2b28ecb9e899e8b413ecc397",
+    "cost-v2/build-baseline.stdout": "85d443cc7a22b97c17291a602adf3eb936584d18a9860caa08071bdbd37ed2a4",
+    "cost-v2/build-candidate.stderr": "6a96bdb615178a3a44575eb24dfa7cbc12ad2263e546cdd4e3b489251bc65f20",
+    "cost-v2/build-candidate.stdout": "146b2877c20bf7efa3cca948c2fdcd08ff8ebdb9ca680f96bf624aac07d03f7f",
+    "cost-v2/commands.json": "20ca81fe4cbe6b011125dde156085c77f99fa8744ab451099a46863a098f986d",
+    "cost-v2/libraries.json": "bf7b251539be06627dbedd892a8bf9757b0aace6821a4f828746e6c83c7f33da",
+    "cost-v2/link-baseline-time.stderr": "0bcf6f3929950d017c14e3e4147bc921b797396afe17a1cd176d7f1274c03b96",
+    "cost-v2/link-baseline-time.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cost-v2/protocol.json": "bfb9fca2659d3693049fb93d940be1adcb87c91cc2be3573e09d4b5d23afacac"
+  },
+  "measurement_processes": 0,
+  "runtime_admitted": false
+}

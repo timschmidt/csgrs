@@ -1,0 +1,44 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v2/baseline-target/release/libhyperreal.rlib",
+    "sha256": "6cbd860dbe0ee27db88560eb84ca97952eefbc24ae5644547075434494f44bd2",
+    "bytes": 11701300,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline-control-v2/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    }
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v2/candidate-target/release/libhyperreal.rlib",
+    "sha256": "edd0e86114e7458b6ee2f4d15a7f34b01ce847f982c84ad7c35b090586b696bf",
+    "bytes": 11701702,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    }
+  }
+}
