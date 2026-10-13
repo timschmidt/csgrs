@@ -1,0 +1,36 @@
+{
+  "crates/hyperreal/src/lib.rs": [
+    {
+      "before": "mod trace;",
+      "after": "pub mod same_radicand_diagnostic;\n\nmod trace;"
+    }
+  ],
+  "crates/hyperreal/src/computable/node/algebra.rs": [
+    {
+      "before": "#[derive(Clone)]\n",
+      "after": "#[cfg(test)]\nmod same_radicand_site_tests;\n\n#[derive(Clone)]\n"
+    },
+    {
+      "before": "    fn multiply(self, other: &Self) -> Option<Self> {",
+      "after": "    fn multiply(self, other: &Self) -> Option<Self> {\n        let diagnostic_single = crate::same_radicand_diagnostic::record_inputs([\n            self.radicals.len(),\n            self.atoms.len(),\n            other.radicals.len(),\n            other.atoms.len(),\n        ]);\n        let mut diagnostic_equal = false;"
+    },
+    {
+      "before": "                if left == *right {",
+      "after": "                if left == *right {\n                    if diagnostic_single {\n                        diagnostic_equal = true;\n                        crate::same_radicand_diagnostic::record_branch(true);\n                    }"
+    },
+    {
+      "before": "                } else {\n                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();",
+      "after": "                } else {\n                    if diagnostic_single {\n                        crate::same_radicand_diagnostic::record_branch(false);\n                    }\n                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();"
+    },
+    {
+      "before": "        Some(result)\n    }\n\n    fn inverse(self) -> Option<Self> {",
+      "after": "        if diagnostic_single {\n            crate::same_radicand_diagnostic::record_result(diagnostic_equal, result.radicals.len());\n        }\n        Some(result)\n    }\n\n    fn inverse(self) -> Option<Self> {"
+    }
+  ],
+  "crates/hyperdrc/src/app.rs": [
+    {
+      "before": "    pub(crate) fn complex_project_zip_kicad_board_completes_smoke_check_suite() {\n        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK\n            .lock()\n            .unwrap_or_else(std::sync::PoisonError::into_inner);",
+      "after": "    pub(crate) fn complex_project_zip_kicad_board_completes_smoke_check_suite() {\n        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK\n            .lock()\n            .unwrap_or_else(std::sync::PoisonError::into_inner);\n        let _same_radicand_report = hyperreal::same_radicand_diagnostic::Report::begin();"
+    }
+  ]
+}

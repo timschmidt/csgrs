@@ -1,0 +1,20 @@
+{
+  "status": "corrected-before-freezing-or-compiling",
+  "cause": "Standalone input formatting did not inherit the crate rustfmt configuration; draft export stopped at the input equality assertion.",
+  "files": [
+    {
+      "path": "docs/evidence/2026-10-13-same-radicand-product-coverage/same_radicand_diagnostic.rs",
+      "standalone_format_sha256": "f2e1e5464c2e7a9142ad008073199aa893f75ffd8252ee23f5fe84e9be77ad9a",
+      "repository_format_sha256": "a6a8f86100b67fdb03a70d171f32965e28c8470e01d93a675cf649c02555d891",
+      "change": "Repository rustfmt expands one macro invocation across lines; no token change."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-same-radicand-product-coverage/same_radicand_site_tests.rs",
+      "standalone_format_sha256": "d9d47a6cd026e192216f864df1cfc67ce77836eb57cbf22f691e5081e66e8453",
+      "repository_format_sha256": "2440d5f13751e546c2fa19f8524dbdec105941aa2e5ad49b6513bc5fe84f3a2c",
+      "change": "Repository rustfmt expands one macro invocation across lines; no token change."
+    }
+  ],
+  "draft_compiled": false,
+  "frozen_preparation_executed": false
+}

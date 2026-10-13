@@ -1,0 +1,46 @@
+{
+  "status": "diagnostic-inputs-prepared-qualification-and-coverage-pending",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "rejected_cache_local_decision_sha256": "619ac894d52594bc50fc76856e766dddf89552eb6c5e2e96d69c05d532af28b1",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": "RadicalCoefficient constructors, insertion, multiply and inverse; closed conversion; polynomial multiplication and retained recognizer/retry."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-coefficient-multiplication-shapes/assessment-v1.json",
+      "sha256": "727aa6da7f30ef2a79a838c44ab19e39a2ea1a406806fe40239b33ce18e55acd",
+      "sections": "Historical 16-cell operand-vector-presence counts; no equality or single-term classification."
+    }
+  ],
+  "review": "The original multiplier inserts left-linear and then right-linear radical terms before nested products. For one radical per operand, no atoms and equal non-unit radicands, at most one output radical remains; exact conjugates can cancel it. The current code repeats insertion and creates new result storage. A future direct kernel would need to preserve arithmetic order, zero-skipping behavior and private noncanonical inputs, rather than just an algebraic identity. No kernel is prepared.",
+  "diagnostic": "Count all multiplier entries and one-radical/no-atom inputs using lengths. Piggyback on the existing radicand comparison branches without another scalar comparison. Count stored output radical lengths immediately before the unchanged successful return. Fixed atomic counters own no scalars and add no mathematical operations or cache queries/writes.",
+  "invariants": [
+    "All original arithmetic, insertion order, declines, memo publication, retry, depth/work budgets and Box cache storage remain byte-for-byte after reversing explicit edits.",
+    "The report starts under the original fixture lock and prints after the original full-board assertion, including unwinding.",
+    "P4 permits stronger facts on warming and never contradictory or weaker available facts.",
+    "Original boards, finding counts and 120-second worker-CPU assertion are preserved."
+  ],
+  "limits": [
+    "Atomic synchronization and diagnostic branches change costs; counts are not time shares, allocation counts or a savings prediction.",
+    "Input vector lengths alone do not prove the proposed direct-kernel preconditions, including reduced non-unit radicands.",
+    "This is focused instrumentation qualification, not all workflows or a whole-crate formal proof.",
+    "The 35 original native paths and endpoint/P4 parent remain unadmitted and unchanged."
+  ],
+  "planned_controls": {
+    "calibration_tests": 2,
+    "site_tests": 3,
+    "inherited_cache_tests": 6,
+    "inherited_P4_tests": 11,
+    "all_feature_scalar_library": 879,
+    "scalar_doctests": 28,
+    "endpoint_tests": 5,
+    "format_strict_four_crate_clippy_and_scalar_docs": true,
+    "counts_overlap": true
+  },
+  "mutable_draft_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/same-radicand-product-coverage-draft-v2/source",
+  "draft_compiled": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
