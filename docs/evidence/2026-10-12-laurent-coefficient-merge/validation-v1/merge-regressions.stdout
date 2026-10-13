@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::laurent_merge_tests::cancellation_order_preserves_the_eight_radical_frontier ... ok
+test computable::node::laurent_merge_tests::failed_merge_does_not_publish_partial_coefficients ... ok
+test computable::node::laurent_merge_tests::opaque_cancellation_preserves_owners_and_the_exact_remainder ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 863 filtered out; finished in 0.00s
+

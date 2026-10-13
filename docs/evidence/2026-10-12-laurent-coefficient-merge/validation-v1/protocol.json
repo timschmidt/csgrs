@@ -1,0 +1,120 @@
+{
+  "runner_sha256": "2914c98319a808df27eec1d04c15356c68569fe282e859911c41a26ba2ef41c8",
+  "preparation_sha256": "3c3e340e15ca1d9d7415c18f867da42e76003f0a58dd3f858a1f31bdafdcb770",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "3d9214c124334a328fa708f6125ce2da44ae7d2dea370d9e459ee671652aa540",
+    "crates/hyperreal/src/computable/node/laurent_merge_tests.rs": "ea025c9657c74cb0f5b22af0251c9ac5c570bdc3895f9553b933c3833a071df7"
+  },
+  "candidate_archive_sha256": "d054728a48ffa606dc5afb066d74096932a81e88943a172c69335901b2920947",
+  "candidate_patch_sha256": "621d02351a4e8d3c708958a1d811e1f4c832d8a16cdc74bd8ba58bd930fff2f8",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "merge-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "laurent_merge_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "cache-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "scalar-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "scalar-doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ]
+    ],
+    [
+      "scalar-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "scope": "Freeze the owned coefficient merge and run scalar correctness gates.\n\nEqual-exponent merges mutate an owned temporary coefficient; failed temporary\npolynomials are discarded. Recognition order, limits and fallback stay unchanged.\n",
+  "runtime_admitted": false
+}

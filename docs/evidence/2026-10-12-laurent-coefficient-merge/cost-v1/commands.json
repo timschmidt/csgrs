@@ -1,0 +1,1606 @@
+[
+  {
+    "name": "build-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target"
+    },
+    "exit_code": 0,
+    "seconds": 0.3161076130345464,
+    "stdout_sha256": "33ed2078cf8a7c10903b1abcb1a1f4748bf9241f1ed8d400c03cd10326f1eddd",
+    "stderr_sha256": "1ff8bbcb4151dc887e69b78a29bc241d5062cba4757aa5f4639926ae712a8181"
+  },
+  {
+    "name": "link-baseline-rational-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8927572187967598,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-rational-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8859143871814013,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-quadratic-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7722129663452506,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-quadratic-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7682259287685156,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-integer-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.5154854012653232,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-integer-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.5225009610876441,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target"
+    },
+    "exit_code": 0,
+    "seconds": 11.314577991142869,
+    "stdout_sha256": "dc88e1ff44aeb4aaaf42950683b2bc2a5ae891325d612f7dc53f25d48004aac9",
+    "stderr_sha256": "5c6342c09a317b4ed8eb8dd402c95510f646e7cc245beb122fbfa6d8c5b791b4"
+  },
+  {
+    "name": "link-candidate-rational-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8844664162024856,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-rational-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.8772092722356319,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-quadratic-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7874751519411802,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-quadratic-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7836183151230216,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-integer-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.5191060327924788,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-integer-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-laurent-coefficient-merge/cost-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "--cfg",
+      "feature=\"count-alloc\""
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.5225663762539625,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-rational-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1805041003972292,
+    "stdout_sha256": "bf2a383724ecd024d1c0d55277445706602b21acbb123fbae4547d65c5d74c21",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-rational-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16794476890936494,
+    "stdout_sha256": "cd57d9a72062c4f8d956e4647040a279a96a733a5ff5d086dd3228cc25467692",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-quadratic-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17072806926444173,
+    "stdout_sha256": "16576ee264c1305b4a4a9300866f3b95ce1466cf0c1a9a1a505fbc66c685a39c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-quadratic-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1741874529980123,
+    "stdout_sha256": "b4a8a76ddd182261dcab07ac40d89bff4cf50f214b18f798e7a78e3464dfceaf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-integer-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16755540575832129,
+    "stdout_sha256": "317dff9d7924cdf8e59ff8f2b2b2d91c7efa1021855015f791930ced1d8e72bd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-integer-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16463173599913716,
+    "stdout_sha256": "f1626dbc33da662edc9251bcdfce1146a6c88bad0de8ba74bade5b62e41b46f9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-rational-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15431541204452515,
+    "stdout_sha256": "1f46c4834284b31c4099aab7f47574c955ba1a1588c42c78b03b8ce66be345bf",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-rational-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.16480079386383295,
+    "stdout_sha256": "e3a46df689364a80b716635f1090376f196b83686d22888721b3807c977921e6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-quadratic-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1620515026152134,
+    "stdout_sha256": "96cb037db9f23d0ed1b88cdf7b8c666e9384e3f88888117d60679f7fe1fcdc4e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-quadratic-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15856889123097062,
+    "stdout_sha256": "716ef1a50f01f4a4a1ab24f5a38644418371fd3905c47b45cdcc8d91fe0fdccb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-integer-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.15219492698088288,
+    "stdout_sha256": "11fb38cd9c33cc3d6e8f7a980c4a8a3a4ab598efc5649ee436b04e46d1f7c53b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-integer-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1635524700395763,
+    "stdout_sha256": "6a742aa34903b3cdc797d4ac8ea6bdfb61471975ef9246d875663625521e4cfa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "rational-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3239195579662919,
+    "stdout_sha256": "86f3179b61e7b2d85a4b3b4b45f5e7b7f2b8986a18fa8a7068f9d22a2ab393b6",
+    "stderr_sha256": "320948b0c8937e2b88c006ad6bb557746a18d2f5fe1e10f12dd3540dc180b16c"
+  },
+  {
+    "name": "rational-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.31090088933706284,
+    "stdout_sha256": "e37b9f01798e1ca966b5ecd2d91d2ae8903d2f7472a7b60e9c4fbed587b1c053",
+    "stderr_sha256": "ddc324a9f5c60d1b02faaf719d31dd58b4412adf5cc874bc7d372f80ff448222"
+  },
+  {
+    "name": "rational-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3472182238474488,
+    "stdout_sha256": "7a89e5ef3cafffd01a58c0ade6286a78cde0184cd968ddd853892b20023fa906",
+    "stderr_sha256": "6dfec2c4720125b45c6328308482e87e1ddb093730c22016f87ced17db276b64"
+  },
+  {
+    "name": "rational-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30701802391558886,
+    "stdout_sha256": "14cae32eae35130bb3c473f490ac99217739cece4409b3a8be0d417e9a581554",
+    "stderr_sha256": "02f313c66d5b1cce686a13c5b66df460c3ea36b00056bb4764a60368668c39b5"
+  },
+  {
+    "name": "rational-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.32378418697044253,
+    "stdout_sha256": "081cfd3eaee5eff6d66009c3035342bf401df2b27fd92e5e3963fef1261a84f4",
+    "stderr_sha256": "318aa0543563502e7c46df5a67932fb498ac5f1eea7cde9876f64f92194f1251"
+  },
+  {
+    "name": "rational-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3220448368228972,
+    "stdout_sha256": "d9a18d83b300ab2f6c5823e8d2e6bc4257b0b3317e407e859e8dbde78be19110",
+    "stderr_sha256": "d17f2a5ab96c2e30a6461c803c68f680a4a2c6238cf759662d20a104663b668c"
+  },
+  {
+    "name": "rational-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.31092415703460574,
+    "stdout_sha256": "0ec9d182b4a91e4592c98a9b43b18f01c5f254c557679bcedd4a93229f7d2b1e",
+    "stderr_sha256": "e8bc27133777254c88fae83989c98e35ee86a3fc68ad3d9dee71815670daa3d3"
+  },
+  {
+    "name": "rational-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3267212859354913,
+    "stdout_sha256": "f3faaa4d048072b072d6d73907773cc67531401824f9c429a5dc5d191c7f49d1",
+    "stderr_sha256": "40cca45794c8fc8ea7e0eee0f37e455849febd934fc39bffbf4ff431c72fa3f8"
+  },
+  {
+    "name": "rational-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3194276746362448,
+    "stdout_sha256": "859feb216026d264ee9b7a464a35480c30742fd02856759fa8c054c5ed89d239",
+    "stderr_sha256": "6b063268ddad519c3f6b478dd0d02c30e52dbc4751fbe79151d72dfabafb3aee"
+  },
+  {
+    "name": "rational-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3366410071030259,
+    "stdout_sha256": "e41e1a8a5eecee9ee16a62689e4b4c41f743f7314eb201c5524f3f219dac4332",
+    "stderr_sha256": "6a512e34e3cca8b0847dda5f98b39d46a709dda05300e98f8b9568ce8270d9eb"
+  },
+  {
+    "name": "rational-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20660538412630558,
+    "stdout_sha256": "0c74b600719344f0c69c0c7c17f6b41fcd27b6bb82cb3d2a730bbf018aafbdc0",
+    "stderr_sha256": "bd3bed7e50823bbbe9c7b2ae946b56189d1f7e95970bae598f18a0379535c954"
+  },
+  {
+    "name": "rational-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20780204189941287,
+    "stdout_sha256": "bd869cac2bbee71b1f12099fddc2b60c6be573e1f2fcbba3c68d10a457cb192c",
+    "stderr_sha256": "be5daa902a0c3c9def99bb5ab640c04a824a3579fa85927a983b3cdcb6e1dbd7"
+  },
+  {
+    "name": "rational-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19767324486747384,
+    "stdout_sha256": "dd56c73cb2ed44215d32ca7d91acbab98e4a7a2b0a46a99d4741eecfe5cf2b09",
+    "stderr_sha256": "9f9efe7e9ab24c5442f4c1927099d91fad8f32209936992f8ccdb7853cbc59d4"
+  },
+  {
+    "name": "rational-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20221470529213548,
+    "stdout_sha256": "814ddba911a0e22417df35a73ea76618438177db900e9197d2af560699f642d5",
+    "stderr_sha256": "b23a88b3e6c26f78476f2ee5690d9e91d6dc732108b9c21400e88c19a830cce9"
+  },
+  {
+    "name": "rational-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21344643598422408,
+    "stdout_sha256": "4da6e96d9dc7ccd378f8fa2054e57abefc5c317e382919caf8f4c2a7d1bf48e2",
+    "stderr_sha256": "76b5ea9caae096d140192988d1c70dbc0c991926390f426cc12af4571a7e99b9"
+  },
+  {
+    "name": "rational-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22337057767435908,
+    "stdout_sha256": "91a1366cf0627bae838744883b8cb6eee62839d21470b93f4e5fd9712dd5a4df",
+    "stderr_sha256": "dbfef8d5f34e2db7633d41916716e3b43c123ed5cf6b85469a97bfe5f5cc0afe"
+  },
+  {
+    "name": "rational-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20750441262498498,
+    "stdout_sha256": "560bfe042a88d9c741b0bb738ff0208a9ff4c6498bd0b10f3864164626dce13e",
+    "stderr_sha256": "5e7f3a6308725a4ec325eec8be8bae2110eac8d942c68d13996bbaa41fbcf7c5"
+  },
+  {
+    "name": "rational-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2197676538489759,
+    "stdout_sha256": "dd7ce26fae843b6a314ac681681496c8454c55bfa03db71b7b7a3e87583954c6",
+    "stderr_sha256": "69213af8974f4a0f455b001337cd8406955b71677df2e35f2188dd4fae00d233"
+  },
+  {
+    "name": "rational-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.219879605807364,
+    "stdout_sha256": "5971e1cfd8fe073d2c94b4a14bd40b045187165714abf6730689e2bc99e521d6",
+    "stderr_sha256": "9667206ae302f2373dbc8e5211c2b2ebd84fd444bc77b07bff4ae42ea5450880"
+  },
+  {
+    "name": "rational-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20830827811732888,
+    "stdout_sha256": "d2121b5527c83c759dfbf846111c98d50fda9f29becffbe3a3c89fafce88d9ef",
+    "stderr_sha256": "059863dd703f26f9251b547fc1a3099fc09acf8374872bbded79e9bb0a5c52b5"
+  },
+  {
+    "name": "quadratic-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.28759654331952333,
+    "stdout_sha256": "e2c776de86c7495fc02a65e082d40050e76ea490af9073081aff0a9cbb7aca93",
+    "stderr_sha256": "5d882a6e4ad0a82429388f2d9da44f99943bdeab09551895797bff5c31efeafc"
+  },
+  {
+    "name": "quadratic-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.29259883100166917,
+    "stdout_sha256": "c2e830a20f83188c43b16511b4f741c5ba032563ab9b01e06d0b083ace0aab78",
+    "stderr_sha256": "45fd8b818e71392e5b68d5a8a7eb2f866a94805a0c9b066f2e044de878e7e906"
+  },
+  {
+    "name": "quadratic-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.29252438619732857,
+    "stdout_sha256": "48b1db522e4eea5b3e6069caf30cba188ee9b56254b4ed99be5367b30eae2fcf",
+    "stderr_sha256": "12555af98349ebd4b0fe0718ba93ef3f68e216a249fad2c91445c62e85d24532"
+  },
+  {
+    "name": "quadratic-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2786777629517019,
+    "stdout_sha256": "7ef937e884ef0f1700fe8f6f331924337e1f203f1ec82e971fe9efd8b2d0dff4",
+    "stderr_sha256": "544c115d5212e32f3c20ccd354f9bcbcc000bdc449c5943d6584bad99b5f211a"
+  },
+  {
+    "name": "quadratic-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.30418216809630394,
+    "stdout_sha256": "d31d15cc124d9fe7d0dcf3d21d682bb7137e6125e48ed05f14810c71cc886380",
+    "stderr_sha256": "a78a2886d960989e6d00e83087563bcb2030387acedbf943fce641d14643f9e8"
+  },
+  {
+    "name": "quadratic-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2887121867388487,
+    "stdout_sha256": "eff2240731fc50d29400960d3b523db3c8231b38af45516020ffe98b64d45205",
+    "stderr_sha256": "2a21e25da8c7f1f87d0185ba53cd51d3cb59eee4d6ba6952cda7b1e342f67051"
+  },
+  {
+    "name": "quadratic-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2902402118779719,
+    "stdout_sha256": "e5d547b0367ba70371c128bd9e9e5248002cf74d3bbcbeb3b88e1ccb636b05bd",
+    "stderr_sha256": "4b3150a2783b0b9588fa6cea61e32fa8e8c95db405e97b5e40d9a583466854a9"
+  },
+  {
+    "name": "quadratic-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2984987166710198,
+    "stdout_sha256": "ee7057f5dccf6873db9179323ebd3ed3349e44c74e632f7de23aab1b42d2acbc",
+    "stderr_sha256": "41886793c110252a003fed92df04c962e8ce6c0e539841380dd79cd7357f9d65"
+  },
+  {
+    "name": "quadratic-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2973198280669749,
+    "stdout_sha256": "72fa328f9fde25eb73cac3d78a9859969ec73f2fa69c4ce3e19d39f20c68c0d0",
+    "stderr_sha256": "3ab0d9f7b9a11a78540677ee7e5be394e1c80f90699f997ee20e429f55e90768"
+  },
+  {
+    "name": "quadratic-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.31241475511342287,
+    "stdout_sha256": "a02872e0eb6937d6b49db80add704e9dbc7cca7029ca4b2d9df4422a8985368b",
+    "stderr_sha256": "bcbb1c297d857e4ff7894ced328969e5850ee44ab5d98f518f97f2d504f59fce"
+  },
+  {
+    "name": "quadratic-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19871727377176285,
+    "stdout_sha256": "b96dfa789d092254096acce654ecc587e6b38b6430d4d1917c4a94ae055dbe1e",
+    "stderr_sha256": "651714a63e4a498c41532a43e09b46b189c6bba3bfd0d05ca6fa2a6fedcf04a8"
+  },
+  {
+    "name": "quadratic-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2037793081253767,
+    "stdout_sha256": "af2078a97fe6b44294070195b87424301e93740c90e83563a3911eeb66b99d13",
+    "stderr_sha256": "436951d0b02b75ef1d0970ad9ddc4d40e0d5c5607eb2b0f6350ca3fdff564740"
+  },
+  {
+    "name": "quadratic-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20002640364691615,
+    "stdout_sha256": "21adb0051eb9eb322bc2002919a02a37b0ab1d326a4562bea81eb3852e2f4fba",
+    "stderr_sha256": "14590d2249963ac87f37bc95c06b3f48e4382528361cd81e46f8a05d3190467b"
+  },
+  {
+    "name": "quadratic-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2011553468182683,
+    "stdout_sha256": "866dbbf3c0e2b2d0a7af22c681b15b6d69414c79cd297b2a28f00890eeff48b7",
+    "stderr_sha256": "c074e9da972105daaec9cc2ad9a96d2c6d6bc4b4ed9485aff14946e031d051f5"
+  },
+  {
+    "name": "quadratic-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19124838523566723,
+    "stdout_sha256": "c9339487184a0fc56e8451d1413c298b50f307d4417dc6fc9ebc58a11dbd8c01",
+    "stderr_sha256": "e77f24623cac56c156cc2e2e84465cde631d474457488ca5d48d2261af9d2dae"
+  },
+  {
+    "name": "quadratic-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21943838708102703,
+    "stdout_sha256": "4ec33d556eb7c0c76c58391e01afcb59a1fb744b9641d99e104a17f8017f0205",
+    "stderr_sha256": "a6e98552f5d1de86ad5d6d2befabbb204b6847a16d8d25a94ef5910cb37f42bb"
+  },
+  {
+    "name": "quadratic-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.20244715875014663,
+    "stdout_sha256": "4b206077e43774cb967943fcd4ed70603c17f3c9ce59ac57bb2476fbda869306",
+    "stderr_sha256": "11de4dbf572fd8921e063ab3470ad0d7570491ce9d72a259ed54ca1266cd9b67"
+  },
+  {
+    "name": "quadratic-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2050344618037343,
+    "stdout_sha256": "396ae530685089f833a976b415e6c59b1feb19144d6f3c75d5dc0f69b2ca33db",
+    "stderr_sha256": "3ff28b2ac46ed037d4b6d85e004e6e90471f3e0baa1db4abfe5679f3334438ff"
+  },
+  {
+    "name": "quadratic-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19869121629744768,
+    "stdout_sha256": "3a071055c3a632033da752c17cff644e4dda97972d0a2d999d3f27832ad1f216",
+    "stderr_sha256": "3902fbdf17b8f7ad5c6046ad00f813a08daf878e5be0dc8c1ffdde583ea64f9f"
+  },
+  {
+    "name": "quadratic-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21025563403964043,
+    "stdout_sha256": "2637f5538f83d405680242247c301fa27f42be117f36fecc1cce8ad109390299",
+    "stderr_sha256": "7d465fa64444f56d63078055a8c9cc7b7bde33718afd95cc1ba89ed9acfbc1ee"
+  },
+  {
+    "name": "integer-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2233632169663906,
+    "stdout_sha256": "3527c96e957306fb3353acc9d5dbe758e4678a3ce4661d6db5d9d3bdddefa6a3",
+    "stderr_sha256": "342d18110be5de0bae8c3a14f16f6a4cabfd6aa73420d941c96cd6b7bb8e8cee"
+  },
+  {
+    "name": "integer-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2248814138583839,
+    "stdout_sha256": "4b7ffd766bae09ce32d7c3acb5f999cb789063f9b696e6f1d5de64ea6d30cf45",
+    "stderr_sha256": "5c3481db7cc196cd8f55d9bfaaa8fb8b8f91da403da291b5804c03f750dab543"
+  },
+  {
+    "name": "integer-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.24155109375715256,
+    "stdout_sha256": "d7fc11e5cb4b356c63530765467a4105c9a06028e79d65bff4c5445ae1b84a26",
+    "stderr_sha256": "3d6cb3b418c4e3e50378e013ce2201d2dde1e4d78ef77411eed26c44685df95c"
+  },
+  {
+    "name": "integer-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2236404586583376,
+    "stdout_sha256": "b0537e4c41051f93065baa74261d692cce441912f891ccfaddd68d599fdaf221",
+    "stderr_sha256": "235963026c11451da3ce505b81741a3691d33e0b40a4de5348a59735c8e3b14e"
+  },
+  {
+    "name": "integer-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22291039815172553,
+    "stdout_sha256": "ce35bd32fc35116414b10267bbfc2cb809623b4c50b1bf883c29714ea4ed0aeb",
+    "stderr_sha256": "caa33c475dd7f751ae94fc42b5327375a2fdcef0f6037062932fd9c442f91726"
+  },
+  {
+    "name": "integer-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.22599207796156406,
+    "stdout_sha256": "c44c45e713af8678077bd7dd35592f3278cd143bced9b01e89e5402ae55d5394",
+    "stderr_sha256": "7f8375a148c702355189f4f8d069f8f986ea99c34826c09e82ff5422c81c9487"
+  },
+  {
+    "name": "integer-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21759311202913523,
+    "stdout_sha256": "b1b51110b318a486cb31e202730a1df6ed9d0afcfff2355a36029499e5f97c09",
+    "stderr_sha256": "6ef3e0a342b10fbba83742b76d89ffd364e5d22af291e529973b03910d6e2ca3"
+  },
+  {
+    "name": "integer-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21062944876030087,
+    "stdout_sha256": "280051611a4f8051fa21e568c8a93c12beafd72d52c062423f4830eda3307eba",
+    "stderr_sha256": "f1209db7fd13a08ac53c110ec2c499a9ff30e0e7b65909d10b430f221d5d9414"
+  },
+  {
+    "name": "integer-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.2162576038390398,
+    "stdout_sha256": "1a612c16b11b9c3ee74e4a1539cc213ce55eab60b01deff6f3521951011b753f",
+    "stderr_sha256": "010f86148f27fa0465b6cf9598dbdb76a378cd284cb6cff735b21ee4a87d2aa2"
+  },
+  {
+    "name": "integer-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.21802755305543542,
+    "stdout_sha256": "5b0154044d1400cc52003472018be807dbff04bf0110c7b19ca0f75cb02cc0e1",
+    "stderr_sha256": "64a147a5920fe2ba09dfc17941d299f2a0c4c099ec3fc9e06d898bc2e0b16d63"
+  },
+  {
+    "name": "integer-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17046679696068168,
+    "stdout_sha256": "5766796eafcb5c94282e132b418f4df697ec2a3bc61dde7f91c985d06c0617af",
+    "stderr_sha256": "b0235b4e1609d6ad638d6d2e8fd7b7ffdec38d9d49ef712ef97d00efb6c76830"
+  },
+  {
+    "name": "integer-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1712863896973431,
+    "stdout_sha256": "120befb5d23b34b4b1ae1d4adfce2b1a52a5a21a9806f7a4f8deb6b099ff23ab",
+    "stderr_sha256": "0f33f0933785c56f56a89dfc65c28f62f6296a8420b8e797fc9c5594c6d4a9e4"
+  },
+  {
+    "name": "integer-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18452251516282558,
+    "stdout_sha256": "64ca0b1c224361c1136c478aa4872cb04d014d6749063a4e47614bfe9239fedb",
+    "stderr_sha256": "4ef9cd010967df48e503093d59723a6b0d0cd0e176b93058340f83d0ce920e83"
+  },
+  {
+    "name": "integer-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1794479019008577,
+    "stdout_sha256": "3ee8121f94e08a32828b033fe781566e47bf6e11ddcf28233da7be0f799f4e59",
+    "stderr_sha256": "2cec93bd5e4b113d847fa1de0b882de4c0a1a645bd0d7dce9832b8f7e3e5bec1"
+  },
+  {
+    "name": "integer-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17268885485827923,
+    "stdout_sha256": "1d57203061410ee363c331217a829e27ffd46a8917e4263efff5675317a6d5fd",
+    "stderr_sha256": "bbdd12cd51b57f551d3ce04b9646587e01736cd818d51ec0b35b39ddbad3b68a"
+  },
+  {
+    "name": "integer-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.18595601711422205,
+    "stdout_sha256": "b14e78ccc99dc8975a8aadb08c0cf484757d0047b654495c9029ec30fb217d7b",
+    "stderr_sha256": "10864700961318a588c3cccd9a65baf379078c79a2089fc62a56a2cc377778e1"
+  },
+  {
+    "name": "integer-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.17189341876655817,
+    "stdout_sha256": "e5906f2f63f65a6596cf51284776bafad5fa96903fa2b633a49f9cd4e7ce92ae",
+    "stderr_sha256": "5fc27a32ce4ece13ee204b170e5435d48686e732c9716e9ec7cba993bf77e28d"
+  },
+  {
+    "name": "integer-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.19023369392380118,
+    "stdout_sha256": "d348e970051d1c4ad5bfd29c30f4a5c69722f96d03a297f363793569baa09a04",
+    "stderr_sha256": "9e5acb27145acb6103011a9d2b58cf058df57c5cb61d07eb838647936ddb466c"
+  },
+  {
+    "name": "integer-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.184538584202528,
+    "stdout_sha256": "867336d0448a5df28094da50996069a2c9762419e9474d4bcfdbb98504a1077b",
+    "stderr_sha256": "f3366792caa18e9999e69284ddee8f499f7460e345aa01cbe2291a379689e21e"
+  },
+  {
+    "name": "integer-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.1832090150564909,
+    "stdout_sha256": "a25e28666e81e32c2d0017dc08ced90d43f99d54f2b536173533edc8d5052d9e",
+    "stderr_sha256": "1e812edb223eb4800c1817c988cdba03117dbbd67eb3af00ff37e0f3b09b6158"
+  }
+]

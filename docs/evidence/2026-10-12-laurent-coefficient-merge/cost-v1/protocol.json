@@ -1,0 +1,38 @@
+{
+  "scope": "Fixed paired scalar costs for owned Laurent coefficient merging.\n\nAll three public probes are unchanged from the integer-leaf trial. Each suite\nuses five fixed alternating pairs per mode, independent exact witnesses and\nsource-specific build directories. This trial does not admit runtime changes.\n",
+  "runner_sha256": "82e5db90d7da97e454c12791dcc49a59aa62304f840458ed34f97a1066d3378b",
+  "probes_sha256": {
+    "rational": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+    "quadratic": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60",
+    "integer": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294"
+  },
+  "predecessor_validation_sha256": "a685055d04c1de2c9ec95f56b62620fd1bfa9d5e5f611751756473a7370bf486",
+  "preparation_sha256": "3c3e340e15ca1d9d7415c18f867da42e76003f0a58dd3f858a1f31bdafdcb770",
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "3d9214c124334a328fa708f6125ce2da44ae7d2dea370d9e459ee671652aa540",
+    "crates/hyperreal/src/computable/node/laurent_merge_tests.rs": "ea025c9657c74cb0f5b22af0251c9ac5c570bdc3895f9553b933c3833a071df7"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "pinned_cpu": 0,
+  "time_iterations": 4096,
+  "memory_iterations": 1000,
+  "pairs_each_suite_and_mode": 5,
+  "preflight_iterations": 42,
+  "all_builds_finish_before_measurements": true,
+  "runtime_admitted": false
+}

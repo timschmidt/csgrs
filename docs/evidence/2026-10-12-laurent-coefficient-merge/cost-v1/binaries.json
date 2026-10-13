@@ -1,0 +1,96 @@
+{
+  "libraries": {
+    "baseline": {
+      "sha256": "47a7799ce5aa8f7c565359b2c5aed1030712a75209ef799084d4aee5906a7321",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target/release/libhyperreal.rlib",
+      "fresh": true,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperreal/Cargo.toml"
+    },
+    "candidate": {
+      "sha256": "4d9d896e12c5fda4a9129f3b01e1c6f9926c94fc90fec9a9a763d040b7f5c2af",
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/libhyperreal.rlib",
+      "fresh": false,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/source/crates/hyperreal#0.13.1",
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/source/crates/hyperreal/Cargo.toml"
+    }
+  },
+  "binaries": {
+    "baseline-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-time",
+      "sha256": "cfdd01e1bd4d323f6d37c7fd196b209afb1552bf8e4aba446027160e539e914b",
+      "bytes": 6178704
+    },
+    "baseline-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-rational-memory",
+      "sha256": "39095297ce7136b382bddf8d4323f36da1c5ae7c314ae18d8903af2fddcc55e7",
+      "bytes": 6180616
+    },
+    "baseline-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-time",
+      "sha256": "3ab2e398401eaf546e5b14662c01ec21f10b64fc5b0fdc5ac95851cc2386f610",
+      "bytes": 6153728
+    },
+    "baseline-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-quadratic-memory",
+      "sha256": "a16ac9f27abaa51fa9e929b34dac0b97c80a043f5afeccca03c47506d38243a7",
+      "bytes": 6157000
+    },
+    "baseline-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-time",
+      "sha256": "b334ec6bb0437cd9f5f8341c69bc572e0d6e941dc46651bf662bdd800a5ba975",
+      "bytes": 6049424
+    },
+    "baseline-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/baseline-integer-memory",
+      "sha256": "de4053a33db595bbdead35848c5b887e02fa47359e3e632b03c588bd0880788f",
+      "bytes": 6052280
+    },
+    "candidate-rational-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-time",
+      "sha256": "bddf868bd697e499c96448ce3a4d302f9ee33d72bd647f8008f15f08ed2f9951",
+      "bytes": 6177920
+    },
+    "candidate-rational-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-rational-memory",
+      "sha256": "a9f07e7d28f960fb2f8efc632ff282f96707b638e04db44f9f729d3772063602",
+      "bytes": 6179832
+    },
+    "candidate-quadratic-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-time",
+      "sha256": "15d95443f6924203540817f0f08167f05a2c9bc1b0dabef54e4cba39f05db3d8",
+      "bytes": 6152944
+    },
+    "candidate-quadratic-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-quadratic-memory",
+      "sha256": "45693305714bbcefbbaeb032ce76346e24cd87f46dd521d4599f3ddb541db7c4",
+      "bytes": 6156232
+    },
+    "candidate-integer-time": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-time",
+      "sha256": "ec1f38acb5e81f495b30aa368e417fd77f33cd7428ff81d6662b4f48aa1fd0fe",
+      "bytes": 6048640
+    },
+    "candidate-integer-memory": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/cost-v1-binaries/candidate-integer-memory",
+      "sha256": "c9c8c99e1bd9fc3ff4aba983df23720ad541bb69dcef5da592cb1a48cbf94b05",
+      "bytes": 6051512
+    }
+  }
+}
