@@ -2744,6 +2744,99 @@
         "production_cli_size_measured": false
       },
       "main_and_35_pending_native_paths_unchanged": true
+    },
+    "outlined_same_radicand_products": {
+      "status": "source-review-complete-inputs-prepared-not-qualified",
+      "evidence": "docs/evidence/2026-10-13-outlined-same-radicand-products",
+      "source_review": "scope-v1.json",
+      "contract": {
+        "caller": "RadicalCoefficient::multiply, one production call site after original unsupported opaque-product guard and unchanged value comparisons.",
+        "preconditions": [
+          "Each radical vector has exactly one element, established by the entry slice pattern.",
+          "The original opaque-product guard and two nonempty radical vectors prove both atom vectors empty.",
+          "Left and right radicands compare equal and left is not one.",
+          "No mutation, ownership duplication or cache lock is inserted between guard and helper."
+        ],
+        "bounds": "Both index-zero reads are justified by the singleton pattern. Later index-zero writes occur before any vector mutation. This adds no numeric-domain failure; indexing remains safe Rust and the helper is private.",
+        "ownership": "Move the consumed left coefficient across the helper boundary; borrow the same right coefficient. No clone of a coefficient, vector or rational is added; the existing conditional right-radicand clone is preserved.",
+        "arithmetic": "Constant product, left linear product, right linear product, same zero-skipped linear addition, cross product and radicand product plus constant, in original order.",
+        "result": "Same first surviving radicand payload, reuse of left Vec for one surviving radical, release of canceled scratch and empty atom capacity.",
+        "fallback": "Original general body recovered byte-exactly; original guard remains first. Cache/memo/retry/work/depth/P4 behavior remains inherited.",
+        "boundary": "Private #[inline(never)] helper returns Self; caller wraps Some. No additional scalar comparison is introduced beyond the direct control."
+      },
+      "qualification_plan": "42 sequential commands; each variant gets 902 all-feature and 815 default library tests, 28 doctests, 28 shared controls plus inherited cache/P4 tests, fmt, strict default/all-feature all-target Clippy and warning-denied scalar docs. Counts overlap.",
+      "fixed_scalar_costs_if_qualified": {
+        "suites": [
+          "rational",
+          "quadratic",
+          "integer"
+        ],
+        "modes": [
+          "time",
+          "memory"
+        ],
+        "variant_order": [
+          "baseline",
+          "direct",
+          "outlined"
+        ],
+        "comparisons": [
+          {
+            "reference": "baseline",
+            "variant": "direct"
+          },
+          {
+            "reference": "baseline",
+            "variant": "outlined"
+          },
+          {
+            "reference": "direct",
+            "variant": "outlined"
+          }
+        ],
+        "measurement_processes": 90,
+        "preflight_processes": 18,
+        "timing_inputs": 4096,
+        "memory_inputs": 1000,
+        "all_builds_before_probes": true,
+        "sample_extension_planned": false,
+        "block_order": [
+          [
+            "baseline",
+            "direct",
+            "outlined"
+          ],
+          [
+            "outlined",
+            "direct",
+            "baseline"
+          ],
+          [
+            "direct",
+            "baseline",
+            "outlined"
+          ],
+          [
+            "outlined",
+            "baseline",
+            "direct"
+          ],
+          [
+            "baseline",
+            "outlined",
+            "direct"
+          ]
+        ]
+      },
+      "risks": [
+        "A separate call and bounds checks may slow eligible inputs. Code layout can change unrelated paths.",
+        "The early eligibility comparisons and retained input capacity risks from the direct control remain.",
+        "Static symbol sizes and first stack adjustments do not establish cause, whole-program size or peak stack use.",
+        "P4 allows only stronger cached facts, never contradiction or weakening."
+      ],
+      "next_step": "Freeze and commit all three sources; execute the 42-command qualification, then the predeclared fixed costs only if it passes.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
