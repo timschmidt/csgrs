@@ -1,0 +1,103 @@
+{
+  "status": "source-design-recorded-implementation-and-qualification-pending",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "previous_decision_sha256": "1e689aedc537fb253f62c33ea7e93e0927b61e9239086b35dc1900e32dc1890e",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": [
+        "RadicalCoefficient multiplication consumes left fields and borrows right fields; insertion and failure order",
+        "PiLaurentPolynomial owned arithmetic and closed conversions",
+        "Retained recognition, local memo, publication eligibility and mandatory original retry after drop(memo)",
+        "Rational, pi and compacting projections"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "sections": [
+        "Graph-free closed cache payload, read/write lock scope and once-only publication"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "sections": [
+        "Exact quadratic projection uses the shared bounded normal form"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs",
+      "sha256": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d",
+      "sections": [
+        "Six inherited controls cover zero-work reuse, opaque ownership, term-frontier retry, concurrency and integer leaves"
+      ]
+    }
+  ],
+  "contract": "Keep existing owned scratch polynomials and graph-free closed payloads. A cache read clones one Arc to the whole immutable closed polynomial. Read-only multiplication right operands borrow its rational and radical slices; other existing consuming algorithms and projections recover ordinary owned polynomials before use.",
+  "ownership": "A private PiLaurentValue enum distinguishes Owned(PiLaurentPolynomial) from Retained(Arc<ClosedPiLaurentPolynomial>). Only the existing cache publication allocates a shared header. Closed coefficients still contain only Rational and Vec<(Rational, Rational)> and cannot own Computable nodes. Scratch creation/cloning and original local memo entries retain their current Vec behavior.",
+  "operations": {
+    "cache": "Clone Arc under the read lock, release the guard before arithmetic; immutable payload survives independently of the node. Existing once-only write publication uses Arc instead of Box.",
+    "multiply": "Materialize the left operand. Owned right operands use the original polynomial algorithm; retained right operands use the same insertion/power-check sequence over closed fields. Both call one coefficient multiplication body with borrowed rational/radical/atom parts.",
+    "add_scale_inverse_sqrt": "Materialize retained operands and call the original owned algorithms. No arithmetic, cancellation, traversal, or bound shortcut is added.",
+    "projection": "The existing wrapper materializes its returned polynomial before invoking unchanged rational/pi/quadratic/compacting projection logic. This version does not implement the previously deferred root-only shortcut.",
+    "memo": "The normalizer computes ordinary owned results and inserts the original deep clone into the original local memo before publication. Retained cache hits return early as before. Opaque Computable counts and first-memo release before retry must be unchanged."
+  },
+  "cost_risks": [
+    "An Arc publication adds reference-count header bytes compared with the original Box, and cached views use atomic clone/drop.",
+    "The new private result enum and borrowing dispatch may change layout, inlining and binary size. Layouts must be recorded, not assumed.",
+    "Left and other consuming operands still reconstruct ordinary vectors; this proposal does not eliminate every retained copy.",
+    "Prior recursive-copy counts are coverage, not allocation measurements, time shares or promised savings."
+  ],
+  "invariants": [
+    "No exact arithmetic or insertion-order changes; all previous mathematical assertions stay in scope.",
+    "All original eight-term/eight-radical and depth/work limits; original retry after dropping the first memo.",
+    "P4 may strengthen Unknown into Certified but may never contradict or weaken facts.",
+    "No additional Computable owner in retained payloads; no escaping cache guards, unsafe code or dependency/manifest change.",
+    "Original full-resolution board/neck fixtures and 120-second worker-CPU/60-second check-body-wall limits."
+  ],
+  "controls": "Both sources retain eight storage, three memo and three alias mathematical controls, plus the six inherited cache and eleven P4 controls. The previous radical-sharing inventory must be 0/0 in both: these ordinary to_polynomial conversions still copy. Candidate-specific controls will exercise actual retained whole-polynomial reads, live aliases, mutation, consuming arithmetic, graph/buffer release and concurrency.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "block_order": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "separate_fresh_build_targets": true,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}
