@@ -1,0 +1,117 @@
+{
+  "status": "source-review-complete-inputs-prepared-not-qualified",
+  "previous_goal_turn_classification": "progress",
+  "prior_evidence_sha256": {
+    "preparation-v2/protocol.json": "68b7166e375b692f0cce1ea11b052451928ef8d7d91bf286e5907c075fa701bc",
+    "correctness-v2.json": "a0d8944f16643e36ed9ca953d55d9c9326dcb28fd07ffe338efaa0eb8744eb83",
+    "cost-assessment-v2.json": "cb2e2af11db8fe58c63f2161ffe7686dbf566d522f7002bf403d1aa190740757",
+    "decision-v1.json": "46ef456ee6281a816f5bd1e71a045b737c48a32390a3e93bcde3768cd3b61103",
+    "codegen-v1/protocol.json": "3c610f902cad81d2f18e905b25f292e8ba581777aaf8dc570ef9e3cab08f30a1",
+    "scope-v1.json": "9f4ac5623e0b526d887f46e1986bd289ad7185722d27ad4aa72e49e785605bc3",
+    "runtime-edits-v1.json": "4be709f2a7044266018a45e04886d988931c3d92dd126c9d490d45340520803b"
+  },
+  "source_review": [
+    {
+      "path": "docs/evidence/2026-10-13-direct-same-radicand-products/algebra_candidate.rs",
+      "sha256": "de6ce2d4df046cc3553806ddfa158e91d0acd44d219f93374045a763c0ceab2e",
+      "reviewed_sections": "RadicalCoefficient::multiply guard, singleton eligibility, complete direct body and general fallback; private helper call has no intervening mutation."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-outlined-same-radicand-products/algebra_outlined.rs",
+      "sha256": "081dcec416f2f383f53a81c88ba6382cc8a8827279ce7192af213386d2b00d1b",
+      "reviewed_sections": "Helper bounds and ownership contract; exact extraction and original fallback recovery; only helper definition and one call reference its name."
+    }
+  ],
+  "motivation": "Qualified direct version saves allocations but is rejected for eight consistently slower scalar phases. Static coefficient symbol grew 2473 to 4161 bytes with first stack subtraction 248 to 264 bytes. Those observations motivate extraction, not a causal explanation or total-stack claim.",
+  "private_helper_contract": {
+    "caller": "RadicalCoefficient::multiply, one production call site after original unsupported opaque-product guard and unchanged value comparisons.",
+    "preconditions": [
+      "Each radical vector has exactly one element, established by the entry slice pattern.",
+      "The original opaque-product guard and two nonempty radical vectors prove both atom vectors empty.",
+      "Left and right radicands compare equal and left is not one.",
+      "No mutation, ownership duplication or cache lock is inserted between guard and helper."
+    ],
+    "bounds": "Both index-zero reads are justified by the singleton pattern. Later index-zero writes occur before any vector mutation. This adds no numeric-domain failure; indexing remains safe Rust and the helper is private.",
+    "ownership": "Move the consumed left coefficient across the helper boundary; borrow the same right coefficient. No clone of a coefficient, vector or rational is added; the existing conditional right-radicand clone is preserved.",
+    "arithmetic": "Constant product, left linear product, right linear product, same zero-skipped linear addition, cross product and radicand product plus constant, in original order.",
+    "result": "Same first surviving radicand payload, reuse of left Vec for one surviving radical, release of canceled scratch and empty atom capacity.",
+    "fallback": "Original general body recovered byte-exactly; original guard remains first. Cache/memo/retry/work/depth/P4 behavior remains inherited.",
+    "boundary": "Private #[inline(never)] helper returns Self; caller wraps Some. No additional scalar comparison is introduced beyond the direct control."
+  },
+  "risks": [
+    "A separate call and bounds checks may slow eligible inputs. Code layout can change unrelated paths.",
+    "The early eligibility comparisons and retained input capacity risks from the direct control remain.",
+    "Static symbol sizes and first stack adjustments do not establish cause, whole-program size or peak stack use.",
+    "P4 allows only stronger cached facts, never contradiction or weakening."
+  ],
+  "shared_test_functions": 28,
+  "new_test_functions": 0,
+  "qualification": "42 sequential commands; each variant gets 902 all-feature and 815 default library tests, 28 doctests, 28 shared controls plus inherited cache/P4 tests, fmt, strict default/all-feature all-target Clippy and warning-denied scalar docs. Counts overlap.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "variant_order": [
+      "baseline",
+      "direct",
+      "outlined"
+    ],
+    "comparisons": [
+      {
+        "reference": "baseline",
+        "variant": "direct"
+      },
+      {
+        "reference": "baseline",
+        "variant": "outlined"
+      },
+      {
+        "reference": "direct",
+        "variant": "outlined"
+      }
+    ],
+    "measurement_processes": 90,
+    "preflight_processes": 18,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false,
+    "block_order": [
+      [
+        "baseline",
+        "direct",
+        "outlined"
+      ],
+      [
+        "outlined",
+        "direct",
+        "baseline"
+      ],
+      [
+        "direct",
+        "baseline",
+        "outlined"
+      ],
+      [
+        "outlined",
+        "baseline",
+        "direct"
+      ],
+      [
+        "baseline",
+        "outlined",
+        "direct"
+      ]
+    ]
+  },
+  "closed_sample_policy": "All new samples remain. Contrasts share one fixed sample set and are not independent. No prior measurement is reused or extended.",
+  "native_gates": "Original 120-second full-board worker CPU and 60-second copper-neck check-body wall. No changed fixture or increased limit. Native validation/costs/reports/CLI remain required before retention.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

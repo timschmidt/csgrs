@@ -1,0 +1,21 @@
+{
+  "status": "uncompiled-unfrozen-draft-line-wrap-corrected",
+  "command": [
+    "rustfmt",
+    "--check",
+    "--edition",
+    "2024",
+    "--config-path",
+    "crates/.rustfmt.toml",
+    "--config",
+    "skip_children=true",
+    "docs/evidence/2026-10-13-outlined-same-radicand-products/algebra_outlined.rs"
+  ],
+  "initial_exit_code": 1,
+  "before_sha256": "14cae94f6e4540067b09f46c0a53fceebec01aeda706bfb984096b9a6b03c6af",
+  "after_sha256": "081dcec416f2f383f53a81c88ba6382cc8a8827279ce7192af213386d2b00d1b",
+  "before": "        if let ([(left, _)], [(right, _)]) =\n            (self.radicals.as_slice(), other.radicals.as_slice())",
+  "after": "        if let ([(left, _)], [(right, _)]) = (self.radicals.as_slice(), other.radicals.as_slice())",
+  "arithmetic_changed": false,
+  "source_was_compiled_or_frozen": false
+}
