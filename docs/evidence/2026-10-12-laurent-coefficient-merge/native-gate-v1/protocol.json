@@ -1,0 +1,102 @@
+{
+  "scope": "Early native consumer and original full-board gates for owned coefficient merging.\n\nThe source-frozen candidate keeps its own Cargo target directory. These gates\nare diagnostic qualification, not full native correctness or matched application\nperformance evidence. Both original full-board fixtures and limits are intact.\n",
+  "runner_sha256": "3484c3b84dae5a4549d02a38fdbbdd4cf1a6ad34eb71cf78aba2410d417d3252",
+  "preparation_sha256": "3c3e340e15ca1d9d7415c18f867da42e76003f0a58dd3f858a1f31bdafdcb770",
+  "candidate_changes_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "3d9214c124334a328fa708f6125ce2da44ae7d2dea370d9e459ee671652aa540",
+    "crates/hyperreal/src/computable/node/laurent_merge_tests.rs": "ea025c9657c74cb0f5b22af0251c9ac5c570bdc3895f9553b933c3833a071df7"
+  },
+  "cost_evidence_sha256": "92a83149d2387e6179a7f880fea9d69b4795a9eff40f405e6ffe512c71c85d6b",
+  "scalar_assessment_sha256": "5733101dc2c0e5efda0bd156cf52ceed867aae544eed815c66102c677db29203",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target"
+  },
+  "commands": [
+    [
+      "strict-consumer-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "curve-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--test",
+        "native_linear_stroke",
+        "--test",
+        "contour_area_normal_form",
+        "--test",
+        "ray_filter_extreme_coordinates",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "drc-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check wall time"
+    }
+  ],
+  "runtime_admitted": false
+}

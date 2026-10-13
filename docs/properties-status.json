@@ -94,7 +94,7 @@
       "runtime_admitted": false
     },
     "isolated_laurent_coefficient_merge": {
-      "status": "advance-isolated-native-diagnostics-with-unresolved-scalar-timing",
+      "status": "rejected-for-runtime-admission-unresolved-scalar-cost-and-both-native-gates",
       "evidence": "docs/evidence/2026-10-12-laurent-coefficient-merge/scalar-assessment-v1.json",
       "implementation": "Update the existing temporary coefficient in place instead of cloning its radical and opaque-atom vectors. All callers discard the temporary polynomial if merging fails. No recursive prepass, new dependency, public layout or recognition-limit change.",
       "qualification": "866 all-feature scalar library results, 28 doctests, strict all-feature all-target Clippy, warning-denied docs and formatting pass. The three merge regressions and six cache regressions are included in the library total.",
@@ -104,7 +104,10 @@
         "Original native full-board and copper-neck limits, broader/default/feature consumer qualification, and complete unnormalized report replay.",
         "Public two-pass recognition-budget wording, broader cache frontiers, independent integration of the typed scalar prototype and the full properties plan."
       ],
-      "runtime_admitted": false
+      "runtime_admitted": false,
+      "native_evidence": "docs/evidence/2026-10-12-laurent-coefficient-merge/native-assessment-v1.json",
+      "native_result": "Twelve focused curve and 26 DRC tests and strict consumer Clippy pass. The unchanged full-board gate fails at 165.086329211 worker CPU seconds / 120. The separate copper-neck check fails at 63.677895054 wall seconds / 60.",
+      "next_step": "Finish complete unnormalized report comparison against the frozen integer-leaf parent. Keep this version rejected, preserve all adverse scalar samples and native failures, and start further performance investigation from the parent rather than silently inheriting this merge change."
     }
   },
   "status_meanings": {

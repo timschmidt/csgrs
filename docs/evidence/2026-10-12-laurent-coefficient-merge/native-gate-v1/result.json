@@ -1,0 +1,130 @@
+{
+  "phases": [
+    {
+      "name": "strict-consumer-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 43.868922331836075,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6747e05d50a8917ef17e2f9584f15eb6daedd178b91efed1df2d466010a11b25"
+    },
+    {
+      "name": "curve-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--test",
+        "native_linear_stroke",
+        "--test",
+        "contour_area_normal_form",
+        "--test",
+        "ray_filter_extreme_coordinates",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 86.41921658394858,
+      "sources_unchanged": true,
+      "stdout_sha256": "65b8063ee182a14938a5f301ee242655c4fa7d206685f2e0e43975ece8c35c1b",
+      "stderr_sha256": "53bc7046aa8b70c7bd647596cd06d5d14d81eac1967fddc58a6a2a1d376ae515"
+    },
+    {
+      "name": "drc-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 125.32936570001766,
+      "sources_unchanged": true,
+      "stdout_sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+      "stderr_sha256": "a10fb31a5760b174a5eed062b8353d9d8fd4e129a09042552d3a673a7cc091ec"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 32.27000599401072,
+      "sources_unchanged": true,
+      "stdout_sha256": "9d06b8889c2cc4a48e81ffc92e63ecfac99ca12d2223e4c43580184cb2734359",
+      "stderr_sha256": "eda3e67859aee5ea361ecb3165c1a8bbebe169d3ef11870edae1159520d1c6d0"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 167.01888196496293,
+      "sources_unchanged": true,
+      "stdout_sha256": "77da12a479136352f5d2f07461430eb12521e82c7305d16ea2a50f166abcc58a",
+      "stderr_sha256": "ebd4c5787ba7424bbbc90229491aee575011003fd1ce36ff2a86a27b9a006342"
+    },
+    {
+      "name": "copper-neck",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 164.64287560619414,
+      "sources_unchanged": true,
+      "stdout_sha256": "3e07511aa560d830ab39bebc17bf426b3b646a8cc441d3575025c87f262b772c",
+      "stderr_sha256": "bd902fce20475c8d22918f7dcc276b7af764398e9c073d823841e97b646b136a"
+    }
+  ],
+  "complete": true,
+  "all_passed": false,
+  "runtime_admitted": false
+}

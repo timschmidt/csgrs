@@ -1,0 +1,74 @@
+{
+  "scope": "Record the original native failures and reject runtime admission of this version.",
+  "decision": "rejected-for-runtime-admission-unresolved-scalar-cost-and-both-native-gates",
+  "focused_tests": {
+    "curve-regressions": [
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.29s",
+      "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.15s",
+      "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.52s"
+    ],
+    "drc-regressions": [
+      "test result: ok. 26 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s"
+    ]
+  },
+  "strict_consumer_clippy": "Release all-feature all-target Clippy with -D warnings passes for hypercurve and hyperdrc.",
+  "full_board": {
+    "exit_code": 101,
+    "worker_cpu_seconds": 165.086329211,
+    "original_limit_seconds": 120,
+    "finding_counts": [
+      12,
+      197
+    ],
+    "check_progress": [
+      "hyperdrc: finished check layer-sanity (7 finding(s), 82.392s)",
+      "hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)",
+      "hyperdrc: finished check min-copper-neck (5 finding(s), 46.689s)",
+      "hyperdrc: finished check drill-spacing (0 finding(s), 0.006s)",
+      "hyperdrc: finished check layer-sanity (1 finding(s), 16.972s)",
+      "hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)",
+      "hyperdrc: finished check min-copper-neck (4 finding(s), 9.461s)",
+      "hyperdrc: finished check drill-spacing (192 finding(s), 0.005s)"
+    ],
+    "complete_process_seconds": 167.01888196496293,
+    "process_user_seconds": 163.5,
+    "process_system_seconds": 1.98,
+    "process_maximum_rss_kib": 1963984
+  },
+  "copper_neck": {
+    "exit_code": 101,
+    "check_wall_seconds": 63.677895054,
+    "original_check_wall_limit_seconds": 60,
+    "check_assertion_passed": false,
+    "complete_process_seconds": 164.64287560619414,
+    "qualification": "The test reports its timed check duration on failure. Complete process duration includes full-board parsing and layer preparation and is a different metric."
+  },
+  "comparison_limits": "The integer-leaf parent previously failed the full-board gate at 154.353265288 worker seconds and passed its separate copper-neck assertion. These standalone runs are not a matched application comparison and do not establish a causal slowdown. This version nevertheless fails both required original assertions and retains the unresolved signed-word construction slowdown.",
+  "review": "The borrowed and owned Rational Add implementations both call add_ref. The sole coefficient-add caller mutates an owned temporary; every polynomial insertion caller propagates failure and discards the temporary before fallback. Structural equality uses immutable DAG data and identity, not Arc strong-count decisions. This is a local source review, not a whole-crate proof.",
+  "next_step": "Finish complete unnormalized report comparison against the frozen integer-leaf parent. Keep this version rejected, preserve all adverse scalar samples and native failures, and start further performance investigation from the parent rather than silently inheriting this merge change.",
+  "remaining": [
+    "The parent persistent-cache/integer-leaf/native-geometry combination still needs original full-board qualification and broader/default/feature consumer coverage.",
+    "Public two-pass recognition-budget wording and broader cache-frontier evidence remain open before any cache admission.",
+    "The separate typed scalar prototype and the complete 39-property, 14-target and crate-future-work scope remain active."
+  ],
+  "artifacts_sha256": {
+    "native-gate-v1/binary.json": "3a4ba91caae7bacab7fc38591e1d348ae909aaf79dbcb555867d41579bab7959",
+    "native-gate-v1/build-board-tests.stderr": "eda3e67859aee5ea361ecb3165c1a8bbebe169d3ef11870edae1159520d1c6d0",
+    "native-gate-v1/build-board-tests.stdout": "9d06b8889c2cc4a48e81ffc92e63ecfac99ca12d2223e4c43580184cb2734359",
+    "native-gate-v1/copper-neck.stderr": "bd902fce20475c8d22918f7dcc276b7af764398e9c073d823841e97b646b136a",
+    "native-gate-v1/copper-neck.stdout": "3e07511aa560d830ab39bebc17bf426b3b646a8cc441d3575025c87f262b772c",
+    "native-gate-v1/curve-regressions.stderr": "53bc7046aa8b70c7bd647596cd06d5d14d81eac1967fddc58a6a2a1d376ae515",
+    "native-gate-v1/curve-regressions.stdout": "65b8063ee182a14938a5f301ee242655c4fa7d206685f2e0e43975ece8c35c1b",
+    "native-gate-v1/drc-regressions.stderr": "a10fb31a5760b174a5eed062b8353d9d8fd4e129a09042552d3a673a7cc091ec",
+    "native-gate-v1/drc-regressions.stdout": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "native-gate-v1/full-board.stderr": "ebd4c5787ba7424bbbc90229491aee575011003fd1ce36ff2a86a27b9a006342",
+    "native-gate-v1/full-board.stdout": "77da12a479136352f5d2f07461430eb12521e82c7305d16ea2a50f166abcc58a",
+    "native-gate-v1/protocol.json": "d4886c14330d0c0be75ae26aff5a9bfa36bcc53f4a8444a26bf519013570d5c2",
+    "native-gate-v1/result.json": "1a34a9a7652126d408ee369f657a98f1e0fa2b11e4016950264e8f4e13f7df39",
+    "native-gate-v1/strict-consumer-clippy.stderr": "6747e05d50a8917ef17e2f9584f15eb6daedd178b91efed1df2d466010a11b25",
+    "native-gate-v1/strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime_admitted": false,
+  "main_runtime_unchanged": true,
+  "plan_complete": false
+}
