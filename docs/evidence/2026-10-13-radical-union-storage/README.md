@@ -16,14 +16,25 @@ remain unchanged.
 Preparation froze three 10,132-file sources with four changed files each.
 The two Vec controls differ only in the feature flag; the radical candidate
 differs from the feature control only in algebra.rs. Package versions/checksums
-are unchanged. Qualification is running in fresh targets. Each source records
-its actual layouts and runs the eight shared storage controls,
+are unchanged. Qualification completed in all three fresh targets. Each source recorded
+its actual layouts and passed the eight shared storage controls,
 six cache-frontier controls, eleven P4 regressions, all-feature/default scalar
 libraries, doctests, formatting, strict Clippy and warning-denied docs. Actual
-dependency feature sets are bound to the builds. Equal type sizes, if observed,
-will not establish equal total memory or faster execution.
+dependency feature sets are bound to the builds: baseline uses no SmallVec
+features, and both union variants use exactly `union` for these scalar checks.
+Each source passes 882 all-feature and 795 default scalar library tests, 28
+doctests, the shared and inherited controls, formatting, strict Clippy and docs.
+Configuration and focused counts overlap. See [correctness-v1.json](correctness-v1.json).
 
-A distinct fixed scalar cost comparison must assess the radical candidate
+All seven recorded layouts match across the three sources: Rational 8 bytes,
+coefficient 56, polynomial 24, persistent coefficient 32, persistent polynomial
+24, Computable 16 and Node 56. The radical candidate avoids the previous extra
+eight coefficient bytes. These equal type sizes establish neither equal total
+memory nor faster execution.
+
+The prepared fixed comparison runs 18 preflights and 90 measurement processes
+in five predeclared three-source blocks, with separate timing/allocation
+executables and fresh targets. All builds finish before measurements. It will assess the radical candidate
 against both the unchanged baseline and the feature-only control, and assess
 the feature-only control against baseline. Supported variants still require
 native qualification, fixed endpoint/broad/abort controls, complete report

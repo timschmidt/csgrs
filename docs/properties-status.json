@@ -954,9 +954,10 @@
       "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions."
     },
     "radical_union_storage": {
-      "status": "three-sources-frozen-scalar-qualification-running",
+      "status": "three-sources-pass-scalar-qualification-fixed-costs-next",
       "evidence": [
-        "docs/evidence/2026-10-13-radical-union-storage/preparation-v1/protocol.json"
+        "docs/evidence/2026-10-13-radical-union-storage/preparation-v1/protocol.json",
+        "docs/evidence/2026-10-13-radical-union-storage/correctness-v1.json"
       ],
       "variants": [
         "baseline",
@@ -965,8 +966,47 @@
       ],
       "scope": "Compare unchanged Vec, Vec with the SmallVec union feature, and radical-only inline storage with union. Terms, persistent certificates and opaque atoms remain Vec. Use the uninstrumented endpoint/P4 parent and exactly the prior eight storage tests; preserve all arithmetic, limits, original retries, proof monotonicity and owner release.",
       "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and private layouts will be bound by qualification.",
-      "next_step": "Complete scalar qualification and establish actual layouts. Then run the new closed five-block, three-suite timing/allocation/size comparison, evaluating all three contrasts. Only supported variants proceed to native qualification, costs, report identity and original gates.",
-      "runtime_admitted": false
+      "next_step": "Execute the frozen five-block scalar comparison: 18 preflights and 90 measurements, retaining all three pairwise contrasts. All recorded layouts now match baseline; this is not total-memory or speedup evidence. Review all adverse rows before native follow-up.",
+      "runtime_admitted": false,
+      "qualification": "Each variant passes eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56
+        },
+        "feature": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56
+        },
+        "radicals": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56
+        }
+      },
+      "actual_smallvec_scalar_features": {
+        "baseline": [],
+        "feature": [
+          "union"
+        ],
+        "radicals": [
+          "union"
+        ]
+      }
     }
   },
   "status_meanings": {

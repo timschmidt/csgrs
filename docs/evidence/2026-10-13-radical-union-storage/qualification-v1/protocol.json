@@ -1,0 +1,187 @@
+{
+  "scope": "Sequential qualification of three sources with a separate union-feature control.\n\nAll variants execute the same checks in separate fresh targets. Default and\nall-feature suites, focused controls and doctests overlap; counts are not added\nas unique coverage. No native admission or resource claim follows from this run.\n",
+  "runner_sha256": "01486ada1878c1047c115d789dd5a6474271d1846e13c4c5f223d77d6aa75344",
+  "preparation_sha256": "40cc7f8c5b3614d9b993d6b77315c0945e63c63f4100d60f62b93e52c6ccd3f0",
+  "commands_per_variant": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      null
+    ],
+    [
+      "storage-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      [
+        8
+      ]
+    ],
+    [
+      "cache-frontiers",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      [
+        6
+      ]
+    ],
+    [
+      "sign-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      [
+        11
+      ]
+    ],
+    [
+      "all-feature-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      [
+        882
+      ]
+    ],
+    [
+      "default-library",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      [
+        795
+      ]
+    ],
+    [
+      "doctests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      [
+        28
+      ]
+    ],
+    [
+      "all-feature-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      null
+    ],
+    [
+      "default-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      null
+    ],
+    [
+      "docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      null
+    ]
+  ],
+  "variant_order": [
+    "baseline",
+    "feature",
+    "radicals"
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "command_timeout_seconds": 1800,
+  "runtime_admitted": false
+}

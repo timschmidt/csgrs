@@ -1,0 +1,1097 @@
+{
+  "complete": true,
+  "phases": [
+    {
+      "name": "baseline-format",
+      "variant": "baseline",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.51175388507545,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-storage-regressions",
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.992614027112722,
+      "stdout_sha256": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+      "stderr_sha256": "7482d7ab52abc648d41bc8a4fe61c7d574e1ccb3b832a7562fb0379864629d76"
+    },
+    {
+      "name": "baseline-cache-frontiers",
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.19417960895225406,
+      "stdout_sha256": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+      "stderr_sha256": "37d75649fd4faef0409163e93b37e10ef0a5c58dac53dc7c1969853f43d9aa74"
+    },
+    {
+      "name": "baseline-sign-regressions",
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14725532289594412,
+      "stdout_sha256": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+      "stderr_sha256": "e4d37869f625e9413760dfc2ba818f4b78df7ca2a510afe04dc7aa0e736a4fd5"
+    },
+    {
+      "name": "baseline-all-feature-library",
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.4425454358570278,
+      "stdout_sha256": "9854beae0ee5f943e5068d926e35bf82219cbdc705cfca3acf0e8ebd27ead228",
+      "stderr_sha256": "e4d37869f625e9413760dfc2ba818f4b78df7ca2a510afe04dc7aa0e736a4fd5"
+    },
+    {
+      "name": "baseline-default-library",
+      "variant": "baseline",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.184679511003196,
+      "stdout_sha256": "3298f9da3478e836653c17c9802d30e5ea32c33ce4f3be0ea769268a4425640c",
+      "stderr_sha256": "209b39f93a05f83e1dede09a9be10850ef1acf076d821620d0313f6d4432ec09"
+    },
+    {
+      "name": "baseline-doctests",
+      "variant": "baseline",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.313282140996307,
+      "stdout_sha256": "9ee1fce417db53e506ee49d37a467a544dedd1397f9db570d1b2296552bb7028",
+      "stderr_sha256": "0f8925da72fbff25b8bcb25bdbafecf2901606bb2e9133bd108b4f6c18ee2ecb"
+    },
+    {
+      "name": "baseline-all-feature-clippy",
+      "variant": "baseline",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.747503106016666,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "3e98947f63643dea65a0225dd1f91a9ec212e975c6aa9d396818a95a7f8548f6"
+    },
+    {
+      "name": "baseline-default-clippy",
+      "variant": "baseline",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.965412459801883,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c57f5c3f971fc210aa2a1ed7a9b7c5e29264c420c09ebce0a496c4efc1156d41"
+    },
+    {
+      "name": "baseline-docs",
+      "variant": "baseline",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.4747473797760904,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "035901ce443cd7743d4e4e11d2ab85215579f96987039801c262bf8255a6364d"
+    },
+    {
+      "name": "feature-format",
+      "variant": "feature",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.421957555692643,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "feature-storage-regressions",
+      "variant": "feature",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 27.03769733896479,
+      "stdout_sha256": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+      "stderr_sha256": "c7f95994855876235bea3414111c668641ae1c651ce1317f0d9faacb08028e91"
+    },
+    {
+      "name": "feature-cache-frontiers",
+      "variant": "feature",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16933781979605556,
+      "stdout_sha256": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+      "stderr_sha256": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943"
+    },
+    {
+      "name": "feature-sign-regressions",
+      "variant": "feature",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.15988274803385139,
+      "stdout_sha256": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+      "stderr_sha256": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943"
+    },
+    {
+      "name": "feature-all-feature-library",
+      "variant": "feature",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.4641176289878786,
+      "stdout_sha256": "3777e8a8594cb3af29eb5fc025b954ba271bedf755f3c038d0e5ad894ebefea5",
+      "stderr_sha256": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943"
+    },
+    {
+      "name": "feature-default-library",
+      "variant": "feature",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.47900274582207,
+      "stdout_sha256": "9caa541e50b43e6188608c86c12f050394dcdb2ffe874ea4be058f1d0f87dc36",
+      "stderr_sha256": "b91359aa8bf26e5824536b397c83ddd7920da36fb76f0b63618dd7e238b8cb1e"
+    },
+    {
+      "name": "feature-doctests",
+      "variant": "feature",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.312837769277394,
+      "stdout_sha256": "0491733a242a783e2f5e9330019cf6df72901f7f75d6c2d6bf8da243fc8ebdab",
+      "stderr_sha256": "c71794fa66fab6581e5a69cc940e34f26eb2fa789cee2abc5de96cd88a4b4424"
+    },
+    {
+      "name": "feature-all-feature-clippy",
+      "variant": "feature",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.784161494113505,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "a17c0d79bb40369be9b799e7e842b961d65be54be3272e3596865c606c1e5882"
+    },
+    {
+      "name": "feature-default-clippy",
+      "variant": "feature",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.902600489091128,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "01cb809f12310880f531eb1458d0ed58ffe9841e4560398810351b31652f6521"
+    },
+    {
+      "name": "feature-docs",
+      "variant": "feature",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.406827728264034,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "9b259295c65fff61685f15182b67bd4eac6a03cc7aa095ccbbf23da85f6703ae"
+    },
+    {
+      "name": "radicals-format",
+      "variant": "radicals",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.606889493763447,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "radicals-storage-regressions",
+      "variant": "radicals",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.487918303813785,
+      "stdout_sha256": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+      "stderr_sha256": "506ab55ec1622ab13c3fc73c4df03bf6663f79d2d7206f666579fc73db502e6f"
+    },
+    {
+      "name": "radicals-cache-frontiers",
+      "variant": "radicals",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.1651635356247425,
+      "stdout_sha256": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+      "stderr_sha256": "867b92ec1ce4077255c2062315f1077c5aaa1d0d7155cde223be7cb189406b4e"
+    },
+    {
+      "name": "radicals-sign-regressions",
+      "variant": "radicals",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16277009015902877,
+      "stdout_sha256": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+      "stderr_sha256": "4117810bff604553ad36693f0f9a3f41c20f7dc752e5d75f3b44f995c96a57ac"
+    },
+    {
+      "name": "radicals-all-feature-library",
+      "variant": "radicals",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.4777081017382443,
+      "stdout_sha256": "4b8292a58eba4bbeaec59508b565a57849187428c02b40e54218a2a90648955a",
+      "stderr_sha256": "867b92ec1ce4077255c2062315f1077c5aaa1d0d7155cde223be7cb189406b4e"
+    },
+    {
+      "name": "radicals-default-library",
+      "variant": "radicals",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.22467369399965,
+      "stdout_sha256": "948751ad0157f808330f67ea3e7d675e46fe2b3b717367bc9b47ec7c072deb65",
+      "stderr_sha256": "983edfae3ae226dbda44ab39b8edef1430dae63d7a58480da7eb978253d8dd1d"
+    },
+    {
+      "name": "radicals-doctests",
+      "variant": "radicals",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.237783570308238,
+      "stdout_sha256": "1eb1014a213fcc818d0a1b985d1ac57a0257b54e5fe676296afd1289ff724fb9",
+      "stderr_sha256": "73614b154a8568dbf374a67d08e79f44844e971b974579158aebcd22e1587fc1"
+    },
+    {
+      "name": "radicals-all-feature-clippy",
+      "variant": "radicals",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.688126261811703,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "13c277a9d0ce029299353c31d1733136b82231c986007cf32e96e97481485dd5"
+    },
+    {
+      "name": "radicals-default-clippy",
+      "variant": "radicals",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.702961134724319,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "c903f299d65458f218d8400c8fc639fd553cf452b7acaf5cbcb51c17e779be3e"
+    },
+    {
+      "name": "radicals-docs",
+      "variant": "radicals",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.2972392248921096,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "dd85b8059ed3c71d713724f665274c3ade56b0a63aadd1421407ebe06e20d8e0"
+    }
+  ],
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "feature": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "smallvec_features": {
+    "baseline": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+        "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+        "features": []
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+        "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+        "features": []
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+        "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+        "features": []
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+        "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+        "features": []
+      }
+    ],
+    "feature": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/debug/.fingerprint/smallvec-51e81ecd687a88bd/lib-smallvec.json",
+        "sha256": "a311b275d857964c05cdf7f64dcb61e53ee62973e9d152079245eff85a77d53a",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/debug/.fingerprint/smallvec-6482a109878cc178/lib-smallvec.json",
+        "sha256": "2f577dcc16260fc229b06b83c567a189f776e30de290755dba9f9bc896c505d1",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/release/.fingerprint/smallvec-639341352eae11a7/lib-smallvec.json",
+        "sha256": "14c5e4c3621b6e314e4114d132a4be3867619b9ccb7b325f2115d2f44e56c9e4",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/release/.fingerprint/smallvec-75e0c29f429992d4/lib-smallvec.json",
+        "sha256": "cf5aaa44e42d8677571c55ddf1bb23170386a2915e22ceac0a8b998a29878c92",
+        "features": [
+          "union"
+        ]
+      }
+    ],
+    "radicals": [
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/debug/.fingerprint/smallvec-51e81ecd687a88bd/lib-smallvec.json",
+        "sha256": "a311b275d857964c05cdf7f64dcb61e53ee62973e9d152079245eff85a77d53a",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/debug/.fingerprint/smallvec-6482a109878cc178/lib-smallvec.json",
+        "sha256": "2f577dcc16260fc229b06b83c567a189f776e30de290755dba9f9bc896c505d1",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/release/.fingerprint/smallvec-639341352eae11a7/lib-smallvec.json",
+        "sha256": "14c5e4c3621b6e314e4114d132a4be3867619b9ccb7b325f2115d2f44e56c9e4",
+        "features": [
+          "union"
+        ]
+      },
+      {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/release/.fingerprint/smallvec-75e0c29f429992d4/lib-smallvec.json",
+        "sha256": "cf5aaa44e42d8677571c55ddf1bb23170386a2915e22ceac0a8b998a29878c92",
+        "features": [
+          "union"
+        ]
+      }
+    ]
+  },
+  "source_parent_and_main_unchanged": true,
+  "same_coefficient_size_as_baseline": true,
+  "focused_and_configuration_totals_overlap": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

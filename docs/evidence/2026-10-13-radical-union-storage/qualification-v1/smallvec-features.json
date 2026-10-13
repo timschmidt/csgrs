@@ -1,0 +1,84 @@
+{
+  "baseline": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/debug/.fingerprint/smallvec-5cee3dc8210a92c2/lib-smallvec.json",
+      "sha256": "4b697b93948bce6c41ab614f5d7d146e4cc1c359d75f968599e76128d102730b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/debug/.fingerprint/smallvec-7fd401b2f3336dda/lib-smallvec.json",
+      "sha256": "bba4a504af4c906c387df01b74abc6fb28ee4de6c005faa4f29be42ede2b03c7",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/release/.fingerprint/smallvec-13c97370cbb7c433/lib-smallvec.json",
+      "sha256": "2d9c945381ebb55588696458b653ee6eda6d37235b6d5e3956ba655724c4685b",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/baseline/qualification-target/release/.fingerprint/smallvec-77a5c4c850fb690f/lib-smallvec.json",
+      "sha256": "cd14563b05326222ca3cecca49f881895adbafdf9d466c42b05d4ab171e53210",
+      "features": []
+    }
+  ],
+  "feature": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/debug/.fingerprint/smallvec-51e81ecd687a88bd/lib-smallvec.json",
+      "sha256": "a311b275d857964c05cdf7f64dcb61e53ee62973e9d152079245eff85a77d53a",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/debug/.fingerprint/smallvec-6482a109878cc178/lib-smallvec.json",
+      "sha256": "2f577dcc16260fc229b06b83c567a189f776e30de290755dba9f9bc896c505d1",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/release/.fingerprint/smallvec-639341352eae11a7/lib-smallvec.json",
+      "sha256": "14c5e4c3621b6e314e4114d132a4be3867619b9ccb7b325f2115d2f44e56c9e4",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/feature/qualification-target/release/.fingerprint/smallvec-75e0c29f429992d4/lib-smallvec.json",
+      "sha256": "cf5aaa44e42d8677571c55ddf1bb23170386a2915e22ceac0a8b998a29878c92",
+      "features": [
+        "union"
+      ]
+    }
+  ],
+  "radicals": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/debug/.fingerprint/smallvec-51e81ecd687a88bd/lib-smallvec.json",
+      "sha256": "a311b275d857964c05cdf7f64dcb61e53ee62973e9d152079245eff85a77d53a",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/debug/.fingerprint/smallvec-6482a109878cc178/lib-smallvec.json",
+      "sha256": "2f577dcc16260fc229b06b83c567a189f776e30de290755dba9f9bc896c505d1",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/release/.fingerprint/smallvec-639341352eae11a7/lib-smallvec.json",
+      "sha256": "14c5e4c3621b6e314e4114d132a4be3867619b9ccb7b325f2115d2f44e56c9e4",
+      "features": [
+        "union"
+      ]
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/radical-union-storage/radicals/qualification-target/release/.fingerprint/smallvec-75e0c29f429992d4/lib-smallvec.json",
+      "sha256": "cf5aaa44e42d8677571c55ddf1bb23170386a2915e22ceac0a8b998a29878c92",
+      "features": [
+        "union"
+      ]
+    }
+  ]
+}

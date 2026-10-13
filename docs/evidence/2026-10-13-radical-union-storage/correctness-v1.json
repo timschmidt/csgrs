@@ -1,0 +1,246 @@
+{
+  "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
+  "assessor_sha256": "a4c175de1ee232dd6748f8539e3894d4dae45793be95b089ef56eb57402b0a7b",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "feature",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "all-feature-library",
+      "passed": 882,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "default-library",
+      "passed": 795,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "radicals",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "feature": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "smallvec_features": {
+    "baseline": [],
+    "feature": [
+      "union"
+    ],
+    "radicals": [
+      "union"
+    ]
+  },
+  "same_coefficient_size_as_baseline": true,
+  "locked_package_inventory_unchanged": true,
+  "source_parent_and_main_unchanged": true,
+  "all_30_commands_passed": true,
+  "qualification": "Each variant passes eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "remaining": "Fixed scalar time/allocation/size controls, native qualification and original full-fixture gates, endpoint/broad/abort controls, complete report bytes and production CLI size. Larger temporary layouts are not total-memory savings; no runtime is admitted.",
+  "artifacts_sha256": {
+    "qualification-v1/baseline-all-feature-clippy.stderr": "3e98947f63643dea65a0225dd1f91a9ec212e975c6aa9d396818a95a7f8548f6",
+    "qualification-v1/baseline-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-all-feature-library.stderr": "e4d37869f625e9413760dfc2ba818f4b78df7ca2a510afe04dc7aa0e736a4fd5",
+    "qualification-v1/baseline-all-feature-library.stdout": "9854beae0ee5f943e5068d926e35bf82219cbdc705cfca3acf0e8ebd27ead228",
+    "qualification-v1/baseline-cache-frontiers.stderr": "37d75649fd4faef0409163e93b37e10ef0a5c58dac53dc7c1969853f43d9aa74",
+    "qualification-v1/baseline-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/baseline-default-clippy.stderr": "c57f5c3f971fc210aa2a1ed7a9b7c5e29264c420c09ebce0a496c4efc1156d41",
+    "qualification-v1/baseline-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-default-library.stderr": "209b39f93a05f83e1dede09a9be10850ef1acf076d821620d0313f6d4432ec09",
+    "qualification-v1/baseline-default-library.stdout": "3298f9da3478e836653c17c9802d30e5ea32c33ce4f3be0ea769268a4425640c",
+    "qualification-v1/baseline-docs.stderr": "035901ce443cd7743d4e4e11d2ab85215579f96987039801c262bf8255a6364d",
+    "qualification-v1/baseline-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-doctests.stderr": "0f8925da72fbff25b8bcb25bdbafecf2901606bb2e9133bd108b4f6c18ee2ecb",
+    "qualification-v1/baseline-doctests.stdout": "9ee1fce417db53e506ee49d37a467a544dedd1397f9db570d1b2296552bb7028",
+    "qualification-v1/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-sign-regressions.stderr": "e4d37869f625e9413760dfc2ba818f4b78df7ca2a510afe04dc7aa0e736a4fd5",
+    "qualification-v1/baseline-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/baseline-storage-regressions.stderr": "7482d7ab52abc648d41bc8a4fe61c7d574e1ccb3b832a7562fb0379864629d76",
+    "qualification-v1/baseline-storage-regressions.stdout": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+    "qualification-v1/commands.json": "6b8c0770e1488e04b3ca541b1ba787c6d9c318d70c28c03e0b9fc5e7eb4b5e2f",
+    "qualification-v1/feature-all-feature-clippy.stderr": "a17c0d79bb40369be9b799e7e842b961d65be54be3272e3596865c606c1e5882",
+    "qualification-v1/feature-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/feature-all-feature-library.stderr": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943",
+    "qualification-v1/feature-all-feature-library.stdout": "3777e8a8594cb3af29eb5fc025b954ba271bedf755f3c038d0e5ad894ebefea5",
+    "qualification-v1/feature-cache-frontiers.stderr": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943",
+    "qualification-v1/feature-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/feature-default-clippy.stderr": "01cb809f12310880f531eb1458d0ed58ffe9841e4560398810351b31652f6521",
+    "qualification-v1/feature-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/feature-default-library.stderr": "b91359aa8bf26e5824536b397c83ddd7920da36fb76f0b63618dd7e238b8cb1e",
+    "qualification-v1/feature-default-library.stdout": "9caa541e50b43e6188608c86c12f050394dcdb2ffe874ea4be058f1d0f87dc36",
+    "qualification-v1/feature-docs.stderr": "9b259295c65fff61685f15182b67bd4eac6a03cc7aa095ccbbf23da85f6703ae",
+    "qualification-v1/feature-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/feature-doctests.stderr": "c71794fa66fab6581e5a69cc940e34f26eb2fa789cee2abc5de96cd88a4b4424",
+    "qualification-v1/feature-doctests.stdout": "0491733a242a783e2f5e9330019cf6df72901f7f75d6c2d6bf8da243fc8ebdab",
+    "qualification-v1/feature-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/feature-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/feature-sign-regressions.stderr": "1cbfbd59c038e51429acc4ec5fd4a6dc73c04255306da11584a81be7cdce9943",
+    "qualification-v1/feature-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/feature-storage-regressions.stderr": "c7f95994855876235bea3414111c668641ae1c651ce1317f0d9faacb08028e91",
+    "qualification-v1/feature-storage-regressions.stdout": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+    "qualification-v1/layouts.json": "e824294085eab4fec0499e1f43d742c66b5710801d067cebb9bbbb6bd4510e7d",
+    "qualification-v1/protocol.json": "194247cf8f5a6c4ba9e30b5da33f544031abdb00a86c719940db4950b5d767d2",
+    "qualification-v1/radicals-all-feature-clippy.stderr": "13c277a9d0ce029299353c31d1733136b82231c986007cf32e96e97481485dd5",
+    "qualification-v1/radicals-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-all-feature-library.stderr": "867b92ec1ce4077255c2062315f1077c5aaa1d0d7155cde223be7cb189406b4e",
+    "qualification-v1/radicals-all-feature-library.stdout": "4b8292a58eba4bbeaec59508b565a57849187428c02b40e54218a2a90648955a",
+    "qualification-v1/radicals-cache-frontiers.stderr": "867b92ec1ce4077255c2062315f1077c5aaa1d0d7155cde223be7cb189406b4e",
+    "qualification-v1/radicals-cache-frontiers.stdout": "8c507493f2ee8e92d51d233b856459e1c217fb29946eafd10c2882ca9bf61c57",
+    "qualification-v1/radicals-default-clippy.stderr": "c903f299d65458f218d8400c8fc639fd553cf452b7acaf5cbcb51c17e779be3e",
+    "qualification-v1/radicals-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-default-library.stderr": "983edfae3ae226dbda44ab39b8edef1430dae63d7a58480da7eb978253d8dd1d",
+    "qualification-v1/radicals-default-library.stdout": "948751ad0157f808330f67ea3e7d675e46fe2b3b717367bc9b47ec7c072deb65",
+    "qualification-v1/radicals-docs.stderr": "dd85b8059ed3c71d713724f665274c3ade56b0a63aadd1421407ebe06e20d8e0",
+    "qualification-v1/radicals-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-doctests.stderr": "73614b154a8568dbf374a67d08e79f44844e971b974579158aebcd22e1587fc1",
+    "qualification-v1/radicals-doctests.stdout": "1eb1014a213fcc818d0a1b985d1ac57a0257b54e5fe676296afd1289ff724fb9",
+    "qualification-v1/radicals-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/radicals-sign-regressions.stderr": "4117810bff604553ad36693f0f9a3f41c20f7dc752e5d75f3b44f995c96a57ac",
+    "qualification-v1/radicals-sign-regressions.stdout": "e135ef9b08e097c4825c942df4d8e2af42a41549d1a37cbee7f7903b3864259a",
+    "qualification-v1/radicals-storage-regressions.stderr": "506ab55ec1622ab13c3fc73c4df03bf6663f79d2d7206f666579fc73db502e6f",
+    "qualification-v1/radicals-storage-regressions.stdout": "dc7fcbcac6ded3472d0dc85302299d5a1d3921adbf80e3a6a8e0a7720d24c1ec",
+    "qualification-v1/result.json": "e66e13d2d65521de8480f045642964e0b5db0275e599551352b9bd2c60165389",
+    "qualification-v1/smallvec-features.json": "9c3351fed7c818b6476509973debbd3af5d589cd6c2971f97a920e083a63925b",
+    "qualification-v1/tests.json": "def15def523123624b63b87497c3a38dca5bbfa48dae56bcb1b1e79be97e5fb5"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}
