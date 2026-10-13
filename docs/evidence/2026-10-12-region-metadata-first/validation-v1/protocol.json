@@ -1,0 +1,131 @@
+{
+  "scope": "Validate the frozen metadata-order candidate and its original native gates.\n\nCommands run sequentially against a dedicated Cargo target. Existing tests and\nfixtures are unchanged. Native timing assertions retain their original limits.\n",
+  "runner_sha256": "992656ce9b43da64b589af71dc739b0f46c2fe70b10e529937bb53fff9934993",
+  "preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "metadata-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "metadata_order_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-consumer-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "curve-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "drc-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "curve-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check wall time"
+    }
+  ],
+  "runtime_admitted": false
+}

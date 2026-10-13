@@ -1,0 +1,73 @@
+{
+  "decision": "prototype-preflight-passed-complete-validation-running",
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.725750954821706,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "metadata-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "metadata_order_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 130.77823812700808,
+      "sources_unchanged": true,
+      "stdout_sha256": "36bd8656e737e308ede8dfdff1901250e5b2175507ad2689fd7a54867bb8cd6c",
+      "stderr_sha256": "9969e2cc8f2b0f412625e379c8bb403300667c8f889da6b833c4b9011771bc50"
+    },
+    {
+      "name": "strict-consumer-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 43.722622537985444,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5078e33e7a0bac597caf820028f6e608fcb9aa41cffd7da02acb4b143fe8d980"
+    }
+  ],
+  "source_preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "test_count": 3,
+  "strict_curve_and_drc_clippy_passed": true,
+  "full_curve_suite_complete": false,
+  "native_gates_complete": false,
+  "cost_comparison_complete": false,
+  "report_replay_complete": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
