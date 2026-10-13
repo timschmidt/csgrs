@@ -1,0 +1,177 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.725750954821706,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "metadata-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "metadata_order_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 130.77823812700808,
+      "sources_unchanged": true,
+      "stdout_sha256": "36bd8656e737e308ede8dfdff1901250e5b2175507ad2689fd7a54867bb8cd6c",
+      "stderr_sha256": "9969e2cc8f2b0f412625e379c8bb403300667c8f889da6b833c4b9011771bc50"
+    },
+    {
+      "name": "strict-consumer-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 43.722622537985444,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5078e33e7a0bac597caf820028f6e608fcb9aa41cffd7da02acb4b143fe8d980"
+    },
+    {
+      "name": "curve-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      "exit_code": 0,
+      "seconds": 1036.1303799101152,
+      "sources_unchanged": true,
+      "stdout_sha256": "3ad0d5213d70f62d775760d7dad7fdcb63eddb51bcf1a15700c9f17ffe8704d1",
+      "stderr_sha256": "1cf0c91e66d24596970f6424b38b1456e05fbb403f78e1bb13dd9af3d4434a8a"
+    },
+    {
+      "name": "drc-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--test",
+        "native_linear_strokes",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 113.37398952292278,
+      "sources_unchanged": true,
+      "stdout_sha256": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+      "stderr_sha256": "98c60d3ff2dc1de13951cf871c467edda5676533ef49d2f8fa68f1fbfdd365e9"
+    },
+    {
+      "name": "curve-docs",
+      "command": [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--no-deps"
+      ],
+      "exit_code": 0,
+      "seconds": 24.337726921308786,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "87168b5baaf6227c8205a7f10b090878bcc99af9fb36610f859e00fc10a864bd"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 29.59332619002089,
+      "sources_unchanged": true,
+      "stdout_sha256": "d36d4d4458f11cd54432cdfbe1b8c26ba5fee463c5d98a1505af62cf8cf433cb",
+      "stderr_sha256": "3b215c62b6de6c27ad40c67dc19655c6f5abfde96e13593fce403dfbcdaa466d"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 148.12913945596665,
+      "sources_unchanged": true,
+      "stdout_sha256": "b9ea684fe22d053c9c1d0d8e43c7596264cb4ec604c239c51ae6e521a7375229",
+      "stderr_sha256": "a6498e0c59c5e68d5b447e4f31ef4382c6396c1d1bd2a61828a353259dc3c22a"
+    },
+    {
+      "name": "copper-neck",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 0,
+      "seconds": 145.9845999921672,
+      "sources_unchanged": true,
+      "stdout_sha256": "1efd6c2a0fef985e0d1e5d2008efc3d923851f8eab5ab9fd815b1e56a7a43e65",
+      "stderr_sha256": "6abcd4babd4bb51ed15ab6e16a57348b03988cdee3e7d8977f65bfb82a3d04e5"
+    }
+  ],
+  "complete": true,
+  "all_passed": false,
+  "runtime_admitted": false
+}

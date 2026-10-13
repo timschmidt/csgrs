@@ -1,0 +1,84 @@
+{
+  "decision": "isolated-correctness-passed-cost-and-report-qualification-pending",
+  "source_delta": "Only geometry/source-metadata conjunction operands swap at runtime; a separate three-test module is added. No scalar, field-layout, fixture or limit changes.",
+  "test_counts": {
+    "metadata-regressions": {
+      "summaries": 1,
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    "curve-tests": {
+      "summaries": 51,
+      "passed": 2489,
+      "failed": 0,
+      "ignored": 33
+    },
+    "drc-regressions": {
+      "summaries": 1,
+      "passed": 26,
+      "failed": 0,
+      "ignored": 0
+    }
+  },
+  "count_overlap": "The three metadata regressions are included again in the full curve suite; do not add them to its total.",
+  "strict_curve_and_drc_clippy_passed": true,
+  "warning_denied_curve_docs_passed": true,
+  "workspace_formatting_passed": true,
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "passed": false,
+      "observed_assertion_seconds": 146.02494178,
+      "process_wall_seconds": 148.12913945596665,
+      "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check wall time",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 145.9845999921672,
+      "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+    }
+  ],
+  "all_original_native_gates_passed": false,
+  "limits": [
+    "The complete curve suite and 26 focused DRC regressions ran. This is not the complete DRC suite or every workflow combination.",
+    "Observed original-board counts are 12 and 197. Complete report bytes are not compared by these test runs.",
+    "These standalone original-cap results are not a matched application-speedup comparison.",
+    "Three regression functions check named metadata, error-order, clone and cache scenarios. They do not establish universal cache or equality completeness."
+  ],
+  "next_step": "Run the frozen paired metadata-control probe and complete unnormalized report replay from separate source/target directories; keep every original limit and prior failed result.",
+  "artifacts_sha256": {
+    "validation-v1/binary.json": "f709ca9371dd00e9b99fa30c8c523fd4b364d3508e60f5d5224c58c700d470b9",
+    "validation-v1/build-board-tests.stderr": "3b215c62b6de6c27ad40c67dc19655c6f5abfde96e13593fce403dfbcdaa466d",
+    "validation-v1/build-board-tests.stdout": "d36d4d4458f11cd54432cdfbe1b8c26ba5fee463c5d98a1505af62cf8cf433cb",
+    "validation-v1/copper-neck.stderr": "6abcd4babd4bb51ed15ab6e16a57348b03988cdee3e7d8977f65bfb82a3d04e5",
+    "validation-v1/copper-neck.stdout": "1efd6c2a0fef985e0d1e5d2008efc3d923851f8eab5ab9fd815b1e56a7a43e65",
+    "validation-v1/curve-docs.stderr": "87168b5baaf6227c8205a7f10b090878bcc99af9fb36610f859e00fc10a864bd",
+    "validation-v1/curve-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/curve-tests.stderr": "1cf0c91e66d24596970f6424b38b1456e05fbb403f78e1bb13dd9af3d4434a8a",
+    "validation-v1/curve-tests.stdout": "3ad0d5213d70f62d775760d7dad7fdcb63eddb51bcf1a15700c9f17ffe8704d1",
+    "validation-v1/drc-regressions.stderr": "98c60d3ff2dc1de13951cf871c467edda5676533ef49d2f8fa68f1fbfdd365e9",
+    "validation-v1/drc-regressions.stdout": "6fe26e30dcac3985dcaa8431fbf6979caa59aa92ac712f3ba4368c8099b8666c",
+    "validation-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/full-board.stderr": "a6498e0c59c5e68d5b447e4f31ef4382c6396c1d1bd2a61828a353259dc3c22a",
+    "validation-v1/full-board.stdout": "b9ea684fe22d053c9c1d0d8e43c7596264cb4ec604c239c51ae6e521a7375229",
+    "validation-v1/metadata-regressions.stderr": "9969e2cc8f2b0f412625e379c8bb403300667c8f889da6b833c4b9011771bc50",
+    "validation-v1/metadata-regressions.stdout": "36bd8656e737e308ede8dfdff1901250e5b2175507ad2689fd7a54867bb8cd6c",
+    "validation-v1/protocol.json": "1f0a7a3bfd2fa6beb6f4b409d804646eddec495966d9a820a13239e6c625a024",
+    "validation-v1/result.json": "ea3bc49a67e370813761a4f3386e60a37d42cc9013818122c95b8ae8e0ec27f5",
+    "validation-v1/strict-consumer-clippy.stderr": "5078e33e7a0bac597caf820028f6e608fcb9aa41cffd7da02acb4b143fe8d980",
+    "validation-v1/strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
