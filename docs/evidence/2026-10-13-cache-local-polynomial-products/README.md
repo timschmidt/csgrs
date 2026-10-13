@@ -123,3 +123,9 @@ separately from the combined DRC suite and retain their original limits.
 Native gains alone cannot dismiss scalar or inherited endpoint tradeoffs.
 Matched native costs, full reports and production size remain further controls
 if investigation continues.
+
+The [native cost inputs](native-cost-inputs-v1.json) are prepared but unexecuted.
+They retain the declared five paired blocks: twenty endpoint timing/allocation
+processes, ten broad processes with 231 witnesses each, and six final-abort
+processes with 210 receipts each. Four preflights follow all builds. This
+follow-up depends on completed native qualification and a decision to continue.

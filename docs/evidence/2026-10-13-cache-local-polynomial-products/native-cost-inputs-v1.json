@@ -1,0 +1,43 @@
+{
+  "status": "prepared-not-executed-native-cost-followup",
+  "scalar_decision_sha256": "93e34d4d345646c36e483331466250858f775aafd10587664efb2738d3531388",
+  "runners_sha256": {
+    "measure_native_v1.py": "ce98b31b442947afa0812e13ff9ea97e1f81e5e003705a8f8a1527dfee7b7da7",
+    "assess_native_controls_v1.py": "3fe88a74bb6b52464df899bf8f2566b3c04c4e0cdec23d078cbf7e92283fa044"
+  },
+  "source_review": "Adapted the established unchanged endpoint, broad-witness and final-abort probes to these frozen source/target paths and the reviewed scalar/native validation versions. Builds and measurements remain sequential. Every sample and adverse row is retained.",
+  "measurement_processes": 36,
+  "endpoint_time_and_allocation_processes": 20,
+  "broad_processes": 10,
+  "abort_processes": 6,
+  "preflights": 4,
+  "endpoint_time_inputs": 8192,
+  "endpoint_memory_inputs": 1000,
+  "broad_rows_per_process": 231,
+  "abort_receipts_per_process": 210,
+  "block_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "conditions": "Only after completed native qualification and a decision to continue. Gate failures remain failures; native costs cannot override them or resolve scalar regressions by themselves.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
