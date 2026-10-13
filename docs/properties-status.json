@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes with five fixed baseline/candidate blocks and dedicated targets. Preserve every adverse row; advance only if scalar costs support native qualification."
+      "next_step": "Run full release all-feature curve and DRC suites, strict consumer Clippy and warning-denied scalar/curve/DRC docs on a separate native target. Execute the original complete-board 120-second worker-CPU and copper-neck 60-second check-body wall assertions separately. Then run fixed native endpoint/broad controls and final-abort receipts. Complete unnormalized report identity and production binary size are required if costs support retention. Preserve every original failure and all inherited endpoint tradeoffs."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -505,11 +505,13 @@
       "runtime_admitted": false
     },
     "isolated_zero_radical_guards": {
-      "status": "isolated-zero-radical-guards-pass-scalar-correctness-await-fixed-costs",
-      "evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/correctness-v1.json",
+      "status": "advance-isolated-zero-radical-guards-to-native-qualification-no-runtime-admission",
+      "evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/scalar-decision-v1.json",
       "result": "The two stored-zero guards pass seven shared baseline/candidate regressions, 870 candidate all-feature release scalar library results and 28 doctests, strict scalar Clippy, formatting and warning-denied docs. Focused counts overlap the full library suite.",
-      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes with five fixed baseline/candidate blocks and dedicated targets. Preserve every adverse row; advance only if scalar costs support native qualification.",
-      "runtime_admitted": false
+      "next_step": "Run full release all-feature curve and DRC suites, strict consumer Clippy and warning-denied scalar/curve/DRC docs on a separate native target. Execute the original complete-board 120-second worker-CPU and copper-neck 60-second check-body wall assertions separately. Then run fixed native endpoint/broad controls and final-abort receipts. Complete unnormalized report identity and production binary size are required if costs support retention. Preserve every original failure and all inherited endpoint tradeoffs.",
+      "runtime_admitted": false,
+      "cost_evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/cost-assessment-v1.json",
+      "cost_summary": "All 60 fixed processes preserve witnesses and inventories; all 68 memory rows and all four fields are identical in every block. Eleven timing rows are faster in all five blocks; conjugate_then_affine_warm is slower in all five (median paired 1.021847), five more in four, and nineteen have slower medians. Four probes keep their size, two add 16 bytes. The sample set stays closed."
     }
   },
   "status_meanings": {
