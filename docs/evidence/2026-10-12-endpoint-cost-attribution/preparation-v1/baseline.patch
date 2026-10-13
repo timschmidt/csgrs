@@ -1,0 +1,397 @@
+--- a/crates/hyperreal/src/lib.rs
++++ b/crates/hyperreal/src/lib.rs
+@@ -28,6 +28,8 @@
+     SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+ };
+ 
++pub mod endpoint_cost_diagnostic;
++
+ mod trace;
+ pub(crate) use trace::trace_dispatch;
+ 
+--- a/crates/hyperreal/src/endpoint_cost_diagnostic.rs
++++ b/crates/hyperreal/src/endpoint_cost_diagnostic.rs
+@@ -0,0 +1,208 @@
++//! Diagnostic-only integer counters for existing calls and allocation scopes.
++//!
++//! Rows are inclusive: an allocation may belong to several active scopes.
++//! No counter owns or clones a scalar, point, geometry object or cache value.
++use std::cell::RefCell;
++
++pub const SPANS: [&str; 16] = [
++    "probe",
++    "endpoint",
++    "coordinate_compare",
++    "distance_squared",
++    "policy_point_equal",
++    "is_zero",
++    "normal_form",
++    "normal_form_recursion",
++    "arithmetic_reuse",
++    "cache_initialize",
++    "cache_store_laurent",
++    "cache_load_laurent",
++    "node_new",
++    "rational_linear_retention",
++    "rational_product_retention",
++    "rational_negation_retention",
++];
++pub const EVENTS: [&str; 6] = [
++    "normal_form_reused",
++    "normal_form_fallback",
++    "cache_created",
++    "cache_published_laurent",
++    "arithmetic_reuse_ready",
++    "arithmetic_reuse_first",
++];
++
++#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
++pub struct Row {
++    pub entries: u64,
++    pub allocations: u64,
++    pub allocated_bytes: u64,
++    pub deallocations: u64,
++    pub deallocated_bytes: u64,
++}
++
++#[derive(Clone, Copy, Debug, Eq, PartialEq)]
++pub struct Snapshot {
++    pub rows: [Row; SPANS.len()],
++    pub events: [u64; EVENTS.len()],
++}
++
++const EMPTY: Snapshot = Snapshot {
++    rows: [Row {
++        entries: 0,
++        allocations: 0,
++        allocated_bytes: 0,
++        deallocations: 0,
++        deallocated_bytes: 0,
++    }; SPANS.len()],
++    events: [0; EVENTS.len()],
++};
++
++struct State {
++    active: bool,
++    mask: u64,
++    snapshot: Snapshot,
++}
++
++thread_local! {
++    static STATE: RefCell<State> = const { RefCell::new(State { active: false, mask: 0, snapshot: EMPTY }) };
++}
++
++pub struct Scope(Option<u64>);
++
++impl Drop for Scope {
++    fn drop(&mut self) {
++        if let Some(mask) = self.0 {
++            STATE.with(|state| {
++                let mut state = state.borrow_mut();
++                assert!(state.active);
++                state.mask = mask;
++            });
++        }
++    }
++}
++
++pub fn begin() {
++    STATE.with(|state| {
++        let mut state = state.borrow_mut();
++        assert!(!state.active);
++        state.active = true;
++        state.mask = 1;
++        state.snapshot = EMPTY;
++        state.snapshot.rows[0].entries = 1;
++    });
++}
++
++pub fn finish() -> Snapshot {
++    STATE.with(|state| {
++        let mut state = state.borrow_mut();
++        assert!(state.active);
++        assert_eq!(state.mask, 1, "all measured calls must have returned");
++        state.active = false;
++        state.mask = 0;
++        state.snapshot
++    })
++}
++
++pub fn enter(span: usize) -> Scope {
++    STATE.with(|state| {
++        let mut state = state.borrow_mut();
++        if !state.active {
++            return Scope(None);
++        }
++        assert!(span > 0 && span < SPANS.len());
++        let prior = state.mask;
++        state.mask |= 1 << span;
++        state.snapshot.rows[span].entries += 1;
++        Scope(Some(prior))
++    })
++}
++
++pub fn event(index: usize) {
++    STATE.with(|state| {
++        let mut state = state.borrow_mut();
++        if state.active {
++            state.snapshot.events[index] += 1;
++        }
++    });
++}
++
++pub fn allocated(bytes: usize) {
++    allocation(bytes, false);
++}
++
++pub fn deallocated(bytes: usize) {
++    allocation(bytes, true);
++}
++
++fn allocation(bytes: usize, deallocation: bool) {
++    STATE.with(|state| {
++        let mut state = state.borrow_mut();
++        let mut mask = state.mask;
++        while mask != 0 {
++            let index = mask.trailing_zeros() as usize;
++            mask &= mask - 1;
++            let row = &mut state.snapshot.rows[index];
++            if deallocation {
++                row.deallocations += 1;
++                row.deallocated_bytes += bytes as u64;
++            } else {
++                row.allocations += 1;
++                row.allocated_bytes += bytes as u64;
++            }
++        }
++    });
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn overlapping_scopes_count_once_per_active_kind_and_restore() {
++        begin();
++        {
++            let _outer = enter(1);
++            allocated(7);
++            {
++                let _nested = enter(1);
++                let _inner = enter(2);
++                allocated(11);
++                deallocated(3);
++                event(0);
++            }
++            allocated(13);
++        }
++        allocated(17);
++        let actual = finish();
++        assert_eq!(actual.rows[0].allocations, 4);
++        assert_eq!(actual.rows[0].allocated_bytes, 48);
++        assert_eq!(actual.rows[1].entries, 2);
++        assert_eq!(actual.rows[1].allocations, 3);
++        assert_eq!(actual.rows[1].allocated_bytes, 31);
++        assert_eq!(actual.rows[2].allocations, 1);
++        assert_eq!(actual.rows[2].allocated_bytes, 11);
++        assert_eq!(actual.rows[1].deallocated_bytes, 3);
++        assert_eq!(actual.events[0], 1);
++        allocated(19);
++        begin();
++        assert_eq!(finish().rows[0].allocations, 0);
++    }
++
++    #[test]
++    fn unwind_restores_the_observation_scope() {
++        begin();
++        assert!(
++            std::panic::catch_unwind(|| {
++                let _outer = enter(1);
++                let _inner = enter(2);
++                panic!("diagnostic unwind calibration");
++            })
++            .is_err()
++        );
++        let actual = finish();
++        assert_eq!(actual.rows[1].entries, 1);
++        assert_eq!(actual.rows[2].entries, 1);
++        begin();
++        assert_eq!(finish().rows[1].entries, 0);
++    }
++}
+--- a/crates/hypercurve/src/point.rs
++++ b/crates/hypercurve/src/point.rs
+@@ -31,6 +31,7 @@
+ 
+ impl PartialEq for Point2 {
+     fn eq(&self, other: &Self) -> bool {
++        let _diagnostic_scope = hyperreal::endpoint_cost_diagnostic::enter(2);
+         Arc::ptr_eq(&self.0, &other.0)
+             || ((self.x() - other.x()).zero_status() == ZeroKnowledge::Zero
+                 && (self.y() - other.y()).zero_status() == ZeroKnowledge::Zero)
+@@ -85,6 +86,7 @@
+ 
+     /// Returns squared Euclidean distance to another point.
+     pub fn distance_squared(&self, other: &Self) -> Real {
++        let _diagnostic_scope = hyperreal::endpoint_cost_diagnostic::enter(3);
+         let (dx, dy) = self.delta_from(other);
+         if dx.exact_rational_ref().is_some() && dy.exact_rational_ref().is_some() {
+             return Real::exact_rational_signed_product_sum_known_exact(
+--- a/crates/hypercurve/src/segment.rs
++++ b/crates/hypercurve/src/segment.rs
+@@ -870,6 +870,7 @@
+     /// Decides endpoint membership without requiring a comparison with the
+     /// other endpoint once either incidence is proved.
+     pub(crate) fn contains_endpoint(&self, point: &Point2, policy: &CurveContext) -> Option<bool> {
++        let _diagnostic_scope = hyperreal::endpoint_cost_diagnostic::enter(1);
+         if point == self.start() || point == self.end() {
+             return Some(true);
+         }
+@@ -2052,6 +2053,7 @@
+ }
+ 
+ fn points_equal(left: &Point2, right: &Point2, policy: &CurveContext) -> Option<bool> {
++    let _diagnostic_scope = hyperreal::endpoint_cost_diagnostic::enter(4);
+     if left == right {
+         return Some(true);
+     }
+--- a/crates/hypercurve/src/classify.rs
++++ b/crates/hypercurve/src/classify.rs
+@@ -133,6 +133,7 @@
+ }
+ 
+ pub(crate) fn is_zero(value: &Real, policy: &CurveContext) -> Option<bool> {
++    let _diagnostic_scope = hyperreal::endpoint_cost_diagnostic::enter(5);
+     match value.zero_status() {
+         ZeroKnowledge::Zero => Some(true),
+         ZeroKnowledge::NonZero => Some(false),
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -456,6 +456,7 @@
+         budget: usize,
+         project: impl Fn(PiLaurentPolynomial) -> Option<T>,
+     ) -> Option<T> {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(6);
+         let mut memo = None;
+         let mut remaining_work = MAX_PI_LAURENT_NORMAL_FORM_NODES;
+         let mut reused = false;
+@@ -480,6 +481,7 @@
+         // before retrying so it cannot change the original sharing decisions.
+         drop(memo);
+         if reused {
++            crate::endpoint_cost_diagnostic::event(1);
+             self.pi_laurent_polynomial(budget).and_then(project)
+         } else {
+             None
+@@ -508,8 +510,10 @@
+         memo: &mut Option<Vec<(usize, Option<PiLaurentPolynomial>)>>,
+         reused: &mut bool,
+     ) -> Option<PiLaurentPolynomial> {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(7);
+         if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {
+             *reused = true;
++            crate::endpoint_cost_diagnostic::event(0);
+             return Some(polynomial);
+         }
+         let key = Arc::as_ptr(&self.internal) as usize;
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -33,6 +33,7 @@
+         bound: BoundCache,
+         exact_sign: ExactSignCache,
+     ) -> Self {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(12);
+         let (contains_inverse_trig_or_pi, linear_demand) = match &approximation {
+             Approximation::Add(left, right) => {
+                 let (left_inverse, left_demand) = left.internal.construction_hints();
+@@ -170,10 +171,12 @@
+     }
+ 
+     fn cell_or_init(&self) -> &std::sync::RwLock<CachedEvaluation> {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(9);
+         if let Some(cell) = self.cell() {
+             return cell;
+         }
+ 
++        crate::endpoint_cost_diagnostic::event(2);
+         let allocated = Box::into_raw(Box::new(
+             std::sync::RwLock::new(CachedEvaluation::default()),
+         ));
+@@ -262,6 +265,7 @@
+     }
+ 
+     fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(11);
+         let guard = self
+             .cell()?
+             .read()
+@@ -270,6 +274,7 @@
+     }
+ 
+     fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(10);
+         let Some(closed) = ClosedPiLaurentPolynomial::from_polynomial(polynomial) else {
+             return;
+         };
+@@ -278,6 +283,7 @@
+             .write()
+             .unwrap_or_else(|error| error.into_inner());
+         if guard.pi_laurent_polynomial.is_none() {
++            crate::endpoint_cost_diagnostic::event(3);
+             guard.pi_laurent_polynomial = Some(Box::new(closed));
+         }
+     }
+--- a/crates/hyperreal/src/rational/arithmetic/ops.rs
++++ b/crates/hyperreal/src/rational/arithmetic/ops.rs
+@@ -810,6 +810,7 @@
+     }
+ 
+     fn retain_product_pair(&self, other: &Self, result: &Self) {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(14);
+         if !self.is_internally_unreduced()
+             && self
+                 .product_cache
+@@ -950,6 +951,7 @@
+ 
+     #[inline]
+     pub(crate) fn has_arithmetic_reuse_evidence(&self) -> bool {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(8);
+         // A shared value may have been cloned only for ownership. Admit a
+         // binary linear cache after an arithmetic observation, or immediately
+         // when another retained arithmetic result already proves reuse.
+@@ -957,8 +959,10 @@
+             || self.linear_cache.get().is_some()
+             || self.retained_fact(RETAINED_LINEAR_REUSE_SEEN)
+         {
++            crate::endpoint_cost_diagnostic::event(4);
+             return true;
+         }
++        crate::endpoint_cost_diagnostic::event(5);
+         crate::trace_dispatch!("rational", "arithmetic-reuse", "first-observation");
+         self.retain_fact(RETAINED_LINEAR_REUSE_SEEN);
+         false
+@@ -972,6 +976,7 @@
+     #[cold]
+     #[inline(never)]
+     fn retain_sum_pair(&self, other: &Self, result: &Self) {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(13);
+         let self_shared = self.has_linear_reuse_evidence();
+         let other_shared = other.has_linear_reuse_evidence();
+         if !self_shared && !other_shared {
+@@ -990,6 +995,7 @@
+     #[cold]
+     #[inline(never)]
+     fn retain_difference_pair(&self, other: &Self, result: &Self) {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(13);
+         let self_shared = self.has_linear_reuse_evidence();
+         let other_shared = other.has_linear_reuse_evidence();
+         if !self_shared && !other_shared {
+@@ -1194,6 +1200,7 @@
+ 
+     #[cold]
+     fn retain_negation_pair(&self, negation: &Self) {
++        let _diagnostic_scope = crate::endpoint_cost_diagnostic::enter(15);
+         let _ = negation
+             .retain_negation_entry(CachedRationalUnary::Weak(Arc::downgrade(&self.0)));
+         let _ = self.retain_negation_entry(CachedRationalUnary::Strong(negation.clone()));
