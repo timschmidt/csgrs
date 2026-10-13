@@ -37,13 +37,27 @@ retained views: shared buffers and graph release, exact arithmetic across all
 ownership combinations, term/radical/power frontiers, concurrent mutation
 isolation, and opaque-left ownership and declined products.
 
-The prepared qualification executes 26 commands in fresh targets, including
-default/all-feature tests, doctests, formatting, strict Clippy and warning-denied
-docs. Only after it passes does a new fixed scalar trial execute twelve
-preflights and 60 measurements across the three unchanged probe suites. Builds
-precede every probe; timing and allocation use separate executables. Every
-phase, sample, adverse result, layout and probe size remains in scope. Neither
-the source design nor old recursive-copy counts prove an improvement.
+All 26 qualification commands passed in fresh targets. Baseline passes 888
+all-feature and 801 default scalar library tests; candidate passes 893 and 806,
+including the five retained-view controls. Both pass 28 doctests, focused shared
+and inherited controls, formatting, strict default/all-feature/all-target Clippy
+and warning-denied docs. Counts overlap and do not establish full-workflow
+coverage. The [independent assessment](correctness-v2.json) verifies every log,
+command, source binding and inventory.
+
+The eight existing type layouts match, including 56-byte scratch coefficients,
+32-byte closed coefficients, 24-byte owned polynomials and 64-byte cache values.
+The new private result enum is 24 bytes. Original memo entries remain 1/1/2 for
+retained/original/opaque controls, and ordinary radical-copy inventories remain
+0/0 in both variants. Candidate tests separately verify actual shared closed
+payloads and their release. Arc headers are additional heap costs and are not
+accounted for by these private type sizes.
+
+The next fixed scalar trial executes twelve preflights and 60 measurements
+across the three unchanged probe suites. Builds precede every probe; timing and
+allocation use separate executables. Every phase, sample, adverse result,
+layout and probe size remains in scope. Neither the source design nor old
+recursive-copy counts prove an improvement.
 
 Version 1 preparation stopped before compilation because rustfmt folded three
 calls and removed optional trailing argument commas. The exact-token guard
@@ -58,8 +72,8 @@ Their maps exactly match the preserved formatted version 1 trees, including
 every Rust and mathematical test byte. Exact parent-token recovery and the
 borrowed multiplication's operation sequence are verified. Baseline and
 candidate differ only in algebra.rs, representation.rs and the new private
-helper. The 26-command qualification is running in fresh targets; costs have
-not run. See [preparation-v2/protocol.json](preparation-v2/protocol.json).
+helper. Qualification passed; costs have not run. See
+[preparation-v2/protocol.json](preparation-v2/protocol.json).
 See [scope-v2.json](scope-v2.json) for the correction, contract and cost risks.
 Native validation, original board and neck
 limits, endpoint/broad/abort controls, complete report bytes and production CLI

@@ -1,0 +1,16 @@
+
+running 11 tests
+test real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_linear_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_square_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::compaction_keeps_unknown_and_unsupported_sources_honest ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::compaction_preserves_final_abort_signal ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::denested_negative_tower_preserves_payload_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::nested_linear_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::nested_square_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::normalized_negative_tower_scale_preserves_payload_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_linear_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_square_retains_sign ... ok
+test real::arithmetic::quadratic_tower_sign_retention_tests::rational_zero_and_symbolic_compactions_preserve_signs ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 882 filtered out; finished in 0.00s
+

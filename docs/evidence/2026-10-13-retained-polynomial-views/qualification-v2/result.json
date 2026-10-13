@@ -1,0 +1,936 @@
+{
+  "complete": true,
+  "phases": [
+    {
+      "name": "baseline-format",
+      "variant": "baseline",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.616017702035606,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-storage-regressions",
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.579057787079364,
+      "stdout_sha256": "51b2f8471198953f142d541f7ef52a718799c717455b2d61e7f9f2978c8577b0",
+      "stderr_sha256": "2be704160618d90525cc2e1bc57b476fd630ab6da76f55a47406182195dd371f"
+    },
+    {
+      "name": "baseline-memo-regressions",
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "memo_publication_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.15542627219110727,
+      "stdout_sha256": "a464222ebfc76861049fe269438db8276991ed7e97222ed05b85b4964c2f1ccb",
+      "stderr_sha256": "81e2fce817862383c89b445baf8ac0dec12cf26b99dc1262ad210e1fbe8bfc5b"
+    },
+    {
+      "name": "baseline-alias-regressions",
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "shared_radical_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.1421503028832376,
+      "stdout_sha256": "34ca5a704ad4428c612ef04244e9f003169e336555ec5cf9c33ab84f7aa54076",
+      "stderr_sha256": "81e2fce817862383c89b445baf8ac0dec12cf26b99dc1262ad210e1fbe8bfc5b"
+    },
+    {
+      "name": "baseline-buffer-ownership",
+      "variant": "baseline",
+      "phase": "buffer-ownership",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "retained_polynomial::tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.15123581001535058,
+      "stdout_sha256": "a8a79a340b1c4fdbeee9420823d1fcf0549967e0c95b9254a3078d64149dc29b",
+      "stderr_sha256": "81e2fce817862383c89b445baf8ac0dec12cf26b99dc1262ad210e1fbe8bfc5b"
+    },
+    {
+      "name": "baseline-cache-frontiers",
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.17517458787187934,
+      "stdout_sha256": "db98dae7eae77093c2ff8171b4421e204c125958ab20eefe6f9f77313f4341ee",
+      "stderr_sha256": "7b1f9aef0db5813d5f0d4e1c4572af597d05d3ad9bb68c3b990f4d67f59c8e48"
+    },
+    {
+      "name": "baseline-sign-regressions",
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14855062402784824,
+      "stdout_sha256": "dce24d697af53b3201321543e52db09deb02ecb614af716f85e3cdaccd079718",
+      "stderr_sha256": "81e2fce817862383c89b445baf8ac0dec12cf26b99dc1262ad210e1fbe8bfc5b"
+    },
+    {
+      "name": "baseline-all-feature-library",
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.5343633857555687,
+      "stdout_sha256": "8c6258b6b54696086c5d3b74fa08ecebf58687558f2d6e8fd47eca0f6adea5aa",
+      "stderr_sha256": "7b1f9aef0db5813d5f0d4e1c4572af597d05d3ad9bb68c3b990f4d67f59c8e48"
+    },
+    {
+      "name": "baseline-default-library",
+      "variant": "baseline",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.56088198674843,
+      "stdout_sha256": "64f24c3419796d75031c65941e04b7ee11c17a790cf8c0c5ba4f4b1d369109ba",
+      "stderr_sha256": "1b8978d078bc26e5a556b49ef2042b888577cb110c83c06adcbc15dcf9ca68cc"
+    },
+    {
+      "name": "baseline-doctests",
+      "variant": "baseline",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.280101597309113,
+      "stdout_sha256": "02afb398c300316596f0ee457824e5999877a31cb925fa8c5369fbdea7590ffe",
+      "stderr_sha256": "6599299c0a43905322cdb538fe8b3f4854abf4d328e2a688656968c87679b622"
+    },
+    {
+      "name": "baseline-all-feature-clippy",
+      "variant": "baseline",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.74880092870444,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "60c05afc8b89229651e97971d34cb23625bf63d98b707a4896ca885ddc971d2a"
+    },
+    {
+      "name": "baseline-default-clippy",
+      "variant": "baseline",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.782633000053465,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b75fab7ba3d8993cafc18e58f8a3a2ce7cd30cd6dd7447d887a9c7bb4a85041b"
+    },
+    {
+      "name": "baseline-docs",
+      "variant": "baseline",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.3614898310042918,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "78f9dd6d89e54cc3d16302428dc7737ad4121ecef5a57054844229a2ef6a8aa8"
+    },
+    {
+      "name": "candidate-format",
+      "variant": "candidate",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.570019755978137,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-storage-regressions",
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.34402270289138,
+      "stdout_sha256": "16d808a9cf9492a017cfbdd0df906a306f91a92fdc166307591bb102bebb71ab",
+      "stderr_sha256": "778e9715743499f6e1a5455984ab6ea642472c6a5e1578dd48d2ad5e9f1a206e"
+    },
+    {
+      "name": "candidate-memo-regressions",
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "memo_publication_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14604239584878087,
+      "stdout_sha256": "565269c60c1b4c4128713bca64bcf3844ae1b425b33a9ac1c81abaa886882912",
+      "stderr_sha256": "424e8e650e0b32f53a975279f5c911940313029e27f9689f5cae601dbb9a07c6"
+    },
+    {
+      "name": "candidate-alias-regressions",
+      "variant": "candidate",
+      "phase": "alias-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "shared_radical_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.1470408570021391,
+      "stdout_sha256": "e328eaba2512b4673952401606aaa940f4f69376f13496eda41c983d6b7c158e",
+      "stderr_sha256": "424e8e650e0b32f53a975279f5c911940313029e27f9689f5cae601dbb9a07c6"
+    },
+    {
+      "name": "candidate-buffer-ownership",
+      "variant": "candidate",
+      "phase": "buffer-ownership",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "retained_polynomial::tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14885847317054868,
+      "stdout_sha256": "70f539c81f2b8796674e0fcf3e95738ee8ab1a52b7de04a458613e8b951e9c77",
+      "stderr_sha256": "424e8e650e0b32f53a975279f5c911940313029e27f9689f5cae601dbb9a07c6"
+    },
+    {
+      "name": "candidate-cache-frontiers",
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16196009423583746,
+      "stdout_sha256": "f7ed1f9acac1a61713f2d8b16172135f9bd17aa59f0245ae3e8ba95a99f86157",
+      "stderr_sha256": "424e8e650e0b32f53a975279f5c911940313029e27f9689f5cae601dbb9a07c6"
+    },
+    {
+      "name": "candidate-sign-regressions",
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16455999575555325,
+      "stdout_sha256": "0ce549effb959bdb51fc63e0f01b8ec4d010a43d783db754a299da2cf7180a7a",
+      "stderr_sha256": "1705b3310dddb9b4e5993fdab68092dddbd0c08d727d4c42dcd123ad1f610975"
+    },
+    {
+      "name": "candidate-all-feature-library",
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.469928425271064,
+      "stdout_sha256": "e612a0506cb576b3c5cd0d4982f247f2d57bde774fc6c6e576c1cbf2e6b8ad6d",
+      "stderr_sha256": "424e8e650e0b32f53a975279f5c911940313029e27f9689f5cae601dbb9a07c6"
+    },
+    {
+      "name": "candidate-default-library",
+      "variant": "candidate",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.84370190417394,
+      "stdout_sha256": "28d362560e025a6d7ee3f9945c353a351994c33650a3e1f13d4f96ab986a73bf",
+      "stderr_sha256": "b7d6f72d7d85d7f9a4e738e6bc4cfc02352d828b483e37c60742615bd3ca1ceb"
+    },
+    {
+      "name": "candidate-doctests",
+      "variant": "candidate",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.365893993992358,
+      "stdout_sha256": "c3db2c98c20bbaa29974da14952da840961b279dddefde790432d20ea1755044",
+      "stderr_sha256": "59dc1e6edd08b0f4b2b3d7efa7f66ef8576f9e1c9a2c955a254851bbf3e84964"
+    },
+    {
+      "name": "candidate-all-feature-clippy",
+      "variant": "candidate",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.895493749994785,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ecbdc4ffd4f566314ab1285dad400c34cc92f6b67c0bd27082449ac4f4758f7d"
+    },
+    {
+      "name": "candidate-default-clippy",
+      "variant": "candidate",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.847210271283984,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b0702350708c69ad1f38b429bdb07c8865ffb7034124b54afdd6f2c42fb67209"
+    },
+    {
+      "name": "candidate-docs",
+      "variant": "candidate",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.47197222430259,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "694ab120e6a45ee899893bed7ea84ed37fb5fb41e31d2380523c07febf11618e"
+    }
+  ],
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "buffer-ownership",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 888,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 801,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "buffer-ownership",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "passed": 893,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "default-library",
+      "passed": 806,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "candidate": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "candidate": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    }
+  },
+  "sharing": {
+    "baseline": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "candidate": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    }
+  },
+  "source_parent_and_main_unchanged": true,
+  "layouts_recorded": true,
+  "retained_view_layout": {
+    "PiLaurentValue": 24,
+    "CachedEvaluation": 64
+  },
+  "focused_and_configuration_totals_overlap": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
