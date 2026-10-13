@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Instrument the initial and repeated point-equality stages inside contains_endpoint in a separate source and target. Observe the Zero/NonZero/Unknown coordinate facts that the existing comparisons already request, final endpoint outcomes and policy categories. Keep every original query, short circuit, temporary lifetime and validation result; counters must retain no scalar or geometry owners. Only evaluate reuse of an already computed negative coordinate proof if the diagnostic supports it. Preserve preview/approximation receipts, shared budgets, aborts, cache strengthening, full reports and the original limits."
+      "next_step": "Fork the frozen metadata-first parent into a separate source and target. Expose only the tri-state result of the same lazy coordinate zero queries used by Point2 equality, without changing global PartialEq. In contains_endpoint, keep shared/either-endpoint success first and skip the existing policy retry only after an actual NonZero coordinate proof. Keep all Unknown retries, the later whole endpoint query, temporary drop boundaries and policy receipts. Qualify negative/unknown/shared/independently equal cases, cold/warm/cloned facts, active and cleared abort, bounded/shared budgets, preview/approximation consumption, historical capability witnesses, fixed costs and memory, full curve validation, complete reports and both original native limits. Correct the inherited two-pass normal-form budget documentation before admission."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -190,6 +190,27 @@
       "profiled_worker_cpu_seconds": 146.569979545,
       "original_worker_cpu_limit_seconds": 120,
       "next_step": "Instrument the initial and repeated point-equality stages inside contains_endpoint in a separate source and target. Observe the Zero/NonZero/Unknown coordinate facts that the existing comparisons already request, final endpoint outcomes and policy categories. Keep every original query, short circuit, temporary lifetime and validation result; counters must retain no scalar or geometry owners. Only evaluate reuse of an already computed negative coordinate proof if the diagnostic supports it. Preserve preview/approximation receipts, shared budgets, aborts, cache strengthening, full reports and the original limits.",
+      "runtime_admitted": false
+    },
+    "isolated_endpoint_coordinate_facts": {
+      "status": "advance-isolated-negative-coordinate-proof-reuse-trial",
+      "evidence": "docs/evidence/2026-10-12-endpoint-coordinate-facts/assessment-v2.json",
+      "result": "2010162 completed endpoint calls; 2616583 per-endpoint policy retries follow an already certified negative coordinate result. Their instrumented time is 11.004793030 seconds of 15.762601851 total retry seconds. No observed negative coordinate proof was contradicted by its same-endpoint retry.",
+      "required_unknown_retries": "113161 retries follow inconclusive coordinate comparisons; 158 later policy queries prove equality. These retries must remain.",
+      "validation": {
+        "diagnostic-regressions": 3,
+        "point-equality-regressions": 5,
+        "arc-membership-regression": 0,
+        "arc-filter-correction": 1
+      },
+      "full_board": {
+        "worker_cpu_seconds": 147.008601816,
+        "limit_seconds": 120,
+        "passed": false,
+        "both_reports_emitted": true
+      },
+      "limits": "Only ordinary exact policy category 0 was observed in the full-board rows. Instrumented time is not a speedup estimate. Marginal endpoint counts are not joint facts.",
+      "next_step": "Fork the frozen metadata-first parent into a separate source and target. Expose only the tri-state result of the same lazy coordinate zero queries used by Point2 equality, without changing global PartialEq. In contains_endpoint, keep shared/either-endpoint success first and skip the existing policy retry only after an actual NonZero coordinate proof. Keep all Unknown retries, the later whole endpoint query, temporary drop boundaries and policy receipts. Qualify negative/unknown/shared/independently equal cases, cold/warm/cloned facts, active and cleared abort, bounded/shared budgets, preview/approximation consumption, historical capability witnesses, fixed costs and memory, full curve validation, complete reports and both original native limits. Correct the inherited two-pass normal-form budget documentation before admission.",
       "runtime_admitted": false
     }
   },

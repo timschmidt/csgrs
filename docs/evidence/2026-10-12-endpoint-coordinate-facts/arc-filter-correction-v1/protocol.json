@@ -1,0 +1,6 @@
+{
+  "runner_sha256": "823464e69dc19f9cc9d669faa5b48dee0aaa0ff4346ccd1a15d35a0359c02825",
+  "prior_protocol_sha256": "8fdaccf64c878db6c93aff96377a1d769c425413837e92bf9b7e84fa72ecd3ac",
+  "reason": "The original segment::tests filter matched zero tests. The function is in segment::policy_cache_tests. The original zero-test logs and failed assessment remain unchanged.",
+  "expected_test_count": 1
+}

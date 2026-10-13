@@ -1,0 +1,7 @@
+{
+  "script_sha256": "74abb597f96b57a89f8b250c762ddf815f3b90a17de7d1c8a52c5b4769e5f0ba",
+  "exit_code": 1,
+  "exception": "AssertionError: asserted one arc regression, but original exact filter ran zero tests.",
+  "output_written": false,
+  "corrected_by": "assess_v2.py and correct_arc_filter_v1.py; original diagnostic preserved"
+}

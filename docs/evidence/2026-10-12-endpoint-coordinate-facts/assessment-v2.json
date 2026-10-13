@@ -1,0 +1,87 @@
+{
+  "decision": "advance-isolated-negative-coordinate-proof-reuse-trial",
+  "scope": "Existing query order and short circuits preserved; only returned coordinate facts observed. This is an instrumented full-board diagnostic, not runtime qualification.",
+  "observed_endpoint_calls": 2010162,
+  "per_endpoint_rows": 19,
+  "totals": {
+    "calls": 4020324,
+    "initial_nanos": 3942880539,
+    "retry_nanos": 15762601851
+  },
+  "negative_followed_by_policy_retry": {
+    "calls": 2616583,
+    "initial_nanos": 2451312315,
+    "retry_nanos": 11004793030
+  },
+  "negative_retry_percent_of_all_retry_nanos": 69.81584090003416,
+  "initial_unknown_followed_by_policy_retry": {
+    "calls": 113161,
+    "initial_nanos": 832313394,
+    "retry_nanos": 4757808821
+  },
+  "initial_unknown_later_policy_true": {
+    "calls": 158,
+    "initial_nanos": 19617587,
+    "retry_nanos": 720663685
+  },
+  "negative_coordinate_contradictions_observed": 0,
+  "policy_categories_observed": [
+    0
+  ],
+  "validation": {
+    "diagnostic-regressions": 3,
+    "point-equality-regressions": 5,
+    "arc-membership-regression": 0,
+    "arc-filter-correction": 1
+  },
+  "format_and_strict_release_all_feature_all_target_curve_clippy_pass": true,
+  "full_board": {
+    "worker_cpu_seconds": 147.008601816,
+    "limit_seconds": 120,
+    "passed": false,
+    "both_reports_emitted": true
+  },
+  "limits": [
+    "Instrumentation changes timing and allocation behavior. The measured retry durations are not predicted net savings or matched release speedup.",
+    "Rows are marginal per-endpoint observations, not joint start/end proofs. An overall true answer after a negative coordinate proof may be caused by the other endpoint.",
+    "Observed policy category 0 has no preview, approximate-terminal permission or bounded-pass flag. Flags indicate permission, not consumed approximation receipts. Other policies still require dedicated controls.",
+    "Only exiting-thread counters are collected. Focused diagnostic, equality and arc regressions pass; no complete curve suite or full report identity replay is claimed here.",
+    "The earlier rejected trial omitted a second whole endpoint call after radius classification. This next trial only proposes preserving the negative facts from the first coordinate comparisons; the rejected omission remains excluded.",
+    "All 39 properties, 14 targets and crate-specific future work remain in scope. The original full-board failure and all earlier cost tradeoffs remain open."
+  ],
+  "next_step": "Fork the frozen metadata-first parent into a separate source and target. Expose only the tri-state result of the same lazy coordinate zero queries used by Point2 equality, without changing global PartialEq. In contains_endpoint, keep shared/either-endpoint success first and skip the existing policy retry only after an actual NonZero coordinate proof. Keep all Unknown retries, the later whole endpoint query, temporary drop boundaries and policy receipts. Qualify negative/unknown/shared/independently equal cases, cold/warm/cloned facts, active and cleared abort, bounded/shared budgets, preview/approximation consumption, historical capability witnesses, fixed costs and memory, full curve validation, complete reports and both original native limits. Correct the inherited two-pass normal-form budget documentation before admission.",
+  "artifacts_sha256": {
+    "diagnostic-v1/arc-membership-regression.stderr": "42bdf75690b75c8a7df9a4a81432dcacd2d47110e953eb6275719ad447f03967",
+    "diagnostic-v1/arc-membership-regression.stdout": "dd7a20ead6111a7237e8953485a915df80d91c62c098bea1044af32af9b00ae2",
+    "diagnostic-v1/binary.json": "36540a18dc80c965b35095378f810280127108652951b1555bd87f88c63a8807",
+    "diagnostic-v1/build-board-tests.stderr": "96b1e53844c573f209e3245f461eab3da0c31fd8af43fdee3e4fd7842e56babe",
+    "diagnostic-v1/build-board-tests.stdout": "ba556c15dc7065a52cdb93bbc62f351827a0da795a9a71ba302dad552cad3317",
+    "diagnostic-v1/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/counters.json": "461d52a2929fbfc5d3ba6946b8532a90f175be7989737cb62f6d61e49f93a601",
+    "diagnostic-v1/diagnostic-regressions.stderr": "49809fecaa2cd552009828075c230f196eb5f3774bc5547da141efd0092bc3fd",
+    "diagnostic-v1/diagnostic-regressions.stdout": "7c11822a9f037d4473adb9148c3834d3f083d8b99b374f268a4cb52e13449520",
+    "diagnostic-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/full-board.stderr": "bf407ba1f30ca31943b9374b28c3b4e0d7f10dcf7155a9a552730bd9b68334dc",
+    "diagnostic-v1/full-board.stdout": "40b4f90fd29f4d68e4a948b4d6933a39b2a33ae212236c7d97661cab9af1d066",
+    "diagnostic-v1/instrumentation.patch": "b9635c189774fcc5655df361681612d7b2a9082286bbf78437ad36c4890b9b4e",
+    "diagnostic-v1/instrumentation.tar.gz": "481162b3a190f8e1e78ec470ae7f73e35bc8e6a48eed098ec984ef64d4453e56",
+    "diagnostic-v1/point-equality-regressions.stderr": "167626bae983ed97c683f50cb4e2dcd5d252c3a467de0021d6887f0bdbc081f7",
+    "diagnostic-v1/point-equality-regressions.stdout": "436dc93ef916a39176412fb911d4e3daf5ae2c5ac355d6c911293e6ffb3ac570",
+    "diagnostic-v1/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/protocol.json": "8fdaccf64c878db6c93aff96377a1d769c425413837e92bf9b7e84fa72ecd3ac",
+    "diagnostic-v1/result.json": "c47453a54fff12935f6cd1151dcf46c6ef537015f6a1f941350fefeae3173433",
+    "diagnostic-v1/strict-curve-clippy.stderr": "58d3d1513b4face86a39f7d7483294eed1332bdfae89933c27df9bb5753f8a6f",
+    "diagnostic-v1/strict-curve-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "arc-filter-correction-v1/arc-regression.stderr": "0b31ffd0120daebd63430e448a6bf9db97cd872e3ecf7201da14decde036e5ed",
+    "arc-filter-correction-v1/arc-regression.stdout": "5a025ae78a411f87c33bdec4081b70f8038de9e0624c9862871a7c9be5debd1f",
+    "arc-filter-correction-v1/build.stderr": "c9ef3b68d69664e1d157e575848e4f6146e26ad39b9aa75897123cb92d2ce4bd",
+    "arc-filter-correction-v1/build.stdout": "1f0ab076c8c14d4ee8eb9abd0cd3c58e89ff54b4504fe2e49c8ed15b4789f405",
+    "arc-filter-correction-v1/protocol.json": "1313b0d5e10d6071e06c91e89e34cb36b778eca228237713e1e675c0d3c40251",
+    "arc-filter-correction-v1/result.json": "627d118a92b8e79d51dfe21e83c2afcfe445def0567ee81ccc4ade9ad774aa36"
+  },
+  "qualification_correction": "The original arc filter matched zero tests. assess_v1 correctly rejected the claimed count. The corrected exact test now runs once and passes; no diagnostic measurement was rerun.",
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

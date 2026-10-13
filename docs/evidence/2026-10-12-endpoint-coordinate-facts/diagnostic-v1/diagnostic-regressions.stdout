@@ -1,0 +1,8 @@
+
+running 3 tests
+test endpoint_fact_diagnostic::tests::observation_scope_restores_state_after_unwind_and_nesting ... ok
+test endpoint_fact_diagnostic::tests::observed_endpoint_queries_keep_warm_and_cloned_results ... ok
+test endpoint_fact_diagnostic::tests::observer_distinguishes_shared_equal_nonzero_and_unknown_coordinates ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 1766 filtered out; finished in 0.00s
+

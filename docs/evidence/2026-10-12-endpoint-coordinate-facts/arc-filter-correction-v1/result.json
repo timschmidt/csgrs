@@ -1,0 +1,52 @@
+{
+  "complete": true,
+  "phases": [
+    {
+      "name": "build",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 0.6187762580811977,
+      "stdout_sha256": "1f0ab076c8c14d4ee8eb9abd0cd3c58e89ff54b4504fe2e49c8ed15b4789f405",
+      "stderr_sha256": "c9ef3b68d69664e1d157e575848e4f6146e26ad39b9aa75897123cb92d2ce4bd"
+    },
+    {
+      "name": "arc-regression",
+      "command": [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-facts/diagnostic-v1/target/release/deps/hypercurve-c64b9a6905916d79",
+        "segment::policy_cache_tests::sweep_membership_uses_a_decisive_half_plane",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.4452911098487675,
+      "stdout_sha256": "5a025ae78a411f87c33bdec4081b70f8038de9e0624c9862871a7c9be5debd1f",
+      "stderr_sha256": "0b31ffd0120daebd63430e448a6bf9db97cd872e3ecf7201da14decde036e5ed"
+    }
+  ],
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-facts/diagnostic-v1/target/release/deps/hypercurve-c64b9a6905916d79",
+    "sha256": "f84565b2fcc1b01eac6715e1aa64cb34c8a2791978187a3372460b14132a8661",
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-facts/diagnostic-v1/source/crates/hypercurve/Cargo.toml",
+    "features": [
+      "comparative-benchmarks",
+      "default",
+      "dispatch-trace",
+      "hershey",
+      "svg",
+      "triangulation"
+    ]
+  },
+  "tests_passed": 1,
+  "source_unchanged": true
+}

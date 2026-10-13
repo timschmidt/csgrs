@@ -1,0 +1,211 @@
+[
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 1,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 322833,
+    "initial_nanos": 147185303,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 2,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 321563,
+    "initial_nanos": 333967277,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 2,
+    "repeated_proof": 2,
+    "policy_result": 1,
+    "overall_result": 1,
+    "calls": 1308025,
+    "initial_nanos": 1415041535,
+    "retry_nanos": 5611232854
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 2,
+    "repeated_proof": 2,
+    "policy_result": 1,
+    "overall_result": 2,
+    "calls": 54,
+    "initial_nanos": 501802,
+    "retry_nanos": 916007
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 855,
+    "initial_nanos": 38879536,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 0,
+    "overall_result": 0,
+    "calls": 5,
+    "initial_nanos": 1254122,
+    "retry_nanos": 21242445
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 1,
+    "overall_result": 0,
+    "calls": 5,
+    "initial_nanos": 899997,
+    "retry_nanos": 1462071
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 1,
+    "overall_result": 1,
+    "calls": 56718,
+    "initial_nanos": 460965040,
+    "retry_nanos": 2160906708
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 1,
+    "overall_result": 2,
+    "calls": 26,
+    "initial_nanos": 7916306,
+    "retry_nanos": 6634914
+  },
+  {
+    "policy": 0,
+    "endpoint": 0,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 2,
+    "overall_result": 2,
+    "calls": 78,
+    "initial_nanos": 11408295,
+    "retry_nanos": 359055301
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 0,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 322833,
+    "initial_nanos": 0,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 1,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 322418,
+    "initial_nanos": 136384636,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 2,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 62,
+    "initial_nanos": 182680,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 2,
+    "repeated_proof": 2,
+    "policy_result": 1,
+    "overall_result": 1,
+    "calls": 1308504,
+    "initial_nanos": 1035768978,
+    "retry_nanos": 5392644169
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 3,
+    "repeated_proof": 0,
+    "policy_result": 3,
+    "overall_result": 2,
+    "calls": 16,
+    "initial_nanos": 2655398,
+    "retry_nanos": 0
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 0,
+    "overall_result": 0,
+    "calls": 5,
+    "initial_nanos": 1107964,
+    "retry_nanos": 20149870
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 1,
+    "overall_result": 0,
+    "calls": 5,
+    "initial_nanos": 651527,
+    "retry_nanos": 2229627
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 1,
+    "overall_result": 1,
+    "calls": 56239,
+    "initial_nanos": 339900851,
+    "retry_nanos": 1824519501
+  },
+  {
+    "policy": 0,
+    "endpoint": 1,
+    "initial_proof": 3,
+    "repeated_proof": 3,
+    "policy_result": 2,
+    "overall_result": 2,
+    "calls": 80,
+    "initial_nanos": 8209292,
+    "retry_nanos": 361608384
+  }
+]

@@ -1,0 +1,146 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.465007571037859,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diagnostic-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_fact_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 122.7951178457588,
+      "sources_unchanged": true,
+      "stdout_sha256": "7c11822a9f037d4473adb9148c3834d3f083d8b99b374f268a4cb52e13449520",
+      "stderr_sha256": "49809fecaa2cd552009828075c230f196eb5f3774bc5547da141efd0092bc3fd"
+    },
+    {
+      "name": "point-equality-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "point::equality_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 1.0721552772447467,
+      "sources_unchanged": true,
+      "stdout_sha256": "436dc93ef916a39176412fb911d4e3daf5ae2c5ac355d6c911293e6ffb3ac570",
+      "stderr_sha256": "167626bae983ed97c683f50cb4e2dcd5d252c3a467de0021d6887f0bdbc081f7"
+    },
+    {
+      "name": "arc-membership-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "segment::tests::sweep_membership_uses_a_decisive_half_plane",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.9144965531304479,
+      "sources_unchanged": true,
+      "stdout_sha256": "dd7a20ead6111a7237e8953485a915df80d91c62c098bea1044af32af9b00ae2",
+      "stderr_sha256": "42bdf75690b75c8a7df9a4a81432dcacd2d47110e953eb6275719ad447f03967"
+    },
+    {
+      "name": "strict-curve-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 37.546593833714724,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "58d3d1513b4face86a39f7d7483294eed1332bdfae89933c27df9bb5753f8a6f"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 127.47408078610897,
+      "sources_unchanged": true,
+      "stdout_sha256": "ba556c15dc7065a52cdb93bbc62f351827a0da795a9a71ba302dad552cad3317",
+      "stderr_sha256": "96b1e53844c573f209e3245f461eab3da0c31fd8af43fdee3e4fd7842e56babe"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-facts/diagnostic-v1/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 149.25238863099366,
+      "sources_unchanged": true,
+      "stdout_sha256": "40b4f90fd29f4d68e4a948b4d6933a39b2a33ae212236c7d97661cab9af1d066",
+      "stderr_sha256": "bf407ba1f30ca31943b9374b28c3b4e0d7f10dcf7155a9a552730bd9b68334dc"
+    }
+  ],
+  "complete": true,
+  "rows": 19,
+  "observed_endpoint_calls": 2010162,
+  "timing_is_perturbed": true,
+  "runtime_admitted": false
+}

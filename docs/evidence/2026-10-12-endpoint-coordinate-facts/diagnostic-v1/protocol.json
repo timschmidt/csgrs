@@ -1,0 +1,135 @@
+{
+  "scope": "Observe existing coordinate proofs during unchanged endpoint queries.\n\nThe previous goal turn made progress through five commits. This diagnostic\nforks the frozen metadata-first candidate, preserves all original math queries,\nand observes only their returned facts. Timers/counters perturb execution and\nretain no geometry or scalar owners. Counters are collected from exiting threads.\n",
+  "runner_sha256": "f6c27cf36f9b8065cb4ca2b06266a7d629c3235c713f05a37efcc7d4d10a10eb",
+  "base_commit": "395ac3ced9ae1b8f6cd290f2a8b035fc81d018cb",
+  "parent_preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "profile_assessment_sha256": "d23a6dd22c7e665a7dd38dc5662801c0ef4469e0d80d2e7b0fb2c19b6808a0e5",
+  "source_changes_sha256": {
+    "crates/hypercurve/src/lib.rs": "d82f8822e5fc778fad0c4544d0c6cf321bc4fc1f235e1097b374893b1167c204",
+    "crates/hypercurve/src/point.rs": "09df9eb88ac5dfb2ae335f998ea6270fb9e0e58885ba3b980c3b96ce9c5d75f5",
+    "crates/hypercurve/src/segment.rs": "1a8343f7252ae29001119b43dc78a98f73c2c96151994d611ec48f5283e8a46c",
+    "crates/hypercurve/src/endpoint_fact_diagnostic.rs": "d852b7afd38a4b627c66be583658c8e090782607d295eae7061669fe54f9be13"
+  },
+  "archive_sha256": "481162b3a190f8e1e78ec470ae7f73e35bc8e6a48eed098ec984ef64d4453e56",
+  "patch_sha256": "b9635c189774fcc5655df361681612d7b2a9082286bbf78437ad36c4890b9b4e",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "diagnostic-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_fact_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "point-equality-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "point::equality_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "arc-membership-regression",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "segment::tests::sweep_membership_uses_a_decisive_half_plane",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-curve-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-facts/diagnostic-v1/target"
+  },
+  "policy_bits": [
+    "edge preview active",
+    "approximate terminal permitted",
+    "bounded exact pass active"
+  ],
+  "proof_codes": [
+    "unvisited",
+    "equal",
+    "proved unequal",
+    "inconclusive false"
+  ],
+  "result_codes": [
+    "Unknown",
+    "false",
+    "true",
+    "unvisited"
+  ],
+  "row_contract": "One row per endpoint per completed contains_endpoint call; key is policy/endpoint/initial proof/repeated proof/policy result/overall result. Both original initial comparisons and policy-based retries keep their order and short circuits. Only already returned coordinate zero facts are observed. Initial timers surround the initial Point2 comparisons; retry timers surround the complete existing points_equal call.",
+  "policy_limit": "Permission flags do not establish actual approximation consumption. No receipt is inferred from them.",
+  "unchanged_worker_limit_seconds": 120,
+  "runtime_admitted": false
+}
