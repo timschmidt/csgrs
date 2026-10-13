@@ -1,0 +1,99 @@
+{
+  "status": "prototype-inputs-prepared-qualification-and-costs-pending",
+  "previous_goal_turn_classification": "progress",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "baseline_preparation_sha256": "0472e04281ded3746c013e10f2e689b40c3d39c679ca598e7726e657cb87adb2",
+  "coverage_assessment_sha256": "c8c31b0258ad40c4c66412e72b77d2bfd9dd5d2f7c795eda98e22de7d2d5a221",
+  "coverage_decision_sha256": "338cc4b35ec6f35683e5140d9afe47d0c7d29fac5116b404e476ea72a8446626",
+  "kernel_review_sha256": "31c72b43e2eec1c41e636af7ac800574b30f0ed48d6476f7d8185600bdea4094",
+  "coverage": "6,379,817 observed equal-radicand single-radical/no-atom products, 29.05971939075416 percent of 21,954,159 multiplications. These are instrumented operation counts, not eligibility counts for the non-unit guard, time shares or savings.",
+  "contract": "After the original opaque-product guard, recognize exactly one equal non-unit radicand on each side. Preserve arithmetic order and zero-skipping, select the same original left/right radicand payload, reuse the owned left vector for a surviving radical and discard scratch buffers on exact cancellation. General fallback, Box cache layout, memo, work/depth limits and mandatory original retry are unchanged.",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "reviewed_sections": "RadicalCoefficient construction, insert_radical, multiply, inverse, closed conversion, PiLaurentPolynomial multiplication and original retained retry."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "reviewed_sections": "Owned/borrowed multiplication, add_ref and owned/borrowed addition; retained product/sum publication and has_arithmetic_reuse_evidence."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/comparison.rs",
+      "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "reviewed_sections": "Complete Rational::PartialEq entry point."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+      "sha256": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+      "reviewed_sections": "storage_identity, is_zero, is_one and stored sign access."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "reviewed_sections": "Rational Arc payload, cache types, Clone and Deref."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "reviewed_sections": "Raw unreduced construction and cached canonicalized_ref."
+    }
+  ],
+  "risks": [
+    "Early equality/is_one checks may add work and touch numeric caches on paths whose original comparisons occurred later.",
+    "Reusing an input Vec can retain a different capacity, including a larger capacity from prior cancellations; fixed allocation/retention/peak controls remain required.",
+    "No expression cache lock is borrowed, no cache field or public API is added, and no diagnostic or rejected runtime change is inherited.",
+    "P4 permits warming to strengthen Unknown into Certified, never contradictions or weaker available facts."
+  ],
+  "new_shared_tests": 8,
+  "existing_shared_tests": 20,
+  "qualification": "28 sequential commands in fresh baseline/candidate targets. Both include 902 all-feature and 815 default library tests, 28 doctests, focused shared/cache/P4 controls, formatting, strict default/all-feature all-target Clippy and warning-denied docs. Counts overlap.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "variants": [
+      "baseline",
+      "candidate"
+    ],
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false,
+    "block_order": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ]
+  },
+  "draft_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-draft/source",
+  "draft_compiled": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

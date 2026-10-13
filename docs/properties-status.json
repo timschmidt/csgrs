@@ -2359,7 +2359,8 @@
           "all_builds_before_probes": true,
           "sample_extension_planned": false
         },
-        "candidate_prepared": false
+        "candidate_prepared": true,
+        "prepared_inputs_evidence": "docs/evidence/2026-10-13-direct-same-radicand-products"
       },
       "runtime_admitted": false,
       "plan_complete": false,
@@ -2449,6 +2450,66 @@
       "kernel_source_review": "next-kernel-review-v1.json",
       "main_and_35_pending_native_paths_unchanged": true,
       "scope_wording_review": "Individual property/target statuses remain unchanged; the full plan remains incomplete and all 39 properties, 14 targets and crate future work stay in scope."
+    },
+    "direct_same_radicand_products": {
+      "status": "prototype-inputs-prepared-qualification-and-costs-pending",
+      "evidence": "docs/evidence/2026-10-13-direct-same-radicand-products",
+      "contract": "After the original opaque-product guard, recognize exactly one equal non-unit radicand on each side. Preserve arithmetic order and zero-skipping, select the same original left/right radicand payload, reuse the owned left vector for a surviving radical and discard scratch buffers on exact cancellation. General fallback, Box cache layout, memo, work/depth limits and mandatory original retry are unchanged.",
+      "coverage_motivation": "6,379,817 observed equal-radicand single-radical/no-atom products, 29.05971939075416 percent of 21,954,159 multiplications. These are instrumented operation counts, not eligibility counts for the non-unit guard, time shares or savings.",
+      "risks": [
+        "Early equality/is_one checks may add work and touch numeric caches on paths whose original comparisons occurred later.",
+        "Reusing an input Vec can retain a different capacity, including a larger capacity from prior cancellations; fixed allocation/retention/peak controls remain required.",
+        "No expression cache lock is borrowed, no cache field or public API is added, and no diagnostic or rejected runtime change is inherited.",
+        "P4 permits warming to strengthen Unknown into Certified, never contradictions or weaker available facts."
+      ],
+      "shared_controls": "Twenty unchanged prior tests plus eight new byte-identical tests on both variants; original general multiplier retained only as a verified test oracle.",
+      "planned_qualification": "28 sequential commands in fresh baseline/candidate targets. Both include 902 all-feature and 815 default library tests, 28 doctests, focused shared/cache/P4 controls, formatting, strict default/all-feature all-target Clippy and warning-denied docs. Counts overlap.",
+      "fixed_scalar_costs_if_qualified": {
+        "suites": [
+          "rational",
+          "quadratic",
+          "integer"
+        ],
+        "modes": [
+          "time",
+          "memory"
+        ],
+        "variants": [
+          "baseline",
+          "candidate"
+        ],
+        "measurement_processes": 60,
+        "preflight_processes": 12,
+        "timing_inputs": 4096,
+        "memory_inputs": 1000,
+        "all_builds_before_probes": true,
+        "sample_extension_planned": false,
+        "block_order": [
+          [
+            "baseline",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "baseline"
+          ],
+          [
+            "baseline",
+            "candidate"
+          ],
+          [
+            "candidate",
+            "baseline"
+          ],
+          [
+            "baseline",
+            "candidate"
+          ]
+        ]
+      },
+      "next_step": "Freeze the committed inputs and exact fallback/oracle recovery, run both variants through scalar qualification, then execute the fixed scalar costs only if qualification passes.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
