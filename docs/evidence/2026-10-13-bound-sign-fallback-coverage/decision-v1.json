@@ -1,0 +1,256 @@
+{
+  "status": "close-stored-bound-sign-bypass-for-observed-native-workload",
+  "decision_runner_sha256": "9b34cc19658deed05c19e4d2791ebf0b30fb723e7c1d30c1f259927f3af0aafb",
+  "assessment_sha256": "ce1d802dc2edcc74f01a8c6b68ffc12f7ee3f12331ff498c4ef53d80cafa7fba",
+  "preparation_sha256": "c6b8831a4b4cc737a3cc81c1c377dd76e223bb3dd8f037fe9c668cfc11f82f70",
+  "closed_observation": {
+    "full_board_runs": 1,
+    "started": 11075136,
+    "completed": 11075136,
+    "unfinished": 0,
+    "eligible_known_sign": 0,
+    "eligible_contradictory": 0,
+    "anomalous_nonzero_zero_sign": 0
+  },
+  "counts": {
+    "rows": [
+      {
+        "bound_tag": "invalid",
+        "starts": 11075136,
+        "results_unknown_negative_zero_positive": [
+          842331,
+          3637633,
+          1665238,
+          4929934
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "unknown",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "zero",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "negative",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "positive",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "nonzero_unsigned",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      },
+      {
+        "bound_tag": "nonzero_zero_sign",
+        "starts": 0,
+        "results_unknown_negative_zero_positive": [
+          0,
+          0,
+          0,
+          0
+        ],
+        "unfinished": 0
+      }
+    ],
+    "started": 11075136,
+    "completed": 11075136,
+    "unfinished": 0,
+    "eligible_known_sign": 0,
+    "eligible_agreeing": 0,
+    "eligible_fallback_declined": 0,
+    "eligible_unfinished": 0,
+    "eligible_contradictory": 0,
+    "anomalous_nonzero_zero_sign": 0
+  },
+  "finding": "Every observed exact-sign quadratic fallback had BoundCache::Invalid immediately before the original call. There was no existing root-bound sign to reuse at this site in these complete-board runs.",
+  "interpretation": [
+    "Do not prepare a production stored-bound check from this observation: it would add work at the measured site without skipping any observed normalization.",
+    "Calibrations cover every representable bound tag and original outcome, including mismatches and unfinished observations. Site controls observe valid positive/negative/zero metadata and a known-sign/declining-normalizer case without bypassing computation.",
+    "The observation is specific to this call site and workload. It does not claim that bound certificates are absent elsewhere, that computing new bounds would be free, or that other workloads have zero coverage.",
+    "No arithmetic, certificate transfer, normalization retry, memo, or budget change is admitted. The direct/outlined/borrowed multiplication-helper series remains rejected and closed."
+  ],
+  "qualification": {
+    "tests": [
+      {
+        "name": "parent-reference",
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "candidate-reference",
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "counter-calibration",
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "counter-sites",
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "sign-regressions",
+        "passed": 11,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "cache-frontiers",
+        "passed": 6,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "scalar-library",
+        "passed": 885,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "scalar-doctests",
+        "passed": 28,
+        "failed": 0,
+        "ignored": 0
+      },
+      {
+        "name": "endpoint-regressions",
+        "passed": 5,
+        "failed": 0,
+        "ignored": 0
+      }
+    ],
+    "command_count": 14,
+    "format_strict_four_crate_clippy_and_warning_denied_docs": true,
+    "focused_counts_overlap_library": true,
+    "shared_reference_test_bytes_identical": true
+  },
+  "original_gate": {
+    "worker_cpu_seconds": 143.517755723,
+    "limit_seconds": 120,
+    "passed": false,
+    "finding_counts": [
+      12,
+      197
+    ],
+    "separate_copper_neck_gate_executed": false,
+    "complete_report_byte_identity_established": false
+  },
+  "preserved_failures": {
+    "preparation-v1": "One included reference-test assert needed crate-specific formatting; no compilation or measurement occurred in V1. V2 changes only that formatting. Both failed source trees and all V1 runners remain hash-checked.",
+    "generated_diff_commit_check": "A blank final unified-diff context line triggered the generic whitespace verifier. Independent byte-identical diff reconstruction is recorded; the exception is restricted to that patch hash."
+  },
+  "next_step": {
+    "action": "Review allocator choice at the native DRC process boundary using the existing profile and already-pinned local dependency sources.",
+    "reason": "The stored-bound shortcut has zero native coverage. The existing unchanged-parent profile attributes 29.580% of sampled cycle weight to a declared allocator-leaf subset; this is a different cost question and does not require another scalar recognition pass or helper/storage variant.",
+    "available_inputs": {
+      "profile": "docs/evidence/2026-10-13-native-normal-form-attribution/profile-v1/observations.json",
+      "profile_sha256": "947d79ec387dff621a64ff038c954cddc74b2d5779cb5b420de550f8fce41197",
+      "allocator_leaf_sampled_weight": {
+        "symbol": "allocator_leaf",
+        "period": 175234734929,
+        "total_profile_percent": 29.580180105411717
+      },
+      "cargo_lock_sha256": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+      "pinned_packages": [
+        {
+          "name": "libmimalloc-sys",
+          "version": "0.1.49",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "checksum": "6a45a52f43e1c16f667ccfe4dd8c85b7f7c204fd5e3bf46c5b0db9a5c3c0b8e9",
+          "dependencies": [
+            "cc"
+          ]
+        },
+        {
+          "name": "mimalloc",
+          "version": "0.1.52",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "checksum": "2d4139bb28d14ad1facf21d5eb8825051b326e172d216b39f6d31df53cc97862",
+          "dependencies": [
+            "libmimalloc-sys"
+          ]
+        }
+      ],
+      "local_package_input_sha256": {
+        "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.49/Cargo.toml": "bb61afd11805969f3236b82ce45779b700d29fc4cb01a5ab27ccdf535454c523",
+        "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.49/src/lib.rs": "3400737f6f802abffa8a7c30c26ee1240d9dd8b8e9afbd4f370da2dc9b3d23bb",
+        "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mimalloc-0.1.52/Cargo.toml": "1fae15585ec90fe874b90c1652056283727b88f548ec7fb445117e94e66fbf69",
+        "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mimalloc-0.1.52/src/lib.rs": "f2f6e98264507d5cfa836a48e5b0fe220f3bcc3270a8f5fabeb4297898a27201"
+      },
+      "drc_entrypoint_input_sha256": {
+        "crates/hyperdrc/Cargo.toml": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+        "crates/hyperdrc/src/main.rs": "23725b908d9905b33878be1f35f95da0fca6ece7fccfdbbec366ab1ea2ab327f",
+        "crates/hyperdrc/src/lib.rs": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29"
+      }
+    },
+    "review_required_before_prototype": [
+      "Read the pinned allocator wrapper, features, build integration and target support. Inspect DRC executable and test-binary ownership and existing allocation instrumentation. Availability in Cargo.lock is not a retention recommendation.",
+      "Distinguish Rust global allocations from allocations performed directly by native dependencies. The sampled allocator subset is not a prediction of what a Rust allocator replacement could remove.",
+      "If a separately frozen process-boundary trial is warranted, preserve mathematical/runtime source, proof caches, policy/budget receipts, all original fixtures and both native assertion metrics. Do not impose a global allocator from the reusable library.",
+      "Require matched whole-application timing and memory measurements, broad qualification, original gate checks, complete report-byte replay and executable-size evidence before admission. Keep all closed samples and rejected candidates unchanged."
+    ],
+    "allocator_source_review_complete": false,
+    "prototype_prepared": false,
+    "dependency_changed": false,
+    "executed": false
+  },
+  "limits": [
+    "These are counts of existing operations under instrumentation, not time shares, allocations or projected savings.",
+    "The only new fact inspection reads the already-stored root bound. It performs no cheap_bound traversal, scalar comparison or new recognizer. The original fallback and result publication still execute. Nonzero without a sign is not eligible; anomalous nonzero/zero-sign metadata is retained separately.",
+    "The full-board assertion retains its original worker CPU metric and limit. Instrumentation changes execution cost and is not a benchmark of an optimization.",
+    "The 12/197 finding counts do not establish complete report-byte identity.",
+    "Focused test totals overlap the full scalar library. This is not the complete workflow/feature/target matrix.",
+    "The parent remains unadmitted. All native tradeoffs and original limits, all 35 pending entries and the entire properties/targets/future-work plan remain open.",
+    "The 143.517755723-second instrumented result is not a matched speedup or slowdown. The parent release failure remains 133.31248412 / 120 seconds."
+  ],
+  "main_and_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

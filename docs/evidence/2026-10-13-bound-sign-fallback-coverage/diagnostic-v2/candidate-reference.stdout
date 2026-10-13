@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::bound_sign_reference_tests::parent_affine_signs_and_publication_are_preserved ... ok
+test computable::node::bound_sign_reference_tests::parent_cached_unknown_and_known_sign_paths_are_preserved ... ok
+test computable::node::bound_sign_reference_tests::parent_multiradical_decline_retains_an_existing_bound ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 882 filtered out; finished in 0.00s
+

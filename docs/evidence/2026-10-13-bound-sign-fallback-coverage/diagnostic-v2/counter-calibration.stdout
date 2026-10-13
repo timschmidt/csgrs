@@ -1,0 +1,8 @@
+
+running 3 tests
+test bound_sign_diagnostic::tests::disabled_reset_and_unfinished_unwind_are_preserved ... ok
+test bound_sign_diagnostic::tests::every_tag_result_and_mismatch_is_preserved ... ok
+test bound_sign_diagnostic::tests::joined_workers_contribute_without_lost_counts ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 882 filtered out; finished in 0.00s
+

@@ -1,0 +1,29 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v2/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "sha256": "a0aa2d4d56cccc4468d9d9c09418b43c8ef4a6f3a6b9aaa40498e9943844b9a5",
+  "bytes": 54170888,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v2/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v2/source/crates/hyperdrc#0.3.0",
+  "target": {
+    "kind": [
+      "lib"
+    ],
+    "crate_types": [
+      "lib"
+    ],
+    "name": "hyperdrc",
+    "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v2/source/crates/hyperdrc/src/lib.rs",
+    "edition": "2024",
+    "doc": true,
+    "doctest": true,
+    "test": true
+  },
+  "profile": {
+    "opt_level": "3",
+    "debuginfo": 0,
+    "debug_assertions": false,
+    "overflow_checks": false,
+    "test": true
+  }
+}

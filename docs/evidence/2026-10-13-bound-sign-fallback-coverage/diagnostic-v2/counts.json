@@ -1,0 +1,90 @@
+{
+  "rows": [
+    {
+      "bound_tag": "invalid",
+      "starts": 11075136,
+      "results_unknown_negative_zero_positive": [
+        842331,
+        3637633,
+        1665238,
+        4929934
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "unknown",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "zero",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "negative",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "positive",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "nonzero_unsigned",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    },
+    {
+      "bound_tag": "nonzero_zero_sign",
+      "starts": 0,
+      "results_unknown_negative_zero_positive": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "unfinished": 0
+    }
+  ],
+  "started": 11075136,
+  "completed": 11075136,
+  "unfinished": 0,
+  "eligible_known_sign": 0,
+  "eligible_agreeing": 0,
+  "eligible_fallback_declined": 0,
+  "eligible_unfinished": 0,
+  "eligible_contradictory": 0,
+  "anomalous_nonzero_zero_sign": 0
+}

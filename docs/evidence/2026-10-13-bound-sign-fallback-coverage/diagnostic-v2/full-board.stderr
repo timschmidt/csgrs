@@ -1,0 +1,144 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (5.826s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.007s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (7 finding(s), 64.805s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/5 after 0.001s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/5 after 15.176s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/5 after 42.667s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/5 after 42.858s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu
+hyperdrc: check min-copper-neck progress 5/5 after 44.494s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/cparti-fpga/CPArti FPGA dev board.kicad_pcb:unknown
+hyperdrc: finished check min-copper-neck (5 finding(s), 44.647s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (0 finding(s), 0.007s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.000s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (12 active finding(s), 0 waived, 116.412s)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (2.911s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.004s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (1 finding(s), 15.763s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/4 after 0.002s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/hvp109a/HVP109A.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/4 after 3.347s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/hvp109a/HVP109A.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/4 after 4.995s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/hvp109a/HVP109A.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/4 after 6.740s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-11318/hvp109a/HVP109A.kicad_pcb:In2.Cu
+hyperdrc: finished check min-copper-neck (4 finding(s), 8.966s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (192 finding(s), 0.005s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.004s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (197 active finding(s), 0 waived, 28.096s)
+
+thread 'zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite' (11319) panicked at crates/hyperdrc/src/app.rs:8770:9:
+complex project KiCad smoke suite took 143.517755723s of worker time
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+BOUND_SIGN_FALLBACK	0	11075136	842331	3637633	1665238	4929934	0
+BOUND_SIGN_FALLBACK	1	0	0	0	0	0	0
+BOUND_SIGN_FALLBACK	2	0	0	0	0	0	0
+BOUND_SIGN_FALLBACK	3	0	0	0	0	0	0
+BOUND_SIGN_FALLBACK	4	0	0	0	0	0	0
+BOUND_SIGN_FALLBACK	5	0	0	0	0	0	0
+BOUND_SIGN_FALLBACK	6	0	0	0	0	0	0

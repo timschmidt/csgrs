@@ -1,0 +1,56 @@
+[
+  {
+    "name": "parent-reference",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "candidate-reference",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "counter-calibration",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "counter-sites",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "scalar-library",
+    "passed": 885,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "endpoint-regressions",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  }
+]

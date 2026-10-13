@@ -1,0 +1,10 @@
+
+running 5 tests
+test computable::node::bound_sign_site_tests::cached_sign_paths_do_not_count_a_fallback ... ok
+test computable::node::bound_sign_site_tests::certified_zero_still_runs_the_original_cancellation ... ok
+test computable::node::bound_sign_site_tests::existing_affine_bound_tags_are_observed_without_bypassing_fallback ... ok
+test computable::node::bound_sign_site_tests::inconsistent_nonzero_zero_sign_is_observed_without_reinterpretation ... ok
+test computable::node::bound_sign_site_tests::known_negative_bound_does_not_hide_the_original_decline ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 880 filtered out; finished in 0.00s
+
