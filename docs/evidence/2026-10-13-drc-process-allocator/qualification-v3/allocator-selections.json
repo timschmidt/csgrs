@@ -1,0 +1,42 @@
+[
+  {
+    "variant": "baseline",
+    "kind": "test",
+    "symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+    "binary_sha256": "744ed9c259815340257d13308d3582c764a1b9c2531c5a74214ba4def080fb7e",
+    "required_target_observed": "__rdl_alloc",
+    "assembly_sha256": "6584db3fe4435fcd0d0ebee2ae6091926f3d181e9d2c5c3e8984774025f53239"
+  },
+  {
+    "variant": "baseline",
+    "kind": "cli",
+    "symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+    "binary_sha256": "bcfedd7bd23ce661f3fbf75a3f4950855cc1de6d9ab72234fff1b08984c07903",
+    "required_target_observed": "__rdl_alloc",
+    "assembly_sha256": "4ae35989530f8d976f037acea9a240e1cbb2c5d57160d396d983c711c5b4896d"
+  },
+  {
+    "variant": "candidate",
+    "kind": "test",
+    "symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+    "binary_sha256": "2e920a4dcb491e26985a0dec2205f8b2f036427cdff06d4e8bd3683185b1213f",
+    "required_target_observed": "mi_malloc_aligned",
+    "assembly_sha256": "4eda9c71a9cc7885847e0deecd28c0d8b0c9922aea90d0192950198e7da15f4d",
+    "dispatch": "ELF64 x86-64 relative relocation",
+    "got_slot": "28be7d0",
+    "target_address": "1161aa0",
+    "relocations_sha256": "26ae43fd3a6d747e6cf08cd904af8ae24373390ee64f42aa0f90e7d4eccf2679"
+  },
+  {
+    "variant": "candidate",
+    "kind": "cli",
+    "symbol": "_RNvCs1njKG4L9aB3_7___rustc12___rust_alloc",
+    "binary_sha256": "2b10a5dbb8bde078af838456a2f0b14b6506b45cb00797e1a691a8c4dc2ea3e7",
+    "required_target_observed": "mi_malloc_aligned",
+    "assembly_sha256": "5a6f803b176300f51ce8a83a67e3d84638525f862ff7b2a73582824f179d8dbf",
+    "dispatch": "ELF64 x86-64 relative relocation",
+    "got_slot": "205d1f0",
+    "target_address": "1f075e0",
+    "relocations_sha256": "f35a3a9f1c478b02d316f2a86869c1f7b98e2d8e695c7b0374e940ada715acd6"
+  }
+]

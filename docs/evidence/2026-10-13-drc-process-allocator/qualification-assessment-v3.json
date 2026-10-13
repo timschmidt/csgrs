@@ -1,0 +1,309 @@
+{
+  "assessor_sha256": "e680e28362f6dd3b850c775e873e048fcae8f9d3bd9b6d8dac6cb7a4a4b31d92",
+  "commands": 34,
+  "reused_commands": 27,
+  "new_commands": 7,
+  "test_counts": [
+    {
+      "variant": "baseline",
+      "phase": "allocator-contracts",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 1
+    },
+    {
+      "variant": "baseline",
+      "phase": "drc-tests",
+      "passed": 1646,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    },
+    {
+      "variant": "candidate",
+      "phase": "allocator-contracts",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 1
+    },
+    {
+      "variant": "candidate",
+      "phase": "drc-tests",
+      "passed": 1646,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    }
+  ],
+  "gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+      "variant": "baseline",
+      "passed": false,
+      "assertion_seconds": 132.223696162,
+      "process_wall_seconds": 133.42387921409681
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+      "variant": "baseline",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 119.79389858385548
+    },
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+      "variant": "candidate",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 109.624899786897
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+      "variant": "candidate",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 99.86350104305893
+    }
+  ],
+  "candidate_original_gates_passed": true,
+  "allocator_selection_verified_for_cli_and_lib_test_binaries": true,
+  "candidate_allocator_dependency_features_empty": true,
+  "binaries": {
+    "baseline": {
+      "test": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "sha256": "744ed9c259815340257d13308d3582c764a1b9c2531c5a74214ba4def080fb7e",
+        "bytes": 54162984,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/Cargo.toml",
+        "features": [],
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc#0.3.0",
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        },
+        "allocator_dependency_features": {}
+      },
+      "cli": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target/release/hyperdrc",
+        "sha256": "bcfedd7bd23ce661f3fbf75a3f4950855cc1de6d9ab72234fff1b08984c07903",
+        "bytes": 42848680,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/Cargo.toml",
+        "features": [],
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc#0.3.0",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "allocator_dependency_features": {}
+      }
+    },
+    "candidate": {
+      "test": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+        "sha256": "2e920a4dcb491e26985a0dec2205f8b2f036427cdff06d4e8bd3683185b1213f",
+        "bytes": 54184592,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/Cargo.toml",
+        "features": [],
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc#0.3.0",
+        "target": {
+          "kind": [
+            "lib"
+          ],
+          "crate_types": [
+            "lib"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/src/lib.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": true,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": true
+        },
+        "allocator_dependency_features": {
+          "libmimalloc_sys": [],
+          "mimalloc": []
+        }
+      },
+      "cli": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/hyperdrc",
+        "sha256": "2b10a5dbb8bde078af838456a2f0b14b6506b45cb00797e1a691a8c4dc2ea3e7",
+        "bytes": 43006936,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/Cargo.toml",
+        "features": [],
+        "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc#0.3.0",
+        "target": {
+          "kind": [
+            "bin"
+          ],
+          "crate_types": [
+            "bin"
+          ],
+          "name": "hyperdrc",
+          "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/src/main.rs",
+          "edition": "2024",
+          "doc": true,
+          "doctest": false,
+          "test": true
+        },
+        "profile": {
+          "opt_level": "3",
+          "debuginfo": 0,
+          "debug_assertions": false,
+          "overflow_checks": false,
+          "test": false
+        },
+        "allocator_dependency_features": {
+          "libmimalloc_sys": [],
+          "mimalloc": []
+        }
+      }
+    }
+  },
+  "shared_tests_identical": true,
+  "sources_dependencies_main_and_binaries_unchanged": true,
+  "artifacts_sha256": {
+    "qualification-v3/allocator-selections.json": "09e24cb32a62ab9f2505fd5f42d90dbc1ddc4abb746ac97024ab2ee856315190",
+    "qualification-v3/baseline-allocator-contracts.stderr": "48a71be133321b3c26fb28212d98aa39d9779c715e3debd8d058a88886f0ea46",
+    "qualification-v3/baseline-allocator-contracts.stdout": "91860e97631b89511f25a94f42dcf7c1f71b922b86ecc5bfffaa257e5be5ff20",
+    "qualification-v3/baseline-build-cli.stderr": "13953df2e9586cde1d597377c52f1c5610a8b047c1b4a4d50e7406433d0dd146",
+    "qualification-v3/baseline-build-cli.stdout": "b229b30bc696667db99f7ef42b41a0fd8d3da5c563028dffeac69bfed8fcdd78",
+    "qualification-v3/baseline-build-test.stderr": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384",
+    "qualification-v3/baseline-build-test.stdout": "553ac9dbc868f5a22984a059910f519be130914fd51f10f85fefdf0ad4e537fa",
+    "qualification-v3/baseline-cli-global-alloc.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-cli-global-alloc.stdout.gz": "c122b30980e5c6f57fa03a53e0f3fff6e3afe5a34efb9b022a527535d1091571",
+    "qualification-v3/baseline-cli-nm-demangled.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-cli-nm-demangled.stdout.gz": "499edba9af625a386662fab72aec9898ddd14075c1b96266493d2e20c2e78917",
+    "qualification-v3/baseline-cli-nm-raw.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-cli-nm-raw.stdout.gz": "5630d18ed47594e94b9d94de49c6e296fff9b9b8c12b4f2f1d6976024db78f2a",
+    "qualification-v3/baseline-clippy-all.stderr": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384",
+    "qualification-v3/baseline-clippy-all.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/baseline-clippy-default.stderr": "c2c13c87b60fb1222e2dd1c13c45bb26f99168f44f2ad7cc9f60d63dd3ae18c6",
+    "qualification-v3/baseline-clippy-default.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/baseline-copper-neck.stderr": "cb02ab8941a0a63e558a2ef1defa57a1014d943d03b5bff4b5e58c9c70324345",
+    "qualification-v3/baseline-copper-neck.stdout": "2121f95f27ee78bb6856f086e33dbe2cad2206ca86d8a9587d25167d2b937d82",
+    "qualification-v3/baseline-drc-docs.stderr": "35b38216a439b8bff597a78a5b0f8d0e431a8a6069aac9188bc5f8de34eafe7c",
+    "qualification-v3/baseline-drc-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/baseline-drc-tests.stderr": "b2898a4180e3bed8763a4a04dfeb805d78841f453b549c62331b9a1aaf6df080",
+    "qualification-v3/baseline-drc-tests.stdout": "78cb7cca7458ab1f15beb30c90a3cadbc80946d4cabe7d3fbd6a84c365f22605",
+    "qualification-v3/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/baseline-full-board.stderr": "2dddffc51fe22f36539a974a0c56cde5daeed0fbb1402a916fe78e4afe8293f0",
+    "qualification-v3/baseline-full-board.stdout": "56209776868bad0e99800fd8315aa4eb7899342a9d996d0e9dcdff3b9a9db464",
+    "qualification-v3/baseline-test-global-alloc.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-test-global-alloc.stdout.gz": "0cea23d251aaa14bdba27baba986c03181386a77193515ab99c23328a269743a",
+    "qualification-v3/baseline-test-nm-demangled.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-test-nm-demangled.stdout.gz": "75546ce530116428241ae60d806e8f6208bf02c3a41324e2536034ea9953f8c1",
+    "qualification-v3/baseline-test-nm-raw.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/baseline-test-nm-raw.stdout.gz": "86b3bb1ce5b384aa1e22e489c6a7c6440635d902e5711c36dcd853a105a9f732",
+    "qualification-v3/binaries.json": "3c46ee98888121ef0f8570150f511421d819ff1e608d70bd9aa849940461f9ed",
+    "qualification-v3/candidate-allocator-contracts.stderr": "a14a634a1fa3e4d33ef3bd5b47cf2126eca025157988d18939c51b71abd42644",
+    "qualification-v3/candidate-allocator-contracts.stdout": "91860e97631b89511f25a94f42dcf7c1f71b922b86ecc5bfffaa257e5be5ff20",
+    "qualification-v3/candidate-build-cli.stderr": "02da26cb567f5c0332e766ae48dd831249620f084cddddc822451657031334d4",
+    "qualification-v3/candidate-build-cli.stdout": "49dbe5cc1df1bc9cb12d02c4d5c7518a58d40b99ce8ae36b81a061d2a61211f0",
+    "qualification-v3/candidate-build-test.stderr": "a50f4a953f17e887d3844be51c0df233623b83d4462c96d5392c2671458d7fef",
+    "qualification-v3/candidate-build-test.stdout": "a53e7d053e59a1b0d5289e71b16a7488307a3d81a6777c7ab2951a2e7bb8ffcd",
+    "qualification-v3/candidate-cli-global-alloc.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-cli-global-alloc.stdout.gz": "aee947dbc8aec3a587e7406ecd417d159487d105cfdf7ddce332867525834e30",
+    "qualification-v3/candidate-cli-nm-demangled.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-cli-nm-demangled.stdout.gz": "2b2ab460bed7edcc9282d356f30f7194bc5872854a913c6404c9b0f5b806a5f1",
+    "qualification-v3/candidate-cli-nm-raw.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-cli-nm-raw.stdout.gz": "032d99cafb6eb73146316e3ee3add007267fd4d24181c730c0a0f6fd5298b274",
+    "qualification-v3/candidate-cli-relocations.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-cli-relocations.stdout.gz": "8f5d2d4039f4fa33249b90534aa7f8a725a4add8e0a0d5bcca7057d88645c7de",
+    "qualification-v3/candidate-clippy-all.stderr": "b65d97c967cb13bb2fd061b2f5b86011ef366acea387375a92a9808f93395384",
+    "qualification-v3/candidate-clippy-all.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/candidate-clippy-default.stderr": "5a7567a40eb930762180e4bdc41299ce105dbe4a4f429bdf56cf4ab28e4324ab",
+    "qualification-v3/candidate-clippy-default.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/candidate-copper-neck.stderr": "e5b7684a321e8ef249450ea781e7388422af358b899069e2a6c668613fe3d663",
+    "qualification-v3/candidate-copper-neck.stdout": "a5fd92c602f046241bfa378d993fd3c6cc4d7b7ffa25e0fe1633919976142bc4",
+    "qualification-v3/candidate-drc-docs.stderr": "d13523bff671f157e00db9c6c7013890a97ff424ab0a2fd5a8205f48b13a5251",
+    "qualification-v3/candidate-drc-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/candidate-drc-tests.stderr": "b6a999b0cd31948db5e49fb5547d8c9d8f0b3990d9c1bb5416314f440f245189",
+    "qualification-v3/candidate-drc-tests.stdout": "3eac23490a1214b8406f986391b5e50fd3a231b1f8d4d90e7bcbc0741a57e2b3",
+    "qualification-v3/candidate-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/candidate-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/candidate-full-board.stderr": "0ac1a04e3a9bfea7febfb2bf07cd5c822ddcc0e8c9c3f53b7f0ed53a82a162cb",
+    "qualification-v3/candidate-full-board.stdout": "cd71b43d2701e6f6747889b15d2fcec6ecf5a542e780f76e44a728f5de89a96b",
+    "qualification-v3/candidate-test-global-alloc.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-test-global-alloc.stdout.gz": "b205c2a6ff18abbe8f842c7ef66a20f3813b6ccc80fd32b2b581d172e05e8bc1",
+    "qualification-v3/candidate-test-nm-demangled.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-test-nm-demangled.stdout.gz": "d54d5cc5678fa023f4629bdfbcad7be175b7758ff96731b4aeadc6a47c7b438e",
+    "qualification-v3/candidate-test-nm-raw.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-test-nm-raw.stdout.gz": "55d4a427c7c8019104e86616497ffb3906b208a0c9a0ed903c7ba819141c69ee",
+    "qualification-v3/candidate-test-relocations.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "qualification-v3/candidate-test-relocations.stdout.gz": "005a581e90662c3ff89357b560e363aef4b7ef5da6eaff097379c76101fa111f",
+    "qualification-v3/commands.json": "5e68687d548fa886e867e69f05af0718387c9ddb9de24488d2340123f2ffa236",
+    "qualification-v3/gates.json": "5e5ff828bd633632e426b5afeb7055cf7a7847114b943f8698ab3d45b4a905c0",
+    "qualification-v3/protocol.json": "cf981165424970489f8928295c6ef8ad6204bbbcd6214821944376aa11798e02",
+    "qualification-v3/result.json": "051ef44597eca27972cdc8c32b01c492ee15665cc496eeabb5a5e5f090bb6136",
+    "qualification-v3/tests.json": "cfba2d9b524d02b42fee4a3373c02989ab6c5bb3903f7199b3564f5053b3277d"
+  },
+  "next_step": "Run the separately frozen fixed application trial.",
+  "limits": [
+    "Focused tests overlap the full DRC suite. Independent integration/doctest drivers use their own allocator.",
+    "Passing assertions do not print the check body duration; process wall time includes setup.",
+    "No complete report-byte comparison or matched application cost set is established by qualification.",
+    "Other platforms, the full workflow matrix and inherited scalar/native costs remain open."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

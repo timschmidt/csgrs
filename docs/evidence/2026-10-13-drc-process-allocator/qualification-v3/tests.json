@@ -1,0 +1,34 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "allocator-contracts",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 1
+  },
+  {
+    "variant": "baseline",
+    "phase": "drc-tests",
+    "passed": 1646,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 10
+  },
+  {
+    "variant": "candidate",
+    "phase": "allocator-contracts",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 1
+  },
+  {
+    "variant": "candidate",
+    "phase": "drc-tests",
+    "passed": 1646,
+    "failed": 0,
+    "ignored": 0,
+    "result_groups": 10
+  }
+]

@@ -1,0 +1,189 @@
+{
+  "scope": "Qualify process allocator ownership and both original native gates serially.",
+  "runner_sha256": "8841b9f4a3fb0b1f9cad3d2ddf5aeb39bf898d0b84bd55829c9b2f1c1a1bdc5e",
+  "assessor_sha256": "e680e28362f6dd3b850c775e873e048fcae8f9d3bd9b6d8dac6cb7a4a4b31d92",
+  "preparation_sha256": "7d3a199d3ce5d95eda80c04d58fcb83db36b1e3cfcff4fa847a76e4b1c13e7b9",
+  "failure_sha256": "5887119d2724118b43ae6a000a94ac81b67e1c19c1eec9c1b2847486238e93ac",
+  "reused_commands": 27,
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "clippy-default",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "clippy-all",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "allocator-contracts",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "allocator_contract_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "drc-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ]
+    ],
+    [
+      "drc-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "build-test",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ],
+    [
+      "build-cli",
+      [
+        "cargo",
+        "build",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--bin",
+        "hyperdrc",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time"
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s"
+    }
+  ],
+  "variants": {
+    "baseline": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target",
+      "files": 10132,
+      "source_hashes_sha256": "6331740bd688f4fab0565636552fc2bbe5c1350ba4dc9f8c38cc34f0ef9cb843",
+      "changes_sha256": {
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/lib.rs": "ec70cf76e1709fd9b6f962c78d6f72cfe3adb9673fc592500f67cbaa0a2895c4"
+      },
+      "original_bytes_recovered": true
+    },
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target",
+      "files": 10133,
+      "source_hashes_sha256": "9b4ec8d3124d32f318bd122529122df6dcc18e42b394207d8645fbff81caaecc",
+      "changes_sha256": {
+        "Cargo.lock": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c",
+        "crates/hyperdrc/Cargo.toml": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b",
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/lib.rs": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c",
+        "crates/hyperdrc/src/main.rs": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4",
+        "crates/hyperdrc/src/process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66"
+      },
+      "original_bytes_recovered": true
+    }
+  },
+  "variant_order": [
+    "baseline",
+    "candidate"
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cc": "cc (GCC) 15.3.1 20260722 (Red Hat 15.3.1-1)\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "inherited_rustflags": null,
+  "inherited_allocator_settings": [],
+  "timeout_seconds": 1800,
+  "limits": "Gate process wall durations include setup and are not the internal assertion metric. Passing assertions do not print their measured duration. DRC lib unit tests and CLI use the selected process allocator; independently linked integration/doctest drivers keep their own allocator.",
+  "runtime_admitted": false
+}

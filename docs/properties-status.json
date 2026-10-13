@@ -3924,10 +3924,10 @@
       }
     },
     "drc_process_allocator": {
-      "status": "qualification-reader-corrected-await-candidate-gates",
-      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/qualification-failure-v2.json",
-      "result": "Both variants pass formatting, default/all-feature strict Clippy, two allocator controls, all 1646 DRC tests and warning-denied docs. Baseline board fails at 132.223696162 worker CPU seconds / 120; baseline neck passes. V2 linkage reader stopped on an indirect GOT dispatch before candidate gates; its 27 completed commands and unchanged binaries are preserved. V3 verifies the exact ELF relocation and continues only unfinished work.",
-      "next_step": "Execute V3 continuation, independently assess both original candidate gates, then run conditional application costs V2 only if both candidate gates pass.",
+      "status": "candidate-original-gates-pass-await-fixed-application-costs",
+      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/qualification-assessment-v3.json",
+      "result": "Independent assessment verifies 34 distinct commands (27 reused unchanged, 7 continuation commands), both 1646-test DRC suites, allocator controls, strict Clippy/docs and allocator linkage. Baseline board fails at 132.223696162 worker CPU seconds / 120; candidate passes that original limit. Both variants pass the 60-second copper-neck body gate. No complete application cost set or report comparison yet.",
+      "next_step": "Execute the committed fixed application costs V2 with 4 preflights, 20 board samples and 10 batches of 50 help processes, then independently assess reports, timing, RSS, startup and binary size.",
       "source_review_complete": true,
       "prototype_prepared": true,
       "qualification_executed": true,
@@ -3942,6 +3942,106 @@
         "assessor": "docs/evidence/2026-10-13-drc-process-allocator/assess_application_v2.py",
         "unchanged_design": "4 complete-report preflights, 20 full-board samples, 10 batches of 50 fresh help processes, no sample extension/filtering.",
         "version_change": "V1 remains unexecuted and frozen. V2 only updates the qualification-assessment reference to V3 and versioned output paths; sample design and measurement logic are unchanged."
+      },
+      "qualification": {
+        "commands": 34,
+        "reused_commands": 27,
+        "new_commands": 7,
+        "tests": [
+          {
+            "variant": "baseline",
+            "phase": "allocator-contracts",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 1
+          },
+          {
+            "variant": "baseline",
+            "phase": "drc-tests",
+            "passed": 1646,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 10
+          },
+          {
+            "variant": "candidate",
+            "phase": "allocator-contracts",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 1
+          },
+          {
+            "variant": "candidate",
+            "phase": "drc-tests",
+            "passed": 1646,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 10
+          }
+        ],
+        "gates": [
+          {
+            "name": "full-board",
+            "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "limit_seconds": 120,
+            "metric": "worker CPU",
+            "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+            "variant": "baseline",
+            "passed": false,
+            "assertion_seconds": 132.223696162,
+            "process_wall_seconds": 133.42387921409681
+          },
+          {
+            "name": "copper-neck",
+            "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+            "limit_seconds": 60,
+            "metric": "check body wall",
+            "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+            "variant": "baseline",
+            "passed": true,
+            "assertion_seconds": null,
+            "process_wall_seconds": 119.79389858385548
+          },
+          {
+            "name": "full-board",
+            "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "limit_seconds": 120,
+            "metric": "worker CPU",
+            "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+            "variant": "candidate",
+            "passed": true,
+            "assertion_seconds": null,
+            "process_wall_seconds": 109.624899786897
+          },
+          {
+            "name": "copper-neck",
+            "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+            "limit_seconds": 60,
+            "metric": "check body wall",
+            "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+            "variant": "candidate",
+            "passed": true,
+            "assertion_seconds": null,
+            "process_wall_seconds": 99.86350104305893
+          }
+        ],
+        "candidate_original_gates_passed": true,
+        "actual_allocator_linkage_verified": true,
+        "empty_allocator_dependency_features_verified": true
+      },
+      "binary_sizes": {
+        "cli": {
+          "baseline_bytes": 42848680,
+          "candidate_bytes": 43006936,
+          "delta_bytes": 158256
+        },
+        "test": {
+          "baseline_bytes": 54162984,
+          "candidate_bytes": 54184592,
+          "delta_bytes": 21608
+        }
       }
     }
   },
