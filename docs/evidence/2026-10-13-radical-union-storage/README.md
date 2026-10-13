@@ -13,8 +13,11 @@ checksum changes. Exact operations, ordered insertion/removal, original retry
 and memo release, proof retention, owner release and all recognition limits
 remain unchanged.
 
-Preparation and qualification runners are ready but have not executed. Each
-source will record its actual layouts and run the eight shared storage controls,
+Preparation froze three 10,132-file sources with four changed files each.
+The two Vec controls differ only in the feature flag; the radical candidate
+differs from the feature control only in algebra.rs. Package versions/checksums
+are unchanged. Qualification is running in fresh targets. Each source records
+its actual layouts and runs the eight shared storage controls,
 six cache-frontier controls, eleven P4 regressions, all-feature/default scalar
 libraries, doctests, formatting, strict Clippy and warning-denied docs. Actual
 dependency feature sets are bound to the builds. Equal type sizes, if observed,
