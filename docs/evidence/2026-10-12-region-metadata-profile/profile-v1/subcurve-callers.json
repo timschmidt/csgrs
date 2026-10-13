@@ -1,0 +1,49 @@
+{
+  "scope": "Locate recovered callers above subcurve equality, including derived equality chains.",
+  "target": "<hypercurve::bezier_split::BezierSubcurve2 as core::cmp::PartialEq>::eq",
+  "selected_period": 862243603,
+  "selected_total_profile_percent": 0.14084369461135976,
+  "rows": {
+    "immediate_project": [
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2 as core::cmp::PartialEq>::eq",
+        "period": 431433150,
+        "total_profile_percent": 0.07047270471175297
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegion2>::new",
+        "period": 344370991,
+        "total_profile_percent": 0.056251484523237825
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegion2>::has_equivalent_exact_boundary",
+        "period": 86439462,
+        "total_profile_percent": 0.014119505376368953
+      }
+    ],
+    "above_equality_chain": [
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegion2>::new",
+        "period": 344370991,
+        "total_profile_percent": 0.056251484523237825
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegion2>::regularized_pair",
+        "period": 258028004,
+        "total_profile_percent": 0.04214773791317384
+      },
+      {
+        "symbol": "hypercurve::curve_region_boolean::boolean_trivial_region",
+        "period": 173405146,
+        "total_profile_percent": 0.028324966798579137
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegion2>::has_equivalent_exact_boundary",
+        "period": 86439462,
+        "total_profile_percent": 0.014119505376368953
+      }
+    ]
+  },
+  "limits": "Recovered non-inline ancestors; sampled cycle periods, not call counts or predicted savings. No runtime change is proposed by this attribution.",
+  "runtime_admitted": false
+}

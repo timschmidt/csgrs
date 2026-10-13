@@ -1,0 +1,8 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-profile-v1/target/release/deps/hyperdrc-313c6a3a257f8485",
+  "sha256": "a13a7bfb0cf204b5d160515434232805f4f4bfb6c35bcc3068137cda2eab663f",
+  "bytes": 322162744,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc#0.3.0"
+}

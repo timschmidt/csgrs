@@ -1,0 +1,28 @@
+{
+  "scope": "Profile the frozen metadata-first parent on the original complete board fixtures.\n\nThis separate build enables frame pointers and line tables. Sampled userspace\ncycle periods diagnose this build; neither its runtime nor its percentages are\nmatched release-speedup evidence. No rejected coefficient-merge code is used.\nAll commands run sequentially. Raw logs are preserved losslessly as gzip files.\n",
+  "runner_sha256": "837d079e7c977ca457506aeab14322e0371a5a79cf08f7b7700b2efeda1ee8d7",
+  "previous_goal_turn": "progress",
+  "parent_decision_sha256": "45cac17082139192e085c18a368af833c2342159e854e977a01ac8280cb88b12",
+  "base_commit": "4a0dbc534948e122ec21c21154b0565f8c8a7c96",
+  "parent_preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "parent_validation_sha256": "1f0a7a3bfd2fa6beb6f4b409d804646eddec495966d9a820a13239e6c625a024",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source",
+  "source_count": 10129,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-profile-v1/target",
+    "RUSTFLAGS": "-Cforce-frame-pointers=yes",
+    "CARGO_PROFILE_RELEASE_DEBUG": "1",
+    "DEBUGINFOD_URLS": ""
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "perf_version": "perf version 7.2.5-100.fc43.x86_64\n",
+  "perf_event_paranoid": "2",
+  "sampling": "49 Hz cycles:u, frame-pointer call chains; no inline expansion during decoding.",
+  "original_worker_limit_seconds": 120,
+  "runtime_admitted": false
+}
