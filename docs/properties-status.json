@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. Storage candidates are rejected. The memo candidate passes scalar correctness and advances provisionally after mixed scalar costs. Execute native qualification while retaining all scalar concerns, original limits, 35 pending entries and full-report obligations. See closed_certificate_memo."
+      "next_step": "The memo candidate passes scalar and native functional qualification, but its original board assertion fails at 132.328922579 worker-CPU seconds / 120. Its separate original neck assertion passes. Fixed native controls are next, with scalar regressions, inherited tradeoffs, all 35 pending entries and complete-report obligations still open. See closed_certificate_memo."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -642,11 +642,10 @@
       ],
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
-        "scope": "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json",
-        "task": "Execute the prepared nine native validation phases serially, including solver/curve/DRC tests, strict four-crate checks and both original full-fixture assertions. Native controls and complete reports remain subsequent work. Scalar regressions remain open; no runtime is admitted.",
-        "retained_projection_diagnostic_and_both_storage_comparisons_complete": true,
-        "memo_candidate_scalar_comparison_complete": true,
-        "memo_candidate_native_validation_executed": false
+        "scope": "docs/evidence/2026-10-13-closed-certificate-memo/native-assessment-v1.json",
+        "task": "Execute the prepared fixed native comparison: 20 endpoint, 10 broad and six final-coordinate abort processes. Keep the original failed board assertion and every scalar/native adverse row open. Complete report replay and production-size verification remain prepared but unexecuted; no runtime is admitted.",
+        "memo_candidate_native_validation_complete": true,
+        "memo_candidate_board_gate_passed": false
       },
       "native_runtime_admitted": false
     },
@@ -1148,16 +1147,17 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "native-validation-running-scalar-regressions-open",
+      "status": "native-correctness-passes-original-board-limit-fails-fixed-controls-next",
       "evidence": [
         "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/correctness-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/cost-assessment-v1.json",
-        "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json"
+        "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/native-assessment-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Complete native validation and independent assessment, then execute fixed native controls serially. Review every scalar/native adverse row before report follow-up or retention. Original assertions and all 35 pending native entries remain in scope.",
+      "next_step": "Execute the prepared fixed native comparison: 20 endpoint, 10 broad and six final-coordinate abort processes. Keep the original failed board assertion and every scalar/native adverse row open. Complete report replay and production-size verification remain prepared but unexecuted; no runtime is admitted.",
       "runtime_admitted": false,
       "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1247,7 +1247,66 @@
       "followup_protocols": {
         "native_controls": "Prepared and committed: 20 endpoint cost processes, 10 broad operation processes and six final-coordinate abort processes. Samples remain fixed.",
         "reports": "Prepared, not executed: four full-board CLI report runs, fresh production targets and shared original input paths; compare every byte and separately record historical parent differences."
-      }
+      },
+      "native_tests": [
+        {
+          "variant": "candidate",
+          "phase": "solver-tests",
+          "passed": 974,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 11
+        },
+        {
+          "variant": "candidate",
+          "phase": "endpoint-regressions",
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 1
+        },
+        {
+          "variant": "candidate",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "candidate",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        }
+      ],
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "candidate",
+          "passed": false,
+          "observed_assertion_seconds": 132.328922579,
+          "process_wall_seconds": 133.6844756482169,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "candidate",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 120.63621033122763,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        }
+      ],
+      "native_checks": "Strict release all-feature/all-target Clippy and warning-denied docs pass for hyperreal, hypersolve, hypercurve and hyperdrc. Original fixtures and limits are unchanged. The passing neck assertion does not print its check-body time."
     }
   },
   "status_meanings": {
