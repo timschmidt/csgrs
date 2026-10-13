@@ -2746,7 +2746,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "outlined_same_radicand_products": {
-      "status": "qualified-cost-setup-failure-corrected-runner-pending",
+      "status": "reject-outlined-same-radicand-products-on-unresolved-scalar-costs",
       "evidence": "docs/evidence/2026-10-13-outlined-same-radicand-products",
       "source_review": "scope-v1.json",
       "contract": {
@@ -2834,7 +2834,18 @@
         "Static symbol sizes and first stack adjustments do not establish cause, whole-program size or peak stack use.",
         "P4 allows only stronger cached facts, never contradiction or weakening."
       ],
-      "next_step": "Commit and run measure_v2.py, independently assess its unchanged 90-measurement plan, then inspect the existing binaries with inspect_codegen_v2.py.",
+      "next_step": {
+        "action": "Keep all three sources and this closed trial frozen; review a helper that borrows already-checked coefficient fields rather than consuming and returning a whole RadicalCoefficient.",
+        "motivation": "The emitted call reduces the multiplier symbol but leaves its first stack subtraction at 264 bytes. The source helper moves a 56-byte coefficient in and out and repeats bounds checks justified by the caller. A narrower borrowed-field boundary may avoid those requirements; this is a hypothesis, not a timing attribution.",
+        "required_review": [
+          "Prove that disjoint mutable rational/radical fields and borrowed right fields preserve arithmetic and zero-skipping order without added scalar comparisons or owners.",
+          "Keep the original opaque guard, singleton eligibility and exact general fallback; no unsafe access, public numeric panic, cache change, budget change or omitted retry.",
+          "Preserve first-surviving radicand payload, cancellation cleanup and all stronger-fact controls; examine drop order before preparing source.",
+          "Only after a sound review, prepare a distinct candidate with unchanged shared tests and a new fixed baseline/outlined/new-candidate comparison. Freeze its protocol before compilation and do not extend existing samples."
+        ],
+        "new_candidate_prepared": false,
+        "scope": "The full plan remains active: all 39 properties, 14 targets and crate future work remain in scope; individual ledger statuses do not change."
+      },
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2946,7 +2957,279 @@
         "commands_executed": 0,
         "measurements_executed": 0,
         "correction": "Version 2 fixes the binary parent and uses fresh cost output paths; sources, completed qualification, cost targets and fixed samples are unchanged."
-      }
+      },
+      "decision": "decision-v1.json",
+      "scalar_cost_assessment": "cost-assessment-v2.json",
+      "closed_sample_set": {
+        "measurement_processes": 90,
+        "preflight_processes": 18,
+        "blocks": 5,
+        "timing_inputs_per_phase": 4096,
+        "allocation_inputs_per_phase": 1000,
+        "extended": false,
+        "all_witnesses_and_inventories_match": true,
+        "shared_contrasts_are_not_independent": true
+      },
+      "summaries": {
+        "direct_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 0,
+          "at_least_four_slower_rows": 5,
+          "all_five_faster_rows": 4,
+          "at_least_four_faster_rows": 23,
+          "ratio_of_medians_above_one_rows": 15,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -1000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -64000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 4,
+              "increased_rows": 0,
+              "min_delta": -64,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            1968,
+            1984
+          ]
+        },
+        "outlined_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 1,
+          "at_least_four_slower_rows": 4,
+          "all_five_faster_rows": 6,
+          "at_least_four_faster_rows": 21,
+          "ratio_of_medians_above_one_rows": 17,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -1000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -64000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 4,
+              "increased_rows": 0,
+              "min_delta": -64,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            2432,
+            2448
+          ]
+        },
+        "outlined_vs_direct": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 1,
+          "at_least_four_slower_rows": 9,
+          "all_five_faster_rows": 3,
+          "at_least_four_faster_rows": 18,
+          "ratio_of_medians_above_one_rows": 35,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            456,
+            480
+          ]
+        }
+      },
+      "decisive_adverse_row": {
+        "comparison": "outlined_vs_baseline",
+        "reference": "baseline",
+        "variant": "outlined",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_cloned",
+        "reference_ns": [
+          3915522,
+          5949342,
+          3801569,
+          3835577,
+          3816049
+        ],
+        "candidate_ns": [
+          3973218,
+          6464397,
+          3934880,
+          4093590,
+          5932474
+        ],
+        "reference_median_ns": 3835577,
+        "candidate_median_ns": 4093590,
+        "ratio_of_medians": 1.0672683666629559,
+        "block_ratios": [
+          1.0147352000576169,
+          1.0865734395501216,
+          1.0350673629756555,
+          1.0672683666629559,
+          1.5546115891069532
+        ],
+        "median_block_ratio": 1.0672683666629559,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          3801569,
+          5949342
+        ],
+        "candidate_range_ns": [
+          3934880,
+          6464397
+        ]
+      },
+      "static_code_observations": {
+        "baseline": {
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472,
+            "helper_named_transfer_lines": []
+          },
+          "coefficient": {
+            "code_bytes": 2473,
+            "first_stack_pointer_subtraction_bytes": 248,
+            "helper_named_transfer_lines": []
+          }
+        },
+        "direct": {
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472,
+            "helper_named_transfer_lines": []
+          },
+          "coefficient": {
+            "code_bytes": 4161,
+            "first_stack_pointer_subtraction_bytes": 264,
+            "helper_named_transfer_lines": []
+          }
+        },
+        "outlined": {
+          "helper": {
+            "code_bytes": 1442,
+            "first_stack_pointer_subtraction_bytes": 104,
+            "helper_named_transfer_lines": [
+              "cce9a:\teb 27                \tjmp    ccec3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0xe3>",
+              "ccead:\teb 26                \tjmp    cced5 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0xf5>",
+              "ccfb0:\te9 41 01 00 00       \tjmp    cd0f6 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x316>",
+              "cd065:\teb e9                \tjmp    cd050 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x270>",
+              "cd10c:\teb 07                \tjmp    cd115 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x335>",
+              "cd11f:\teb 24                \tjmp    cd145 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x365>",
+              "cd132:\teb 11                \tjmp    cd145 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x365>",
+              "cd14e:\teb 2b                \tjmp    cd17b <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x39b>",
+              "cd156:\te9 72 01 00 00       \tjmp    cd2cd <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4ed>",
+              "cd162:\te9 87 00 00 00       \tjmp    cd1ee <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x40e>",
+              "cd193:\te9 8f 00 00 00       \tjmp    cd227 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x447>",
+              "cd198:\te9 be 00 00 00       \tjmp    cd25b <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x47b>",
+              "cd1b0:\te9 4d 01 00 00       \tjmp    cd302 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x522>",
+              "cd1e1:\te9 ed 00 00 00       \tjmp    cd2d3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+              "cd1e9:\teb 23                \tjmp    cd20e <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x42e>",
+              "cd1f4:\te9 da 00 00 00       \tjmp    cd2d3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+              "cd22a:\te9 a4 00 00 00       \tjmp    cd2d3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+              "cd23b:\te9 dd 00 00 00       \tjmp    cd31d <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x53d>",
+              "cd24b:\te9 a3 00 00 00       \tjmp    cd2f3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x513>",
+              "cd259:\teb 78                \tjmp    cd2d3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+              "cd25e:\te9 d5 00 00 00       \tjmp    cd338 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x558>",
+              "cd284:\teb ea                \tjmp    cd270 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x490>"
+            ]
+          },
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472,
+            "helper_named_transfer_lines": []
+          },
+          "coefficient": {
+            "code_bytes": 2800,
+            "first_stack_pointer_subtraction_bytes": 264,
+            "helper_named_transfer_lines": [
+              "cd952:\te8 89 f4 ff ff       \tcall   ccde0 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand>"
+            ]
+          }
+        }
+      },
+      "control_context": {
+        "previous_direct_decision_sha256": "46ef456ee6281a816f5bd1e71a045b737c48a32390a3e93bcde3768cd3b61103",
+        "previous_direct_all_five_slower_rows": 8,
+        "fresh_direct_all_five_slower_rows": 0,
+        "previous_rejection_unchanged": true,
+        "interpretation": "The fresh direct control has materially different directions from its previous closed trial. Both records remain; this shared comparison neither erases that rejection nor establishes a stable universal speed change. No historical timing sample is pooled into this run."
+      },
+      "native": {
+        "status": "not-executed-after-scalar-cost-rejection",
+        "original_fixture_gates_run": false,
+        "matched_native_costs_run": false,
+        "complete_report_identity_established": false,
+        "production_cli_size_measured": false,
+        "original_limits": {
+          "full_board_worker_cpu_seconds": 120,
+          "copper_neck_check_body_wall_seconds": 60
+        }
+      },
+      "main_and_35_pending_native_paths_unchanged": true
     }
   },
   "status_meanings": {

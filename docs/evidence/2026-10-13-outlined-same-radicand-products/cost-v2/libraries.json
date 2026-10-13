@@ -1,0 +1,110 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "7d976fa69385f7918f336e186a7a9f6edb43d74b0c5893e145256911e1e26a79",
+    "bytes": 11703500,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "direct": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/direct/cost-target/release/libhyperreal.rlib",
+    "sha256": "b2f29d076d490fc5486fe797d1cbf40466e825114bdf0c6007a55988aedf400b",
+    "bytes": 11706774,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/direct/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/direct/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/direct/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "outlined": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/outlined/cost-target/release/libhyperreal.rlib",
+    "sha256": "822ad36cd7a97e2e5d1544082b895ea2b1f0f1a563837e898bfc7baa82a5d12c",
+    "bytes": 11708950,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/outlined/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/outlined/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/outlined/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  }
+}
