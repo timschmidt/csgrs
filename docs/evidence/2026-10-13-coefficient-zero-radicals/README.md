@@ -1,3 +1,7 @@
+The zero-radical guard experiment is **rejected for runtime retention**. Fixed
+native controls show eleven broad rows slower in every block, no memory savings,
+and the original complete-board CPU limit still fails.
+
 This isolated candidate tests two guards around the original radical linear
 loops: a stored zero opposite rational scale skips that loop. The rational
 product, radical cross-products, both opaque loops, insertion order, budgets
@@ -49,11 +53,28 @@ is not printed. The 121.352-second whole subprocess includes setup and is not
 the asserted interval. Both complete boards emit 12/197 findings; this is not
 a complete report-byte comparison.
 
-Fixed native controls remain prepared: 20 endpoint processes (10 time and 10
-memory), 10 broad processes and six final-abort processes, with new separate
-targets. Four endpoint preflights precede measurements; all builds finish before
-any probe. Complete-report verification inputs are committed but unexecuted.
-The closed native costs will determine whether report replay is warranted.
+[Fixed native controls](native-controls-assessment-v1.json) are complete: 20
+endpoint, 10 broad and six final-abort processes. All endpoint witnesses, 231
+historical broad witnesses and all six 210-row abort receipt sets match. Every
+field of all 48 endpoint memory rows is identical in every block. Four endpoint
+rows are faster in all five blocks, none slower in all five; two are slower in
+four. Eleven broad rows are slower in all five blocks, including
+`operation_castellation_circle_17` at 1.051289 and native handoff at 1.041059.
+Six broad rows are faster in all five. All samples and ranges are preserved;
+standalone native probes add 24–40 bytes.
+
+[The retention decision](decision-v1.json) **rejects the candidate**. The broad
+slowdowns, absent memory savings and failed original board cap do not support
+retention. Favorable scalar/endpoint/broad results remain valid observations;
+no universal slowdown or exactness defect is inferred. Both sample sets are
+closed. Complete-report runners remain committed but unexecuted because the
+retention decision is already rejection. Native finding counts are not a
+complete report comparison, and production CLI size was not measured.
+
+The next task is the separately prepared
+[P4 sign-transfer observation](../2026-10-13-quadratic-tower-sign-transfer/README.md).
+Its source has not been compiled or executed; no compaction defect is claimed.
+The original endpoint parent and all pending native work remain unadmitted.
 
 Preparation and results are committed separately. No runtime change is admitted;
 the endpoint parent's earlier tradeoffs and the full properties plan stay open.

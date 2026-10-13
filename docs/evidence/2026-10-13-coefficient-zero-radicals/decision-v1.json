@@ -1,0 +1,1090 @@
+{
+  "decision": "reject-zero-radical-guards-on-broad-native-costs-and-original-board-failure",
+  "scalar_correctness": "Seven shared regressions pass on unchanged baseline and candidate; candidate passes 870 scalar library results and 28 doctests, strict Clippy, formatting and warning-denied docs. Focused counts overlap the library total.",
+  "native_tests": [
+    {
+      "variant": "candidate",
+      "phase": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "result_groups": 51
+    },
+    {
+      "variant": "candidate",
+      "phase": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    }
+  ],
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "variant": "candidate",
+      "passed": false,
+      "observed_assertion_seconds": 135.297041172,
+      "process_wall_seconds": 136.51485151285306,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "variant": "candidate",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 121.35244134766981,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    }
+  ],
+  "scalar_tradeoffs": {
+    "all_five_faster_count": 11,
+    "all_five_slower": [
+      {
+        "variant": "candidate",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_warm",
+        "baseline_ns": [
+          3189613,
+          3208161,
+          3261977,
+          3191082,
+          3280347
+        ],
+        "candidate_ns": [
+          3259298,
+          3336242,
+          3322874,
+          3390669,
+          3328003
+        ],
+        "baseline_median_ns": 3208161,
+        "candidate_median_ns": 3328003,
+        "median_ratio": 1.0373553571656784,
+        "block_ratios": [
+          1.0218474780482774,
+          1.0399234951113738,
+          1.0186687398470313,
+          1.0625452432748517,
+          1.014527731365005
+        ],
+        "median_block_ratio": 1.0218474780482774,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "baseline_range_ns": [
+          3189613,
+          3280347
+        ],
+        "candidate_range_ns": [
+          3259298,
+          3390669
+        ]
+      }
+    ],
+    "slower_median_count": 19,
+    "all_memory_fields_unchanged_in_every_sample": true
+  },
+  "native_tradeoffs": {
+    "arc_all_five_faster": [
+      {
+        "name": "aborted_unknown_warm",
+        "samples_ns": {
+          "baseline": [
+            151681769,
+            154628118,
+            152323615,
+            150531128,
+            150825058
+          ],
+          "candidate": [
+            150366019,
+            146183545,
+            147142509,
+            148575532,
+            150134094
+          ]
+        },
+        "block_ratios": [
+          0.9913255890363463,
+          0.9453878563017886,
+          0.9659861932767286,
+          0.9870086936437492,
+          0.9954187718595142
+        ],
+        "median_block_ratio": 0.9870086936437492,
+        "ratio_of_medians": 0.9795213556614045,
+        "ranges_ns": {
+          "baseline": [
+            150531128,
+            154628118
+          ],
+          "candidate": [
+            146183545,
+            150366019
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "aborted_unknown_cloned",
+        "samples_ns": {
+          "baseline": [
+            154455130,
+            152928414,
+            159355945,
+            151534289,
+            153238253
+          ],
+          "candidate": [
+            153081443,
+            146936403,
+            143500908,
+            146718148,
+            152524051
+          ]
+        },
+        "block_ratios": [
+          0.9911062390740922,
+          0.9608181969375553,
+          0.9005055192638091,
+          0.9682174837669908,
+          0.9953392708020496
+        ],
+        "median_block_ratio": 0.9682174837669908,
+        "ratio_of_medians": 0.9588754773914057,
+        "ranges_ns": {
+          "baseline": [
+            151534289,
+            159355945
+          ],
+          "candidate": [
+            143500908,
+            153081443
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "approximate_endpoint_cloned",
+        "samples_ns": {
+          "baseline": [
+            91096057,
+            84839505,
+            81650583,
+            84197329,
+            117290038
+          ],
+          "candidate": [
+            85284415,
+            84584612,
+            81184014,
+            80652451,
+            82921695
+          ]
+        },
+        "block_ratios": [
+          0.9362031443358739,
+          0.9969955859596304,
+          0.9942857848302198,
+          0.9578979755996773,
+          0.7069798630297996
+        ],
+        "median_block_ratio": 0.9578979755996773,
+        "ratio_of_medians": 0.977394846893555,
+        "ranges_ns": {
+          "baseline": [
+            81650583,
+            117290038
+          ],
+          "candidate": [
+            80652451,
+            85284415
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "near_endpoint_off_circle_cloned",
+        "samples_ns": {
+          "baseline": [
+            13875092,
+            10760715,
+            10568368,
+            10639453,
+            10634853
+          ],
+          "candidate": [
+            11566650,
+            10719047,
+            10381011,
+            10437097,
+            10581628
+          ]
+        },
+        "block_ratios": [
+          0.8336269049603419,
+          0.9961277666028698,
+          0.9822719080183431,
+          0.9809806011643644,
+          0.9949952293651826
+        ],
+        "median_block_ratio": 0.9822719080183431,
+        "ratio_of_medians": 0.9945650401388116,
+        "ranges_ns": {
+          "baseline": [
+            10568368,
+            13875092
+          ],
+          "candidate": [
+            10381011,
+            11566650
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      }
+    ],
+    "arc_all_five_slower": [],
+    "arc_slower_in_four_blocks": [
+      {
+        "name": "stored_endpoint_warm",
+        "samples_ns": {
+          "baseline": [
+            171029,
+            170059,
+            169318,
+            168569,
+            171898
+          ],
+          "candidate": [
+            175708,
+            177888,
+            182508,
+            302940,
+            166049
+          ]
+        },
+        "block_ratios": [
+          1.0273579334498828,
+          1.0460369636420301,
+          1.0779007547927568,
+          1.7971275857364046,
+          0.9659740078418597
+        ],
+        "median_block_ratio": 1.0460369636420301,
+        "ratio_of_medians": 1.0460369636420301,
+        "ranges_ns": {
+          "baseline": [
+            168569,
+            171898
+          ],
+          "candidate": [
+            166049,
+            302940
+          ]
+        },
+        "slower_blocks": 4,
+        "faster_blocks": 1
+      },
+      {
+        "name": "approximate_non_endpoint_cloned",
+        "samples_ns": {
+          "baseline": [
+            10083731,
+            10126548,
+            10188524,
+            10153646,
+            10105220
+          ],
+          "candidate": [
+            10289797,
+            10816701,
+            10031105,
+            10307985,
+            10195913
+          ]
+        },
+        "block_ratios": [
+          1.0204354915854061,
+          1.0681528394473616,
+          0.9845493812450165,
+          1.0152003526614972,
+          1.0089748664551588
+        ],
+        "median_block_ratio": 1.0152003526614972,
+        "ratio_of_medians": 1.0161208933192238,
+        "ranges_ns": {
+          "baseline": [
+            10083731,
+            10188524
+          ],
+          "candidate": [
+            10031105,
+            10816701
+          ]
+        },
+        "slower_blocks": 4,
+        "faster_blocks": 1
+      }
+    ],
+    "arc_slower_median_count": 18,
+    "broad_all_five_slower": [
+      {
+        "name": "operation_clone_and_native_handoff",
+        "samples_ns": {
+          "baseline": [
+            107473,
+            103023,
+            106253,
+            105133,
+            107053
+          ],
+          "candidate": [
+            111662,
+            107253,
+            132611,
+            106963,
+            153059
+          ]
+        },
+        "block_ratios": [
+          1.0389772314907,
+          1.0410587926967765,
+          1.2480682898365223,
+          1.0174065231658946,
+          1.4297497501237704
+        ],
+        "median_block_ratio": 1.0410587926967765,
+        "ratio_of_medians": 1.0509067979257056,
+        "ranges_ns": {
+          "baseline": [
+            103023,
+            107473
+          ],
+          "candidate": [
+            106963,
+            153059
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_mounting_hole_spacing",
+        "samples_ns": {
+          "baseline": [
+            681604,
+            420462,
+            423711,
+            417132,
+            417112
+          ],
+          "candidate": [
+            775527,
+            425681,
+            423991,
+            448029,
+            422771
+          ]
+        },
+        "block_ratios": [
+          1.13779701997054,
+          1.012412536685836,
+          1.0006608277812,
+          1.0740700785362907,
+          1.0135670994840715
+        ],
+        "median_block_ratio": 1.0135670994840715,
+        "ratio_of_medians": 1.012412536685836,
+        "ranges_ns": {
+          "baseline": [
+            417112,
+            681604
+          ],
+          "candidate": [
+            422771,
+            775527
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_castellation_circle_17",
+        "samples_ns": {
+          "baseline": [
+            2595713,
+            1708623,
+            1754910,
+            1753900,
+            1711084
+          ],
+          "candidate": [
+            3494981,
+            1796257,
+            2617692,
+            1775958,
+            1727282
+          ]
+        },
+        "block_ratios": [
+          1.346443539790416,
+          1.0512892545634702,
+          1.4916388874643145,
+          1.0125765437026055,
+          1.0094665136252807
+        ],
+        "median_block_ratio": 1.0512892545634702,
+        "ratio_of_medians": 1.0241501795997492,
+        "ranges_ns": {
+          "baseline": [
+            1708623,
+            2595713
+          ],
+          "candidate": [
+            1727282,
+            3494981
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_castellation_circle_128",
+        "samples_ns": {
+          "baseline": [
+            2664258,
+            1698504,
+            1752111,
+            1740591,
+            1698094
+          ],
+          "candidate": [
+            3486132,
+            1756840,
+            1772419,
+            1775018,
+            1715543
+          ]
+        },
+        "block_ratios": [
+          1.3084813858117343,
+          1.0343455181736398,
+          1.0115905898655964,
+          1.0197789141734044,
+          1.0102756384511105
+        ],
+        "median_block_ratio": 1.0197789141734044,
+        "ratio_of_medians": 1.0182857431757375,
+        "ranges_ns": {
+          "baseline": [
+            1698094,
+            2664258
+          ],
+          "candidate": [
+            1715543,
+            3486132
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_duplicate_layers_source_failure",
+        "samples_ns": {
+          "baseline": [
+            74905,
+            76965,
+            74005,
+            77724,
+            77315
+          ],
+          "candidate": [
+            78224,
+            77635,
+            78675,
+            80274,
+            78734
+          ]
+        },
+        "block_ratios": [
+          1.0443094586476203,
+          1.0087052556356786,
+          1.0631038443348422,
+          1.0328083989501313,
+          1.0183534889736792
+        ],
+        "median_block_ratio": 1.0328083989501313,
+        "ratio_of_medians": 1.0222178912492692,
+        "ranges_ns": {
+          "baseline": [
+            74005,
+            77724
+          ],
+          "candidate": [
+            77635,
+            80274
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_authored_decoupling_huge_centers",
+        "samples_ns": {
+          "baseline": [
+            26029,
+            25598,
+            26108,
+            26258,
+            26278
+          ],
+          "candidate": [
+            27068,
+            25838,
+            26138,
+            26608,
+            26338
+          ]
+        },
+        "block_ratios": [
+          1.0399170156364055,
+          1.0093757324791,
+          1.001149073081048,
+          1.01332927107929,
+          1.00228327878834
+        ],
+        "median_block_ratio": 1.0093757324791,
+        "ratio_of_medians": 1.0088095602880343,
+        "ranges_ns": {
+          "baseline": [
+            25598,
+            26278
+          ],
+          "candidate": [
+            25838,
+            27068
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_fixture_thermal_huge_radius",
+        "samples_ns": {
+          "baseline": [
+            52216,
+            52946,
+            53626,
+            52297,
+            53736
+          ],
+          "candidate": [
+            53546,
+            84734,
+            55836,
+            54467,
+            54456
+          ]
+        },
+        "block_ratios": [
+          1.0254711199632296,
+          1.6003852982283837,
+          1.0412113527020475,
+          1.04149377593361,
+          1.0133988387673067
+        ],
+        "median_block_ratio": 1.0412113527020475,
+        "ratio_of_medians": 1.0287273826162506,
+        "ranges_ns": {
+          "baseline": [
+            52216,
+            53736
+          ],
+          "candidate": [
+            53546,
+            84734
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_fixture_access_spacing_floor",
+        "samples_ns": {
+          "baseline": [
+            686833,
+            702802,
+            694073,
+            701632,
+            697182
+          ],
+          "candidate": [
+            724921,
+            714671,
+            697752,
+            1047428,
+            704062
+          ]
+        },
+        "block_ratios": [
+          1.0554545282477692,
+          1.0168881135796426,
+          1.005300595182351,
+          1.4928452522119857,
+          1.0098682983783287
+        ],
+        "median_block_ratio": 1.0168881135796426,
+        "ratio_of_medians": 1.0250852718515395,
+        "ranges_ns": {
+          "baseline": [
+            686833,
+            702802
+          ],
+          "candidate": [
+            697752,
+            1047428
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_fixture_access_sub_ulp_spacing",
+        "samples_ns": {
+          "baseline": [
+            406833,
+            406672,
+            405742,
+            410022,
+            419821
+          ],
+          "candidate": [
+            407952,
+            411001,
+            419962,
+            615448,
+            423741
+          ]
+        },
+        "block_ratios": [
+          1.0027505143388074,
+          1.0106449423614117,
+          1.035046901725727,
+          1.5010121408119563,
+          1.009337312807125
+        ],
+        "median_block_ratio": 1.0106449423614117,
+        "ratio_of_medians": 1.0322712267687233,
+        "ranges_ns": {
+          "baseline": [
+            405742,
+            419821
+          ],
+          "candidate": [
+            407952,
+            615448
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_fixture_copper_maximum_order_unneeded",
+        "samples_ns": {
+          "baseline": [
+            158639,
+            156040,
+            154949,
+            153510,
+            151960
+          ],
+          "candidate": [
+            161059,
+            157720,
+            201006,
+            170098,
+            155999
+          ]
+        },
+        "block_ratios": [
+          1.0152547608091327,
+          1.0107664701358625,
+          1.2972397369457047,
+          1.1080581069637156,
+          1.0265793629902606
+        ],
+        "median_block_ratio": 1.0265793629902606,
+        "ratio_of_medians": 1.0394323293470755,
+        "ranges_ns": {
+          "baseline": [
+            151960,
+            158639
+          ],
+          "candidate": [
+            155999,
+            201006
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      },
+      {
+        "name": "operation_fixture_copper_large_shape",
+        "samples_ns": {
+          "baseline": [
+            118662,
+            117332,
+            118012,
+            118012,
+            115272
+          ],
+          "candidate": [
+            120112,
+            119802,
+            119422,
+            118931,
+            127422
+          ]
+        },
+        "block_ratios": [
+          1.012219581668942,
+          1.0210513755838135,
+          1.0119479374978815,
+          1.0077873436599667,
+          1.1054028732042473
+        ],
+        "median_block_ratio": 1.012219581668942,
+        "ratio_of_medians": 1.0151679490221333,
+        "ranges_ns": {
+          "baseline": [
+            115272,
+            118662
+          ],
+          "candidate": [
+            118931,
+            127422
+          ]
+        },
+        "slower_blocks": 5,
+        "faster_blocks": 0
+      }
+    ],
+    "broad_all_five_faster": [
+      {
+        "name": "operation_uncertain_polygon_bounds",
+        "samples_ns": {
+          "baseline": [
+            534394,
+            408282,
+            422791,
+            496856,
+            409812
+          ],
+          "candidate": [
+            383054,
+            395573,
+            406962,
+            418312,
+            387484
+          ]
+        },
+        "block_ratios": [
+          0.7168007125828508,
+          0.9688720051337066,
+          0.962560697838885,
+          0.8419179802598741,
+          0.9455164807277483
+        ],
+        "median_block_ratio": 0.9455164807277483,
+        "ratio_of_medians": 0.9356230383333609,
+        "ranges_ns": {
+          "baseline": [
+            408282,
+            534394
+          ],
+          "candidate": [
+            383054,
+            418312
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "operation_point_edge_sparse_2002",
+        "samples_ns": {
+          "baseline": [
+            17602918,
+            17319687,
+            26029432,
+            27680450,
+            17538222
+          ],
+          "candidate": [
+            16815521,
+            17063554,
+            16928013,
+            16988240,
+            16781844
+          ]
+        },
+        "block_ratios": [
+          0.9552689502956271,
+          0.9852114533016676,
+          0.6503412367968691,
+          0.6137270167211877,
+          0.956872595180971
+        ],
+        "median_block_ratio": 0.9552689502956271,
+        "ratio_of_medians": 0.9616594816836618,
+        "ranges_ns": {
+          "baseline": [
+            17319687,
+            27680450
+          ],
+          "candidate": [
+            16781844,
+            17063554
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "operation_fixture_thermal_sparse_2002",
+        "samples_ns": {
+          "baseline": [
+            4105190,
+            4239310,
+            4125449,
+            4014936,
+            4165656
+          ],
+          "candidate": [
+            4010956,
+            4009166,
+            4074471,
+            3982578,
+            4012216
+          ]
+        },
+        "block_ratios": [
+          0.9770451550354551,
+          0.945711920100205,
+          0.987643042005852,
+          0.9919405938226662,
+          0.9631654654152911
+        ],
+        "median_block_ratio": 0.9770451550354551,
+        "ratio_of_medians": 0.9722471420686573,
+        "ranges_ns": {
+          "baseline": [
+            4014936,
+            4239310
+          ],
+          "candidate": [
+            3982578,
+            4074471
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "operation_fixture_copper_huge_radius",
+        "samples_ns": {
+          "baseline": [
+            962445,
+            960305,
+            978993,
+            964034,
+            964144
+          ],
+          "candidate": [
+            952405,
+            944095,
+            944195,
+            937476,
+            943315
+          ]
+        },
+        "block_ratios": [
+          0.9895682350679779,
+          0.9831199462670714,
+          0.9644553127550453,
+          0.9724511791077908,
+          0.9783963806236413
+        ],
+        "median_block_ratio": 0.9783963806236413,
+        "ratio_of_medians": 0.9793171195206808,
+        "ranges_ns": {
+          "baseline": [
+            960305,
+            978993
+          ],
+          "candidate": [
+            937476,
+            952405
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "operation_pad_round_construct_subnormal",
+        "samples_ns": {
+          "baseline": [
+            19277983,
+            20485101,
+            19978465,
+            20913241,
+            20309432
+          ],
+          "candidate": [
+            19164181,
+            19615510,
+            19660337,
+            19672276,
+            19253235
+          ]
+        },
+        "block_ratios": [
+          0.9940967890676115,
+          0.9575500750521074,
+          0.9840764543221914,
+          0.9406612777043979,
+          0.9479947543584676
+        ],
+        "median_block_ratio": 0.9575500750521074,
+        "ratio_of_medians": 0.9658325254984974,
+        "ranges_ns": {
+          "baseline": [
+            19277983,
+            20913241
+          ],
+          "candidate": [
+            19164181,
+            19672276
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      },
+      {
+        "name": "operation_pad_trapezoid_construct_original_large",
+        "samples_ns": {
+          "baseline": [
+            8407186,
+            8945949,
+            8911492,
+            8730164,
+            8976697
+          ],
+          "candidate": [
+            8240077,
+            8167772,
+            8407996,
+            8177301,
+            8011852
+          ]
+        },
+        "block_ratios": [
+          0.9801230756640807,
+          0.9130134768262148,
+          0.9435003700839321,
+          0.9366720945906629,
+          0.8925167018559277
+        ],
+        "median_block_ratio": 0.9366720945906629,
+        "ratio_of_medians": 0.9176130102568684,
+        "ranges_ns": {
+          "baseline": [
+            8407186,
+            8976697
+          ],
+          "candidate": [
+            8011852,
+            8407996
+          ]
+        },
+        "slower_blocks": 0,
+        "faster_blocks": 5
+      }
+    ],
+    "broad_slower_median_count": 109,
+    "all_48_arc_memory_rows_and_four_fields_unchanged_in_every_sample": true,
+    "probe_binary_sizes": {
+      "time": {
+        "baseline_bytes": 8593912,
+        "candidate_bytes": 8593944,
+        "byte_delta": 32
+      },
+      "memory": {
+        "baseline_bytes": 8596256,
+        "candidate_bytes": 8596296,
+        "byte_delta": 40
+      },
+      "broad": {
+        "baseline_bytes": 26357728,
+        "candidate_bytes": 26357752,
+        "byte_delta": 24
+      },
+      "abort": {
+        "baseline_bytes": 8530872,
+        "candidate_bytes": 8530912,
+        "byte_delta": 40
+      }
+    }
+  },
+  "why": "The fixed native controls retain eleven all-five slower broad rows, including castellation-circle-17 at a 1.051289 median paired ratio and native handoff at 1.041059. Four endpoint and six broad rows are faster in every block, but there are no measured memory savings and the original 120-second complete-board assertion still fails at 135.297041172 worker seconds. These results do not justify retention under the governing ladder. The candidate is rejected; the fixed samples and original gates remain intact.",
+  "preserved_evidence": "All 60 scalar and 36 native processes remain recorded, including every favorable sample. All endpoint witnesses, all 231 historical broad witnesses, and all six 210-row final-abort receipt sets match. Functional tests and docs pass. This is a conservative retention decision for the observed workloads, not a proof that every workload slows down or that exactness failed.",
+  "complete_reports": {
+    "executed": false,
+    "prepared_runner": "replay_reports_v1.py",
+    "reason": "The closed native costs and failed original board cap settle rejection before runtime admission. Complete report replay and production CLI size are left unexecuted. Native 12/197 finding counts are not complete report identity."
+  },
+  "sample_set_closed": true,
+  "sample_extension_planned": false,
+  "next_step": {
+    "task": "Observe available exact signs across quadratic-tower compaction under P4 before proposing another runtime change.",
+    "prepared_inputs": "docs/evidence/2026-10-13-quadratic-tower-sign-transfer",
+    "status": "Probe source and scope prepared; not compiled or executed; runner still required.",
+    "question": "Can compact_quadratic_tower rebuild an equal covered value while losing a sign already certified at higher precision and available to a later low-precision query?",
+    "source_basis": "The public method rebuilds even/odd/radicand components and copies the abort signal, without explicit source-sign transfer. Reconstruction may prove the sign independently, so source inspection alone establishes no defect. The existing pi-Laurent compaction tests explicitly cover retaining a 1,100-bit proof for later lower-precision queries.",
+    "fixed_scope": "Twelve fresh processes per source: three quadratic/nested/biquadratic families, linear and squared differences from a certified 1,024-bit lower bound, and scales 1/-7. Record original, warmed, cloned, compacted and repeatedly compacted facts. Query exact difference equality last. Preserve Unknown and uncovered outcomes.",
+    "required_runner": "Bind and compare current main and the unchanged endpoint runtime baseline separately, with exact source, manifest, features, library, target, compiler and probe hashes. Use separate targets; preserve every existing frozen experiment and all 35 pending native entries. Serialize all builds and observations.",
+    "native_work_remains": "Keep the rejected guards out of runtime sources. The unchanged endpoint parent remains unadmitted; all native limits, earlier endpoint timing/memory tradeoffs and the 35 pending changes remain open. Any later native experiment starts from that parent, not this rejected branch.",
+    "read_sections_sha256": {
+      "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
+      "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3"
+    },
+    "runtime_admitted": false
+  },
+  "evidence_sha256": {
+    "correctness-v1.json": "bd6afc3e779ab63d859c71d0e6c5a81c706dcbdeea517255219c683db1a3eb62",
+    "cost-assessment-v1.json": "d0f4bfa6ac0a07f4a7bc496c6e349a126953a448fd1d070bf7b269ac7d3e0999",
+    "scalar-decision-v1.json": "67070f204469baf5eab6927278b87211b2131407b9a1f45917f32bdca0fe1b7e",
+    "native-assessment-v1.json": "d59bd32861a5747a2a9cb4f08d8560624adca1f12e7c2859ca0703cd975d0932",
+    "native-controls-assessment-v1.json": "d57ff7c00280eacb8ba06a54e4fa396bd3a4c461dbc97cae42e33e3679dbef32",
+    "native-controls-v1/result.json": "67558ee0086f221d00670fb51725131b3c1a903b441d819d734b67951b74d395",
+    "native-controls-v1/trials.json": "5002263982a5d188e4fa1cf5d8f9d238b336ffcbdc07622b7da9c947da32085f",
+    "replay_reports_v1.py": "0196ecec522d70d050d9c9e9169a78b076aa3fa635123703b39c42e2fdafcc79"
+  },
+  "source_parent_main_and_artifacts_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "prepared_next_input_sha256": {
+    "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/README.md": "177a643e75d3119a3686c0358f94cb2fb29884586ee385f39752f803ecbceb41",
+    "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/probe.rs": "6896af967a1205188008d6919a3279cf96ac4bc6cc465582cc9b29eb769fad33"
+  }
+}
