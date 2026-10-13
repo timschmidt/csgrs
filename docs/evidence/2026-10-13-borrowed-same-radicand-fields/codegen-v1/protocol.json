@@ -1,0 +1,327 @@
+{
+  "scope": "Inspect the three existing quadratic timing binaries without adding cost samples.",
+  "runner_sha256": "68f45a5ead04becf1900e4864e5af85afc93ad2190253bedd3a6512582dbcff1",
+  "cost_assessment_sha256": "e5c5f3a88b0562c516a7b9ae3ce5752b4654260850e855b2fffcd46d4c7b16b8",
+  "binaries_sha256": "e4320c6ba22634ef683807650c5673afedd444b93ff805c9a6cdd083eb9ca3c2",
+  "tool_versions": {
+    "nm": "GNU nm version 2.45.1-5.fc43",
+    "objdump": "GNU objdump version 2.45.1-5.fc43"
+  },
+  "commands": [
+    {
+      "variant": "baseline",
+      "command": [
+        "/usr/bin/nm",
+        "-S",
+        "--size-sort",
+        "--demangle",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "baseline",
+      "symbol": "polynomial",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcef20",
+        "--stop-address=0xcf857",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "baseline",
+      "symbol": "coefficient",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcd040",
+        "--stop-address=0xcd9e9",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "outlined",
+      "command": [
+        "/usr/bin/nm",
+        "-S",
+        "--size-sort",
+        "--demangle",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "outlined",
+      "symbol": "helper",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xccdd0",
+        "--stop-address=0xcd372",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "outlined",
+      "symbol": "polynomial",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcf770",
+        "--stop-address=0xd00a7",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "outlined",
+      "symbol": "coefficient",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcd750",
+        "--stop-address=0xce240",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "borrowed",
+      "command": [
+        "/usr/bin/nm",
+        "-S",
+        "--size-sort",
+        "--demangle",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "borrowed",
+      "symbol": "field_helper",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xccd40",
+        "--stop-address=0xcd15c",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "borrowed",
+      "symbol": "polynomial",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcf620",
+        "--stop-address=0xcff57",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "borrowed",
+      "symbol": "coefficient",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcd530",
+        "--stop-address=0xce0e1",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "rows": [
+    {
+      "variant": "baseline",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-time",
+        "sha256": "90fa3336ff32fe3a3daf946f5f3e43547c1b35cd9d42985e3046da4737f04007",
+        "bytes": 6153112
+      },
+      "symbols": {
+        "polynomial": {
+          "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+          "address": 847648,
+          "code_bytes": 2359,
+          "kind": "t",
+          "disassembly_stdout_sha256": "141ebf5b35f6194f711cac9b604a43045b97007763a9eb7e6a5515db3aff7fff",
+          "first_stack_pointer_subtraction_bytes": 472,
+          "helper_named_transfer_lines": []
+        },
+        "coefficient": {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+          "address": 839744,
+          "code_bytes": 2473,
+          "kind": "t",
+          "disassembly_stdout_sha256": "dfd72785a869719da5d95e4ed721612a38948700b566f8ebba04ae57e3a9385e",
+          "first_stack_pointer_subtraction_bytes": 248,
+          "helper_named_transfer_lines": []
+        }
+      },
+      "missing_requested_symbols": [
+        "helper",
+        "field_helper"
+      ]
+    },
+    {
+      "variant": "outlined",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time",
+        "sha256": "c1db0db007658a861ed8efad60e3f9ba45510953c63da7d30b9f9f6afff2d223",
+        "bytes": 6155552
+      },
+      "symbols": {
+        "helper": {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand",
+          "address": 839120,
+          "code_bytes": 1442,
+          "kind": "t",
+          "disassembly_stdout_sha256": "4aa9e5b00ed4f00a01cd886063b93b0fe9926184241d2e3ab9f359725a4d0cc5",
+          "first_stack_pointer_subtraction_bytes": 104,
+          "helper_named_transfer_lines": [
+            "cce8a:\teb 27                \tjmp    cceb3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0xe3>",
+            "cce9d:\teb 26                \tjmp    ccec5 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0xf5>",
+            "ccfa0:\te9 41 01 00 00       \tjmp    cd0e6 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x316>",
+            "cd055:\teb e9                \tjmp    cd040 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x270>",
+            "cd0fc:\teb 07                \tjmp    cd105 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x335>",
+            "cd10f:\teb 24                \tjmp    cd135 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x365>",
+            "cd122:\teb 11                \tjmp    cd135 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x365>",
+            "cd13e:\teb 2b                \tjmp    cd16b <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x39b>",
+            "cd146:\te9 72 01 00 00       \tjmp    cd2bd <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4ed>",
+            "cd152:\te9 87 00 00 00       \tjmp    cd1de <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x40e>",
+            "cd183:\te9 8f 00 00 00       \tjmp    cd217 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x447>",
+            "cd188:\te9 be 00 00 00       \tjmp    cd24b <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x47b>",
+            "cd1a0:\te9 4d 01 00 00       \tjmp    cd2f2 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x522>",
+            "cd1d1:\te9 ed 00 00 00       \tjmp    cd2c3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+            "cd1d9:\teb 23                \tjmp    cd1fe <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x42e>",
+            "cd1e4:\te9 da 00 00 00       \tjmp    cd2c3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+            "cd21a:\te9 a4 00 00 00       \tjmp    cd2c3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+            "cd22b:\te9 dd 00 00 00       \tjmp    cd30d <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x53d>",
+            "cd23b:\te9 a3 00 00 00       \tjmp    cd2e3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x513>",
+            "cd249:\teb 78                \tjmp    cd2c3 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x4f3>",
+            "cd24e:\te9 d5 00 00 00       \tjmp    cd328 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x558>",
+            "cd274:\teb ea                \tjmp    cd260 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand+0x490>"
+          ]
+        },
+        "polynomial": {
+          "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+          "address": 849776,
+          "code_bytes": 2359,
+          "kind": "t",
+          "disassembly_stdout_sha256": "a93ecb368e00357fa9a2efc57ea2d75c5abc23ff0cf1b74ceac36ce63e113364",
+          "first_stack_pointer_subtraction_bytes": 472,
+          "helper_named_transfer_lines": []
+        },
+        "coefficient": {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+          "address": 841552,
+          "code_bytes": 2800,
+          "kind": "t",
+          "disassembly_stdout_sha256": "241dcb6e7efbe857c72c1c697bcf752fd761442e0d722d92daa70f38a110f4e6",
+          "first_stack_pointer_subtraction_bytes": 264,
+          "helper_named_transfer_lines": [
+            "cd942:\te8 89 f4 ff ff       \tcall   ccdd0 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand>"
+          ]
+        }
+      },
+      "missing_requested_symbols": [
+        "field_helper"
+      ]
+    },
+    {
+      "variant": "borrowed",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time",
+        "sha256": "2e2e965600321beb7c7d4fd91698a84c70ade6773969134bd57292fdea0da3d3",
+        "bytes": 6155096
+      },
+      "symbols": {
+        "field_helper": {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields",
+          "address": 838976,
+          "code_bytes": 1052,
+          "kind": "t",
+          "disassembly_stdout_sha256": "4361125483de7bf1e053a1abf3114b920d753f620833643e3293f14c4d7aa4bd",
+          "first_stack_pointer_subtraction_bytes": 104,
+          "helper_named_transfer_lines": [
+            "ccdd1:\teb 2b                \tjmp    ccdfe <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0xbe>",
+            "ccde4:\teb 2a                \tjmp    cce10 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0xd0>",
+            "cceab:\te9 f0 00 00 00       \tjmp    ccfa0 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x260>",
+            "ccf45:\teb e9                \tjmp    ccf30 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x1f0>",
+            "ccfd4:\te9 0f 01 00 00       \tjmp    cd0e8 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3a8>",
+            "ccfe2:\te9 fe 00 00 00       \tjmp    cd0e5 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3a5>",
+            "ccff0:\teb 22                \tjmp    cd014 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x2d4>",
+            "cd003:\te9 0e 01 00 00       \tjmp    cd116 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3d6>",
+            "cd00d:\teb 23                \tjmp    cd032 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x2f2>",
+            "cd017:\te9 cc 00 00 00       \tjmp    cd0e8 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3a8>",
+            "cd04f:\te9 94 00 00 00       \tjmp    cd0e8 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3a8>",
+            "cd05f:\te9 cc 00 00 00       \tjmp    cd130 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3f0>",
+            "cd071:\te9 a0 00 00 00       \tjmp    cd116 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3d6>",
+            "cd07d:\teb 6b                \tjmp    cd0ea <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x3aa>",
+            "cd0a4:\teb ea                \tjmp    cd090 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields+0x350>"
+          ]
+        },
+        "polynomial": {
+          "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+          "address": 849440,
+          "code_bytes": 2359,
+          "kind": "t",
+          "disassembly_stdout_sha256": "4c448587bc7381e353a607caa6f098a72b6dc7b4583bd5f642b5321d1a9ac5de",
+          "first_stack_pointer_subtraction_bytes": 472,
+          "helper_named_transfer_lines": []
+        },
+        "coefficient": {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+          "address": 841008,
+          "code_bytes": 2993,
+          "kind": "t",
+          "disassembly_stdout_sha256": "bed2bf2df4eafa023e5e1c0fe311853fee89da828f98c0ca488b7f53db26723b",
+          "first_stack_pointer_subtraction_bytes": 264,
+          "helper_named_transfer_lines": [
+            "cd6c1:\te8 7a f6 ff ff       \tcall   ccd40 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields>"
+          ]
+        }
+      },
+      "missing_requested_symbols": [
+        "helper"
+      ]
+    }
+  ],
+  "limits": [
+    "Only three already-measured quadratic timing executables are inspected. No compile or new timing/allocation sample is performed.",
+    "Symbol presence and named transfers describe these binaries, not all possible call-site inlining or whole-program behavior.",
+    "The first stack-pointer subtraction excludes pushes, callees and dynamic behavior. Adding these numbers does not measure total or peak stack use.",
+    "Body sizes and call boundaries are static observations. They cannot causally explain favorable or adverse timings."
+  ],
+  "artifacts_sha256": {
+    "baseline-coefficient.asm.gz": "ae0f5fdc3ab6d206974f67ff30b67e518e243e9ce092c6bfb28e705efc5240bf",
+    "baseline-polynomial.asm.gz": "03af4d02de64c436e4b9da49cd258c492a2c3dfcce0ac7455eee4e03d13103bc",
+    "baseline-symbols.txt.gz": "6c4510d193ef31d3329b3b1accc9a78e9492a10eaac2fbd49ce7b3d5e93fce88",
+    "borrowed-coefficient.asm.gz": "915f0d14ad17518278bc1e4a9a46b3b7690495d9a0c3aa3c37fe65397abff34f",
+    "borrowed-field_helper.asm.gz": "cc82bbfd9068b17f942e2fc68158068d4501e60157fef47b786e607e056a8fd2",
+    "borrowed-polynomial.asm.gz": "b7b2a7b1e9aacab01919a4814cb2cd71a64e515a60e8ed94667d91d471aa85e0",
+    "borrowed-symbols.txt.gz": "0491f2d532e7b7dfa163407168c0787b305b7fcdb851daf55a1b75f0afde8b2b",
+    "outlined-coefficient.asm.gz": "da3d7805956dcb414a749747ebffad7cb59607c4ba4525bdc3a0c097fdb3ef91",
+    "outlined-helper.asm.gz": "71473d3ff3ae18a7efd1f3aaaa0c0039c1b801d5ceec7f7dc56c19adb7c754e9",
+    "outlined-polynomial.asm.gz": "b1bcdf6186b2fa0fa1fa8d37521f1327e6d21c9a2805bb1f9e6619879d25bb7b",
+    "outlined-symbols.txt.gz": "0251b1855d11764b43d59930f7e691b8766a09c7e3f5ce7f86c40bc06b89d2e1"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

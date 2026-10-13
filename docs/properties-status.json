@@ -3232,7 +3232,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "borrowed_same_radicand_fields": {
-      "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
+      "status": "reject-borrowed-same-radicand-fields-on-scalar-timing-costs",
       "evidence": "docs/evidence/2026-10-13-borrowed-same-radicand-fields",
       "source_review": "scope-v1.json",
       "contract": {
@@ -3314,7 +3314,14 @@
         "Mutable field reborrows must preserve arithmetic, payload identity, drop order and monotone proof retention; qualification and fixed costs remain necessary.",
         "Static symbol/frame observations are not total-memory or causal timing evidence."
       ],
-      "next_step": "Run the fixed 90-measurement scalar trial and 18 preflights after all builds; independently assess every contrast and inspect the existing binary code generation. No sample extension.",
+      "next_step": {
+        "action": "Close the current direct/outlined/borrowed same-radicand series and return to native cost attribution at the unchanged endpoint/P4 parent.",
+        "review": "Re-read the retained native profile and operation-count diagnostics alongside the parent normalizer/certificate-consumer code. Identify repeated work that can be removed before proposing another optimization; these helper changes preserve the expensive arithmetic and have not established an acceptable cost improvement.",
+        "diagnostic_if_needed": "If the existing evidence does not isolate avoidable work, prepare a separately frozen fixed profiling or counter run for the unchanged parent on the complete boards. Preserve the original assertion and label instrumented observations as attribution, not matched benchmark evidence.",
+        "constraints": "Keep all sources and samples frozen. Do not extend a closed trial, schedule another equivalent helper-boundary variant, alter proof/memo/budget semantics or raise the original fixture limits.",
+        "new_source_or_diagnostic_prepared": false,
+        "full_scope": "All 39 properties, 14 targets and crate future work remain in scope. Individual ledger statuses remain unchanged; the goal is active and incomplete."
+      },
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -3419,7 +3426,216 @@
           "cancelled_radical_capacity": 0,
           "cancelled_atom_capacity": 0
         }
-      }
+      },
+      "decision": "decision-v1.json",
+      "scalar_cost_assessment": "cost-assessment-v1.json",
+      "closed_sample_set": {
+        "measurement_processes": 90,
+        "preflight_processes": 18,
+        "blocks": 5,
+        "timing_inputs_per_phase": 4096,
+        "allocation_inputs_per_phase": 1000,
+        "extended": false,
+        "all_witnesses_and_inventories_match": true,
+        "shared_contrasts_are_not_independent": true
+      },
+      "summaries": {
+        "outlined_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 4,
+          "at_least_four_slower_rows": 18,
+          "all_five_faster_rows": 4,
+          "at_least_four_faster_rows": 21,
+          "ratio_of_medians_above_one_rows": 30,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -1000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -64000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 4,
+              "increased_rows": 0,
+              "min_delta": -64,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            2432,
+            2448
+          ]
+        },
+        "borrowed_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 6,
+          "at_least_four_slower_rows": 15,
+          "all_five_faster_rows": 3,
+          "at_least_four_faster_rows": 13,
+          "ratio_of_medians_above_one_rows": 33,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -1000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 6,
+              "increased_rows": 0,
+              "min_delta": -64000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 4,
+              "increased_rows": 0,
+              "min_delta": -64,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            1976,
+            2008
+          ]
+        },
+        "borrowed_vs_outlined": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 4,
+          "at_least_four_slower_rows": 14,
+          "all_five_faster_rows": 0,
+          "at_least_four_faster_rows": 13,
+          "ratio_of_medians_above_one_rows": 36,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            -456,
+            -440
+          ]
+        }
+      },
+      "static_code_observations": {
+        "baseline": {
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472
+          },
+          "coefficient": {
+            "code_bytes": 2473,
+            "first_stack_pointer_subtraction_bytes": 248
+          },
+          "entry_helper_transfers": []
+        },
+        "outlined": {
+          "helper": {
+            "code_bytes": 1442,
+            "first_stack_pointer_subtraction_bytes": 104
+          },
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472
+          },
+          "coefficient": {
+            "code_bytes": 2800,
+            "first_stack_pointer_subtraction_bytes": 264
+          },
+          "entry_helper_transfers": [
+            "cd942:\te8 89 f4 ff ff       \tcall   ccdd0 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand>"
+          ]
+        },
+        "borrowed": {
+          "field_helper": {
+            "code_bytes": 1052,
+            "first_stack_pointer_subtraction_bytes": 104
+          },
+          "polynomial": {
+            "code_bytes": 2359,
+            "first_stack_pointer_subtraction_bytes": 472
+          },
+          "coefficient": {
+            "code_bytes": 2993,
+            "first_stack_pointer_subtraction_bytes": 264
+          },
+          "entry_helper_transfers": [
+            "cd6c1:\te8 7a f6 ff ff       \tcall   ccd40 <<hyperreal::computable::node::RadicalCoefficient>::multiply_same_radicand_fields>"
+          ]
+        }
+      },
+      "control_context": {
+        "prior_outlined_decision_sha256": "1d75493c957b627be5ccfec737140f3b4b18f8ea55857e4ba62dd4174a766164",
+        "prior_outlined_all_five_slower_rows": 1,
+        "fresh_outlined_all_five_slower_rows": 4,
+        "prior_rejection_unchanged": true,
+        "interpretation": "Fresh outlined timing directions differ from its earlier closed trial despite identical sources. Both records remain. No earlier sample is pooled, extended or used to erase an adverse result."
+      },
+      "native": {
+        "status": "not-executed-after-scalar-cost-rejection",
+        "original_fixture_gates_run": false,
+        "matched_native_costs_run": false,
+        "complete_report_identity_established": false,
+        "production_cli_size_measured": false,
+        "original_limits": {
+          "full_board_worker_cpu_seconds": 120,
+          "copper_neck_check_body_wall_seconds": 60
+        }
+      },
+      "main_and_35_pending_native_paths_unchanged": true
     }
   },
   "status_meanings": {

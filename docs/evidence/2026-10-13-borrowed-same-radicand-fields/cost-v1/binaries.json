@@ -1,0 +1,92 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-rational-time",
+    "sha256": "ca0a2c6c372789669f1e9eead13841a2bbff934c2a4e521b6470e2ec1c728968",
+    "bytes": 6178072
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-rational-memory",
+    "sha256": "842160546fb725f160fc735b749ad80140fa47041ddab080b3820130b496a8d0",
+    "bytes": 6179952
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-time",
+    "sha256": "90fa3336ff32fe3a3daf946f5f3e43547c1b35cd9d42985e3046da4737f04007",
+    "bytes": 6153112
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-quadratic-memory",
+    "sha256": "99f158aa7585a11aabe25b24eb285024ba4ca31be88ee31682909ec2b6e3e79d",
+    "bytes": 6156352
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-integer-time",
+    "sha256": "a62ac88285c6a361744aac717c4e8bd21288821d163791510ed89ed1218c85df",
+    "bytes": 6048920
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/baseline-integer-memory",
+    "sha256": "09bf41c988c836254304757022da626a5765b22994315236650893e0e43ec493",
+    "bytes": 6051816
+  },
+  "outlined-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-rational-time",
+    "sha256": "1b2c7f9c1c8d922175d47205539d38c5c394667f6c3ba0e6537d62bc6b9af81a",
+    "bytes": 6180504
+  },
+  "outlined-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-rational-memory",
+    "sha256": "e6d419030ae53c1a4a906057edad8511b867c9aebb78cd2dff58c9258ff61a97",
+    "bytes": 6182400
+  },
+  "outlined-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-time",
+    "sha256": "c1db0db007658a861ed8efad60e3f9ba45510953c63da7d30b9f9f6afff2d223",
+    "bytes": 6155552
+  },
+  "outlined-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-quadratic-memory",
+    "sha256": "b277ff0cd2bb00c2d598372c8fd5d7345de92edd3969b40c07b90c67c8c774a0",
+    "bytes": 6158800
+  },
+  "outlined-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-integer-time",
+    "sha256": "84a8ff18d78b78fe925cd1f18c8c97e44332e76bbf689ff5ca13c8eeb3e695f8",
+    "bytes": 6051368
+  },
+  "outlined-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/outlined-integer-memory",
+    "sha256": "3ff241f20f9d48e30f4036e77042a7969ddfe33e9e2984fb66ed0599d019c81b",
+    "bytes": 6054248
+  },
+  "borrowed-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-rational-time",
+    "sha256": "ed5bd3002f3e199fbc91f3cf6f34c528d0cd7676f466ffe96095ad2ef93cd860",
+    "bytes": 6180048
+  },
+  "borrowed-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-rational-memory",
+    "sha256": "7ff0a2cad879b5c9923daff286560a59710160d39bc390cd2924f16a51fb958f",
+    "bytes": 6181944
+  },
+  "borrowed-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-time",
+    "sha256": "2e2e965600321beb7c7d4fd91698a84c70ade6773969134bd57292fdea0da3d3",
+    "bytes": 6155096
+  },
+  "borrowed-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-quadratic-memory",
+    "sha256": "b72c0cdd33a59308ba3eff81cd2bb63ec77016e880c015bc654bb023a63e3314",
+    "bytes": 6158360
+  },
+  "borrowed-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-integer-time",
+    "sha256": "e1265a879d35d66ea6adacb21ec872c8ae2adeb01a37fb4ccd67999829336aef",
+    "bytes": 6050928
+  },
+  "borrowed-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/cost-v1-binaries/borrowed-integer-memory",
+    "sha256": "33efd03276098537f25d5a3f49b77e272375b9d488a412a2d12ae82d7480f90b",
+    "bytes": 6053808
+  }
+}
