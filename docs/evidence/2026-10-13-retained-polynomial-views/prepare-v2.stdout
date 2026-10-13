@@ -1,0 +1,1 @@
+{"variants": ["baseline", "candidate"], "candidate_runtime_files": 3, "shared_mathematical_tests": 14, "new_candidate_helper_tests": 5, "borrowed_operation_order_verified": true, "main_and_parent_unchanged": true}

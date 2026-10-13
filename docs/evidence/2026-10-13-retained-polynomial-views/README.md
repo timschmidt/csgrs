@@ -52,9 +52,14 @@ trees and their hashes remain preserved. An independent
 [failure assessment](preparation-failure-assessment-v1.json) recovers every
 parent token after explicitly accounting for those three commas.
 
-Version 2 changes only the preparation's expected call fragments. Fresh source
-maps must exactly match the preserved formatted version 1 trees, including
-every Rust and mathematical test byte. Qualification and costs have not run.
+Version 2 changes only the preparation's expected call fragments. Preparation
+passed and froze fresh 10,134-file baseline and 10,135-file candidate trees.
+Their maps exactly match the preserved formatted version 1 trees, including
+every Rust and mathematical test byte. Exact parent-token recovery and the
+borrowed multiplication's operation sequence are verified. Baseline and
+candidate differ only in algebra.rs, representation.rs and the new private
+helper. The 26-command qualification is running in fresh targets; costs have
+not run. See [preparation-v2/protocol.json](preparation-v2/protocol.json).
 See [scope-v2.json](scope-v2.json) for the correction, contract and cost risks.
 Native validation, original board and neck
 limits, endpoint/broad/abort controls, complete report bytes and production CLI
