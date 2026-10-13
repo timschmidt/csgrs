@@ -1,0 +1,132 @@
+{
+  "baseline": {
+    "test": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "sha256": "744ed9c259815340257d13308d3582c764a1b9c2531c5a74214ba4def080fb7e",
+      "bytes": 54162984,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      },
+      "allocator_dependency_features": {}
+    },
+    "cli": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target/release/hyperdrc",
+      "sha256": "bcfedd7bd23ce661f3fbf75a3f4950855cc1de6d9ab72234fff1b08984c07903",
+      "bytes": 42848680,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "allocator_dependency_features": {}
+    }
+  },
+  "candidate": {
+    "test": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc",
+      "sha256": "2e920a4dcb491e26985a0dec2205f8b2f036427cdff06d4e8bd3683185b1213f",
+      "bytes": 54184592,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      },
+      "allocator_dependency_features": {
+        "libmimalloc_sys": [],
+        "mimalloc": []
+      }
+    },
+    "cli": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/hyperdrc",
+      "sha256": "2b10a5dbb8bde078af838456a2f0b14b6506b45cb00797e1a691a8c4dc2ea3e7",
+      "bytes": 43006936,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "allocator_dependency_features": {
+        "libmimalloc_sys": [],
+        "mimalloc": []
+      }
+    }
+  }
+}

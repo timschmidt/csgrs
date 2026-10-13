@@ -1,0 +1,11 @@
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 20.91s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/hyperdrc-0a58b5559aec40cc)
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/hyperdrc-f19e2b4a21a4c2a0)
+     Running tests/artifact_numeric_keys.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/artifact_numeric_keys-45e76ed3a2756559)
+     Running tests/diagnostic_formatting.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/diagnostic_formatting-6d75fc87f96dc90f)
+     Running tests/kicad_pad_sources.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/kicad_pad_sources-008887ac1e3988dd)
+     Running tests/kicad_rule_export.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/kicad_rule_export-294e9d9dbfe1f66d)
+     Running tests/native_linear_strokes.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/native_linear_strokes-32f08f4e4678b7d9)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/deps/readme-fe0bfe3ef28382ee)
+   Doc-tests hyperdrc
