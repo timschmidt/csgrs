@@ -1638,13 +1638,15 @@
       "native_executed": false
     },
     "retained_polynomial_views": {
-      "status": "v2-qualified-fixed-scalar-costs-next",
+      "status": "reject-recursive-retained-polynomial-views-on-scalar-performance-and-retention-costs",
       "evidence": [
         "docs/evidence/2026-10-13-retained-polynomial-views/scope-v1.json",
         "docs/evidence/2026-10-13-retained-polynomial-views/preparation-failure-assessment-v1.json",
         "docs/evidence/2026-10-13-retained-polynomial-views/scope-v2.json",
         "docs/evidence/2026-10-13-retained-polynomial-views/preparation-v2/protocol.json",
-        "docs/evidence/2026-10-13-retained-polynomial-views/correctness-v2.json"
+        "docs/evidence/2026-10-13-retained-polynomial-views/correctness-v2.json",
+        "docs/evidence/2026-10-13-retained-polynomial-views/cost-assessment-v2.json",
+        "docs/evidence/2026-10-13-retained-polynomial-views/decision-v2.json"
       ],
       "contract": "Keep existing owned scratch polynomials and graph-free closed payloads. A cache read clones one Arc to the whole immutable closed polynomial. Read-only multiplication right operands borrow its rational and radical slices; other existing consuming algorithms and projections recover ordinary owned polynomials before use.",
       "ownership": "A private PiLaurentValue enum distinguishes Owned(PiLaurentPolynomial) from Retained(Arc<ClosedPiLaurentPolynomial>). Only the existing cache publication allocates a shared header. Closed coefficients still contain only Rational and Vec<(Rational, Rational)> and cannot own Computable nodes. Scratch creation/cloning and original local memo entries retain their current Vec behavior.",
@@ -1662,7 +1664,19 @@
         "Prior recursive-copy counts are coverage, not allocation measurements, time shares or promised savings."
       ],
       "controls": "Both sources retain eight storage, three memo and three alias mathematical controls, plus the six inherited cache and eleven P4 controls. The previous radical-sharing inventory must be 0/0 in both: these ordinary to_polynomial conversions still copy. Candidate-specific controls will exercise actual retained whole-polynomial reads, live aliases, mutation, consuming arithmetic, graph/buffer release and concurrency.",
-      "next_step": "Run the predeclared twelve preflights and 60 scalar measurements, then independently assess every timing, requested-memory and probe-size row. Arc headers remain a heap cost despite unchanged existing type layouts. No native or runtime admission follows from scalar qualification.",
+      "next_step": {
+        "status": "source-review-pending",
+        "task": "Review direct read-only rational, pi and quadratic projection from PiLaurentValue, keeping compacting and other consuming operations owned. The current wrapper always materializes an owned polynomial before those read-only projections. Establish identical shape rejection, exact returned components, sign publication and original retry behavior before preparing the combined design.",
+        "basis": "The current source retains shared read views internally but materializes every root projection. Removing that reconstruction may offset costs in repeated scalar queries; this is a source-based hypothesis, not an attribution of the measured slowdowns. Prior parent instrumentation found only 0.6244 percent root retained-copy coverage on the board, so a root-only shortcut remains insufficient evidence for native performance.",
+        "constraints": [
+          "Keep the endpoint/P4 parent as the unchanged baseline. Include this qualified recursive-only version as a control for any combined projection candidate in a new fixed sample set; do not extend these samples or compare different experiments as matched measurements.",
+          "No additional recognition prepass, cache fact, looser bound, changed arithmetic order or opaque Computable owner in the closed payload.",
+          "Preserve every supported and declined shape, rational zero, pi powers, multiradical cancellation, sign retention, and the mandatory original retry after dropping the first memo.",
+          "Exercise owned and retained values, publication races, live aliases, graph release, original term/radical frontiers, low/high/low P4 behavior and exact mathematical witnesses.",
+          "Record every layout, requested-memory field and probe size; keep both original full-resolution native limits and all native admission controls."
+        ],
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation_v1": "Stopped before compilation when rustfmt folded three calls and removed optional trailing commas. Both formatted 10,134/10,135-file sources are preserved; independent accounting recovers all original parent tokens. No Rust or mathematical test input correction is needed.",
@@ -1715,7 +1729,67 @@
           "source_shares_closed": 0,
           "views_share_closed": 0
         }
-      }
+      },
+      "cost_summary": {
+        "timing_rows": 68,
+        "memory_rows": 68,
+        "all_five_slower_rows": 23,
+        "at_least_four_slower_rows": 43,
+        "all_five_faster_rows": 5,
+        "at_least_four_faster_rows": 13,
+        "ratio_of_medians_above_one_rows": 50,
+        "memory_fields": {
+          "allocation_calls": {
+            "reduced_rows": 9,
+            "increased_rows": 0,
+            "min_delta": -2000,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 9,
+            "increased_rows": 15,
+            "min_delta": -96000,
+            "max_delta": 16000,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 0,
+            "increased_rows": 21,
+            "min_delta": 0,
+            "max_delta": 16000,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 1,
+            "increased_rows": 21,
+            "min_delta": -96,
+            "max_delta": 16000,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_delta_bytes_range": [
+          4352,
+          4368
+        ]
+      },
+      "cost_decision": "Reject the measured version. It preserves tested values, ownership, aliases, arithmetic frontiers and P4 behavior, and avoids requested allocations in nine phases. However, twenty-three phases are slower in every fixed pair, retained/peak memory increases in twenty-one, and all probes grow. The supported scalar savings do not resolve the repeated adverse rows. This source does not advance to native validation or main runtime.",
+      "cost_limits": [
+        "The comparison uses a new closed sample set. It neither extends previous samples nor establishes native workload performance.",
+        "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+        "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Private coefficient layouts do not establish total memory or eventual reclamation.",
+        "Native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open. Dependencies and owned coefficient layouts are unchanged; the shared closed payload and private result enum change ownership and their costs remain part of this comparison.",
+        "Rational quadratic-reciprocal first/warm/cloned queries have ratios of medians 1.069731/1.076561/1.065831 and median paired ratios 1.091542/1.098132/1.076855. Every pair is adverse. No allocation calls are saved in those phases; first/cloned each add 16,000 allocated, retained and peak requested bytes per 1,000 inputs.",
+        "Quadratic opaque-cancellation first/warm queries have ratios of medians and median paired ratios 1.091224/1.070052, adverse in every pair with unchanged requested-memory counters. Wide-integer first/warm/cloned queries are likewise adverse in every pair, with ratios of medians 1.091895/1.061425/1.067078 and median paired ratios 1.095414/1.063283/1.068369.",
+        "Allocation calls decrease in nine phases, by up to 2,000 per 1,000 inputs, and never increase. Allocated bytes decrease in nine and increase in fifteen. Retained bytes increase in twenty-one and never decrease; peak bytes increase in twenty-one and decrease in one by 96 bytes. Every paired memory delta repeats five times. Private type sizes omit shared allocation headers and cannot establish total-memory improvement.",
+        "Quadratic multiradical-square first/warm/cloned queries are faster in all five pairs, with ratios of medians 0.906561/0.923904/0.949935. Their requested allocations each decrease by 2,000 per 1,000 inputs. First/cloned still add 16,000 retained bytes. The other two all-five-faster rows are timer-scale radical-Laurent first/warm queries and are not treated as persuasive gains.",
+        "All six probe executables grow by 4,352 to 4,368 bytes. Production CLI size was not measured.",
+        "All timing samples and ranges remain visible, including large rational-suite candidate variation. Rational conjugate-product construction has ratio of medians 1.536804 but is adverse in four, not all five, pairs; neither that ratio nor any favorable outlier establishes an application effect. No sample is discarded and no significance claim is made.",
+        "First-query phases use fresh graphs in processes that may already share constants; cloned-query phases do not include cloning. Requested retained bytes are relative to each phase and do not measure eventual reclamation or native C heaps, allocator bookkeeping and stack frames.",
+        "No native qualification, original fixture gates, endpoint/broad/abort controls, complete-report replay or production CLI build ran for this rejected source. The uninstrumented parent still fails the original board assertion at 133.31248412 worker-CPU seconds against 120, and passes the separate 60-second neck check-body assertion. Historical standalone gates are not matched speed comparisons.",
+        "Version 1 stopped at source preparation before compilation. Version 2 corrected three expected optional-comma fragments and reproduced every formatted v1 source byte. The failed preparation and successful qualification remain distinct evidence."
+      ],
+      "native_executed": false
     }
   },
   "status_meanings": {

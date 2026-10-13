@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "a96e13d1dbd478cf63ba976eca179aa75d7297148edfdf4ca1e146a5a83cd82f",
+    "bytes": 11702964,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/cost-target/release/libhyperreal.rlib",
+    "sha256": "5b02fa8b8ef39818720b1410e6bbedc9d01563708146c3270691478c4fd5d1b1",
+    "bytes": 11728174,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  }
+}

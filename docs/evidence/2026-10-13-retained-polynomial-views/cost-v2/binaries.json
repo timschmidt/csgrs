@@ -1,0 +1,62 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-rational-time",
+    "sha256": "1b966e336b29bdd129edaea00b724d07e6922702b812e88b62c73a92d6d4452b",
+    "bytes": 6178112
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-rational-memory",
+    "sha256": "8815853b9de160acebbee9ca479128ad7de3615c0f465cedd64e82b281646e64",
+    "bytes": 6179992
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-quadratic-time",
+    "sha256": "9394d4864f4dbd721db904a3a592b60c810ee4db78e01053d72af8434c235331",
+    "bytes": 6153144
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-quadratic-memory",
+    "sha256": "8b36a8d1c1d8a6e7529ca320891941f6f07452489581ed533d3444000c41609f",
+    "bytes": 6156392
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-integer-time",
+    "sha256": "12503612b3b5d899a0dc41b99ed2753737bfb31884bdd1911245a8b2f5a4b503",
+    "bytes": 6048944
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/baseline-integer-memory",
+    "sha256": "d7fa83f8ea6b1300e8c4d9be4bcefa8d50564d17a18b649d18fbdce6e31c61fc",
+    "bytes": 6051832
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-rational-time",
+    "sha256": "5b457ccda43a4092b8d43b14b5de7869d6cc5a170097a25a59093fffb3b3b1f1",
+    "bytes": 6182464
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-rational-memory",
+    "sha256": "92bf7e8a56b0d40973c42e295f2e0c55c99591f2f9566d110efdd57282fec0bc",
+    "bytes": 6184344
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-quadratic-time",
+    "sha256": "3e977e9722ab77ae92ab6490620d2990174301c36f2e80543630c5821554a6e2",
+    "bytes": 6157512
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-quadratic-memory",
+    "sha256": "c85d437ad55ad01773193238876a8eba1b4b89569af0adb59c4e68569c2e4a8f",
+    "bytes": 6160760
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-integer-time",
+    "sha256": "9d341303376babdffbb0b80c6841201f108a0ac4c45f2bd845adf611092e71c2",
+    "bytes": 6053304
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-views-v2/cost-v2-binaries/candidate-integer-memory",
+    "sha256": "d80788c9db7cefda5d1c1729373c0b09a594a10f628214f27bc1350b804e548e",
+    "bytes": 6056184
+  }
+}
