@@ -1,4 +1,9 @@
-This experiment shares rational/radical arrays across temporary and persistent
+This version is rejected after scalar qualification and the fixed cost
+comparison. All tested values and ownership controls pass, but repeated
+slowdowns and increased heap costs prevent retention. See
+[decision-v1.json](decision-v1.json) for the decision and complete adverse rows.
+
+The experiment shares rational/radical arrays across temporary and persistent
 Laurent certificates. The frozen endpoint/P4 parent reconstructs each array on
 a persistent read. Earlier diagnostics counted 35,239,829 recursive certificate
 copies, including 30,843,135 single-radical copies. Those are coverage counts,
@@ -24,7 +29,7 @@ along with the inherited P4 and cache-frontier tests.
 
 New buffers pay for an additional shared allocation, and mutations can copy.
 Reference counting and retained capacity may offset read savings. Qualification
-will record the layouts and pointer-sharing inventory, followed by the fixed
+records the layouts and pointer-sharing inventory, followed by the fixed
 60-process scalar comparison described in [scope-v1.json](scope-v1.json).
 Construction, first, warm, cloned and opaque controls retain every sample.
 No smaller-layout or reduced-allocation result can excuse a significant
@@ -48,8 +53,51 @@ mutation. Both keep one retained-query memo entry, one original-query entry and
 two opaque-query entries. Coefficient layouts shrink from 56 to 40 bytes and
 closed coefficients from 32 to 16. Rational, polynomial, closed polynomial,
 Computable and Node sizes remain 8, 24, 24, 16 and 56 bytes. These private sizes
-do not include shared allocations. The fixed cost comparison is running from
-separate fresh targets; no cost conclusion is available yet.
+do not include shared allocations.
+
+The fixed scalar comparison completed all twelve preflights and 60 measurement
+processes after both library builds and all twelve probe builds finished.
+The independent [cost assessment](cost-assessment-v1.json) verifies source and
+artifact bindings, raw outputs, arguments, all witnesses and representation
+inventories. No sample was added or discarded. Of 68 timing phases, three are
+slower in all five pairs and seventeen in at least four; thirteen are faster
+in all five and twenty-eight in at least four.
+
+| Conjugate-then-affine phase | Slower pairs | Ratio of medians | Median paired ratio | Extra allocation calls per 1,000 inputs |
+| --- | ---: | ---: | ---: | ---: |
+| First | 5 / 5 | 1.116639 | 1.107542 | 5,048 |
+| Warm | 5 / 5 | 1.176402 | 1.171850 | 5,048 |
+| Cloned | 5 / 5 | 1.109723 | 1.098514 | 3,048 |
+
+Warm conjugate products, warm reciprocals, first/warm pi transport and wide
+integer affine queries also have adverse ratios in at least four pairs. Some
+baseline samples vary substantially, including fourth-block samples and
+negated-scaled-surd construction. Every range and paired sample is retained;
+neither a large apparent construction gain nor these descriptive ratios
+establish statistical significance or application speedup.
+
+| Requested-memory field | Phases reduced | Phases increased | Smallest delta | Largest delta |
+| --- | ---: | ---: | ---: | ---: |
+| Allocation calls | 3 | 30 | -2,000 | +5,048 |
+| Allocated bytes | 32 | 19 | -777,232 | +56,000 |
+| Retained-byte delta | 6 | 15 | -32,000 | +72,000 |
+| Peak-byte delta | 20 | 28 | -32,160 | +71,888 |
+
+Each row covers 68 phases with 1,000 inputs per phase; every delta repeats in
+all five pairs. These are requested Rust bytes, excluding native C heaps,
+allocator bookkeeping and eventual process reclamation. All six probe
+executables grow by 1,584–2,616 bytes. Smaller coefficient fields therefore
+do not establish lower total heap cost. No native test, gate, cost control,
+complete-report replay or production CLI build was run for this rejected source.
+
+The next source review considers separating ordinary owned scratch Vecs from
+immutable shared cache payloads. In this version, newly built and mutated
+nonempty arrays also pay for a shared header. A shared read view could instead
+become an ordinary owned Vec when first mutated. That is a distinct hypothesis
+requiring review of publication, empty states, consuming iteration, alias
+isolation and release. It may enlarge coefficient layouts, which must be
+measured. No follow-up candidate has been prepared; this source and sample
+set remain frozen.
 
 All arithmetic, insertion order,
 eight-term/eight-radical bounds, original work/depth limits and the mandatory

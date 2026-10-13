@@ -126,10 +126,11 @@ failed. Neither fixed sample set was extended. The complete-report replay and
 production-size runners remain prepared and unexecuted after this rejection;
 complete report-byte identity is not established for this candidate.
 
-The next [shared-radical-storage experiment](../2026-10-13-shared-radical-storage/README.md)
-addresses reconstruction of immutable rational/radical arrays on recursive
-persistent-cache reads. Its source review establishes mutation, aliasing,
-release and original-retry requirements. It starts from the frozen parent
-without this rejected memo change. The main runtime and all 35 pending native entries remain
+The subsequent [shared-radical-storage experiment](../2026-10-13-shared-radical-storage/README.md)
+addressed reconstruction of rational/radical arrays on recursive persistent-cache
+reads. It qualified the alias and ownership controls but was also rejected after
+fixed scalar costs. It starts from the frozen parent without this memo change;
+its decision records the next review of owned scratch arrays versus immutable
+retained sharing. The main runtime and all 35 pending native entries remain
 unchanged. The parent still fails the board assertion at 133.31248412 seconds.
 All 39 properties, 14 targets and crate-specific future work remain in scope.

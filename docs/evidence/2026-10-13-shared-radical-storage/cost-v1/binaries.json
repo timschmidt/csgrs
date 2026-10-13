@@ -1,0 +1,62 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-rational-time",
+    "sha256": "b8c4c50acb8a3f9752209128abb156826535f023cb84e8e8cb37f17bd5cb552c",
+    "bytes": 6178112
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-rational-memory",
+    "sha256": "15bb2b2b89ca7f9d4f92c90ebd118c18fc8f259631aea0ab8f91c1ada9785a34",
+    "bytes": 6179992
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-quadratic-time",
+    "sha256": "686e4df3e7497b06affc2b81e571ac6cd4ec61169abeefc43b056eb046d62a62",
+    "bytes": 6153144
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-quadratic-memory",
+    "sha256": "8ac6b1fc28cd77ba01e36a0a804f3effaaed8989ea91a0145ed8411e3c5418e1",
+    "bytes": 6156392
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-integer-time",
+    "sha256": "e2cecf39d1c520a3c7ddec6d026d1374f37731d6fa5e00e26c2fc68740ca2af8",
+    "bytes": 6048944
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/baseline-integer-memory",
+    "sha256": "0fb92e9957c6afb056cd7355303e8f150686b01be271a1a8beacdeabc0c15309",
+    "bytes": 6051800
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-rational-time",
+    "sha256": "393fe3ebf54ca7a5a7e458e58059d2746317b4ddd5f7c9202c67d477b309aa0d",
+    "bytes": 6180704
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-rational-memory",
+    "sha256": "f5c2a240a629738ce56e2d0de71ff0ad948badc71073874e6916b905b043f2fa",
+    "bytes": 6182608
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-quadratic-time",
+    "sha256": "856033188319a2c100ea2a5ed5c617b3eb59a35e90153a98197ad2df7465eda7",
+    "bytes": 6155600
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-quadratic-memory",
+    "sha256": "4983dfee1b00546818b0abc125b29d56e5e3398092a70b326592d22fe186961d",
+    "bytes": 6158864
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-integer-time",
+    "sha256": "2d4ce67fe9abf991fbd0293c2e7e000db46d4f835faeb6c46c770148083f559f",
+    "bytes": 6050544
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/cost-v1-binaries/candidate-integer-memory",
+    "sha256": "e8e53ce7adefd78749adc5e7e2db60adb467cf1da259f442e19b7f3e5ec055c8",
+    "bytes": 6053384
+  }
+}

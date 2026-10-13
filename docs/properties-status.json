@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Qualify a distinct copy-on-write radical-storage experiment from the frozen endpoint/P4 parent, then use its fixed scalar costs before considering native work. The memo candidate is rejected; all 35 pending entries, inherited tradeoffs and original limits remain open."
+      "next_step": "The shared-radical-storage version is rejected after fixed scalar costs: conjugate-then-affine first/warm/cloned queries are slower in all five pairs, and allocation calls increase in thirty phases. Review owned scratch arrays versus immutable retained sharing from the frozen parent before preparing another candidate. All 35 pending entries, inherited tradeoffs and original limits remain open."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -1159,7 +1159,7 @@
         "docs/evidence/2026-10-13-closed-certificate-memo/decision-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Rejected and frozen. A distinct shared-radical-storage experiment has been source-reviewed and its inputs prepared from the unchanged endpoint/P4 parent, without the memo-publication change. See shared_radical_storage.",
+      "next_step": "Rejected and frozen. The subsequent shared-radical-storage experiment also passed scalar correctness but was rejected on its fixed scalar performance and heap costs. Review a distinct separation of owned scratch Vecs from immutable retained sharing; no new candidate is prepared. See shared_radical_storage.",
       "runtime_admitted": false,
       "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1383,16 +1383,29 @@
       "native_cost_identity": "All 36 fixed native processes and four preflights complete. Endpoint identities, all 231 broad witnesses per process and all 210 final-coordinate abort receipts per process match. Historical broad witnesses also match. Both scalar and native sample sets are closed without extension."
     },
     "shared_radical_storage": {
-      "status": "scalar-qualified-fixed-costs-running",
+      "status": "reject-shared-radical-storage-on-scalar-performance-and-memory-costs",
       "evidence": [
         "docs/evidence/2026-10-13-shared-radical-storage/scope-v1.json",
         "docs/evidence/2026-10-13-shared-radical-storage/preparation-v1/protocol.json",
-        "docs/evidence/2026-10-13-shared-radical-storage/correctness-v1.json"
+        "docs/evidence/2026-10-13-shared-radical-storage/correctness-v1.json",
+        "docs/evidence/2026-10-13-shared-radical-storage/cost-assessment-v1.json",
+        "docs/evidence/2026-10-13-shared-radical-storage/decision-v1.json"
       ],
       "scope": "Persistent reads rebuild a polynomial and clone each radical Vec. Share only the rational/radical array through an optional Arc<Vec>, using copy-on-write for mutation and unwrapping or cloning on consuming iteration. The prior diagnostic counts cache copies, not allocation counts, time share or expected savings.",
       "ownership": "Opaque atom Vecs and polynomial term Vecs retain their original cloning and ownership. The shared array owns only Rational pairs. Mutable access uses Arc::make_mut before exposing entries; consuming access uses Arc::unwrap_or_clone. No unsafe implementation, static memo, lock escape or expression-node owner is introduced.",
       "cost_risks": "A new nonempty buffer allocates both a Vec payload and an Arc header; mutations of shared buffers copy. Empty storage is None and mutable empty iteration allocates nothing. Reference-count operations, retained capacity, first-query and construction costs can offset cheaper read copies. Smaller struct layouts are not proof of lower total memory.",
-      "next_step": "Complete the fixed three-suite 60-process scalar comparison and twelve preflights in separate fresh targets. Every build finishes before probes. Preserve every adverse timing, requested-memory and binary-size row; do not equate smaller layouts with lower total cost. Native work waits for that review.",
+      "next_step": {
+        "status": "source-review-pending",
+        "task": "Keep every completed source and sample set frozen. Review a distinct design that keeps mutable scratch radical arrays as owned Vecs and shares only immutable retained payloads. A write to a shared read view would produce an ordinary owned Vec rather than another reference-counted buffer. Establish publication, empty-state, consuming iteration, alias isolation, release and layout requirements before preparing a candidate from the unchanged endpoint/P4 parent.",
+        "motivation": "This version shares all nonempty temporary arrays, including newly built and mutable results. The source uses Arc::make_mut for writes and allocates a shared header for every new nonempty buffer; the measured call increases show that saving read copies did not reduce allocation traffic overall. Separating scratch ownership from retained sharing is a hypothesis, not an attributed cause for every adverse row or an established improvement.",
+        "constraints": [
+          "Do not combine the rejected memo-publication or inline-storage changes into the next baseline.",
+          "Preserve Computable owner counts for opaque atoms, arithmetic/insertion order, all original bounds and mandatory original retry after releasing the first memo.",
+          "A two-form storage enum may enlarge coefficient layouts; measure every layout, requested-memory field and probe size rather than hiding that tradeoff.",
+          "Reuse mathematical alias, concurrency, cache-frontier and P4 controls; explicitly document any changed pointer-sharing inventory definition."
+        ],
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "preparation": "A 10,134-file shared-test baseline and 10,135-file candidate are frozen. They differ only in algebra.rs and the new storage helper. Parent-token recovery passes; all manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new alias-isolation controls, three shared publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests and 28 doctests. The baseline passes 888 all-feature and 801 default scalar library tests; the candidate passes 889 and 802, including one additional buffer-ownership control. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1431,7 +1444,52 @@
       "sharing": {
         "baseline": 0,
         "candidate": 1
-      }
+      },
+      "decision": "Reject this shared-radical-storage version. It preserves the tested values, aliases, ownership and P4 facts, but conjugate-then-affine first, warm and cloned queries are slower in every fixed pair. Other repeated adverse phases, increased allocation calls and retained memory, and larger probes remain visible. Smaller coefficient layouts and thirteen all-five-faster phases do not resolve those costs under the governing ladder. No native run is advanced for this source.",
+      "costs": {
+        "timing_rows": 68,
+        "memory_rows": 68,
+        "all_five_slower_rows": 3,
+        "at_least_four_slower_rows": 17,
+        "all_five_faster_rows": 13,
+        "at_least_four_faster_rows": 28,
+        "ratio_of_medians_above_one_rows": 31,
+        "memory_fields": {
+          "allocation_calls": {
+            "reduced_rows": 3,
+            "increased_rows": 30,
+            "min_delta": -2000,
+            "max_delta": 5048,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 32,
+            "increased_rows": 19,
+            "min_delta": -777232,
+            "max_delta": 56000,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 6,
+            "increased_rows": 15,
+            "min_delta": -32000,
+            "max_delta": 72000,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 20,
+            "increased_rows": 28,
+            "min_delta": -32160,
+            "max_delta": 71888,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_delta_bytes_range": [
+          1584,
+          2616
+        ]
+      },
+      "native_work": "No native validation, gate, cost control, complete-report replay or production CLI build was run after this scalar cost rejection."
     }
   },
   "status_meanings": {
