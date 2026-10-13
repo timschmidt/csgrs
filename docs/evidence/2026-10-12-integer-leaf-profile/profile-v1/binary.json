@@ -1,0 +1,8 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/integer-leaf-profile-v1/target/release/deps/hyperdrc-313c6a3a257f8485",
+  "sha256": "863bbcf44a346406c806fb1874f8d6279c54196db49a41259788b287fb6a4718",
+  "bytes": 322164808,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc#0.3.0"
+}
