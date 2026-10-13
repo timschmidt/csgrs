@@ -1,0 +1,14 @@
+
+running 8 tests
+test computable::node::temporary_storage_tests::closed_roundtrips_preserve_scaled_single_and_spilled_forms ... ok
+test computable::node::temporary_storage_tests::opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts ... ok
+test computable::node::temporary_storage_tests::opaque_owners_are_released_on_clear_cancellation_and_decline ... ok
+test computable::node::temporary_storage_tests::polynomial_frontiers_stay_sorted_after_cancel_and_regrow ... ok
+test computable::node::temporary_storage_tests::polynomial_products_cancel_cross_terms_and_keep_power_limits ... ok
+test computable::node::temporary_storage_tests::radical_frontiers_cancel_and_regrow_in_order ... ok
+test computable::node::temporary_storage_tests::radical_products_and_inverses_keep_exact_coefficients ... ok
+test computable::node::temporary_storage_tests::temporary_and_persistent_layouts_are_reported_separately ... TEMPORARY_LAURENT_LAYOUT	8	40	24	16	24	16	56
+ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 881 filtered out; finished in 0.00s
+

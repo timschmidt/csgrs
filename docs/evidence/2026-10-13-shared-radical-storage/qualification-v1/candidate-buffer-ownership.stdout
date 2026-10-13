@@ -1,0 +1,6 @@
+
+running 1 test
+test computable::node::radical_storage::tests::empty_unique_shared_and_detached_buffers_release_their_owners ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 888 filtered out; finished in 0.00s
+

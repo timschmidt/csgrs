@@ -1,0 +1,750 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.478138699196279,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-storage-regressions",
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.809530545957386,
+    "stdout_sha256": "af9722652a3079910daec4744d0fd1393ffc817c0b0bd45fc2564d3f2146caee",
+    "stderr_sha256": "9193e4d500ece8cb8e6f677d460717a7513815fecb0dd75fc2cdf00f0f33eaae"
+  },
+  {
+    "name": "baseline-memo-regressions",
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14080784795805812,
+    "stdout_sha256": "a464222ebfc76861049fe269438db8276991ed7e97222ed05b85b4964c2f1ccb",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-alias-regressions",
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14438287308439612,
+    "stdout_sha256": "a84b1677f66a025137324108d26db518ee1e49c6d87b933fde8633071e2ed479",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-buffer-ownership",
+    "variant": "baseline",
+    "phase": "buffer-ownership",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "radical_storage::tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14130053389817476,
+    "stdout_sha256": "a8a79a340b1c4fdbeee9420823d1fcf0549967e0c95b9254a3078d64149dc29b",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-cache-frontiers",
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16177736083045602,
+    "stdout_sha256": "db98dae7eae77093c2ff8171b4421e204c125958ab20eefe6f9f77313f4341ee",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-sign-regressions",
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1453658058308065,
+    "stdout_sha256": "dce24d697af53b3201321543e52db09deb02ecb614af716f85e3cdaccd079718",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-all-feature-library",
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.4670186112634838,
+    "stdout_sha256": "b62ff7e290ad411295292e23f3a0de60e04642fe9afc25872b1c5646b37380a0",
+    "stderr_sha256": "78a59dd4627168a54985874276cb0ac46764b7d2725e3288abd94d80c09c027f"
+  },
+  {
+    "name": "baseline-default-library",
+    "variant": "baseline",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.45219486486167,
+    "stdout_sha256": "0c94e471160cf2ec9772f13506fdbc19e0be0f34a9cd915e49b1f2f9e3c7001d",
+    "stderr_sha256": "42ee64a094b2be847f79710011ad806ac68745e7b730907db148a37b82fdb5eb"
+  },
+  {
+    "name": "baseline-doctests",
+    "variant": "baseline",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.109771438874304,
+    "stdout_sha256": "0fa9cceb121198c4fe527c1971d265c21e017a6dcc896d3ca881bb05d67395ea",
+    "stderr_sha256": "db318f45ddab870ab42129e76712cfcfb987b7a619e8412f466e886f70f70e1e"
+  },
+  {
+    "name": "baseline-all-feature-clippy",
+    "variant": "baseline",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.655452952254564,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "2dc15ebb27db268c6e6ea171abe92d5c41286f23fca54876863e57083cf1211e"
+  },
+  {
+    "name": "baseline-default-clippy",
+    "variant": "baseline",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.608424964826554,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "93c6025c4808e8540a962a2fa18cbb1c427b265456aa96b4cd7f7c012d02200f"
+  },
+  {
+    "name": "baseline-docs",
+    "variant": "baseline",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.2226575622335076,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "cb3d579b66ce8f7f60f71ca4901a9f8de2f4f4eddf811e8333893353ca1270a5"
+  },
+  {
+    "name": "candidate-format",
+    "variant": "candidate",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.426491650287062,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-storage-regressions",
+    "variant": "candidate",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.584136726800352,
+    "stdout_sha256": "10ff77c83bf53b775a2a08b37842a1451acca97d8004e03af951e3db7dd8f582",
+    "stderr_sha256": "cd84adeb50122b3ed3d9ba4e526c3f2df06bad9911e069e42360b55f6a4d1ca1"
+  },
+  {
+    "name": "candidate-memo-regressions",
+    "variant": "candidate",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.143657011911273,
+    "stdout_sha256": "e9cc0ed887b6fee1d8d880c1409381d15adcc5916c236a178d663d1b4ebfbd32",
+    "stderr_sha256": "12e1f5c862676f0779884cfd51e07da985b2b8608299a113696d1a366348c4eb"
+  },
+  {
+    "name": "candidate-alias-regressions",
+    "variant": "candidate",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14312042901292443,
+    "stdout_sha256": "c46f5c606f6ced44561369b7cb4308c7e25d36f03e2bdc82c1d51e5b50697b18",
+    "stderr_sha256": "12e1f5c862676f0779884cfd51e07da985b2b8608299a113696d1a366348c4eb"
+  },
+  {
+    "name": "candidate-buffer-ownership",
+    "variant": "candidate",
+    "phase": "buffer-ownership",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "radical_storage::tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1535415849648416,
+    "stdout_sha256": "c5e0647783fb416e2993104aafb97fe1528170c2ef250cb88a1a7c01cd9dabf5",
+    "stderr_sha256": "5e51612cf1bd88124bd4318d8275586945758a81884e0776218dee9ecba22cad"
+  },
+  {
+    "name": "candidate-cache-frontiers",
+    "variant": "candidate",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16097037494182587,
+    "stdout_sha256": "8c7c3685aea39940edb7563bc13952135386f948ee4d4b212b5d6781526af366",
+    "stderr_sha256": "12e1f5c862676f0779884cfd51e07da985b2b8608299a113696d1a366348c4eb"
+  },
+  {
+    "name": "candidate-sign-regressions",
+    "variant": "candidate",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14899231679737568,
+    "stdout_sha256": "2f80cf484f541936ddb02d172323440ae06ef8066e50cb65c128796e66de388e",
+    "stderr_sha256": "12e1f5c862676f0779884cfd51e07da985b2b8608299a113696d1a366348c4eb"
+  },
+  {
+    "name": "candidate-all-feature-library",
+    "variant": "candidate",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.4301132108084857,
+    "stdout_sha256": "d2a23561870022fedf2985ed846447df8200824f07442c28b77f787905b1a638",
+    "stderr_sha256": "12e1f5c862676f0779884cfd51e07da985b2b8608299a113696d1a366348c4eb"
+  },
+  {
+    "name": "candidate-default-library",
+    "variant": "candidate",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.21998987160623,
+    "stdout_sha256": "a7bcacef3634de78f5f6847b88848833a6da3c24723a1fa2c6c41886314f0307",
+    "stderr_sha256": "3bd75d6a6098333eee493e1eda9f8c0ba6d608af4cfd5e466fdfb7d65379eea1"
+  },
+  {
+    "name": "candidate-doctests",
+    "variant": "candidate",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.165387585759163,
+    "stdout_sha256": "56869e320ba57d41aaf00c83f46e88578dd0a45e26e99581e59fd57d9b7f05a4",
+    "stderr_sha256": "b6e2b7156ffbd00cf51454b55cb784182a739ede17dade2757287efba3e08053"
+  },
+  {
+    "name": "candidate-all-feature-clippy",
+    "variant": "candidate",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.65029547503218,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b9f29f8eebc02afd8425ae2c2b02ebb4dfee165b7f686b6bc8cf77fb181c1bbf"
+  },
+  {
+    "name": "candidate-default-clippy",
+    "variant": "candidate",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.897806738968939,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6be868579a343904d607d02e10294fd94e6ae9e479de56e13664c4984697c20c"
+  },
+  {
+    "name": "candidate-docs",
+    "variant": "candidate",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/shared-radical-storage/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.252383924089372,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ef16c031cedb505a1bf29d13b2078dd47449629336136a4555c642fb19254e0a"
+  }
+]

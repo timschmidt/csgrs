@@ -34,8 +34,24 @@ Preparation froze a 10,134-file baseline and a 10,135-file candidate. The
 baseline adds only shared tests and their declarations to the parent. The
 candidate differs only in algebra.rs and its new private storage helper. Exact
 parent-token recovery, unchanged manifests/lockfiles, identical shared tests
-and main/native source guards pass. Qualification is running serially from
-fresh targets; the fixed cost runners are prepared but unexecuted. All arithmetic, insertion order,
+and main/native source guards pass. All 26 qualification commands passed; the
+independent [assessment](correctness-v1.json) verifies their commands, outputs,
+test counts, layouts and ownership inventories. Baseline passes 888 all-feature
+and 801 default scalar library tests; candidate passes 889 and 802, including
+its additional buffer-ownership control. Both pass 28 doctests, strict
+default/all-feature/all-target Clippy, formatting and warning-denied docs.
+Focused and configuration counts overlap.
+
+The alias control observes separate radical arrays in baseline and shared arrays
+in candidate before mutation; both preserve every live certificate after
+mutation. Both keep one retained-query memo entry, one original-query entry and
+two opaque-query entries. Coefficient layouts shrink from 56 to 40 bytes and
+closed coefficients from 32 to 16. Rational, polynomial, closed polynomial,
+Computable and Node sizes remain 8, 24, 24, 16 and 56 bytes. These private sizes
+do not include shared allocations. The fixed cost comparison is running from
+separate fresh targets; no cost conclusion is available yet.
+
+All arithmetic, insertion order,
 eight-term/eight-radical bounds, original work/depth limits and the mandatory
 original retry remain intact, including release of the first query memo.
 Manifests, lockfiles, the main runtime and the 35 pending native entries stay
