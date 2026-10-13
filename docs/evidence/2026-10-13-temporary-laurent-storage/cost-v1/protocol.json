@@ -1,0 +1,144 @@
+{
+  "scope": "Fixed four-variant scalar timing, allocation and size controls.\n\nThree historical probes are copied unchanged. Each suite/mode has five fixed\nblocks containing baseline, radical, term and combined storage processes.\nThe first four blocks balance positions; the fifth reverses the first.\nAll builds precede every probe; each source has a dedicated immutable cost\ntarget. Timing has no allocation wrapper. No sample extension is planned.\n",
+  "runner_sha256": "303ddde3c128159bb0e334d4b9eb11629a70209c0a3971ae930d89b2126ea384",
+  "assessor_sha256": "32f6cb207fcd7107fb569811b967f12d8bfdb96de321267c1c2b7572056a4193",
+  "preparation_sha256": "805e3475787c8195b914ad2dfe611b6cf9c2fa4bbc3f050af58b096f5e59a8bb",
+  "qualification_result_sha256": "40b29625366288da6f76da3073ece92005e5fd648b2c4ce0582b546d01985845",
+  "correctness_sha256": "1ccae2f21451142cbed67e6ab0b4c99cff2a534c98301a249962b6ea022a07ed",
+  "historical_probe_inputs": {
+    "rational": {
+      "path": "docs/evidence/2026-10-09-hyperdrc-native-linear-strokes/normal_form_ownership_probe.rs",
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae"
+    },
+    "quadratic": {
+      "path": "docs/evidence/2026-10-12-quadratic-certificate-consumer/quadratic_probe.rs",
+      "sha256": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60"
+    },
+    "integer": {
+      "path": "docs/evidence/2026-10-12-small-integer-certificates/integer_probe.rs",
+      "sha256": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294"
+    }
+  },
+  "variants": {
+    "baseline": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/cost-target"
+    },
+    "radicals": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/cost-target"
+    },
+    "terms": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/cost-target"
+    },
+    "both": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/cost-target"
+    }
+  },
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "terms": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 80,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "both": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 88,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "memory_limits": "Requested Rust heap counters exclude native C heaps, stack frames, allocator bookkeeping and eventual process reclamation. Inline layout sizes are recorded separately. No heap saving alone establishes total memory or runtime improvement.",
+  "fixed_block_order": [
+    [
+      "baseline",
+      "radicals",
+      "both",
+      "terms"
+    ],
+    [
+      "radicals",
+      "terms",
+      "baseline",
+      "both"
+    ],
+    [
+      "terms",
+      "both",
+      "radicals",
+      "baseline"
+    ],
+    [
+      "both",
+      "baseline",
+      "terms",
+      "radicals"
+    ],
+    [
+      "terms",
+      "both",
+      "radicals",
+      "baseline"
+    ]
+  ],
+  "time_inputs": 4096,
+  "memory_inputs": 1000,
+  "preflight_inputs": 42,
+  "suites": [
+    "rational",
+    "quadratic",
+    "integer"
+  ],
+  "modes": [
+    "time",
+    "memory"
+  ],
+  "measured_processes": 120,
+  "preflight_processes": 24,
+  "cpu": 0,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3460.098\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "command_timeout_seconds": 1800,
+  "runtime_admitted": false
+}

@@ -50,7 +50,9 @@ native cost improvement or complete report identity is claimed here.
 `next-diagnostic-scope-v1.json` records the original question about retained-form
 copies during quadratic projection. The separate
 [completed diagnostic](../2026-10-13-retained-quadratic-projection/README.md)
-observed little root reuse but frequent single-term recursive copies. Its
-decision proposes testing private temporary inline storage from this
-uninstrumented parent. Original retries, proof availability, budgets and owners
-must be preserved; counts alone cannot justify a runtime optimization.
+observed little root reuse but frequent single-term recursive copies. The
+subsequent [temporary-storage trial](../2026-10-13-temporary-laurent-storage/README.md)
+rejected three variants after fixed scalar costs. Its next hypothesis adds a
+separately controlled SmallVec feature change to radical-only storage, starting
+from this uninstrumented parent. Original retries, proof availability, budgets
+and owners must be preserved; counts alone cannot justify a runtime optimization.

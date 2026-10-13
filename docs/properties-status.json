@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The endpoint/P4 combination passes scoped correctness checks but still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. The completed retained-projection diagnostic points toward private temporary inline storage. Prepare matched variants from the uninstrumented combined source, preserving all 35 pending files, proofs, original retries, budgets and limits; see retained_quadratic_projection_coverage."
+      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. The three nonunion inline-storage variants are rejected after fixed scalar costs. Prepare the separately controlled radical-only union-storage hypothesis from the uninstrumented parent; all 35 pending entries, native tradeoffs, full reports and original limits remain open. See temporary_laurent_storage."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -642,10 +642,10 @@
       ],
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
-        "scope": "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json",
-        "task": "The retained-projection diagnostic is complete. Prepare the private temporary inline-storage experiment from this frozen uninstrumented source; keep persistent certificate fields and opaque atom vectors unchanged. Counts are not speedup or allocation evidence.",
-        "diagnostic_completed": true,
-        "storage_source_runner_or_measurements_prepared": true
+        "scope": "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json",
+        "task": "Keep this uninstrumented combined parent frozen. The four-source temporary-storage comparison is complete and rejects all three nonunion candidates. Next prepare a separate radical-only union-storage experiment with an explicit feature-only control, preserving all original proofs, owners, retries, budgets and native assertions.",
+        "retained_projection_diagnostic_and_nonunion_storage_comparison_complete": true,
+        "union_storage_source_runner_or_measurements_prepared": false
       },
       "native_runtime_admitted": false
     },
@@ -673,14 +673,16 @@
       },
       "result": "Root-only reuse is uncommon. Recursive copies are predominantly single-term and single-radical; this motivates a temporary-storage experiment, not a speedup claim. Original board gate still fails; no native runtime is admitted.",
       "preserved_failure": "Preparation v1 stopped before compilation after rustfmt moved optional commas. Its never-compiled source is archived. Version 2 preserves all original tokens outside seven explicit instrumentation/test changes.",
-      "next_step": "The four matched temporary-storage sources pass scoped scalar qualification. Fixed costs are next; see temporary_laurent_storage. No speedup claim or runtime admission yet.",
+      "next_step": "The completed temporary-storage experiment rejects all three nonunion variants despite allocation-call savings: repeated scalar slowdowns and larger layouts remain. A separately controlled radical-only union-storage hypothesis is source-reviewed but not prepared; see temporary_laurent_storage.",
       "runtime_admitted": false
     },
     "temporary_laurent_storage": {
-      "status": "four-variants-pass-scoped-scalar-qualification-costs-next",
+      "status": "reject-all-three-nonunion-inline-storage-variants",
       "evidence": [
         "docs/evidence/2026-10-13-temporary-laurent-storage/preparation-v1/protocol.json",
-        "docs/evidence/2026-10-13-temporary-laurent-storage/correctness-v1.json"
+        "docs/evidence/2026-10-13-temporary-laurent-storage/correctness-v1.json",
+        "docs/evidence/2026-10-13-temporary-laurent-storage/cost-assessment-v1.json",
+        "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json"
       ],
       "variants": [
         "baseline",
@@ -691,7 +693,7 @@
       "scope": "Private temporary radical and/or Laurent-term vectors use one inline slot. The uninstrumented endpoint/P4 parent, persistent certificates, opaque atom vectors, arithmetic, original retries, all recognition bounds and original native assertions are preserved.",
       "preparation": "Four 10,132-file sources and separate fresh targets. Each source changes only algebra.rs, one shared eight-test module, the hyperreal manifest and the root lockfile. All package versions/checksums match the parent; only the same direct no-feature SmallVec dependency is added.",
       "qualification": "Each variant passes eight new storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
-      "next_step": "Execute the frozen three-suite, five-block four-variant scalar cost schedule after qualification: 24 preflights and 120 measurements with separate timing/allocation executables. Review every adverse row and larger temporary layouts before choosing native follow-up. No sample extension or runtime admission.",
+      "next_step": "Prepare a distinct radical-only union-storage experiment with both an unchanged Vec baseline and a Vec feature-only control. Establish actual layouts and qualify before new fixed costs; union can affect other native dependency users. The completed 120-process nonunion sample set remains closed. No native qualification or gate was run for the rejected variants.",
       "runtime_admitted": false,
       "layouts": {
         "baseline": {
@@ -730,7 +732,226 @@
           "Computable": 16,
           "Node": 56
         }
-      }
+      },
+      "costs": {
+        "radicals": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 11,
+          "at_least_four_slower_rows": 27,
+          "all_five_faster_rows": 7,
+          "ratio_of_medians_above_one_rows": 39,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 36,
+              "increased_rows": 0,
+              "min_delta": -8142,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 36,
+              "increased_rows": 15,
+              "min_delta": -222824,
+              "max_delta": 372616,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 20,
+              "increased_rows": 29,
+              "min_delta": -88,
+              "max_delta": 104,
+              "all_five_deltas_equal": true
+            }
+          },
+          "memory_any_field_increased_rows": 31,
+          "probe_binary_delta_bytes_range": [
+            9800,
+            10864
+          ],
+          "largest_median_block_ratios": [
+            {
+              "suite": "quadratic",
+              "name": "multiradical_square_warm",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.153627842875584,
+              "median_ratio": 1.1276594058633416,
+              "baseline_ns_per_input": 400.51220703125,
+              "candidate_ns_per_input": 451.641357421875
+            },
+            {
+              "suite": "quadratic",
+              "name": "multiradical_square_cloned",
+              "slower_blocks": 4,
+              "median_block_ratio": 1.0993948540923906,
+              "median_ratio": 1.0905189913362385,
+              "baseline_ns_per_input": 523.772705078125,
+              "candidate_ns_per_input": 571.18408203125
+            },
+            {
+              "suite": "rational",
+              "name": "opaque_linear_atom_warm",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.0734320666992059,
+              "median_ratio": 1.0724473916688413,
+              "baseline_ns_per_input": 1408.052978515625,
+              "candidate_ns_per_input": 1510.062744140625
+            }
+          ]
+        },
+        "terms": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 19,
+          "at_least_four_slower_rows": 32,
+          "all_five_faster_rows": 3,
+          "ratio_of_medians_above_one_rows": 42,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 51,
+              "increased_rows": 0,
+              "min_delta": -17098,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 42,
+              "increased_rows": 8,
+              "min_delta": -1764928,
+              "max_delta": 265152,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 29,
+              "increased_rows": 20,
+              "min_delta": -400,
+              "max_delta": 320,
+              "all_five_deltas_equal": true
+            }
+          },
+          "memory_any_field_increased_rows": 20,
+          "probe_binary_delta_bytes_range": [
+            11680,
+            12728
+          ],
+          "largest_median_block_ratios": [
+            {
+              "suite": "rational",
+              "name": "multiradical_square_warm",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.3409334855213466,
+              "median_ratio": 1.248122405477475,
+              "baseline_ns_per_input": 1295.14794921875,
+              "candidate_ns_per_input": 1616.503173828125
+            },
+            {
+              "suite": "quadratic",
+              "name": "mixed_field_decline_warm",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.156954241488929,
+              "median_ratio": 1.14970841500747,
+              "baseline_ns_per_input": 329.933349609375,
+              "candidate_ns_per_input": 379.3271484375
+            },
+            {
+              "suite": "rational",
+              "name": "multiradical_square_cloned",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.1448537768828184,
+              "median_ratio": 1.1834558090387735,
+              "baseline_ns_per_input": 1360.182861328125,
+              "candidate_ns_per_input": 1609.71630859375
+            }
+          ]
+        },
+        "both": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 19,
+          "at_least_four_slower_rows": 41,
+          "all_five_faster_rows": 5,
+          "ratio_of_medians_above_one_rows": 48,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 51,
+              "increased_rows": 0,
+              "min_delta": -21093,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 43,
+              "increased_rows": 8,
+              "min_delta": -1647616,
+              "max_delta": 329152,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 31,
+              "increased_rows": 18,
+              "min_delta": -512,
+              "max_delta": 384,
+              "all_five_deltas_equal": true
+            }
+          },
+          "memory_any_field_increased_rows": 18,
+          "probe_binary_delta_bytes_range": [
+            11544,
+            12208
+          ],
+          "largest_median_block_ratios": [
+            {
+              "suite": "integer",
+              "name": "wide_integer_affine_warm",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.1710718236824702,
+              "median_ratio": 1.1885456646827237,
+              "baseline_ns_per_input": 316.013671875,
+              "candidate_ns_per_input": 375.5966796875
+            },
+            {
+              "suite": "integer",
+              "name": "wide_integer_affine_first",
+              "slower_blocks": 4,
+              "median_block_ratio": 1.1678089301144612,
+              "median_ratio": 1.1868886300796107,
+              "baseline_ns_per_input": 318.843017578125,
+              "candidate_ns_per_input": 378.43115234375
+            },
+            {
+              "suite": "quadratic",
+              "name": "pi_transport_first",
+              "slower_blocks": 5,
+              "median_block_ratio": 1.1676435009950443,
+              "median_ratio": 1.1720821789518867,
+              "baseline_ns_per_input": 250.263671875,
+              "candidate_ns_per_input": 293.32958984375
+            }
+          ]
+        }
+      },
+      "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions."
     }
   },
   "status_meanings": {

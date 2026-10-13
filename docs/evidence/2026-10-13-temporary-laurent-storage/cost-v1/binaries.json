@@ -1,0 +1,122 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-rational-time",
+    "sha256": "977820919b6e83b57a31b735052cfc0b6d2b8c5c045300a7bc5a58b2178a15d5",
+    "bytes": 6177304
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-rational-memory",
+    "sha256": "598e222bf73d8a969398a31c94785c4477449e0b5b287b7d5ea254b3b650c99b",
+    "bytes": 6179160
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-quadratic-time",
+    "sha256": "73f11da32bb55cf0dde0a2e8456e108225a7d681e1dde479003b8c74a6f40c2d",
+    "bytes": 6152344
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-quadratic-memory",
+    "sha256": "01a1af96cc768d2f2d7f1bf03101bd9978301439ba620a48c5630602ba687dc2",
+    "bytes": 6155608
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-integer-time",
+    "sha256": "b180dd71a1249bce8173d002bf42d29164f1584ca628af10b4d474a19cfba2a7",
+    "bytes": 6048216
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/baseline-integer-memory",
+    "sha256": "bc40a77b3703649d56d42625ad2f0b74464d2389e92f51ddfad2f281cae5db30",
+    "bytes": 6051128
+  },
+  "radicals-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-rational-time",
+    "sha256": "837b218f9391b6b57d2ae4bacede01b469541d6dada99f640d125b03772895af",
+    "bytes": 6188160
+  },
+  "radicals-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-rational-memory",
+    "sha256": "49db5b186c040ecfdf80b817eb4d79a60a7cb7011f6036f5ea9a300a63e13e5b",
+    "bytes": 6190024
+  },
+  "radicals-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-quadratic-time",
+    "sha256": "fe0eba2e79d4f42c5937cde9dd39335bd72557584a56746c6468da2768ef4d05",
+    "bytes": 6163048
+  },
+  "radicals-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-quadratic-memory",
+    "sha256": "a4fceba1d7360ea3513efe4445bb83928ebd7fc96f948764bcdcae3c38809c8b",
+    "bytes": 6166312
+  },
+  "radicals-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-integer-time",
+    "sha256": "e36adce5e57c389ba474fcab7e18871df34ba48fbe24ef51dd908789970cbeb4",
+    "bytes": 6058072
+  },
+  "radicals-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/radicals-integer-memory",
+    "sha256": "97b6cae5316f6e410b22205f652695b90ed4215414b1078542e2e759f9b798db",
+    "bytes": 6060928
+  },
+  "terms-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-rational-time",
+    "sha256": "e9eb533e3e200292b546c44b02deaac3c1ce3146b99909f6d235993660e1e291",
+    "bytes": 6190024
+  },
+  "terms-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-rational-memory",
+    "sha256": "b39ce778e9b9eda849b3324cb31c21e762b54d16f1cd2ac29e5ddc8a7de61d46",
+    "bytes": 6191888
+  },
+  "terms-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-quadratic-time",
+    "sha256": "20988f6502600c4819e761c131b35535a06164b62405fb2043b0a9688a905e6b",
+    "bytes": 6164912
+  },
+  "terms-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-quadratic-memory",
+    "sha256": "8c6f1904ebb9764892dfa64faa6427e3c27fb6139d1829c705c995c0e042fa64",
+    "bytes": 6168176
+  },
+  "terms-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-integer-time",
+    "sha256": "43998b4d4b3a23f278f84e1df1bbc7366ba90d5db6450a921d1b3b043f97a1d2",
+    "bytes": 6059952
+  },
+  "terms-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/terms-integer-memory",
+    "sha256": "35422e0d3b1bb41befd67f8f07e75314c760ac1cd5c1cfdd36a39d34b4ed8a56",
+    "bytes": 6062808
+  },
+  "both-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-rational-time",
+    "sha256": "a8336bbbb3a4e34e6766e2f6b01154f810ba81023e0c128852e0601d66109731",
+    "bytes": 6189496
+  },
+  "both-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-rational-memory",
+    "sha256": "dbe93c034199bd218af3d54939332f605e2065031c4d3cc6e454e8558172bb67",
+    "bytes": 6191360
+  },
+  "both-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-quadratic-time",
+    "sha256": "3e64120c7051840a24ab007f1a9019df7be2cae2b4204b1cb2e2d42bf1097526",
+    "bytes": 6164552
+  },
+  "both-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-quadratic-memory",
+    "sha256": "0355c343c48476392ecfce3b6dab6a568dbda375f8402c1bb2b8fed0492700ca",
+    "bytes": 6167800
+  },
+  "both-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-integer-time",
+    "sha256": "c17ff55d6cd2fdf2acf6394baa8b1b1169c3275be502673ab6b496a9fd52899a",
+    "bytes": 6059800
+  },
+  "both-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/cost-v1-binaries/both-integer-memory",
+    "sha256": "767c239bbc43788e2ecc02866bb57b92539ca47a29a6c55a774748f26a475b37",
+    "bytes": 6062672
+  }
+}

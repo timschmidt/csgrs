@@ -1,0 +1,154 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "d6fdc11ffe0d738e72875ab3b5c014a37e33142b673b696594a108b10d6eac3d",
+    "bytes": 11695048,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": []
+  },
+  "radicals": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/cost-target/release/libhyperreal.rlib",
+    "sha256": "b2223291e0e2804f8930daac21d6550395e05eb458b5f51fce50e7711828638d",
+    "bytes": 11722480,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/radicals/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": []
+  },
+  "terms": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/cost-target/release/libhyperreal.rlib",
+    "sha256": "cb578884440f30b180cf9e21a78267df880a2a3d5dc9aa54b43846b4fa1ee955",
+    "bytes": 11710870,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/terms/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": []
+  },
+  "both": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/cost-target/release/libhyperreal.rlib",
+    "sha256": "f8c1d1b7f77e84e5260c4098d9b586e2b50f701369445844847b2619a297d03f",
+    "bytes": 11694120,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/temporary-laurent-storage/both/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "smallvec_package_id": "registry+https://github.com/rust-lang/crates.io-index#smallvec@1.15.1",
+    "smallvec_features": []
+  }
+}

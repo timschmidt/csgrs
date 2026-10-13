@@ -45,14 +45,14 @@ optimization benchmark. Finding counts do not establish complete report-byte
 identity. All eleven commands, source guards, executable identity and artifact
 hashes are recorded in [diagnostic-v2/](diagnostic-v2/).
 
-[decision-v1.json](decision-v1.json) defers a root-only shortcut because observed
-coverage is small. The next experiment will test private inline storage for
-temporary single-term and single-radical forms, starting from the uninstrumented
-parent. Persistent certificates and opaque-owner vectors remain outside that
-experiment. Counts justify investigating this storage choice; they are not
-allocation measurements, time shares or predicted savings. Each storage variant
-needs independent qualification and a fixed set of cost controls, including
-larger in-memory layouts and spilling costs.
+[decision-v1.json](decision-v1.json) deferred a root-only shortcut because
+observed coverage is small. The subsequent
+[temporary-storage comparison](../2026-10-13-temporary-laurent-storage/README.md)
+qualified all three variants but rejected them after fixed costs showed repeated
+scalar regressions and larger layouts despite allocation-call savings. It kept
+persistent certificates and opaque-owner vectors unchanged. That result does
+not alter these diagnostic counts, which remain coverage observations rather
+than allocation measurements, time shares or predicted savings.
 
 The parent remains unadmitted; all 35 pending native entries, original limits
 and the complete properties, targets and future work stay open.

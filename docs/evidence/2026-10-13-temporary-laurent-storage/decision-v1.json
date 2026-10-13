@@ -1,0 +1,317 @@
+{
+  "status": "reject-all-three-nonunion-inline-storage-variants",
+  "qualification_sha256": "1ccae2f21451142cbed67e6ab0b4c99cff2a534c98301a249962b6ea022a07ed",
+  "cost_assessment_sha256": "b3f4ce8eddacf87f303b5a73c62a2dab5a048d6bb27da27b49ec661f0eb281be",
+  "cost_result_sha256": "a5310ee8c330a96414d76a00c74c8f077da6f6b3f215aa54af99a0d848064936",
+  "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions.",
+  "qualification": "Each variant passes eight new storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "closed_sample_set": {
+    "measurement_processes": 120,
+    "preflight_processes": 24,
+    "blocks": 5,
+    "timing_inputs_per_phase": 4096,
+    "allocation_inputs_per_phase": 1000,
+    "extended": false,
+    "all_witnesses_and_inventories_match": true
+  },
+  "summary": {
+    "radicals": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 11,
+      "at_least_four_slower_rows": 27,
+      "all_five_faster_rows": 7,
+      "ratio_of_medians_above_one_rows": 39,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 36,
+          "increased_rows": 0,
+          "min_delta": -8142,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 36,
+          "increased_rows": 15,
+          "min_delta": -222824,
+          "max_delta": 372616,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 20,
+          "increased_rows": 29,
+          "min_delta": -88,
+          "max_delta": 104,
+          "all_five_deltas_equal": true
+        }
+      },
+      "memory_any_field_increased_rows": 31,
+      "probe_binary_delta_bytes_range": [
+        9800,
+        10864
+      ],
+      "largest_median_block_ratios": [
+        {
+          "suite": "quadratic",
+          "name": "multiradical_square_warm",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.153627842875584,
+          "median_ratio": 1.1276594058633416,
+          "baseline_ns_per_input": 400.51220703125,
+          "candidate_ns_per_input": 451.641357421875
+        },
+        {
+          "suite": "quadratic",
+          "name": "multiradical_square_cloned",
+          "slower_blocks": 4,
+          "median_block_ratio": 1.0993948540923906,
+          "median_ratio": 1.0905189913362385,
+          "baseline_ns_per_input": 523.772705078125,
+          "candidate_ns_per_input": 571.18408203125
+        },
+        {
+          "suite": "rational",
+          "name": "opaque_linear_atom_warm",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.0734320666992059,
+          "median_ratio": 1.0724473916688413,
+          "baseline_ns_per_input": 1408.052978515625,
+          "candidate_ns_per_input": 1510.062744140625
+        }
+      ]
+    },
+    "terms": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 19,
+      "at_least_four_slower_rows": 32,
+      "all_five_faster_rows": 3,
+      "ratio_of_medians_above_one_rows": 42,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 51,
+          "increased_rows": 0,
+          "min_delta": -17098,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 42,
+          "increased_rows": 8,
+          "min_delta": -1764928,
+          "max_delta": 265152,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 29,
+          "increased_rows": 20,
+          "min_delta": -400,
+          "max_delta": 320,
+          "all_five_deltas_equal": true
+        }
+      },
+      "memory_any_field_increased_rows": 20,
+      "probe_binary_delta_bytes_range": [
+        11680,
+        12728
+      ],
+      "largest_median_block_ratios": [
+        {
+          "suite": "rational",
+          "name": "multiradical_square_warm",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.3409334855213466,
+          "median_ratio": 1.248122405477475,
+          "baseline_ns_per_input": 1295.14794921875,
+          "candidate_ns_per_input": 1616.503173828125
+        },
+        {
+          "suite": "quadratic",
+          "name": "mixed_field_decline_warm",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.156954241488929,
+          "median_ratio": 1.14970841500747,
+          "baseline_ns_per_input": 329.933349609375,
+          "candidate_ns_per_input": 379.3271484375
+        },
+        {
+          "suite": "rational",
+          "name": "multiradical_square_cloned",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.1448537768828184,
+          "median_ratio": 1.1834558090387735,
+          "baseline_ns_per_input": 1360.182861328125,
+          "candidate_ns_per_input": 1609.71630859375
+        }
+      ]
+    },
+    "both": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 19,
+      "at_least_four_slower_rows": 41,
+      "all_five_faster_rows": 5,
+      "ratio_of_medians_above_one_rows": 48,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 51,
+          "increased_rows": 0,
+          "min_delta": -21093,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 43,
+          "increased_rows": 8,
+          "min_delta": -1647616,
+          "max_delta": 329152,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 31,
+          "increased_rows": 18,
+          "min_delta": -512,
+          "max_delta": 384,
+          "all_five_deltas_equal": true
+        }
+      },
+      "memory_any_field_increased_rows": 18,
+      "probe_binary_delta_bytes_range": [
+        11544,
+        12208
+      ],
+      "largest_median_block_ratios": [
+        {
+          "suite": "integer",
+          "name": "wide_integer_affine_warm",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.1710718236824702,
+          "median_ratio": 1.1885456646827237,
+          "baseline_ns_per_input": 316.013671875,
+          "candidate_ns_per_input": 375.5966796875
+        },
+        {
+          "suite": "integer",
+          "name": "wide_integer_affine_first",
+          "slower_blocks": 4,
+          "median_block_ratio": 1.1678089301144612,
+          "median_ratio": 1.1868886300796107,
+          "baseline_ns_per_input": 318.843017578125,
+          "candidate_ns_per_input": 378.43115234375
+        },
+        {
+          "suite": "quadratic",
+          "name": "pi_transport_first",
+          "slower_blocks": 5,
+          "median_block_ratio": 1.1676435009950443,
+          "median_ratio": 1.1720821789518867,
+          "baseline_ns_per_input": 250.263671875,
+          "candidate_ns_per_input": 293.32958984375
+        }
+      ]
+    }
+  },
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "radicals": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "terms": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 80,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "both": {
+      "Rational": 8,
+      "RadicalCoefficient": 64,
+      "PiLaurentPolynomial": 88,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "limits": [
+    "Block ratios pair each candidate with the baseline in the same fixed block; this is a four-variant design, not additional samples for any earlier experiment.",
+    "Ratios and directions are descriptive, without statistical-significance or application-speedup claims. Every range and adverse row is retained.",
+    "Requested Rust allocations exclude native C heaps, stack frames and allocator bookkeeping; retained and peak counters are phase-relative and do not prove eventual reclamation. Increased temporary layouts are reported separately.",
+    "Probe binary sizes are not production executable size. Native consumers, full reports, the complete workflow/feature/target matrix and original limits remain open.",
+    "All retained requested-byte deltas match in all five pairs and every phase. This does not establish identical stack use or total memory.",
+    "This is a decision based on the measured workload and priority ladder, not a universal claim that inline storage is slower. No native timing gate, native control, full-report replay or production CLI build was executed for these rejected variants.",
+    "The uninstrumented parent still fails its original board limit at 133.31248412 seconds of worker CPU against 120; the separate original neck assertion passes. These are parent results, not timing results for the rejected storage variants."
+  ],
+  "next_experiment": {
+    "status": "source-reviewed-not-prepared",
+    "question": "Can one inline radical slot keep the original coefficient size by using SmallVec union storage, while preserving performance against both the original and a feature-only control?",
+    "source_review": {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/smallvec-1.15.1/src/lib.rs",
+      "sha256": "881e5b2c9afecd0091df0d1232fd557edbb9d58304d073356b066728af14ab2e",
+      "sections": [
+        "SmallVecData union/enum definitions at lines 620-718",
+        "SmallVec capacity and data fields at lines 772-779"
+      ],
+      "observation": "Without union, SmallVecData is an enum; with union it overlays inline and heap storage and reuses capacity to distinguish them. This motivates a smaller-layout hypothesis. The current experiment did not enable union. Layout changes alone do not explain or prove the cause of the timing regressions."
+    },
+    "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+    "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+    "variants": [
+      "Vec baseline with current SmallVec features",
+      "Vec feature-only control with SmallVec union enabled",
+      "one inline radical slot with SmallVec union enabled"
+    ],
+    "scope": "Fork the uninstrumented endpoint/P4 parent into fresh sources/targets with the same shared eight storage tests and locked SmallVec version. Keep polynomial terms, persistent certificates and opaque atom vectors as Vec. The radical-storage candidate deliberately retests only that component in combination with a separately controlled dependency feature change. Do not inherit either term-storage variant or unrelated rejected coefficient algorithms.",
+    "feature_control": "SmallVec features unify across consumers. The native parent already builds [] and [const_generics,const_new] configurations. Adding union can affect other native SmallVec users, so measure the feature-only control and compare the candidate against both controls. Keep package versions/checksums fixed and bind actual features for each command.",
+    "first_gate": "Establish actual private layouts and complete the same scalar frontier, ownership, P4/cache, default/all-feature, docs and Clippy qualification before measuring. Do not assume the anticipated same-size coefficient layout or a speedup.",
+    "cost_and_native_gate": "Use a new predeclared closed matched sample set; do not append to or reinterpret the completed nonunion samples as matched union measurements. Include all adverse rows and sizes. Advance only supported variants to complete native qualification, fixed endpoint/broad/final-abort controls, both original full-fixture assertions, complete report bytes and production CLI sizes.",
+    "invariants": [
+      "Exact arithmetic and insertion/removal order",
+      "Original eight-term/eight-radical limits and 512-work/depth budgets",
+      "Mandatory original retry with first memo released",
+      "P4 fact monotonicity and shared/opaque owner release",
+      "Original 120-second worker-CPU and 60-second neck check-body limits"
+    ],
+    "source_runner_or_measurements_prepared": false
+  },
+  "runtime_admitted": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}
