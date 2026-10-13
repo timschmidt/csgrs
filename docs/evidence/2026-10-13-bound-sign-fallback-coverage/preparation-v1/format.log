@@ -1,0 +1,12 @@
+Diff in /home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v1/source/crates/hyperreal/src/computable/node/bound_sign_reference_tests.rs:55:
+             let weak = Arc::downgrade(&value.internal);
+             assert_eq!(value.exact_sign(), Some(sign));
+             assert_eq!(clone.exact_sign(), Some(sign));
+[31m-            assert_eq!(value.internal.facts.exact_sign(), ExactSignCache::Valid(sign));
+(B[m[32m+            assert_eq!(
+(B[m[32m+                value.internal.facts.exact_sign(),
+(B[m[32m+                ExactSignCache::Valid(sign)
+(B[m[32m+            );
+(B[m             assert!(value.internal.cache.pi_laurent_polynomial().is_some());
+             assert!(value.cached().is_none());
+             assert_eq!(Arc::strong_count(&value.internal), 2);

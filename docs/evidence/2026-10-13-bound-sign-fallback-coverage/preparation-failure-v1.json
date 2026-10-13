@@ -1,0 +1,34 @@
+{
+  "status": "preparation-format-check-failed-before-compilation",
+  "inputs_sha256": {
+    "prepare_v1.py": "116cbf0f65242c65e31d2d43c8cb8790019a2f06c59acb2bb25ca6e3c747c9a2",
+    "diagnose_v1.py": "f281090ec7fb7f42a7c8fe155f4f656e83eee449a970254b38709270d3666f17",
+    "assess_v1.py": "7e3eafed802bb6b20aea83611ee28d8605736b9cd7209cc48713a9ed532dcf4f",
+    "scope-v1.json": "5e284c0cf8a3cb06c4928510cd66ade531e025f3d6470c0eb84a1b396086cbe1",
+    "runtime-edits-v1.json": "611af5acefcdf2ce57c8c907b3be10727ab8098ce1be0a7d008f2ea1fcbc84f0",
+    "draft-format-v1.json": "afef88a4e8bf7f719cca0f0a3c513ead12253017ec1917ecfefa9d243c7da610",
+    "bound_sign_diagnostic.rs": "6adfc80942e7f8f7dfa1431b4ecae5e7328a4119027b70dee53b0103b93226a1",
+    "bound_sign_reference_tests.rs": "0b509687a212fd033552019263ff0dc33a969b60ab14b3f3ed15b7fc1fc3e0ea",
+    "bound_sign_site_tests.rs": "bc05d4bab98d72998075c3610b1d9e7c9343cd93a5392fa64b27861ae8de9b30"
+  },
+  "sources": [
+    {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v1/source",
+      "hashes": "preparation-v1/failed-source-hashes.json.gz",
+      "hashes_sha256": "0de3f09162c5961127432cff5b4333a8965a5a2aa766d51d6afc8df6989a946c",
+      "files": 10134
+    },
+    {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/bound-sign-fallback-coverage-v1/reference-source",
+      "hashes": "preparation-v1/failed-reference-source-hashes.json.gz",
+      "hashes_sha256": "9aa40066cf3e5d5aa60122efcab12fb7108c443173e4490d1be31d30e0cc5dae",
+      "files": 10132
+    }
+  ],
+  "format_log_sha256": "4c49f42a310ae456216de75a76f79aca7cf5651029ec9ec1f05a933ca0154077",
+  "reason": "The included reference test was formatted initially under repository defaults; direct rustfmt from its frozen crate path requires one assert_eq macro to wrap. Both Cargo workspace format checks had passed.",
+  "compiled": false,
+  "tests_executed": false,
+  "board_measurements": 0,
+  "correction": "V2 changes only whitespace and trailing-comma formatting in the shared reference test, with explicit crate-level rustfmt configuration. V1 sources and runners remain untouched."
+}

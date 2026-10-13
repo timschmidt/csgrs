@@ -1,0 +1,11 @@
+{
+  "scope": "Review the commit whitespace warning on preserved generated evidence.",
+  "path": "docs/evidence/2026-10-13-bound-sign-fallback-coverage/preparation-v2/source.patch",
+  "sha256": "bfc5c25c583da13e363070d80f13c5a61cf48d891cd2862039b4eda880246a23",
+  "preparation_sha256": "c6b8831a4b4cc737a3cc81c1c377dd76e223bb3dd8f037fe9c668cfc11f82f70",
+  "warning": "new blank line at EOF",
+  "reason": "The generated unified diff ends with an unchanged blank context line for lib.rs. The entire diff was independently reproduced from the frozen parent and diagnostic sources and is byte-identical.",
+  "last_line": " ",
+  "generated_patch_replayed_byte_identically": true,
+  "source_or_frozen_artifact_modified": false
+}

@@ -1,0 +1,489 @@
+--- a/crates/hyperdrc/src/app.rs
++++ b/crates/hyperdrc/src/app.rs
+@@ -8720,6 +8720,7 @@
+         let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+             .lock()
+             .unwrap_or_else(std::sync::PoisonError::into_inner);
++        let _bound_sign_report = hyperreal::bound_sign_diagnostic::Report::begin();
+         let root = complex_zip_temp_root("kicad-smoke-suite");
+         let _ = fs::remove_dir_all(&root);
+         fs::create_dir_all(&root).unwrap();
+--- a/crates/hyperreal/src/bound_sign_diagnostic.rs
++++ b/crates/hyperreal/src/bound_sign_diagnostic.rs
+@@ -0,0 +1,213 @@
++//! Diagnostic-only counts at the unchanged exact-sign quadratic fallback.
++use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
++
++static ACTIVE: AtomicBool = AtomicBool::new(false);
++static STARTS: [AtomicU64; 7] = [const { AtomicU64::new(0) }; 7];
++static RESULTS: [[AtomicU64; 4]; 7] = [const { [const { AtomicU64::new(0) }; 4] }; 7];
++
++/// Existing bound tag, with no magnitude or scalar owners retained.
++#[derive(Clone, Copy)]
++pub enum BoundTag {
++    /// No stored bound.
++    Invalid,
++    /// Stored unknown bound.
++    Unknown,
++    /// Certified zero.
++    Zero,
++    /// Certified negative sign.
++    Negative,
++    /// Certified positive sign.
++    Positive,
++    /// Nonzero without a sign.
++    Unsigned,
++    /// Representable but inconsistent nonzero/zero-sign metadata.
++    NonzeroZeroSign,
++}
++
++/// Result of the original quadratic sign computation.
++#[derive(Clone, Copy)]
++pub enum Outcome {
++    /// Original fallback declined.
++    Unknown,
++    /// Original fallback proved a negative value.
++    Negative,
++    /// Original fallback proved zero.
++    Zero,
++    /// Original fallback proved a positive value.
++    Positive,
++}
++
++/// Counts read after observed workers have returned.
++#[derive(Debug, PartialEq, Eq)]
++pub struct Snapshot {
++    /// Started fallbacks in BoundTag order.
++    pub starts: [u64; 7],
++    /// Completed fallbacks in BoundTag then Outcome order.
++    pub results: [[u64; 4]; 7],
++}
++
++impl Snapshot {
++    /// Started observations without a completed result.
++    pub fn unfinished(&self) -> [u64; 7] {
++        std::array::from_fn(|i| {
++            self.starts[i]
++                .checked_sub(self.results[i].iter().sum())
++                .expect("a completed observation has one start")
++        })
++    }
++}
++
++/// A token contains only the entry tag and whether counting was enabled.
++#[must_use]
++pub struct Observation(Option<usize>);
++
++impl Observation {
++    /// Counts entry metadata without changing any proof or computation.
++    pub fn begin(tag: BoundTag) -> Self {
++        if ACTIVE.load(Ordering::Acquire) {
++            let tag = tag as usize;
++            STARTS[tag].fetch_add(1, Ordering::Relaxed);
++            Self(Some(tag))
++        } else {
++            Self(None)
++        }
++    }
++
++    /// Counts the already-computed original result, consuming the token once.
++    pub fn complete(self, outcome: Outcome) {
++        if let Some(tag) = self.0 {
++            RESULTS[tag][outcome as usize].fetch_add(1, Ordering::Relaxed);
++        }
++    }
++}
++
++/// Prints after the original board assertion, including unwinding.
++pub struct Report {
++    finished: bool,
++}
++
++impl Report {
++    /// Starts with no other active report or observed worker.
++    pub fn begin() -> Self {
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        for counter in &STARTS {
++            counter.store(0, Ordering::Relaxed);
++        }
++        for row in &RESULTS {
++            for counter in row {
++                counter.store(0, Ordering::Relaxed);
++            }
++        }
++        ACTIVE.store(true, Ordering::Release);
++        Self { finished: false }
++    }
++
++    /// Stops after workers have joined, without printing.
++    pub fn finish(mut self) -> Snapshot {
++        self.finished = true;
++        finish()
++    }
++}
++
++fn snapshot() -> Snapshot {
++    Snapshot {
++        starts: std::array::from_fn(|i| STARTS[i].load(Ordering::Relaxed)),
++        results: std::array::from_fn(|i| {
++            std::array::from_fn(|j| RESULTS[i][j].load(Ordering::Relaxed))
++        }),
++    }
++}
++
++fn finish() -> Snapshot {
++    assert!(ACTIVE.swap(false, Ordering::AcqRel));
++    snapshot()
++}
++
++impl Drop for Report {
++    fn drop(&mut self) {
++        if !self.finished {
++            let counts = finish();
++            let unfinished = counts.unfinished();
++            for (i, remaining) in unfinished.iter().enumerate() {
++                let row = counts.results[i];
++                eprintln!(
++                    "BOUND_SIGN_FALLBACK\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
++                    i, counts.starts[i], row[0], row[1], row[2], row[3], remaining
++                );
++            }
++        }
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn every_tag_result_and_mismatch_is_preserved() {
++        let report = Report::begin();
++        for tag in [
++            BoundTag::Invalid,
++            BoundTag::Unknown,
++            BoundTag::Zero,
++            BoundTag::Negative,
++            BoundTag::Positive,
++            BoundTag::Unsigned,
++            BoundTag::NonzeroZeroSign,
++        ] {
++            for result in [
++                Outcome::Unknown,
++                Outcome::Negative,
++                Outcome::Zero,
++                Outcome::Positive,
++            ] {
++                Observation::begin(tag).complete(result);
++            }
++        }
++        let counts = report.finish();
++        assert_eq!(counts.starts, [4; 7]);
++        assert_eq!(counts.results, [[1; 4]; 7]);
++        assert_eq!(counts.unfinished(), [0; 7]);
++    }
++
++    #[test]
++    fn disabled_reset_and_unfinished_unwind_are_preserved() {
++        let empty = Snapshot {
++            starts: [0; 7],
++            results: [[0; 4]; 7],
++        };
++        assert_eq!(Report::begin().finish(), empty);
++        Observation::begin(BoundTag::Positive).complete(Outcome::Negative);
++        assert_eq!(snapshot(), empty);
++        assert!(
++            std::panic::catch_unwind(|| {
++                let _report = Report::begin();
++                let _unfinished = Observation::begin(BoundTag::Negative);
++                panic!("intentional calibration unwind");
++            })
++            .is_err()
++        );
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        assert_eq!(snapshot().starts, [0, 0, 0, 1, 0, 0, 0]);
++        assert_eq!(snapshot().unfinished(), [0, 0, 0, 1, 0, 0, 0]);
++        assert_eq!(Report::begin().finish(), empty);
++    }
++
++    #[test]
++    fn joined_workers_contribute_without_lost_counts() {
++        let report = Report::begin();
++        std::thread::scope(|scope| {
++            for _ in 0..4 {
++                scope.spawn(|| {
++                    for _ in 0..1000 {
++                        Observation::begin(BoundTag::Positive).complete(Outcome::Positive);
++                    }
++                });
++            }
++        });
++        let counts = report.finish();
++        assert_eq!(counts.starts, [0, 0, 0, 0, 4000, 0, 0]);
++        assert_eq!(counts.results[4], [0, 0, 0, 4000]);
++        assert_eq!(counts.unfinished(), [0; 7]);
++    }
++}
+--- a/crates/hyperreal/src/computable/node/bound_sign_reference_tests.rs
++++ b/crates/hyperreal/src/computable/node/bound_sign_reference_tests.rs
+@@ -0,0 +1,102 @@
++use super::*;
++
++pub(super) fn raw(approximation: Approximation, bound: BoundCache) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(approximation, bound, ExactSignCache::Invalid)),
++        signal: None,
++    }
++}
++
++pub(super) fn affine(integer: i64, bound: BoundCache) -> Computable {
++    raw(
++        Approximation::Add(
++            Computable::rational(Rational::new(integer)),
++            raw(
++                Approximation::Negate(Computable::sqrt_rational(Rational::new(13))),
++                BoundCache::Invalid,
++            ),
++        ),
++        bound,
++    )
++}
++
++pub(super) fn difference(bound: BoundCache) -> Computable {
++    raw(
++        Approximation::Add(
++            Computable::sqrt_rational(Rational::new(13)),
++            raw(
++                Approximation::Negate(Computable::sqrt_rational(Rational::new(17))),
++                BoundCache::Invalid,
++            ),
++        ),
++        bound,
++    )
++}
++
++pub(super) fn signed_bound(sign: Option<Sign>) -> BoundCache {
++    BoundCache::Valid(BoundInfo::NonZero {
++        sign,
++        msd: None,
++        exact_msd: false,
++    })
++}
++
++#[test]
++fn parent_affine_signs_and_publication_are_preserved() {
++    for (integer, sign) in [(3, Sign::Minus), (5, Sign::Plus)] {
++        for bound in [
++            BoundCache::Invalid,
++            BoundCache::Valid(BoundInfo::Unknown),
++            signed_bound(None),
++            signed_bound(Some(sign)),
++        ] {
++            let value = affine(integer, bound);
++            let clone = value.clone();
++            let weak = Arc::downgrade(&value.internal);
++            assert_eq!(value.exact_sign(), Some(sign));
++            assert_eq!(clone.exact_sign(), Some(sign));
++            assert_eq!(
++                value.internal.facts.exact_sign(),
++                ExactSignCache::Valid(sign)
++            );
++            assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++            assert!(value.cached().is_none());
++            assert_eq!(Arc::strong_count(&value.internal), 2);
++            drop(value);
++            drop(clone);
++            assert!(weak.upgrade().is_none());
++        }
++    }
++}
++
++#[test]
++fn parent_multiradical_decline_retains_an_existing_bound() {
++    for bound in [
++        BoundCache::Invalid,
++        BoundCache::Valid(BoundInfo::Unknown),
++        signed_bound(Some(Sign::Minus)),
++    ] {
++        let value = difference(bound);
++        let clone = value.clone();
++        assert_eq!(value.exact_sign(), None);
++        assert_eq!(clone.exact_sign(), None);
++        assert_eq!(value.internal.facts.exact_sign(), ExactSignCache::Unknown);
++        assert_eq!(value.internal.facts.bound(), bound);
++        assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++        assert!(value.cached().is_none());
++    }
++}
++
++#[test]
++fn parent_cached_unknown_and_known_sign_paths_are_preserved() {
++    for (cached, expected) in [
++        (ExactSignCache::Unknown, None),
++        (ExactSignCache::Valid(Sign::Plus), Some(Sign::Plus)),
++    ] {
++        let value = affine(5, signed_bound(Some(Sign::Plus)));
++        value.internal.facts.replace_exact_sign(cached);
++        assert_eq!(value.exact_sign(), expected);
++        assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++        assert!(value.cached().is_none());
++    }
++}
+--- a/crates/hyperreal/src/computable/node/bound_sign_site_tests.rs
++++ b/crates/hyperreal/src/computable/node/bound_sign_site_tests.rs
+@@ -0,0 +1,103 @@
++use super::bound_sign_reference_tests::{affine, difference, raw, signed_bound};
++use super::*;
++use crate::bound_sign_diagnostic::Report;
++
++#[test]
++fn existing_affine_bound_tags_are_observed_without_bypassing_fallback() {
++    for (integer, sign, result_index, bound_index) in
++        [(3, Sign::Minus, 1, 3), (5, Sign::Plus, 3, 4)]
++    {
++        for (bound, tag) in [
++            (BoundCache::Invalid, 0),
++            (BoundCache::Valid(BoundInfo::Unknown), 1),
++            (signed_bound(None), 5),
++            (signed_bound(Some(sign)), bound_index),
++        ] {
++            let value = affine(integer, bound);
++            let clone = value.clone();
++            let report = Report::begin();
++            assert_eq!(value.exact_sign(), Some(sign));
++            assert_eq!(clone.exact_sign(), Some(sign));
++            let counts = report.finish();
++            let mut starts = [0; 7];
++            starts[tag] = 1;
++            let mut results = [[0; 4]; 7];
++            results[tag][result_index] = 1;
++            assert_eq!(counts.starts, starts);
++            assert_eq!(counts.results, results);
++            assert_eq!(counts.unfinished(), [0; 7]);
++            assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++            assert_eq!(value.internal.facts.bound(), bound);
++            assert_eq!(Arc::strong_count(&value.internal), 2);
++            assert!(value.cached().is_none());
++        }
++    }
++}
++
++#[test]
++fn certified_zero_still_runs_the_original_cancellation() {
++    let root = Computable::sqrt_rational(Rational::new(13));
++    let value = raw(
++        Approximation::Add(
++            root.clone(),
++            raw(Approximation::Negate(root), BoundCache::Invalid),
++        ),
++        BoundCache::Valid(BoundInfo::Zero),
++    );
++    let clone = value.clone();
++    let report = Report::begin();
++    assert_eq!(value.exact_sign(), Some(Sign::NoSign));
++    let counts = report.finish();
++    assert_eq!(counts.starts, [0, 0, 1, 0, 0, 0, 0]);
++    assert_eq!(counts.results[2], [0, 0, 1, 0]);
++    assert_eq!(counts.unfinished(), [0; 7]);
++    assert!(clone.internal.cache.pi_laurent_polynomial().is_some());
++    assert!(value.cached().is_none());
++}
++
++#[test]
++fn known_negative_bound_does_not_hide_the_original_decline() {
++    let value = difference(signed_bound(Some(Sign::Minus)));
++    let clone = value.clone();
++    let report = Report::begin();
++    assert_eq!(value.exact_sign(), None);
++    assert_eq!(clone.exact_sign(), None);
++    let counts = report.finish();
++    assert_eq!(counts.starts, [0, 0, 0, 1, 0, 0, 0]);
++    assert_eq!(counts.results[3], [1, 0, 0, 0]);
++    assert_eq!(counts.unfinished(), [0; 7]);
++    assert_eq!(value.immediate_sign(), Some(RealSign::Negative));
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    assert!(value.cached().is_none());
++}
++
++#[test]
++fn cached_sign_paths_do_not_count_a_fallback() {
++    for (cached, expected) in [
++        (ExactSignCache::Unknown, None),
++        (ExactSignCache::Valid(Sign::Plus), Some(Sign::Plus)),
++    ] {
++        let value = affine(5, signed_bound(Some(Sign::Plus)));
++        value.internal.facts.replace_exact_sign(cached);
++        let report = Report::begin();
++        assert_eq!(value.exact_sign(), expected);
++        let counts = report.finish();
++        assert_eq!(counts.starts, [0; 7]);
++        assert_eq!(counts.results, [[0; 4]; 7]);
++        assert!(value.cached().is_none());
++    }
++}
++
++#[test]
++fn inconsistent_nonzero_zero_sign_is_observed_without_reinterpretation() {
++    // Deliberately malformed test metadata: the diagnostic must expose it,
++    // execute the original arithmetic, and never substitute this fake sign.
++    let value = affine(5, signed_bound(Some(Sign::NoSign)));
++    let report = Report::begin();
++    assert_eq!(value.exact_sign(), Some(Sign::Plus));
++    let counts = report.finish();
++    assert_eq!(counts.starts, [0, 0, 0, 0, 0, 0, 1]);
++    assert_eq!(counts.results[6], [0, 0, 0, 1]);
++    assert_eq!(counts.unfinished(), [0; 7]);
++    assert!(value.cached().is_none());
++}
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1,3 +1,9 @@
++#[cfg(test)]
++mod bound_sign_reference_tests;
++
++#[cfg(test)]
++mod bound_sign_site_tests;
++
+ #[derive(Clone, Copy)]
+ struct Binary64Interval {
+     lower: f64,
+@@ -1267,7 +1273,28 @@
+             .pop()
+             .expect("exact sign evaluation should produce a result");
+         if result.is_none() {
++            let diagnostic_bound = match self.internal.facts.bound() {
++                BoundCache::Invalid => crate::bound_sign_diagnostic::BoundTag::Invalid,
++                BoundCache::Valid(BoundInfo::Unknown) => {
++                    crate::bound_sign_diagnostic::BoundTag::Unknown
++                }
++                BoundCache::Valid(BoundInfo::Zero) => crate::bound_sign_diagnostic::BoundTag::Zero,
++                BoundCache::Valid(BoundInfo::NonZero { sign, .. }) => match sign {
++                    None => crate::bound_sign_diagnostic::BoundTag::Unsigned,
++                    Some(Sign::Minus) => crate::bound_sign_diagnostic::BoundTag::Negative,
++                    Some(Sign::Plus) => crate::bound_sign_diagnostic::BoundTag::Positive,
++                    Some(Sign::NoSign) => crate::bound_sign_diagnostic::BoundTag::NonzeroZeroSign,
++                },
++            };
++            let diagnostic_observation =
++                crate::bound_sign_diagnostic::Observation::begin(diagnostic_bound);
+             result = self.exact_quadratic_surd_sign();
++            diagnostic_observation.complete(match result {
++                None => crate::bound_sign_diagnostic::Outcome::Unknown,
++                Some(Sign::Minus) => crate::bound_sign_diagnostic::Outcome::Negative,
++                Some(Sign::NoSign) => crate::bound_sign_diagnostic::Outcome::Zero,
++                Some(Sign::Plus) => crate::bound_sign_diagnostic::Outcome::Positive,
++            });
+         }
+         store_exact_sign(self, result);
+         result
+--- a/crates/hyperreal/src/lib.rs
++++ b/crates/hyperreal/src/lib.rs
+@@ -28,6 +28,8 @@
+     SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+ };
+ 
++pub mod bound_sign_diagnostic;
++
+ mod trace;
+ pub(crate) use trace::trace_dispatch;
+ 
