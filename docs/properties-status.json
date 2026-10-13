@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Keep the rejected guards out of runtime sources. The unchanged endpoint parent remains unadmitted; all native limits, earlier endpoint timing/memory tradeoffs and the 35 pending changes remain open. Any later native experiment starts from that parent, not this rejected branch. The immediate next task is the separately prepared P4 sign-transfer observation."
+      "next_step": "Keep rejected coefficient changes out of runtime. The unchanged endpoint parent remains unadmitted; all native limits, earlier timing/memory tradeoffs and 35 pending changes remain open. The P4 compaction observation reproduced lost signs on both main and endpoint sources. Next is an isolated focused repair based on current main."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -577,23 +577,16 @@
       }
     },
     "quadratic_tower_sign_transfer_observation": {
-      "status": "prepared-not-compiled-or-executed",
-      "evidence": "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/README.md",
-      "next_step": {
-        "task": "Observe available exact signs across quadratic-tower compaction under P4 before proposing another runtime change.",
-        "prepared_inputs": "docs/evidence/2026-10-13-quadratic-tower-sign-transfer",
-        "status": "Probe source and scope prepared; not compiled or executed; runner still required.",
-        "question": "Can compact_quadratic_tower rebuild an equal covered value while losing a sign already certified at higher precision and available to a later low-precision query?",
-        "source_basis": "The public method rebuilds even/odd/radicand components and copies the abort signal, without explicit source-sign transfer. Reconstruction may prove the sign independently, so source inspection alone establishes no defect. The existing pi-Laurent compaction tests explicitly cover retaining a 1,100-bit proof for later lower-precision queries.",
-        "fixed_scope": "Twelve fresh processes per source: three quadratic/nested/biquadratic families, linear and squared differences from a certified 1,024-bit lower bound, and scales 1/-7. Record original, warmed, cloned, compacted and repeatedly compacted facts. Query exact difference equality last. Preserve Unknown and uncovered outcomes.",
-        "required_runner": "Bind and compare current main and the unchanged endpoint runtime baseline separately, with exact source, manifest, features, library, target, compiler and probe hashes. Use separate targets; preserve every existing frozen experiment and all 35 pending native entries. Serialize all builds and observations.",
-        "native_work_remains": "Keep the rejected guards out of runtime sources. The unchanged endpoint parent remains unadmitted; all native limits, earlier endpoint timing/memory tradeoffs and the 35 pending changes remain open. Any later native experiment starts from that parent, not this rejected branch.",
-        "read_sections_sha256": {
-          "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
-          "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3"
-        },
-        "runtime_admitted": false
-      },
+      "status": "complete-sign-loss-reproduced-repair-next",
+      "evidence": [
+        "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/failure-v1.json",
+        "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/assessment-v2.json",
+        "docs/evidence/2026-10-13-quadratic-tower-sign-transfer/decision-v1.json"
+      ],
+      "qualification": "Two separately built all-feature scalar libraries and 24 fresh observation processes. Version 1 compile failure is preserved; version 2 changes exactly one output-format escape brace.",
+      "result": "Each source has 12 immediate-sign weakenings, eight persisting at requested precisions 0 and -512, 12 exact equality witnesses and no definite contradictions. Main and unchanged endpoint baseline observations agree. Original and original-clone signs remain available.",
+      "source_review": "Real::compact_quadratic_tower rebuilds even + odd*sqrt(radicand), applies its original rational scale and copies abort state, but does not transfer an already available sign to the new expression. Computable::quadratic_tower_parts retains the reduction without publishing its sign. The separate Pi-Laurent compactor explicitly transfers a retained exact sign after equal reconstruction. This explains the observed loss; it is not a contradictory mathematical result.",
+      "next_step": "Start from current main in fresh isolated baseline/candidate sources. Add deterministic regressions for the observed 1024-bit lower endpoints and 1100-bit warming, sign/scale normalization, repeated compaction, clones and abort behavior. Transfer only an already proved sign across established exact equality, accounting for the rebuilt payload scale. Do not increase precision or algebraic budgets, infer a sign from Unknown, or inherit rejected native/performance candidates. Qualify scalar behavior and proportionate cost before admission.",
       "runtime_admitted": false
     }
   },

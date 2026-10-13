@@ -9,9 +9,21 @@ Version 1 built both scalar libraries, then failed its first probe compile:
 `probe.rs` has an unmatched closing brace in its JSON output format string.
 No observation executed. `failure-v1.json` binds the original inputs and all
 logs; those files remain unchanged. `probe_v2.rs` adds exactly one closing
-escape brace and is prepared but **has not been compiled or executed**.
-The version 2 runner and assessor retain the same fixed matrix and use fresh
-build targets and output files.
+escape brace. Version 2 completed all 24 fresh processes with separately built
+all-feature libraries. The fixed matrix and source guards passed.
+
+Both sources show 12 immediate-sign weakenings and eight weakenings that
+persist at precision limits 0 and -512. The eight are the nested and
+biquadratic cases, with both shapes and scales. The four quadratic cases
+recover the sign at precision 0. All 24 equality queries prove zero difference;
+no definite signs contradict one another. Original and original-clone signs
+remain available. `assessment-v2.json` retains every observation.
+
+The reconstruction does not transfer the source's sign proof; its tower-parts
+query stores a reduction without publishing a sign. The Pi-Laurent compactor
+already transfers its retained sign across exact reconstruction.
+`decision-v1.json` records the source review and advances a focused isolated
+repair based on current main, with regressions and proportionate qualification.
 
 The probe uses three
 fixed families (`sqrt(2)`, `sqrt(3 + sqrt(5))`, and `sqrt(2) + sqrt(3)`), linear
@@ -29,6 +41,6 @@ their scopes separately. Preserve all 35 pending native entries and existing
 frozen experiment sources. Run only after the current native validation and
 cost/report processes have finished. No concurrent build, test or measurement.
 
-Any observed loss requires a focused regression and source review before a
+This observed loss requires a focused regression before a
 runtime experiment. This probe is neither a universal cache proof nor a
 performance benchmark, and it does not qualify runtime retention.

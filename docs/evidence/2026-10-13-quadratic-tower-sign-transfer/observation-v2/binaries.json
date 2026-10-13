@@ -1,0 +1,12 @@
+{
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+    "sha256": "806354847ea283cf8b97debcefa44ab2e37d23c8a97604bd0551300abbd60233",
+    "bytes": 6129904
+  },
+  "endpoint": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+    "sha256": "5754b3febc262d344c40c394434925b5f969b29207805da0bec50d00afffad1c",
+    "bytes": 6126336
+  }
+}

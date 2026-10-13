@@ -1,0 +1,9 @@
+{
+  "collection_complete": true,
+  "complete": true,
+  "observation_processes": 24,
+  "process_failures": [],
+  "invalid_output": [],
+  "sources_main_libraries_and_binaries_unchanged": true,
+  "runtime_admitted": false
+}

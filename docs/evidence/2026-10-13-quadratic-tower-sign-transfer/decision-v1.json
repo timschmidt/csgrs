@@ -1,0 +1,32 @@
+{
+  "decision": "advance-focused-main-based-quadratic-tower-sign-retention-repair",
+  "observation_assessment_sha256": "07d53331adee9932a1f049f586882c243d18d58676e13b9c371bdae732b92a17",
+  "prior_compile_failure_sha256": "5279adc6cd0166752c97f983a53a739e6e865ecb53c5cf5bfc6f926f45aac7da",
+  "fresh_processes": 24,
+  "cases_per_source": 12,
+  "per_source": {
+    "immediate_sign_lost": 12,
+    "precision_zero_sign_lost": 8,
+    "precision_minus512_still_unknown": 8,
+    "equal_reconstruction_proven": 12,
+    "contradictory_definite_signs": 0,
+    "uncovered_compactions": 0,
+    "process_failures": 0
+  },
+  "main_and_endpoint_rows_identical": true,
+  "source_review": {
+    "files_sha256": {
+      "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7",
+      "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3",
+      "crates/hyperreal/src/computable/node/quadratic_tower.rs": "3f3a2b11c2302deb8883a6ddbb50e571b7de0f13d5b45a2d7ec2aae311ea8a20",
+      "crates/hyperreal/src/computable/node/algebra.rs": "344ff1fedb272531999a61836c9689bdd24ecfa528ab87b04a25632c09ddcd9d",
+      "crates/hyperreal/src/real/arithmetic/facts.rs": "195c6abd8ba22527a0ec5712e8cb949665ff51f3c85ec7c215d3210750e4353b",
+      "crates/hyperreal/src/computable/node/structural_analysis.rs": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933"
+    },
+    "finding": "Real::compact_quadratic_tower rebuilds even + odd*sqrt(radicand), applies its original rational scale and copies abort state, but does not transfer an already available sign to the new expression. Computable::quadratic_tower_parts retains the reduction without publishing its sign. The separate Pi-Laurent compactor explicitly transfers a retained exact sign after equal reconstruction. This explains the observed loss; it is not a contradictory mathematical result."
+  },
+  "repair_scope": "Start from current main in fresh isolated baseline/candidate sources. Add deterministic regressions for the observed 1024-bit lower endpoints and 1100-bit warming, sign/scale normalization, repeated compaction, clones and abort behavior. Transfer only an already proved sign across established exact equality, accounting for the rebuilt payload scale. Do not increase precision or algebraic budgets, infer a sign from Unknown, or inherit rejected native/performance candidates. Qualify scalar behavior and proportionate cost before admission.",
+  "limits": "This is a scoped P4 completeness defect. No universal cache proof, performance improvement, native gate pass, runtime admission or completion of the full plan is claimed. All prior failures and 35 pending native entries remain in scope.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

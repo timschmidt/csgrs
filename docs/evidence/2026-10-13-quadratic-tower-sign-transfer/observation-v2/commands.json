@@ -1,0 +1,564 @@
+[
+  {
+    "name": "build-main",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/main-target"
+    },
+    "exit_code": 0,
+    "seconds": 13.99527870118618,
+    "stdout_sha256": "0baf0c4d82afbbfbc414de9e19c63dbfd85acd562e5584e7d39fac77ca5d9425",
+    "stderr_sha256": "96d03fae14cdae13b6274aa67486def6931c6225e37963ab567b298faf1134c3"
+  },
+  {
+    "name": "build-endpoint",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/endpoint-target"
+    },
+    "exit_code": 0,
+    "seconds": 14.458644611295313,
+    "stdout_sha256": "e7bd3d525fcb0d4fe75b185e54b6ecbaa714486d30d32b428e5380952e65b66a",
+    "stderr_sha256": "cb3ec8c1c551754910e482b595d676afc711227b4e59b3dbdb5116d6318df702"
+  },
+  {
+    "name": "link-main",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-quadratic-tower-sign-transfer/probe_v2.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/main-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/main-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.36231262516230345,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-endpoint",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-quadratic-tower-sign-transfer/probe_v2.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/endpoint-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/endpoint-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.3544737817719579,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-01-quadratic-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "quadratic",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002732653170824051,
+    "stdout_sha256": "a7f93060446e625365ac02159600c43237bef939bd806cb3c43f7c012b01f962",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-02-quadratic-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "quadratic",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002461340744048357,
+    "stdout_sha256": "8eae4db8cd5a23670f035c3b59998056cc55b232834ed2330015c8fbfc674345",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-03-quadratic-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "quadratic",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0026265098713338375,
+    "stdout_sha256": "0114ef4864f0bb53e13a0387625505ccec0c082d2bc619606c8f90d893d72c37",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-04-quadratic-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "quadratic",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.00299894530326128,
+    "stdout_sha256": "3ef1b90d027e5204a8b8b07e7201743fbab5deee1aa25655c82bf9d8c826fb6f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-05-nested-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "nested",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0029058721847832203,
+    "stdout_sha256": "3b5d571c915a62e6c6836d11d679da056a4a2220ccaed732dfde70fbdd5b1982",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-06-nested-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "nested",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0026129106990993023,
+    "stdout_sha256": "109b10a8321c6b6feafd54b0664dfba96cfedb987f18a466ede657d5b9c97ab9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-07-nested-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "nested",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0026701567694544792,
+    "stdout_sha256": "2352ec3cbb03dfa7766cbfeacc83fe1381b52314d4ed5ac60d41a08b2ad5695a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-08-nested-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "nested",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0030036838725209236,
+    "stdout_sha256": "712047f79a4b6204ba13578ad084a2b383c815c76d8bceaf19f246b3e8823cb0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-09-biquadratic-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "biquadratic",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0026965360157191753,
+    "stdout_sha256": "a72bf194da5e71676bae493233aed014bc6845ac0227e89eebe96fa402f7dc63",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-10-biquadratic-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "biquadratic",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002782828640192747,
+    "stdout_sha256": "f4e18959c67671423bcb887e8d5d4b0e4a26e1b22d6aa83d3d39004cc6e0d19c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-11-biquadratic-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "biquadratic",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0034910310059785843,
+    "stdout_sha256": "b2a7e76b57ec2f752a1078ac9e134d1461e9cc9b732616398edb8499a8bcdf96",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "main-12-biquadratic-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/main",
+      "biquadratic",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.003033052198588848,
+    "stdout_sha256": "caec3e570a5f2887a5e91f5f7d596c6109e0577c031150c61c2d5e195d04ba4c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-01-quadratic-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "quadratic",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0025421567261219025,
+    "stdout_sha256": "a7f93060446e625365ac02159600c43237bef939bd806cb3c43f7c012b01f962",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-02-quadratic-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "quadratic",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0030543110333383083,
+    "stdout_sha256": "8eae4db8cd5a23670f035c3b59998056cc55b232834ed2330015c8fbfc674345",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-03-quadratic-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "quadratic",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002600782085210085,
+    "stdout_sha256": "0114ef4864f0bb53e13a0387625505ccec0c082d2bc619606c8f90d893d72c37",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-04-quadratic-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "quadratic",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0025864928029477596,
+    "stdout_sha256": "3ef1b90d027e5204a8b8b07e7201743fbab5deee1aa25655c82bf9d8c826fb6f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-05-nested-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "nested",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0027098553255200386,
+    "stdout_sha256": "3b5d571c915a62e6c6836d11d679da056a4a2220ccaed732dfde70fbdd5b1982",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-06-nested-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "nested",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.00296552712097764,
+    "stdout_sha256": "109b10a8321c6b6feafd54b0664dfba96cfedb987f18a466ede657d5b9c97ab9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-07-nested-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "nested",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002625091001391411,
+    "stdout_sha256": "2352ec3cbb03dfa7766cbfeacc83fe1381b52314d4ed5ac60d41a08b2ad5695a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-08-nested-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "nested",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0030152341350913048,
+    "stdout_sha256": "712047f79a4b6204ba13578ad084a2b383c815c76d8bceaf19f246b3e8823cb0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-09-biquadratic-linear-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "biquadratic",
+      "linear",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0031059770844876766,
+    "stdout_sha256": "a72bf194da5e71676bae493233aed014bc6845ac0227e89eebe96fa402f7dc63",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-10-biquadratic-linear--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "biquadratic",
+      "linear",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.002773500047624111,
+    "stdout_sha256": "f4e18959c67671423bcb887e8d5d4b0e4a26e1b22d6aa83d3d39004cc6e0d19c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-11-biquadratic-square-1",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "biquadratic",
+      "square",
+      "1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0029552881605923176,
+    "stdout_sha256": "b2a7e76b57ec2f752a1078ac9e134d1461e9cc9b732616398edb8499a8bcdf96",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "endpoint-12-biquadratic-square--7",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "120",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer-v2/bins/endpoint",
+      "biquadratic",
+      "square",
+      "-7"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.0026056221686303616,
+    "stdout_sha256": "caec3e570a5f2887a5e91f5f7d596c6109e0577c031150c61c2d5e195d04ba4c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]
