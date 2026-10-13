@@ -1,0 +1,871 @@
+{
+  "decision": "advance-cache-local-products-to-native-investigation-with-scalar-costs-open",
+  "decision_runner_sha256": "0d02ef2dbc96eea5ee6ef1d02654132bfaaef4cae67afb15052c9ad26b00efa7",
+  "cost_assessment_sha256": "8ff475d14213ab61e0a055a6a38a8e73c840720b2c4a94036724eb59a2a63ac6",
+  "cost_result_sha256": "aa2a5f718dc612f2c5684b21962d676fcc70203db93156e7351cf7ba09fd26d3",
+  "correctness_sha256": "47fcf592f6b4b18f6ee1ca17e14dd1d9a81ff127004ae6d7a2f2cd30caf5604b",
+  "qualification": "Both variants pass twenty shared projection/storage/memo/alias tests, six inherited cache tests, eleven P4 tests and 28 doctests. Baseline passes 894 all-feature and 807 default library tests; candidate passes 902 and 815 including eight private borrowed-product controls. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "closed_sample_set": {
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "blocks": 5,
+    "timing_inputs_per_phase": 4096,
+    "allocation_inputs_per_phase": 1000,
+    "extended": false,
+    "all_witnesses_and_inventories_match": true
+  },
+  "summary": {
+    "timing_rows": 68,
+    "memory_rows": 68,
+    "all_five_slower_rows": 2,
+    "at_least_four_slower_rows": 10,
+    "all_five_faster_rows": 5,
+    "at_least_four_faster_rows": 18,
+    "ratio_of_medians_above_one_rows": 28,
+    "memory_fields": {
+      "allocation_calls": {
+        "reduced_rows": 9,
+        "increased_rows": 0,
+        "min_delta": -2000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "allocated_bytes": {
+        "reduced_rows": 9,
+        "increased_rows": 0,
+        "min_delta": -96000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "retained_bytes_delta": {
+        "reduced_rows": 0,
+        "increased_rows": 0,
+        "min_delta": 0,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "peak_bytes_delta": {
+        "reduced_rows": 2,
+        "increased_rows": 0,
+        "min_delta": -96,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      }
+    },
+    "probe_binary_delta_bytes_range": [
+      2848,
+      2880
+    ]
+  },
+  "slower_in_all_five_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "radical_laurent_transport_warm",
+      "reference_ns": [
+        14259,
+        16119,
+        16119,
+        16239,
+        16299
+      ],
+      "candidate_ns": [
+        16679,
+        16358,
+        16389,
+        16359,
+        16319
+      ],
+      "reference_median_ns": 16119,
+      "candidate_median_ns": 16359,
+      "ratio_of_medians": 1.014889261120417,
+      "block_ratios": [
+        1.1697173714846762,
+        1.014827222532415,
+        1.016750418760469,
+        1.0073896175872898,
+        1.0012270691453464
+      ],
+      "median_block_ratio": 1.014827222532415,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        14259,
+        16299
+      ],
+      "candidate_range_ns": [
+        16319,
+        16679
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_cloned",
+      "reference_ns": [
+        3786481,
+        3818898,
+        3725395,
+        3800240,
+        3747863
+      ],
+      "candidate_ns": [
+        3861825,
+        4073731,
+        3876835,
+        4008295,
+        5324156
+      ],
+      "reference_median_ns": 3786481,
+      "candidate_median_ns": 4008295,
+      "ratio_of_medians": 1.0585805131466393,
+      "block_ratios": [
+        1.0198981587389453,
+        1.0667294596504018,
+        1.0406507229434732,
+        1.0547478580300191,
+        1.420584477074002
+      ],
+      "median_block_ratio": 1.0547478580300191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3725395,
+        3818898
+      ],
+      "candidate_range_ns": [
+        3861825,
+        5324156
+      ]
+    }
+  ],
+  "slower_in_at_least_four_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_first",
+      "reference_ns": [
+        5924454,
+        3789751,
+        3891684,
+        3846116,
+        3761043
+      ],
+      "candidate_ns": [
+        4041103,
+        4131807,
+        3900942,
+        3865085,
+        3844097
+      ],
+      "reference_median_ns": 3846116,
+      "candidate_median_ns": 3900942,
+      "ratio_of_medians": 1.0142549002682186,
+      "block_ratios": [
+        0.6821055577442242,
+        1.090258172634561,
+        1.002378918740576,
+        1.004931988530767,
+        1.0220827041860463
+      ],
+      "median_block_ratio": 1.004931988530767,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        3761043,
+        5924454
+      ],
+      "candidate_range_ns": [
+        3844097,
+        4131807
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_warm",
+      "reference_ns": [
+        4388879,
+        2828626,
+        2845475,
+        2873413,
+        2835266
+      ],
+      "candidate_ns": [
+        2980895,
+        3043152,
+        2902761,
+        2956977,
+        2882853
+      ],
+      "reference_median_ns": 2845475,
+      "candidate_median_ns": 2956977,
+      "ratio_of_medians": 1.039185724703257,
+      "block_ratios": [
+        0.6791927961559204,
+        1.0758410620562775,
+        1.020132315342781,
+        1.0290817922797733,
+        1.0167839631272693
+      ],
+      "median_block_ratio": 1.020132315342781,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        2828626,
+        4388879
+      ],
+      "candidate_range_ns": [
+        2882853,
+        3043152
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_cloned",
+      "reference_ns": [
+        5330165,
+        3297844,
+        3328252,
+        3351611,
+        3369039
+      ],
+      "candidate_ns": [
+        3784261,
+        3526918,
+        3442005,
+        3460943,
+        3371819
+      ],
+      "reference_median_ns": 3351611,
+      "candidate_median_ns": 3460943,
+      "ratio_of_medians": 1.0326207307470945,
+      "block_ratios": [
+        0.7099707044716251,
+        1.0694617453099662,
+        1.03417800094464,
+        1.0326207307470945,
+        1.0008251611216137
+      ],
+      "median_block_ratio": 1.0326207307470945,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        3297844,
+        5330165
+      ],
+      "candidate_range_ns": [
+        3371819,
+        3784261
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "radical_laurent_transport_warm",
+      "reference_ns": [
+        14259,
+        16119,
+        16119,
+        16239,
+        16299
+      ],
+      "candidate_ns": [
+        16679,
+        16358,
+        16389,
+        16359,
+        16319
+      ],
+      "reference_median_ns": 16119,
+      "candidate_median_ns": 16359,
+      "ratio_of_medians": 1.014889261120417,
+      "block_ratios": [
+        1.1697173714846762,
+        1.014827222532415,
+        1.016750418760469,
+        1.0073896175872898,
+        1.0012270691453464
+      ],
+      "median_block_ratio": 1.014827222532415,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        14259,
+        16299
+      ],
+      "candidate_range_ns": [
+        16319,
+        16679
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_first",
+      "reference_ns": [
+        1562563,
+        1013511,
+        1025450,
+        1011181,
+        1009201
+      ],
+      "candidate_ns": [
+        1025570,
+        1038539,
+        1029590,
+        1026690,
+        1028710
+      ],
+      "reference_median_ns": 1013511,
+      "candidate_median_ns": 1028710,
+      "ratio_of_medians": 1.0149963838576985,
+      "block_ratios": [
+        0.6563383364382748,
+        1.0246943545753326,
+        1.0040372519381735,
+        1.015337511286308,
+        1.0193311342339137
+      ],
+      "median_block_ratio": 1.015337511286308,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        1009201,
+        1562563
+      ],
+      "candidate_range_ns": [
+        1025570,
+        1038539
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_warm",
+      "reference_ns": [
+        1604260,
+        1008781,
+        1020570,
+        1002221,
+        1004911
+      ],
+      "candidate_ns": [
+        1021010,
+        1027339,
+        1060627,
+        1022370,
+        1043978
+      ],
+      "reference_median_ns": 1008781,
+      "candidate_median_ns": 1027339,
+      "ratio_of_medians": 1.0183964606787796,
+      "block_ratios": [
+        0.6364367371872389,
+        1.0183964606787796,
+        1.0392496350078877,
+        1.0201043482425534,
+        1.038876079573216
+      ],
+      "median_block_ratio": 1.0201043482425534,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        1002221,
+        1604260
+      ],
+      "candidate_range_ns": [
+        1021010,
+        1060627
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_first",
+      "reference_ns": [
+        1096295,
+        726690,
+        717791,
+        724241,
+        743119
+      ],
+      "candidate_ns": [
+        749429,
+        759068,
+        742409,
+        756228,
+        747889
+      ],
+      "reference_median_ns": 726690,
+      "candidate_median_ns": 749429,
+      "ratio_of_medians": 1.0312911970716536,
+      "block_ratios": [
+        0.6836015853397124,
+        1.0445554500543561,
+        1.034296891434972,
+        1.0441662374817222,
+        1.0064188911870104
+      ],
+      "median_block_ratio": 1.034296891434972,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        717791,
+        1096295
+      ],
+      "candidate_range_ns": [
+        742409,
+        759068
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_cloned",
+      "reference_ns": [
+        1392375,
+        916177,
+        924027,
+        916977,
+        902358
+      ],
+      "candidate_ns": [
+        980643,
+        932996,
+        979123,
+        1000102,
+        937706
+      ],
+      "reference_median_ns": 916977,
+      "candidate_median_ns": 979123,
+      "ratio_of_medians": 1.0677726922267408,
+      "block_ratios": [
+        0.7042951791004578,
+        1.018357806406404,
+        1.059625963310596,
+        1.0906511286542628,
+        1.0391729224986093
+      ],
+      "median_block_ratio": 1.0391729224986093,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        902358,
+        1392375
+      ],
+      "candidate_range_ns": [
+        932996,
+        1000102
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_warm",
+      "reference_ns": [
+        3268086,
+        3258687,
+        3285185,
+        3226939,
+        3232098
+      ],
+      "candidate_ns": [
+        3549147,
+        3342831,
+        3272086,
+        3776301,
+        3570305
+      ],
+      "reference_median_ns": 3258687,
+      "candidate_median_ns": 3549147,
+      "ratio_of_medians": 1.0891340592085095,
+      "block_ratios": [
+        1.0860017147651562,
+        1.0258214428081003,
+        0.9960127055249552,
+        1.1702424495783774,
+        1.1046400820767193
+      ],
+      "median_block_ratio": 1.0860017147651562,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        3226939,
+        3285185
+      ],
+      "candidate_range_ns": [
+        3272086,
+        3776301
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_cloned",
+      "reference_ns": [
+        3786481,
+        3818898,
+        3725395,
+        3800240,
+        3747863
+      ],
+      "candidate_ns": [
+        3861825,
+        4073731,
+        3876835,
+        4008295,
+        5324156
+      ],
+      "reference_median_ns": 3786481,
+      "candidate_median_ns": 4008295,
+      "ratio_of_medians": 1.0585805131466393,
+      "block_ratios": [
+        1.0198981587389453,
+        1.0667294596504018,
+        1.0406507229434732,
+        1.0547478580300191,
+        1.420584477074002
+      ],
+      "median_block_ratio": 1.0547478580300191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3725395,
+        3818898
+      ],
+      "candidate_range_ns": [
+        3861825,
+        5324156
+      ]
+    }
+  ],
+  "faster_in_all_five_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "multiradical_square_construction",
+      "reference_ns": [
+        17433176,
+        14061917,
+        11609534,
+        12458327,
+        14600340
+      ],
+      "candidate_ns": [
+        11819901,
+        11436227,
+        11461985,
+        11145967,
+        11267318
+      ],
+      "reference_median_ns": 14061917,
+      "candidate_median_ns": 11436227,
+      "ratio_of_medians": 0.8132765255263561,
+      "block_ratios": [
+        0.6780119124593247,
+        0.8132765255263561,
+        0.9872907043469618,
+        0.8946600133388697,
+        0.7717161381173315
+      ],
+      "median_block_ratio": 0.8132765255263561,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        11609534,
+        17433176
+      ],
+      "candidate_range_ns": [
+        11145967,
+        11819901
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "radical_laurent_transport_construction",
+      "reference_ns": [
+        4759963,
+        2946928,
+        2944708,
+        2924499,
+        2919640
+      ],
+      "candidate_ns": [
+        3148975,
+        2933559,
+        2898161,
+        2802558,
+        2826636
+      ],
+      "reference_median_ns": 2944708,
+      "candidate_median_ns": 2898161,
+      "ratio_of_medians": 0.9841929997813026,
+      "block_ratios": [
+        0.6615545120833922,
+        0.9954634113897591,
+        0.9841929997813026,
+        0.9583036273905376,
+        0.9681453877875354
+      ],
+      "median_block_ratio": 0.9681453877875354,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        2919640,
+        4759963
+      ],
+      "candidate_range_ns": [
+        2802558,
+        3148975
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "conjugate_product_construction",
+      "reference_ns": [
+        10054151,
+        6084183,
+        5921035,
+        6092383,
+        6171447
+      ],
+      "candidate_ns": [
+        5862608,
+        5866538,
+        5769494,
+        5851379,
+        5771405
+      ],
+      "reference_median_ns": 6092383,
+      "candidate_median_ns": 5851379,
+      "ratio_of_medians": 0.9604417516101663,
+      "block_ratios": [
+        0.5831032376577595,
+        0.9642277360822316,
+        0.9744063326766351,
+        0.9604417516101663,
+        0.9351785731936124
+      ],
+      "median_block_ratio": 0.9604417516101663,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        5921035,
+        10054151
+      ],
+      "candidate_range_ns": [
+        5769494,
+        5866538
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_cloned",
+      "reference_ns": [
+        3717086,
+        2091837,
+        2125784,
+        2153953,
+        2026341
+      ],
+      "candidate_ns": [
+        2138224,
+        2038960,
+        1912019,
+        1965715,
+        1921268
+      ],
+      "reference_median_ns": 2125784,
+      "candidate_median_ns": 1965715,
+      "ratio_of_medians": 0.9247011925952966,
+      "block_ratios": [
+        0.5752420040859964,
+        0.9747222178401089,
+        0.8994418059407729,
+        0.912608120975713,
+        0.9481464373469224
+      ],
+      "median_block_ratio": 0.912608120975713,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        2026341,
+        3717086
+      ],
+      "candidate_range_ns": [
+        1912019,
+        2138224
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_construction",
+      "reference_ns": [
+        3471772,
+        1879891,
+        1881311,
+        1822935,
+        1858243
+      ],
+      "candidate_ns": [
+        1875812,
+        1744190,
+        1779959,
+        1768459,
+        1762179
+      ],
+      "reference_median_ns": 1879891,
+      "candidate_median_ns": 1768459,
+      "ratio_of_medians": 0.9407242228405795,
+      "block_ratios": [
+        0.5403039139667006,
+        0.9278144317941838,
+        0.9461269295719846,
+        0.9701163234015475,
+        0.9483038547703395
+      ],
+      "median_block_ratio": 0.9461269295719846,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        1822935,
+        3471772
+      ],
+      "candidate_range_ns": [
+        1744190,
+        1875812
+      ]
+    }
+  ],
+  "rationale": "The typed operation avoids a closed right-operand copy without changing retained storage or measured exact behavior. Nine phases save requested calls/bytes, two reduce peak bytes, and no measured memory field increases. Timing remains mixed: five phases are faster in every pair and eighteen in at least four, while two are slower in every pair and ten in at least four. This justifies investigating the native consumers and original fixture gates, not retaining the source or treating allocation savings as resolution of timing regressions.",
+  "unresolved_costs": [
+    "Quadratic conjugate-then-affine cloned queries are slower in all five pairs: ratio of medians 1.058581, median paired ratio 1.054748, paired range 1.019898..1.420584. Warm queries are slower in four pairs: ratio of medians 1.089134, median paired ratio 1.086002, range 0.996013..1.170242. Both phases save 570 requested allocations and 22,800 allocated bytes per 1,000 inputs, with unchanged retained/peak bytes. Lower-rung savings do not resolve those timing costs.",
+    "Rational radical-Laurent warm is the second all-five-slower phase: ratio of medians 1.014889 and median paired ratio 1.014827. The phase medians are 16,119 and 16,359 ns across 4,096 inputs; this timer-scale difference remains recorded and is not treated as persuasive evidence of a practical effect.",
+    "Quadratic-reciprocal first/warm/cloned, quadratic pi-transport first/warm and opaque-decline first/cloned queries are also adverse in four pairs. Every row and range remains visible.",
+    "Large timing variation affects both favorable and adverse rows. The first block has lower candidate timings in 21 of 24 rational phases and 18 of 32 quadratic phases; ratios below 0.7 occur in 20 rational and 12 quadratic phases. The other first-block phases remain visible. No samples are discarded, no earlier samples are appended and no significance or application-speedup claim is made.",
+    "All six probes grow, by 2,848 to 2,880 bytes. Production CLI size remains unmeasured. The temporary product-lookup Result is 32 bytes; private type sizes do not measure stack frames or total memory.",
+    "A product holds a cache read lock across rational arithmetic. Scoped source inspection and passing concurrent-reader/writer tests do not prove all possible schedules, bounded waiting or a universal lock-duration bound."
+  ],
+  "favorable_costs": [
+    "Requested allocation calls and bytes decrease in nine phases, by up to 2,000 calls and 96,000 bytes per 1,000 inputs. Retained bytes match in every phase and pair. Peak bytes decrease in two phases by up to 96 bytes. Every paired memory delta repeats five times, and none increases.",
+    "Quadratic multiradical-square cloned queries are faster in every pair, median paired ratio 0.912608, with 2,000 fewer allocations and 96,000 fewer allocated bytes per 1,000 inputs. The other all-five-faster phases are rational multiradical-square, radical-Laurent and conjugate-product construction, and quadratic mixed-field-decline construction; their complete ranges remain attached."
+  ],
+  "retention_requirement": "Keep every scalar adverse row and inherited endpoint tradeoff open. Native timing gains alone do not dismiss them. Resolve meaningful regressions and complete original gates, matched native costs, complete report identity, production size and remaining workflow obligations before runtime retention.",
+  "limits": [
+    "The comparison uses a new closed sample set. It neither extends previous samples nor establishes native workload performance.",
+    "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+    "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Private coefficient layouts do not establish total memory or eventual reclamation.",
+    "Native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open. Dependencies, Box payloads and existing owned coefficient layouts are unchanged. Borrowed products hold a read lock across rational arithmetic; concurrency and native costs still require evidence.",
+    "The baseline already includes the isolated endpoint changes and admitted P4 repair. These samples cannot establish a speedup over main or erase inherited endpoint tradeoffs.",
+    "The uninstrumented parent fails the original board assertion at 133.31248412 worker-CPU seconds against 120 and passes the separate 60-second neck check-body assertion. These historical standalone results are not candidate measurements or matched speed comparisons.",
+    "First-query phases use fresh graphs in a process that may share constants; cloned-query phases exclude cloning. Requested retained bytes are phase-relative and do not measure eventual reclamation."
+  ],
+  "next_step": "Run the committed native validation runner in a fresh target: strict four-crate all-feature/all-target Clippy, full solver/curve/DRC suites, warning-denied docs, then both original assertions separately from a bound executable. Record gate failures without enlarging limits. Fixed native costs, reports and production CLI size follow only if investigation continues.",
+  "native_runners_sha256": {
+    "validate_native_v2.py": "ff3f3030d0a132fb320258be883442253a40635649a16b7b0e95847bfdeb75aa",
+    "assess_native_v2.py": "5ee5f7a33f08aa99eba0c60898baae24cc54f6e312d34a83a8b2747d04cd9a20"
+  },
+  "native_fixed_block_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "native_cost_protocol": {
+    "endpoint_time_inputs": 8192,
+    "endpoint_allocation_inputs": 1000,
+    "endpoint_measurement_processes": 20,
+    "broad_measurement_processes": 10,
+    "broad_witness_rows_per_process": 231,
+    "final_abort_processes": 6,
+    "final_abort_rows_per_process": 210,
+    "final_abort_blocks": "first three predeclared blocks",
+    "sample_extension_planned": false
+  },
+  "runtime_admitted": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false,
+  "decision_review": {
+    "status": "one-overbroad-sentence-corrected-samples-and-decision-unchanged",
+    "review_runner_sha256": "dc3892caf399a85bdb0d7c2ea13d08b8936601c98de2809c9d7cf0c4966480df",
+    "original_decision_sha256": "ba323b6cdc641cd6fcbd47995256c34304582c1db142ac00d232735dddbd7c73",
+    "first_block_observations": {
+      "rational": {
+        "phase_count": 24,
+        "first_block_candidate_faster": 21,
+        "first_block_candidate_slower": 3,
+        "first_block_ratios_below_0_7": 20
+      },
+      "quadratic": {
+        "phase_count": 32,
+        "first_block_candidate_faster": 18,
+        "first_block_candidate_slower": 14,
+        "first_block_ratios_below_0_7": 12
+      },
+      "integer": {
+        "phase_count": 12,
+        "first_block_candidate_faster": 5,
+        "first_block_candidate_slower": 7,
+        "first_block_ratios_below_0_7": 0
+      }
+    },
+    "native_v1_runners_executed": false,
+    "new_native_runner_version_reason": "Keep the original referenced inputs intact and bind native execution to this corrected interpretation."
+  }
+}

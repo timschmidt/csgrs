@@ -1,0 +1,74 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "7f3cf33fa915e9a69d54f3f4635847c6d070e29e9965c1161dd77f9ffcaa6a52",
+    "bytes": 11703774,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/cost-target/release/libhyperreal.rlib",
+    "sha256": "470566e3568dc44c0ed6b91d3e0e2ef10dc10847d246b9f463ee20d9476c3bb1",
+    "bytes": 11715142,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  }
+}
