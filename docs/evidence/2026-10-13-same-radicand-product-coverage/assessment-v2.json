@@ -1,0 +1,135 @@
+{
+  "status": "same-radicand-product-coverage-observed-await-review",
+  "assessor_sha256": "6c9a5503e9e6c97c041cd7ed47e0cd7fed8f7d359998cd13caa9933f3dfebfa4",
+  "summary": {
+    "coefficient_multiplications": 21954159,
+    "single_radical_pairs_without_atoms": 6986607,
+    "same_radicand_pairs": 6379817,
+    "unequal_radicand_pairs": 606790,
+    "narrow_percent_of_all_calls": 31.823614833071037,
+    "same_radicand_percent_of_all_calls": 29.05971939075416,
+    "same_radicand_outputs_without_radicals": 3778231,
+    "same_radicand_outputs_with_one_radical": 2601586
+  },
+  "counts": {
+    "calls": 21954159,
+    "narrow_inputs": 6986607,
+    "comparisons": [
+      {
+        "equal": false,
+        "branch_entries": 606790,
+        "completed_by_output_radical_count": [
+          251,
+          94273,
+          344847,
+          167419
+        ]
+      },
+      {
+        "equal": true,
+        "branch_entries": 6379817,
+        "completed_by_output_radical_count": [
+          3778231,
+          2601586,
+          0,
+          0
+        ]
+      }
+    ]
+  },
+  "tests": [
+    {
+      "name": "counter-calibration",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "counter-sites",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "scalar-library",
+      "passed": 879,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "format_strict_clippy_and_docs_passed": true,
+  "original_gate_passed": false,
+  "instrumented_worker_cpu_seconds": 139.129132266,
+  "original_worker_cpu_limit_seconds": 120,
+  "finding_counts": [
+    12,
+    197
+  ],
+  "limits": [
+    "These are counts of existing operations under instrumentation, not time shares, allocations or projected savings.",
+    "Narrow input classification uses only vector lengths. Radicand outcomes are observed inside the original comparison branches; the diagnostic adds no scalar comparison or mathematical recognizer. Stored lengths do not prove reduced non-unit radicands.",
+    "The full-board assertion retains its original worker CPU metric and limit. Instrumentation changes execution cost and is not a benchmark of an optimization.",
+    "The 12/197 finding counts do not establish complete report-byte identity.",
+    "Focused test totals overlap the full scalar library. This is not the complete workflow/feature/target matrix.",
+    "The parent remains unadmitted. All native tradeoffs and original limits, all 35 pending entries and the entire properties/targets/future-work plan remain open."
+  ],
+  "artifacts_sha256": {
+    "diagnostic-v2/binary.json": "3639d5da40546a8e52d360f5661f44c1c8e8611170e52490618d0a4fde6cdf3e",
+    "diagnostic-v2/build-board.stderr": "f6319fbe3c7e6ccbbb9cda4907e8ee03cdb72ee96d6df123de456e8b9bed6f60",
+    "diagnostic-v2/build-board.stdout": "dfa46601b340e55d1a19285e612242c60597b166b4a810e9761cafdef70e4c5d",
+    "diagnostic-v2/cache-frontiers.stderr": "7bc29d83d8e989deb6fbe6889feacc3990f9c4c3677759d6474e1a5803f2ab3b",
+    "diagnostic-v2/cache-frontiers.stdout": "51ab9cc802935c909f57b556305e93cba913e8b5fbc4eaf43b561d107910fdff",
+    "diagnostic-v2/commands.json": "7960dccf1e39c25f432e8a6031f4dbae733259c4bfeb1504dffaed38682fcb84",
+    "diagnostic-v2/counter-calibration.stderr": "b9999b60e9d97312e59358adba869ea890e106007f97172495702d4ba8f7bbfc",
+    "diagnostic-v2/counter-calibration.stdout": "12754fb48a53eb95dfbc15cfceed9cd44d84d1f6bc2da9feaf796fd90aa3d815",
+    "diagnostic-v2/counter-sites.stderr": "701801bf8cc9c8008f88cd1310f95dae3d95a16444f8c9bbac2f4bebbfd378d6",
+    "diagnostic-v2/counter-sites.stdout": "55376536b98f80e5956dcd2fab23dee1f8a33813d050eaf81058b8df142acc45",
+    "diagnostic-v2/counts.json": "11b7f7db5089913ac64403da8d0d0fa54682f934e6fe192bd6d83649801aa362",
+    "diagnostic-v2/diagnostic-docs.stderr": "4ae9f1e30ceaf56a4f53869039165b59190796e8dc81d6f24ea3780f3bc0d95a",
+    "diagnostic-v2/diagnostic-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/endpoint-regressions.stderr": "ab1c74a133e0c70a55ff294dec3fc2c9644650b8a1c741284b782cfca5370f70",
+    "diagnostic-v2/endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "diagnostic-v2/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/full-board.stderr": "b73e3c7d24bab969bdcbd45f6498bd888301c45e90e6588d8bb07a1532a07378",
+    "diagnostic-v2/full-board.stdout": "53fa7dd3b733572a8c74c998a224c2c3874bcd51154a772df3397695896325e7",
+    "diagnostic-v2/protocol.json": "5fe4e7e54b8dcdd0b9c08da090993d9f71da7df153bb0406f36da654a19a3a1f",
+    "diagnostic-v2/result.json": "ba0f1b7900b41ad6f9753c6f34acfdc699b0847eb53ebe23d1d28a60b453b32c",
+    "diagnostic-v2/scalar-doctests.stderr": "affa05504b88e637edaf2382f99e169b41a6427bbd66df513ff5d7ff41689e61",
+    "diagnostic-v2/scalar-doctests.stdout": "97302c3a021568e0e66c9984c466fa59956e804435f7f3dd42b87e931e09a84d",
+    "diagnostic-v2/scalar-library.stderr": "7bc29d83d8e989deb6fbe6889feacc3990f9c4c3677759d6474e1a5803f2ab3b",
+    "diagnostic-v2/scalar-library.stdout": "a36ee357c805d69202fde67127d5cc7e3c0787def2c83cc36acf247a544449e1",
+    "diagnostic-v2/sign-regressions.stderr": "701801bf8cc9c8008f88cd1310f95dae3d95a16444f8c9bbac2f4bebbfd378d6",
+    "diagnostic-v2/sign-regressions.stdout": "6d6dabc2bc1527a62a787efe9d9116b1715355bd5ff909460fb646c8faba5aa0",
+    "diagnostic-v2/strict-clippy.stderr": "a83f6407c1faef01b36665aaf56022b9d20b4d6b0b634a053a3ea9ec5a341906",
+    "diagnostic-v2/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v2/tests.json": "eb7bc47a85364471233586e110fd902a140ba3d175a98018a270e42499beff48"
+  },
+  "source_parent_main_and_binary_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

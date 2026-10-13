@@ -1,0 +1,8 @@
+
+running 3 tests
+test computable::node::same_radicand_site_tests::equal_radicands_preserve_affine_products_and_exact_cancellation ... ok
+test computable::node::same_radicand_site_tests::other_shapes_and_opaque_decline_are_counted_without_new_owners ... ok
+test computable::node::same_radicand_site_tests::unequal_radicands_preserve_original_insertion_order ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 876 filtered out; finished in 0.00s
+

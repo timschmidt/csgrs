@@ -1,6 +1,7 @@
-This diagnostic will count multiplication of two single-radical coefficients
-with the same radicand. Version 2 preparation passed; qualification and full-board
-coverage remain pending. No runtime optimization is prepared or admitted.
+The complete boards execute 6,379,817 single-radical products with matching
+radicands: 29.06% of all coefficient multiplications. Diagnostic qualification
+passed. The [reviewed decision](decision-v2.json) calls for a distinct direct
+kernel experiment; no runtime optimization is prepared or admitted.
 
 The [cache-local product trial](../2026-10-13-cache-local-polynomial-products/README.md)
 failed the original board assertion with scalar costs still unresolved. This
@@ -33,9 +34,9 @@ regressions, formatting, strict four-crate all-feature/all-target release Clippy
 and warning-denied scalar docs. Counts overlap; this is not the full workflow
 matrix.
 
-The original complete boards will run once from a bound executable, retaining
-the 120-second worker-CPU assertion. The report prints after the assertion,
-including unwinding. Finding counts are not complete report-byte comparisons.
+The original complete boards ran once from a bound executable, retaining
+the 120-second worker-CPU assertion. The report printed after the failed
+assertion during unwinding. Finding counts are not complete report-byte comparisons.
 The 60-second copper-neck assertion remains unchanged but is not exercised by
 this coverage run. The entire properties, target and future-work plan remains
 open.
@@ -60,3 +61,41 @@ Reversing the explicit edits recovers the original runtime files exactly; the
 parent, main runtime and all 35 pending native paths remain unchanged. The
 source maps, delta archive, patch and formatting check are committed before
 qualification.
+
+The [independent assessment](assessment-v2.json) verifies all twelve commands,
+logs, source bindings, the executable and every counter row. Eleven
+qualification commands pass: two calibrations, three site tests, eleven P4
+controls, six cache controls, 879 all-feature scalar library results, 28
+doctests and five endpoint regressions, plus formatting, strict four-crate
+Clippy and warning-denied scalar docs. Focused counts overlap the library.
+
+| Observed work | Calls |
+| --- | ---: |
+| All coefficient multiplications | 21,954,159 |
+| Both operands have one radical and no opaque atoms | 6,986,607 |
+| Of those, radicands compare equal | 6,379,817 |
+| Equal-radicand outputs with no radical term | 3,778,231 |
+| Equal-radicand outputs with one radical term | 2,601,586 |
+| Single-radical inputs with unequal radicands | 606,790 |
+
+The original instrumented board assertion fails at 139.129132266 worker-CPU
+seconds against 120. Both complete reports are emitted with 12 and 197
+findings. Instrumentation changes execution cost; this duration is not a
+matched comparison or an estimate of an optimization's benefit. The counters
+do not independently check non-unit or square-reduced radicands.
+
+The [kernel review](next-kernel-review-v1.json) identifies a narrow next trial
+from the unchanged endpoint/P4 parent. Preserve the original arithmetic order,
+zero-skipping behavior and selected radicand payload: a zero left linear
+contribution means ordinary insertion retains the right payload when its
+contribution survives. Unit radicands and all nonmatching shapes retain the
+original path. Reusing a consumed vector needs ownership, cancellation,
+frontier, original-retry and P4 controls before fresh fixed scalar costs. Native
+correctness, original gates, matched costs, complete reports and production
+size remain further retention requirements.
+
+A wording review clarifies that the entire plan remains incomplete and in
+scope; already verified individual target statuses are unchanged. The initial
+decision remains preserved, with every measurement, summary and next-step
+decision identical in the reviewed version. The main runtime and all 35 pending
+native paths remain unchanged.

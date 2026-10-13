@@ -1,0 +1,7 @@
+
+running 2 tests
+test same_radicand_diagnostic::tests::bins_disabled_reset_and_unwind_are_observable ... ok
+test same_radicand_diagnostic::tests::joined_workers_contribute_to_every_counter ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 877 filtered out; finished in 0.00s
+

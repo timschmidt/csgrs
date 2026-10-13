@@ -1,0 +1,26 @@
+{
+  "calls": 21954159,
+  "narrow_inputs": 6986607,
+  "comparisons": [
+    {
+      "equal": false,
+      "branch_entries": 606790,
+      "completed_by_output_radical_count": [
+        251,
+        94273,
+        344847,
+        167419
+      ]
+    },
+    {
+      "equal": true,
+      "branch_entries": 6379817,
+      "completed_by_output_radical_count": [
+        3778231,
+        2601586,
+        0,
+        0
+      ]
+    }
+  ]
+}

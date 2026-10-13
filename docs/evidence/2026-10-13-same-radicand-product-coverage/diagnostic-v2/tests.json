@@ -1,0 +1,44 @@
+[
+  {
+    "name": "counter-calibration",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "counter-sites",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "scalar-library",
+    "passed": 879,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "scalar-doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "endpoint-regressions",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  }
+]

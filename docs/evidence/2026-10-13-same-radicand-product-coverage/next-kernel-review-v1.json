@@ -1,0 +1,83 @@
+{
+  "status": "source-review-complete-runtime-kernel-not-prepared",
+  "source_files": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "reviewed_sections": "RadicalCoefficient construction, insert_radical, multiply, inverse, closed conversion, PiLaurentPolynomial multiplication and original retained retry."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "reviewed_sections": "Owned/borrowed multiplication, add_ref and owned/borrowed addition; retained product/sum publication and has_arithmetic_reuse_evidence."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/comparison.rs",
+      "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "reviewed_sections": "Complete Rational::PartialEq entry point."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/queries_conversion.rs",
+      "sha256": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+      "reviewed_sections": "storage_identity, is_zero, is_one and stored sign access."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "reviewed_sections": "Rational Arc payload, cache types, Clone and Deref."
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "reviewed_sections": "Raw unreduced construction and cached canonicalized_ref."
+    }
+  ],
+  "prospective_preconditions": [
+    "Leave the original unsupported opaque-product guard first and unchanged. After that guard, one radical in each operand implies both atom vectors are empty.",
+    "A direct branch may handle only exactly one radical per operand, equal Rational radicands and a non-unit radicand. Unequal, unit, zero-width, multiple-radical and opaque cases retain the original general body.",
+    "Do not inherit cache-local borrowing, Arc polynomial payloads, scratch storage substitutions, rational-only scaling branches or memo omission."
+  ],
+  "arithmetic_sequence": [
+    "Compute the rational-constant product in the original left/right order.",
+    "Compute the owned-left radical coefficient times the right rational constant.",
+    "Compute the borrowed-right radical coefficient times the left rational constant.",
+    "Merge the linear contributions in left-then-right order, skipping addition exactly when the original insertion skips a zero contribution. Remove an exact cancellation.",
+    "Compute left radical coefficient times right radical coefficient, multiply that result by the left radicand, then add it to the rational-constant product in the original order."
+  ],
+  "payload_selection": [
+    {
+      "case": "left linear contribution nonzero and combined radical coefficient nonzero",
+      "retained_radicand": "original left radicand payload"
+    },
+    {
+      "case": "left linear contribution zero and right linear contribution nonzero",
+      "retained_radicand": "original right radicand payload, even when equal-valued left storage differs"
+    },
+    {
+      "case": "both linear contributions zero or cancel exactly",
+      "retained_radicand": "none; consider releasing the consumed vector instead of retaining unused capacity"
+    }
+  ],
+  "ownership_notes": [
+    "Keep original input scalar owners live through the arithmetic that reads them. Output radicand identity follows insertion behavior and can be checked through the existing storage_identity API without exposing a new public hook.",
+    "The owned left radical Vec is a possible output buffer when exactly one radical survives. No persistent field, representation, cache lock lifetime or Computable owner needs to change.",
+    "Rational multiply/add operators use retained numeric results. The reviewed reuse admission follows arithmetic observations and stored facts, not Arc strong counts. Operation order and selected payloads still matter for cache behavior; whole-crate equivalence is not inferred from this inspection."
+  ],
+  "edge_cases": [
+    "Both nonzero linear contributions, each one-sided zero case, both zero and exact conjugate cancellation.",
+    "Equal-valued radicands in distinct storage; shared constants aliased with coefficients and rational parts.",
+    "Unit radicands and raw private zero coefficients, internally unreduced ratios, wide integers and dyadics; retain original fallback and observable representation.",
+    "Term/radical limits at eight and nine; zero work/depth and mandatory original retry after first-memo drop.",
+    "Opaque rejection/ownership release, general unequal-radicand insertion order and unchanged P4 behavior."
+  ],
+  "qualification_requirement": "Shared regression controls should pass unchanged on baseline and candidate. Add differential checks against the original general multiplier plus independent exact examples, selected-payload and buffer/owner controls. Preserve fallback bytes. Qualify scalar default/all features, doctests, formatting, strict Clippy and docs before costs.",
+  "cost_requirement": "A distinct unchanged-parent baseline and candidate need fresh fixed rational, quadratic and integer probes: five paired blocks, 60 measurements, 12 preflights, 4096 timing inputs and 1000 allocation inputs per phase, builds before probes, every sample retained. Native correctness, original gates, matched endpoint/broad/abort controls, complete reports and production size remain separate retention requirements.",
+  "risks": [
+    "An eligibility comparison can add work on nonmatching inputs and changes when numeric comparison caches are touched. is_one may canonicalize internally unreduced ratios.",
+    "Extra dispatch, code growth, changed allocation capacities and shorter temporary ownership can affect costs even when returned values agree.",
+    "Coverage cannot establish speedup or resolve any inherited endpoint or scalar tradeoff."
+  ],
+  "runtime_candidate_prepared": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

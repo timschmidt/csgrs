@@ -2279,7 +2279,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "same_radicand_product_coverage": {
-      "status": "frozen-diagnostic-awaits-qualification-and-coverage",
+      "status": "prepare-distinct-direct-same-radicand-product-experiment",
       "evidence": "docs/evidence/2026-10-13-same-radicand-product-coverage",
       "source_review": "The original multiplier inserts left-linear and then right-linear radical terms before nested products. For one radical per operand, no atoms and equal non-unit radicands, at most one output radical remains; exact conjugates can cancel it. The current code repeats insertion and creates new result storage. A future direct kernel would need to preserve arithmetic order, zero-skipping behavior and private noncanonical inputs, rather than just an algebraic identity. No kernel is prepared.",
       "diagnostic": "Count all multiplier entries and one-radical/no-atom inputs using lengths. Piggyback on the existing radicand comparison branches without another scalar comparison. Count stored output radical lengths immediately before the unchanged successful return. Fixed atomic counters own no scalars and add no mathematical operations or cache queries/writes.",
@@ -2295,12 +2295,72 @@
         "counts_overlap": true
       },
       "limits": [
-        "Atomic synchronization and diagnostic branches change costs; counts are not time shares, allocation counts or a savings prediction.",
-        "Input vector lengths alone do not prove the proposed direct-kernel preconditions, including reduced non-unit radicands.",
-        "This is focused instrumentation qualification, not all workflows or a whole-crate formal proof.",
-        "The 35 original native paths and endpoint/P4 parent remain unadmitted and unchanged."
+        "These are counts of existing operations under instrumentation, not time shares, allocations or projected savings.",
+        "Narrow input classification uses only vector lengths. Radicand outcomes are observed inside the original comparison branches; the diagnostic adds no scalar comparison or mathematical recognizer. Stored lengths do not prove reduced non-unit radicands.",
+        "The full-board assertion retains its original worker CPU metric and limit. Instrumentation changes execution cost and is not a benchmark of an optimization.",
+        "The 12/197 finding counts do not establish complete report-byte identity.",
+        "Focused test totals overlap the full scalar library. This is not the complete workflow/feature/target matrix.",
+        "The parent remains unadmitted. All native tradeoffs and original limits, all 35 pending entries and the entire properties/targets/future-work plan remain open.",
+        "An eligibility comparison can add work on nonmatching inputs and changes when numeric comparison caches are touched. is_one may canonicalize internally unreduced ratios.",
+        "Extra dispatch, code growth, changed allocation capacities and shorter temporary ownership can affect costs even when returned values agree.",
+        "Coverage cannot establish speedup or resolve any inherited endpoint or scalar tradeoff.",
+        "The diagnostic counts vector shapes and the original equality branches. It does not independently test non-unit or square-reduced radicands and does not estimate how many allocations a future implementation removes.",
+        "The instrumented board assertion fails at 139.129132266 worker-CPU seconds against 120. It must not be compared with historical uninstrumented or differently instrumented durations as a matched benchmark.",
+        "No new runtime source is admitted, no closed sample set is extended and no previous rejection is reversed. The full plan remains incomplete. All 39 properties, 14 targets and crate future work remain in scope; individual ledger statuses are unchanged, including already verified targets."
       ],
-      "next_step": "Run version 2 diagnostic qualification and one original complete-board assertion; independently assess counts before deciding on a runtime prototype.",
+      "next_step": {
+        "status": "reviewed-not-prepared",
+        "baseline": "Unchanged endpoint/P4 parent with the previously shared regression controls; no diagnostic counters or rejected runtime changes.",
+        "runtime_scope": "A private direct path for exactly one equal non-unit radical per coefficient after the original unsupported opaque-product guard. Preserve the original general fallback and all other normalizer/cache/retry behavior.",
+        "source_review": "next-kernel-review-v1.json",
+        "requirements": [
+          "Preserve arithmetic operand order and zero-skipping behavior; retain the same left/right radicand payload selected by ordinary insertion.",
+          "Review the lifetime of inputs and result payloads before reusing the consumed vector. Do not infer numeric-cache equivalence from a polynomial identity.",
+          "Cover independent exact products, original-general differential results, cancellation, payload/buffer ownership, unreduced/wide rationals, unit-radicand fallback, radical/term/power frontiers, zero budgets, opaque release and mandatory original retry.",
+          "Qualify shared tests on both frozen variants, scalar default/all-feature libraries and doctests, formatting, strict Clippy and warning-denied docs before measuring.",
+          "Complete fresh fixed scalar costs first. Native correctness, original fixture gates, matched costs/receipts, complete reports, production size and remaining workflow obligations stay separate admission requirements."
+        ],
+        "fixed_scalar_costs_if_qualified": {
+          "suites": [
+            "rational",
+            "quadratic",
+            "integer"
+          ],
+          "modes": [
+            "time",
+            "memory"
+          ],
+          "blocks": [
+            [
+              "baseline",
+              "candidate"
+            ],
+            [
+              "candidate",
+              "baseline"
+            ],
+            [
+              "baseline",
+              "candidate"
+            ],
+            [
+              "candidate",
+              "baseline"
+            ],
+            [
+              "baseline",
+              "candidate"
+            ]
+          ],
+          "measurement_processes": 60,
+          "preflight_processes": 12,
+          "timing_inputs_per_phase": 4096,
+          "allocation_inputs_per_phase": 1000,
+          "all_builds_before_probes": true,
+          "sample_extension_planned": false
+        },
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2312,7 +2372,83 @@
         "matches_formatted_draft": true,
         "failed_version_1_preserved": true,
         "main_and_35_pending_native_paths_unchanged": true
-      }
+      },
+      "decision": "decision-v2.json",
+      "assessment": "assessment-v2.json",
+      "coverage": {
+        "coefficient_multiplications": 21954159,
+        "single_radical_pairs_without_atoms": 6986607,
+        "same_radicand_pairs": 6379817,
+        "unequal_radicand_pairs": 606790,
+        "narrow_percent_of_all_calls": 31.823614833071037,
+        "same_radicand_percent_of_all_calls": 29.05971939075416,
+        "same_radicand_outputs_without_radicals": 3778231,
+        "same_radicand_outputs_with_one_radical": 2601586
+      },
+      "qualification": {
+        "tests": [
+          {
+            "name": "counter-calibration",
+            "passed": 2,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "counter-sites",
+            "passed": 3,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "sign-regressions",
+            "passed": 11,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "cache-frontiers",
+            "passed": 6,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "scalar-library",
+            "passed": 879,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "scalar-doctests",
+            "passed": 28,
+            "failed": 0,
+            "ignored": 0
+          },
+          {
+            "name": "endpoint-regressions",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0
+          }
+        ],
+        "format_strict_four_crate_clippy_and_warning_denied_scalar_docs_passed": true,
+        "qualification_commands_passed": 11,
+        "counts_overlap": true,
+        "full_workflow_matrix_covered": false
+      },
+      "instrumented_gate": {
+        "passed": false,
+        "worker_cpu_seconds": 139.129132266,
+        "original_worker_cpu_limit_seconds": 120,
+        "finding_counts": [
+          12,
+          197
+        ],
+        "complete_report_identity_established": false,
+        "performance_comparison": false
+      },
+      "kernel_source_review": "next-kernel-review-v1.json",
+      "main_and_35_pending_native_paths_unchanged": true,
+      "scope_wording_review": "Individual property/target statuses remain unchanged; the full plan remains incomplete and all 39 properties, 14 targets and crate future work stay in scope."
     }
   },
   "status_meanings": {
