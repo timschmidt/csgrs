@@ -1638,12 +1638,13 @@
       "native_executed": false
     },
     "retained_polynomial_views": {
-      "status": "v2-sources-frozen-scalar-qualification-running",
+      "status": "v2-qualified-fixed-scalar-costs-next",
       "evidence": [
         "docs/evidence/2026-10-13-retained-polynomial-views/scope-v1.json",
         "docs/evidence/2026-10-13-retained-polynomial-views/preparation-failure-assessment-v1.json",
         "docs/evidence/2026-10-13-retained-polynomial-views/scope-v2.json",
-        "docs/evidence/2026-10-13-retained-polynomial-views/preparation-v2/protocol.json"
+        "docs/evidence/2026-10-13-retained-polynomial-views/preparation-v2/protocol.json",
+        "docs/evidence/2026-10-13-retained-polynomial-views/correctness-v2.json"
       ],
       "contract": "Keep existing owned scratch polynomials and graph-free closed payloads. A cache read clones one Arc to the whole immutable closed polynomial. Read-only multiplication right operands borrow its rational and radical slices; other existing consuming algorithms and projections recover ordinary owned polynomials before use.",
       "ownership": "A private PiLaurentValue enum distinguishes Owned(PiLaurentPolynomial) from Retained(Arc<ClosedPiLaurentPolynomial>). Only the existing cache publication allocates a shared header. Closed coefficients still contain only Rational and Vec<(Rational, Rational)> and cannot own Computable nodes. Scratch creation/cloning and original local memo entries retain their current Vec behavior.",
@@ -1661,11 +1662,60 @@
         "Prior recursive-copy counts are coverage, not allocation measurements, time shares or promised savings."
       ],
       "controls": "Both sources retain eight storage, three memo and three alias mathematical controls, plus the six inherited cache and eleven P4 controls. The previous radical-sharing inventory must be 0/0 in both: these ordinary to_polynomial conversions still copy. Candidate-specific controls will exercise actual retained whole-polynomial reads, live aliases, mutation, consuming arithmetic, graph/buffer release and concurrency.",
-      "next_step": "Complete the 26-command scalar qualification in fresh targets, independently assess every log and inventory, then run the predeclared fixed scalar costs only if qualification passes. Native requirements, original limits and all pending native changes remain in scope.",
+      "next_step": "Run the predeclared twelve preflights and 60 scalar measurements, then independently assess every timing, requested-memory and probe-size row. Arc headers remain a heap cost despite unchanged existing type layouts. No native or runtime admission follows from scalar qualification.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation_v1": "Stopped before compilation when rustfmt folded three calls and removed optional trailing commas. Both formatted 10,134/10,135-file sources are preserved; independent accounting recovers all original parent tokens. No Rust or mathematical test input correction is needed.",
-      "preparation_v2": "Fresh baseline 10,134-file and candidate 10,135-file source maps exactly match the archived formatted v1 trees. Exact parent-token recovery, unchanged mathematical tests, and borrowed multiplication operation order pass. The variants differ only in algebra.rs, representation.rs and the private helper; manifests and lockfiles are unchanged."
+      "preparation_v2": "Fresh baseline 10,134-file and candidate 10,135-file source maps exactly match the archived formatted v1 trees. Exact parent-token recovery, unchanged mathematical tests, and borrowed multiplication operation order pass. The variants differ only in algebra.rs, representation.rs and the private helper; manifests and lockfiles are unchanged.",
+      "qualification_v2": "Each variant passes three shared alias-isolation controls, three shared publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests and 28 doctests. The baseline passes 888 all-feature and 801 default scalar library tests; the candidate passes 893 and 806, including five additional whole-polynomial view controls. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "candidate": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        }
+      },
+      "retained_view_layout": {
+        "PiLaurentValue": 24,
+        "CachedEvaluation": 64
+      },
+      "memo_inventories": {
+        "baseline": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "candidate": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        }
+      },
+      "ordinary_copy_sharing": {
+        "baseline": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "candidate": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        }
+      }
     }
   },
   "status_meanings": {
