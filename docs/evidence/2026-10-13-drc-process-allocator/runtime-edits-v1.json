@@ -1,0 +1,36 @@
+{
+  "baseline": {
+    "crates/hyperdrc/src/lib.rs": [
+      {
+        "before": "#![deny(missing_docs)]\n",
+        "after": "#![deny(missing_docs)]\n\n#[cfg(test)]\nmod allocator_contract_tests;\n"
+      }
+    ]
+  },
+  "candidate": {
+    "crates/hyperdrc/src/lib.rs": [
+      {
+        "before": "#![deny(missing_docs)]\n",
+        "after": "#![deny(missing_docs)]\n\n#[cfg(test)]\nmod allocator_contract_tests;\n\n#[cfg(all(test, not(target_family = \"wasm\")))]\nmod process_allocator;\n"
+      }
+    ],
+    "crates/hyperdrc/src/main.rs": [
+      {
+        "before": "use anyhow::Result;",
+        "after": "#[cfg(not(target_family = \"wasm\"))]\nmod process_allocator;\n\nuse anyhow::Result;"
+      }
+    ],
+    "crates/hyperdrc/Cargo.toml": [
+      {
+        "before": "\n[dev-dependencies]\n",
+        "after": "\n[target.'cfg(not(target_family = \"wasm\"))'.dependencies]\nmimalloc = { version = \"0.1.52\", default-features = false }\n\n[dev-dependencies]\n"
+      }
+    ],
+    "Cargo.lock": [
+      {
+        "before": "[[package]]\nname = \"hyperdrc\"\nversion = \"0.3.0\"\ndependencies = [\n \"anyhow\",\n \"arrow-array\",\n \"arrow-ipc\",\n \"arrow-schema\",\n \"calamine\",\n \"clap\",\n \"csgrs\",\n \"flate2\",\n \"hypercurve\",\n \"hyperlattice\",\n \"hyperlimit\",\n \"hyperpath\",\n \"hyperreal\",\n \"hypersolve\",\n \"libc\",\n \"log\",\n \"parquet\",\n \"proptest\",\n \"quick-xml\",\n \"rusqlite\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"tar\",\n \"zip 2.4.2\",\n]\n\n",
+        "after": "[[package]]\nname = \"hyperdrc\"\nversion = \"0.3.0\"\ndependencies = [\n \"anyhow\",\n \"arrow-array\",\n \"arrow-ipc\",\n \"arrow-schema\",\n \"calamine\",\n \"clap\",\n \"csgrs\",\n \"flate2\",\n \"hypercurve\",\n \"hyperlattice\",\n \"hyperlimit\",\n \"hyperpath\",\n \"hyperreal\",\n \"hypersolve\",\n \"libc\",\n \"log\",\n \"mimalloc\",\n \"parquet\",\n \"proptest\",\n \"quick-xml\",\n \"rusqlite\",\n \"serde\",\n \"serde_json\",\n \"sha2\",\n \"tar\",\n \"zip 2.4.2\",\n]\n\n"
+      }
+    ]
+  }
+}

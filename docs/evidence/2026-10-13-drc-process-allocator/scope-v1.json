@@ -1,0 +1,98 @@
+{
+  "scope": "Compare the unchanged endpoint/P4 native parent with a DRC executable/test-process Rust allocator change. Mathematical sources and reusable-library allocator ownership remain unchanged.",
+  "previous_goal_turn": "progress",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "closed_bound_coverage_sha256": "87115648bdbc6311db7054ef82d11bc54ba49af6f5d778fc07fae205a6507e4d",
+  "profile_sha256": "947d79ec387dff621a64ff038c954cddc74b2d5779cb5b420de550f8fce41197",
+  "source_review": [
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mimalloc-0.1.52/Cargo.toml",
+      "sha256": "1fae15585ec90fe874b90c1652056283727b88f548ec7fb445117e94e66fbf69"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mimalloc-0.1.52/src/lib.rs",
+      "sha256": "f2f6e98264507d5cfa836a48e5b0fe220f3bcc3270a8f5fabeb4297898a27201"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.49/Cargo.toml",
+      "sha256": "bb61afd11805969f3236b82ce45779b700d29fc4cb01a5ab27ccdf535454c523"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.49/src/lib.rs",
+      "sha256": "3400737f6f802abffa8a7c30c26ee1240d9dd8b8e9afbd4f370da2dc9b3d23bb"
+    },
+    {
+      "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/libmimalloc-sys-0.1.49/build.rs",
+      "sha256": "4917ec3e9a59e216b1b568ce37ea5cb97ba0ba1b9c50789a29d1cd429de9119f"
+    }
+  ],
+  "review_findings": [
+    "mimalloc 0.1.52 implements GlobalAlloc through aligned mi_malloc, mi_zalloc, mi_realloc and mi_free. Its default feature set is empty and it forwards explicitly selected features to libmimalloc-sys.",
+    "libmimalloc-sys 0.1.49 builds vendored v3 by default through cc, with release debug assertions disabled. The override feature alone enables process C-malloc replacement; it is not enabled by this trial. Native C allocations outside Rust GlobalAlloc may remain with their original allocator.",
+    "The build script has OS/compiler-specific paths for Unix TLS, MSVC C++ atomics, Windows system libraries and Linux ARM atomics. This first executable trial runs on the current Linux host. Other runtime platforms remain unverified; wasm family targets retain their current allocator.",
+    "DRC has a thin CLI main and reusable library. The candidate installs the allocator only in the CLI crate root and under cfg(test) in the standalone library unit-test root. Library consumers, integration-test drivers and doctests retain their own allocator.",
+    "The profile allocator subset occupies 29.580% of sampled cycle weight. Its categories include more than Rust global allocation, and it is not predicted savings."
+  ],
+  "variants": {
+    "baseline": "Unchanged parent plus two shared allocator contract tests; default process allocator.",
+    "candidate": "Identical parent and shared tests, plus the pinned mimalloc dependency and process-owned global allocator module for native-family CLI/unit-test binaries."
+  },
+  "shared_contract_tests": 2,
+  "original_limits": {
+    "full_board_worker_cpu_seconds": 120,
+    "copper_neck_check_body_wall_seconds": 60
+  },
+  "qualification": [
+    "Verify exact source delta, locked metadata, vendored dependency checksums and identical shared tests.",
+    "Both variants: formatting; two allocator contract tests; all-feature DRC tests including integration/doc tests with only the two original gates executed separately; strict all-target DRC Clippy with default and all features; warning-denied DRC docs; release CLI and test builds.",
+    "Inspect allocator selection in both built CLI and unit-test executables and confirm mimalloc/libmimalloc-sys were compiled without override or other extra features.",
+    "Run both original complete-fixture assertion tests for both variants. Preserve baseline gate failures and stop admission if either candidate assertion fails."
+  ],
+  "fixed_application_design_if_candidate_gates_pass": {
+    "variants": [
+      "baseline",
+      "candidate"
+    ],
+    "fixtures": [
+      "CPArti FPGA dev board.zip",
+      "HVP109A.zip"
+    ],
+    "complete_report_preflight_runs": 4,
+    "blocks": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "board_measurements": 20,
+    "startup_help_runs_per_measurement": 50,
+    "startup_measurements": 10,
+    "timing": "Fresh CLI processes, same extracted absolute input paths, original four checks and 0.0762 minimum width. Whole-process wall and user/system CPU are application measurements, not replacements for original internal assertions.",
+    "memory": "Maximum process RSS from the same uninstrumented CLI run, in KiB. This includes allocator overhead/retention but is not requested/live payload or allocation traffic.",
+    "output": "Every full report must match complete bytes and JSON values without field normalization. Freeze every executable before any measurement. Retain all samples, including startup adverse rows; do not extend/filter a closed set.",
+    "size": "Record CLI and unit-test executable byte sizes."
+  },
+  "risk_review": [
+    "The allocator changes address reuse, cross-thread free behavior, binary size, startup and peak resident memory. Shared safe-Rust controls exercise alignment, zeroing, reallocation contents and cross-thread Arc destruction; native tests and complete reports exercise application behavior.",
+    "Only DRC unit tests and CLI actually select the candidate allocator. Do not claim that separately linked kernel tests, integration drivers or doctests use it.",
+    "Existing parent scalar/native tradeoffs, complete workflow matrix, other platforms and full properties/targets/future-work obligations remain open."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
