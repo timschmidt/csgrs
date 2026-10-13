@@ -1,0 +1,68 @@
+{
+  "original_method": "    fn multiply(self, other: &Self) -> Option<Self> {\n        if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))\n            || (!other.atoms.is_empty() && !self.radicals.is_empty())\n        {\n            return None;\n        }\n        let mut result = Self::rational(&self.rational * &other.rational);\n        for (radicand, coefficient) in &self.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;\n        }\n        for (radicand, coefficient) in &other.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &self.rational)?;\n        }\n        for (left, left_coefficient) in self.radicals {\n            for (right, right_coefficient) in &other.radicals {\n                let coefficient = &left_coefficient * right_coefficient;\n                if left == *right {\n                    result.rational = result.rational + coefficient * &left;\n                } else {\n                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();\n                    result.insert_radical(radicand, coefficient * scale)?;\n                }\n            }\n        }\n        for (atom, coefficient) in self.atoms {\n            result.insert_atom(atom, coefficient * &other.rational);\n        }\n        for (atom, coefficient) in &other.atoms {\n            result.insert_atom(atom.clone(), coefficient * &self.rational);\n        }\n        Some(result)\n    }",
+  "outlined_helper": "    // Called only after multiply proves singleton radical vectors, empty atom\n    // vectors, and equal non-unit radicands. Neither input changes before this\n    // call, so both index operations below are in bounds by construction.\n    #[inline(never)]\n    fn multiply_same_radicand(mut self, other: &Self) -> Self {\n        let (left, left_coefficient) = &self.radicals[0];\n        let (right, right_coefficient) = &other.radicals[0];\n        // Keep the original arithmetic and insertion order.\n        let rational = &self.rational * &other.rational;\n        let mut linear = left_coefficient * &other.rational;\n        let right_linear = right_coefficient * &self.rational;\n        let take_right = linear.sign() == Sign::NoSign;\n        if take_right {\n            linear = right_linear;\n        } else if right_linear.sign() != Sign::NoSign {\n            linear = linear + right_linear;\n        }\n        let cross = left_coefficient * right_coefficient;\n        let rational = rational + cross * left;\n        if linear.sign() == Sign::NoSign {\n            return Self::rational(rational);\n        }\n        if take_right {\n            // Ordinary insertion selects the first surviving payload,\n            // including distinct equal-valued right radicand storage.\n            self.radicals[0].0 = right.clone();\n        }\n        self.rational = rational;\n        self.radicals[0].1 = linear;\n        self.atoms = Vec::new();\n        self\n    }\n\n",
+  "outlined_method": "    fn multiply(self, other: &Self) -> Option<Self> {\n        if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))\n            || (!other.atoms.is_empty() && !self.radicals.is_empty())\n        {\n            return None;\n        }\n        if let ([(left, _)], [(right, _)]) = (self.radicals.as_slice(), other.radicals.as_slice())\n            && left == right\n            && !left.is_one()\n        {\n            return Some(self.multiply_same_radicand(other));\n        }\n        let mut result = Self::rational(&self.rational * &other.rational);\n        for (radicand, coefficient) in &self.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;\n        }\n        for (radicand, coefficient) in &other.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &self.rational)?;\n        }\n        for (left, left_coefficient) in self.radicals {\n            for (right, right_coefficient) in &other.radicals {\n                let coefficient = &left_coefficient * right_coefficient;\n                if left == *right {\n                    result.rational = result.rational + coefficient * &left;\n                } else {\n                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();\n                    result.insert_radical(radicand, coefficient * scale)?;\n                }\n            }\n        }\n        for (atom, coefficient) in self.atoms {\n            result.insert_atom(atom, coefficient * &other.rational);\n        }\n        for (atom, coefficient) in &other.atoms {\n            result.insert_atom(atom.clone(), coefficient * &self.rational);\n        }\n        Some(result)\n    }",
+  "outlined_branch": "        if let ([(left, _)], [(right, _)]) = (self.radicals.as_slice(), other.radicals.as_slice())\n            && left == right\n            && !left.is_one()\n        {\n            return Some(self.multiply_same_radicand(other));\n        }\n",
+  "borrowed_helper": "    // The caller proves equal non-unit radicands and empty atom vectors.\n    // Checked element borrows keep vector indexing out of this helper.\n    // Some holds the rational result on cancellation; None means the borrowed\n    // fields now contain the product with one surviving radical.\n    #[inline(never)]\n    fn multiply_same_radicand_fields(\n        constant: &mut Rational,\n        left: &mut (Rational, Rational),\n        other_constant: &Rational,\n        right: &(Rational, Rational),\n        atoms: &mut Vec<(Computable, Rational)>,\n    ) -> Option<Rational> {\n        let (left, left_coefficient) = left;\n        let (right, right_coefficient) = right;\n        let rational = &*constant * other_constant;\n        let mut linear = &*left_coefficient * other_constant;\n        let right_linear = right_coefficient * &*constant;\n        let take_right = linear.sign() == Sign::NoSign;\n        if take_right {\n            linear = right_linear;\n        } else if right_linear.sign() != Sign::NoSign {\n            linear = linear + right_linear;\n        }\n        let cross = &*left_coefficient * right_coefficient;\n        let rational = rational + cross * &*left;\n        if linear.sign() == Sign::NoSign {\n            return Some(rational);\n        }\n        if take_right {\n            // Ordinary insertion selects the first surviving payload,\n            // including distinct equal-valued right radicand storage.\n            *left = right.clone();\n        }\n        *constant = rational;\n        *left_coefficient = linear;\n        *atoms = Vec::new();\n        None\n    }\n\n",
+  "borrowed_method": "    fn multiply(mut self, other: &Self) -> Option<Self> {\n        if (!self.atoms.is_empty() && (!other.radicals.is_empty() || !other.atoms.is_empty()))\n            || (!other.atoms.is_empty() && !self.radicals.is_empty())\n        {\n            return None;\n        }\n        if let ([left], [right]) = (self.radicals.as_mut_slice(), other.radicals.as_slice())\n            && left.0 == right.0\n            && !left.0.is_one()\n        {\n            if let Some(rational) = Self::multiply_same_radicand_fields(\n                &mut self.rational,\n                left,\n                &other.rational,\n                right,\n                &mut self.atoms,\n            ) {\n                return Some(Self::rational(rational));\n            }\n            return Some(self);\n        }\n        let mut result = Self::rational(&self.rational * &other.rational);\n        for (radicand, coefficient) in &self.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &other.rational)?;\n        }\n        for (radicand, coefficient) in &other.radicals {\n            result.insert_radical(radicand.clone(), coefficient * &self.rational)?;\n        }\n        for (left, left_coefficient) in self.radicals {\n            for (right, right_coefficient) in &other.radicals {\n                let coefficient = &left_coefficient * right_coefficient;\n                if left == *right {\n                    result.rational = result.rational + coefficient * &left;\n                } else {\n                    let (scale, radicand) = (&left * right).extract_square_reduced_retained();\n                    result.insert_radical(radicand, coefficient * scale)?;\n                }\n            }\n        }\n        for (atom, coefficient) in self.atoms {\n            result.insert_atom(atom, coefficient * &other.rational);\n        }\n        for (atom, coefficient) in &other.atoms {\n            result.insert_atom(atom.clone(), coefficient * &self.rational);\n        }\n        Some(result)\n    }",
+  "borrowed_branch": "        if let ([left], [right]) = (self.radicals.as_mut_slice(), other.radicals.as_slice())\n            && left.0 == right.0\n            && !left.0.is_one()\n        {\n            if let Some(rational) = Self::multiply_same_radicand_fields(\n                &mut self.rational,\n                left,\n                &other.rational,\n                right,\n                &mut self.atoms,\n            ) {\n                return Some(Self::rational(rational));\n            }\n            return Some(self);\n        }\n",
+  "outlined_arithmetic_suffix": "        let rational = &self.rational * &other.rational;\n        let mut linear = left_coefficient * &other.rational;\n        let right_linear = right_coefficient * &self.rational;\n        let take_right = linear.sign() == Sign::NoSign;\n        if take_right {\n            linear = right_linear;\n        } else if right_linear.sign() != Sign::NoSign {\n            linear = linear + right_linear;\n        }\n        let cross = left_coefficient * right_coefficient;\n        let rational = rational + cross * left;\n        if linear.sign() == Sign::NoSign {\n            return Self::rational(rational);\n        }\n        if take_right {\n            // Ordinary insertion selects the first surviving payload,\n            // including distinct equal-valued right radicand storage.\n            self.radicals[0].0 = right.clone();\n        }\n        self.rational = rational;\n        self.radicals[0].1 = linear;\n        self.atoms = Vec::new();\n        self\n",
+  "borrowed_arithmetic_suffix": "        let rational = &*constant * other_constant;\n        let mut linear = &*left_coefficient * other_constant;\n        let right_linear = right_coefficient * &*constant;\n        let take_right = linear.sign() == Sign::NoSign;\n        if take_right {\n            linear = right_linear;\n        } else if right_linear.sign() != Sign::NoSign {\n            linear = linear + right_linear;\n        }\n        let cross = &*left_coefficient * right_coefficient;\n        let rational = rational + cross * &*left;\n        if linear.sign() == Sign::NoSign {\n            return Some(rational);\n        }\n        if take_right {\n            // Ordinary insertion selects the first surviving payload,\n            // including distinct equal-valued right radicand storage.\n            *left = right.clone();\n        }\n        *constant = rational;\n        *left_coefficient = linear;\n        *atoms = Vec::new();\n        None\n",
+  "arithmetic_substitutions": [
+    {
+      "before": "&self.rational",
+      "after": "&*constant",
+      "count": 2
+    },
+    {
+      "before": "&other.rational",
+      "after": "other_constant",
+      "count": 2
+    },
+    {
+      "before": "let mut linear = left_coefficient *",
+      "after": "let mut linear = &*left_coefficient *",
+      "count": 1
+    },
+    {
+      "before": "let cross = left_coefficient *",
+      "after": "let cross = &*left_coefficient *",
+      "count": 1
+    },
+    {
+      "before": "cross * left",
+      "after": "cross * &*left",
+      "count": 1
+    },
+    {
+      "before": "return Self::rational(rational);",
+      "after": "return Some(rational);",
+      "count": 1
+    },
+    {
+      "before": "self.radicals[0].0 =",
+      "after": "*left =",
+      "count": 1
+    },
+    {
+      "before": "self.rational =",
+      "after": "*constant =",
+      "count": 1
+    },
+    {
+      "before": "self.radicals[0].1 =",
+      "after": "*left_coefficient =",
+      "count": 1
+    },
+    {
+      "before": "self.atoms =",
+      "after": "*atoms =",
+      "count": 1
+    },
+    {
+      "before": "        self\n",
+      "after": "        None\n",
+      "count": 1
+    }
+  ]
+}

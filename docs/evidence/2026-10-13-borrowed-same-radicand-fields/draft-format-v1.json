@@ -1,0 +1,17 @@
+{
+  "status": "formatted-before-freezing-or-compilation",
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--config-path",
+    "/home/tim/Documents/GitHub/workspace/csgrs/crates/.rustfmt.toml",
+    "--config",
+    "skip_children=true",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-same-radicand-fields/algebra_borrowed.rs"
+  ],
+  "exit_code": 0,
+  "before_sha256": "d4c73b9e82e8718701812360d2df4d54ea7e719e8ad3f2ca62a54ce52c1b570f",
+  "after_sha256": "d4c73b9e82e8718701812360d2df4d54ea7e719e8ad3f2ca62a54ce52c1b570f",
+  "whitespace_only": true
+}

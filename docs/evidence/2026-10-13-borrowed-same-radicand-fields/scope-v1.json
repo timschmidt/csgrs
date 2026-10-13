@@ -1,0 +1,125 @@
+{
+  "status": "borrowed-field-review-and-inputs-prepared-not-qualified",
+  "previous_goal_turn_classification": "progress",
+  "prior_evidence_sha256": {
+    "preparation-v1/protocol.json": "80150bd77492a8bc1aa841b542ded888d8054bf0702ded3d9d6cd735c27f9733",
+    "correctness-v1.json": "a57ccb757eead397f09472ded6e0c41094d027187a7c29f6483abcb9e8813cc3",
+    "cost-assessment-v2.json": "e2fef30e6d23c5fc16ad748e882ca9fd8a467f83c52479509d5ef8357c7f5392",
+    "decision-v1.json": "1d75493c957b627be5ccfec737140f3b4b18f8ea55857e4ba62dd4174a766164",
+    "codegen-v2/protocol.json": "7b3ded085ac05ad6af6ba7898ee0ea6edd0f1b6a4e60e0ba938265a2cd9f015f",
+    "runtime-edits-v1.json": "82a648a1e4f7697829c8d250b7f278e71e3654fd4496daaf7f5c0c3a07745025"
+  },
+  "source_review": [
+    {
+      "path": "docs/evidence/2026-10-13-outlined-same-radicand-products/algebra_outlined.rs",
+      "sha256": "081dcec416f2f383f53a81c88ba6382cc8a8827279ce7192af213386d2b00d1b",
+      "reviewed_sections": "Complete coefficient helper and multiply; zero/nonnull returns and assignment order."
+    },
+    {
+      "path": "target/outlined-same-radicand-products/baseline/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "db91c8fbac383ba5b3fae9f0c68898444c8f538a87855f6b49f78fc28858c253",
+      "reviewed_sections": "Coefficient fields, rational constructor, original general multiply and insertion rules."
+    },
+    {
+      "path": "target/outlined-same-radicand-products/baseline/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "reviewed_sections": "Rational Arc ownership, Clone/Deref, RationalData caches and CompactOnceBox destructor."
+    },
+    {
+      "path": "target/outlined-same-radicand-products/baseline/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "reviewed_sections": "Borrowed and owned Mul implementations and MulAssign; reborrows select the same Rational multiplication implementation."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-borrowed-same-radicand-fields/algebra_borrowed.rs",
+      "sha256": "d4c73b9e82e8718701812360d2df4d54ea7e719e8ad3f2ca62a54ce52c1b570f",
+      "reviewed_sections": "Five borrowed arguments, cancellation Option and nonzero assignments; caller disjoint borrows, checked element extraction, opaque guard and general fallback."
+    }
+  ],
+  "private_helper_contract": {
+    "caller": "One private call after the unchanged opaque guard and singleton/equal/non-unit checks. Mutable left element comes from a slice pattern; right is borrowed from its checked singleton.",
+    "field_borrows": "The left constant, radical element and atom Vec are disjoint struct fields. Borrowing does not add owners. Right constant and element are shared references. No helper index, unsafe access, new scalar comparison or public numeric error is introduced.",
+    "arithmetic": "The reviewed substitutions only reborrow mutable Rational fields, replace field locations, and return a rational on cancellation. Constant/linear/cross arithmetic, signs and zero-skipped addition keep the original order and operand forms.",
+    "cancellation": "Return Some(rational) without replacing input fields. Helper locals drop before the caller constructs the allocation-free rational carrier and drops the consumed input fields in declaration order. No input clone is added.",
+    "surviving_radical": "Replace the left radicand with the right clone only for the same first-surviving contribution, then constant, then coefficient, then empty atom Vec, in the original assignment/drop order. Atom-buffer release stays inside the helper before its remaining local drops.",
+    "result_boundary": "The helper returns Option<Rational>, not a RadicalCoefficient. None means the already-borrowed fields contain the one-radical product; it is not recognition failure. The caller still returns Some for every eligible product.",
+    "fallback": "Removing the borrowed helper/branch and mut recovers the original general method exactly. Cache storage, memo, mandatory retry, recognition budgets and P4 stronger-facts semantics are unchanged."
+  },
+  "motivation": "Outlined entry body shrank but its first stack subtraction stayed 264 bytes and the cloned conjugate phase slowed in all five pairs. Test a smaller source-level ownership boundary without attributing those timings to frame size or bounds checks.",
+  "risks": [
+    "Borrowed argument passing and Option dispatch can still regress performance; no speedup is inferred from source shape.",
+    "Early equality/is_one checks and reuse of input Vec capacity retain the existing direct-product risks.",
+    "Mutable field reborrows must preserve arithmetic, payload identity, drop order and monotone proof retention; qualification and fixed costs remain necessary.",
+    "Static symbol/frame observations are not total-memory or causal timing evidence."
+  ],
+  "shared_test_functions": 28,
+  "new_test_functions": 0,
+  "qualification": "42 sequential commands in fresh baseline/outlined/borrowed targets: each has 902 all-feature and 815 default scalar library tests, 28 doctests, unchanged shared/cache/P4 controls, fmt, strict default/all-feature all-target Clippy and warning-denied docs. Counts overlap.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "variant_order": [
+      "baseline",
+      "outlined",
+      "borrowed"
+    ],
+    "comparisons": [
+      {
+        "reference": "baseline",
+        "variant": "outlined"
+      },
+      {
+        "reference": "baseline",
+        "variant": "borrowed"
+      },
+      {
+        "reference": "outlined",
+        "variant": "borrowed"
+      }
+    ],
+    "measurement_processes": 90,
+    "preflight_processes": 18,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false,
+    "block_order": [
+      [
+        "baseline",
+        "outlined",
+        "borrowed"
+      ],
+      [
+        "borrowed",
+        "outlined",
+        "baseline"
+      ],
+      [
+        "outlined",
+        "baseline",
+        "borrowed"
+      ],
+      [
+        "borrowed",
+        "baseline",
+        "outlined"
+      ],
+      [
+        "baseline",
+        "borrowed",
+        "outlined"
+      ]
+    ]
+  },
+  "closed_sample_policy": "Keep every sample. Contrasts share one new fixed set and are not independent. Neither prior direct nor outlined samples are reused, extended or used to erase prior rejections.",
+  "native_gates": "Original 120-second board worker CPU and 60-second neck check-body wall, unchanged fixtures. Native correctness, matched costs, full reports, CLI size and remaining workflows remain retention requirements.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

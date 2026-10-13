@@ -3230,6 +3230,93 @@
         }
       },
       "main_and_35_pending_native_paths_unchanged": true
+    },
+    "borrowed_same_radicand_fields": {
+      "status": "borrowed-field-review-and-inputs-prepared-not-qualified",
+      "evidence": "docs/evidence/2026-10-13-borrowed-same-radicand-fields",
+      "source_review": "scope-v1.json",
+      "contract": {
+        "caller": "One private call after the unchanged opaque guard and singleton/equal/non-unit checks. Mutable left element comes from a slice pattern; right is borrowed from its checked singleton.",
+        "field_borrows": "The left constant, radical element and atom Vec are disjoint struct fields. Borrowing does not add owners. Right constant and element are shared references. No helper index, unsafe access, new scalar comparison or public numeric error is introduced.",
+        "arithmetic": "The reviewed substitutions only reborrow mutable Rational fields, replace field locations, and return a rational on cancellation. Constant/linear/cross arithmetic, signs and zero-skipped addition keep the original order and operand forms.",
+        "cancellation": "Return Some(rational) without replacing input fields. Helper locals drop before the caller constructs the allocation-free rational carrier and drops the consumed input fields in declaration order. No input clone is added.",
+        "surviving_radical": "Replace the left radicand with the right clone only for the same first-surviving contribution, then constant, then coefficient, then empty atom Vec, in the original assignment/drop order. Atom-buffer release stays inside the helper before its remaining local drops.",
+        "result_boundary": "The helper returns Option<Rational>, not a RadicalCoefficient. None means the already-borrowed fields contain the one-radical product; it is not recognition failure. The caller still returns Some for every eligible product.",
+        "fallback": "Removing the borrowed helper/branch and mut recovers the original general method exactly. Cache storage, memo, mandatory retry, recognition budgets and P4 stronger-facts semantics are unchanged."
+      },
+      "qualification_plan": "42 sequential commands in fresh baseline/outlined/borrowed targets: each has 902 all-feature and 815 default scalar library tests, 28 doctests, unchanged shared/cache/P4 controls, fmt, strict default/all-feature all-target Clippy and warning-denied docs. Counts overlap.",
+      "fixed_scalar_costs_if_qualified": {
+        "suites": [
+          "rational",
+          "quadratic",
+          "integer"
+        ],
+        "modes": [
+          "time",
+          "memory"
+        ],
+        "variant_order": [
+          "baseline",
+          "outlined",
+          "borrowed"
+        ],
+        "comparisons": [
+          {
+            "reference": "baseline",
+            "variant": "outlined"
+          },
+          {
+            "reference": "baseline",
+            "variant": "borrowed"
+          },
+          {
+            "reference": "outlined",
+            "variant": "borrowed"
+          }
+        ],
+        "measurement_processes": 90,
+        "preflight_processes": 18,
+        "timing_inputs": 4096,
+        "memory_inputs": 1000,
+        "all_builds_before_probes": true,
+        "sample_extension_planned": false,
+        "block_order": [
+          [
+            "baseline",
+            "outlined",
+            "borrowed"
+          ],
+          [
+            "borrowed",
+            "outlined",
+            "baseline"
+          ],
+          [
+            "outlined",
+            "baseline",
+            "borrowed"
+          ],
+          [
+            "borrowed",
+            "baseline",
+            "outlined"
+          ],
+          [
+            "baseline",
+            "borrowed",
+            "outlined"
+          ]
+        ]
+      },
+      "risks": [
+        "Borrowed argument passing and Option dispatch can still regress performance; no speedup is inferred from source shape.",
+        "Early equality/is_one checks and reuse of input Vec capacity retain the existing direct-product risks.",
+        "Mutable field reborrows must preserve arithmetic, payload identity, drop order and monotone proof retention; qualification and fixed costs remain necessary.",
+        "Static symbol/frame observations are not total-memory or causal timing evidence."
+      ],
+      "next_step": "Freeze and commit all three sources, execute 42 qualification commands, and run the fixed costs only if qualification passes.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
