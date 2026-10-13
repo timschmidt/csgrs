@@ -30,7 +30,11 @@ Its failure remains recorded. Both that input and a genuinely nested
 It covers fifteen families, construction with source proof, first compaction,
 warm compaction and cloned compaction. Exact equality witnesses and sign-fact
 availability are reported separately so the intended strengthening is visible.
-The measurement runner, fixed samples and retention review remain to be done.
+The runner and assessor are prepared for five fixed paired blocks per mode,
+with separate fresh build targets, four preflights and twenty measurement
+processes. Timing uses 4,096 inputs; allocation mode uses 1,000. Execution and
+retention review remain to be done; samples will not be extended to remove
+adverse rows.
 
 The runtime repair is not admitted. All 35 pending native entries, original
 application limits and failures, all 39 properties, all 14 targets and
