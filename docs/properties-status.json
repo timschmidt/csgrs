@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Keep rejected coefficient changes out of runtime. Fork the unchanged endpoint parent and layer the now-admitted P4 repair, using the verified next-native-inputs-v1.json record and fresh main guards. The combined fork has not run. Original native limits, earlier timing/memory tradeoffs and all 35 pending entries remain open."
+      "next_step": "The endpoint/P4 combination passes scoped scalar, solver and native correctness checks; its original board gate still fails at 133.31248412 worker-CPU seconds / 120, while the separate neck check passes. Prepare the retained-quadratic-projection coverage diagnostic from this frozen combination. All 35 pending files, inherited tradeoffs, complete reports and original limits remain open; see combined_native_tower_sign_retention."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -258,7 +258,7 @@
           "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
         }
       ],
-      "next_step": "Evaluate the preregistered right-scalar and bidirectional coefficient-scaling variants separately, using the frozen uninstrumented endpoint parent. Preserve original arithmetic fallbacks and ownership guarantees; complete scalar correctness and fixed three-suite cost controls before native qualification. Full requirements: docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json",
+      "next_step": "The scaling and zero-radical trials are rejected. The unchanged endpoint parent plus the admitted P4 repair now has combined qualification; see combined_native_tower_sign_retention. Use that frozen combination for the prepared retained-quadratic-projection coverage question, preserving every inherited tradeoff and original gate.",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-assessment-v1.json",
       "cost_summary": "Twenty arc cost processes, ten broad capability processes and six effective final-abort processes complete. All variant witnesses match, all 231 historical witnesses are preserved, and every 210-row abort receipt set is identical. The 21 intended exact non-endpoint/off-circle query rows have median paired ratios from 0.267 to 0.635; 20 are faster in all five pairs and the remaining row in four.",
@@ -602,10 +602,51 @@
       "implementation": "Transfers a retained root sign across equal quadratic-tower reconstruction, correcting for the rebuilt payload rational scale before applying the original outer scale. Unknown transfers no sign; no new cache field, owner, numeric refinement or recognition budget. Runtime bytes match candidate-v3.",
       "qualification": "The unchanged baseline retains six failing regressions and five passing controls. Candidate passes eleven focused tests, 983 all-feature scalar results, 878 default results, 28 doctests, 974 solver results, strict scalar/solver Clippy, formatting and scalar docs. Configuration totals overlap. Twelve fresh public probe cases retain all previously lost signs, prove zero difference and preserve original facts.",
       "preserved_failures": "Two preparation format checks, same-name Cargo executable selection and an incorrect denested-input normalization expectation remain archived. Both denested and genuinely nested normalization inputs now pass controls on unchanged baseline and candidate.",
-      "next_step": "Layer the admitted repair onto a fresh fork of the unchanged endpoint parent before further native work. The verified input record is docs/evidence/2026-10-13-quadratic-tower-sign-retention/next-native-inputs-v1.json. The combined fork, tests, original native gates and cost/report review have not run.",
+      "next_step": "The admitted repair has been qualified with the frozen endpoint/native experiment. See combined_native_tower_sign_retention: correctness checks pass, but the original board CPU gate still fails. The scalar repair remains retained with its recorded direct costs; the native work remains unadmitted.",
       "runtime_admitted": true,
       "costs": "Twenty fixed measurement processes and four preflights preserve all value witnesses and never weaken paired fact counts. Five timing rows are slower in all five pairs; the largest ratio of medians is 1.126724. One construction phase adds 20 allocation calls, 832 allocated bytes and 560 retained/peak bytes per 1000 inputs; the other 59 allocation rows match in every field/pair. Probe binaries add 552/560 bytes. All samples and adverse rows are retained; no application speedup or universal resource claim.",
       "retention": "Accepted as a scoped P4 completeness repair with these explicit lower-priority resource costs. The three main files match the qualified source, main formatting passes, and all 35 native entries remain byte-identical."
+    },
+    "combined_native_tower_sign_retention": {
+      "status": "combined-correctness-passes-original-board-cap-still-fails",
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "evidence": [
+        "docs/evidence/2026-10-13-native-tower-sign-retention/preparation-v1/protocol.json",
+        "docs/evidence/2026-10-13-native-tower-sign-retention/qualification-failure-v1.json",
+        "docs/evidence/2026-10-13-native-tower-sign-retention/qualification-assessment-v2.json",
+        "docs/evidence/2026-10-13-native-tower-sign-retention/decision-v1.json"
+      ],
+      "qualification": "The exact admitted P4 files pass eleven sign regressions and six inherited cache controls in the combined source. Full results: 874 scalar library tests, 28 doctests, 974 solver results, 2494 curve results with 33 existing ignores, 1644 DRC results excluding the separately executed timing gates; five endpoint controls also pass. Focused counts overlap. Formatting, strict four-crate Clippy and warning-denied docs pass.",
+      "preserved_failure": "The first runner expected ten solver result groups; all 974 tests passed and an empty doctest group made eleven. Its stop and every successful phase remain archived; the corrected continuation reused verified successes without repeating tests.",
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "passed": false,
+          "observed_assertion_seconds": 133.31248412,
+          "process_wall_seconds": 134.52721580676734,
+          "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 121.51144994283095,
+          "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+        }
+      ],
+      "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
+      "next_step": {
+        "scope": "docs/evidence/2026-10-13-native-tower-sign-retention/next-diagnostic-scope-v1.json",
+        "task": "Prepare the scoped retained-quadratic-projection coverage diagnostic described in next-diagnostic-scope-v1.json. Fork this frozen combination into a new source and target; count only existing root/recursive retained reads, actual closed-form copies and original retries. Retain no new scalar owners and preserve every original arithmetic operation, proof, budget and gate.",
+        "runner_source_and_measurements_prepared_or_executed": false
+      },
+      "native_runtime_admitted": false
     }
   },
   "status_meanings": {
