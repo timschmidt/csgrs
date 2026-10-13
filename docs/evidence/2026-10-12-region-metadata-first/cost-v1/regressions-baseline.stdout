@@ -1,0 +1,9 @@
+
+running 4 tests
+test bezier_region::metadata_order_tests::cost::probe ... ignored, explicit isolated evidence probe
+test bezier_region::metadata_order_tests::duplicate_errors_still_precede_cross_loop_source_errors ... ok
+test bezier_region::metadata_order_tests::duplicate_validation_covers_metadata_and_independent_exact_geometry ... ok
+test bezier_region::metadata_order_tests::validation_retains_available_facts_and_allows_later_refinement ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 1763 filtered out; finished in 0.00s
+

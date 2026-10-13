@@ -1,0 +1,24 @@
+
+running 1 test
+test bezier_region::metadata_order_tests::cost::probe ... REGION_COST unequal_sources first_validation 128 3626462 7040 2835456 2708480 2708568
+REGION_COST unequal_sources warm_validation 128 2287334 7040 2835456 2708480 2708568
+REGION_COST unequal_sources cloned_validation 128 530244 7040 2835456 2708480 2708568
+REGION_COST absent_sources first_validation 128 3183263 12160 2914304 2561024 2561024
+REGION_COST absent_sources warm_validation 128 4540720 12160 2914304 2561024 2561024
+REGION_COST absent_sources cloned_validation 128 3054941 12160 2914304 2561024 2561024
+REGION_COST mixed_sources first_validation 128 2020831 9600 2865152 2634752 2634752
+REGION_COST mixed_sources warm_validation 128 2459562 9600 2865152 2634752 2634752
+REGION_COST mixed_sources cloned_validation 128 1179520 9600 2865152 2634752 2634752
+REGION_COST equal_sources first_validation 128 3589774 15872 3144832 10368 31616
+REGION_COST equal_sources warm_validation 128 3283275 15872 3144832 10368 31616
+REGION_COST equal_sources cloned_validation 128 3429836 15872 3144832 10368 31616
+REGION_COST duplicate first_validation 128 113212 768 228224 7040 8768
+REGION_COST duplicate warm_validation 128 108323 768 228224 7040 8768
+REGION_COST duplicate cloned_validation 128 108113 768 228224 7040 8768
+REGION_COST singleton first_validation 128 27809 640 168960 164864 164864
+REGION_COST singleton warm_validation 128 27558 640 168960 164864 164864
+REGION_COST singleton cloned_validation 128 27548 640 168960 164864 164864
+ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 1766 filtered out; finished in 0.10s
+

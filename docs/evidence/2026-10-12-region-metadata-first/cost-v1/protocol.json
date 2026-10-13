@@ -1,0 +1,116 @@
+{
+  "scope": "Fixed paired constructor costs on separate copies with identical probes.\n\nSix source-metadata controls, three query phases, five alternating fresh-process\npairs per mode. Time uses 1024 inputs per case; allocation mode uses 128. Fixture\nconstruction and output-buffer reservation are excluded. The allocator wrapper\nis present in both variants; TLS counting is active only in allocation mode.\nRetained bytes include returned region owners and any scalar cache changes.\nThis is a local instrumented operation comparison, not whole-board timing.\n",
+  "runner_sha256": "756a25e2eadeef518ae072f1d8903d15d52ff0ee63fc55efc4d2e17cd3897eca",
+  "probe_sha256": "2efd62d7d89effa8bd79b83858a9209a33914de967e99389085a855fcc0bb4d6",
+  "preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "source_hashes_sha256": "07ce630cae6de0a2d2b5fcf515ddfe4902b9ee00c833153ac410cb4b702876b3",
+  "schedule": [
+    {
+      "mode": "time",
+      "iterations": 1024,
+      "pair": 0,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "mode": "time",
+      "iterations": 1024,
+      "pair": 1,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "mode": "time",
+      "iterations": 1024,
+      "pair": 2,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "mode": "time",
+      "iterations": 1024,
+      "pair": 3,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "mode": "time",
+      "iterations": 1024,
+      "pair": 4,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "mode": "memory",
+      "iterations": 128,
+      "pair": 0,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "mode": "memory",
+      "iterations": 128,
+      "pair": 1,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "mode": "memory",
+      "iterations": 128,
+      "pair": 2,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "mode": "memory",
+      "iterations": 128,
+      "pair": 3,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "mode": "memory",
+      "iterations": 128,
+      "pair": 4,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/cost-v1/baseline/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/cost-v1/candidate/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/cost-v1/baseline/target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/cost-v1/candidate/target"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "runtime_admitted": false
+}

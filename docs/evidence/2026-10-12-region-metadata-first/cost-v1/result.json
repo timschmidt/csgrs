@@ -1,0 +1,8 @@
+{
+  "complete": true,
+  "fresh_processes": 20,
+  "observations": 360,
+  "all_expected_outcomes_passed": true,
+  "sources_unchanged": true,
+  "runtime_admitted": false
+}
