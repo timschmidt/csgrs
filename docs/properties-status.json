@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Run full release all-feature curve and DRC suites, strict consumer Clippy and warning-denied scalar/curve/DRC docs on a separate native target. Execute the original complete-board 120-second worker-CPU and copper-neck 60-second check-body wall assertions separately. Then run fixed native endpoint/broad controls and final-abort receipts. Complete unnormalized report identity and production binary size are required if costs support retention. Preserve every original failure and all inherited endpoint tradeoffs."
+      "next_step": "Complete the fixed native endpoint/broad timing and allocation controls plus six final-coordinate abort receipt processes. Preserve the failed 135.297041172/120-second board assertion and all scalar/inherited endpoint tradeoffs. Review these costs before deciding whether complete reports are warranted; no runtime change is admitted."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -505,13 +505,55 @@
       "runtime_admitted": false
     },
     "isolated_zero_radical_guards": {
-      "status": "advance-isolated-zero-radical-guards-to-native-qualification-no-runtime-admission",
-      "evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/scalar-decision-v1.json",
+      "status": "native-qualification-recorded-await-fixed-controls-and-complete-reports",
+      "evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/native-assessment-v1.json",
       "result": "The two stored-zero guards pass seven shared baseline/candidate regressions, 870 candidate all-feature release scalar library results and 28 doctests, strict scalar Clippy, formatting and warning-denied docs. Focused counts overlap the full library suite.",
-      "next_step": "Run full release all-feature curve and DRC suites, strict consumer Clippy and warning-denied scalar/curve/DRC docs on a separate native target. Execute the original complete-board 120-second worker-CPU and copper-neck 60-second check-body wall assertions separately. Then run fixed native endpoint/broad controls and final-abort receipts. Complete unnormalized report identity and production binary size are required if costs support retention. Preserve every original failure and all inherited endpoint tradeoffs.",
+      "next_step": "Complete the fixed native endpoint/broad timing and allocation controls plus six final-coordinate abort receipt processes. Preserve the failed 135.297041172/120-second board assertion and all scalar/inherited endpoint tradeoffs. Review these costs before deciding whether complete reports are warranted; no runtime change is admitted.",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-13-coefficient-zero-radicals/cost-assessment-v1.json",
-      "cost_summary": "All 60 fixed processes preserve witnesses and inventories; all 68 memory rows and all four fields are identical in every block. Eleven timing rows are faster in all five blocks; conjugate_then_affine_warm is slower in all five (median paired 1.021847), five more in four, and nineteen have slower medians. Four probes keep their size, two add 16 bytes. The sample set stays closed."
+      "cost_summary": "All 60 fixed processes preserve witnesses and inventories; all 68 memory rows and all four fields are identical in every block. Eleven timing rows are faster in all five blocks; conjugate_then_affine_warm is slower in all five (median paired 1.021847), five more in four, and nineteen have slower medians. Four probes keep their size, two add 16 bytes. The sample set stays closed.",
+      "native_tests": [
+        {
+          "variant": "candidate",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "candidate",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        }
+      ],
+      "native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "candidate",
+          "passed": false,
+          "observed_assertion_seconds": 135.297041172,
+          "process_wall_seconds": 136.51485151285306,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "candidate",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 121.35244134766981,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        }
+      ]
     }
   },
   "status_meanings": {
