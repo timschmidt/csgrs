@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The shared-radical-storage version is rejected after fixed scalar costs: conjugate-then-affine first/warm/cloned queries are slower in all five pairs, and allocation calls increase in thirty phases. Review owned scratch arrays versus immutable retained sharing from the frozen parent before preparing another candidate. All 35 pending entries, inherited tradeoffs and original limits remain open."
+      "next_step": "Freeze and qualify the owned-radical-scratch design, then review its fixed scalar costs before any native work. All 35 existing native entries, inherited tradeoffs, complete-report obligations and original timing limits remain open."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -1394,18 +1394,7 @@
       "scope": "Persistent reads rebuild a polynomial and clone each radical Vec. Share only the rational/radical array through an optional Arc<Vec>, using copy-on-write for mutation and unwrapping or cloning on consuming iteration. The prior diagnostic counts cache copies, not allocation counts, time share or expected savings.",
       "ownership": "Opaque atom Vecs and polynomial term Vecs retain their original cloning and ownership. The shared array owns only Rational pairs. Mutable access uses Arc::make_mut before exposing entries; consuming access uses Arc::unwrap_or_clone. No unsafe implementation, static memo, lock escape or expression-node owner is introduced.",
       "cost_risks": "A new nonempty buffer allocates both a Vec payload and an Arc header; mutations of shared buffers copy. Empty storage is None and mutable empty iteration allocates nothing. Reference-count operations, retained capacity, first-query and construction costs can offset cheaper read copies. Smaller struct layouts are not proof of lower total memory.",
-      "next_step": {
-        "status": "source-review-pending",
-        "task": "Keep every completed source and sample set frozen. Review a distinct design that keeps mutable scratch radical arrays as owned Vecs and shares only immutable retained payloads. A write to a shared read view would produce an ordinary owned Vec rather than another reference-counted buffer. Establish publication, empty-state, consuming iteration, alias isolation, release and layout requirements before preparing a candidate from the unchanged endpoint/P4 parent.",
-        "motivation": "This version shares all nonempty temporary arrays, including newly built and mutable results. The source uses Arc::make_mut for writes and allocates a shared header for every new nonempty buffer; the measured call increases show that saving read copies did not reduce allocation traffic overall. Separating scratch ownership from retained sharing is a hypothesis, not an attributed cause for every adverse row or an established improvement.",
-        "constraints": [
-          "Do not combine the rejected memo-publication or inline-storage changes into the next baseline.",
-          "Preserve Computable owner counts for opaque atoms, arithmetic/insertion order, all original bounds and mandatory original retry after releasing the first memo.",
-          "A two-form storage enum may enlarge coefficient layouts; measure every layout, requested-memory field and probe size rather than hiding that tradeoff.",
-          "Reuse mathematical alias, concurrency, cache-frontier and P4 controls; explicitly document any changed pointer-sharing inventory definition."
-        ],
-        "candidate_prepared": false
-      },
+      "next_step": "Rejected and frozen. A distinct owned-scratch/immutable-retained design has been reviewed and its inputs prepared from the unchanged endpoint/P4 parent. The previous shared-scratch implementation is not part of that source. See owned_radical_scratch.",
       "runtime_admitted": false,
       "preparation": "A 10,134-file shared-test baseline and 10,135-file candidate are frozen. They differ only in algebra.rs and the new storage helper. Parent-token recovery passes; all manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new alias-isolation controls, three shared publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests and 28 doctests. The baseline passes 888 all-feature and 801 default scalar library tests; the candidate passes 889 and 802, including one additional buffer-ownership control. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1490,6 +1479,18 @@
         ]
       },
       "native_work": "No native validation, gate, cost control, complete-report replay or production CLI build was run after this scalar cost rejection."
+    },
+    "owned_radical_scratch": {
+      "status": "source-reviewed-inputs-prepared-not-executed",
+      "evidence": [
+        "docs/evidence/2026-10-13-owned-radical-scratch/scope-v1.json"
+      ],
+      "scope": "Keep scratch arrays in ordinary owned Vecs, and introduce shared storage only for reads from an immutable retained payload. A write unwraps or copies a retained buffer into an owned Vec, without allocating a new shared header. Publishing an owned array still copies it into a retained Arc and can cost more than baseline.",
+      "ownership": "The two-form scratch storage is private: Owned(Vec) or Retained(Arc<Vec>). Cloning owned scratch preserves the original deep Vec copy; cloning a retained read shares rational data. Closed storage exposes only immutable reads and conversion to a scratch view. Empty retained storage is None. Polynomial terms and opaque Computable owners keep their original Vec behavior.",
+      "cost_risks": "Owned publication adds an Arc allocation. The scratch enum may enlarge coefficients, even while closed coefficients shrink. Retained reads can avoid copies, but borrowed-to-owned transitions, first-query costs, stack/heap layouts and binary size must all be measured. The prior rejected version is not the new baseline and its samples are not extended.",
+      "alias_control_change": "Only the pointer-inventory observation changes. It separately records whether the original scratch shares its closed payload and whether two returned views share that payload. Baseline expects 0/0; candidate expects 0/1. Every mathematical assertion, graph-release check and concurrent mutation control is preserved by exact token recovery.",
+      "next_step": "Two fresh sources/targets with identical eight storage, three memo and three mathematical alias controls; candidate-only two buffer transition/release controls; inherited six cache-frontier and eleven P4 controls; default/all-feature scalar library tests, doctests, formatting, strict Clippy and warning-denied docs. Record all seven layouts without assuming the scratch enum size.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
