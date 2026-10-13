@@ -1,0 +1,22 @@
+{
+  "status": "source-recovery-verification-failed-before-candidate-compile",
+  "failed_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate/source",
+  "source_count": 10128,
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "7edf0a42f99c162f3891251d4257c99d83bc820cffe614c9f7975643d3b3b169",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "ce7ed7ea7ebea9801a4fceed64ea9ed75c0c7ea9d2c93c2b73d9a455d5fe2319"
+  },
+  "runner_sha256": "a7d8119eaba313b74c4106ac3a1e1ca51831afe635eb8f30346de0d5190a38bf",
+  "qualification_executed": false,
+  "cause": "Formatting the existing included facade changed unrelated preexisting formatting and the transfer call layout, so exact recovery of the baseline source failed. No candidate compilation or test ran.",
+  "correction": "Version 2 preserves every existing facade byte, uses the formatter-produced layout only for the new transfer block, and formats only the node helper file and the added tests. The original failed tree and inputs remain immutable.",
+  "artifacts_sha256": {
+    "preparation-v1/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparation-v1/failed-delta.tar.gz": "47b5737888bff2397e81aebcf8876ada5406a6e1590692cb7ea0f5592284e17d",
+    "preparation-v1/failed-source-hashes.json.gz": "f1ee5b04997f28a4417e57f1d52ba07255d73e51134438cc444c52dc884aa962",
+    "preparation-v1/failed.patch": "1e77ab7e7d729ce8a3c5e5c44a0f03b33abd0aaa9f9be0bb57f4d8489abf4a00",
+    "preparation-v1/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime_admitted": false
+}
