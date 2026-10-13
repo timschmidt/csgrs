@@ -31,19 +31,18 @@
       ],
       "runtime_admitted": false,
       "next_step": {
+        "name": "coefficient-zero-radicals",
         "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
-        "parent_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/decision-v1.json",
-        "question": "In the original coefficient multiplier, how many actually executed linear radical/opaque products are multiplied by an already stored zero rational constant and then discarded?",
-        "source_basis": "The original multiplier forms both linear radical contributions before radical cross-products and later forms opaque linear contributions. insert_radical/insert_atom immediately drop zero coefficients. Rational multiplication returns zero before canonicalization, product-cache lookup or publication when either stored sign is NoSign.",
-        "read_source_sha256": {
-          "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
-          "crates/hyperreal/src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
-          "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6"
-        },
-        "diagnostic_only": "Fork the unchanged endpoint parent. Use fixed integer counters for accepted coefficient shapes and stored-zero flags, plus actual entry counts at each of the four existing linear-term loops. Count zero scales from Rational::sign/is_zero only, which read the immutable stored sign. Preserve every original operation, early return, owner lifetime, insertion order, cache publication and query. Do not infer executed loop counts solely from input lengths, because later insertion can decline early.",
-        "qualification": "Calibrate reset/disabled behavior, all counter bins and joined worker aggregation; run existing scalar cache frontiers and endpoint regressions, strict Clippy and formatting. Observe the unchanged complete-board assertion once with instrumentation, reporting overhead and every original failure. Counts are coverage, not runtime shares or predicted savings.",
-        "runtime_followup": "Only if actual coverage warrants it, preregister a separate zero-contribution experiment that preserves nonzero arithmetic and original insertion order. Qualify zero/negative/mixed/opaque inputs, owner release, eight/nine-term frontiers, mandatory original retry, cold/warm/cloned facts and abort/budget receipts. Require fixed scalar/native cost controls and original gates before any retention; complete report identity remains an admission requirement.",
-        "exclusions": "Do not inherit either rejected scaling branch, the rejected coefficient merge or the rejected eight-node prepass. The endpoint parent remains unadmitted and all its prior timing and memory tradeoffs remain open."
+        "change": "Guard only the existing two borrowed radical linear loops with the opposite rational constant being nonzero. Keep the rational product, unsupported-product guard, radical cross-products, both opaque loops, term insertion order, normal-form budgets and original retry unchanged.",
+        "source_reasoning": "Rational multiplication by stored zero returns the shared zero before canonicalization, product-cache lookup or publication. insert_radical immediately accepts and discards that zero before inspecting the radicand or term limit. The skipped radicand clone only increments its Arc count; the original vector remains owned through the unchanged cross-product loop. Thus the guard removes zero temporaries and radicand clone/drop pairs without changing nonzero arithmetic, input owners or certificate publication.",
+        "qualification": [
+          "Fresh baseline and candidate from the frozen endpoint source, both with identical new tests and separate qualification/cost targets. No diagnostic counters, rejected scaling, merge or prepass code.",
+          "Exact zero/positive/negative rational scaling in both directions for radical, opaque and mixed coefficients; independent mixed-radical component products and cancellation; eight/nine-term success/decline; unsupported opaque products; zero and nonzero owner release; cold/warm/cloned facts.",
+          "The existing six retained-cache regressions include the mandatory original retry. Full scalar release all-feature library tests, 28 doctests, strict all-target/all-feature Clippy, formatting and warning-denied docs.",
+          "Three unchanged scalar probe suites with fixed five paired blocks, time and allocation modes, construction/first/warm/cloned/opaque and mixed-field controls; no extension to remove adverse rows.",
+          "Only a candidate supported by scalar costs advances to full native tests, five fixed native endpoint/broad blocks and effective final-abort controls, original 120-second board worker CPU and separate 60-second neck check-body wall assertions. Complete unnormalized reports and production binary size remain required for retention."
+        ],
+        "cost_risks": "Two extra stored-sign branches affect nonzero and empty-vector cases. Zero multiplication is already cheap; no allocation or runtime improvement follows from coverage alone. The existing endpoint parent remains unadmitted and its earlier timing/memory tradeoffs remain open."
       }
     },
     "plan_complete": false,
@@ -474,6 +473,49 @@
         "prepared_runner": "replay_reports_v1.py",
         "reason": "The closed native costs and original board failures settle rejection before runtime admission. Complete report replay and production CLI size are therefore left unexecuted for these rejected sources. Native finding counts are not claimed as complete report identity."
       }
+    },
+    "isolated_coefficient_zero_contributions": {
+      "status": "advance-isolated-zero-radical-contribution-guard-experiment",
+      "evidence": "docs/evidence/2026-10-13-coefficient-zero-contributions/decision-v1.json",
+      "result": "9,488,190 executed zero-scale radical products out of 29,365,695 linear entries (32.310%). Left/right radical loops contribute 4,721,952/4,766,238; both opaque loops have zero. All 64 bins and actual site counts are retained.",
+      "qualification": [
+        {
+          "name": "counter-calibration",
+          "passed": 4,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "cache-frontiers",
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "endpoint-regressions",
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "instrumented_worker_cpu_seconds": 133.052481708,
+      "original_worker_cpu_limit_seconds": 120,
+      "original_assertion_passed": false,
+      "next_step": {
+        "name": "coefficient-zero-radicals",
+        "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+        "change": "Guard only the existing two borrowed radical linear loops with the opposite rational constant being nonzero. Keep the rational product, unsupported-product guard, radical cross-products, both opaque loops, term insertion order, normal-form budgets and original retry unchanged.",
+        "source_reasoning": "Rational multiplication by stored zero returns the shared zero before canonicalization, product-cache lookup or publication. insert_radical immediately accepts and discards that zero before inspecting the radicand or term limit. The skipped radicand clone only increments its Arc count; the original vector remains owned through the unchanged cross-product loop. Thus the guard removes zero temporaries and radicand clone/drop pairs without changing nonzero arithmetic, input owners or certificate publication.",
+        "qualification": [
+          "Fresh baseline and candidate from the frozen endpoint source, both with identical new tests and separate qualification/cost targets. No diagnostic counters, rejected scaling, merge or prepass code.",
+          "Exact zero/positive/negative rational scaling in both directions for radical, opaque and mixed coefficients; independent mixed-radical component products and cancellation; eight/nine-term success/decline; unsupported opaque products; zero and nonzero owner release; cold/warm/cloned facts.",
+          "The existing six retained-cache regressions include the mandatory original retry. Full scalar release all-feature library tests, 28 doctests, strict all-target/all-feature Clippy, formatting and warning-denied docs.",
+          "Three unchanged scalar probe suites with fixed five paired blocks, time and allocation modes, construction/first/warm/cloned/opaque and mixed-field controls; no extension to remove adverse rows.",
+          "Only a candidate supported by scalar costs advances to full native tests, five fixed native endpoint/broad blocks and effective final-abort controls, original 120-second board worker CPU and separate 60-second neck check-body wall assertions. Complete unnormalized reports and production binary size remain required for retention."
+        ],
+        "cost_risks": "Two extra stored-sign branches affect nonzero and empty-vector cases. Zero multiplication is already cheap; no allocation or runtime improvement follows from coverage alone. The existing endpoint parent remains unadmitted and its earlier timing/memory tradeoffs remain open."
+      },
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
