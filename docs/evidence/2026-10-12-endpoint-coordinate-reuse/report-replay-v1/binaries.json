@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/bins/baseline",
+    "sha256": "48f36474df33aaf2788217dae33b3465b6ff8ca495344c01492a11484befdeb2",
+    "bytes": 42847120,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc#0.3.0",
+    "fresh": false
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/bins/candidate",
+    "sha256": "3b36827b25d8affe299fb8042acf0421a008d01b437222cc7a758eedf50aaea9",
+    "bytes": 42848088,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc#0.3.0",
+    "fresh": false
+  }
+}

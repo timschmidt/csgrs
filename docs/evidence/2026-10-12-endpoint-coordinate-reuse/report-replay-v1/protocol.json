@@ -1,0 +1,63 @@
+{
+  "scope": "Compare complete full-board JSON reports without normalizing any fields.\n\nThe frozen metadata-first baseline and endpoint-proof candidate read identical\nfull-resolution archives extracted to shared absolute input paths. Each board\nruns once per variant in a fresh CLI process, with the original four checks and\nminimum width. Both executables are built and bound before replay. This closes\na report comparison gap; it is not a matched application speedup experiment and\ndoes not replace either original runtime gate.\n",
+  "runner_sha256": "749b8b590ed28b3ffb945453a363b7c4e4a8c3af196b9d9b56cae80392c91f95",
+  "preparation_sha256": "c4cfcdbfd171c86c8a6889ebb134c230fa9dc8628de58f63a777f48a341ca789",
+  "native_result_sha256": "0008e37564664948e8ae2f3d62c67cf09c88ab1ee428bc2ef405ee5f9d0faa91",
+  "source_changes_sha256": {
+    "crates/hypercurve/src/point.rs": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+    "crates/hypercurve/src/segment.rs": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+    "crates/hypercurve/src/segment/endpoint_proof_tests.rs": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "2497f82c7dfc85b71725e8c86f6c541c9f384678ba637b9a699aa56c03a534ee"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target"
+  },
+  "fixtures": [
+    {
+      "label": "cparti-fpga",
+      "zip": "CPArti FPGA dev board.zip",
+      "board": "CPArti FPGA dev board.kicad_pcb",
+      "expected_findings": 12,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "archive_sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+      "board_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "label": "hvp109a",
+      "zip": "HVP109A.zip",
+      "board": "HVP109A.kicad_pcb",
+      "expected_findings": 197,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "archive_sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+      "board_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  ],
+  "input_hashes_sha256": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+  "extracted_input_files": 108,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "expected_cli_exit_code": 1,
+  "exit_code_contract": "run_cli exits 1 when a complete report has active findings; JSON parsing and finding counts are checked separately.",
+  "normalization": null,
+  "runtime_admitted": false
+}

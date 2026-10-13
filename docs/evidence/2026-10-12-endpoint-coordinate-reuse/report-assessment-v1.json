@@ -1,0 +1,103 @@
+{
+  "decision": "complete-report-replay-recorded",
+  "complete_reports_byte_identical": true,
+  "complete_report_values_identical": true,
+  "comparisons": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147892,
+      "candidate_bytes": 147892,
+      "baseline_sha256": "43558fbdf1a416705acd6423bbc3574f94dc640cf3b35d204d0be6bc1858d960",
+      "candidate_sha256": "43558fbdf1a416705acd6423bbc3574f94dc640cf3b35d204d0be6bc1858d960",
+      "violation_count": 12
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128807,
+      "candidate_bytes": 128807,
+      "baseline_sha256": "3217a0418584ad64cd9e9175864068a24eeeb75b6fc6c34b3fc9ce4563a71617",
+      "candidate_sha256": "3217a0418584ad64cd9e9175864068a24eeeb75b6fc6c34b3fc9ce4563a71617",
+      "violation_count": 197
+    }
+  ],
+  "production_binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/bins/baseline",
+      "sha256": "48f36474df33aaf2788217dae33b3465b6ff8ca495344c01492a11484befdeb2",
+      "bytes": 42847120,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc/Cargo.toml",
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc#0.3.0",
+      "fresh": false
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/bins/candidate",
+      "sha256": "3b36827b25d8affe299fb8042acf0421a008d01b437222cc7a758eedf50aaea9",
+      "bytes": 42848088,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc/Cargo.toml",
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc#0.3.0",
+      "fresh": false
+    }
+  },
+  "production_binary_byte_delta": 968,
+  "process_observations": [
+    {
+      "name": "cparti-fpga-baseline",
+      "process_seconds": 113.63942730659619,
+      "maximum_rss_kib": 1959956,
+      "findings": 12
+    },
+    {
+      "name": "cparti-fpga-candidate",
+      "process_seconds": 107.09086424484849,
+      "maximum_rss_kib": 1892300,
+      "findings": 12
+    },
+    {
+      "name": "hvp109a-candidate",
+      "process_seconds": 25.808323370758444,
+      "maximum_rss_kib": 532512,
+      "findings": 197
+    },
+    {
+      "name": "hvp109a-baseline",
+      "process_seconds": 26.84122209204361,
+      "maximum_rss_kib": 556324,
+      "findings": 197
+    }
+  ],
+  "limits": [
+    "Both complete original boards use shared absolute paths and all original input bytes. No report fields are normalized or omitted.",
+    "Active findings explain CLI exit code 1; JSON structure, complete bytes and counts are checked independently.",
+    "Four standalone CLI executions are report verification, not a fixed repeated application benchmark or a substitute for either original runtime assertion.",
+    "Process RSS includes fixture import, setup and reports; it does not isolate constructor allocations or prove graph reclamation.",
+    "Different replay-directory paths change report bytes relative to historical replay hashes; comparisons here use the same paths for both variants."
+  ],
+  "artifacts_sha256": {
+    "report-replay-v1/binaries.json": "c17252c7f26cc5266cba67d1581bf3e3699e4dfce2365beb3f1a5d68d4578801",
+    "report-replay-v1/build-baseline.stderr": "7db76e4759472256bacb8279e5d94d75715f68d3b24c269a4e8a3df574ab0ed5",
+    "report-replay-v1/build-baseline.stdout": "3a5bf05ff735b1313056c2edd96adb89492b39c23447eb6ddd50c2df71f9d04a",
+    "report-replay-v1/build-candidate.stderr": "142317e4c0d164922e549f1ceba3a0103b09940205a586dd89d721fa758aed95",
+    "report-replay-v1/build-candidate.stdout": "6d09fecb3e6595030ce4f6689cc0f6cb4696193790d9cee48dd98cb2e6c04b57",
+    "report-replay-v1/commands.json": "dbb63cc0acb071f80627a92297924c3eb913e70b68c16c071eba74e821ee9379",
+    "report-replay-v1/cparti-fpga-baseline.json.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "report-replay-v1/cparti-fpga-baseline.stderr": "529687942a2d0245ca54147dd5fa8bae574f14cb511ef040fb70ca0324403729",
+    "report-replay-v1/cparti-fpga-candidate.json.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "report-replay-v1/cparti-fpga-candidate.stderr": "800d113003103296b73f638ae8ff16219b0dd34e0e97707ca9c30ad8dfcf8045",
+    "report-replay-v1/hvp109a-baseline.json.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "report-replay-v1/hvp109a-baseline.stderr": "f02676ff2a31b52c4a0309cf4e9d01719819772bc0fabd2cbb222c378f297197",
+    "report-replay-v1/hvp109a-candidate.json.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "report-replay-v1/hvp109a-candidate.stderr": "5255f03e9e4638eb04b03848b8207fd552607c5919a7e72192b4d1479356df6a",
+    "report-replay-v1/input-hashes.json.gz": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+    "report-replay-v1/protocol.json": "983fdc9879b4bc5c55ad378669b6ffc4ec62c937f88bbcd80612ab7f82d9c279",
+    "report-replay-v1/result.json": "16b15ed38431e951db3ffb164ad1f55a410e3742c20e4748f800f87d79310515"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
