@@ -53,3 +53,16 @@ only the declared algebra file differs across variants. Exact arithmetic and
 fallback recovery, shared-test identity, manifest/lockfile identity, and all
 parent/main/native source guards pass. The frozen maps and deltas are committed
 before compilation.
+
+All 42 qualification commands passed. The [independent assessment](correctness-v1.json)
+checks every log, command and source binding. Each variant passes 902
+all-feature tests, 815 default tests, 28 doctests, the shared/cache/P4 controls,
+formatting, both strict Clippy configurations and warning-denied docs. Counts
+overlap and do not cover the complete workflow matrix.
+
+All eight recorded type layouts match. Memo inventories remain 1/1/2 for
+retained/original/opaque controls, with ordinary-copy sharing 0/0. Direct and
+outlined both reuse the capacity-one input buffer in the surviving-radical
+control and release radical capacity on cancellation; baseline capacities are
+four in both cases. Empty atom capacities are zero throughout. These local
+observations do not establish total memory or timing behavior.

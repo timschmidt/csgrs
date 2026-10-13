@@ -1,0 +1,407 @@
+{
+  "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
+  "assessor_sha256": "deefb1f2b968e90b49b61a3918f31a925287e6bcbc893cddd666392fe0f8156a",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "projection-regressions",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "direct-product-controls",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 902,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 815,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "projection-regressions",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "direct-product-controls",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "all-feature-library",
+      "passed": 902,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "default-library",
+      "passed": 815,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "direct",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "projection-regressions",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "direct-product-controls",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "all-feature-library",
+      "passed": 902,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "default-library",
+      "passed": 815,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "outlined",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "direct": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "outlined": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "direct": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "outlined": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    }
+  },
+  "sharing": {
+    "baseline": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "direct": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "outlined": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    }
+  },
+  "layouts_recorded": true,
+  "direct_product_storage": {
+    "baseline": {
+      "reused_input_buffer": 0,
+      "input_capacity": 1,
+      "output_capacity": 4,
+      "atom_capacity": 0,
+      "cancelled_radical_capacity": 4,
+      "cancelled_atom_capacity": 0
+    },
+    "direct": {
+      "reused_input_buffer": 1,
+      "input_capacity": 1,
+      "output_capacity": 1,
+      "atom_capacity": 0,
+      "cancelled_radical_capacity": 0,
+      "cancelled_atom_capacity": 0
+    },
+    "outlined": {
+      "reused_input_buffer": 1,
+      "input_capacity": 1,
+      "output_capacity": 1,
+      "atom_capacity": 0,
+      "cancelled_radical_capacity": 0,
+      "cancelled_atom_capacity": 0
+    }
+  },
+  "manifests_and_lockfiles_unchanged": true,
+  "source_parent_and_main_unchanged": true,
+  "all_42_commands_passed": true,
+  "qualification": "All three variants pass twenty shared projection/storage/memo/alias tests, eight shared direct-product controls, six inherited cache tests, eleven P4 tests and 28 doctests. Each passes 902 all-feature and 815 default library tests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "remaining": "Fixed scalar time/allocation/size controls, native qualification and original full-fixture gates, endpoint/broad/abort controls, complete report bytes and production CLI size. Private layouts do not establish total-memory or performance behavior; eligibility comparisons, private helper calls/bounds checks, code generation and reused vector capacities remain cost risks; no runtime is admitted.",
+  "artifacts_sha256": {
+    "qualification-v1/baseline-alias-regressions.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-alias-regressions.stdout": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "qualification-v1/baseline-all-feature-clippy.stderr": "608550e8a0f94e6b8123a2402886768150ba9517e410b392aa5235a8f70e1ded",
+    "qualification-v1/baseline-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-all-feature-library.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-all-feature-library.stdout": "99e9dbc83e13b659bb1ea3c035f1fa82101402f854c5b52d289c5ea5dc91580b",
+    "qualification-v1/baseline-cache-frontiers.stderr": "605ec7194f1312794ac3bb8e2bc28f37cb573cacae2b22ca0e54e99324dd0f2b",
+    "qualification-v1/baseline-cache-frontiers.stdout": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "qualification-v1/baseline-default-clippy.stderr": "da74e4b827d9e4693a494b3d54b60c77203194cb62626e1105abd9aa4d2004f1",
+    "qualification-v1/baseline-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-default-library.stderr": "bbc23f57248c7fb1fe6fb9ae9477a8f269658931fd6802c3df241aa1946a88e7",
+    "qualification-v1/baseline-default-library.stdout": "679494b4d574cc1793087f3b207b9e6fe811b0cbe755dfb630da5d20532fc190",
+    "qualification-v1/baseline-direct-product-controls.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-direct-product-controls.stdout": "37b685a9c64995d14c416a9528a7648827785097be3f4c0584f2c53549788e9c",
+    "qualification-v1/baseline-docs.stderr": "d85ced671187f070235bba474528a80651c230aa514f868161b0ad1a8944b77f",
+    "qualification-v1/baseline-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-doctests.stderr": "e85e6a4ba3923143c0a352a80625619d7dbb62c515be39d270dd567955b829e6",
+    "qualification-v1/baseline-doctests.stdout": "e36db95acd0b2dbed100d8dc36075380d2aaf73cf41254f153b87252e9ad03ee",
+    "qualification-v1/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-memo-regressions.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-memo-regressions.stdout": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "qualification-v1/baseline-projection-regressions.stderr": "3ff89a06643825660dc4327ff4b4921f77ef74af840f13a7f8375a756e249554",
+    "qualification-v1/baseline-projection-regressions.stdout": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "qualification-v1/baseline-sign-regressions.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-sign-regressions.stdout": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "qualification-v1/baseline-storage-regressions.stderr": "3bc67d7c3ea561cb12bbc450b4b400794a305088ab54ea9bc382cabaf5278a40",
+    "qualification-v1/baseline-storage-regressions.stdout": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "qualification-v1/commands.json": "18a4effd08d54882377aaed73e0ce02923c5f4e433c744081ba884cff0a5face",
+    "qualification-v1/direct-alias-regressions.stderr": "f367ca9e3441a27294661a7c6c9a6d7f6e14aeeeb9de9a2f39417567a6d3aad5",
+    "qualification-v1/direct-alias-regressions.stdout": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "qualification-v1/direct-all-feature-clippy.stderr": "644b9b0d59f83025ed34e7d0bca0680c797543dbade1f9f931e2595837468996",
+    "qualification-v1/direct-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/direct-all-feature-library.stderr": "5dcf55316f51006ab788382f77f473bc8c6673fa59b12adf02291ae3c2e7acf7",
+    "qualification-v1/direct-all-feature-library.stdout": "e1b223e3ccec6f43bbe4a212a52d96b4ed3b52a16c23cd2535c075bbee69acb1",
+    "qualification-v1/direct-cache-frontiers.stderr": "f367ca9e3441a27294661a7c6c9a6d7f6e14aeeeb9de9a2f39417567a6d3aad5",
+    "qualification-v1/direct-cache-frontiers.stdout": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "qualification-v1/direct-default-clippy.stderr": "1a70c566189aac461beee1efdebd4a892aa48c88a503d6bda0a51784be35e888",
+    "qualification-v1/direct-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/direct-default-library.stderr": "6cae79376b459b2d3a6e8a153c5ccccf426e42fe2443722f2d9892fbc0a6c6d9",
+    "qualification-v1/direct-default-library.stdout": "0f8b393125141168a7cbf740e50ae1dedc323c2b754a3347fbf2ed32a6c23fb5",
+    "qualification-v1/direct-direct-product-controls.stderr": "5dcf55316f51006ab788382f77f473bc8c6673fa59b12adf02291ae3c2e7acf7",
+    "qualification-v1/direct-direct-product-controls.stdout": "002fef7dffefa8ee0afbbf301bcd3503dcfa184574da992002bf4ed0ee8c7e6a",
+    "qualification-v1/direct-docs.stderr": "46660dee662f91030a67c17fc3efe3cf95fd9ab3c54e91673133abc41f2818d6",
+    "qualification-v1/direct-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/direct-doctests.stderr": "11a8cf7f7196cced3ad31903b30ce2680e25eb4bdc43ffff9832c24d6a7be362",
+    "qualification-v1/direct-doctests.stdout": "2b23e31c30f58a177e5b1610b7ae05a1c217959ced04b162485cbc7a4012a5b5",
+    "qualification-v1/direct-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/direct-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/direct-memo-regressions.stderr": "5dcf55316f51006ab788382f77f473bc8c6673fa59b12adf02291ae3c2e7acf7",
+    "qualification-v1/direct-memo-regressions.stdout": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "qualification-v1/direct-product-storage.json": "a542f033aab1686b9975336eb816385b14d3a83a5d82931dc8584009d2ce9798",
+    "qualification-v1/direct-projection-regressions.stderr": "faaa5f4a33f802e3c139f92a0ecf4126c13766b2778ec26146f24c1a1eb2ca5c",
+    "qualification-v1/direct-projection-regressions.stdout": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "qualification-v1/direct-sign-regressions.stderr": "5dcf55316f51006ab788382f77f473bc8c6673fa59b12adf02291ae3c2e7acf7",
+    "qualification-v1/direct-sign-regressions.stdout": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "qualification-v1/direct-storage-regressions.stderr": "4559b244199295824533142e297293cd5434c1cefa2a842b9567e951f60766e9",
+    "qualification-v1/direct-storage-regressions.stdout": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "qualification-v1/layouts.json": "688512a24ad65df21e3e7756ddeb16b963d9112e01361f86333f7c84b559a716",
+    "qualification-v1/memo-inventories.json": "8e5968731b4fc4319705c76c6ad358ddfca26648254cec18a2360c981df55122",
+    "qualification-v1/outlined-alias-regressions.stderr": "7da3e7837e10b7a04f795c2d28c1282db94000b96070b3f7228988793b407025",
+    "qualification-v1/outlined-alias-regressions.stdout": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "qualification-v1/outlined-all-feature-clippy.stderr": "a54b99f56df82538d1faf8ba3209d6610d9dfce88849013472584720da96a82e",
+    "qualification-v1/outlined-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/outlined-all-feature-library.stderr": "7da3e7837e10b7a04f795c2d28c1282db94000b96070b3f7228988793b407025",
+    "qualification-v1/outlined-all-feature-library.stdout": "658593aacdd065843a80ad98e4aaaca9868bf641ad1328c27b96c2e6aa172c30",
+    "qualification-v1/outlined-cache-frontiers.stderr": "13da5abd5ceb9ed725c5b704b228c99c19ad091951bba76b7548e2f015543bfc",
+    "qualification-v1/outlined-cache-frontiers.stdout": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "qualification-v1/outlined-default-clippy.stderr": "4fa869b76e7a5abd1a5fba25dc780a865f4eb2d43be7ace1c50841ce0e17c35a",
+    "qualification-v1/outlined-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/outlined-default-library.stderr": "95942b1105d2b06d76962e4f67e52ce17d62e9cd65349f5b5f1248c508e10bb6",
+    "qualification-v1/outlined-default-library.stdout": "a8995c0b36d27e160814a871c4f627074e8226236e4e5263e3072f2fc02ea25a",
+    "qualification-v1/outlined-direct-product-controls.stderr": "13da5abd5ceb9ed725c5b704b228c99c19ad091951bba76b7548e2f015543bfc",
+    "qualification-v1/outlined-direct-product-controls.stdout": "002fef7dffefa8ee0afbbf301bcd3503dcfa184574da992002bf4ed0ee8c7e6a",
+    "qualification-v1/outlined-docs.stderr": "8a4e9d59f076ce357f375dced51ddf79f5906d13ab290fb568393c488a480143",
+    "qualification-v1/outlined-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/outlined-doctests.stderr": "fa80562bf51fd1cfd706b453ac85a8ac00bd511e2bcc7aa3a6d15c3219dd7520",
+    "qualification-v1/outlined-doctests.stdout": "b4cd2d30e9826f1c43450ce46c4b0408ba965df2aad87031cd14d6588dc152b4",
+    "qualification-v1/outlined-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/outlined-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/outlined-memo-regressions.stderr": "13da5abd5ceb9ed725c5b704b228c99c19ad091951bba76b7548e2f015543bfc",
+    "qualification-v1/outlined-memo-regressions.stdout": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "qualification-v1/outlined-projection-regressions.stderr": "1a235f5a223c4263a92c4653d89603c743216414945562b916ee6778e1dc233b",
+    "qualification-v1/outlined-projection-regressions.stdout": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "qualification-v1/outlined-sign-regressions.stderr": "7da3e7837e10b7a04f795c2d28c1282db94000b96070b3f7228988793b407025",
+    "qualification-v1/outlined-sign-regressions.stdout": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "qualification-v1/outlined-storage-regressions.stderr": "96f5f00ca563abd84d7e15bf2e3f3d9cba8990b543c1560ce052f8305903f606",
+    "qualification-v1/outlined-storage-regressions.stdout": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "qualification-v1/protocol.json": "b1163ca9e96e5b155a2a8877f9a08efa1ef1881f2e32ce23297de2d01f5106d0",
+    "qualification-v1/result.json": "325c16ba4a69f5d17588c736630d90f64a83b7641811d748ca8ff8591d5ad0fd",
+    "qualification-v1/sharing.json": "3acbd19ec8432e12c146a1f29c4ec07c666c7ee6699956dd9b758207a6cd151a",
+    "qualification-v1/tests.json": "b6080b732f0e4660486c0251604c1cdbb3bf0cd38c26cef1fef51a3f1b4152ce"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

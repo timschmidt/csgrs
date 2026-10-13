@@ -1,0 +1,212 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "direct-product-controls",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "passed": 902,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "default-library",
+    "passed": 815,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "direct-product-controls",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "all-feature-library",
+    "passed": 902,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "default-library",
+    "passed": 815,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "direct",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "direct-product-controls",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "all-feature-library",
+    "passed": 902,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "default-library",
+    "passed": 815,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "outlined",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  }
+]

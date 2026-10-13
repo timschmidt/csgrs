@@ -1,0 +1,26 @@
+{
+  "baseline": {
+    "reused_input_buffer": 0,
+    "input_capacity": 1,
+    "output_capacity": 4,
+    "atom_capacity": 0,
+    "cancelled_radical_capacity": 4,
+    "cancelled_atom_capacity": 0
+  },
+  "direct": {
+    "reused_input_buffer": 1,
+    "input_capacity": 1,
+    "output_capacity": 1,
+    "atom_capacity": 0,
+    "cancelled_radical_capacity": 0,
+    "cancelled_atom_capacity": 0
+  },
+  "outlined": {
+    "reused_input_buffer": 1,
+    "input_capacity": 1,
+    "output_capacity": 1,
+    "atom_capacity": 0,
+    "cancelled_radical_capacity": 0,
+    "cancelled_atom_capacity": 0
+  }
+}

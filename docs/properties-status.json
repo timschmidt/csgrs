@@ -2746,7 +2746,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "outlined_same_radicand_products": {
-      "status": "three-sources-frozen-qualification-next",
+      "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
       "evidence": "docs/evidence/2026-10-13-outlined-same-radicand-products",
       "source_review": "scope-v1.json",
       "contract": {
@@ -2834,7 +2834,7 @@
         "Static symbol sizes and first stack adjustments do not establish cause, whole-program size or peak stack use.",
         "P4 allows only stronger cached facts, never contradiction or weakening."
       ],
-      "next_step": "Execute all 42 qualification commands in fresh targets; run the fixed scalar costs only after independent qualification assessment.",
+      "next_step": "Run the fixed 90-measurement scalar trial and 18 preflights after all builds, then independently assess every contrast and inspect existing binary code generation. No sample extension.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2845,6 +2845,100 @@
         "arithmetic_and_general_fallback_recovered": true,
         "shared_tests": 28,
         "main_and_35_pending_native_paths_unchanged": true
+      },
+      "qualification": {
+        "evidence": "correctness-v1.json",
+        "all_42_commands_passed": true,
+        "scope": "All three variants pass twenty shared projection/storage/memo/alias tests, eight shared direct-product controls, six inherited cache tests, eleven P4 tests and 28 doctests. Each passes 902 all-feature and 815 default library tests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals."
+      },
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "direct": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "outlined": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        }
+      },
+      "memo_inventories": {
+        "baseline": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "direct": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "outlined": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        }
+      },
+      "sharing": {
+        "baseline": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "direct": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "outlined": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        }
+      },
+      "direct_product_storage": {
+        "baseline": {
+          "reused_input_buffer": 0,
+          "input_capacity": 1,
+          "output_capacity": 4,
+          "atom_capacity": 0,
+          "cancelled_radical_capacity": 4,
+          "cancelled_atom_capacity": 0
+        },
+        "direct": {
+          "reused_input_buffer": 1,
+          "input_capacity": 1,
+          "output_capacity": 1,
+          "atom_capacity": 0,
+          "cancelled_radical_capacity": 0,
+          "cancelled_atom_capacity": 0
+        },
+        "outlined": {
+          "reused_input_buffer": 1,
+          "input_capacity": 1,
+          "output_capacity": 1,
+          "atom_capacity": 0,
+          "cancelled_radical_capacity": 0,
+          "cancelled_atom_capacity": 0
+        }
       }
     }
   },
