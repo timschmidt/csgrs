@@ -24,8 +24,12 @@ Preparation version 1 stopped before compilation because rustfmt moved optional
 commas in two inserted calls and an unrelated legacy expression. Its source and
 failure remain archived. Version 2 uses the formatted call fragments and leaves
 the included legacy file byte-identical outside the explicit insertions. The
-counter and site-test inputs are unchanged. Version 2 is prepared but has not
-executed; no diagnostic has been compiled or run. Counts are
+counter and site-test inputs are unchanged. Version 2 froze a 10,133-file source
+with seven changed files and recovered all original tokens from the explicit
+replacements. Formatting, all nine counter/site checks, the P4 and cache
+controls and the full 883-test scalar library pass. Native qualification and
+the board observation are still in progress; no board counts are recorded yet.
+Counts are
 coverage, not allocation measurements, time shares or predicted savings. A
 separate measured optimization would need independent qualification and fixed
 cost controls. The parent remains unadmitted; all 35 pending native entries,

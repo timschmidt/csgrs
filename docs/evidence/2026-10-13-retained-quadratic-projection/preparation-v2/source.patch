@@ -1,0 +1,595 @@
+--- a/crates/hyperdrc/src/app.rs
++++ b/crates/hyperdrc/src/app.rs
+@@ -8720,6 +8720,7 @@
+         let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+             .lock()
+             .unwrap_or_else(std::sync::PoisonError::into_inner);
++        let _projection_report = hyperreal::retained_projection_diagnostic::Report::begin();
+         let root = complex_zip_temp_root("kicad-smoke-suite");
+         let _ = fs::remove_dir_all(&root);
+         fs::create_dir_all(&root).unwrap();
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -480,6 +480,9 @@
+         // before retrying so it cannot change the original sharing decisions.
+         drop(memo);
+         if reused {
++            crate::retained_projection_diagnostic::record_retry(std::ptr::from_ref(
++                &self.internal.cache,
++            ) as usize);
+             self.pi_laurent_polynomial(budget).and_then(project)
+         } else {
+             None
+--- a/crates/hyperreal/src/computable/node/representation.rs
++++ b/crates/hyperreal/src/computable/node/representation.rs
+@@ -262,11 +262,35 @@
+     }
+ 
+     fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {
+-        let guard = self
+-            .cell()?
+-            .read()
+-            .unwrap_or_else(|error| error.into_inner());
+-        Some(guard.pi_laurent_polynomial.as_deref()?.to_polynomial())
++        let diagnostic_address = std::ptr::from_ref(self) as usize;
++        let cell = self.cell();
++        crate::retained_projection_diagnostic::record_cell(diagnostic_address, cell.is_some());
++        let guard = cell?.read().unwrap_or_else(|error| error.into_inner());
++        let Some(polynomial) = guard.pi_laurent_polynomial.as_deref() else {
++            crate::retained_projection_diagnostic::record_missing_form(diagnostic_address);
++            return None;
++        };
++        let result = polynomial.to_polynomial();
++        crate::retained_projection_diagnostic::record_copy(diagnostic_address, || {
++            let (radicals, vectors) =
++                polynomial
++                    .terms
++                    .iter()
++                    .fold((0, 0), |(radicals, vectors), (_, coefficient)| {
++                        let length = coefficient.radicals.len();
++                        (radicals + length, vectors + usize::from(length != 0))
++                    });
++            (
++                polynomial.terms.len(),
++                polynomial
++                    .terms
++                    .first()
++                    .map(|(power, coefficient)| (*power, coefficient.radicals.len())),
++                radicals,
++                vectors,
++            )
++        });
++        Some(result)
+     }
+ 
+     fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {
+--- a/crates/hyperreal/src/computable/node/retained_projection_site_tests.rs
++++ b/crates/hyperreal/src/computable/node/retained_projection_site_tests.rs
+@@ -0,0 +1,143 @@
++use super::*;
++use crate::retained_projection_diagnostic::Report;
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn quadratic() -> Computable {
++    raw(Approximation::Add(
++        Computable::rational(Rational::new(5)),
++        Computable::sqrt_rational(Rational::new(13)),
++    ))
++}
++
++#[test]
++fn missing_and_approximation_only_cells_are_distinguished() {
++    for warm_approximation in [false, true] {
++        let rational = Rational::fraction(17, 13).unwrap();
++        let value = raw(Approximation::Ratio(rational.clone()));
++        assert!(value.internal.cache.cell().is_none());
++        if warm_approximation {
++            let _ = value.approx(-8);
++        }
++        let before = value.cached();
++        let report = Report::begin();
++        assert_eq!(
++            value.exact_quadratic_surd_parts(),
++            Some((rational, Rational::zero(), None))
++        );
++        let actual = report.finish();
++        assert_eq!(actual.queries, [1, 1, 0, 0, 0]);
++        assert_eq!(
++            actual.reads,
++            if warm_approximation {
++                [[0, 1, 0], [0, 0, 0]]
++            } else {
++                [[1, 0, 0], [0, 0, 0]]
++            }
++        );
++        assert_eq!(actual.copies, [[[0; 4]; 6]; 2]);
++        assert_eq!(value.cached(), before);
++        assert_eq!(Arc::strong_count(&value.internal), 1);
++    }
++}
++
++#[test]
++fn retained_quadratic_root_copy_preserves_value_and_owners() {
++    let value = quadratic();
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let expected = Some((Rational::new(5), Rational::one(), Some(Rational::new(13))));
++    assert_eq!(value.exact_quadratic_surd_parts(), expected);
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    let owners = Arc::strong_count(&value.internal);
++    let report = Report::begin();
++    assert_eq!(clone.exact_quadratic_surd_parts(), expected);
++    let actual = report.finish();
++    assert_eq!(actual.queries, [1, 1, 0, 0, 0]);
++    assert_eq!(actual.reads, [[0, 0, 1], [0, 0, 0]]);
++    assert_eq!(actual.copies[0][2], [1, 1, 1, 1]);
++    assert_eq!(Arc::strong_count(&value.internal), owners);
++    assert!(value.cached().is_none());
++    drop(value);
++    drop(clone);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn retained_nonquadratic_root_declines_and_runs_original_retry() {
++    let value = raw(Approximation::Add(
++        Computable::sqrt_rational(Rational::new(13)),
++        Computable::sqrt_rational(Rational::new(17)),
++    ));
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    assert!(value.exact_quadratic_surd_parts().is_none());
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    let owners = Arc::strong_count(&value.internal);
++    let report = Report::begin();
++    assert!(clone.exact_quadratic_surd_parts().is_none());
++    let actual = report.finish();
++    assert_eq!(actual.queries, [1, 0, 1, 0, 1]);
++    assert_eq!(actual.reads, [[0, 0, 1], [0, 0, 0]]);
++    assert_eq!(actual.copies[0][3], [1, 1, 2, 1]);
++    assert_eq!(Arc::strong_count(&value.internal), owners);
++    assert!(value.cached().is_none());
++    drop(value);
++    drop(clone);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn recursive_copy_is_separate_from_the_missing_root_cell() {
++    let child = quadratic();
++    let clone = child.clone();
++    assert_eq!(
++        child.exact_quadratic_surd_parts(),
++        Some((Rational::new(5), Rational::one(), Some(Rational::new(13))))
++    );
++    let root = raw(Approximation::Add(
++        raw(Approximation::Ratio(Rational::fraction(7, 19).unwrap())),
++        child,
++    ));
++    assert!(root.internal.cache.cell().is_none());
++    let child_owners = Arc::strong_count(&clone.internal);
++    let report = Report::begin();
++    assert_eq!(
++        root.exact_quadratic_surd_parts(),
++        Some((
++            Rational::fraction(102, 19).unwrap(),
++            Rational::one(),
++            Some(Rational::new(13))
++        ))
++    );
++    let actual = report.finish();
++    assert_eq!(actual.queries, [1, 1, 0, 0, 0]);
++    assert_eq!(actual.reads, [[1, 0, 0], [1, 0, 1]]);
++    assert_eq!(actual.copies[1][2], [1, 1, 1, 1]);
++    assert_eq!(actual.copies[0], [[0; 4]; 6]);
++    assert_eq!(Arc::strong_count(&root.internal), 1);
++    assert_eq!(Arc::strong_count(&clone.internal), child_owners);
++    assert!(root.cached().is_none());
++}
++
++#[test]
++fn reads_outside_quadratic_projection_are_not_counted() {
++    let value = quadratic();
++    let _clone = value.clone();
++    assert!(value.exact_quadratic_surd_parts().is_some());
++    let report = Report::begin();
++    assert!(value.internal.cache.pi_laurent_polynomial().is_some());
++    let actual = report.finish();
++    assert_eq!(actual.queries, [0; 5]);
++    assert_eq!(actual.reads, [[0; 3]; 2]);
++    assert_eq!(actual.copies, [[[0; 4]; 6]; 2]);
++}
+--- a/crates/hyperreal/src/computable/node/structural_analysis.rs
++++ b/crates/hyperreal/src/computable/node/structural_analysis.rs
+@@ -1,3 +1,6 @@
++#[cfg(test)]
++mod retained_projection_site_tests;
++
+ #[derive(Clone, Copy)]
+ struct Binary64Interval {
+     lower: f64,
+@@ -1306,6 +1309,9 @@
+     pub(crate) fn exact_quadratic_surd_parts(
+         &self,
+     ) -> Option<(Rational, Rational, Option<Rational>)> {
++        let mut projection_probe = crate::retained_projection_diagnostic::RootScope::begin(
++            std::ptr::from_ref(&self.internal.cache) as usize,
++        );
+         // Project the shared bounded normal form after cancellation. Requiring
+         // every intermediate expression to use one radical would miss exact
+         // quadratic values assembled from independent geometric directions.
+@@ -1326,6 +1332,7 @@
+                 _ => None,
+             }
+         })?;
++        projection_probe.success();
+         crate::trace_dispatch!("computable", "structural", "quadratic-surd");
+         Some(value)
+     }
+--- a/crates/hyperreal/src/lib.rs
++++ b/crates/hyperreal/src/lib.rs
+@@ -28,6 +28,8 @@
+     SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+ };
+ 
++pub mod retained_projection_diagnostic;
++
+ mod trace;
+ pub(crate) use trace::trace_dispatch;
+ 
+--- a/crates/hyperreal/src/retained_projection_diagnostic.rs
++++ b/crates/hyperreal/src/retained_projection_diagnostic.rs
+@@ -0,0 +1,343 @@
++//! Diagnostic-only counts of existing retained quadratic-projection work.
++//!
++//! Contexts contain cache addresses only; no address is dereferenced and no
++//! scalar, cache guard, approximation or other owner is retained here.
++use std::cell::Cell;
++use std::marker::PhantomData;
++use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
++
++const ROLES: [&str; 2] = ["root", "recursive"];
++const SHAPES: [&str; 6] = [
++    "empty",
++    "rational",
++    "quadratic",
++    "multiple_radicals",
++    "nonzero_power",
++    "multiple_powers",
++];
++static ACTIVE: AtomicBool = AtomicBool::new(false);
++static QUERIES: [AtomicU64; 5] = [const { AtomicU64::new(0) }; 5];
++static READS: [[AtomicU64; 3]; 2] = [const { [const { AtomicU64::new(0) }; 3] }; 2];
++static COPIES: [[[AtomicU64; 4]; 6]; 2] =
++    [const { [const { [const { AtomicU64::new(0) }; 4] }; 6] }; 2];
++
++thread_local! {
++    static ROOT: Cell<Option<usize>> = const { Cell::new(None) };
++}
++
++/// Fixed counters read only after all observed workers have returned.
++#[derive(Debug, PartialEq, Eq)]
++pub struct Snapshot {
++    /// Started, succeeded, declined, unwound and original-retry root queries.
++    pub queries: [u64; 5],
++    /// Missing cell, missing closed form and executed copy, root then recursive.
++    pub reads: [[u64; 3]; 2],
++    /// Copies, term entries, radical entries and nonempty radical vectors.
++    /// Indexed by root/recursive, then the six printed shape names.
++    pub copies: [[[u64; 4]; 6]; 2],
++}
++
++/// An explicit observation lifetime, ended after its workers have joined.
++pub struct Report {
++    finished: bool,
++}
++
++impl Report {
++    /// Reset counters and begin while no other report or observed work is active.
++    pub fn begin() -> Self {
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        for counter in &QUERIES {
++            counter.store(0, Ordering::Relaxed);
++        }
++        for row in &READS {
++            for counter in row {
++                counter.store(0, Ordering::Relaxed);
++            }
++        }
++        for role in &COPIES {
++            for row in role {
++                for counter in row {
++                    counter.store(0, Ordering::Relaxed);
++                }
++            }
++        }
++        ACTIVE.store(true, Ordering::Release);
++        Self { finished: false }
++    }
++
++    /// Finish without printing, after every observed worker has returned.
++    pub fn finish(mut self) -> Snapshot {
++        self.finished = true;
++        finish()
++    }
++}
++
++fn snapshot() -> Snapshot {
++    Snapshot {
++        queries: std::array::from_fn(|i| QUERIES[i].load(Ordering::Relaxed)),
++        reads: std::array::from_fn(|i| {
++            std::array::from_fn(|j| READS[i][j].load(Ordering::Relaxed))
++        }),
++        copies: std::array::from_fn(|i| {
++            std::array::from_fn(|j| {
++                std::array::from_fn(|k| COPIES[i][j][k].load(Ordering::Relaxed))
++            })
++        }),
++    }
++}
++
++fn finish() -> Snapshot {
++    assert!(ACTIVE.swap(false, Ordering::AcqRel));
++    snapshot()
++}
++
++impl Drop for Report {
++    fn drop(&mut self) {
++        if self.finished {
++            return;
++        }
++        let counters = finish();
++        let q = counters.queries;
++        eprintln!(
++            "RETAINED_PROJECTION_QUERY\t{}\t{}\t{}\t{}\t{}",
++            q[0], q[1], q[2], q[3], q[4]
++        );
++        for (role, reads) in counters.reads.into_iter().enumerate() {
++            eprintln!(
++                "RETAINED_PROJECTION_READ\t{}\t{}\t{}\t{}",
++                ROLES[role], reads[0], reads[1], reads[2]
++            );
++            for (shape, row) in counters.copies[role].into_iter().enumerate() {
++                eprintln!(
++                    "RETAINED_PROJECTION_COPY\t{}\t{}\t{}\t{}\t{}\t{}",
++                    ROLES[role], SHAPES[shape], row[0], row[1], row[2], row[3]
++                );
++            }
++        }
++    }
++}
++
++/// Restores the previous thread-local root on return or unwind.
++pub(crate) struct RootScope {
++    previous: Option<usize>,
++    active: bool,
++    succeeded: bool,
++    // A scope must be dropped on the thread whose context it replaced.
++    _not_send: PhantomData<*mut ()>,
++}
++
++impl RootScope {
++    pub(crate) fn begin(address: usize) -> Self {
++        let active = ACTIVE.load(Ordering::Acquire);
++        let previous = if active {
++            QUERIES[0].fetch_add(1, Ordering::Relaxed);
++            ROOT.with(|root| root.replace(Some(address)))
++        } else {
++            None
++        };
++        Self {
++            previous,
++            active,
++            succeeded: false,
++            _not_send: PhantomData,
++        }
++    }
++
++    pub(crate) fn success(&mut self) {
++        self.succeeded = true;
++    }
++}
++
++impl Drop for RootScope {
++    fn drop(&mut self) {
++        if self.active {
++            let outcome = if std::thread::panicking() {
++                3
++            } else if self.succeeded {
++                1
++            } else {
++                2
++            };
++            QUERIES[outcome].fetch_add(1, Ordering::Relaxed);
++            ROOT.with(|root| root.set(self.previous));
++        }
++    }
++}
++
++fn role(address: usize) -> Option<usize> {
++    if !ACTIVE.load(Ordering::Acquire) {
++        return None;
++    }
++    ROOT.with(|root| root.get().map(|root| usize::from(root != address)))
++}
++
++pub(crate) fn record_cell(address: usize, exists: bool) {
++    if !exists && let Some(role) = role(address) {
++        READS[role][0].fetch_add(1, Ordering::Relaxed);
++    }
++}
++
++pub(crate) fn record_missing_form(address: usize) {
++    if let Some(role) = role(address) {
++        READS[role][1].fetch_add(1, Ordering::Relaxed);
++    }
++}
++
++pub(crate) fn record_copy(
++    address: usize,
++    shape: impl FnOnce() -> (usize, Option<(i16, usize)>, usize, usize),
++) {
++    let Some(role) = role(address) else {
++        return;
++    };
++    let (terms, first, radicals, vectors) = shape();
++    let bin = match (terms, first) {
++        (0, _) => 0,
++        (1, Some((0, 0))) => 1,
++        (1, Some((0, 1))) => 2,
++        (1, Some((0, _))) => 3,
++        (1, Some(_)) => 4,
++        _ => 5,
++    };
++    READS[role][2].fetch_add(1, Ordering::Relaxed);
++    for (counter, count) in
++        COPIES[role][bin]
++            .iter()
++            .zip([1, terms as u64, radicals as u64, vectors as u64])
++    {
++        counter.fetch_add(count, Ordering::Relaxed);
++    }
++}
++
++pub(crate) fn record_retry(address: usize) {
++    if role(address) == Some(0) {
++        QUERIES[4].fetch_add(1, Ordering::Relaxed);
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn all_shapes_roles_reset_and_disabled_callbacks_are_observed() {
++        let empty = Snapshot {
++            queries: [0; 5],
++            reads: [[0; 3]; 2],
++            copies: [[[0; 4]; 6]; 2],
++        };
++        assert_eq!(Report::begin().finish(), empty);
++        record_copy(7, || panic!("disabled callback must not run"));
++        let report = Report::begin();
++        record_copy(7, || panic!("out-of-scope callback must not run"));
++        {
++            let mut scope = RootScope::begin(7);
++            for address in [7, 11] {
++                record_cell(address, false);
++                record_cell(address, true);
++                record_missing_form(address);
++                for shape in [
++                    (0, None, 0, 0),
++                    (1, Some((0, 0)), 0, 0),
++                    (1, Some((0, 1)), 1, 1),
++                    (1, Some((0, 3)), 3, 1),
++                    (1, Some((-1, 2)), 2, 1),
++                    (3, Some((0, 1)), 5, 2),
++                ] {
++                    record_copy(address, || shape);
++                }
++            }
++            record_retry(7);
++            record_retry(11);
++            scope.success();
++        }
++        let actual = report.finish();
++        assert_eq!(actual.queries, [1, 1, 0, 0, 1]);
++        assert_eq!(actual.reads, [[1, 1, 6]; 2]);
++        assert_eq!(
++            actual.copies,
++            [[
++                [1, 0, 0, 0],
++                [1, 1, 0, 0],
++                [1, 1, 1, 1],
++                [1, 1, 3, 1],
++                [1, 1, 2, 1],
++                [1, 3, 5, 2],
++            ]; 2]
++        );
++        record_missing_form(7);
++        record_retry(7);
++        assert_eq!(snapshot(), actual);
++        assert_eq!(Report::begin().finish(), empty);
++    }
++
++    #[test]
++    fn nested_scopes_restore_context_on_return_and_unwind() {
++        let report = Report::begin();
++        {
++            let mut outer = RootScope::begin(13);
++            {
++                let _inner = RootScope::begin(17);
++                record_cell(17, false);
++                record_cell(13, false);
++            }
++            assert!(
++                std::panic::catch_unwind(|| {
++                    let _inner = RootScope::begin(19);
++                    record_missing_form(19);
++                    panic!("intentional scope unwind");
++                })
++                .is_err()
++            );
++            record_retry(13);
++            record_cell(13, false);
++            outer.success();
++        }
++        assert!(ROOT.with(|root| root.get().is_none()));
++        record_cell(13, false);
++        let actual = report.finish();
++        assert_eq!(actual.queries, [3, 1, 1, 1, 1]);
++        assert_eq!(actual.reads, [[2, 1, 0], [1, 0, 0]]);
++    }
++
++    #[test]
++    fn joined_workers_keep_separate_roots_and_aggregate_counts() {
++        let report = Report::begin();
++        std::thread::scope(|threads| {
++            for worker in 0..4 {
++                threads.spawn(move || {
++                    for _ in 0..1000 {
++                        let mut root = RootScope::begin(worker);
++                        record_copy(worker, || (1, Some((0, 1)), 1, 1));
++                        record_cell(worker + 10, false);
++                        root.success();
++                    }
++                    assert!(ROOT.with(|root| root.get().is_none()));
++                });
++            }
++        });
++        let actual = report.finish();
++        assert_eq!(actual.queries, [4000, 4000, 0, 0, 0]);
++        assert_eq!(actual.reads, [[0, 0, 4000], [4000, 0, 0]]);
++        assert_eq!(actual.copies[0][2], [4000, 4000, 4000, 4000]);
++        assert_eq!(actual.copies[1], [[0; 4]; 6]);
++    }
++
++    #[test]
++    fn report_unwind_ends_recording_after_query_scope_drops() {
++        assert!(
++            std::panic::catch_unwind(|| {
++                let _report = Report::begin();
++                let _query = RootScope::begin(23);
++                record_cell(23, false);
++                panic!("intentional report unwind");
++            })
++            .is_err()
++        );
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        assert!(ROOT.with(|root| root.get().is_none()));
++        assert_eq!(snapshot().queries, [1, 0, 0, 1, 0]);
++        assert_eq!(snapshot().reads, [[1, 0, 0], [0, 0, 0]]);
++        assert_eq!(Report::begin().finish().queries, [0; 5]);
++    }
++}
