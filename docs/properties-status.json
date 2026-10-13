@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "In a separate copy of the frozen endpoint candidate, count the existing left/right coefficient shapes at RadicalCoefficient::multiply: rational-only, radical-only, opaque-only and mixed. Use fixed integer counters, inspect only existing vector presence/length, and retain no scalar owners. Keep every original multiplication, early rejection, insertion order, normal-form pass, cache publication and full-board fixture. Only if actual shape coverage supports it, evaluate consuming the owned left vectors for a purely rational right scale through the existing scaling helper. Do not inherit the rejected coefficient merge or eight-node prepass. Preserve the eight/nine-term cache frontier and mandatory original fallback, opaque ownership, abort/budget receipts, cold/warm/cloned facts, fixed scalar/native timing and memory controls, complete reports, and both original native limits. All prior endpoint timing tradeoffs and the broader properties/future-work plan remain open."
+      "next_step": "Evaluate the preregistered right-scalar and bidirectional coefficient-scaling variants separately, using the frozen uninstrumented endpoint parent. Preserve original arithmetic fallbacks and ownership guarantees; complete scalar correctness and fixed three-suite cost controls before native qualification. Full requirements: docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json"
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -258,7 +258,7 @@
           "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
         }
       ],
-      "next_step": "In a separate copy of the frozen endpoint candidate, count the existing left/right coefficient shapes at RadicalCoefficient::multiply: rational-only, radical-only, opaque-only and mixed. Use fixed integer counters, inspect only existing vector presence/length, and retain no scalar owners. Keep every original multiplication, early rejection, insertion order, normal-form pass, cache publication and full-board fixture. Only if actual shape coverage supports it, evaluate consuming the owned left vectors for a purely rational right scale through the existing scaling helper. Do not inherit the rejected coefficient merge or eight-node prepass. Preserve the eight/nine-term cache frontier and mandatory original fallback, opaque ownership, abort/budget receipts, cold/warm/cloned facts, fixed scalar/native timing and memory controls, complete reports, and both original native limits. All prior endpoint timing tradeoffs and the broader properties/future-work plan remain open.",
+      "next_step": "Evaluate the preregistered right-scalar and bidirectional coefficient-scaling variants separately, using the frozen uninstrumented endpoint parent. Preserve original arithmetic fallbacks and ownership guarantees; complete scalar correctness and fixed three-suite cost controls before native qualification. Full requirements: docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-assessment-v1.json",
       "cost_summary": "Twenty arc cost processes, ten broad capability processes and six effective final-abort processes complete. All variant witnesses match, all 231 historical witnesses are preserved, and every 210-row abort receipt set is identical. The 21 intended exact non-endpoint/off-circle query rows have median paired ratios from 0.267 to 0.635; 20 are faster in all five pairs and the remaining row in four.",
@@ -316,7 +316,39 @@
       "result": "6786 samples, zero lost. Normal-form work has 27.404% inclusive sampled weight; coefficient multiplication has 9.227%, including a declared allocator-leaf subset at 1.947% of total profile weight. The profile does not identify operand shapes or predict savings.",
       "profiled_worker_cpu_seconds": 135.955714978,
       "original_worker_cpu_limit_seconds": 120,
-      "next_step": "In a separate copy of the frozen endpoint candidate, count the existing left/right coefficient shapes at RadicalCoefficient::multiply: rational-only, radical-only, opaque-only and mixed. Use fixed integer counters, inspect only existing vector presence/length, and retain no scalar owners. Keep every original multiplication, early rejection, insertion order, normal-form pass, cache publication and full-board fixture. Only if actual shape coverage supports it, evaluate consuming the owned left vectors for a purely rational right scale through the existing scaling helper. Do not inherit the rejected coefficient merge or eight-node prepass. Preserve the eight/nine-term cache frontier and mandatory original fallback, opaque ownership, abort/budget receipts, cold/warm/cloned facts, fixed scalar/native timing and memory controls, complete reports, and both original native limits. All prior endpoint timing tradeoffs and the broader properties/future-work plan remain open.",
+      "next_step": "Evaluate the preregistered right-scalar and bidirectional coefficient-scaling variants separately, using the frozen uninstrumented endpoint parent. Preserve original arithmetic fallbacks and ownership guarantees; complete scalar correctness and fixed three-suite cost controls before native qualification. Full requirements: docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json",
+      "runtime_admitted": false
+    },
+    "isolated_coefficient_shapes": {
+      "status": "advance-two-isolated-scaling-variants-with-separate-cost-results",
+      "evidence": "docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json",
+      "result": "21954159 observed multiplications. Right-rational calls: 3067533 (13.972%); 1348450 have owned left vectors (6.142% of all calls). Rational-left with borrowed right vectors occurs 8594476 times. No scalar queries or owners were added by the counters.",
+      "qualification": [
+        {
+          "name": "counter-calibration",
+          "passed": 2,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "cache-frontiers",
+          "passed": 6,
+          "failed": 0,
+          "ignored": 0
+        },
+        {
+          "name": "endpoint-regressions",
+          "passed": 5,
+          "failed": 0,
+          "ignored": 0
+        }
+      ],
+      "instrumented_worker_cpu_seconds": 134.127171383,
+      "original_worker_cpu_limit_seconds": 120,
+      "next_step": {
+        "right": "When the right coefficient has no radical or opaque vectors, consume the owned left coefficient through the existing scale_in_place helper; preserve the original general multiplication body otherwise.",
+        "both": "Include the right-scalar branch; additionally, when only the left coefficient is rational, clone the borrowed right coefficient once and scale its vectors through the existing helper."
+      },
       "runtime_admitted": false
     }
   },
