@@ -1,0 +1,110 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "f476ba91b602996797d4d70428d9232d82ca703c00a53dc625d80dd22b0c192b",
+    "bytes": 11704166,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/baseline/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "recursive": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/recursive/cost-target/release/libhyperreal.rlib",
+    "sha256": "f0bc96e874984619d09a442aaeccbb56ad71f76bce7c48898b5597d27e274b16",
+    "bytes": 11728828,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/recursive/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/recursive/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/recursive/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  },
+  "projected": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/projected/cost-target/release/libhyperreal.rlib",
+    "sha256": "60ab44a18b662e551e6bc5408cfa1b9abe5cdb111bfd554b8302c64ca09e54bd",
+    "bytes": 11799268,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/projected/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/projected/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/projected/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  }
+}

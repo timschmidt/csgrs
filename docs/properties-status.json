@@ -1792,7 +1792,7 @@
       "native_executed": false
     },
     "retained_polynomial_projection": {
-      "status": "v2-scalar-qualification-passed-fixed-costs-next",
+      "status": "reject-direct-retained-polynomial-projection-on-scalar-costs",
       "evidence": "docs/evidence/2026-10-13-retained-polynomial-projection",
       "scope": "Three fresh variants: unchanged endpoint/P4 baseline, rejected recursive-view control and direct rational/pi/quadratic projection from owned or retained slices. Only five consumer/wrapper methods and private projection definitions change from the recursive runtime.",
       "controls": "Six new shared public-query controls, fourteen unchanged shared storage/memo/alias tests, inherited cache/P4 checks, five recursive-view controls and three projected helper controls. All configurations and focused counts overlap.",
@@ -1802,7 +1802,23 @@
         "Borrowed projection may change generated code and binary size.",
         "Root retained-copy counts do not predict application improvement."
       ],
-      "next_step": "Run the predeclared eighteen preflights and ninety measurements with separate fresh targets and unchanged probes. Assess all three contrasts from the same closed sample set; retain every adverse result. Native correctness, costs, full reports, production size and original full-fixture gates remain open.",
+      "next_step": {
+        "status": "cache-local-borrowing-review-pending-no-candidate",
+        "task": "Review a scoped read callback for a closed right multiplication operand while retaining the parent Box-backed cache and owned polynomial return type. Determine whether the multiplication body and every helper it invokes can be proven non-reentrant with respect to the held cache lock before preparing a candidate.",
+        "basis": "The parent copies a closed payload under its cache read guard, then releases the guard. Its multiplication normalizes left before right. A cache-local borrowed product might avoid the right-side copy without an Arc header or a result enum on every recursive call. This is a source-based hypothesis, not an attribution of timing or a demonstrated improvement.",
+        "source_review_sha256": {
+          "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+          "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e"
+        },
+        "constraints": [
+          "Resolve read-lock reentrancy, writer blocking and callback lifetime before implementation; do not hold a guard across unchecked expression evaluation or publication.",
+          "Preserve left-before-right normalization, cache-hit work accounting, reuse tracking, operation/insertion order, every opaque-owner decision and the original retry after releasing the first memo.",
+          "Keep original Box payloads, scratch layouts, memo behavior, all exact/declined shapes and limits, with no new cache fact, approximation, dependency or recognition prepass.",
+          "Include original cache/P4/frontier tests and explicit alias, lifetime, concurrent-reader/writer and fallback controls. Require fresh qualification and fixed costs; no old sample extension.",
+          "Root retained-copy coverage of 0.6244 percent is not a cost estimate. Keep both full-resolution native gates and every remaining admission obligation."
+        ],
+        "candidate_prepared": false
+      },
       "native_limits": "120-second full-board worker CPU and 60-second copper-neck check-body wall; no fixture or limit change.",
       "runtime_admitted": false,
       "plan_complete": false,
@@ -1902,7 +1918,141 @@
           "source_shares_closed": 0,
           "views_share_closed": 0
         }
-      }
+      },
+      "cost_summaries": {
+        "recursive_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 1,
+          "at_least_four_slower_rows": 28,
+          "all_five_faster_rows": 7,
+          "at_least_four_faster_rows": 13,
+          "ratio_of_medians_above_one_rows": 43,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 9,
+              "increased_rows": 0,
+              "min_delta": -2000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 9,
+              "increased_rows": 15,
+              "min_delta": -96000,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 21,
+              "min_delta": 0,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 1,
+              "increased_rows": 21,
+              "min_delta": -96,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            4192,
+            4216
+          ]
+        },
+        "projected_vs_baseline": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 9,
+          "at_least_four_slower_rows": 29,
+          "all_five_faster_rows": 4,
+          "at_least_four_faster_rows": 10,
+          "ratio_of_medians_above_one_rows": 41,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 9,
+              "increased_rows": 0,
+              "min_delta": -2000,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 9,
+              "increased_rows": 15,
+              "min_delta": -96000,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 21,
+              "min_delta": 0,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 1,
+              "increased_rows": 21,
+              "min_delta": -96,
+              "max_delta": 16000,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            5072,
+            5080
+          ]
+        },
+        "projected_vs_recursive": {
+          "timing_rows": 68,
+          "memory_rows": 68,
+          "all_five_slower_rows": 10,
+          "at_least_four_slower_rows": 12,
+          "all_five_faster_rows": 11,
+          "at_least_four_faster_rows": 30,
+          "ratio_of_medians_above_one_rows": 24,
+          "memory_fields": {
+            "allocation_calls": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "allocated_bytes": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "retained_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            },
+            "peak_bytes_delta": {
+              "reduced_rows": 0,
+              "increased_rows": 0,
+              "min_delta": 0,
+              "max_delta": 0,
+              "all_five_deltas_equal": true
+            }
+          },
+          "probe_binary_delta_bytes_range": [
+            856,
+            888
+          ]
+        }
+      },
+      "cost_decision": "Reject the measured projected version. All scoped correctness checks and exact cost witnesses pass. Against the unchanged baseline, nine phases are slower in all five pairs, retained/peak bytes rise in twenty-one phases, and every probe grows. Against the recursive control, ten integer phases are slower in all five pairs and every requested-memory counter is unchanged. Favorable quadratic timings do not resolve the adverse rows. Neither experimental source advances to native validation or main runtime.",
+      "cost_limits": "One closed five-block three-source sample set: 90 measurements and 18 preflights, 4096 timing inputs and 1000 allocation inputs per phase. All witnesses and inventories match. Contrasts share samples and are not independent experiments. All raw samples, adverse rows and ranges remain; no significance or application-speedup claim. Memory counters exclude native C heaps, stack frames and allocator bookkeeping.",
+      "native_executed": false
     }
   },
   "status_meanings": {

@@ -1,0 +1,92 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-rational-time",
+    "sha256": "cdb98abcdbd3d1fd665055ac108629749e5aa66bd8feacea49183c74ef86ac81",
+    "bytes": 6178184
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-rational-memory",
+    "sha256": "6bf945bdf75388434fc916130d4e824ebb9f4eb1dc2d2695e11eb319000d09f1",
+    "bytes": 6180072
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-quadratic-time",
+    "sha256": "4d630491a9c80bb7f58c5fc6d03495ceb675dba722c835dbaf6276c3c7b02064",
+    "bytes": 6153208
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-quadratic-memory",
+    "sha256": "5a277e9586b2db5fd560c0cb340d80c994c15717d331ffb8515ed3448aa792b5",
+    "bytes": 6156456
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-integer-time",
+    "sha256": "8c4c571c675f58d7cece10a52dd0481636f1643515bb204672047e9a2991b6fc",
+    "bytes": 6049024
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/baseline-integer-memory",
+    "sha256": "710910e4343fa06b126f132a27a71d59b11b29877946bea4664f0b9614cf0487",
+    "bytes": 6051880
+  },
+  "recursive-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-rational-time",
+    "sha256": "8b13152bd06f40753ea59289dcb9564ae6ecee003953f37260e33554e9aa2dc3",
+    "bytes": 6182384
+  },
+  "recursive-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-rational-memory",
+    "sha256": "e9f6610d4710197d37c7e79573a34ad4b4e1cbb5b8b4ad7e6bfe15ebf3f8ce6b",
+    "bytes": 6184264
+  },
+  "recursive-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-quadratic-time",
+    "sha256": "18b50089c20d0f5c9309b7ed5b0061f7cb6b01d4a8417b4df3e1f31e64f1dacb",
+    "bytes": 6157424
+  },
+  "recursive-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-quadratic-memory",
+    "sha256": "f182a26197ec2f7ff32506ad99135b43905c394e69a0b1d09ff1a46d8ccd14a0",
+    "bytes": 6160664
+  },
+  "recursive-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-integer-time",
+    "sha256": "653135be6f5f21db0377181aa10a1868d1486038f6b304343070170924d16587",
+    "bytes": 6053232
+  },
+  "recursive-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/recursive-integer-memory",
+    "sha256": "ba52c8544b97c8aa89a67bbd00833b0fbd7e26da4c6549a9f79afff8db723b4b",
+    "bytes": 6056072
+  },
+  "projected-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-rational-time",
+    "sha256": "f793a2bf132ed8fa07b7148c176ad9487f7f7613fe67cd6db07151e250e3cfe8",
+    "bytes": 6183256
+  },
+  "projected-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-rational-memory",
+    "sha256": "2f597015d3c3b189dfacf842b8aa29367dacafa9b203cdbaf11c6648e1bcb4dc",
+    "bytes": 6185152
+  },
+  "projected-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-quadratic-time",
+    "sha256": "064e6ee176a5fc159ae2f9651d9d6226049724a4871fd36013fc819eeda58d0b",
+    "bytes": 6158280
+  },
+  "projected-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-quadratic-memory",
+    "sha256": "8dcefb6572be003d5241cc9324e4279f0855c995afe37e5d771604cf4942f339",
+    "bytes": 6161536
+  },
+  "projected-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-integer-time",
+    "sha256": "305f9b0f779ef57b35c9917e60ccaddebcf6fe548f7b314f17d8652bddc71608",
+    "bytes": 6054104
+  },
+  "projected-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-polynomial-projection-v2/cost-v2-binaries/projected-integer-memory",
+    "sha256": "53f1bb7af3235b87c5f2c93b3081c8dbcbcf9f71e63b6e0e4c21ef0af09140c5",
+    "bytes": 6056952
+  }
+}

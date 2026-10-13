@@ -1,0 +1,4946 @@
+{
+  "status": "reject-direct-retained-polynomial-projection-on-scalar-costs",
+  "decision_runner_sha256": "bd153e4bf333ba86aad20ba2dca552873627b96c50ba72ac7b38e9369f6041e1",
+  "cost_assessment_sha256": "9ff60bb358c61a2d78a91d53990e65bec737f67e35c9d77e72080c75235a669a",
+  "correctness_sha256": "68ed1f3add5b7358e45242b5661fa2add3ac0d42f5aa74263b79cec4475ced7c",
+  "decision": "Reject the measured projected version. All scoped correctness checks and exact cost witnesses pass. Against the unchanged baseline, nine phases are slower in all five pairs, retained/peak bytes rise in twenty-one phases, and every probe grows. Against the recursive control, ten integer phases are slower in all five pairs and every requested-memory counter is unchanged. Favorable quadratic timings do not resolve the adverse rows. Neither experimental source advances to native validation or main runtime.",
+  "closed_sample_set": {
+    "measurement_processes": 90,
+    "preflight_processes": 18,
+    "blocks": 5,
+    "timing_inputs_per_phase": 4096,
+    "allocation_inputs_per_phase": 1000,
+    "comparisons_share_samples": true,
+    "independent_experiments": false,
+    "extended": false,
+    "all_witnesses_and_inventories_match": true
+  },
+  "summaries": {
+    "recursive_vs_baseline": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 1,
+      "at_least_four_slower_rows": 28,
+      "all_five_faster_rows": 7,
+      "at_least_four_faster_rows": 13,
+      "ratio_of_medians_above_one_rows": 43,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 9,
+          "increased_rows": 0,
+          "min_delta": -2000,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 9,
+          "increased_rows": 15,
+          "min_delta": -96000,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 21,
+          "min_delta": 0,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 1,
+          "increased_rows": 21,
+          "min_delta": -96,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        4192,
+        4216
+      ]
+    },
+    "projected_vs_baseline": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 9,
+      "at_least_four_slower_rows": 29,
+      "all_five_faster_rows": 4,
+      "at_least_four_faster_rows": 10,
+      "ratio_of_medians_above_one_rows": 41,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 9,
+          "increased_rows": 0,
+          "min_delta": -2000,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 9,
+          "increased_rows": 15,
+          "min_delta": -96000,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 21,
+          "min_delta": 0,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 1,
+          "increased_rows": 21,
+          "min_delta": -96,
+          "max_delta": 16000,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        5072,
+        5080
+      ]
+    },
+    "projected_vs_recursive": {
+      "timing_rows": 68,
+      "memory_rows": 68,
+      "all_five_slower_rows": 10,
+      "at_least_four_slower_rows": 12,
+      "all_five_faster_rows": 11,
+      "at_least_four_faster_rows": 30,
+      "ratio_of_medians_above_one_rows": 24,
+      "memory_fields": {
+        "allocation_calls": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "allocated_bytes": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "retained_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        },
+        "peak_bytes_delta": {
+          "reduced_rows": 0,
+          "increased_rows": 0,
+          "min_delta": 0,
+          "max_delta": 0,
+          "all_five_deltas_equal": true
+        }
+      },
+      "probe_binary_delta_bytes_range": [
+        856,
+        888
+      ]
+    }
+  },
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "recursive": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "projected": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    }
+  },
+  "retained_view_layouts": {
+    "recursive": {
+      "PiLaurentValue": 24,
+      "CachedEvaluation": 64
+    },
+    "projected": {
+      "PiLaurentValue": 24,
+      "CachedEvaluation": 64
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "recursive": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "projected": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    }
+  },
+  "ordinary_copy_sharing": {
+    "baseline": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "recursive": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "projected": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    }
+  },
+  "slower_in_all_five_blocks": {
+    "recursive_vs_baseline": [
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_first",
+        "reference_ns": [
+          2244886,
+          2164472,
+          2134964,
+          2126594,
+          3132596
+        ],
+        "candidate_ns": [
+          2324001,
+          2440863,
+          3544867,
+          2257905,
+          3546567
+        ],
+        "reference_median_ns": 2164472,
+        "candidate_median_ns": 2440863,
+        "ratio_of_medians": 1.1276944215494586,
+        "block_ratios": [
+          1.0352423241091084,
+          1.1276944215494586,
+          1.660387247747503,
+          1.0617470941797071,
+          1.1321495015635594
+        ],
+        "median_block_ratio": 1.1276944215494586,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2126594,
+          3132596
+        ],
+        "candidate_range_ns": [
+          2257905,
+          3546567
+        ]
+      }
+    ],
+    "projected_vs_baseline": [
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_first",
+        "reference_ns": [
+          3792590,
+          3710846,
+          3807899,
+          6399712,
+          3792780
+        ],
+        "candidate_ns": [
+          3987107,
+          3963658,
+          4094759,
+          6793904,
+          3959229
+        ],
+        "reference_median_ns": 3792780,
+        "candidate_median_ns": 3987107,
+        "ratio_of_medians": 1.0512360326726042,
+        "block_ratios": [
+          1.0512886971700077,
+          1.06812786087054,
+          1.075332880415158,
+          1.0615952717872303,
+          1.043885751348615
+        ],
+        "median_block_ratio": 1.0615952717872303,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          3710846,
+          6399712
+        ],
+        "candidate_range_ns": [
+          3959229,
+          6793904
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_warm",
+        "reference_ns": [
+          2836255,
+          2793798,
+          2922079,
+          4660180,
+          2868934
+        ],
+        "candidate_ns": [
+          2996035,
+          3010204,
+          3033753,
+          5224852,
+          3040641
+        ],
+        "reference_median_ns": 2868934,
+        "candidate_median_ns": 3033753,
+        "ratio_of_medians": 1.0574495614050377,
+        "block_ratios": [
+          1.0563348500046716,
+          1.0774594297798195,
+          1.0382173103465033,
+          1.1211695685574377,
+          1.059850453164834
+        ],
+        "median_block_ratio": 1.059850453164834,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2793798,
+          4660180
+        ],
+        "candidate_range_ns": [
+          2996035,
+          5224852
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_cloned",
+        "reference_ns": [
+          3204230,
+          3216039,
+          3298144,
+          5432458,
+          3308503
+        ],
+        "candidate_ns": [
+          3422516,
+          3404937,
+          3456663,
+          6068474,
+          3410716
+        ],
+        "reference_median_ns": 3298144,
+        "candidate_median_ns": 3422516,
+        "ratio_of_medians": 1.037709693694393,
+        "block_ratios": [
+          1.0681243231603224,
+          1.0587362280121604,
+          1.0480630924544228,
+          1.1170770211200896,
+          1.0308940327392782
+        ],
+        "median_block_ratio": 1.0587362280121604,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          3204230,
+          5432458
+        ],
+        "candidate_range_ns": [
+          3404937,
+          6068474
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_warm",
+        "reference_ns": [
+          1533655,
+          1167050,
+          1236115,
+          1256474,
+          1617149
+        ],
+        "candidate_ns": [
+          1962585,
+          1359297,
+          1291501,
+          1328340,
+          2285474
+        ],
+        "reference_median_ns": 1256474,
+        "candidate_median_ns": 1359297,
+        "ratio_of_medians": 1.0818345624342405,
+        "block_ratios": [
+          1.2796782848815411,
+          1.1647290176085001,
+          1.0448065107210898,
+          1.0571965675374102,
+          1.4132736068228715
+        ],
+        "median_block_ratio": 1.1647290176085001,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1167050,
+          1617149
+        ],
+        "candidate_range_ns": [
+          1291501,
+          2285474
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_first",
+        "reference_ns": [
+          1963275,
+          1375276,
+          1399074,
+          1447081,
+          1391625
+        ],
+        "candidate_ns": [
+          2419604,
+          1535254,
+          1507006,
+          1629118,
+          2373258
+        ],
+        "reference_median_ns": 1399074,
+        "candidate_median_ns": 1629118,
+        "ratio_of_medians": 1.1644258988445215,
+        "block_ratios": [
+          1.2324325425628095,
+          1.1163242869067735,
+          1.0771453118276804,
+          1.1257959989800157,
+          1.7053861492859068
+        ],
+        "median_block_ratio": 1.1257959989800157,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1375276,
+          1963275
+        ],
+        "candidate_range_ns": [
+          1507006,
+          2419604
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_warm",
+        "reference_ns": [
+          1374186,
+          1381115,
+          1392274,
+          1438351,
+          1397525
+        ],
+        "candidate_ns": [
+          2304602,
+          1530165,
+          1510357,
+          1631898,
+          2369597
+        ],
+        "reference_median_ns": 1392274,
+        "candidate_median_ns": 1631898,
+        "ratio_of_medians": 1.172109800226105,
+        "block_ratios": [
+          1.677067005485429,
+          1.1079200501044446,
+          1.084813046857156,
+          1.134561730759738,
+          1.695566805602762
+        ],
+        "median_block_ratio": 1.134561730759738,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1374186,
+          1438351
+        ],
+        "candidate_range_ns": [
+          1510357,
+          2369597
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_cloned",
+        "reference_ns": [
+          2270894,
+          2232097,
+          2286413,
+          2370678,
+          2269385
+        ],
+        "candidate_ns": [
+          3754073,
+          2434613,
+          2541926,
+          2553825,
+          3919201
+        ],
+        "reference_median_ns": 2270894,
+        "candidate_median_ns": 2553825,
+        "ratio_of_medians": 1.1245901393900375,
+        "block_ratios": [
+          1.6531255972317511,
+          1.090729031937232,
+          1.1117527760732642,
+          1.0772551143596896,
+          1.7269881487715835
+        ],
+        "median_block_ratio": 1.1117527760732642,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2232097,
+          2370678
+        ],
+        "candidate_range_ns": [
+          2434613,
+          3919201
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_first",
+        "reference_ns": [
+          1327739,
+          1323529,
+          1339038,
+          1368766,
+          1325390
+        ],
+        "candidate_ns": [
+          2200179,
+          1778788,
+          1484209,
+          1572932,
+          2390306
+        ],
+        "reference_median_ns": 1327739,
+        "candidate_median_ns": 1778788,
+        "ratio_of_medians": 1.3397120970311183,
+        "block_ratios": [
+          1.6570869726655615,
+          1.3439735736806673,
+          1.1084143989939046,
+          1.1491606308163704,
+          1.8034736945351935
+        ],
+        "median_block_ratio": 1.3439735736806673,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1323529,
+          1368766
+        ],
+        "candidate_range_ns": [
+          1484209,
+          2390306
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_cloned",
+        "reference_ns": [
+          1899730,
+          1889211,
+          1912229,
+          2367527,
+          1962006
+        ],
+        "candidate_ns": [
+          3398817,
+          2110995,
+          2264065,
+          2491609,
+          3552066
+        ],
+        "reference_median_ns": 1912229,
+        "candidate_median_ns": 2491609,
+        "ratio_of_medians": 1.3029867238704151,
+        "block_ratios": [
+          1.7891052939101872,
+          1.1173950395164967,
+          1.1839926075799498,
+          1.0524099619560834,
+          1.8104256561906538
+        ],
+        "median_block_ratio": 1.1839926075799498,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1889211,
+          2367527
+        ],
+        "candidate_range_ns": [
+          2110995,
+          3552066
+        ]
+      }
+    ],
+    "projected_vs_recursive": [
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_first",
+        "reference_ns": [
+          1461470,
+          1557394,
+          1354597,
+          1425082,
+          2137954
+        ],
+        "candidate_ns": [
+          2091977,
+          1648967,
+          1499307,
+          1538785,
+          2469781
+        ],
+        "reference_median_ns": 1461470,
+        "candidate_median_ns": 1648967,
+        "ratio_of_medians": 1.1282934305870118,
+        "block_ratios": [
+          1.4314197349244253,
+          1.0587988652839295,
+          1.106828820675079,
+          1.0797869876961466,
+          1.1552077359943198
+        ],
+        "median_block_ratio": 1.106828820675079,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1354597,
+          2137954
+        ],
+        "candidate_range_ns": [
+          1499307,
+          2469781
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_warm",
+        "reference_ns": [
+          1220887,
+          1329069,
+          1195758,
+          1277943,
+          2181140
+        ],
+        "candidate_ns": [
+          1962585,
+          1359297,
+          1291501,
+          1328340,
+          2285474
+        ],
+        "reference_median_ns": 1277943,
+        "candidate_median_ns": 1359297,
+        "ratio_of_medians": 1.0636601162962667,
+        "block_ratios": [
+          1.6075074925034012,
+          1.022743740166989,
+          1.0800688768128668,
+          1.0394360311844895,
+          1.0478346185939462
+        ],
+        "median_block_ratio": 1.0478346185939462,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1195758,
+          2181140
+        ],
+        "candidate_range_ns": [
+          1291501,
+          2285474
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_cloned",
+        "reference_ns": [
+          2279524,
+          2350689,
+          2320001,
+          2299542,
+          2465551
+        ],
+        "candidate_ns": [
+          3684288,
+          2476220,
+          2544315,
+          2939718,
+          4135977
+        ],
+        "reference_median_ns": 2320001,
+        "candidate_median_ns": 2939718,
+        "ratio_of_medians": 1.2671192814141028,
+        "block_ratios": [
+          1.6162532177770448,
+          1.0534017898582075,
+          1.0966870272900744,
+          1.2783928277891858,
+          1.6775061639365805
+        ],
+        "median_block_ratio": 1.2783928277891858,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2279524,
+          2465551
+        ],
+        "candidate_range_ns": [
+          2476220,
+          4135977
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_construction",
+        "reference_ns": [
+          2239826,
+          2297263,
+          2222258,
+          2295843,
+          2302543
+        ],
+        "candidate_ns": [
+          4210261,
+          2356688,
+          2431113,
+          2409055,
+          4137666
+        ],
+        "reference_median_ns": 2295843,
+        "candidate_median_ns": 2431113,
+        "ratio_of_medians": 1.058919534131907,
+        "block_ratios": [
+          1.879726818065332,
+          1.0258677391313054,
+          1.0939832368698863,
+          1.0493117342954201,
+          1.7969983622455694
+        ],
+        "median_block_ratio": 1.0939832368698863,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2222258,
+          2302543
+        ],
+        "candidate_range_ns": [
+          2356688,
+          4210261
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_first",
+        "reference_ns": [
+          1390524,
+          1373216,
+          1407644,
+          1396375,
+          1400804
+        ],
+        "candidate_ns": [
+          2419604,
+          1535254,
+          1507006,
+          1629118,
+          2373258
+        ],
+        "reference_median_ns": 1396375,
+        "candidate_median_ns": 1629118,
+        "ratio_of_medians": 1.1666765732700743,
+        "block_ratios": [
+          1.740066334705478,
+          1.117998916412276,
+          1.0705874496676717,
+          1.1666765732700743,
+          1.6942113243537282
+        ],
+        "median_block_ratio": 1.1666765732700743,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1373216,
+          1407644
+        ],
+        "candidate_range_ns": [
+          1507006,
+          2419604
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_warm",
+        "reference_ns": [
+          1420013,
+          1406113,
+          1408184,
+          1435801,
+          1439541
+        ],
+        "candidate_ns": [
+          2304602,
+          1530165,
+          1510357,
+          1631898,
+          2369597
+        ],
+        "reference_median_ns": 1420013,
+        "candidate_median_ns": 1631898,
+        "ratio_of_medians": 1.1492134226940176,
+        "block_ratios": [
+          1.6229442969888304,
+          1.0882233504704102,
+          1.072556569311965,
+          1.1365767261619124,
+          1.646078159635606
+        ],
+        "median_block_ratio": 1.1365767261619124,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1406113,
+          1439541
+        ],
+        "candidate_range_ns": [
+          1510357,
+          2369597
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_cloned",
+        "reference_ns": [
+          2292803,
+          2360638,
+          2343190,
+          2331230,
+          2330510
+        ],
+        "candidate_ns": [
+          3754073,
+          2434613,
+          2541926,
+          2553825,
+          3919201
+        ],
+        "reference_median_ns": 2331230,
+        "candidate_median_ns": 2553825,
+        "ratio_of_medians": 1.0954839290846463,
+        "block_ratios": [
+          1.6373290683935777,
+          1.0313368674061842,
+          1.0848142916280796,
+          1.0954839290846463,
+          1.681692419255871
+        ],
+        "median_block_ratio": 1.0954839290846463,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2292803,
+          2360638
+        ],
+        "candidate_range_ns": [
+          2434613,
+          3919201
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_first",
+        "reference_ns": [
+          1307820,
+          1317190,
+          1341278,
+          1340428,
+          1322060
+        ],
+        "candidate_ns": [
+          2200179,
+          1778788,
+          1484209,
+          1572932,
+          2390306
+        ],
+        "reference_median_ns": 1322060,
+        "candidate_median_ns": 1778788,
+        "ratio_of_medians": 1.345466922832549,
+        "block_ratios": [
+          1.6823255493875304,
+          1.3504414700992264,
+          1.1065632926209183,
+          1.1734550457018207,
+          1.8080162776273392
+        ],
+        "median_block_ratio": 1.3504414700992264,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1307820,
+          1341278
+        ],
+        "candidate_range_ns": [
+          1484209,
+          2390306
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_warm",
+        "reference_ns": [
+          1322949,
+          1345767,
+          1339828,
+          1349557,
+          1445331
+        ],
+        "candidate_ns": [
+          2266104,
+          1534695,
+          1480449,
+          1650307,
+          2459062
+        ],
+        "reference_median_ns": 1345767,
+        "candidate_median_ns": 1650307,
+        "ratio_of_medians": 1.226294744929843,
+        "block_ratios": [
+          1.712918638586975,
+          1.1403868574574945,
+          1.1049545165498855,
+          1.2228509058898587,
+          1.701383281753453
+        ],
+        "median_block_ratio": 1.2228509058898587,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1322949,
+          1445331
+        ],
+        "candidate_range_ns": [
+          1480449,
+          2459062
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_cloned",
+        "reference_ns": [
+          2010313,
+          2108105,
+          2051649,
+          2006062,
+          2168081
+        ],
+        "candidate_ns": [
+          3398817,
+          2110995,
+          2264065,
+          2491609,
+          3552066
+        ],
+        "reference_median_ns": 2051649,
+        "candidate_median_ns": 2491609,
+        "ratio_of_medians": 1.214442138981863,
+        "block_ratios": [
+          1.6906904546704915,
+          1.0013708994570953,
+          1.1035342790116633,
+          1.2420398771324117,
+          1.638345615316033
+        ],
+        "median_block_ratio": 1.2420398771324117,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2006062,
+          2168081
+        ],
+        "candidate_range_ns": [
+          2110995,
+          3552066
+        ]
+      }
+    ]
+  },
+  "slower_in_at_least_four_blocks": {
+    "recursive_vs_baseline": [
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "quadratic_reciprocal_cloned",
+        "reference_ns": [
+          3488111,
+          3358780,
+          3418256,
+          5386681,
+          3599374
+        ],
+        "candidate_ns": [
+          3608462,
+          3742794,
+          3570305,
+          3585924,
+          5732807
+        ],
+        "reference_median_ns": 3488111,
+        "candidate_median_ns": 3608462,
+        "ratio_of_medians": 1.0345032024496927,
+        "block_ratios": [
+          1.0345032024496927,
+          1.1143313941371569,
+          1.0444814548705539,
+          0.665701941510923,
+          1.5927233457817942
+        ],
+        "median_block_ratio": 1.0444814548705539,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3358780,
+          5386681
+        ],
+        "candidate_range_ns": [
+          3570305,
+          5732807
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "pi_parameter_transport_warm",
+        "reference_ns": [
+          7390443,
+          7098104,
+          7254043,
+          12153977,
+          7385014
+        ],
+        "candidate_ns": [
+          8369636,
+          7552603,
+          7990482,
+          7629367,
+          11021785
+        ],
+        "reference_median_ns": 7385014,
+        "candidate_median_ns": 7990482,
+        "ratio_of_medians": 1.0819860327956048,
+        "block_ratios": [
+          1.1324944932259136,
+          1.0640310426558979,
+          1.1015211792927062,
+          0.6277259698615523,
+          1.4924528240569348
+        ],
+        "median_block_ratio": 1.1015211792927062,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          7098104,
+          12153977
+        ],
+        "candidate_range_ns": [
+          7552603,
+          11021785
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "opaque_linear_atom_first",
+        "reference_ns": [
+          5772095,
+          5854998,
+          5885957,
+          9561305,
+          6233503
+        ],
+        "candidate_ns": [
+          9876853,
+          6219773,
+          6049346,
+          6242302,
+          6341375
+        ],
+        "reference_median_ns": 5885957,
+        "candidate_median_ns": 6242302,
+        "ratio_of_medians": 1.060541556793568,
+        "block_ratios": [
+          1.7111383301903382,
+          1.0623014730321,
+          1.0277591222633804,
+          0.6528713392157243,
+          1.01730519741468
+        ],
+        "median_block_ratio": 1.0277591222633804,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5772095,
+          9561305
+        ],
+        "candidate_range_ns": [
+          6049346,
+          9876853
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "conjugate_product_first",
+        "reference_ns": [
+          3792590,
+          3710846,
+          3807899,
+          6399712,
+          3792780
+        ],
+        "candidate_ns": [
+          6194365,
+          4050822,
+          3941000,
+          3937370,
+          3973608
+        ],
+        "reference_median_ns": 3792780,
+        "candidate_median_ns": 3973608,
+        "ratio_of_medians": 1.0476769019030896,
+        "block_ratios": [
+          1.6332809504850248,
+          1.0916168442452205,
+          1.0349539207841385,
+          0.6152417483786771,
+          1.0476769019030896
+        ],
+        "median_block_ratio": 1.0476769019030896,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3710846,
+          6399712
+        ],
+        "candidate_range_ns": [
+          3937370,
+          6194365
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "conjugate_product_warm",
+        "reference_ns": [
+          2836255,
+          2793798,
+          2922079,
+          4660180,
+          2868934
+        ],
+        "candidate_ns": [
+          5136448,
+          3151064,
+          3044841,
+          3052441,
+          3133075
+        ],
+        "reference_median_ns": 2868934,
+        "candidate_median_ns": 3133075,
+        "ratio_of_medians": 1.0920693888391995,
+        "block_ratios": [
+          1.810996542976566,
+          1.1278782503244686,
+          1.0420118689467328,
+          0.6550049568900772,
+          1.0920693888391995
+        ],
+        "median_block_ratio": 1.0920693888391995,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2793798,
+          4660180
+        ],
+        "candidate_range_ns": [
+          3044841,
+          5136448
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "conjugate_product_cloned",
+        "reference_ns": [
+          3204230,
+          3216039,
+          3298144,
+          5432458,
+          3308503
+        ],
+        "candidate_ns": [
+          5648042,
+          3493041,
+          3532028,
+          3490920,
+          3773622
+        ],
+        "reference_median_ns": 3298144,
+        "candidate_median_ns": 3532028,
+        "ratio_of_medians": 1.070913823047144,
+        "block_ratios": [
+          1.7626830783058645,
+          1.0861314181824289,
+          1.070913823047144,
+          0.6426041397835013,
+          1.1405829162010734
+        ],
+        "median_block_ratio": 1.0861314181824289,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3204230,
+          5432458
+        ],
+        "candidate_range_ns": [
+          3490920,
+          5648042
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "affine_surd_warm",
+        "reference_ns": [
+          2292643,
+          1460970,
+          1687874,
+          1619849,
+          2536606
+        ],
+        "candidate_ns": [
+          1837124,
+          1927108,
+          2637670,
+          1728992,
+          2572233
+        ],
+        "reference_median_ns": 1687874,
+        "candidate_median_ns": 1927108,
+        "ratio_of_medians": 1.141736883203367,
+        "block_ratios": [
+          0.8013127207332323,
+          1.3190606241059022,
+          1.5627173592341608,
+          1.0673785025641278,
+          1.014045145363529
+        ],
+        "median_block_ratio": 1.0673785025641278,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1460970,
+          2536606
+        ],
+        "candidate_range_ns": [
+          1728992,
+          2637670
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "affine_surd_cloned",
+        "reference_ns": [
+          4017765,
+          2518688,
+          2530506,
+          2553975,
+          3974027
+        ],
+        "candidate_ns": [
+          2738592,
+          2966126,
+          4315504,
+          3050321,
+          4224180
+        ],
+        "reference_median_ns": 2553975,
+        "candidate_median_ns": 3050321,
+        "ratio_of_medians": 1.1943425444650007,
+        "block_ratios": [
+          0.6816207518359088,
+          1.1776472512673264,
+          1.705391727978515,
+          1.1943425444650007,
+          1.0629469804810083
+        ],
+        "median_block_ratio": 1.1776472512673264,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2518688,
+          4017765
+        ],
+        "candidate_range_ns": [
+          2738592,
+          4315504
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_first",
+        "reference_ns": [
+          2244886,
+          2164472,
+          2134964,
+          2126594,
+          3132596
+        ],
+        "candidate_ns": [
+          2324001,
+          2440863,
+          3544867,
+          2257905,
+          3546567
+        ],
+        "reference_median_ns": 2164472,
+        "candidate_median_ns": 2440863,
+        "ratio_of_medians": 1.1276944215494586,
+        "block_ratios": [
+          1.0352423241091084,
+          1.1276944215494586,
+          1.660387247747503,
+          1.0617470941797071,
+          1.1321495015635594
+        ],
+        "median_block_ratio": 1.1276944215494586,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2126594,
+          3132596
+        ],
+        "candidate_range_ns": [
+          2257905,
+          3546567
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_warm",
+        "reference_ns": [
+          1672366,
+          1734471,
+          1712633,
+          1696044,
+          2850375
+        ],
+        "candidate_ns": [
+          1755290,
+          1801916,
+          2743582,
+          1813736,
+          2783370
+        ],
+        "reference_median_ns": 1712633,
+        "candidate_median_ns": 1813736,
+        "ratio_of_medians": 1.0590336633709616,
+        "block_ratios": [
+          1.0495848396822227,
+          1.0388850548668729,
+          1.6019672632723998,
+          1.0693920676586222,
+          0.9764925667675306
+        ],
+        "median_block_ratio": 1.0495848396822227,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1672366,
+          2850375
+        ],
+        "candidate_range_ns": [
+          1755290,
+          2783370
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_cloned",
+        "reference_ns": [
+          2914780,
+          2995945,
+          2985235,
+          2971377,
+          4885606
+        ],
+        "candidate_ns": [
+          3173652,
+          3181341,
+          4774982,
+          3267196,
+          4873046
+        ],
+        "reference_median_ns": 2985235,
+        "candidate_median_ns": 3267196,
+        "ratio_of_medians": 1.0944518605737907,
+        "block_ratios": [
+          1.0888135639739533,
+          1.0618823109235984,
+          1.59953303508769,
+          1.099556199028262,
+          0.9974291827871506
+        ],
+        "median_block_ratio": 1.0888135639739533,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2914780,
+          4885606
+        ],
+        "candidate_range_ns": [
+          3173652,
+          4873046
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "pi_transport_first",
+        "reference_ns": [
+          1033089,
+          983253,
+          1007471,
+          990072,
+          1395574
+        ],
+        "candidate_ns": [
+          1100035,
+          1096085,
+          1524415,
+          1139832,
+          1058628
+        ],
+        "reference_median_ns": 1007471,
+        "candidate_median_ns": 1100035,
+        "ratio_of_medians": 1.0918775825805407,
+        "block_ratios": [
+          1.0648017740969073,
+          1.1147537815801223,
+          1.5131105510729341,
+          1.1512617264198968,
+          0.7585609935410089
+        ],
+        "median_block_ratio": 1.1147537815801223,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          983253,
+          1395574
+        ],
+        "candidate_range_ns": [
+          1058628,
+          1524415
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "pi_transport_cloned",
+        "reference_ns": [
+          1380246,
+          1458210,
+          1390944,
+          1408783,
+          2239826
+        ],
+        "candidate_ns": [
+          1496998,
+          1847354,
+          2377257,
+          1542245,
+          1542294
+        ],
+        "reference_median_ns": 1408783,
+        "candidate_median_ns": 1542294,
+        "ratio_of_medians": 1.0947704508075409,
+        "block_ratios": [
+          1.084587819852403,
+          1.266864169084014,
+          1.7090961246462835,
+          1.0947356690136096,
+          0.6885775948667441
+        ],
+        "median_block_ratio": 1.0947356690136096,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1380246,
+          2239826
+        ],
+        "candidate_range_ns": [
+          1496998,
+          2377257
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "mixed_field_decline_first",
+        "reference_ns": [
+          1334208,
+          1314590,
+          1421882,
+          1327779,
+          2250475
+        ],
+        "candidate_ns": [
+          1441652,
+          1955096,
+          2164421,
+          1411543,
+          1420073
+        ],
+        "reference_median_ns": 1334208,
+        "candidate_median_ns": 1441652,
+        "ratio_of_medians": 1.0805301722070322,
+        "block_ratios": [
+          1.0805301722070322,
+          1.4872287176990544,
+          1.5222226598269055,
+          1.0630857996699752,
+          0.6310103422610782
+        ],
+        "median_block_ratio": 1.0805301722070322,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1314590,
+          2250475
+        ],
+        "candidate_range_ns": [
+          1411543,
+          2164421
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "mixed_field_decline_warm",
+        "reference_ns": [
+          1334129,
+          1312020,
+          1383425,
+          1304201,
+          2315132
+        ],
+        "candidate_ns": [
+          1469559,
+          1704213,
+          2254016,
+          1472219,
+          1433422
+        ],
+        "reference_median_ns": 1334129,
+        "candidate_median_ns": 1472219,
+        "ratio_of_medians": 1.1035057329538598,
+        "block_ratios": [
+          1.101511922760093,
+          1.2989230347098368,
+          1.6293011908849413,
+          1.128828301772503,
+          0.619153465115596
+        ],
+        "median_block_ratio": 1.128828301772503,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1304201,
+          2315132
+        ],
+        "candidate_range_ns": [
+          1433422,
+          2254016
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_decline_first",
+        "reference_ns": [
+          722330,
+          717201,
+          756608,
+          712071,
+          1050908
+        ],
+        "candidate_ns": [
+          829753,
+          917917,
+          1096645,
+          855031,
+          812715
+        ],
+        "reference_median_ns": 722330,
+        "candidate_median_ns": 855031,
+        "ratio_of_medians": 1.1837124306065094,
+        "block_ratios": [
+          1.1487173452577077,
+          1.2798601786667894,
+          1.4494229508543395,
+          1.2007664965993559,
+          0.7733455259642138
+        ],
+        "median_block_ratio": 1.2007664965993559,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          712071,
+          1050908
+        ],
+        "candidate_range_ns": [
+          812715,
+          1096645
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_decline_warm",
+        "reference_ns": [
+          721541,
+          707772,
+          758688,
+          709412,
+          1059367
+        ],
+        "candidate_ns": [
+          905088,
+          896159,
+          1106914,
+          818264,
+          802815
+        ],
+        "reference_median_ns": 721541,
+        "candidate_median_ns": 896159,
+        "ratio_of_medians": 1.2420070377151124,
+        "block_ratios": [
+          1.2543819408737689,
+          1.2661690487897233,
+          1.4589844573790545,
+          1.1534397501029021,
+          0.757825191836257
+        ],
+        "median_block_ratio": 1.2543819408737689,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          707772,
+          1059367
+        ],
+        "candidate_range_ns": [
+          802815,
+          1106914
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_decline_cloned",
+        "reference_ns": [
+          887759,
+          890279,
+          948655,
+          927987,
+          1401214
+        ],
+        "candidate_ns": [
+          1528515,
+          1145061,
+          1460250,
+          1048538,
+          1036829
+        ],
+        "reference_median_ns": 927987,
+        "candidate_median_ns": 1145061,
+        "ratio_of_medians": 1.2339192251615594,
+        "block_ratios": [
+          1.7217679572947162,
+          1.286182196816953,
+          1.5392845660435037,
+          1.1299059146302697,
+          0.739950500066371
+        ],
+        "median_block_ratio": 1.286182196816953,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          887759,
+          1401214
+        ],
+        "candidate_range_ns": [
+          1036829,
+          1528515
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_construction",
+        "reference_ns": [
+          10748434,
+          10782501,
+          11247130,
+          10588884,
+          17623142
+        ],
+        "candidate_ns": [
+          19358534,
+          11165564,
+          18968490,
+          11212192,
+          10686208
+        ],
+        "reference_median_ns": 10782501,
+        "candidate_median_ns": 11212192,
+        "ratio_of_medians": 1.0398507730256645,
+        "block_ratios": [
+          1.8010562282840459,
+          1.0355263588660923,
+          1.6865182495445505,
+          1.0588643713539594,
+          0.6063735967173164
+        ],
+        "median_block_ratio": 1.0588643713539594,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          10588884,
+          17623142
+        ],
+        "candidate_range_ns": [
+          10686208,
+          19358534
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_first",
+        "reference_ns": [
+          5642633,
+          5776174,
+          5653852,
+          6013588,
+          9903401
+        ],
+        "candidate_ns": [
+          11330184,
+          6605408,
+          10216830,
+          6364304,
+          6433499
+        ],
+        "reference_median_ns": 5776174,
+        "candidate_median_ns": 6605408,
+        "ratio_of_medians": 1.1435611184843115,
+        "block_ratios": [
+          2.007960468100619,
+          1.1435611184843115,
+          1.8070564988259332,
+          1.0583205899705799,
+          0.6496252146106171
+        ],
+        "median_block_ratio": 1.1435611184843115,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5642633,
+          9903401
+        ],
+        "candidate_range_ns": [
+          6364304,
+          11330184
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_warm",
+        "reference_ns": [
+          5565278,
+          5560989,
+          5717378,
+          5468635,
+          8932808
+        ],
+        "candidate_ns": [
+          10529419,
+          6516483,
+          10516899,
+          6014708,
+          6347995
+        ],
+        "reference_median_ns": 5565278,
+        "candidate_median_ns": 6516483,
+        "ratio_of_medians": 1.1709177870359755,
+        "block_ratios": [
+          1.8919843716702023,
+          1.1718208757471018,
+          1.8394619001927106,
+          1.0998554483888576,
+          0.7106382449953027
+        ],
+        "median_block_ratio": 1.1718208757471018,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5468635,
+          8932808
+        ],
+        "candidate_range_ns": [
+          6014708,
+          10529419
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_cloned",
+        "reference_ns": [
+          6355795,
+          7097153,
+          6239843,
+          6424919,
+          10773192
+        ],
+        "candidate_ns": [
+          11683119,
+          7639876,
+          11925943,
+          6984491,
+          6949914
+        ],
+        "reference_median_ns": 6424919,
+        "candidate_median_ns": 7639876,
+        "ratio_of_medians": 1.189100749752643,
+        "block_ratios": [
+          1.8381837362595868,
+          1.0764705227575058,
+          1.9112569018162797,
+          1.08709401628254,
+          0.6451118665665664
+        ],
+        "median_block_ratio": 1.08709401628254,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          6239843,
+          10773192
+        ],
+        "candidate_range_ns": [
+          6949914,
+          11925943
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_first",
+        "reference_ns": [
+          3874085,
+          3975368,
+          4203792,
+          3891093,
+          6206305
+        ],
+        "candidate_ns": [
+          7461998,
+          4259209,
+          7324518,
+          4295596,
+          4173174
+        ],
+        "reference_median_ns": 3975368,
+        "candidate_median_ns": 4295596,
+        "ratio_of_medians": 1.0805530456551444,
+        "block_ratios": [
+          1.9261317188445788,
+          1.0713999307737045,
+          1.7423597551924548,
+          1.103956137774142,
+          0.6724087842927474
+        ],
+        "median_block_ratio": 1.103956137774142,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3874085,
+          6206305
+        ],
+        "candidate_range_ns": [
+          4173174,
+          7461998
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_warm",
+        "reference_ns": [
+          3249068,
+          3296644,
+          3217369,
+          3179962,
+          5790913
+        ],
+        "candidate_ns": [
+          5877277,
+          3495691,
+          5877567,
+          3501160,
+          3483531
+        ],
+        "reference_median_ns": 3249068,
+        "candidate_median_ns": 3501160,
+        "ratio_of_medians": 1.0775890193741713,
+        "block_ratios": [
+          1.8089116632831324,
+          1.0603786760111191,
+          1.8268240291990132,
+          1.1010068673776605,
+          0.6015512579795276
+        ],
+        "median_block_ratio": 1.1010068673776605,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3179962,
+          5790913
+        ],
+        "candidate_range_ns": [
+          3483531,
+          5877567
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_cloned",
+        "reference_ns": [
+          3698977,
+          3821838,
+          3723435,
+          4071771,
+          6670333
+        ],
+        "candidate_ns": [
+          7133511,
+          4021134,
+          6978712,
+          4140316,
+          4016144
+        ],
+        "reference_median_ns": 3821838,
+        "candidate_median_ns": 4140316,
+        "ratio_of_medians": 1.0833311092725542,
+        "block_ratios": [
+          1.9285091526657234,
+          1.0521466372985981,
+          1.8742671753367521,
+          1.0168341981904188,
+          0.6020904803403369
+        ],
+        "median_block_ratio": 1.0521466372985981,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3698977,
+          6670333
+        ],
+        "candidate_range_ns": [
+          4016144,
+          7133511
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "integer",
+        "name": "signed_word_boundary_warm",
+        "reference_ns": [
+          1374186,
+          1381115,
+          1392274,
+          1438351,
+          1397525
+        ],
+        "candidate_ns": [
+          1420013,
+          1406113,
+          1408184,
+          1435801,
+          1439541
+        ],
+        "reference_median_ns": 1392274,
+        "candidate_median_ns": 1420013,
+        "ratio_of_medians": 1.0199235208012216,
+        "block_ratios": [
+          1.0333484695667108,
+          1.018099868584441,
+          1.0114273483524077,
+          0.9982271364917187,
+          1.0300645784511906
+        ],
+        "median_block_ratio": 1.018099868584441,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1374186,
+          1438351
+        ],
+        "candidate_range_ns": [
+          1406113,
+          1439541
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "integer",
+        "name": "signed_word_boundary_cloned",
+        "reference_ns": [
+          2270894,
+          2232097,
+          2286413,
+          2370678,
+          2269385
+        ],
+        "candidate_ns": [
+          2292803,
+          2360638,
+          2343190,
+          2331230,
+          2330510
+        ],
+        "reference_median_ns": 2270894,
+        "candidate_median_ns": 2331230,
+        "ratio_of_medians": 1.0265692718374348,
+        "block_ratios": [
+          1.0096477422548125,
+          1.0575875510786494,
+          1.0248323465620603,
+          0.9833600345555153,
+          1.0269346100375212
+        ],
+        "median_block_ratio": 1.0248323465620603,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2232097,
+          2370678
+        ],
+        "candidate_range_ns": [
+          2292803,
+          2360638
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "integer",
+        "name": "wide_integer_affine_cloned",
+        "reference_ns": [
+          1899730,
+          1889211,
+          1912229,
+          2367527,
+          1962006
+        ],
+        "candidate_ns": [
+          2010313,
+          2108105,
+          2051649,
+          2006062,
+          2168081
+        ],
+        "reference_median_ns": 1912229,
+        "candidate_median_ns": 2051649,
+        "ratio_of_medians": 1.0729096776588996,
+        "block_ratios": [
+          1.0582098508735451,
+          1.1158653003820114,
+          1.0729096776588996,
+          0.8473238108794535,
+          1.1050328082584864
+        ],
+        "median_block_ratio": 1.0729096776588996,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1889211,
+          2367527
+        ],
+        "candidate_range_ns": [
+          2006062,
+          2168081
+        ]
+      }
+    ],
+    "projected_vs_baseline": [
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "quadratic_reciprocal_cloned",
+        "reference_ns": [
+          3488111,
+          3358780,
+          3418256,
+          5386681,
+          3599374
+        ],
+        "candidate_ns": [
+          3527059,
+          3539567,
+          3578544,
+          3649160,
+          4028524
+        ],
+        "reference_median_ns": 3488111,
+        "candidate_median_ns": 3578544,
+        "ratio_of_medians": 1.0259260671463724,
+        "block_ratios": [
+          1.011165929065904,
+          1.053825198435146,
+          1.0468917483067388,
+          0.6774412667095007,
+          1.1192290659431334
+        ],
+        "median_block_ratio": 1.0468917483067388,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3358780,
+          5386681
+        ],
+        "candidate_range_ns": [
+          3527059,
+          4028524
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "pi_parameter_transport_warm",
+        "reference_ns": [
+          7390443,
+          7098104,
+          7254043,
+          12153977,
+          7385014
+        ],
+        "candidate_ns": [
+          7604489,
+          12822961,
+          7484617,
+          7929057,
+          7638906
+        ],
+        "reference_median_ns": 7385014,
+        "candidate_median_ns": 7638906,
+        "ratio_of_medians": 1.0343793525645313,
+        "block_ratios": [
+          1.028962539863984,
+          1.8065332657847786,
+          1.0317855849489725,
+          0.6523837423750267,
+          1.0343793525645313
+        ],
+        "median_block_ratio": 1.0317855849489725,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          7098104,
+          12153977
+        ],
+        "candidate_range_ns": [
+          7484617,
+          12822961
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "opaque_linear_atom_construction",
+        "reference_ns": [
+          11235730,
+          12212793,
+          11319164,
+          19714959,
+          12387871
+        ],
+        "candidate_ns": [
+          11495922,
+          16141514,
+          11473373,
+          20413392,
+          11570927
+        ],
+        "reference_median_ns": 12212793,
+        "candidate_median_ns": 11570927,
+        "ratio_of_medians": 0.9474431442504593,
+        "block_ratios": [
+          1.0231575518457634,
+          1.321688986294945,
+          1.013623709312808,
+          1.0354265509758351,
+          0.9340529135313081
+        ],
+        "median_block_ratio": 1.0231575518457634,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          11235730,
+          19714959
+        ],
+        "candidate_range_ns": [
+          11473373,
+          20413392
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "opaque_linear_atom_first",
+        "reference_ns": [
+          5772095,
+          5854998,
+          5885957,
+          9561305,
+          6233503
+        ],
+        "candidate_ns": [
+          6188245,
+          6119371,
+          6066744,
+          10874574,
+          6172107
+        ],
+        "reference_median_ns": 5885957,
+        "candidate_median_ns": 6172107,
+        "ratio_of_medians": 1.0486157136384109,
+        "block_ratios": [
+          1.072096872972465,
+          1.0451533886091848,
+          1.0307149712442683,
+          1.1373524848333987,
+          0.9901506424236902
+        ],
+        "median_block_ratio": 1.0451533886091848,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5772095,
+          9561305
+        ],
+        "candidate_range_ns": [
+          6066744,
+          10874574
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_first",
+        "reference_ns": [
+          3792590,
+          3710846,
+          3807899,
+          6399712,
+          3792780
+        ],
+        "candidate_ns": [
+          3987107,
+          3963658,
+          4094759,
+          6793904,
+          3959229
+        ],
+        "reference_median_ns": 3792780,
+        "candidate_median_ns": 3987107,
+        "ratio_of_medians": 1.0512360326726042,
+        "block_ratios": [
+          1.0512886971700077,
+          1.06812786087054,
+          1.075332880415158,
+          1.0615952717872303,
+          1.043885751348615
+        ],
+        "median_block_ratio": 1.0615952717872303,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          3710846,
+          6399712
+        ],
+        "candidate_range_ns": [
+          3959229,
+          6793904
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_warm",
+        "reference_ns": [
+          2836255,
+          2793798,
+          2922079,
+          4660180,
+          2868934
+        ],
+        "candidate_ns": [
+          2996035,
+          3010204,
+          3033753,
+          5224852,
+          3040641
+        ],
+        "reference_median_ns": 2868934,
+        "candidate_median_ns": 3033753,
+        "ratio_of_medians": 1.0574495614050377,
+        "block_ratios": [
+          1.0563348500046716,
+          1.0774594297798195,
+          1.0382173103465033,
+          1.1211695685574377,
+          1.059850453164834
+        ],
+        "median_block_ratio": 1.059850453164834,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2793798,
+          4660180
+        ],
+        "candidate_range_ns": [
+          2996035,
+          5224852
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "conjugate_product_cloned",
+        "reference_ns": [
+          3204230,
+          3216039,
+          3298144,
+          5432458,
+          3308503
+        ],
+        "candidate_ns": [
+          3422516,
+          3404937,
+          3456663,
+          6068474,
+          3410716
+        ],
+        "reference_median_ns": 3298144,
+        "candidate_median_ns": 3422516,
+        "ratio_of_medians": 1.037709693694393,
+        "block_ratios": [
+          1.0681243231603224,
+          1.0587362280121604,
+          1.0480630924544228,
+          1.1170770211200896,
+          1.0308940327392782
+        ],
+        "median_block_ratio": 1.0587362280121604,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          3204230,
+          5432458
+        ],
+        "candidate_range_ns": [
+          3404937,
+          6068474
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_warm",
+        "reference_ns": [
+          1672366,
+          1734471,
+          1712633,
+          1696044,
+          2850375
+        ],
+        "candidate_ns": [
+          1749260,
+          1756200,
+          1731442,
+          1765529,
+          1781938
+        ],
+        "reference_median_ns": 1712633,
+        "candidate_median_ns": 1756200,
+        "ratio_of_medians": 1.0254386082715912,
+        "block_ratios": [
+          1.045979169631528,
+          1.012527739005149,
+          1.010982504716422,
+          1.0409688663737497,
+          0.6251591457264395
+        ],
+        "median_block_ratio": 1.012527739005149,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1672366,
+          2850375
+        ],
+        "candidate_range_ns": [
+          1731442,
+          1781938
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_cloned",
+        "reference_ns": [
+          2914780,
+          2995945,
+          2985235,
+          2971377,
+          4885606
+        ],
+        "candidate_ns": [
+          3142864,
+          3163473,
+          3052551,
+          3359480,
+          3067080
+        ],
+        "reference_median_ns": 2985235,
+        "candidate_median_ns": 3142864,
+        "ratio_of_medians": 1.0528028781653707,
+        "block_ratios": [
+          1.0782508456898976,
+          1.055918249500575,
+          1.0225496485201333,
+          1.1306138534423602,
+          0.6277788262090721
+        ],
+        "median_block_ratio": 1.055918249500575,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2914780,
+          4885606
+        ],
+        "candidate_range_ns": [
+          3052551,
+          3359480
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "pi_transport_construction",
+        "reference_ns": [
+          2335530,
+          2295733,
+          2333810,
+          2328361,
+          4366851
+        ],
+        "candidate_ns": [
+          2490589,
+          2397575,
+          2342030,
+          2340019,
+          2398666
+        ],
+        "reference_median_ns": 2333810,
+        "candidate_median_ns": 2397575,
+        "ratio_of_medians": 1.027322275592272,
+        "block_ratios": [
+          1.0663913544249057,
+          1.044361430532209,
+          1.0035221376204575,
+          1.005006955536534,
+          0.5492896368573144
+        ],
+        "median_block_ratio": 1.005006955536534,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2295733,
+          4366851
+        ],
+        "candidate_range_ns": [
+          2340019,
+          2490589
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "pi_transport_first",
+        "reference_ns": [
+          1033089,
+          983253,
+          1007471,
+          990072,
+          1395574
+        ],
+        "candidate_ns": [
+          1279533,
+          1076316,
+          1068687,
+          1068406,
+          1054338
+        ],
+        "reference_median_ns": 1007471,
+        "candidate_median_ns": 1068687,
+        "ratio_of_medians": 1.0607620467487402,
+        "block_ratios": [
+          1.2385505992223322,
+          1.0946480712492106,
+          1.0607620467487402,
+          1.0791194983799157,
+          0.755486989582781
+        ],
+        "median_block_ratio": 1.0791194983799157,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          983253,
+          1395574
+        ],
+        "candidate_range_ns": [
+          1054338,
+          1279533
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "pi_transport_cloned",
+        "reference_ns": [
+          1380246,
+          1458210,
+          1390944,
+          1408783,
+          2239826
+        ],
+        "candidate_ns": [
+          1595901,
+          1556343,
+          1485669,
+          1518536,
+          1507107
+        ],
+        "reference_median_ns": 1408783,
+        "candidate_median_ns": 1518536,
+        "ratio_of_medians": 1.077906249578537,
+        "block_ratios": [
+          1.1562438869592813,
+          1.0672968913942436,
+          1.06810123196908,
+          1.077906249578537,
+          0.6728678924166431
+        ],
+        "median_block_ratio": 1.06810123196908,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1380246,
+          2239826
+        ],
+        "candidate_range_ns": [
+          1485669,
+          1595901
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "mixed_field_decline_warm",
+        "reference_ns": [
+          1334129,
+          1312020,
+          1383425,
+          1304201,
+          2315132
+        ],
+        "candidate_ns": [
+          1437692,
+          1454590,
+          1430732,
+          1408733,
+          1558663
+        ],
+        "reference_median_ns": 1334129,
+        "candidate_median_ns": 1437692,
+        "ratio_of_medians": 1.0776259267282249,
+        "block_ratios": [
+          1.0776259267282249,
+          1.1086645020655173,
+          1.034195565354103,
+          1.0801502222433506,
+          0.6732501645694501
+        ],
+        "median_block_ratio": 1.0776259267282249,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1304201,
+          2315132
+        ],
+        "candidate_range_ns": [
+          1408733,
+          1558663
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_decline_first",
+        "reference_ns": [
+          722330,
+          717201,
+          756608,
+          712071,
+          1050908
+        ],
+        "candidate_ns": [
+          802915,
+          807465,
+          807404,
+          795156,
+          891568
+        ],
+        "reference_median_ns": 722330,
+        "candidate_median_ns": 807404,
+        "ratio_of_medians": 1.1177771932496228,
+        "block_ratios": [
+          1.1115625821992718,
+          1.1258559316007646,
+          1.0671364828286245,
+          1.1166807804277945,
+          0.8483787353412477
+        ],
+        "median_block_ratio": 1.1115625821992718,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          712071,
+          1050908
+        ],
+        "candidate_range_ns": [
+          795156,
+          891568
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_decline_warm",
+        "reference_ns": [
+          721541,
+          707772,
+          758688,
+          709412,
+          1059367
+        ],
+        "candidate_ns": [
+          810435,
+          871301,
+          792356,
+          817974,
+          807965
+        ],
+        "reference_median_ns": 721541,
+        "candidate_median_ns": 810435,
+        "ratio_of_medians": 1.1232002062252873,
+        "block_ratios": [
+          1.1232002062252873,
+          1.231047568991144,
+          1.0443766080391412,
+          1.153030960852086,
+          0.7626865854798196
+        ],
+        "median_block_ratio": 1.1232002062252873,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          707772,
+          1059367
+        ],
+        "candidate_range_ns": [
+          792356,
+          871301
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_decline_cloned",
+        "reference_ns": [
+          887759,
+          890279,
+          948655,
+          927987,
+          1401214
+        ],
+        "candidate_ns": [
+          1029009,
+          981943,
+          1045238,
+          1015490,
+          983812
+        ],
+        "reference_median_ns": 927987,
+        "candidate_median_ns": 1015490,
+        "ratio_of_medians": 1.0942933467817977,
+        "block_ratios": [
+          1.1591084967879797,
+          1.10296098189444,
+          1.1018104579641703,
+          1.0942933467817977,
+          0.7021140239820612
+        ],
+        "median_block_ratio": 1.1018104579641703,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          887759,
+          1401214
+        ],
+        "candidate_range_ns": [
+          981943,
+          1045238
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_first",
+        "reference_ns": [
+          5642633,
+          5776174,
+          5653852,
+          6013588,
+          9903401
+        ],
+        "candidate_ns": [
+          6417510,
+          6320087,
+          5949032,
+          6041456,
+          6248092
+        ],
+        "reference_median_ns": 5776174,
+        "candidate_median_ns": 6248092,
+        "ratio_of_medians": 1.0817007936395269,
+        "block_ratios": [
+          1.137325429458198,
+          1.0941649264720903,
+          1.052208653498535,
+          1.0046341718122358,
+          0.6309036663263459
+        ],
+        "median_block_ratio": 1.052208653498535,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5642633,
+          9903401
+        ],
+        "candidate_range_ns": [
+          5949032,
+          6417510
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_warm",
+        "reference_ns": [
+          5565278,
+          5560989,
+          5717378,
+          5468635,
+          8932808
+        ],
+        "candidate_ns": [
+          5886566,
+          6060714,
+          5799813,
+          5842279,
+          6598107
+        ],
+        "reference_median_ns": 5565278,
+        "candidate_median_ns": 5886566,
+        "ratio_of_medians": 1.0577308087754107,
+        "block_ratios": [
+          1.0577308087754107,
+          1.0898626125676565,
+          1.0144183225247658,
+          1.068324911060987,
+          0.7386375034591587
+        ],
+        "median_block_ratio": 1.0577308087754107,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          5468635,
+          8932808
+        ],
+        "candidate_range_ns": [
+          5799813,
+          6598107
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_cloned",
+        "reference_ns": [
+          6355795,
+          7097153,
+          6239843,
+          6424919,
+          10773192
+        ],
+        "candidate_ns": [
+          6823133,
+          7137961,
+          6665393,
+          9771571,
+          7203876
+        ],
+        "reference_median_ns": 6424919,
+        "candidate_median_ns": 7137961,
+        "ratio_of_medians": 1.110980698744996,
+        "block_ratios": [
+          1.0735294325886848,
+          1.0057499112672363,
+          1.0681988312846973,
+          1.5208862555310037,
+          0.6686853812686157
+        ],
+        "median_block_ratio": 1.0681988312846973,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          6239843,
+          10773192
+        ],
+        "candidate_range_ns": [
+          6665393,
+          9771571
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_first",
+        "reference_ns": [
+          3874085,
+          3975368,
+          4203792,
+          3891093,
+          6206305
+        ],
+        "candidate_ns": [
+          4015724,
+          4288506,
+          4312775,
+          4066081,
+          4167834
+        ],
+        "reference_median_ns": 3975368,
+        "candidate_median_ns": 4167834,
+        "ratio_of_medians": 1.0484146373367196,
+        "block_ratios": [
+          1.0365606330268953,
+          1.0787695629687617,
+          1.0259249268279687,
+          1.0449714257664877,
+          0.6715483689570525
+        ],
+        "median_block_ratio": 1.0365606330268953,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3874085,
+          6206305
+        ],
+        "candidate_range_ns": [
+          4015724,
+          4312775
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_warm",
+        "reference_ns": [
+          3249068,
+          3296644,
+          3217369,
+          3179962,
+          5790913
+        ],
+        "candidate_ns": [
+          3764672,
+          3476321,
+          3364230,
+          3402077,
+          3371759
+        ],
+        "reference_median_ns": 3249068,
+        "candidate_median_ns": 3402077,
+        "ratio_of_medians": 1.0470931971876243,
+        "block_ratios": [
+          1.1586928928541969,
+          1.0545030036606926,
+          1.0456463029263974,
+          1.0698483189421761,
+          0.5822499837245008
+        ],
+        "median_block_ratio": 1.0545030036606926,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          3179962,
+          5790913
+        ],
+        "candidate_range_ns": [
+          3364230,
+          3764672
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_warm",
+        "reference_ns": [
+          1533655,
+          1167050,
+          1236115,
+          1256474,
+          1617149
+        ],
+        "candidate_ns": [
+          1962585,
+          1359297,
+          1291501,
+          1328340,
+          2285474
+        ],
+        "reference_median_ns": 1256474,
+        "candidate_median_ns": 1359297,
+        "ratio_of_medians": 1.0818345624342405,
+        "block_ratios": [
+          1.2796782848815411,
+          1.1647290176085001,
+          1.0448065107210898,
+          1.0571965675374102,
+          1.4132736068228715
+        ],
+        "median_block_ratio": 1.1647290176085001,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1167050,
+          1617149
+        ],
+        "candidate_range_ns": [
+          1291501,
+          2285474
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_cloned",
+        "reference_ns": [
+          2979016,
+          2166701,
+          3024252,
+          2271784,
+          2233927
+        ],
+        "candidate_ns": [
+          3684288,
+          2476220,
+          2544315,
+          2939718,
+          4135977
+        ],
+        "reference_median_ns": 2271784,
+        "candidate_median_ns": 2939718,
+        "ratio_of_medians": 1.2940129871501869,
+        "block_ratios": [
+          1.236746630430988,
+          1.1428526594117048,
+          0.8413038992782348,
+          1.2940129871501869,
+          1.8514378491329395
+        ],
+        "median_block_ratio": 1.236746630430988,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          2166701,
+          3024252
+        ],
+        "candidate_range_ns": [
+          2476220,
+          4135977
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_first",
+        "reference_ns": [
+          1963275,
+          1375276,
+          1399074,
+          1447081,
+          1391625
+        ],
+        "candidate_ns": [
+          2419604,
+          1535254,
+          1507006,
+          1629118,
+          2373258
+        ],
+        "reference_median_ns": 1399074,
+        "candidate_median_ns": 1629118,
+        "ratio_of_medians": 1.1644258988445215,
+        "block_ratios": [
+          1.2324325425628095,
+          1.1163242869067735,
+          1.0771453118276804,
+          1.1257959989800157,
+          1.7053861492859068
+        ],
+        "median_block_ratio": 1.1257959989800157,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1375276,
+          1963275
+        ],
+        "candidate_range_ns": [
+          1507006,
+          2419604
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_warm",
+        "reference_ns": [
+          1374186,
+          1381115,
+          1392274,
+          1438351,
+          1397525
+        ],
+        "candidate_ns": [
+          2304602,
+          1530165,
+          1510357,
+          1631898,
+          2369597
+        ],
+        "reference_median_ns": 1392274,
+        "candidate_median_ns": 1631898,
+        "ratio_of_medians": 1.172109800226105,
+        "block_ratios": [
+          1.677067005485429,
+          1.1079200501044446,
+          1.084813046857156,
+          1.134561730759738,
+          1.695566805602762
+        ],
+        "median_block_ratio": 1.134561730759738,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1374186,
+          1438351
+        ],
+        "candidate_range_ns": [
+          1510357,
+          2369597
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_cloned",
+        "reference_ns": [
+          2270894,
+          2232097,
+          2286413,
+          2370678,
+          2269385
+        ],
+        "candidate_ns": [
+          3754073,
+          2434613,
+          2541926,
+          2553825,
+          3919201
+        ],
+        "reference_median_ns": 2270894,
+        "candidate_median_ns": 2553825,
+        "ratio_of_medians": 1.1245901393900375,
+        "block_ratios": [
+          1.6531255972317511,
+          1.090729031937232,
+          1.1117527760732642,
+          1.0772551143596896,
+          1.7269881487715835
+        ],
+        "median_block_ratio": 1.1117527760732642,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2232097,
+          2370678
+        ],
+        "candidate_range_ns": [
+          2434613,
+          3919201
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_first",
+        "reference_ns": [
+          1327739,
+          1323529,
+          1339038,
+          1368766,
+          1325390
+        ],
+        "candidate_ns": [
+          2200179,
+          1778788,
+          1484209,
+          1572932,
+          2390306
+        ],
+        "reference_median_ns": 1327739,
+        "candidate_median_ns": 1778788,
+        "ratio_of_medians": 1.3397120970311183,
+        "block_ratios": [
+          1.6570869726655615,
+          1.3439735736806673,
+          1.1084143989939046,
+          1.1491606308163704,
+          1.8034736945351935
+        ],
+        "median_block_ratio": 1.3439735736806673,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1323529,
+          1368766
+        ],
+        "candidate_range_ns": [
+          1484209,
+          2390306
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_warm",
+        "reference_ns": [
+          1318030,
+          1609130,
+          1326479,
+          1376746,
+          2187450
+        ],
+        "candidate_ns": [
+          2266104,
+          1534695,
+          1480449,
+          1650307,
+          2459062
+        ],
+        "reference_median_ns": 1376746,
+        "candidate_median_ns": 1650307,
+        "ratio_of_medians": 1.198701140224849,
+        "block_ratios": [
+          1.719311396553948,
+          0.953742084231852,
+          1.116074208487281,
+          1.198701140224849,
+          1.1241683238474023
+        ],
+        "median_block_ratio": 1.1241683238474023,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          1318030,
+          2187450
+        ],
+        "candidate_range_ns": [
+          1480449,
+          2459062
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_cloned",
+        "reference_ns": [
+          1899730,
+          1889211,
+          1912229,
+          2367527,
+          1962006
+        ],
+        "candidate_ns": [
+          3398817,
+          2110995,
+          2264065,
+          2491609,
+          3552066
+        ],
+        "reference_median_ns": 1912229,
+        "candidate_median_ns": 2491609,
+        "ratio_of_medians": 1.3029867238704151,
+        "block_ratios": [
+          1.7891052939101872,
+          1.1173950395164967,
+          1.1839926075799498,
+          1.0524099619560834,
+          1.8104256561906538
+        ],
+        "median_block_ratio": 1.1839926075799498,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1889211,
+          2367527
+        ],
+        "candidate_range_ns": [
+          2110995,
+          3552066
+        ]
+      }
+    ],
+    "projected_vs_recursive": [
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "multiradical_square_first",
+        "reference_ns": [
+          9096217,
+          9825397,
+          9079328,
+          8833905,
+          8399784
+        ],
+        "candidate_ns": [
+          15361947,
+          9020361,
+          15191879,
+          9251156,
+          9205989
+        ],
+        "reference_median_ns": 9079328,
+        "candidate_median_ns": 9251156,
+        "ratio_of_medians": 1.0189251891769964,
+        "block_ratios": [
+          1.6888281139291201,
+          0.9180658043639356,
+          1.6732382616863275,
+          1.0472329054930973,
+          1.0959792537522393
+        ],
+        "median_block_ratio": 1.0959792537522393,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          8399784,
+          9825397
+        ],
+        "candidate_range_ns": [
+          9020361,
+          15361947
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "rational",
+        "name": "radical_laurent_transport_cloned",
+        "reference_ns": [
+          13989,
+          14369,
+          14269,
+          13939,
+          14009
+        ],
+        "candidate_ns": [
+          14109,
+          15979,
+          14159,
+          19759,
+          14279
+        ],
+        "reference_median_ns": 14009,
+        "candidate_median_ns": 14279,
+        "ratio_of_medians": 1.0192733242915268,
+        "block_ratios": [
+          1.0085781685610122,
+          1.1120467673463708,
+          0.9922909804471232,
+          1.4175335389913193,
+          1.0192733242915268
+        ],
+        "median_block_ratio": 1.0192733242915268,
+        "slower_blocks": 4,
+        "faster_blocks": 1,
+        "reference_range_ns": [
+          13939,
+          14369
+        ],
+        "candidate_range_ns": [
+          14109,
+          19759
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_first",
+        "reference_ns": [
+          1461470,
+          1557394,
+          1354597,
+          1425082,
+          2137954
+        ],
+        "candidate_ns": [
+          2091977,
+          1648967,
+          1499307,
+          1538785,
+          2469781
+        ],
+        "reference_median_ns": 1461470,
+        "candidate_median_ns": 1648967,
+        "ratio_of_medians": 1.1282934305870118,
+        "block_ratios": [
+          1.4314197349244253,
+          1.0587988652839295,
+          1.106828820675079,
+          1.0797869876961466,
+          1.1552077359943198
+        ],
+        "median_block_ratio": 1.106828820675079,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1354597,
+          2137954
+        ],
+        "candidate_range_ns": [
+          1499307,
+          2469781
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_warm",
+        "reference_ns": [
+          1220887,
+          1329069,
+          1195758,
+          1277943,
+          2181140
+        ],
+        "candidate_ns": [
+          1962585,
+          1359297,
+          1291501,
+          1328340,
+          2285474
+        ],
+        "reference_median_ns": 1277943,
+        "candidate_median_ns": 1359297,
+        "ratio_of_medians": 1.0636601162962667,
+        "block_ratios": [
+          1.6075074925034012,
+          1.022743740166989,
+          1.0800688768128668,
+          1.0394360311844895,
+          1.0478346185939462
+        ],
+        "median_block_ratio": 1.0478346185939462,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1195758,
+          2181140
+        ],
+        "candidate_range_ns": [
+          1291501,
+          2285474
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "canonical_integer_boundary_cloned",
+        "reference_ns": [
+          2279524,
+          2350689,
+          2320001,
+          2299542,
+          2465551
+        ],
+        "candidate_ns": [
+          3684288,
+          2476220,
+          2544315,
+          2939718,
+          4135977
+        ],
+        "reference_median_ns": 2320001,
+        "candidate_median_ns": 2939718,
+        "ratio_of_medians": 1.2671192814141028,
+        "block_ratios": [
+          1.6162532177770448,
+          1.0534017898582075,
+          1.0966870272900744,
+          1.2783928277891858,
+          1.6775061639365805
+        ],
+        "median_block_ratio": 1.2783928277891858,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2279524,
+          2465551
+        ],
+        "candidate_range_ns": [
+          2476220,
+          4135977
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_construction",
+        "reference_ns": [
+          2239826,
+          2297263,
+          2222258,
+          2295843,
+          2302543
+        ],
+        "candidate_ns": [
+          4210261,
+          2356688,
+          2431113,
+          2409055,
+          4137666
+        ],
+        "reference_median_ns": 2295843,
+        "candidate_median_ns": 2431113,
+        "ratio_of_medians": 1.058919534131907,
+        "block_ratios": [
+          1.879726818065332,
+          1.0258677391313054,
+          1.0939832368698863,
+          1.0493117342954201,
+          1.7969983622455694
+        ],
+        "median_block_ratio": 1.0939832368698863,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2222258,
+          2302543
+        ],
+        "candidate_range_ns": [
+          2356688,
+          4210261
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_first",
+        "reference_ns": [
+          1390524,
+          1373216,
+          1407644,
+          1396375,
+          1400804
+        ],
+        "candidate_ns": [
+          2419604,
+          1535254,
+          1507006,
+          1629118,
+          2373258
+        ],
+        "reference_median_ns": 1396375,
+        "candidate_median_ns": 1629118,
+        "ratio_of_medians": 1.1666765732700743,
+        "block_ratios": [
+          1.740066334705478,
+          1.117998916412276,
+          1.0705874496676717,
+          1.1666765732700743,
+          1.6942113243537282
+        ],
+        "median_block_ratio": 1.1666765732700743,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1373216,
+          1407644
+        ],
+        "candidate_range_ns": [
+          1507006,
+          2419604
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_warm",
+        "reference_ns": [
+          1420013,
+          1406113,
+          1408184,
+          1435801,
+          1439541
+        ],
+        "candidate_ns": [
+          2304602,
+          1530165,
+          1510357,
+          1631898,
+          2369597
+        ],
+        "reference_median_ns": 1420013,
+        "candidate_median_ns": 1631898,
+        "ratio_of_medians": 1.1492134226940176,
+        "block_ratios": [
+          1.6229442969888304,
+          1.0882233504704102,
+          1.072556569311965,
+          1.1365767261619124,
+          1.646078159635606
+        ],
+        "median_block_ratio": 1.1365767261619124,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1406113,
+          1439541
+        ],
+        "candidate_range_ns": [
+          1510357,
+          2369597
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "signed_word_boundary_cloned",
+        "reference_ns": [
+          2292803,
+          2360638,
+          2343190,
+          2331230,
+          2330510
+        ],
+        "candidate_ns": [
+          3754073,
+          2434613,
+          2541926,
+          2553825,
+          3919201
+        ],
+        "reference_median_ns": 2331230,
+        "candidate_median_ns": 2553825,
+        "ratio_of_medians": 1.0954839290846463,
+        "block_ratios": [
+          1.6373290683935777,
+          1.0313368674061842,
+          1.0848142916280796,
+          1.0954839290846463,
+          1.681692419255871
+        ],
+        "median_block_ratio": 1.0954839290846463,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2292803,
+          2360638
+        ],
+        "candidate_range_ns": [
+          2434613,
+          3919201
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_first",
+        "reference_ns": [
+          1307820,
+          1317190,
+          1341278,
+          1340428,
+          1322060
+        ],
+        "candidate_ns": [
+          2200179,
+          1778788,
+          1484209,
+          1572932,
+          2390306
+        ],
+        "reference_median_ns": 1322060,
+        "candidate_median_ns": 1778788,
+        "ratio_of_medians": 1.345466922832549,
+        "block_ratios": [
+          1.6823255493875304,
+          1.3504414700992264,
+          1.1065632926209183,
+          1.1734550457018207,
+          1.8080162776273392
+        ],
+        "median_block_ratio": 1.3504414700992264,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1307820,
+          1341278
+        ],
+        "candidate_range_ns": [
+          1484209,
+          2390306
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_warm",
+        "reference_ns": [
+          1322949,
+          1345767,
+          1339828,
+          1349557,
+          1445331
+        ],
+        "candidate_ns": [
+          2266104,
+          1534695,
+          1480449,
+          1650307,
+          2459062
+        ],
+        "reference_median_ns": 1345767,
+        "candidate_median_ns": 1650307,
+        "ratio_of_medians": 1.226294744929843,
+        "block_ratios": [
+          1.712918638586975,
+          1.1403868574574945,
+          1.1049545165498855,
+          1.2228509058898587,
+          1.701383281753453
+        ],
+        "median_block_ratio": 1.2228509058898587,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          1322949,
+          1445331
+        ],
+        "candidate_range_ns": [
+          1480449,
+          2459062
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "integer",
+        "name": "wide_integer_affine_cloned",
+        "reference_ns": [
+          2010313,
+          2108105,
+          2051649,
+          2006062,
+          2168081
+        ],
+        "candidate_ns": [
+          3398817,
+          2110995,
+          2264065,
+          2491609,
+          3552066
+        ],
+        "reference_median_ns": 2051649,
+        "candidate_median_ns": 2491609,
+        "ratio_of_medians": 1.214442138981863,
+        "block_ratios": [
+          1.6906904546704915,
+          1.0013708994570953,
+          1.1035342790116633,
+          1.2420398771324117,
+          1.638345615316033
+        ],
+        "median_block_ratio": 1.2420398771324117,
+        "slower_blocks": 5,
+        "faster_blocks": 0,
+        "reference_range_ns": [
+          2006062,
+          2168081
+        ],
+        "candidate_range_ns": [
+          2110995,
+          3552066
+        ]
+      }
+    ]
+  },
+  "faster_in_all_five_blocks": {
+    "recursive_vs_baseline": [
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "multiradical_square_construction",
+        "reference_ns": [
+          14014809,
+          12021576,
+          14053317,
+          19030226,
+          11725067
+        ],
+        "candidate_ns": [
+          12031556,
+          11196853,
+          11348692,
+          16594903,
+          11658001
+        ],
+        "reference_median_ns": 14014809,
+        "candidate_median_ns": 11658001,
+        "ratio_of_medians": 0.8318344545401939,
+        "block_ratios": [
+          0.8584887599966579,
+          0.9313964325476127,
+          0.8075454357145718,
+          0.8720286874154831,
+          0.9942801179728866
+        ],
+        "median_block_ratio": 0.8720286874154831,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          11725067,
+          19030226
+        ],
+        "candidate_range_ns": [
+          11196853,
+          16594903
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "radical_laurent_transport_construction",
+        "reference_ns": [
+          2933269,
+          2985486,
+          2896012,
+          5246001,
+          3045982
+        ],
+        "candidate_ns": [
+          2839975,
+          2847055,
+          2877732,
+          3093639,
+          2895251
+        ],
+        "reference_median_ns": 2985486,
+        "candidate_median_ns": 2877732,
+        "ratio_of_medians": 0.9639073839234216,
+        "block_ratios": [
+          0.9681945297209359,
+          0.9536320049733946,
+          0.9936878714590962,
+          0.5897137648277231,
+          0.9505148093455575
+        ],
+        "median_block_ratio": 0.9536320049733946,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          2896012,
+          5246001
+        ],
+        "candidate_range_ns": [
+          2839975,
+          3093639
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "radical_laurent_transport_first",
+        "reference_ns": [
+          16359,
+          16279,
+          21988,
+          14799,
+          16669
+        ],
+        "candidate_ns": [
+          14189,
+          14699,
+          14569,
+          14788,
+          14639
+        ],
+        "reference_median_ns": 16359,
+        "candidate_median_ns": 14639,
+        "ratio_of_medians": 0.8948590989669295,
+        "block_ratios": [
+          0.8673513050919983,
+          0.9029424411818908,
+          0.6625886847371294,
+          0.9992567065342253,
+          0.8782170496130541
+        ],
+        "median_block_ratio": 0.8782170496130541,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          14799,
+          21988
+        ],
+        "candidate_range_ns": [
+          14189,
+          14788
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "radical_laurent_transport_warm",
+        "reference_ns": [
+          16199,
+          16239,
+          16239,
+          15058,
+          21159
+        ],
+        "candidate_ns": [
+          14309,
+          14169,
+          14659,
+          14339,
+          14159
+        ],
+        "reference_median_ns": 16239,
+        "candidate_median_ns": 14309,
+        "ratio_of_medians": 0.8811503171377548,
+        "block_ratios": [
+          0.8833261312426693,
+          0.8725290966192499,
+          0.9027033684340169,
+          0.9522512949926949,
+          0.6691715109409707
+        ],
+        "median_block_ratio": 0.8833261312426693,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          15058,
+          21159
+        ],
+        "candidate_range_ns": [
+          14159,
+          14659
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "rational",
+        "name": "radical_laurent_transport_cloned",
+        "reference_ns": [
+          16169,
+          16229,
+          16318,
+          14809,
+          16489
+        ],
+        "candidate_ns": [
+          13989,
+          14369,
+          14269,
+          13939,
+          14009
+        ],
+        "reference_median_ns": 16229,
+        "candidate_median_ns": 14009,
+        "ratio_of_medians": 0.8632078378211843,
+        "block_ratios": [
+          0.8651740985837095,
+          0.8853903506069382,
+          0.8744331413163378,
+          0.9412519413869944,
+          0.8495967008308569
+        ],
+        "median_block_ratio": 0.8744331413163378,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          14809,
+          16489
+        ],
+        "candidate_range_ns": [
+          13939,
+          14369
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "integer",
+        "name": "signed_word_boundary_construction",
+        "reference_ns": [
+          3469472,
+          2683166,
+          2778369,
+          2378437,
+          2363628
+        ],
+        "candidate_ns": [
+          2239826,
+          2297263,
+          2222258,
+          2295843,
+          2302543
+        ],
+        "reference_median_ns": 2683166,
+        "candidate_median_ns": 2295843,
+        "ratio_of_medians": 0.8556470229572081,
+        "block_ratios": [
+          0.6455812296510823,
+          0.8561762485064286,
+          0.7998426414921848,
+          0.965273833193816,
+          0.9741562547067474
+        ],
+        "median_block_ratio": 0.8561762485064286,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          2363628,
+          3469472
+        ],
+        "candidate_range_ns": [
+          2222258,
+          2302543
+        ]
+      },
+      {
+        "comparison": "recursive_vs_baseline",
+        "reference": "baseline",
+        "variant": "recursive",
+        "suite": "integer",
+        "name": "wide_integer_affine_construction",
+        "reference_ns": [
+          3878774,
+          4348272,
+          3934351,
+          4021464,
+          3920441
+        ],
+        "candidate_ns": [
+          3826848,
+          3803369,
+          3911051,
+          3926561,
+          3914302
+        ],
+        "reference_median_ns": 3934351,
+        "candidate_median_ns": 3911051,
+        "ratio_of_medians": 0.994077803429333,
+        "block_ratios": [
+          0.9866127802238542,
+          0.8746851622897556,
+          0.994077803429333,
+          0.9764008828625595,
+          0.9984341047346459
+        ],
+        "median_block_ratio": 0.9866127802238542,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          3878774,
+          4348272
+        ],
+        "candidate_range_ns": [
+          3803369,
+          3926561
+        ]
+      }
+    ],
+    "projected_vs_baseline": [
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_first",
+        "reference_ns": [
+          3696277,
+          3644410,
+          3674928,
+          3699356,
+          6509784
+        ],
+        "candidate_ns": [
+          3311323,
+          3378579,
+          3368979,
+          3340751,
+          3438874
+        ],
+        "reference_median_ns": 3696277,
+        "candidate_median_ns": 3368979,
+        "ratio_of_medians": 0.9114519826300896,
+        "block_ratios": [
+          0.8958535845663083,
+          0.927057877681161,
+          0.916746940348219,
+          0.9030628574270765,
+          0.528262381670421
+        ],
+        "median_block_ratio": 0.9030628574270765,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          3644410,
+          6509784
+        ],
+        "candidate_range_ns": [
+          3311323,
+          3438874
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_warm",
+        "reference_ns": [
+          1600251,
+          1579501,
+          1697364,
+          1615419,
+          2575773
+        ],
+        "candidate_ns": [
+          1496868,
+          1521826,
+          1550374,
+          1443051,
+          1468539
+        ],
+        "reference_median_ns": 1615419,
+        "candidate_median_ns": 1496868,
+        "ratio_of_medians": 0.9266128478122394,
+        "block_ratios": [
+          0.935395759790183,
+          0.9634853032698302,
+          0.9134010147499299,
+          0.8932982712225126,
+          0.57013525648417
+        ],
+        "median_block_ratio": 0.9134010147499299,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1579501,
+          2575773
+        ],
+        "candidate_range_ns": [
+          1443051,
+          1550374
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_cloned",
+        "reference_ns": [
+          2062149,
+          2094886,
+          2086107,
+          3621862,
+          3914102
+        ],
+        "candidate_ns": [
+          1907230,
+          1963475,
+          1941567,
+          1893600,
+          1953606
+        ],
+        "reference_median_ns": 2094886,
+        "candidate_median_ns": 1941567,
+        "ratio_of_medians": 0.9268127239382,
+        "block_ratios": [
+          0.9248749726620142,
+          0.9372705722411625,
+          0.9307130458792382,
+          0.5228249999585849,
+          0.4991198492016815
+        ],
+        "median_block_ratio": 0.9248749726620142,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          2062149,
+          3914102
+        ],
+        "candidate_range_ns": [
+          1893600,
+          1963475
+        ]
+      },
+      {
+        "comparison": "projected_vs_baseline",
+        "reference": "baseline",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "mixed_field_decline_cloned",
+        "reference_ns": [
+          2040670,
+          2064198,
+          2069798,
+          1995793,
+          3888433
+        ],
+        "candidate_ns": [
+          1987904,
+          1972775,
+          1970395,
+          1967745,
+          2004073
+        ],
+        "reference_median_ns": 2064198,
+        "candidate_median_ns": 1972775,
+        "ratio_of_medians": 0.9557101595874039,
+        "block_ratios": [
+          0.974142806039193,
+          0.9557101595874039,
+          0.9519745405107165,
+          0.9859464383330335,
+          0.5153934759837703
+        ],
+        "median_block_ratio": 0.9557101595874039,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1995793,
+          3888433
+        ],
+        "candidate_range_ns": [
+          1967745,
+          2004073
+        ]
+      }
+    ],
+    "projected_vs_recursive": [
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "affine_surd_first",
+        "reference_ns": [
+          2019081,
+          2180441,
+          3095768,
+          1998933,
+          2961157
+        ],
+        "candidate_ns": [
+          1827014,
+          2001833,
+          1905929,
+          1952426,
+          2068348
+        ],
+        "reference_median_ns": 2180441,
+        "candidate_median_ns": 1952426,
+        "ratio_of_medians": 0.8954271177252675,
+        "block_ratios": [
+          0.9048740491342349,
+          0.9180862953870341,
+          0.6156562765685284,
+          0.9767340876357536,
+          0.6984931903306715
+        ],
+        "median_block_ratio": 0.9048740491342349,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1998933,
+          3095768
+        ],
+        "candidate_range_ns": [
+          1827014,
+          2068348
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "affine_surd_cloned",
+        "reference_ns": [
+          2738592,
+          2966126,
+          4315504,
+          3050321,
+          4224180
+        ],
+        "candidate_ns": [
+          2589862,
+          2623140,
+          2576823,
+          2692266,
+          2617151
+        ],
+        "reference_median_ns": 3050321,
+        "candidate_median_ns": 2617151,
+        "ratio_of_medians": 0.8579919949408603,
+        "block_ratios": [
+          0.9456910704478798,
+          0.8843656675407585,
+          0.597108240428001,
+          0.8826172720838233,
+          0.6195642704619595
+        ],
+        "median_block_ratio": 0.8826172720838233,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          2738592,
+          4315504
+        ],
+        "candidate_range_ns": [
+          2576823,
+          2692266
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_first",
+        "reference_ns": [
+          2324001,
+          2440863,
+          3544867,
+          2257905,
+          3546567
+        ],
+        "candidate_ns": [
+          2215478,
+          2216218,
+          2193520,
+          2214548,
+          2164152
+        ],
+        "reference_median_ns": 2440863,
+        "candidate_median_ns": 2214548,
+        "ratio_of_medians": 0.9072807445563311,
+        "block_ratios": [
+          0.9533033763754835,
+          0.9079649287977244,
+          0.6187876724288951,
+          0.980797686350843,
+          0.61021038091202
+        ],
+        "median_block_ratio": 0.9079649287977244,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          2257905,
+          3546567
+        ],
+        "candidate_range_ns": [
+          2164152,
+          2216218
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_warm",
+        "reference_ns": [
+          1755290,
+          1801916,
+          2743582,
+          1813736,
+          2783370
+        ],
+        "candidate_ns": [
+          1749260,
+          1756200,
+          1731442,
+          1765529,
+          1781938
+        ],
+        "reference_median_ns": 1813736,
+        "candidate_median_ns": 1756200,
+        "ratio_of_medians": 0.9682776324669081,
+        "block_ratios": [
+          0.9965646702254328,
+          0.9746292279995293,
+          0.631088117650575,
+          0.9734211594190114,
+          0.6402088116204457
+        ],
+        "median_block_ratio": 0.9734211594190114,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1755290,
+          2783370
+        ],
+        "candidate_range_ns": [
+          1731442,
+          1781938
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_first",
+        "reference_ns": [
+          3418686,
+          3397127,
+          5586957,
+          3533478,
+          5585458
+        ],
+        "candidate_ns": [
+          3311323,
+          3378579,
+          3368979,
+          3340751,
+          3438874
+        ],
+        "reference_median_ns": 3533478,
+        "candidate_median_ns": 3368979,
+        "ratio_of_medians": 0.9534455853411284,
+        "block_ratios": [
+          0.9685952439036519,
+          0.9945400922603129,
+          0.603007862777537,
+          0.9454568558230729,
+          0.6156834408207885
+        ],
+        "median_block_ratio": 0.9454568558230729,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          3397127,
+          5586957
+        ],
+        "candidate_range_ns": [
+          3311323,
+          3438874
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_warm",
+        "reference_ns": [
+          1523685,
+          1540374,
+          2570404,
+          1539185,
+          2537496
+        ],
+        "candidate_ns": [
+          1496868,
+          1521826,
+          1550374,
+          1443051,
+          1468539
+        ],
+        "reference_median_ns": 1540374,
+        "candidate_median_ns": 1496868,
+        "ratio_of_medians": 0.9717562098555286,
+        "block_ratios": [
+          0.982399905492277,
+          0.9879587684549337,
+          0.6031635493875671,
+          0.9375422707471811,
+          0.5787354935731919
+        ],
+        "median_block_ratio": 0.9375422707471811,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1523685,
+          2570404
+        ],
+        "candidate_range_ns": [
+          1443051,
+          1550374
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "multiradical_square_cloned",
+        "reference_ns": [
+          2019942,
+          1976034,
+          3494221,
+          2314192,
+          2718963
+        ],
+        "candidate_ns": [
+          1907230,
+          1963475,
+          1941567,
+          1893600,
+          1953606
+        ],
+        "reference_median_ns": 2314192,
+        "candidate_median_ns": 1941567,
+        "ratio_of_medians": 0.8389826773232298,
+        "block_ratios": [
+          0.9442003780306564,
+          0.9936443401277508,
+          0.5556508875654974,
+          0.818255356513202,
+          0.7185114324836344
+        ],
+        "median_block_ratio": 0.818255356513202,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1976034,
+          3494221
+        ],
+        "candidate_range_ns": [
+          1893600,
+          1963475
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_decline_construction",
+        "reference_ns": [
+          3385298,
+          3489941,
+          5757935,
+          3394967,
+          3455853
+        ],
+        "candidate_ns": [
+          3315263,
+          3313963,
+          3368839,
+          3355720,
+          3380748
+        ],
+        "reference_median_ns": 3455853,
+        "candidate_median_ns": 3355720,
+        "ratio_of_medians": 0.9710250985791352,
+        "block_ratios": [
+          0.9793120132998631,
+          0.9495756518519941,
+          0.5850776363401116,
+          0.9884396519907263,
+          0.978267304772512
+        ],
+        "median_block_ratio": 0.978267304772512,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          3385298,
+          5757935
+        ],
+        "candidate_range_ns": [
+          3313963,
+          3380748
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_decline_cloned",
+        "reference_ns": [
+          1528515,
+          1145061,
+          1460250,
+          1048538,
+          1036829
+        ],
+        "candidate_ns": [
+          1029009,
+          981943,
+          1045238,
+          1015490,
+          983812
+        ],
+        "reference_median_ns": 1145061,
+        "candidate_median_ns": 1015490,
+        "ratio_of_medians": 0.8868435830056215,
+        "block_ratios": [
+          0.6732083100263981,
+          0.8575464538570434,
+          0.715793870912515,
+          0.9684818289847388,
+          0.9488662064814931
+        ],
+        "median_block_ratio": 0.8575464538570434,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          1036829,
+          1528515
+        ],
+        "candidate_range_ns": [
+          981943,
+          1045238
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "opaque_cancellation_first",
+        "reference_ns": [
+          11330184,
+          6605408,
+          10216830,
+          6364304,
+          6433499
+        ],
+        "candidate_ns": [
+          6417510,
+          6320087,
+          5949032,
+          6041456,
+          6248092
+        ],
+        "reference_median_ns": 6605408,
+        "candidate_median_ns": 6248092,
+        "ratio_of_medians": 0.9459055367965158,
+        "block_ratios": [
+          0.5664082772177398,
+          0.9568049392255558,
+          0.5822776732117496,
+          0.9492720649422152,
+          0.971181001193907
+        ],
+        "median_block_ratio": 0.9492720649422152,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          6364304,
+          11330184
+        ],
+        "candidate_range_ns": [
+          5949032,
+          6417510
+        ]
+      },
+      {
+        "comparison": "projected_vs_recursive",
+        "reference": "recursive",
+        "variant": "projected",
+        "suite": "quadratic",
+        "name": "conjugate_then_affine_warm",
+        "reference_ns": [
+          5877277,
+          3495691,
+          5877567,
+          3501160,
+          3483531
+        ],
+        "candidate_ns": [
+          3764672,
+          3476321,
+          3364230,
+          3402077,
+          3371759
+        ],
+        "reference_median_ns": 3501160,
+        "candidate_median_ns": 3402077,
+        "ratio_of_medians": 0.9716999508734248,
+        "block_ratios": [
+          0.6405469743896706,
+          0.9944588923906604,
+          0.5723847979954971,
+          0.9716999508734248,
+          0.967914165253589
+        ],
+        "median_block_ratio": 0.967914165253589,
+        "slower_blocks": 0,
+        "faster_blocks": 5,
+        "reference_range_ns": [
+          3483531,
+          5877567
+        ],
+        "candidate_range_ns": [
+          3364230,
+          3764672
+        ]
+      }
+    ]
+  },
+  "limits": [
+    "The three comparisons share one new closed sample set and are not independent experiments. It neither extends previous samples nor establishes native workload performance.",
+    "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+    "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Private coefficient layouts do not establish total memory or eventual reclamation.",
+    "Native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open. Dependencies and owned coefficient layouts are unchanged; the shared closed payload and private result enum change ownership and their costs remain part of this comparison.",
+    "Projected conjugate-product first/warm/cloned queries have ratios of medians 1.051236/1.057450/1.037710 and median paired ratios 1.061595/1.059850/1.058736. Each pair is adverse, with paired ranges 1.043886..1.075333, 1.038217..1.121170 and 1.030894..1.117077. First/cloned each add 16,000 allocated, retained and peak requested bytes per 1,000 inputs; warm counters are unchanged.",
+    "Projected integer canonical-boundary warm, signed-word first/warm/cloned and wide-integer first/cloned queries are also slower than baseline in all five pairs. Wide-integer first/cloned median paired ratios are 1.343974/1.183993, with large paired ranges 1.108414..1.803474 and 1.052410..1.810426. The complete samples and ranges remain visible; no significance or application-effect claim follows.",
+    "Against the recursive control, all four requested-memory fields match in every one of 68 phases and all five blocks. This does not establish that direct projection never avoids copying; it establishes no additional measured heap saving on these probes.",
+    "Against baseline, both experimental variants save allocation calls in nine phases and increase none. Allocated bytes decrease in nine and increase in fifteen; retained bytes rise in twenty-one and decrease in none; peak bytes rise in twenty-one and decrease in one by 96 bytes. All paired memory deltas repeat five times. These counters exclude native C heaps, stack frames and allocator bookkeeping.",
+    "Projected quadratic multiradical-square first/warm/cloned queries are faster than baseline in all five pairs, with median paired ratios 0.903063/0.913401/0.924875 and 2,000 fewer allocations per 1,000 inputs. First/cloned still retain 16,000 additional requested bytes. Mixed-field-decline cloned is the fourth all-five-faster row. All favorable results are retained.",
+    "Against the recursive control, eleven quadratic phases are faster in all five pairs, while ten integer phases are slower in all five. These contrasts share samples with both baseline comparisons and cannot be counted as independent evidence. No cause for the integer timing differences is established by this trial.",
+    "The projected probes grow by 5,072 to 5,080 bytes against baseline and by 856 to 888 bytes against recursive control. Recursive probes grow by 4,192 to 4,216 bytes against baseline. Production CLI size is unmeasured.",
+    "Fresh recursive-control timing directions differ from the earlier closed recursive-only run. The earlier results remain frozen and are not appended, pooled or treated as matched measurements here. Large within-set variation remains visible, and no sample is discarded.",
+    "First-query phases use fresh graphs within processes that may already share constants. Cloned-query phases exclude cloning itself. Retained counters are phase-relative and do not measure eventual process reclamation.",
+    "No native qualification, original fixture gates, endpoint/broad/abort controls, complete-report replay or production CLI build ran for this rejected source. The uninstrumented endpoint/P4 parent still fails the 120-second board assertion at 133.31248412 worker-CPU seconds and passes the separate 60-second neck check-body assertion. Historical standalone gates are not matched speed comparisons.",
+    "Version 1 stopped in source recovery before compilation. Version 2 accounts for two rustfmt rewrites and reproduces all three formatted v1 source maps byte-for-byte. Every executed runner and source remains frozen."
+  ],
+  "next_step": {
+    "status": "cache-local-borrowing-review-pending-no-candidate",
+    "task": "Review a scoped read callback for a closed right multiplication operand while retaining the parent Box-backed cache and owned polynomial return type. Determine whether the multiplication body and every helper it invokes can be proven non-reentrant with respect to the held cache lock before preparing a candidate.",
+    "basis": "The parent copies a closed payload under its cache read guard, then releases the guard. Its multiplication normalizes left before right. A cache-local borrowed product might avoid the right-side copy without an Arc header or a result enum on every recursive call. This is a source-based hypothesis, not an attribution of timing or a demonstrated improvement.",
+    "source_review_sha256": {
+      "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e"
+    },
+    "constraints": [
+      "Resolve read-lock reentrancy, writer blocking and callback lifetime before implementation; do not hold a guard across unchecked expression evaluation or publication.",
+      "Preserve left-before-right normalization, cache-hit work accounting, reuse tracking, operation/insertion order, every opaque-owner decision and the original retry after releasing the first memo.",
+      "Keep original Box payloads, scratch layouts, memo behavior, all exact/declined shapes and limits, with no new cache fact, approximation, dependency or recognition prepass.",
+      "Include original cache/P4/frontier tests and explicit alias, lifetime, concurrent-reader/writer and fallback controls. Require fresh qualification and fixed costs; no old sample extension.",
+      "Root retained-copy coverage of 0.6244 percent is not a cost estimate. Keep both full-resolution native gates and every remaining admission obligation."
+    ],
+    "candidate_prepared": false
+  },
+  "source_parent_main_unchanged": true,
+  "runtime_admitted": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}
