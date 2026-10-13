@@ -2053,6 +2053,20 @@
       "cost_decision": "Reject the measured projected version. All scoped correctness checks and exact cost witnesses pass. Against the unchanged baseline, nine phases are slower in all five pairs, retained/peak bytes rise in twenty-one phases, and every probe grows. Against the recursive control, ten integer phases are slower in all five pairs and every requested-memory counter is unchanged. Favorable quadratic timings do not resolve the adverse rows. Neither experimental source advances to native validation or main runtime.",
       "cost_limits": "One closed five-block three-source sample set: 90 measurements and 18 preflights, 4096 timing inputs and 1000 allocation inputs per phase. All witnesses and inventories match. Contrasts share samples and are not independent experiments. All raw samples, adverse rows and ranges remain; no significance or application-speedup claim. Memory counters exclude native C heaps, stack frames and allocator bookkeeping.",
       "native_executed": false
+    },
+    "cache_local_polynomial_products": {
+      "status": "prototype-inputs-recorded-preparation-and-qualification-pending",
+      "evidence": "docs/evidence/2026-10-13-cache-local-polynomial-products",
+      "contract": "Typed multiplication borrows a closed right operand under the original Box-backed cache read lock, returns an owned product, and returns the unchanged left polynomial on a miss. No Arc payload or recursive result enum. Cache-hit decline marks reuse; cache misses enter the preserved original recognizer body once.",
+      "source_review": "Product coefficient operations use Rational arithmetic and immutable structural comparison; inspected helpers do not evaluate expressions or call EvaluationCache. The typed method accepts no arbitrary callback. The parent retains the borrowed node, and the guard must be released before recursion, publication and return. Scoped inspection is not a whole-crate formal proof.",
+      "risks": [
+        "Read-lock duration may delay writers; coefficient bit sizes are unbounded, so no fixed-duration or wait-free claim.",
+        "Dispatch, temporary Result moves and code generation may regress cold paths or probe size."
+      ],
+      "controls": "Twenty unchanged shared tests plus inherited cache/P4 controls; eight candidate tests cover exact products, frontiers, misses, zero work, fallback accounting, concurrent readers/writers, poison recovery and opaque self-reference. Fresh qualification will run 28 commands; counts overlap.",
+      "next_step": "Commit inputs, freeze two fresh sources using rustfmt check without source edits, then complete qualification and fixed twelve-preflight/sixty-measurement scalar costs. Original native gates and complete admission controls remain mandatory.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
