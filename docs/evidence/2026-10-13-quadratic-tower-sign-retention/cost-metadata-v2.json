@@ -1,0 +1,11 @@
+{
+  "main_metadata_updates": {
+    "docs/properties-status.json": {
+      "before": "806cead27890652eab7c46ffc161f63132f3f7d89d5296d015abb7f3b780b9f1",
+      "after": "0218fc7e4de8f23416c9a46bd109cf885b1dfc9ab549deb2b8512d5477e55f45"
+    }
+  },
+  "authorized_scope": "Only the committed current_work status update from scoped qualification. Every other original-snapshot file, all 1133 main guarded sources and all 35 pending native entries retain their original hashes. Frozen baseline/candidate maps are unchanged.",
+  "commit": "43154d5c709fce7964f8ce33970815ec04d2d10a",
+  "non_current_work_plan_scope_unchanged": true
+}

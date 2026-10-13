@@ -1,0 +1,16 @@
+{
+  "status": "initial-main-metadata-guard-failed-before-any-cost-action",
+  "runner_sha256": "0cf075dd2da1f80da03118eda1f6dc43b4b00e3e7dd10ebdf95debbeeb60cef4",
+  "changed_files": {
+    "docs/properties-status.json": {
+      "before": "806cead27890652eab7c46ffc161f63132f3f7d89d5296d015abb7f3b780b9f1",
+      "after": "0218fc7e4de8f23416c9a46bd109cf885b1dfc9ab549deb2b8512d5477e55f45"
+    }
+  },
+  "cost_output_created": false,
+  "cost_target_created": false,
+  "builds_or_probes_executed": 0,
+  "correction": "Version 2 accepts exactly the committed status-ledger hash in cost-metadata-v2.json, preserving every other code/source guard. Sampling, probe bytes, families, phases and pair order are unchanged. No measurement sample exists to discard.",
+  "metadata_sha256": "b968d13c4c46561a37b288bf41cdb434880a3fcc945a66865b7384b7fb6b1816",
+  "runtime_admitted": false
+}
