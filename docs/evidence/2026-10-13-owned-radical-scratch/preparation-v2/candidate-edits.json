@@ -1,0 +1,40 @@
+{
+  "crates/hyperreal/src/computable/node/algebra.rs": [
+    {
+      "before": "#[derive(Clone)]\nstruct PiAtanLinearForm {",
+      "after": "mod radical_storage;\nuse radical_storage::{ClosedRadicalTerms, RadicalTerms};\n\n#[derive(Clone)]\nstruct PiAtanLinearForm {"
+    },
+    {
+      "before": "    radicals: Vec<(Rational, Rational)>,\n    atoms:",
+      "after": "    radicals: RadicalTerms,\n    atoms:"
+    },
+    {
+      "before": "struct ClosedRadicalCoefficient {\n    rational: Rational,\n    radicals: Vec<(Rational, Rational)>,",
+      "after": "struct ClosedRadicalCoefficient {\n    rational: Rational,\n    radicals: ClosedRadicalTerms,"
+    },
+    {
+      "before": "            rational: value,\n            radicals: Vec::new(),",
+      "after": "            rational: value,\n            radicals: RadicalTerms::new(),"
+    },
+    {
+      "before": "            radicals: vec![(radicand, value)],",
+      "after": "            radicals: vec![(radicand, value)].into(),"
+    },
+    {
+      "before": "            radicals: Vec::new(),\n            atoms: vec![(value, Rational::one())],",
+      "after": "            radicals: RadicalTerms::new(),\n            atoms: vec![(value, Rational::one())],"
+    },
+    {
+      "before": "                    radicals: vec![(radicand.clone(), -coefficient * inverse_norm)],",
+      "after": "                    radicals: vec![(radicand.clone(), -coefficient * inverse_norm)].into(),"
+    },
+    {
+      "before": "ClosedRadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.clone(),",
+      "after": "ClosedRadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.retained(),"
+    },
+    {
+      "before": "RadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.clone(),\n                            atoms: Vec::new(),",
+      "after": "RadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.to_terms(),\n                            atoms: Vec::new(),"
+    }
+  ]
+}

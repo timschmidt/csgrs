@@ -1,0 +1,1004 @@
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -1,3 +1,15 @@
++#[cfg(test)]
++mod shared_radical_tests;
++
++#[cfg(test)]
++mod memo_publication_tests;
++
++#[cfg(test)]
++mod temporary_storage_tests;
++
++mod radical_storage;
++use radical_storage::{ClosedRadicalTerms, RadicalTerms};
++
+ #[derive(Clone)]
+ struct PiAtanLinearForm {
+     constant: Rational,
+@@ -48,7 +60,7 @@
+ #[derive(Clone)]
+ struct RadicalCoefficient {
+     rational: Rational,
+-    radicals: Vec<(Rational, Rational)>,
++    radicals: RadicalTerms,
+     atoms: Vec<(Computable, Rational)>,
+ }
+ 
+@@ -59,7 +71,7 @@
+     fn rational(value: Rational) -> Self {
+         Self {
+             rational: value,
+-            radicals: Vec::new(),
++            radicals: RadicalTerms::new(),
+             atoms: Vec::new(),
+         }
+     }
+@@ -72,7 +84,7 @@
+         }
+         Self {
+             rational: Rational::zero(),
+-            radicals: vec![(radicand, value)],
++            radicals: vec![(radicand, value)].into(),
+             atoms: Vec::new(),
+         }
+     }
+@@ -80,7 +92,7 @@
+     fn atom(value: Computable) -> Self {
+         Self {
+             rational: Rational::zero(),
+-            radicals: Vec::new(),
++            radicals: RadicalTerms::new(),
+             atoms: vec![(value, Rational::one())],
+         }
+     }
+@@ -202,7 +214,7 @@
+                 let inverse_norm = norm.inverse().ok()?;
+                 Some(Self {
+                     rational: self.rational * &inverse_norm,
+-                    radicals: vec![(radicand.clone(), -coefficient * inverse_norm)],
++                    radicals: vec![(radicand.clone(), -coefficient * inverse_norm)].into(),
+                     atoms: Vec::new(),
+                 })
+             }
+@@ -224,7 +236,7 @@
+ 
+ struct ClosedRadicalCoefficient {
+     rational: Rational,
+-    radicals: Vec<(Rational, Rational)>,
++    radicals: ClosedRadicalTerms,
+ }
+ 
+ impl ClosedPiLaurentPolynomial {
+@@ -245,7 +257,7 @@
+                         *power,
+                         ClosedRadicalCoefficient {
+                             rational: coefficient.rational.clone(),
+-                            radicals: coefficient.radicals.clone(),
++                            radicals: coefficient.radicals.retained(),
+                         },
+                     )
+                 })
+@@ -263,7 +275,7 @@
+                         *power,
+                         RadicalCoefficient {
+                             rational: coefficient.rational.clone(),
+-                            radicals: coefficient.radicals.clone(),
++                            radicals: coefficient.radicals.to_terms(),
+                             atoms: Vec::new(),
+                         },
+                     )
+--- a/crates/hyperreal/src/computable/node/memo_publication_tests.rs
++++ b/crates/hyperreal/src/computable/node/memo_publication_tests.rs
+@@ -0,0 +1,154 @@
++use super::*;
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn closed_expression() -> Computable {
++    raw(Approximation::Add(
++        raw(Approximation::Ratio(Rational::new(3))),
++        raw(Approximation::Sqrt(raw(Approximation::Ratio(
++            Rational::new(13),
++        )))),
++    ))
++}
++
++fn assert_closed(value: &PiLaurentPolynomial) {
++    assert_eq!(value.terms.len(), 1);
++    assert_eq!(value.terms[0].0, 0);
++    let coefficient = &value.terms[0].1;
++    assert_eq!(coefficient.rational, Rational::new(3));
++    assert_eq!(
++        coefficient.radicals.as_slice(),
++        [(Rational::new(13), Rational::one())]
++    );
++    assert!(coefficient.atoms.is_empty());
++}
++
++#[test]
++fn published_closed_value_survives_zero_work_reuse_and_releases_owners() {
++    let value = closed_expression();
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let owners = Arc::strong_count(&value.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&first);
++    assert!(!reused);
++    assert_closed(&value.internal.cache.pi_laurent_polynomial().unwrap());
++    assert_eq!(Arc::strong_count(&value.internal), owners);
++    let entries = memo.as_ref().map_or(0, Vec::len);
++    println!("CLOSED_MEMO_INVENTORY\tretained\t{entries}");
++    // A fresh zero-work query must use the published certificate, independent
++    // of whether the original query kept a redundant local copy.
++    drop(memo);
++    drop(first);
++    let mut empty_memo = None;
++    work = 0;
++    let warm = clone
++        .pi_laurent_polynomial_retained::<true>(0, &mut work, &mut empty_memo, &mut reused)
++        .unwrap();
++    assert_closed(&warm);
++    assert!(reused);
++    assert_eq!(work, 0);
++    assert!(empty_memo.is_none());
++    assert!(value.cached().is_none());
++    assert!(clone.cached().is_none());
++    drop(warm);
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn original_recognizer_keeps_zero_work_query_memo_reuse() {
++    let value = closed_expression();
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<false>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&first);
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    assert_eq!(memo.as_ref().unwrap().len(), 1);
++    println!("CLOSED_MEMO_INVENTORY\toriginal\t1");
++    work = 0;
++    let second = clone
++        .pi_laurent_polynomial_retained::<false>(0, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_closed(&second);
++    assert!(!reused);
++    assert_eq!(work, 0);
++    assert!(clone.cached().is_none());
++    drop(first);
++    drop(second);
++    drop(memo);
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn rejected_opaque_publication_preserves_memo_and_releases_every_owner() {
++    let opaque = raw(Approximation::AtanRational(
++        Rational::fraction(3, 7).unwrap(),
++    ));
++    let opaque_weak = Arc::downgrade(&opaque.internal);
++    let value = raw(Approximation::Add(
++        opaque.clone(),
++        raw(Approximation::Ratio(Rational::one())),
++    ));
++    let clone = value.clone();
++    let weak = Arc::downgrade(&value.internal);
++    let owners = Arc::strong_count(&opaque.internal);
++    let mut memo = None;
++    let mut work = 512;
++    let mut reused = false;
++    let first = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_eq!(first.terms.len(), 1);
++    assert_eq!(first.terms[0].1.rational, Rational::one());
++    assert_eq!(first.terms[0].1.atoms.len(), 1);
++    assert_eq!(first.terms[0].1.atoms[0].1, Rational::one());
++    assert!(Computable::internal_structural_eq(
++        &first.terms[0].1.atoms[0].0,
++        &opaque
++    ));
++    assert!(value.internal.cache.pi_laurent_polynomial().is_none());
++    assert_eq!(memo.as_ref().unwrap().len(), 2);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners + 3);
++    println!("CLOSED_MEMO_INVENTORY\topaque\t2");
++    work = 0;
++    let second = clone
++        .pi_laurent_polynomial_retained::<true>(0, &mut work, &mut memo, &mut reused)
++        .unwrap();
++    assert_eq!(second.terms[0].1.atoms.len(), 1);
++    assert!(!reused);
++    assert_eq!(work, 0);
++    drop(first);
++    drop(second);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners + 2);
++    drop(memo);
++    assert_eq!(Arc::strong_count(&opaque.internal), owners);
++    assert!(clone.cached().is_none());
++    drop(clone);
++    drop(value);
++    drop(opaque);
++    assert!(weak.upgrade().is_none());
++    assert!(opaque_weak.upgrade().is_none());
++}
+--- a/crates/hyperreal/src/computable/node/radical_storage.rs
++++ b/crates/hyperreal/src/computable/node/radical_storage.rs
+@@ -0,0 +1,222 @@
++use crate::Rational;
++use std::ops::{Deref, DerefMut};
++use std::sync::Arc;
++
++type Term = (Rational, Rational);
++
++#[derive(Clone)]
++enum Storage {
++    Owned(Vec<Term>),
++    Retained(Arc<Vec<Term>>),
++}
++
++// Mutable scratch arrays keep ordinary Vec ownership. Only a read from a
++// retained certificate shares a buffer, and that buffer owns only rationals.
++#[derive(Clone)]
++pub(super) struct RadicalTerms(Storage);
++
++#[derive(Clone, Default)]
++pub(super) struct ClosedRadicalTerms(Option<Arc<Vec<Term>>>);
++
++impl Default for RadicalTerms {
++    fn default() -> Self {
++        Self::new()
++    }
++}
++
++impl RadicalTerms {
++    pub(super) fn new() -> Self {
++        Self(Storage::Owned(Vec::new()))
++    }
++
++    pub(super) fn as_slice(&self) -> &[Term] {
++        match &self.0 {
++            Storage::Owned(terms) => terms,
++            Storage::Retained(terms) => terms,
++        }
++    }
++
++    fn into_vec(self) -> Vec<Term> {
++        match self.0 {
++            Storage::Owned(terms) => terms,
++            Storage::Retained(terms) => Arc::unwrap_or_clone(terms),
++        }
++    }
++
++    fn writable(&mut self) -> &mut Vec<Term> {
++        if matches!(self.0, Storage::Retained(_)) {
++            let terms = std::mem::take(self).into_vec();
++            self.0 = Storage::Owned(terms);
++        }
++        // The only other variant was converted above under exclusive access.
++        let Storage::Owned(terms) = &mut self.0 else {
++            unreachable!("retained storage was converted to owned storage");
++        };
++        terms
++    }
++
++    pub(super) fn push(&mut self, term: Term) {
++        self.writable().push(term);
++    }
++
++    pub(super) fn remove(&mut self, index: usize) -> Term {
++        self.writable().remove(index)
++    }
++
++    pub(super) fn retain(&mut self, predicate: impl FnMut(&Term) -> bool) {
++        self.writable().retain(predicate);
++    }
++
++    pub(super) fn retained(&self) -> ClosedRadicalTerms {
++        if self.is_empty() {
++            return ClosedRadicalTerms(None);
++        }
++        ClosedRadicalTerms(Some(match &self.0 {
++            Storage::Owned(terms) => Arc::new(terms.clone()),
++            Storage::Retained(terms) => terms.clone(),
++        }))
++    }
++}
++
++impl ClosedRadicalTerms {
++    pub(super) fn to_terms(&self) -> RadicalTerms {
++        match &self.0 {
++            Some(terms) => RadicalTerms(Storage::Retained(terms.clone())),
++            None => RadicalTerms::new(),
++        }
++    }
++}
++
++impl Deref for ClosedRadicalTerms {
++    type Target = [Term];
++
++    fn deref(&self) -> &Self::Target {
++        self.0.as_ref().map_or(&[], |terms| terms.as_slice())
++    }
++}
++
++impl From<Vec<Term>> for RadicalTerms {
++    fn from(terms: Vec<Term>) -> Self {
++        Self(Storage::Owned(terms))
++    }
++}
++
++impl Deref for RadicalTerms {
++    type Target = [Term];
++
++    fn deref(&self) -> &Self::Target {
++        self.as_slice()
++    }
++}
++
++impl DerefMut for RadicalTerms {
++    fn deref_mut(&mut self) -> &mut Self::Target {
++        self.writable().as_mut_slice()
++    }
++}
++
++impl IntoIterator for RadicalTerms {
++    type Item = Term;
++    type IntoIter = std::vec::IntoIter<Term>;
++
++    fn into_iter(self) -> Self::IntoIter {
++        self.into_vec().into_iter()
++    }
++}
++
++impl<'a> IntoIterator for &'a RadicalTerms {
++    type Item = &'a Term;
++    type IntoIter = std::slice::Iter<'a, Term>;
++
++    fn into_iter(self) -> Self::IntoIter {
++        self.iter()
++    }
++}
++
++impl<'a> IntoIterator for &'a mut RadicalTerms {
++    type Item = &'a mut Term;
++    type IntoIter = std::slice::IterMut<'a, Term>;
++
++    fn into_iter(self) -> Self::IntoIter {
++        self.iter_mut()
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn publication_and_mutation_keep_scratch_arrays_owned() {
++        let mut empty = RadicalTerms::new();
++        empty.retain(|_| panic!("empty storage has no entries"));
++        assert_eq!((&mut empty).into_iter().count(), 0);
++        assert!(matches!(empty.0, Storage::Owned(_)));
++        assert!(empty.retained().0.is_none());
++        assert!(matches!(empty.retained().to_terms().0, Storage::Owned(_)));
++
++        let pair = (Rational::new(13), Rational::new(7));
++        let owner = RadicalTerms::from(vec![pair.clone()]);
++        let copy = owner.clone();
++        assert!(matches!(owner.0, Storage::Owned(_)));
++        assert!(matches!(copy.0, Storage::Owned(_)));
++        assert_ne!(owner.as_ptr(), copy.as_ptr());
++        let closed = owner.retained();
++        let weak = Arc::downgrade(closed.0.as_ref().unwrap());
++        assert_ne!(owner.as_ptr(), closed.as_ptr());
++        let mut first = closed.to_terms();
++        let second = first.clone();
++        assert!(matches!(first.0, Storage::Retained(_)));
++        assert!(matches!(second.0, Storage::Retained(_)));
++        assert_eq!(closed.as_ptr(), first.as_ptr());
++        assert_eq!(first.as_ptr(), second.as_ptr());
++        let republished = first.retained();
++        assert_eq!(republished.as_ptr(), closed.as_ptr());
++        first[0].1 = Rational::new(-3);
++        assert!(matches!(first.0, Storage::Owned(_)));
++        assert_ne!(first.as_ptr(), closed.as_ptr());
++        first.remove(0);
++        first.push((Rational::new(2), Rational::new(9)));
++        first.retain(|_| false);
++        assert!(first.is_empty());
++        assert!(matches!(first.0, Storage::Owned(_)));
++        assert_eq!(&*closed, [pair.clone()].as_slice());
++        assert_eq!(second.as_slice(), [pair.clone()].as_slice());
++        assert_eq!(owner.as_slice(), [pair.clone()].as_slice());
++        assert_eq!(copy.as_slice(), [pair].as_slice());
++        drop(closed);
++        drop(republished);
++        assert!(weak.upgrade().is_some());
++        drop(second);
++        assert!(weak.upgrade().is_none());
++    }
++
++    #[test]
++    fn consuming_owned_and_retained_views_reuses_or_releases_buffers() {
++        let pair = (Rational::new(13), Rational::new(7));
++        let owned = RadicalTerms::from(vec![pair.clone()]);
++        let pointer = owned.as_ptr();
++        let iterator = owned.into_iter();
++        assert_eq!(iterator.as_slice().as_ptr(), pointer);
++        assert_eq!(iterator.collect::<Vec<_>>(), vec![pair.clone()]);
++
++        let closed = RadicalTerms::from(vec![pair.clone()]).retained();
++        let weak = Arc::downgrade(closed.0.as_ref().unwrap());
++        let view = closed.to_terms();
++        let pointer = view.as_ptr();
++        drop(closed);
++        let iterator = view.into_iter();
++        assert_eq!(iterator.as_slice().as_ptr(), pointer);
++        assert!(weak.upgrade().is_none());
++        assert_eq!(iterator.collect::<Vec<_>>(), vec![pair.clone()]);
++
++        let closed = RadicalTerms::from(vec![pair.clone()]).retained();
++        let weak = Arc::downgrade(closed.0.as_ref().unwrap());
++        let values = closed.to_terms().into_iter().collect::<Vec<_>>();
++        assert_ne!(values.as_ptr(), closed.as_ptr());
++        assert_eq!(values, vec![pair]);
++        assert_eq!(values.as_slice(), &*closed);
++        drop(closed);
++        assert!(weak.upgrade().is_none());
++    }
++}
+--- a/crates/hyperreal/src/computable/node/shared_radical_tests.rs
++++ b/crates/hyperreal/src/computable/node/shared_radical_tests.rs
+@@ -0,0 +1,175 @@
++use super::*;
++
++const ROOTS: [i64; 8] = [2, 3, 5, 7, 11, 13, 17, 19];
++
++fn coefficient(width: usize) -> RadicalCoefficient {
++    let mut result = RadicalCoefficient::rational(Rational::new(29));
++    for (index, root) in ROOTS[..width].iter().enumerate() {
++        result
++            .insert_radical(
++                Rational::new(*root),
++                Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++    }
++    result
++}
++
++fn components(value: &RadicalCoefficient) -> (Rational, Vec<(Rational, Rational)>) {
++    assert!(value.atoms.is_empty());
++    (value.rational.clone(), value.radicals.to_vec())
++}
++
++#[test]
++fn closed_views_isolate_scaling_cancellation_and_frontier_failures() {
++    for width in [1, 2, 8] {
++        let source = PiLaurentPolynomial::monomial(0, coefficient(width));
++        let expected = components(&source.terms[0].1);
++        let closed = ClosedPiLaurentPolynomial::from_polynomial(&source).unwrap();
++        let first = closed.to_polynomial();
++        let second = closed.to_polynomial();
++        if width == 1 {
++            let source_shared =
++                source.terms[0].1.radicals.as_ptr() == closed.terms[0].1.radicals.as_ptr();
++            let views_shared = closed.terms[0].1.radicals.as_ptr()
++                == first.terms[0].1.radicals.as_ptr()
++                && first.terms[0].1.radicals.as_ptr() == second.terms[0].1.radicals.as_ptr();
++            println!(
++                "RADICAL_STORAGE_SHARING\t{}\t{}",
++                u8::from(source_shared),
++                u8::from(views_shared)
++            );
++        }
++        let scale = Rational::fraction(-3, 11).unwrap();
++        let scaled = first.scaled(scale.clone());
++        assert_eq!(scaled.terms[0].1.rational, &expected.0 * &scale);
++        assert_eq!(
++            scaled.terms[0].1.radicals.as_slice(),
++            expected
++                .1
++                .iter()
++                .map(|(root, amount)| (root.clone(), amount * &scale))
++                .collect::<Vec<_>>()
++        );
++        let mut cancelled = second;
++        cancelled.terms[0]
++            .1
++            .insert_radical(Rational::new(2), Rational::new(-1))
++            .unwrap();
++        assert_eq!(cancelled.terms[0].1.radicals.as_slice(), &expected.1[1..]);
++        let mut frontier = closed.to_polynomial();
++        if width == 8 {
++            assert!(
++                frontier.terms[0]
++                    .1
++                    .insert_radical(Rational::new(23), Rational::new(1))
++                    .is_none()
++            );
++            assert_eq!(components(&frontier.terms[0].1), expected);
++        }
++        assert_eq!(components(&source.terms[0].1), expected);
++        assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++        assert!(
++            closed
++                .to_polynomial()
++                .scaled(Rational::zero())
++                .terms
++                .is_empty()
++        );
++        assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++    }
++}
++
++#[test]
++fn consuming_cached_products_and_inverses_preserves_live_certificates() {
++    let mut value = RadicalCoefficient::radical(Rational::new(2), Rational::new(13));
++    value.rational = Rational::new(3);
++    let source = PiLaurentPolynomial::monomial(0, value);
++    let expected = components(&source.terms[0].1);
++    let closed = ClosedPiLaurentPolynomial::from_polynomial(&source).unwrap();
++    let product = closed
++        .to_polynomial()
++        .multiply(closed.to_polynomial())
++        .unwrap();
++    assert_eq!(product.terms[0].1.rational, Rational::new(61));
++    assert_eq!(
++        product.terms[0].1.radicals.as_slice(),
++        [(Rational::new(13), Rational::new(12))].as_slice()
++    );
++    let inverse = closed.to_polynomial().inverse_monomial().unwrap();
++    assert_eq!(
++        inverse.terms[0].1.rational,
++        Rational::fraction(-3, 43).unwrap()
++    );
++    assert_eq!(
++        inverse.terms[0].1.radicals.as_slice(),
++        [(Rational::new(13), Rational::fraction(2, 43).unwrap())].as_slice()
++    );
++    let identity = inverse.multiply(closed.to_polynomial()).unwrap();
++    assert_eq!(identity.terms[0].1.rational, Rational::one());
++    assert!(identity.terms[0].1.radicals.is_empty());
++    assert_eq!(components(&source.terms[0].1), expected);
++    assert_eq!(components(&closed.to_polynomial().terms[0].1), expected);
++}
++
++#[test]
++fn concurrent_cached_views_mutate_independently_and_outlive_the_graph() {
++    let value = Computable {
++        internal: Arc::new(Node::new(
++            Approximation::Add(
++                Computable::rational(Rational::new(3)),
++                Computable::sqrt_rational(Rational::new(13)),
++            ),
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    };
++    let weak = Arc::downgrade(&value.internal);
++    let clone = value.clone();
++    let mut work = 512;
++    let mut reused = false;
++    let original = value
++        .pi_laurent_polynomial_retained::<true>(64, &mut work, &mut None, &mut reused)
++        .unwrap();
++    let expected = (Rational::new(3), vec![(Rational::new(13), Rational::one())]);
++    assert_eq!(components(&original.terms[0].1), expected);
++    std::thread::scope(|scope| {
++        for index in 1..=8 {
++            let value = &value;
++            let expected = &expected;
++            scope.spawn(move || {
++                for _ in 0..8 {
++                    let mut work = 0;
++                    let mut reused = false;
++                    let view = value
++                        .pi_laurent_polynomial_retained::<true>(
++                            0,
++                            &mut work,
++                            &mut None,
++                            &mut reused,
++                        )
++                        .unwrap();
++                    assert!(reused);
++                    assert_eq!(work, 0);
++                    assert_eq!(components(&view.terms[0].1), *expected);
++                    let changed = view.scaled(Rational::new(-index));
++                    assert_eq!(changed.terms[0].1.rational, Rational::new(-3 * index));
++                    assert_eq!(changed.terms[0].1.radicals[0].1, Rational::new(-index));
++                }
++            });
++        }
++    });
++    assert_eq!(components(&original.terms[0].1), expected);
++    assert!(value.cached().is_none());
++    let view = value.internal.cache.pi_laurent_polynomial().unwrap();
++    drop(clone);
++    drop(value);
++    assert!(weak.upgrade().is_none());
++    assert_eq!(components(&original.terms[0].1), expected);
++    assert_eq!(components(&view.terms[0].1), expected);
++    let negated = view.scaled(Rational::new(-1));
++    assert_eq!(negated.terms[0].1.rational, Rational::new(-3));
++    assert_eq!(negated.terms[0].1.radicals[0].1, Rational::new(-1));
++    assert_eq!(components(&original.terms[0].1), expected);
++}
+--- a/crates/hyperreal/src/computable/node/temporary_storage_tests.rs
++++ b/crates/hyperreal/src/computable/node/temporary_storage_tests.rs
+@@ -0,0 +1,351 @@
++use super::*;
++
++const ROOTS: [i64; 9] = [2, 3, 5, 7, 11, 13, 17, 19, 23];
++
++fn empty() -> PiLaurentPolynomial {
++    PiLaurentPolynomial::monomial(0, RadicalCoefficient::rational(Rational::zero()))
++}
++
++fn raw(approximation: Approximation) -> Computable {
++    Computable {
++        internal: Arc::new(Node::new(
++            approximation,
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    }
++}
++
++fn atom(index: i64) -> Computable {
++    raw(Approximation::AtanRational(
++        Rational::fraction(index + 1, 37).unwrap(),
++    ))
++}
++
++fn components(value: &RadicalCoefficient) -> (Rational, Vec<(Rational, Rational)>) {
++    assert!(value.atoms.is_empty());
++    (value.rational.clone(), value.radicals.to_vec())
++}
++
++#[test]
++fn radical_frontiers_cancel_and_regrow_in_order() {
++    let mut value = RadicalCoefficient::rational(Rational::zero());
++    for (index, root) in ROOTS[..8].iter().enumerate() {
++        value
++            .insert_radical(
++                Rational::new(*root),
++                Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++        assert_eq!(value.radicals.len(), index + 1);
++    }
++    let before = components(&value);
++    assert!(
++        value
++            .insert_radical(Rational::new(23), Rational::one())
++            .is_none()
++    );
++    assert_eq!(components(&value), before);
++    // Existing identities and zero entries remain allowed at the full frontier.
++    value
++        .insert_radical(Rational::new(23), Rational::zero())
++        .unwrap();
++    value
++        .insert_radical(Rational::one(), Rational::new(41))
++        .unwrap();
++    for (index, root) in ROOTS[..8].iter().enumerate().rev() {
++        value
++            .insert_radical(
++                Rational::new(*root),
++                -Rational::new(i64::try_from(index + 1).unwrap()),
++            )
++            .unwrap();
++        assert_eq!(value.radicals.len(), index);
++    }
++    assert_eq!(value.rational, Rational::new(41));
++    for root in [23, 3, 2] {
++        value
++            .insert_radical(Rational::new(root), Rational::new(-7))
++            .unwrap();
++    }
++    assert_eq!(
++        value.radicals.as_slice(),
++        [23, 3, 2]
++            .map(|root| (Rational::new(root), Rational::new(-7)))
++            .as_slice()
++    );
++}
++
++#[test]
++fn polynomial_frontiers_stay_sorted_after_cancel_and_regrow() {
++    let mut value = empty();
++    for power in [7, -4, 3, -2, 5, 0, 1, -6] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(3)))
++            .unwrap();
++    }
++    assert_eq!(
++        value.terms.iter().map(|(p, _)| *p).collect::<Vec<_>>(),
++        [-6, -4, -2, 0, 1, 3, 5, 7]
++    );
++    assert!(
++        value
++            .insert(9, RadicalCoefficient::rational(Rational::one()))
++            .is_none()
++    );
++    assert_eq!(value.terms.len(), 8);
++    value
++        .insert(9, RadicalCoefficient::rational(Rational::zero()))
++        .unwrap();
++    for power in [0, 7, -6, 3, -2, 5, 1, -4] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(-3)))
++            .unwrap();
++    }
++    assert!(value.terms.is_empty());
++    for power in [5, -5, 0] {
++        value
++            .insert(power, RadicalCoefficient::rational(Rational::new(11)))
++            .unwrap();
++    }
++    assert_eq!(
++        value.terms.iter().map(|(p, _)| *p).collect::<Vec<_>>(),
++        [-5, 0, 5]
++    );
++}
++
++#[test]
++fn closed_roundtrips_preserve_scaled_single_and_spilled_forms() {
++    for width in [0, 1, 2, 8] {
++        for radical_width in [0, 1, 2, 8] {
++            let mut value = empty();
++            for index in 0..width {
++                let mut coefficient = RadicalCoefficient::rational(Rational::new(41));
++                for root in &ROOTS[..radical_width] {
++                    coefficient
++                        .insert_radical(Rational::new(*root), Rational::fraction(5, 7).unwrap())
++                        .unwrap();
++                }
++                value.insert(index * 2 - 7, coefficient).unwrap();
++            }
++            for numerator in [0, -3, 2] {
++                let scale = Rational::fraction(numerator, 11).unwrap();
++                let scaled = value.clone().scaled(scale);
++                let closed = ClosedPiLaurentPolynomial::from_polynomial(&scaled).unwrap();
++                let restored = closed.to_polynomial();
++                drop(closed);
++                assert_eq!(
++                    restored.terms.len(),
++                    if numerator == 0 {
++                        0
++                    } else {
++                        usize::try_from(width).unwrap()
++                    }
++                );
++                for (index, (power, coefficient)) in restored.terms.iter().enumerate() {
++                    assert_eq!(*power, i16::try_from(index).unwrap() * 2 - 7);
++                    assert_eq!(
++                        coefficient.rational,
++                        Rational::fraction(41 * numerator, 11).unwrap()
++                    );
++                    assert_eq!(coefficient.radicals.len(), radical_width);
++                    for ((root, amount), expected_root) in coefficient.radicals.iter().zip(ROOTS) {
++                        assert_eq!(*root, Rational::new(expected_root));
++                        assert_eq!(*amount, Rational::fraction(5 * numerator, 77).unwrap());
++                    }
++                    assert!(coefficient.atoms.is_empty());
++                }
++                // A second copy remains independent after the first is released.
++                let again = ClosedPiLaurentPolynomial::from_polynomial(&restored).unwrap();
++                drop(restored);
++                assert_eq!(again.to_polynomial().terms.len(), scaled.terms.len());
++            }
++        }
++    }
++}
++
++#[test]
++fn radical_products_and_inverses_keep_exact_coefficients() {
++    let left = RadicalCoefficient::rational(Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::new(3),
++            Rational::new(5),
++        ))
++        .unwrap();
++    let right = RadicalCoefficient::rational(Rational::new(7))
++        .add(RadicalCoefficient::radical(
++            Rational::new(-2),
++            Rational::new(5),
++        ))
++        .unwrap();
++    assert_eq!(
++        components(&left.multiply(&right).unwrap()),
++        (
++            Rational::new(-16),
++            vec![(Rational::new(5), Rational::new(17))]
++        )
++    );
++    let two_roots = RadicalCoefficient::radical(Rational::one(), Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::one(),
++            Rational::new(3),
++        ))
++        .unwrap();
++    assert_eq!(
++        components(&two_roots.clone().multiply(&two_roots).unwrap()),
++        (Rational::new(5), vec![(Rational::new(6), Rational::new(2))])
++    );
++    assert!(two_roots.inverse().is_none());
++    let unit = RadicalCoefficient::rational(Rational::new(2))
++        .add(RadicalCoefficient::radical(
++            Rational::one(),
++            Rational::new(3),
++        ))
++        .unwrap();
++    let inverse = unit.clone().inverse().unwrap();
++    assert_eq!(
++        components(&inverse),
++        (
++            Rational::new(2),
++            vec![(Rational::new(3), Rational::new(-1))]
++        )
++    );
++    assert_eq!(
++        components(&unit.multiply(&inverse).unwrap()),
++        (Rational::one(), vec![])
++    );
++    assert!(
++        RadicalCoefficient::rational(Rational::zero())
++            .inverse()
++            .is_none()
++    );
++    assert!(RadicalCoefficient::atom(atom(0)).inverse().is_none());
++    let opaque = RadicalCoefficient::atom(atom(1));
++    assert!(opaque.clone().multiply(&opaque).is_none());
++    assert!(
++        opaque
++            .multiply(&RadicalCoefficient::radical(
++                Rational::one(),
++                Rational::new(2)
++            ))
++            .is_none()
++    );
++}
++
++#[test]
++fn polynomial_products_cancel_cross_terms_and_keep_power_limits() {
++    let make = |sign| {
++        PiLaurentPolynomial::monomial(
++            1,
++            RadicalCoefficient::radical(Rational::one(), Rational::new(2)),
++        )
++        .add(PiLaurentPolynomial::monomial(
++            0,
++            RadicalCoefficient::radical(Rational::new(sign), Rational::new(3)),
++        ))
++        .unwrap()
++    };
++    let product = make(1).multiply(make(-1)).unwrap();
++    assert_eq!(product.terms.len(), 2);
++    assert_eq!(product.terms[0].0, 0);
++    assert_eq!(components(&product.terms[0].1), (Rational::new(-3), vec![]));
++    assert_eq!(product.terms[1].0, 2);
++    assert_eq!(components(&product.terms[1].1), (Rational::new(2), vec![]));
++    assert!(product.inverse_monomial().is_none());
++    assert!(empty().inverse_monomial().is_none());
++    let monomial =
++        |power| PiLaurentPolynomial::monomial(power, RadicalCoefficient::rational(Rational::one()));
++    assert!(monomial(i16::MAX).multiply(monomial(1)).is_none());
++    assert!(monomial(i16::MIN).multiply(monomial(-1)).is_none());
++    assert!(monomial(i16::MIN).inverse_monomial().is_none());
++    assert_eq!(monomial(-7).inverse_monomial().unwrap().terms[0].0, 7);
++}
++
++#[test]
++fn opaque_owners_are_released_on_clear_cancellation_and_decline() {
++    for width in [1, 2, 8] {
++        let mut value = empty();
++        let mut weak = Vec::new();
++        for index in 0..width {
++            let owner = atom(index);
++            weak.push(Arc::downgrade(&owner.internal));
++            value
++                .insert(
++                    i16::try_from(index).unwrap(),
++                    RadicalCoefficient::atom(owner),
++                )
++                .unwrap();
++        }
++        assert!(ClosedPiLaurentPolynomial::from_polynomial(&value).is_none());
++        let clone = value.clone();
++        assert!(weak.iter().all(|owner| owner.strong_count() == 2));
++        let cleared = clone.scaled(Rational::zero());
++        assert!(cleared.terms.is_empty());
++        assert!(weak.iter().all(|owner| owner.strong_count() == 1));
++        drop(cleared);
++        if width == 8 {
++            let extra = atom(17);
++            let extra_weak = Arc::downgrade(&extra.internal);
++            assert!(value.insert(9, RadicalCoefficient::atom(extra)).is_none());
++            assert!(extra_weak.upgrade().is_none());
++        }
++        for index in (0..width).rev() {
++            let mut opposite = value.terms[usize::try_from(index).unwrap()].1.clone();
++            opposite.scale_in_place(&Rational::new(-1));
++            value
++                .insert(i16::try_from(index).unwrap(), opposite)
++                .unwrap();
++            assert!(weak[usize::try_from(index).unwrap()].upgrade().is_none());
++        }
++        assert!(value.terms.is_empty());
++        assert!(weak.iter().all(|owner| owner.upgrade().is_none()));
++    }
++    let owner = atom(19);
++    let weak = Arc::downgrade(&owner.internal);
++    let left = PiLaurentPolynomial::monomial(i16::MAX, RadicalCoefficient::atom(owner));
++    let right = PiLaurentPolynomial::monomial(1, RadicalCoefficient::rational(Rational::one()));
++    assert!(left.multiply(right).is_none());
++    assert!(weak.upgrade().is_none());
++}
++
++#[test]
++fn opaque_cancellation_keeps_cold_warm_and_cloned_quadratic_facts() {
++    let opaque = atom(5);
++    let root = Computable::sqrt_rational(Rational::new(13));
++    let sum = raw(Approximation::Add(
++        raw(Approximation::Add(Computable::pi(), root)),
++        opaque.clone(),
++    ));
++    let expression = raw(Approximation::Add(
++        raw(Approximation::Add(
++            sum.clone(),
++            raw(Approximation::Negate(Computable::pi())),
++        )),
++        raw(Approximation::Negate(opaque)),
++    ));
++    let clone = expression.clone();
++    let expected = Some((Rational::zero(), Rational::one(), Some(Rational::new(13))));
++    for query in [&expression, &clone, &expression] {
++        assert_eq!(query.exact_quadratic_surd_parts(), expected);
++        assert!(sum.exact_quadratic_surd_parts().is_none());
++        assert!(query.cached().is_none());
++    }
++}
++
++#[test]
++fn temporary_and_persistent_layouts_are_reported_separately() {
++    println!(
++        "TEMPORARY_LAURENT_LAYOUT\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
++        std::mem::size_of::<Rational>(),
++        std::mem::size_of::<RadicalCoefficient>(),
++        std::mem::size_of::<PiLaurentPolynomial>(),
++        std::mem::size_of::<ClosedRadicalCoefficient>(),
++        std::mem::size_of::<ClosedPiLaurentPolynomial>(),
++        std::mem::size_of::<Computable>(),
++        std::mem::size_of::<Node>(),
++    );
++    // The persistent representation still owns only closed rational data.
++    let closed = ClosedPiLaurentPolynomial::from_polynomial(&empty()).unwrap();
++    let _: Vec<(i16, ClosedRadicalCoefficient)> = closed.terms;
++}

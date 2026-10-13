@@ -43,10 +43,11 @@ source and failure remain frozen in
 
 Version 2 changes only that expression to `std::mem::take(self)`. The existing
 Default implementation already delegates directly to `Self::new`; exact byte
-comparison binds this correction. New preparation and qualification runners
-will use fresh source trees and targets and rerun all 26 commands. No v1 cost
-probe executed, and no v1 pass is relabelled as a v2 execution. The corrected
-inputs are prepared but unexecuted; see [scope-v2.json](scope-v2.json).
+comparison binds this correction. Preparation froze fresh v2 source trees with the same 10,134/10,135 file
+counts and exact parent-token recovery. The qualifier is rerunning all 26
+commands in fresh targets. No v1 cost
+probe executed, and no v1 pass is relabelled as a v2 execution. The correction and preserved failure are bound in
+[preparation-v2/protocol.json](preparation-v2/protocol.json).
 
 Qualification records every layout rather than assuming the scratch enum's
 size. If it passes, the fixed three-suite comparison uses
