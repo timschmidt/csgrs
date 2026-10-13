@@ -1481,16 +1481,18 @@
       "native_work": "No native validation, gate, cost control, complete-report replay or production CLI build was run after this scalar cost rejection."
     },
     "owned_radical_scratch": {
-      "status": "source-reviewed-inputs-prepared-not-executed",
+      "status": "two-sources-frozen-qualification-running",
       "evidence": [
-        "docs/evidence/2026-10-13-owned-radical-scratch/scope-v1.json"
+        "docs/evidence/2026-10-13-owned-radical-scratch/scope-v1.json",
+        "docs/evidence/2026-10-13-owned-radical-scratch/preparation-v1/protocol.json"
       ],
       "scope": "Keep scratch arrays in ordinary owned Vecs, and introduce shared storage only for reads from an immutable retained payload. A write unwraps or copies a retained buffer into an owned Vec, without allocating a new shared header. Publishing an owned array still copies it into a retained Arc and can cost more than baseline.",
       "ownership": "The two-form scratch storage is private: Owned(Vec) or Retained(Arc<Vec>). Cloning owned scratch preserves the original deep Vec copy; cloning a retained read shares rational data. Closed storage exposes only immutable reads and conversion to a scratch view. Empty retained storage is None. Polynomial terms and opaque Computable owners keep their original Vec behavior.",
       "cost_risks": "Owned publication adds an Arc allocation. The scratch enum may enlarge coefficients, even while closed coefficients shrink. Retained reads can avoid copies, but borrowed-to-owned transitions, first-query costs, stack/heap layouts and binary size must all be measured. The prior rejected version is not the new baseline and its samples are not extended.",
       "alias_control_change": "Only the pointer-inventory observation changes. It separately records whether the original scratch shares its closed payload and whether two returned views share that payload. Baseline expects 0/0; candidate expects 0/1. Every mathematical assertion, graph-release check and concurrent mutation control is preserved by exact token recovery.",
       "next_step": "Two fresh sources/targets with identical eight storage, three memo and three mathematical alias controls; candidate-only two buffer transition/release controls; inherited six cache-frontier and eleven P4 controls; default/all-feature scalar library tests, doctests, formatting, strict Clippy and warning-denied docs. Record all seven layouts without assuming the scratch enum size.",
-      "runtime_admitted": false
+      "runtime_admitted": false,
+      "preparation": "A 10,134-file shared-test baseline and 10,135-file candidate differ only in algebra.rs and the new private storage helper. Parent-token recovery and the unchanged mathematical alias controls are verified. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged."
     }
   },
   "status_meanings": {
