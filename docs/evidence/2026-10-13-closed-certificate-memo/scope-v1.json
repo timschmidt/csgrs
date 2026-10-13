@@ -1,0 +1,41 @@
+{
+  "status": "inputs-prepared-not-executed",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": [
+        "project_pi_laurent_polynomial: retained attempt, drop(memo), original retry",
+        "pi_laurent_polynomial_retained: cache lookup before local memo lookup, then original depth/work checks",
+        "shared-result tail: local memo clone followed by eligible persistent publication"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "sections": [
+        "Closed cache read clones under a read lock",
+        "store_pi_laurent_polynomial rejects opaque values and publishes under a write lock"
+      ]
+    }
+  ],
+  "inference": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
+  "concurrency": "Publication success includes finding an already-published certificate under the write lock. Both implementations check that persistent certificate before any local memo on a later retained visit. No lock guard escapes and no cache eviction is introduced. Existing concurrent publication and graph-reclamation controls remain required.",
+  "candidate_runtime_files": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/representation.rs"
+  ],
+  "invariants": [
+    "No changes to arithmetic, ordering, Vec storage or dependency features",
+    "No change to shared-node detection or ownership by opaque values",
+    "Non-retaining recognition and unpublishable results keep local memo entries",
+    "Original failed-projection retry with first memo released",
+    "Original 512-node/depth and eight-term/eight-radical bounds",
+    "P4 certificates are never contradicted or weakened",
+    "Original full-resolution fixtures and 120-second worker-CPU/60-second neck check-body assertions"
+  ],
+  "qualification_next": "Two fresh sources/targets, identical eight storage and three memo-publication tests, inherited P4/cache-frontier controls, default/all-feature scalar library suites, docs, strict Clippy and exact memo inventories. Cost measurements wait for correctness.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
