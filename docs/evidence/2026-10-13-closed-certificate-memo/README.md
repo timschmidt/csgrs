@@ -27,6 +27,14 @@ sources without making their mathematical assertions differ. Qualification
 must verify those inventories and unchanged layouts, plus the inherited P4,
 cache-frontier, default/all-feature library, doctest, Clippy and docs checks.
 
+Preparation completed and froze two 10,133-file sources. The baseline differs
+from the parent only by the two shared test modules and their declarations.
+The candidate differs from that baseline only in algebra.rs and
+representation.rs. Exact recovery checks preserve every parent token outside
+the declared edits. All manifests, lockfiles, 35 pending native entries and
+the main runtime remain unchanged. The 22-command qualification is in progress;
+see [preparation-v1/protocol.json](preparation-v1/protocol.json).
+
 If correctness passes, a new fixed scalar comparison must cover timing,
 requested allocations and probe sizes. No sample is added to either completed
 storage experiment. Native qualification, fixed endpoint/broad/final-abort

@@ -67,8 +67,10 @@ performance-before-memory ladder does not support retaining these slowdowns
 for the heap savings. The feature-only change is also unadmitted. No native
 qualification, native cost controls, full-report replay or production CLI
 build was run for these variants. Those obligations remain open for any future
-supported candidate. The next investigation reviews ownership at the recursive
-closed-certificate copy boundary; no replacement candidate is prepared.
+supported candidate. The copy-boundary review led to a narrower
+[closed-certificate memo experiment](../2026-10-13-closed-certificate-memo/README.md).
+Its fresh sources are frozen and undergoing qualification; it changes no
+radical storage or dependency features.
 
 The native parent remains unadmitted: its original board assertion fails at
 133.31248412 seconds of worker CPU against 120; its separate 60-second neck

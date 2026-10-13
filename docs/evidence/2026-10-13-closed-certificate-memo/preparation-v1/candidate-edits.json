@@ -1,0 +1,22 @@
+{
+  "crates/hyperreal/src/computable/node/algebra.rs": [
+    {
+      "before": "        if shared {\n            memo.get_or_insert_with(|| Vec::with_capacity(8))\n                .push((key, result.clone()));\n            if RETAIN\n",
+      "after": "        if shared {\n            if RETAIN\n"
+    },
+    {
+      "before": "                && let Some(polynomial) = &result\n            {\n                self.internal.cache.store_pi_laurent_polynomial(polynomial);\n            }\n        }\n        result\n",
+      "after": "                && let Some(polynomial) = &result\n                && self.internal.cache.store_pi_laurent_polynomial(polynomial)\n            {\n                // Retained visits consult the published certificate before\n                // the query memo. Closed coefficients own no expression nodes,\n                // so omitting this duplicate does not change node sharing.\n                return result;\n            }\n            memo.get_or_insert_with(|| Vec::with_capacity(8))\n                .push((key, result.clone()));\n        }\n        result\n"
+    }
+  ],
+  "crates/hyperreal/src/computable/node/representation.rs": [
+    {
+      "before": "    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {\n        let Some(closed) = ClosedPiLaurentPolynomial::from_polynomial(polynomial) else {\n            return;\n        };\n",
+      "after": "    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) -> bool {\n        let Some(closed) = ClosedPiLaurentPolynomial::from_polynomial(polynomial) else {\n            return false;\n        };\n"
+    },
+    {
+      "before": "        if guard.pi_laurent_polynomial.is_none() {\n            guard.pi_laurent_polynomial = Some(Box::new(closed));\n        }\n    }\n",
+      "after": "        if guard.pi_laurent_polynomial.is_none() {\n            guard.pi_laurent_polynomial = Some(Box::new(closed));\n        }\n        true\n    }\n"
+    }
+  ]
+}

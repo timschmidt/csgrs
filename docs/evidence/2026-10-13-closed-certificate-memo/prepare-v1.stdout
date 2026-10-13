@@ -1,0 +1,1 @@
+{"variants": ["baseline", "candidate"], "candidate_runtime_files": 2, "shared_storage_tests": 8, "new_memo_tests": 3, "baseline_runtime_body_unchanged": true, "main_and_parent_unchanged": true}
