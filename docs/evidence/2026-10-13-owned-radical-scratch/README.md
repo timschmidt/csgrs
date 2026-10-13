@@ -30,9 +30,12 @@ candidate controls check owned cloning, publication, detachment, republishing,
 consuming iteration and buffer reclamation. The same eight storage and three
 memo controls run in both sources, along with inherited cache and P4 controls.
 
-Inputs are prepared but have not executed. Two fresh sources and targets will
-run default/all-feature scalar suites, doctests, formatting, strict Clippy and
-warning-denied docs. Qualification records every layout rather than assuming
+Preparation froze a 10,134-file shared-test baseline and a 10,135-file
+candidate. They differ only in algebra.rs and the private storage helper. Exact
+parent-token recovery and unchanged mathematical alias controls are verified;
+all manifests, lockfiles, main runtime and pending native entries are unchanged.
+Qualification is running serially from fresh targets through default/all-feature
+scalar suites, doctests, formatting, strict Clippy and warning-denied docs. Qualification records every layout rather than assuming
 the scratch enum's size. If it passes, the fixed three-suite comparison uses
 twelve preflights and 60 measurement processes, with separate timing/allocation
 executables and all builds before probes. Every original phase and sample stays
