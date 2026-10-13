@@ -1,5 +1,5 @@
 This diagnostic will count multiplication of two single-radical coefficients
-with the same radicand. Inputs are prepared; qualification and full-board
+with the same radicand. Version 2 preparation passed; qualification and full-board
 coverage remain pending. No runtime optimization is prepared or admitted.
 
 The [cache-local product trial](../2026-10-13-cache-local-polynomial-products/README.md)
@@ -53,3 +53,10 @@ Version 2 uses the unique full declaration prefix. Forward application now
 recovers the already formatted draft bytes exactly; every other edit and both
 test/helper inputs remain unchanged. The old source and unexecuted version 1
 diagnostic runners remain preserved.
+
+Version 2 freezes 10,133 source files, with five changed or added paths relative
+to the 10,131-file parent. Its complete bytes match the formatted mutable draft.
+Reversing the explicit edits recovers the original runtime files exactly; the
+parent, main runtime and all 35 pending native paths remain unchanged. The
+source maps, delta archive, patch and formatting check are committed before
+qualification.
