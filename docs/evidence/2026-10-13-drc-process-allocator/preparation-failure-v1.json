@@ -1,0 +1,22 @@
+{
+  "phase": "prepare-v1",
+  "exit_code": 1,
+  "exception": "FileNotFoundError: /tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/mimalloc-0.1.52/.cargo-checksum.json",
+  "cause": "The cached registry source has .cargo-ok and the verified .crate archive, not a .cargo-checksum.json manifest. The draft assumed the latter.",
+  "failed_before_source_preparation": true,
+  "failed_before_compilation_or_tests": true,
+  "work_directory_created": false,
+  "preparation_directory_created": false,
+  "preserved_inputs_sha256": {
+    "allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+    "assess_qualification_v1.py": "8f13d2665dfa357e13d4a5fef5a5464a7c941e81d214badee7dbaa7f9d8d5684",
+    "common_v1.py": "8d0ebef850a3d7078044f44473e5ea46aac4d8d9ffcfcd915aece55c3e613c13",
+    "prepare_v1.py": "79e5299c2beb6fb7eb1ff00670ce7847006e0e63264b58cacb7e901c4b6b8d60",
+    "process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66",
+    "qualify_v1.py": "80a74ce93bc6cf654e672c1939d5ac1349752f5ab498f1b4fb3ecb1a447b9e15",
+    "runtime-edits-v1.json": "22cba009460071649ba20b0bb69b403b6ee3fc57daf0bc07b3e40d398fe467e7",
+    "scope-v1.json": "cd77259d988caab7e4057d7b7bb04cbe5f82934598de1c903f4393c7706cf949"
+  },
+  "correction": "V2 verifies cached .crate SHA256 against Cargo.lock and checks every archived file byte against the extracted local package; no dependency, runtime or experiment-design change.",
+  "preparation_v1_not_rerun": true
+}
