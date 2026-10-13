@@ -1,0 +1,111 @@
+{
+  "decision": "retain-isolated-metadata-order-for-further-investigation",
+  "goal_turn_classification": "progress",
+  "basis": [
+    "The prior unchanged-query diagnostic observed source mismatch in 34023542 of 34056513 comparisons and 99.801% of instrumented geometry-query time. That is an opportunity observation, not predicted savings.",
+    "The full curve run passes 2489 tests/doctests with 33 unchanged ignores; 26 focused DRC tests, strict consumer Clippy, formatting and warning-denied curve documentation pass.",
+    "All fixed unequal/mixed metadata probe pairs are faster and allocate less. Every measured retained and peak-extra allocation pair agrees.",
+    "Both complete original-board JSON reports match byte for byte with no normalization. The same findings, inputs and complete report fields are retained."
+  ],
+  "remaining_tradeoffs": [
+    "The original full-board worker CPU assertion fails at 146.02494178 seconds / 120. The separate original 60-second copper-neck assertion passes. No runtime is admitted.",
+    "Absent-source first validation has a 1.030 median ratio with four slower pairs. Duplicate first validation has a 1.056 median including one 2.091 ratio sample; warm duplicate rejection is 1.022 with all five pairs slower. Preserve these observations.",
+    "Local operation ratios and the four standalone report runs do not establish a matched whole-application speedup. Named regressions and report identity do not prove universal equality or cache completeness.",
+    "Standalone replay peak RSS is 1958196 to 1960744 KiB for CPArti and 554272 to 556240 KiB for HVP. These observed increases are preserved; one run per variant/board does not isolate causality or establish unchanged process memory.",
+    "The inherited persistent-cache and integer-leaf candidates retain their original resource, memory, API-documentation and admission obligations. The rejected coefficient merge is absent."
+  ],
+  "validation": {
+    "test_counts": {
+      "metadata-regressions": {
+        "summaries": 1,
+        "passed": 3,
+        "failed": 0,
+        "ignored": 0
+      },
+      "curve-tests": {
+        "summaries": 51,
+        "passed": 2489,
+        "failed": 0,
+        "ignored": 33
+      },
+      "drc-regressions": {
+        "summaries": 1,
+        "passed": 26,
+        "failed": 0,
+        "ignored": 0
+      }
+    },
+    "count_overlap": "The three metadata regressions are included again in the full curve suite; do not add them to its total.",
+    "native_gates": [
+      {
+        "label": "full-board",
+        "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "limit_seconds": 120,
+        "metric": "worker CPU",
+        "passed": false,
+        "observed_assertion_seconds": 146.02494178,
+        "process_wall_seconds": 148.12913945596665,
+        "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+      },
+      {
+        "label": "copper-neck",
+        "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "limit_seconds": 60,
+        "metric": "check wall time",
+        "passed": true,
+        "observed_assertion_seconds": null,
+        "process_wall_seconds": 145.9845999921672,
+        "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
+      }
+    ]
+  },
+  "cost_summary": {
+    "all_five_time_pairs_slower": [
+      "duplicate/warm_validation"
+    ],
+    "all_five_time_pairs_faster": [
+      "unequal_sources/first_validation",
+      "unequal_sources/warm_validation",
+      "unequal_sources/cloned_validation",
+      "mixed_sources/first_validation",
+      "mixed_sources/warm_validation",
+      "mixed_sources/cloned_validation",
+      "equal_sources/first_validation"
+    ],
+    "memory_median_increases": []
+  },
+  "reports": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147824,
+      "candidate_bytes": 147824,
+      "baseline_sha256": "1e284cca01fee7fc11d7b41bcd0fbf7436f986add7e6795654e60b0f072c9d7f",
+      "candidate_sha256": "1e284cca01fee7fc11d7b41bcd0fbf7436f986add7e6795654e60b0f072c9d7f",
+      "violation_count": 12
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128763,
+      "candidate_bytes": 128763,
+      "baseline_sha256": "f78e1f32505406148c294d418c1e4751983edd7018c15701f952e1af6ef4b49e",
+      "candidate_sha256": "f78e1f32505406148c294d418c1e4751983edd7018c15701f952e1af6ef4b49e",
+      "violation_count": 197
+    }
+  ],
+  "production_binary_byte_delta": 0,
+  "next_step": "Profile the frozen metadata-first source with the complete original boards in a separate target, keeping the original assertions and all existing inputs. Identify a remaining concrete caller or allocation site before proposing another optimization. Preserve the rejected point-equality and coefficient-merge experiments. The 120-second full-board CPU gate, broader native validation, pending scalar-cache tradeoffs and accurate two-pass budget documentation still precede runtime admission.",
+  "evidence_sha256": {
+    "preparation.json": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+    "validation-assessment-v1.json": "98d3844fe493657d4d93919e77cc36e278fe68007007d7b8030e82851155d055",
+    "cost-assessment-v1.json": "43ac4a8fda3c548c31e2d53a4c0c08d2cdb81b4554ae588742241a30f7db6e50",
+    "report-assessment-v1.json": "57d0746b00cead155b39daf21d3608b87a33fb410e493fe0caea189b79a18d01"
+  },
+  "pending_main_native_entries_unchanged": 35,
+  "scope": "All 39 properties, all 14 targets and crate-specific future work remain active. No property or target is declared complete here.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

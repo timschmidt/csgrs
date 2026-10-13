@@ -1,0 +1,20 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/report-replay-v1/bins/baseline",
+    "sha256": "04ec04ce767569255f8cb6272afcc6d5c704b1d3bc6f3218bccbfb6d24a576ba",
+    "bytes": 42847120,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source/crates/hyperdrc#0.3.0",
+    "fresh": true
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/report-replay-v1/bins/candidate",
+    "sha256": "48f36474df33aaf2788217dae33b3465b6ff8ca495344c01492a11484befdeb2",
+    "bytes": 42847120,
+    "features": [],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc/Cargo.toml",
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc#0.3.0",
+    "fresh": false
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "scope": "Compare complete full-board JSON reports without normalizing any fields.\n\nThe frozen integer-leaf baseline and metadata-first candidate read identical\nfull-resolution archives extracted to shared absolute input paths. Each board\nruns once per variant in a fresh CLI process, with the original four checks and\nminimum width. Both executables are built and bound before replay. This closes\na report comparison gap; it is not a matched application speedup experiment and\ndoes not replace either original runtime gate.\n",
+  "runner_sha256": "d59b3fc3c5b0a223341071c477ef92bf2bb7667c24e2c5a1c614137ae19c90dd",
+  "preparation_sha256": "723f5dea53e884c5854c0f8bf68b6b373b316956fcf8ecce5078028fbf79ce8c",
+  "native_result_sha256": "ea3bc49a67e370813761a4f3386e60a37d42cc9013818122c95b8ae8e0ec27f5",
+  "source_changes_sha256": {
+    "crates/hypercurve/src/bezier_region.rs": "f94f30baee3331690d8bb556b9d64ab45355dffb4c4d209683f0535d739fbfee",
+    "crates/hypercurve/src/bezier_region/metadata_order_tests.rs": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f"
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/small-integer-certificates/target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target"
+  },
+  "fixtures": [
+    {
+      "label": "cparti-fpga",
+      "zip": "CPArti FPGA dev board.zip",
+      "board": "CPArti FPGA dev board.kicad_pcb",
+      "expected_findings": 12,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "archive_sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+      "board_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "label": "hvp109a",
+      "zip": "HVP109A.zip",
+      "board": "HVP109A.kicad_pcb",
+      "expected_findings": 197,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "archive_sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+      "board_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  ],
+  "input_hashes_sha256": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+  "extracted_input_files": 108,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "expected_cli_exit_code": 1,
+  "exit_code_contract": "run_cli exits 1 when a complete report has active findings; JSON parsing and finding counts are checked separately.",
+  "normalization": null,
+  "runtime_admitted": false
+}
