@@ -2452,7 +2452,7 @@
       "scope_wording_review": "Individual property/target statuses remain unchanged; the full plan remains incomplete and all 39 properties, 14 targets and crate future work stay in scope."
     },
     "direct_same_radicand_products": {
-      "status": "frozen-direct-product-variants-await-scalar-qualification",
+      "status": "version-1-test-import-failure-preserved-version-2-inputs-ready",
       "evidence": "docs/evidence/2026-10-13-direct-same-radicand-products",
       "contract": "After the original opaque-product guard, recognize exactly one equal non-unit radicand on each side. Preserve arithmetic order and zero-skipping, select the same original left/right radicand payload, reuse the owned left vector for a surviving radical and discard scratch buffers on exact cancellation. General fallback, Box cache layout, memo, work/depth limits and mandatory original retry are unchanged.",
       "coverage_motivation": "6,379,817 observed equal-radicand single-radical/no-atom products, 29.05971939075416 percent of 21,954,159 multiplications. These are instrumented operation counts, not eligibility counts for the non-unit guard, time shares or savings.",
@@ -2507,7 +2507,7 @@
           ]
         ]
       },
-      "next_step": "Run the committed 28-command scalar qualification in fresh targets, then assess it independently before starting the fixed cost trial.",
+      "next_step": "Freeze fresh version 2 sources, verify the test import is their only difference from version 1, then qualify and assess before the unchanged fixed scalar trial.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2518,6 +2518,15 @@
         "original_general_fallback_recovered": true,
         "original_test_oracle_verified": true,
         "main_and_35_pending_native_paths_unchanged": true
+      },
+      "qualification_failure": {
+        "evidence": "qualification-failure-v1.json",
+        "phase": "baseline-projection-regressions compile",
+        "cause": "Shared test used num_bigint as a direct crate instead of num::BigUint.",
+        "tests_executed": 0,
+        "candidate_compiled": false,
+        "costs_executed": false,
+        "version_2_change": "Test import only; no arithmetic or dependency change."
       }
     }
   },

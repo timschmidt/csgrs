@@ -1,5 +1,6 @@
 This candidate adds a private direct product for coefficients containing one
-equal, non-unit radicand on each side. Preparation passed and both source maps are frozen. Qualification and
+equal, non-unit radicand on each side. Version 1 preparation passed; qualification stopped on a shared-test import
+error before tests ran. Version 2 corrects that import only. Qualification and
 costs remain pending; no runtime is admitted.
 
 The [coverage diagnostic](../2026-10-13-same-radicand-product-coverage/README.md)
@@ -57,3 +58,12 @@ original general fallback is recovered exactly, and the test-only oracle
 matches the parent method after its name change and formatting. Manifests,
 lockfiles, parent source, main runtime and all 35 pending native paths remain
 unchanged. Source maps and delta archives are committed before compilation.
+
+Version 1 qualification passed formatting, then compilation failed because the
+new test imported the transitive `num_bigint` crate directly. The [failure
+record](qualification-failure-v1.json) preserves every log and the unchanged
+frozen sources. No tests or cost probes ran, and the candidate was not
+compiled. Version 2 changes only that test import to the crate's supported
+`num::BigUint` path. All arithmetic, other tests and declared sample sizes stay
+unchanged. Fresh version 2 targets and evidence directories will preserve the
+original attempt.

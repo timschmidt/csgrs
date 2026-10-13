@@ -1,0 +1,56 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.715351854916662,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-projection-regressions",
+    "variant": "baseline",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/qualification-target"
+    },
+    "exit_code": 101,
+    "seconds": 15.921541393268853,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "b42622276e2e28db9c72386ebfe5a3c48ff5becaff98c29b24d10c51e15128b7"
+  }
+]

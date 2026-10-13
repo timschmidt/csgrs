@@ -1,0 +1,79 @@
+{
+  "status": "shared-test-import-compile-failure-before-tests-or-costs",
+  "runner_sha256": "50aae764094d09a479c29afbb86b591fa37eda9c9b1fb087adb5e227e70f2e77",
+  "preparation_sha256": "8ebcd5519ccf540d473730ea42b5600a5e62e8d2e4772131e14f86d1ed11473e",
+  "commands": [
+    {
+      "name": "baseline-format",
+      "variant": "baseline",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.715351854916662,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-projection-regressions",
+      "variant": "baseline",
+      "phase": "projection-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "computable::node::projection_tests::",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products/baseline/qualification-target"
+      },
+      "exit_code": 101,
+      "seconds": 15.921541393268853,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b42622276e2e28db9c72386ebfe5a3c48ff5becaff98c29b24d10c51e15128b7"
+    }
+  ],
+  "artifacts_sha256": {
+    "qualification-v1/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-projection-regressions.stderr": "b42622276e2e28db9c72386ebfe5a3c48ff5becaff98c29b24d10c51e15128b7",
+    "qualification-v1/baseline-projection-regressions.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/commands.json": "a0972646796e011940095bc9ff3681074cdc6f2f25ed1bd93a01c376e02c57af",
+    "qualification-v1/protocol.json": "2f2e16ad953b8e4f74b3890ca2b0d802d8de72a2b390469b1bbd5deacf581969"
+  },
+  "original_test_input_sha256": "3891822b2086191aad4786af2ea92cafd27eb488d9809a59008800ec560d58ba",
+  "corrected_test_input_sha256": "5a19f5cce0aa26c688116b4ccae89d8778dbed204f509205e52cbb152be3e894",
+  "cause": "The new shared test imported num_bigint as a direct dependency, but hyperreal uses its direct num dependency and imports num::BigUint. No manifest or dependency change is needed.",
+  "correction": "Replace only use num_bigint::BigUint with use num::BigUint in a new test input. Preserve the old runners, frozen trees and failed logs. Version 2 sources differ from their corresponding version 1 source only at this import.",
+  "candidate_runtime_changes": false,
+  "baseline_test_functions_executed": 0,
+  "candidate_compiled": false,
+  "costs_executed": false,
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false
+}
