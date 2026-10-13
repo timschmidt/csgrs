@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Compare complete unnormalized reports on both original boards. Then decide whether the isolated comparison reorder is a suitable parent for further profiling; the 146.02494178 / 120-second original CPU failure still prevents runtime admission."
+      "next_step": "Profile the frozen metadata-first source with the complete original boards in a separate target, keeping the original assertions and all existing inputs. Identify a remaining concrete caller or allocation site before proposing another optimization. Preserve the rejected point-equality and coefficient-merge experiments. The 120-second full-board CPU gate, broader native validation, pending scalar-cache tradeoffs and accurate two-pass budget documentation still precede runtime admission."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -130,7 +130,7 @@
       "runtime_admitted": false
     },
     "isolated_region_metadata_first": {
-      "status": "isolated-cost-comparison-complete-report-replay-pending",
+      "status": "retain-isolated-metadata-order-for-further-investigation",
       "evidence": "docs/evidence/2026-10-12-region-metadata-first/validation-assessment-v1.json",
       "validation": {
         "metadata-regressions": {
@@ -174,11 +174,14 @@
           "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
         }
       ],
-      "next_step": "Compare complete unnormalized reports on both original boards. Then decide whether the isolated comparison reorder is a suitable parent for further profiling; the 146.02494178 / 120-second original CPU failure still prevents runtime admission.",
+      "next_step": "Profile the frozen metadata-first source with the complete original boards in a separate target, keeping the original assertions and all existing inputs. Identify a remaining concrete caller or allocation site before proposing another optimization. Preserve the rejected point-equality and coefficient-merge experiments. The 120-second full-board CPU gate, broader native validation, pending scalar-cache tradeoffs and accurate two-pass budget documentation still precede runtime admission.",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-12-region-metadata-first/cost-assessment-v1.json",
       "cost_summary": "All 20 fresh probe processes and 360 case/phase observations pass their expected outcomes. Unequal-source median paired time ratios are 0.543 first, 0.373 warm and 0.219 cloned; mixed-source ratios are 0.513, 0.523 and 0.419, with all five pairs faster for each. Per 128 inputs, unequal sources avoid 8832 allocation calls and 353280 allocated bytes; mixed sources avoid 4608 calls and 184320 bytes. Retained and peak-extra Rust allocation deltas match in every pair across all controls.",
-      "cost_tradeoffs": "Absent-source first validation is 1.030 median (four slower pairs). Duplicate rejection is 1.056 first (including a 2.091 ratio sample), 1.022 warm (all five slower) and 1.013 cloned. Preserve every sample; this is not uniform or whole-application speedup evidence."
+      "cost_tradeoffs": "Absent-source first validation is 1.030 median (four slower pairs). Duplicate rejection is 1.056 first (including a 2.091 ratio sample), 1.022 warm (all five slower) and 1.013 cloned. Preserve every sample; this is not uniform or whole-application speedup evidence.",
+      "decision_evidence": "docs/evidence/2026-10-12-region-metadata-first/decision-v1.json",
+      "report_evidence": "docs/evidence/2026-10-12-region-metadata-first/report-assessment-v1.json",
+      "report_summary": "Both complete original-board reports are byte-identical without normalization across four fresh CLI processes reading the same 108 extracted inputs. Production executable size delta: 0 bytes. Standalone replay durations are not a matched speedup or a replacement for either original cap."
     }
   },
   "status_meanings": {
