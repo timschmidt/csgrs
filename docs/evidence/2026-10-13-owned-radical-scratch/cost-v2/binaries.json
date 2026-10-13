@@ -1,0 +1,62 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-rational-time",
+    "sha256": "3eec6bdd18002567161eb6183e6835a2a8ba0a0f2134458818b907db685c4a0f",
+    "bytes": 6178112
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-rational-memory",
+    "sha256": "2a20cd82f7f4a57064177692ce7b164664def291da4c55a586a5452a69b643c3",
+    "bytes": 6179992
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-quadratic-time",
+    "sha256": "d9111632e72f39939f9c98abc2d4ba70924e7be875c3e737d70c362c8bdffcfa",
+    "bytes": 6153144
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-quadratic-memory",
+    "sha256": "c99c5d40fa49d782dd75dc398bcb323c63a47cab95129892138950fd44e8fb25",
+    "bytes": 6156392
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-integer-time",
+    "sha256": "c425096307aa4722956b44e51f326025b54da2607c23f4c84a3aaca089a398bb",
+    "bytes": 6048944
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/baseline-integer-memory",
+    "sha256": "877384780ce906fd23b1d6346cabf55aaab954110303c0fd697b68730a1d7e35",
+    "bytes": 6051800
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-rational-time",
+    "sha256": "39180f2cdd2a4affb07af9d4ecd629af0ebdbbcbf5b5097a37bfcfbdddcfeccd",
+    "bytes": 6178880
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-rational-memory",
+    "sha256": "7f06efdbe61a226afdc01ab38b288ebb940ce7a20e03af210447bc44078711e5",
+    "bytes": 6180784
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-quadratic-time",
+    "sha256": "bb7dc4e71a14afd69232a71781e28d2fd206f2f0e86a762d81566e653920f659",
+    "bytes": 6153920
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-quadratic-memory",
+    "sha256": "8cac9627d088e5a2ea2b288ee9dd25469ad906b570c546dcc96a9bc9ae3d9917",
+    "bytes": 6157176
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-integer-time",
+    "sha256": "90fddba0fd96fb7dbebce39227d2dcc0987d6a4780be50d3714aa78999960cb4",
+    "bytes": 6049744
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/cost-v2-binaries/candidate-integer-memory",
+    "sha256": "303e26d492709e3ab7eda114e32199c011522ff2ce06822bcc2115e5391efa07",
+    "bytes": 6052592
+  }
+}

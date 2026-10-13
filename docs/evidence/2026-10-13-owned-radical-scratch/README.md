@@ -1,3 +1,8 @@
+The measured version is rejected: scalar correctness passes, but repeated
+timing regressions and increased allocation/retention costs remain. The
+[decision](decision-v2.json) preserves all favorable and adverse results. No
+native run or runtime admission follows from this experiment.
+
 This experiment keeps temporary radical arrays in ordinary owned Vecs and shares
 only immutable retained arrays. It starts from the frozen endpoint/P4 parent,
 without the rejected shared-scratch, memo-publication or inline-storage changes.
@@ -60,11 +65,36 @@ these are scoped checks, not full-workflow coverage. The other five recorded
 type layouts are unchanged. Both sources retain the original local memo
 entries, while only candidate reads share the immutable retained array.
 
-The next fixed three-suite cost comparison uses twelve preflights and 60
+The fixed three-suite cost comparison completed twelve preflights and 60
 measurement processes, with separate timing/allocation executables and all
-builds before probes. Every original phase and sample stays in scope. No cost
-claim follows from the smaller closed coefficient. See
-[scope-v2.json](scope-v2.json).
+builds before probes. All mathematical witnesses and representation inventories
+match. The [independent assessment](cost-assessment-v2.json) retains every row,
+sample and range; no sample set was extended. See [scope-v2.json](scope-v2.json).
+
+Six phases are slower in all five pairs and twenty-four in at least four;
+three are faster in all five and seventeen in at least four. Quadratic-reciprocal
+first queries have a ratio of medians of 1.333721 and a median paired ratio of
+1.157056, with every pair adverse. They add 1,000 requested allocation calls and
+24,000 allocated/retained/peak bytes per 1,000 inputs. Conjugate-then-affine first
+and warm queries are also slower in every pair, despite the warm phase saving
+285 calls. These are descriptive results, not significance or application
+speedup claims. Large timing variation remains visible in the raw samples.
+
+Allocation calls decrease in four phases and increase in eleven. Allocated bytes
+decrease in thirteen and increase in eleven. Retained bytes decrease in seven
+and increase in fourteen; peak bytes decrease in eight and increase in fourteen.
+Every memory delta repeats across all five pairs. These counters exclude native
+C heaps, stack frames and allocator bookkeeping; retained bytes are relative to
+each phase. All six probe executables grow by 768 to 800 bytes. Production CLI
+size was not measured. Smaller private coefficients do not establish lower
+total memory or acceptable runtime cost.
+
+The next source review concerns the outer polynomial term Vec, which these
+radical-only designs still reconstruct. Whole-polynomial immutable views may
+avoid copying until arithmetic needs owned storage, but no such candidate has
+been prepared. Graph-free payloads, opaque ownership, operation order, memo
+behavior, lock scope, mutation isolation and release need an explicit design
+before implementation. Every completed source and sample set remains frozen.
 
 The eight-term/eight-radical and original work/depth limits remain intact, as
 does the mandatory original retry after releasing its first memo. No manifest,
