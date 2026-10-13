@@ -1790,6 +1790,22 @@
         "Version 1 stopped at source preparation before compilation. Version 2 corrected three expected optional-comma fragments and reproduced every formatted v1 source byte. The failed preparation and successful qualification remain distinct evidence."
       ],
       "native_executed": false
+    },
+    "retained_polynomial_projection": {
+      "status": "inputs-recorded-preparation-and-qualification-pending",
+      "evidence": "docs/evidence/2026-10-13-retained-polynomial-projection",
+      "scope": "Three fresh variants: unchanged endpoint/P4 baseline, rejected recursive-view control and direct rational/pi/quadratic projection from owned or retained slices. Only five consumer/wrapper methods and private projection definitions change from the recursive runtime.",
+      "controls": "Six new shared public-query controls, fourteen unchanged shared storage/memo/alias tests, inherited cache/P4 checks, five recursive-view controls and three projected helper controls. All configurations and focused counts overlap.",
+      "ownership": "Clone only returned exact Rational components. Keep graph-free retained payload, original arithmetic/memo/opaque owners, recognition budgets and original retry after dropping the first memo. Compacting still materializes an owned polynomial.",
+      "cost_risks": [
+        "The recursive representation still adds Arc header retention.",
+        "Borrowed projection may change generated code and binary size.",
+        "Root retained-copy counts do not predict application improvement."
+      ],
+      "next_step": "Freeze all three sources, complete 42 scalar qualification commands, then run the predeclared eighteen preflights and ninety measurements with unchanged probes. Preserve all three contrasts, sharing one closed sample set; do not extend earlier samples.",
+      "native_limits": "120-second full-board worker CPU and 60-second copper-neck check-body wall; no fixture or limit change.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
