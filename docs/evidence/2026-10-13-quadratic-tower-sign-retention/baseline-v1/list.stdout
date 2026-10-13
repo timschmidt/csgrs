@@ -1,0 +1,11 @@
+real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_linear_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_square_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::compaction_keeps_unknown_and_unsupported_sources_honest: test
+real::arithmetic::quadratic_tower_sign_retention_tests::compaction_preserves_final_abort_signal: test
+real::arithmetic::quadratic_tower_sign_retention_tests::nested_linear_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::nested_square_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_linear_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_square_retains_sign: test
+real::arithmetic::quadratic_tower_sign_retention_tests::rational_zero_and_symbolic_compactions_preserve_signs: test
+
+9 tests, 0 benchmarks

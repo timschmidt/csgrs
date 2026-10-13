@@ -1,0 +1,19 @@
+{
+  "complete": true,
+  "regression_failures": [
+    "real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_linear_retains_sign",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_square_retains_sign",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::nested_linear_retains_sign",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::nested_square_retains_sign",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_linear_retains_sign",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_square_retains_sign"
+  ],
+  "control_passes": [
+    "real::arithmetic::quadratic_tower_sign_retention_tests::compaction_keeps_unknown_and_unsupported_sources_honest",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::compaction_preserves_final_abort_signal",
+    "real::arithmetic::quadratic_tower_sign_retention_tests::rational_zero_and_symbolic_compactions_preserve_signs"
+  ],
+  "source_and_main_unchanged": true,
+  "runtime_admitted": false,
+  "limits": "Nine focused tests. This does not qualify runtime or establish universal sign, abort, cache or resource behavior."
+}

@@ -1,0 +1,21 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+  "sha256": "d3896337566717d75fb97d773bf6d701bcd31b35b66bc552ffbfd01140eb5b35",
+  "bytes": 10202728,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/source/crates/hyperreal/Cargo.toml",
+  "features": [
+    "cached-f32-approx",
+    "cached-f64-approx",
+    "default",
+    "dispatch-trace",
+    "serde",
+    "simple"
+  ],
+  "profile": {
+    "opt_level": "3",
+    "debuginfo": 0,
+    "debug_assertions": false,
+    "overflow_checks": false,
+    "test": true
+  }
+}

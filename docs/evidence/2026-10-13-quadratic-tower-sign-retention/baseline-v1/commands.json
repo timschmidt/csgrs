@@ -1,0 +1,84 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/source",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "seconds": 10.574272853322327,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/source",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "seconds": 26.758584261871874,
+    "stdout_sha256": "a376011a21635aac3b089aeb5f7bff857935f7a9850569ec01a71bb1cc52e955",
+    "stderr_sha256": "9dd9fdedc234a7a92aa5cf5a241d4e0bf9203483b53a43603544ee70c7ec7ad3"
+  },
+  {
+    "name": "list",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "quadratic_tower_sign_retention_tests",
+      "--list"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/source",
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "seconds": 0.0032033007591962814,
+    "stdout_sha256": "fa1c3eae7e8d8dc156974528cc921c72e307652c2e6b91a2d668919535753633",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "quadratic_tower_sign_retention_tests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline/source",
+    "exit_code": 101,
+    "expected_exit_code": 101,
+    "seconds": 0.0045906659215688705,
+    "stdout_sha256": "2c15ef1eab4319761104c0c1c237bdbbef9071a4e07805b26337a49ef1c4a53e",
+    "stderr_sha256": "3bf0369b2f64876eb9b5b710ef80f3d5fd2a9f879ff6a3e5cc56a46439fd625c"
+  }
+]
