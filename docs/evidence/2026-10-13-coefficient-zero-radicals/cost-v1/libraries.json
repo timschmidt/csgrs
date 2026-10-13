@@ -1,0 +1,32 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "328581987f29eadf423dda8c501bfb0237c058b29bef7d6f5dcce04d22642bae",
+    "bytes": 11699900,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperreal#0.13.1"
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/cost-target/release/libhyperreal.rlib",
+    "sha256": "3317a0719e7ed9be0ef5714b3f87ed211afbe5b4860d9df87e592c6f876b3cf4",
+    "bytes": 11699870,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperreal#0.13.1"
+  }
+}

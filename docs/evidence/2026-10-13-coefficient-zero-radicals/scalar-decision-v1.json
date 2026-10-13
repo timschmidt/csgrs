@@ -1,0 +1,821 @@
+{
+  "decision": "advance-isolated-zero-radical-guards-to-native-qualification-no-runtime-admission",
+  "cost_assessment_sha256": "d0f4bfa6ac0a07f4a7bc496c6e349a126953a448fd1d070bf7b269ac7d3e0999",
+  "correctness_sha256": "bd6afc3e779ab63d859c71d0e6c5a81c706dcbdeea517255219c683db1a3eb62",
+  "fixed_measurement_processes": 60,
+  "preflight_processes": 12,
+  "witnesses_and_inventories_identical": true,
+  "faster_in_all_five_blocks": [
+    {
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "pi_parameter_transport_construction",
+      "baseline_ns": [
+        15933434,
+        27520644,
+        16087034,
+        17454180,
+        15982100
+      ],
+      "candidate_ns": [
+        15789933,
+        16241212,
+        16030688,
+        16160508,
+        15821262
+      ],
+      "baseline_median_ns": 16087034,
+      "candidate_median_ns": 16030688,
+      "median_ratio": 0.9964974276799564,
+      "block_ratios": [
+        0.9909937179894804,
+        0.5901465096528992,
+        0.9964974276799564,
+        0.9258818231506722,
+        0.9899363663098091
+      ],
+      "median_block_ratio": 0.9899363663098091,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        15933434,
+        27520644
+      ],
+      "candidate_range_ns": [
+        15789933,
+        16241212
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "affine_surd_construction",
+      "baseline_ns": [
+        3273957,
+        2905442,
+        3405958,
+        3369331,
+        4912865
+      ],
+      "candidate_ns": [
+        3148415,
+        2884703,
+        2946199,
+        3326384,
+        2761951
+      ],
+      "baseline_median_ns": 3369331,
+      "candidate_median_ns": 2946199,
+      "median_ratio": 0.8744166126747417,
+      "block_ratios": [
+        0.9616543528213718,
+        0.9928620154868003,
+        0.8650133090308219,
+        0.9872535527082379,
+        0.5621874405260474
+      ],
+      "median_block_ratio": 0.9616543528213718,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        2905442,
+        4912865
+      ],
+      "candidate_range_ns": [
+        2761951,
+        3326384
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_construction",
+      "baseline_ns": [
+        3407618,
+        3807110,
+        3597735,
+        3422577,
+        5810394
+      ],
+      "candidate_ns": [
+        3330393,
+        3445715,
+        3471903,
+        3336463,
+        3400948
+      ],
+      "baseline_median_ns": 3597735,
+      "candidate_median_ns": 3400948,
+      "median_ratio": 0.9453025306199595,
+      "block_ratios": [
+        0.9773375419427882,
+        0.9050736648008595,
+        0.9650246613494323,
+        0.9748394265490594,
+        0.5853214084965667
+      ],
+      "median_block_ratio": 0.9650246613494323,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        3407618,
+        5810394
+      ],
+      "candidate_range_ns": [
+        3330393,
+        3471903
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_cloned",
+      "baseline_ns": [
+        3009525,
+        3015185,
+        3071271,
+        3034593,
+        4966552
+      ],
+      "candidate_ns": [
+        2989806,
+        2985577,
+        3031793,
+        3012495,
+        3026824
+      ],
+      "baseline_median_ns": 3034593,
+      "candidate_median_ns": 3012495,
+      "median_ratio": 0.9927179690983272,
+      "block_ratios": [
+        0.9934478032247613,
+        0.990180370358701,
+        0.9871460382362872,
+        0.9927179690983272,
+        0.6094417213390698
+      ],
+      "median_block_ratio": 0.990180370358701,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        3009525,
+        4966552
+      ],
+      "candidate_range_ns": [
+        2985577,
+        3031793
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_construction",
+      "baseline_ns": [
+        2236318,
+        2259566,
+        2228148,
+        2207559,
+        4151967
+      ],
+      "candidate_ns": [
+        2160553,
+        2152983,
+        2186851,
+        2201630,
+        2144923
+      ],
+      "baseline_median_ns": 2236318,
+      "candidate_median_ns": 2160553,
+      "median_ratio": 0.9661206501043232,
+      "block_ratios": [
+        0.9661206501043232,
+        0.9528303222831287,
+        0.981465773368735,
+        0.9973142280681966,
+        0.5166040577875498
+      ],
+      "median_block_ratio": 0.9661206501043232,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        2207559,
+        4151967
+      ],
+      "candidate_range_ns": [
+        2144923,
+        2201630
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_warm",
+      "baseline_ns": [
+        1674436,
+        1657007,
+        1700094,
+        1698014,
+        2967858
+      ],
+      "candidate_ns": [
+        1521516,
+        1505998,
+        1597451,
+        1505647,
+        1521926
+      ],
+      "baseline_median_ns": 1698014,
+      "candidate_median_ns": 1521516,
+      "median_ratio": 0.8960562162620568,
+      "block_ratios": [
+        0.9086737265562852,
+        0.9088664079270636,
+        0.9396251030825354,
+        0.8867105924921702,
+        0.5128028362542952
+      ],
+      "median_block_ratio": 0.9086737265562852,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        1657007,
+        2967858
+      ],
+      "candidate_range_ns": [
+        1505647,
+        1597451
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_cloned",
+      "baseline_ns": [
+        2206119,
+        2165632,
+        2207030,
+        2232558,
+        4280588
+      ],
+      "candidate_ns": [
+        2050260,
+        2102246,
+        2134445,
+        2090648,
+        2074669
+      ],
+      "baseline_median_ns": 2207030,
+      "candidate_median_ns": 2090648,
+      "median_ratio": 0.9472675949126201,
+      "block_ratios": [
+        0.9293514991711689,
+        0.9707309459778947,
+        0.9671119105766574,
+        0.9364361418605922,
+        0.48466916227396795
+      ],
+      "median_block_ratio": 0.9364361418605922,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        2165632,
+        4280588
+      ],
+      "candidate_range_ns": [
+        2050260,
+        2134445
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_construction",
+      "baseline_ns": [
+        2360449,
+        2392227,
+        2404266,
+        2442554,
+        4551870
+      ],
+      "candidate_ns": [
+        2284824,
+        2311683,
+        2358089,
+        2333061,
+        2330701
+      ],
+      "baseline_median_ns": 2404266,
+      "candidate_median_ns": 2330701,
+      "median_ratio": 0.9694023040711801,
+      "block_ratios": [
+        0.9679616039151874,
+        0.9663309543784934,
+        0.9807937224916045,
+        0.9551727413191274,
+        0.5120315386862981
+      ],
+      "median_block_ratio": 0.9663309543784934,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        2360449,
+        4551870
+      ],
+      "candidate_range_ns": [
+        2284824,
+        2358089
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_cancellation_cloned",
+      "baseline_ns": [
+        6691664,
+        6496497,
+        6484048,
+        6798166,
+        7445552
+      ],
+      "candidate_ns": [
+        6352917,
+        6293171,
+        6370456,
+        6550804,
+        6371236
+      ],
+      "baseline_median_ns": 6691664,
+      "candidate_median_ns": 6370456,
+      "median_ratio": 0.951998785354435,
+      "block_ratios": [
+        0.9493777631393328,
+        0.9687022098216931,
+        0.9824813141420298,
+        0.9636134216198898,
+        0.855710362374744
+      ],
+      "median_block_ratio": 0.9636134216198898,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        6484048,
+        7445552
+      ],
+      "candidate_range_ns": [
+        6293171,
+        6550804
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_construction",
+      "baseline_ns": [
+        3370120,
+        3230620,
+        3226210,
+        3153455,
+        3247389
+      ],
+      "candidate_ns": [
+        3054922,
+        3177874,
+        3191092,
+        3127557,
+        3058221
+      ],
+      "baseline_median_ns": 3230620,
+      "candidate_median_ns": 3127557,
+      "median_ratio": 0.9680980740538968,
+      "block_ratios": [
+        0.9064727665483722,
+        0.9836731029957098,
+        0.9891147817408042,
+        0.991787420464221,
+        0.9417476625067093
+      ],
+      "median_block_ratio": 0.9836731029957098,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        3153455,
+        3370120
+      ],
+      "candidate_range_ns": [
+        3054922,
+        3191092
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "integer",
+      "name": "signed_word_boundary_cloned",
+      "baseline_ns": [
+        2286994,
+        2295324,
+        3343962,
+        3517460,
+        2284894
+      ],
+      "candidate_ns": [
+        2271515,
+        2223079,
+        2234638,
+        2458152,
+        2260476
+      ],
+      "baseline_median_ns": 2295324,
+      "candidate_median_ns": 2260476,
+      "median_ratio": 0.9848178296397372,
+      "block_ratios": [
+        0.9932317268869092,
+        0.9685251406773074,
+        0.6682605843008982,
+        0.6988429150580249,
+        0.9893132898068795
+      ],
+      "median_block_ratio": 0.9685251406773074,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "baseline_range_ns": [
+        2284894,
+        3517460
+      ],
+      "candidate_range_ns": [
+        2223079,
+        2458152
+      ]
+    }
+  ],
+  "slower_in_all_five_blocks": [
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_warm",
+      "baseline_ns": [
+        3189613,
+        3208161,
+        3261977,
+        3191082,
+        3280347
+      ],
+      "candidate_ns": [
+        3259298,
+        3336242,
+        3322874,
+        3390669,
+        3328003
+      ],
+      "baseline_median_ns": 3208161,
+      "candidate_median_ns": 3328003,
+      "median_ratio": 1.0373553571656784,
+      "block_ratios": [
+        1.0218474780482774,
+        1.0399234951113738,
+        1.0186687398470313,
+        1.0625452432748517,
+        1.014527731365005
+      ],
+      "median_block_ratio": 1.0218474780482774,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "baseline_range_ns": [
+        3189613,
+        3280347
+      ],
+      "candidate_range_ns": [
+        3259298,
+        3390669
+      ]
+    }
+  ],
+  "slower_in_at_least_four_blocks": [
+    {
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "pi_parameter_transport_cloned",
+      "baseline_ns": [
+        7972736,
+        12921119,
+        7839845,
+        7901082,
+        7883202
+      ],
+      "candidate_ns": [
+        8035283,
+        7913371,
+        7988096,
+        8103638,
+        7990796
+      ],
+      "baseline_median_ns": 7901082,
+      "candidate_median_ns": 7990796,
+      "median_ratio": 1.0113546473761441,
+      "block_ratios": [
+        1.007845111138761,
+        0.6124369723705818,
+        1.0189099401837665,
+        1.0256364887745755,
+        1.0136485149054915
+      ],
+      "median_block_ratio": 1.0136485149054915,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "baseline_range_ns": [
+        7839845,
+        12921119
+      ],
+      "candidate_range_ns": [
+        7913371,
+        8103638
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "conjugate_product_first",
+      "baseline_ns": [
+        5341356,
+        3743275,
+        3742945,
+        3799741,
+        3720456
+      ],
+      "candidate_ns": [
+        3801301,
+        3777353,
+        3820959,
+        4134628,
+        3787592
+      ],
+      "baseline_median_ns": 3743275,
+      "candidate_median_ns": 3801301,
+      "median_ratio": 1.0155013991758555,
+      "block_ratios": [
+        0.7116734027838624,
+        1.0091037928017579,
+        1.0208429458621486,
+        1.0881341649338732,
+        1.0180450998479755
+      ],
+      "median_block_ratio": 1.0180450998479755,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "baseline_range_ns": [
+        3720456,
+        5341356
+      ],
+      "candidate_range_ns": [
+        3777353,
+        4134628
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_warm",
+      "baseline_ns": [
+        987853,
+        1004541,
+        1004041,
+        990563,
+        1580872
+      ],
+      "candidate_ns": [
+        1073946,
+        1035009,
+        1021740,
+        994472,
+        1002272
+      ],
+      "baseline_median_ns": 1004041,
+      "candidate_median_ns": 1021740,
+      "median_ratio": 1.0176277661967987,
+      "block_ratios": [
+        1.087151630860057,
+        1.0303302702428274,
+        1.0176277661967987,
+        1.0039462406732333,
+        0.6339994635871848
+      ],
+      "median_block_ratio": 1.0176277661967987,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "baseline_range_ns": [
+        987853,
+        1580872
+      ],
+      "candidate_range_ns": [
+        994472,
+        1073946
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_first",
+      "baseline_ns": [
+        709252,
+        700993,
+        698423,
+        715831,
+        1047909
+      ],
+      "candidate_ns": [
+        714511,
+        733410,
+        735100,
+        722740,
+        733100
+      ],
+      "baseline_median_ns": 709252,
+      "candidate_median_ns": 733100,
+      "median_ratio": 1.033624156153243,
+      "block_ratios": [
+        1.0074148539588186,
+        1.0462443990168233,
+        1.0525140208727375,
+        1.0096517194700985,
+        0.6995836470533224
+      ],
+      "median_block_ratio": 1.0096517194700985,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "baseline_range_ns": [
+        698423,
+        1047909
+      ],
+      "candidate_range_ns": [
+        714511,
+        735100
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_warm",
+      "baseline_ns": [
+        708581,
+        704622,
+        700512,
+        711961,
+        1070797
+      ],
+      "candidate_ns": [
+        720601,
+        721471,
+        734410,
+        726230,
+        722171
+      ],
+      "baseline_median_ns": 708581,
+      "candidate_median_ns": 722171,
+      "median_ratio": 1.0191791764103186,
+      "block_ratios": [
+        1.0169634805336298,
+        1.0239121117421823,
+        1.0483903202229226,
+        1.0200418281338444,
+        0.6744238170260096
+      ],
+      "median_block_ratio": 1.0200418281338444,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "baseline_range_ns": [
+        700512,
+        1070797
+      ],
+      "candidate_range_ns": [
+        720601,
+        734410
+      ]
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_warm",
+      "baseline_ns": [
+        3189613,
+        3208161,
+        3261977,
+        3191082,
+        3280347
+      ],
+      "candidate_ns": [
+        3259298,
+        3336242,
+        3322874,
+        3390669,
+        3328003
+      ],
+      "baseline_median_ns": 3208161,
+      "candidate_median_ns": 3328003,
+      "median_ratio": 1.0373553571656784,
+      "block_ratios": [
+        1.0218474780482774,
+        1.0399234951113738,
+        1.0186687398470313,
+        1.0625452432748517,
+        1.014527731365005
+      ],
+      "median_block_ratio": 1.0218474780482774,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "baseline_range_ns": [
+        3189613,
+        3280347
+      ],
+      "candidate_range_ns": [
+        3259298,
+        3390669
+      ]
+    }
+  ],
+  "slower_median_block_ratio_rows": 19,
+  "all_measured_memory_fields_unchanged_in_all_five_blocks": true,
+  "probe_binary_sizes": [
+    {
+      "variant": "candidate",
+      "suite": "rational",
+      "mode": "time",
+      "baseline_bytes": 6178112,
+      "candidate_bytes": 6178112,
+      "delta_bytes": 0
+    },
+    {
+      "variant": "candidate",
+      "suite": "rational",
+      "mode": "memory",
+      "baseline_bytes": 6180008,
+      "candidate_bytes": 6180008,
+      "delta_bytes": 0
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "mode": "time",
+      "baseline_bytes": 6153168,
+      "candidate_bytes": 6153168,
+      "delta_bytes": 0
+    },
+    {
+      "variant": "candidate",
+      "suite": "quadratic",
+      "mode": "memory",
+      "baseline_bytes": 6156408,
+      "candidate_bytes": 6156424,
+      "delta_bytes": 16
+    },
+    {
+      "variant": "candidate",
+      "suite": "integer",
+      "mode": "time",
+      "baseline_bytes": 6049008,
+      "candidate_bytes": 6049008,
+      "delta_bytes": 0
+    },
+    {
+      "variant": "candidate",
+      "suite": "integer",
+      "mode": "memory",
+      "baseline_bytes": 6051808,
+      "candidate_bytes": 6051824,
+      "delta_bytes": 16
+    }
+  ],
+  "reason": "The quadratic multiradical-square warm/cloned rows are faster in all five blocks with median paired ratios 0.908674/0.936436, alongside nine other all-five faster rows. All allocation, retained and peak fields are identical. These observations warrant native testing, while the all-five conjugate-then-affine warm slowdown and five additional four-block slower rows remain open.",
+  "timing_limits": "The persistent slower row has median paired ratio 1.021847. Wide spreads and slower medians in nineteen rows are retained. Ratios are descriptive, not statistical significance or an application-speedup claim. No samples will be added to this closed set.",
+  "source_review": {
+    "candidate_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+    "candidate_algebra_sha256": "d4376455b8282b85f1a12a7a404bca383e60d67e0d116d6105797f51b7a73f1b",
+    "original_body_recovered_after_removing_only_two_guards": true,
+    "reasoning": "Stored-sign zero tests do not canonicalize or refine. A zero rational product already returns before retained-product work, and insert_radical discards its zero coefficient before radicand queries or the term cap. Removing the linear iteration avoids temporary radicand/zero Arc operations; the original vectors survive until the unchanged cross-product loop. Nonzero products, rational product order, opaque loops, budgets, cache publication sites and the mandatory original retry are identical.",
+    "limits": "This is source reasoning and recorded regression coverage, not a universal formal proof of cache semantics or resolution of the separate high-precision quadratic-tower hypothesis."
+  },
+  "next_step": "Run full release all-feature curve and DRC suites, strict consumer Clippy and warning-denied scalar/curve/DRC docs on a separate native target. Execute the original complete-board 120-second worker-CPU and copper-neck 60-second check-body wall assertions separately. Then run fixed native endpoint/broad controls and final-abort receipts. Complete unnormalized report identity and production binary size are required if costs support retention. Preserve every original failure and all inherited endpoint tradeoffs.",
+  "native_controls_fixed_order": [
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "candidate",
+      "baseline"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ],
+    [
+      "baseline",
+      "candidate"
+    ]
+  ],
+  "native_final_abort_order": "First three fixed baseline/candidate blocks; 210 receipts per process must match.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,62 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-rational-time",
+    "sha256": "6833782d4b1d292b240f6f94f72c284ac763f2392ae29c747ff554425679602d",
+    "bytes": 6178112
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-rational-memory",
+    "sha256": "fcdda7be6ab5ad51d347dbbe377f7bda236c631a1beacedf20aa9010459d3064",
+    "bytes": 6180008
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-quadratic-time",
+    "sha256": "80507e0b9da19bb1c727892a0dc001cbff24502d2f3979b89eb47f1172a42d58",
+    "bytes": 6153168
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-quadratic-memory",
+    "sha256": "9eb8d173501aea231723285f41c2c3f15d475300c59a455e09db6a64f0337e37",
+    "bytes": 6156408
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-integer-time",
+    "sha256": "625fdf5597c56b54cc620caf118b5cc95666aff99c1a5c795d410fc9f85f0d17",
+    "bytes": 6049008
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/baseline-integer-memory",
+    "sha256": "66df6321a65b2c86d9be781ad8522e66cc599cc259bac503e9683ce83317d9fa",
+    "bytes": 6051808
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-rational-time",
+    "sha256": "7ca2d7c3457b6c7dfb97e90bd74ef489188cb6b459dc705f62279925488408b9",
+    "bytes": 6178112
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-rational-memory",
+    "sha256": "03c46d6426155f6962131af6def70fdff61d5a6062e3dc24386f973233f7a2e5",
+    "bytes": 6180008
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-quadratic-time",
+    "sha256": "694e97ff429ff637b5f08eab3041916043baefb7badf79bc64d23cfaad8c72c4",
+    "bytes": 6153168
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-quadratic-memory",
+    "sha256": "52bc8c3d1b0168e8bd6a10c5dbef929c4bd80773b59fb6bce62e95606179260c",
+    "bytes": 6156424
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-integer-time",
+    "sha256": "19b037b069a2df004d12a5b134fd4673a50a4bd54f0f601a80808ffb8d01ce92",
+    "bytes": 6049008
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/cost-v1-binaries/candidate-integer-memory",
+    "sha256": "0513319325620460ffab3321594d3c4bc8b17a33bea5119536310d09f0e1de18",
+    "bytes": 6051824
+  }
+}

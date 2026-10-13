@@ -26,8 +26,19 @@ limits, complete reports and binary-size evidence before retention.
 [Scalar qualification](correctness-v1.json) passes: all seven regressions on
 baseline and candidate, 870 candidate library results, 28 doctests, strict
 scalar Clippy, formatting and warning-denied docs. Focused regressions overlap
-the full library total. The fixed cost runner and assessor are prepared; costs
-have not yet run.
+the full library total.
+
+[The fixed scalar costs](cost-assessment-v1.json) contain all 60 processes and
+matching witnesses/inventories. Every allocation, retained and peak field is
+identical in all five blocks. Eleven timing rows are faster in all blocks,
+including quadratic multiradical-square warm/cloned ratios of 0.909/0.936.
+`conjugate_then_affine_warm` is slower in all five blocks (1.022); five additional
+rows are slower in four blocks, and nineteen have slower median paired ratios.
+All ranges remain recorded. Four probe sizes are unchanged and two add 16 bytes.
+
+[The scalar decision](scalar-decision-v1.json) advances this candidate to native
+qualification with these tradeoffs open. The cost sample set is closed. No
+statistical significance or application speedup is inferred.
 
 Preparation and results are committed separately. No runtime change is admitted;
 the endpoint parent's earlier tradeoffs and the full properties plan stay open.
