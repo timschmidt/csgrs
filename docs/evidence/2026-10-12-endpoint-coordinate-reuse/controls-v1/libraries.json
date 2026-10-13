@@ -1,0 +1,114 @@
+{
+  "baseline": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhypercurve.rlib",
+      "sha256": "d951d071ff4ce97f81a2b52eb5be1dcaa2bf71add4981a16c60b4db9c7fe0dfc",
+      "bytes": 48766436,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "4ea5dafd6c6450621d971e061f42447f61d3525ce6dae299802f24e22f245ad5",
+      "bytes": 11428608,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhyperdrc.rlib",
+      "sha256": "0253e8b8a56ce3088958e85cd8f68ef7a2ca7145bd46f8c15706a9234cd7ec0a",
+      "bytes": 26563062,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "0cd5803403732f9a68bb9c2f1fd31eeccc681e1bd3e066d873a9f47169832423",
+      "bytes": 4000510,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "8c44736ea61f57152a6784d96ffada1517a9ce25f2bc4211f98494a78b9307a1",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  },
+  "candidate": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhypercurve.rlib",
+      "sha256": "e2f2cdc3351120d87f68180c5778685348bc4a728bfe1f2679e89b559c0585ca",
+      "bytes": 48756554,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "7fdc43b12912803259f5a1472f96bde0d9c3769822c52ff85d5b7ab2cf1caeb7",
+      "bytes": 11430248,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhyperdrc.rlib",
+      "sha256": "cfcf3adec2b9c7fd9a8ccbf45e97da2a415035d3e310efc979d548f0b47ba201",
+      "bytes": 26564486,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "b172edaa17619167f48ef66b3c1b53c031692297912a637672820799508491d9",
+      "bytes": 4000808,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "6461f080cf78e5ed6cadf4acfbb0c039640e82d9d8d7bdb79588aed7576cbea2",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  }
+}

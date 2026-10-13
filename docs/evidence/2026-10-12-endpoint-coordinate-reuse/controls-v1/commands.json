@@ -1,0 +1,942 @@
+[
+  {
+    "name": "build-libraries-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target"
+    },
+    "exit_code": 0,
+    "seconds": 113.7767027518712,
+    "stdout_sha256": "c9cb7fc820d4299883bf3b05bbeece73a7366d29a2cf10f7bc7373c2bb722b96",
+    "stderr_sha256": "9dd06e7af6524dfe588ce3e209f3e25347c92458a7bb31c7672e1048f1322c2d"
+  },
+  {
+    "name": "build-libraries-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target"
+    },
+    "exit_code": 0,
+    "seconds": 115.19325370015576,
+    "stdout_sha256": "695e9a4f41fd04c10bd3cfc552722b0951fc0a7b087a7571369344c6fcb1e47e",
+    "stderr_sha256": "e2caa3bd44bdbc71e7fd1d59d9d498cbc1ad34b1eab8e20faead4f3cd5f85347"
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5628763362765312,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5479021109640598,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.4861061703413725,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/region-metadata-first/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.955513191409409,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5468054469674826,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6490482799708843,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5249611311592162,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.8131645801477134,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.0072146761231124,
+    "stdout_sha256": "8a4527843349d74ec1906156330dc1ab63c646858327f13e237d1d5e5696e23c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9741231701336801,
+    "stdout_sha256": "85a079d01275765ffef3eb6cda0048784d25fa71dc06831c734dcbc41eee117f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.0046443506143987,
+    "stdout_sha256": "9bd7326abecc88ceefba2ff7427e1ee81b53266fb999a9d3c0682944651e9084",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-candidate-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9773352290503681,
+    "stdout_sha256": "6381e0abcbf296f95a64c23bbb538225fd353faccbb48dbdddff502cf57da9e8",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9793875487521291,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9676475119777024,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9536991068162024,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9649762357585132,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9603084647096694,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.9412452490068972,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 5.779437566176057,
+    "stdout_sha256": "cf95480de09530d1aad6d0bddc474336de24b050260c84ee672fd644b51787c4",
+    "stderr_sha256": "97d84d322752aa2ac7e2df8bf60e4f8808a5f895a7099fb0ca4214d3c1140c91"
+  },
+  {
+    "name": "time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.637529395986348,
+    "stdout_sha256": "10799778cbe8ef39aa6f9a4f1efe549d81f899df01fcf9a077f93e546ee087f5",
+    "stderr_sha256": "66e6ce4eaf1927f77b4069288d70ba2d56681eb7f5b6876e3f620eedf5103874"
+  },
+  {
+    "name": "time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.01695617614314,
+    "stdout_sha256": "9034d82f242dc687bde95b9b8d157ef73e73eacb9b722da300df4b38977088f2",
+    "stderr_sha256": "005efe547d8a8ac921a76ce27b9cc494b71ff231a6b4811c34fecb0b9d3c8d8b"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 5.731489956844598,
+    "stdout_sha256": "4afe0d5a694aec4a1bc6258246a1fd5cc7b85d20a8aad39992138e06750ef557",
+    "stderr_sha256": "65ce05fa0376b290b7b85962b6cfc3646ea418f9bbf9e72bee5b8e78476cd76d"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 5.830712168011814,
+    "stdout_sha256": "4649cb5cde672ddbb911498d9cd3027c2fa420cf544616e8d2a3353987b2ab4d",
+    "stderr_sha256": "07de419a2c73a506d2e030abfbabe1e92b33c115f81931b5e23ea11793940988"
+  },
+  {
+    "name": "time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.9853393509984016,
+    "stdout_sha256": "05fa598b5b5b594abe2f046a0d8f048a174a267c283ac4d1bef55518e061b116",
+    "stderr_sha256": "751d591445216e5256a95f2cebc49b4461f32db490883f44a82bd1c6f75d9ef1"
+  },
+  {
+    "name": "time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.079652826767415,
+    "stdout_sha256": "175e0e2c5bc12937b1ed778d2e65ed2c2655a5a4afcf15165a971f0f899cbeab",
+    "stderr_sha256": "c1ab29cca157c83057a93d8e02e37268b52cecc9ca01774ef13bbfcfdd3d0080"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 5.661553351674229,
+    "stdout_sha256": "8bb6af2557912addfaabfe4b32635d352f4d93f0b0c8aa63378816fdba81b39e",
+    "stderr_sha256": "5a4b658b231a0c1157849e24715150d6fe620ed8fd6ea29b429aa0499fc78b04"
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 5.7388731320388615,
+    "stdout_sha256": "eeb90e7a1b915d593c2b67370940b0f6a27ff62eec5ef231a8c5e1b110733fc1",
+    "stderr_sha256": "07a99b777168a7500454ebf681981de38a33690e16ec5edd3586a1df87960b9c"
+  },
+  {
+    "name": "time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 3.8524982291273773,
+    "stdout_sha256": "424ebbebad81a6ee58784341b59fff9b9c1ec4de7a229bc7b51a4225d89a9a0d",
+    "stderr_sha256": "442adfe86c8bc00401d423acb17bbfc9a966061072434d7f32afb1493e77e3fd"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5092952833510935,
+    "stdout_sha256": "10e152d0b8203bb7ca5b00abf685436719575a1bb8355f8caa76c92ea4e986e9",
+    "stderr_sha256": "404293807cc62b7bee38c9aa3e1d83dc76c4f95ed69d15c7c2e921dbf651f659"
+  },
+  {
+    "name": "memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.3306755339726806,
+    "stdout_sha256": "82669138a0f5ae20b8aa201782917405645930fb91965594c50bbb1d9206eb04",
+    "stderr_sha256": "a627e8f9a17b66c4ba5aa4db89cdd4c9a10a864e5c7a52577cd88fb6f72d4e14"
+  },
+  {
+    "name": "memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.3180340989492834,
+    "stdout_sha256": "bf2f6baf2307013713b0deda3f3f8a22a663d055c687577267f5375d2202a6e7",
+    "stderr_sha256": "23e8c61f294cd173ac72e4dea2653338f488e2a48361fc9b531e15d9ebc22996"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5365199013613164,
+    "stdout_sha256": "2688eb19bf91167b31aac602f0006023a4d8d7b2ad8a7d9a08bcccb31f81f0a3",
+    "stderr_sha256": "7bb1cded2d3922d5e9e6d44526bc16685861cc1d366bcd1472a53b027dd5236f"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.5068934177979827,
+    "stdout_sha256": "ed5ad8384c8a6a6c3aabe5411d9303da49023b500cc5dd7eaec4574f8c8a0b46",
+    "stderr_sha256": "51bb3a1be6a515d5e10953afb1b9f89656608f9d537f9c2d2ac1d99fedd8a395"
+  },
+  {
+    "name": "memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.333273755852133,
+    "stdout_sha256": "99bf6689cfd204b438579a6449591560b070423a43e08ca37baa3b378d80b277",
+    "stderr_sha256": "da9e975c59dd95580f0de40e7a2f25fac06b307b7425526e57418ded2f9bbeff"
+  },
+  {
+    "name": "memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.3880747868679464,
+    "stdout_sha256": "b6f7f4d9c789e9e4b5cc2c877444028deaa1531119cc7ccb988d4fa04da589a5",
+    "stderr_sha256": "5b5a6d9abb29790d461536bb7336a15dffba66629d32d1ef27ffda2ad31c0d37"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6985426838509738,
+    "stdout_sha256": "974783bc9be38630923c627bd172bb6fecc7fb9677ec95ce29aad3cb92dd7c11",
+    "stderr_sha256": "8a6c84d3855b0f65b944c4b0e5a4d2a99f49964ea8000b1d278dff5be7d46496"
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.507414462044835,
+    "stdout_sha256": "916efa99d81e34c28f5adfa93217f512f923c6ed9bd631815ed18ad5174bab4c",
+    "stderr_sha256": "dbcc89c19f194797c83c3dbfa3fa28ae5c59654b46d8bb8e9fcd18b9dfb84065"
+  },
+  {
+    "name": "memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.3259077109396458,
+    "stdout_sha256": "7add3b9a731ff25fba78b0594d730cf3f88d564675131aae6a06b20a6617bd37",
+    "stderr_sha256": "a947e79f314c781370acdb84ef618a00d434cc538a878fdf0b3f494be4d65031"
+  },
+  {
+    "name": "broad-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.477535381913185,
+    "stdout_sha256": "3e195ebad2bae48230bb4d6b8d71bdda86a3f704f78b42fe142840704e33d721",
+    "stderr_sha256": "95f2e20e5bef2f6e3bbde2e16e11b605aa92c3b8211caebb9a2bff00aa177557"
+  },
+  {
+    "name": "broad-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.537030301056802,
+    "stdout_sha256": "41fd44be950c62380d6dc2a05ad9c3ec39cf6db377f0958564d6089800a90567",
+    "stderr_sha256": "f419c47be5bf3e1c26c4e9b506fbfbf76e1e1be5accb2258858bed649d9cbf8b"
+  },
+  {
+    "name": "broad-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.377314068842679,
+    "stdout_sha256": "90260e82549914a64d78553e43b2cc2f24fd70a5d330878c62093657bf41b73b",
+    "stderr_sha256": "8b7218a0b515113a65db1f12575fb474cc428aa21d9e232328cd11bd368117ba"
+  },
+  {
+    "name": "broad-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.515066223684698,
+    "stdout_sha256": "8b2f618e189f77ca5d795ff09813c86067e91f8df7adb8da83272ec0200b0c30",
+    "stderr_sha256": "4119297cd6b41373297dec75b5c45c674d5f27acf4069be9ad3d9c702384e123"
+  },
+  {
+    "name": "broad-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.366818056907505,
+    "stdout_sha256": "a6e0a6a0525e8ef862f6191ad0eaed6e951b8e747d64d54db652f3b4e3191b25",
+    "stderr_sha256": "5f0f8028bccf6112319d342315136ada2f9d0cd2ee0d636c6afb30736bfba984"
+  },
+  {
+    "name": "broad-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.493690667208284,
+    "stdout_sha256": "1eaf599c58d0157fc82a55e6e972bf862ea798121642ff6903057f1dd0a1fc74",
+    "stderr_sha256": "33a797516751dd4bd173ac501bd9b79832caa46e41980aabfc3f708ceac86821"
+  },
+  {
+    "name": "broad-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.2753379861824214,
+    "stdout_sha256": "760d90072b3acc27cefbae0d02ba0a70819ba87132184acd941385d2484ba932",
+    "stderr_sha256": "75246d97208aad7cada4a4c9da8cd14fb68610a3465d14e1f96aec81eb6bb3b7"
+  },
+  {
+    "name": "broad-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.487906431779265,
+    "stdout_sha256": "ec636cea30267f5f79ad93183d4d4a95320bde9709588eda1ec98bc786bb1415",
+    "stderr_sha256": "22baea38ecd0c1bf888dc2b1df6fe81cd6af756899d77e4618d1f7efbd3f8fbb"
+  },
+  {
+    "name": "broad-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.4723553457297385,
+    "stdout_sha256": "cc92f7aaf5747e8f042ec38fae917cde18e176c9f69770b0918e422fbd3dd31c",
+    "stderr_sha256": "2fea1d5575599b5388bfa648b2bca632b8879100499ff2fce2e7ff5e1c2c583b"
+  },
+  {
+    "name": "broad-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.661488106008619,
+    "stdout_sha256": "f229ea37f7953d25622b05207ae871aaac2fbc26866009d89700be4a419b44dc",
+    "stderr_sha256": "016c77d994feadf3c81cff416aae27f5859ae5935f9574a70505bd0d8d6c762f"
+  }
+]

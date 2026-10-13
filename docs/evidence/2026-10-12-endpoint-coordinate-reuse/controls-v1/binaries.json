@@ -1,0 +1,42 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-time",
+    "sha256": "c8fe4a72baeb08b1d179dd37885176512c3321cf02b0e899b63d94ce302c9f9f",
+    "bytes": 8593600
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-memory",
+    "sha256": "782e01c58c41e860d33e469cac15e114940f2159a9ecc1b5857e97b3086af862",
+    "bytes": 8595960
+  },
+  "baseline-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-abort",
+    "sha256": "f9d1d251861da84c99ea21c9dc9602248b84f43339adcaf11b08dddd9b859ed0",
+    "bytes": 8530576
+  },
+  "baseline-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/baseline-broad",
+    "sha256": "7f601932288899c4cc105e877f44bc0903b79c5f3f3f7ad0285e33575a08baee",
+    "bytes": 26369056
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-time",
+    "sha256": "8e410a8d578f149430fe7dbbeb9d4d8cf628180ce697bf6da5caba292fdc6b34",
+    "bytes": 8593880
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-memory",
+    "sha256": "1cf7a6e59fa9c70256e4fa125f109336a4c862a0073f0427162adfd5979c2d65",
+    "bytes": 8596224
+  },
+  "candidate-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-abort",
+    "sha256": "21775d8ecda2e1ddf6faf63b9c49bb24629f115f5696ecba42cf1fe83c0a46dd",
+    "bytes": 8530848
+  },
+  "candidate-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/controls-v1/candidate-broad",
+    "sha256": "79fbe22577e9a40e478720bc944e25660916f09b9e4b409d5f7a5e4b3f5401fa",
+    "bytes": 26357600
+  }
+}
