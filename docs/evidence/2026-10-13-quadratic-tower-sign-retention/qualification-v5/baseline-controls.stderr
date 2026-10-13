@@ -1,0 +1,31 @@
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_linear_retains_sign' (1780) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::biquadratic_square_retains_sign' (1781) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::nested_linear_retains_sign' (1785) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::nested_square_retains_sign' (1786) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_linear_retains_sign' (1788) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::quadratic_square_retains_sign' (1789) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:46:13:
+assertion `left == right` failed: reverse=false, scale=1/1
+  left: None
+ right: Some(Positive)

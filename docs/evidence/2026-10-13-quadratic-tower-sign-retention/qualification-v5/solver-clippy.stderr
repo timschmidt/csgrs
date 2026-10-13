@@ -1,0 +1,25 @@
+    Checking bytemuck v1.25.0
+    Checking num-complex v0.4.6
+    Checking serde_core v1.0.228
+    Checking num-bigint v0.4.6
+    Checking approx v0.5.1
+    Checking rawpointer v0.2.1
+    Checking typenum v1.20.1
+    Checking roots v0.0.8
+    Checking matrixmultiply v0.3.11
+    Checking safe_arch v1.2.0
+    Checking wide v1.7.1
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source/crates/hyperreal)
+    Checking serde v1.0.228
+    Checking serde_json v1.0.149
+    Checking ciborium v0.2.2
+    Checking tinytemplate v1.2.1
+    Checking criterion v0.5.1
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source/crates/hyperlimit)
+    Checking simba v0.10.2
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source/crates/hypersolve)
+    Checking nalgebra v0.35.0
+    Finished `release` profile [optimized] target(s) in 14.94s

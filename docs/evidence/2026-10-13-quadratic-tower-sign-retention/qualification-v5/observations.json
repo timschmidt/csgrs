@@ -1,0 +1,338 @@
+[
+  {
+    "name": "probe-01-quadratic-linear-1",
+    "case": {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": 1
+    },
+    "row": {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": 1,
+      "delta_before": "positive",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-02-quadratic-linear--7",
+    "case": {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": -7
+    },
+    "row": {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": -7,
+      "delta_before": "positive",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-03-quadratic-square-1",
+    "case": {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": 1
+    },
+    "row": {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": 1,
+      "delta_before": "positive",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-04-quadratic-square--7",
+    "case": {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": -7
+    },
+    "row": {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": -7,
+      "delta_before": "positive",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-05-nested-linear-1",
+    "case": {
+      "family": "nested",
+      "shape": "linear",
+      "scale": 1
+    },
+    "row": {
+      "family": "nested",
+      "shape": "linear",
+      "scale": 1,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-06-nested-linear--7",
+    "case": {
+      "family": "nested",
+      "shape": "linear",
+      "scale": -7
+    },
+    "row": {
+      "family": "nested",
+      "shape": "linear",
+      "scale": -7,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-07-nested-square-1",
+    "case": {
+      "family": "nested",
+      "shape": "square",
+      "scale": 1
+    },
+    "row": {
+      "family": "nested",
+      "shape": "square",
+      "scale": 1,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-08-nested-square--7",
+    "case": {
+      "family": "nested",
+      "shape": "square",
+      "scale": -7
+    },
+    "row": {
+      "family": "nested",
+      "shape": "square",
+      "scale": -7,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-09-biquadratic-linear-1",
+    "case": {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": 1
+    },
+    "row": {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": 1,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-10-biquadratic-linear--7",
+    "case": {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": -7
+    },
+    "row": {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": -7,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-11-biquadratic-square-1",
+    "case": {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": 1
+    },
+    "row": {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": 1,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "positive",
+      "original_zero": "positive",
+      "original_clone_zero": "positive",
+      "compact_covered": true,
+      "compact_immediate": "positive",
+      "compact_zero": "positive",
+      "compact_512": "positive",
+      "clone_zero": "positive",
+      "repeated_covered": true,
+      "repeated_zero": "positive",
+      "difference_tower_sign": "zero",
+      "original_after": "positive",
+      "all_definite_signs_agree": true
+    }
+  },
+  {
+    "name": "probe-12-biquadratic-square--7",
+    "case": {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": -7
+    },
+    "row": {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": -7,
+      "delta_before": "unknown",
+      "delta_warmed": "positive",
+      "original_immediate": "negative",
+      "original_zero": "negative",
+      "original_clone_zero": "negative",
+      "compact_covered": true,
+      "compact_immediate": "negative",
+      "compact_zero": "negative",
+      "compact_512": "negative",
+      "clone_zero": "negative",
+      "repeated_covered": true,
+      "repeated_zero": "negative",
+      "difference_tower_sign": "zero",
+      "original_after": "negative",
+      "all_definite_signs_agree": true
+    }
+  }
+]

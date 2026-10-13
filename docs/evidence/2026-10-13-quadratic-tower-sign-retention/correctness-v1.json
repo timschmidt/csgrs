@@ -1,0 +1,122 @@
+{
+  "decision": "isolated-tower-sign-retention-passes-scoped-correctness-await-fixed-costs",
+  "assessor_sha256": "98ccf538972cdac59d256d6dc956f5417bf5d94fb39463cbd39129e9ab8fe64f",
+  "test_results": {
+    "baseline-controls": {
+      "passed": 5,
+      "failed": 6,
+      "ignored": 0,
+      "groups": 1
+    },
+    "focused-regressions": {
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "all-feature-tests": {
+      "passed": 983,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 23
+    },
+    "default-tests": {
+      "passed": 878,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 22
+    },
+    "doctests": {
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "solver-tests": {
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 10
+    }
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source",
+  "runtime_matches_preparation_v3": true,
+  "probe_result": "All twelve formerly weakened immediate facts are retained. All eight formerly lost precision-0/-512 signs remain available. Clone/repeated facts agree, all exact differences are zero, and original facts match the frozen main observations.",
+  "proof": "Before multiplying by the original outer rational, source_payload = rebuilt_scale * rebuilt_payload. For nonzero rebuilt_scale, sign(rebuilt_payload) = sign(source_payload) * sign(rebuilt_scale). Only a retained exact sign is copied; Unknown and zero-scale provide no inferred payload sign. Named/rational outputs already expose their exact sign and skip the transfer.",
+  "preserved_failures": [
+    "The original output-format compile failure.",
+    "Two candidate preparation format-identity failures.",
+    "The ambiguous same-name Cargo artifact selection.",
+    "The original denested normalization-control assumption.",
+    "All six original sign-retention regressions, repeated on the unchanged eleven-test baseline."
+  ],
+  "limits": [
+    "Configurations and focused tests overlap; their totals are not additive unique coverage.",
+    "This covers scalar default/all-feature tests and the direct hypersolve consumer, not every repository workflow or native application gate.",
+    "No universal cache/concurrency/error-bound proof, performance result, whole-plan completion or runtime admission is claimed."
+  ],
+  "artifacts_sha256": {
+    "qualification-v5/all-feature-clippy.stderr": "cf2b76a61a468696f20dc5f416f398614d528911f18abda4517fb2f759c2a7f9",
+    "qualification-v5/all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/all-feature-tests.stderr": "87c2ebd2da91991193b8b39bf5ef41b416981c3032757dc8c37a99a328d045c7",
+    "qualification-v5/all-feature-tests.stdout": "ba4ab7af91602274d313826a8d5c5c3e112c3833ce3223505d4bd622ed43bfa1",
+    "qualification-v5/baseline-controls.stderr": "099d43a6c345f3ec391247ed0715e05654919e3cbc6b04b903483f0afba3fcde",
+    "qualification-v5/baseline-controls.stdout": "1233fc3430a0413a8836df255e057c07c48fcbe71fa2f2eb3daeaa5d1bf78cd8",
+    "qualification-v5/bindings.json": "77ee699c21e6159bb0b6236548ae31e21c3ab200ba674e3d11d88519a69a7803",
+    "qualification-v5/build-baseline-controls.stderr": "e089c741e694088996c6cff6e31171e60239832330e53cee716d944b2feaf596",
+    "qualification-v5/build-baseline-controls.stdout": "52c47b8215d7ec08c7cc32329bd433c6a1ea8622816cf34fb0bd9dfafde1b648",
+    "qualification-v5/build-library.stderr": "edb56f31d6438a767bf1a6d7a46fe83f4db03431e3a5a1b06c058e18297da64b",
+    "qualification-v5/build-library.stdout": "b5974aa3451356b89cc091548617f315562d992211d8aa41dee537b8e7002296",
+    "qualification-v5/build-tests.stderr": "b2b5a705cb6ec4f382745338a7bb316766bce43984c0b7d87ab3a30f342c3c24",
+    "qualification-v5/build-tests.stdout": "db2e6a60922592c693aabe42e93aee957a469c229cf82b66162af94b12cad5f3",
+    "qualification-v5/commands.json": "3c698fc4262240a53e90e7ae9091ec859aee661ad740984a05dc103f7f61b6c6",
+    "qualification-v5/default-clippy.stderr": "d7577f11a813068c05855bfea30f833a32f0a6a502c567ecac56f69e8d3e3521",
+    "qualification-v5/default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/default-tests.stderr": "e1a879d650a095372c1545281b9f08450d936ed719ac42caf73d9fbf23a64fa3",
+    "qualification-v5/default-tests.stdout": "eb62426130127c273047ed6940aecd42899c143abf20cf109978f20615848a3e",
+    "qualification-v5/docs.stderr": "56f17e776ee295ec7ed4df222a544deb29fc7f37ea52847127fc920c1c69a111",
+    "qualification-v5/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/doctests.stderr": "0170077069b34dd8b1831c84a848db9bf7488dfd339ff0b5aaf98eb7987aad1d",
+    "qualification-v5/doctests.stdout": "5088f9e8ec8ff80c0d3d1cbd3e24567694dfeee69ebc1d4ffa9edabc3e3d9ae4",
+    "qualification-v5/fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/focused-regressions.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/focused-regressions.stdout": "f04e950e3e079318a07be6aff57bed5e4950bfc0cf9e485fb967ba872e63c1a2",
+    "qualification-v5/link-probe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/link-probe.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/observations.json": "0a5657b57816ec77d692a99c9d59586cf0451dc41a3cfe8dbfc9dc535ee52c95",
+    "qualification-v5/probe-01-quadratic-linear-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-01-quadratic-linear-1.stdout": "05444689ce6558ca8ee6f7a566b610b33c1e7faff0120ddeac70a2e3fc0b4581",
+    "qualification-v5/probe-02-quadratic-linear--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-02-quadratic-linear--7.stdout": "32a9b649444ac5edc089433589a51e5f863dd535462a19aecd9996caaf84a2d3",
+    "qualification-v5/probe-03-quadratic-square-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-03-quadratic-square-1.stdout": "7c7fde79957eb6540ee3fa1b49b0e249ad9adca44b3352b0a649ce6add59ed36",
+    "qualification-v5/probe-04-quadratic-square--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-04-quadratic-square--7.stdout": "1eda59da2b3e64444a22855cb8134916ae1eeec73d0ee8b004e09609bb5c1a10",
+    "qualification-v5/probe-05-nested-linear-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-05-nested-linear-1.stdout": "851215ea4637802e4725f5c39618ef368c7ca275cc9931f59b147190e6a5aa91",
+    "qualification-v5/probe-06-nested-linear--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-06-nested-linear--7.stdout": "1860e542353ffc20427cf1e9ca340a066618baa45e02cc20d2356e77461aa10f",
+    "qualification-v5/probe-07-nested-square-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-07-nested-square-1.stdout": "5e8a0dc2f2d180ec966ceb06bd05f0821284bd543283a636c44c02ba303c4837",
+    "qualification-v5/probe-08-nested-square--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-08-nested-square--7.stdout": "07268f1948b743ac73c4bfd4a29592415049e746c1cff465056daf4b2791c226",
+    "qualification-v5/probe-09-biquadratic-linear-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-09-biquadratic-linear-1.stdout": "cabedf74a350a6d4da55aaefa162481953675589715554243d8c976b9d698acf",
+    "qualification-v5/probe-10-biquadratic-linear--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-10-biquadratic-linear--7.stdout": "ff02c7128c44d2fe14c937c602ee13a51eac08f4de01dea8b70b74add309649f",
+    "qualification-v5/probe-11-biquadratic-square-1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-11-biquadratic-square-1.stdout": "093ddf5d4474251062deafe00df7e67130928d6d1b3d6d44c0b033d6c9400652",
+    "qualification-v5/probe-12-biquadratic-square--7.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/probe-12-biquadratic-square--7.stdout": "2d838a141525974abe9a099f2005a201de8ecf4f17c2d7c7352e9dee6e01fbe3",
+    "qualification-v5/protocol.json": "7fd3e042303bf8346a5cd17e03ab3c893ca8cc045579baa2e8a36aa4bacffb8c",
+    "qualification-v5/result.json": "31d6079af8ab93d37ff3c180745da5322257eb70acb77dfff58ab0d33dc8a750",
+    "qualification-v5/solver-clippy.stderr": "ceaab19b7923758ac033ee2f9e0c147d417c33451f755a1d3c401f3e22280fd5",
+    "qualification-v5/solver-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v5/solver-tests.stderr": "45cc5bdc7e431500c23d176a206343c72214b0aed7cb0f4412c7e9faa0ac21cb",
+    "qualification-v5/solver-tests.stdout": "07499eeef270ff699d293b11700dd74bf7cd3a905e034f10e50110a4777dad1b"
+  },
+  "sources_main_and_bound_artifacts_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

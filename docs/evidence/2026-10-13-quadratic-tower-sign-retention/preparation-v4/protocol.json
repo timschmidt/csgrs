@@ -1,0 +1,32 @@
+{
+  "scope": "Prepare exact sign transfer across an already established tower equality.",
+  "runner_sha256": "29b5270990f680c21380a16ee86b89d7971f7e4de5d7ccbdcab53cf4d309c4d1",
+  "failed_preparation_sha256": "6e6491738bffa195065630037c95d870eec6b6712cb6383feabaf522182770bc",
+  "second_failed_preparation_sha256": "903d29270d157e6a9d9d1fe27e6ed1a09711ab5c37ba8700d9695476b35ca17b",
+  "qualification_runner_sha256": "2f3ea1391d2e9ed1da00238b86bdb202f5195ffef8a561e42d6a9032aa20a1b5",
+  "test_sha256": "d82d4c28c00e3ee1a0f682996d340c83f676a84ad06b967ac1bab8ab71f39d03",
+  "baseline_protocol_sha256": "172d762d3f75c67d483463a778214ec9abd177080910e776f39dd8b7087f312b",
+  "baseline_result_sha256": "e8918607716d44ab558ff84429b293a606dca0aa51835970fd9256207c9436f3",
+  "base_commit": "bcc7c391d82c9de2943b2f6cd10ade7f7a61616a",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v4/qualification-target",
+  "source_count": 10128,
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "d82d4c28c00e3ee1a0f682996d340c83f676a84ad06b967ac1bab8ab71f39d03"
+  },
+  "patch_sha256": "943ea55b6a22e4ce405d599716727556e363e75aeb2284849acc56090d7c0022",
+  "delta_archive_sha256": "70f29bae6d72d5796a788bf0e9c2a2a0c442c7f299b85125283b81fe5b479ff7",
+  "baseline_runtime_recovered_after_removing_transfer_and_doc": true,
+  "new_test_functions": 11,
+  "shared_baseline_test_functions": 11,
+  "control_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline-control-v2/source",
+  "control_target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/baseline-control-v2/qualification-target",
+  "prior_qualification_failure_sha256": "8f6ab8bb37fddfa94eafaa78a63598a38d5fb08d4b824bd362f96ef3d13e59aa",
+  "runtime_matches_preparation_v3": true,
+  "extra_tests": "Retain the denested input and add a genuinely nested input. The two normalization controls check both outer signs, each payload sign and the shared positive root.",
+  "proof": "Before multiplying by the original outer rational, source_payload = rebuilt_scale * rebuilt_payload. For nonzero rebuilt_scale, sign(rebuilt_payload) = sign(source_payload) * sign(rebuilt_scale). Only a retained exact sign is copied; Unknown and zero-scale provide no inferred payload sign. Named/rational outputs already expose their exact sign and skip the transfer.",
+  "limits": "No new cache field, owner, numerical refinement, recognition budget, public API, or rejected experimental runtime. This has not yet passed candidate qualification or matched resource controls.",
+  "runtime_admitted": false
+}

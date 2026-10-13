@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "focused_tests": 11,
+  "baseline_control_passes": 5,
+  "baseline_regression_failures": 6,
+  "fresh_probe_processes": 12,
+  "all_previously_lost_signs_retained": true,
+  "all_probe_equalities_proven": true,
+  "original_probe_facts_unchanged": true,
+  "sources_main_inputs_and_bindings_unchanged": true,
+  "qualification_commands": 27,
+  "runtime_admitted": false,
+  "remaining": "Independent resource costs, broader/native qualification as warranted, and retention decision. Existing native failures, 35 pending entries and all properties/targets/future work remain open."
+}
