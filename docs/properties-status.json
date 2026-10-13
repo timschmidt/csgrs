@@ -30,7 +30,21 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Complete the preregistered fixed native controls and complete unnormalized report comparison. Preserve all scalar and inherited endpoint tradeoffs and every failed original native assertion; neither variant is admitted."
+      "next_step": {
+        "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+        "parent_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/decision-v1.json",
+        "question": "In the original coefficient multiplier, how many actually executed linear radical/opaque products are multiplied by an already stored zero rational constant and then discarded?",
+        "source_basis": "The original multiplier forms both linear radical contributions before radical cross-products and later forms opaque linear contributions. insert_radical/insert_atom immediately drop zero coefficients. Rational multiplication returns zero before canonicalization, product-cache lookup or publication when either stored sign is NoSign.",
+        "read_source_sha256": {
+          "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+          "crates/hyperreal/src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+          "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6"
+        },
+        "diagnostic_only": "Fork the unchanged endpoint parent. Use fixed integer counters for accepted coefficient shapes and stored-zero flags, plus actual entry counts at each of the four existing linear-term loops. Count zero scales from Rational::sign/is_zero only, which read the immutable stored sign. Preserve every original operation, early return, owner lifetime, insertion order, cache publication and query. Do not infer executed loop counts solely from input lengths, because later insertion can decline early.",
+        "qualification": "Calibrate reset/disabled behavior, all counter bins and joined worker aggregation; run existing scalar cache frontiers and endpoint regressions, strict Clippy and formatting. Observe the unchanged complete-board assertion once with instrumentation, reporting overhead and every original failure. Counts are coverage, not runtime shares or predicted savings.",
+        "runtime_followup": "Only if actual coverage warrants it, preregister a separate zero-contribution experiment that preserves nonzero arithmetic and original insertion order. Qualify zero/negative/mixed/opaque inputs, owner release, eight/nine-term frontiers, mandatory original retry, cold/warm/cloned facts and abort/budget receipts. Require fixed scalar/native cost controls and original gates before any retention; complete report identity remains an admission requirement.",
+        "exclusions": "Do not inherit either rejected scaling branch, the rejected coefficient merge or the rejected eight-node prepass. The endpoint parent remains unadmitted and all its prior timing and memory tradeoffs remain open."
+      }
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -352,10 +366,24 @@
       "runtime_admitted": false
     },
     "isolated_coefficient_scaling": {
-      "status": "native-qualification-recorded-await-fixed-controls-and-complete-reports",
-      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/native-assessment-v1.json",
+      "status": "reject-both-scaling-variants-on-native-costs-and-original-board-failures",
+      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/decision-v1.json",
       "result": "Right-scalar and bidirectional variants each pass 867 scalar library results, 28 doctests, four included new regressions and six included cache-frontier regressions. The four new tests also pass on the unchanged runtime baseline. Clippy, formatting and warning-denied docs pass.",
-      "next_step": "Complete the preregistered fixed native controls and complete unnormalized report comparison. Preserve all scalar and inherited endpoint tradeoffs and every failed original native assertion; neither variant is admitted.",
+      "next_step": {
+        "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+        "parent_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/decision-v1.json",
+        "question": "In the original coefficient multiplier, how many actually executed linear radical/opaque products are multiplied by an already stored zero rational constant and then discarded?",
+        "source_basis": "The original multiplier forms both linear radical contributions before radical cross-products and later forms opaque linear contributions. insert_radical/insert_atom immediately drop zero coefficients. Rational multiplication returns zero before canonicalization, product-cache lookup or publication when either stored sign is NoSign.",
+        "read_source_sha256": {
+          "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+          "crates/hyperreal/src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+          "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6"
+        },
+        "diagnostic_only": "Fork the unchanged endpoint parent. Use fixed integer counters for accepted coefficient shapes and stored-zero flags, plus actual entry counts at each of the four existing linear-term loops. Count zero scales from Rational::sign/is_zero only, which read the immutable stored sign. Preserve every original operation, early return, owner lifetime, insertion order, cache publication and query. Do not infer executed loop counts solely from input lengths, because later insertion can decline early.",
+        "qualification": "Calibrate reset/disabled behavior, all counter bins and joined worker aggregation; run existing scalar cache frontiers and endpoint regressions, strict Clippy and formatting. Observe the unchanged complete-board assertion once with instrumentation, reporting overhead and every original failure. Counts are coverage, not runtime shares or predicted savings.",
+        "runtime_followup": "Only if actual coverage warrants it, preregister a separate zero-contribution experiment that preserves nonzero arithmetic and original insertion order. Qualify zero/negative/mixed/opaque inputs, owner release, eight/nine-term frontiers, mandatory original retry, cold/warm/cloned facts and abort/budget receipts. Require fixed scalar/native cost controls and original gates before any retention; complete report identity remains an admission requirement.",
+        "exclusions": "Do not inherit either rejected scaling branch, the rejected coefficient merge or the rejected eight-node prepass. The endpoint parent remains unadmitted and all its prior timing and memory tradeoffs remain open."
+      },
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-13-coefficient-scaling/cost-assessment-v1.json",
       "cost_summary": "All 90 fixed processes preserve witnesses and inventories. No allocation field increases in any sample; retained requested bytes match. Right saves allocations/bytes in six rows; both reduces bytes in eighteen. Each has one all-five slower timing row and further adverse four-block rows, retained in full.",
@@ -438,7 +466,14 @@
           "process_wall_seconds": 122.77485628472641,
           "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
         }
-      ]
+      ],
+      "native_cost_evidence": "docs/evidence/2026-10-13-coefficient-scaling/native-controls-assessment-v1.json",
+      "native_cost_summary": "Right/both have 10/13 endpoint rows and 18/15 broad rows slower in all five blocks. Neither has an all-five faster endpoint row or endpoint allocation savings. Four opaque-translated phases add 24 peak requested bytes in every sample. Faster broad controls and all scalar savings remain recorded; both original board caps fail.",
+      "report_replay": {
+        "executed": false,
+        "prepared_runner": "replay_reports_v1.py",
+        "reason": "The closed native costs and original board failures settle rejection before runtime admission. Complete report replay and production CLI size are therefore left unexecuted for these rejected sources. Native finding counts are not claimed as complete report identity."
+      }
     }
   },
   "status_meanings": {
