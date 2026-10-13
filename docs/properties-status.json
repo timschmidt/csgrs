@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The endpoint/P4 combination passes scoped scalar, solver and native correctness checks; its original board gate still fails at 133.31248412 worker-CPU seconds / 120, while the separate neck check passes. Prepare the retained-quadratic-projection coverage diagnostic from this frozen combination. All 35 pending files, inherited tradeoffs, complete reports and original limits remain open; see combined_native_tower_sign_retention."
+      "next_step": "The endpoint/P4 combination passes scoped correctness checks but still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. The completed retained-projection diagnostic points toward private temporary inline storage. Prepare matched variants from the uninstrumented combined source, preserving all 35 pending files, proofs, original retries, budgets and limits; see retained_quadratic_projection_coverage."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -642,11 +642,39 @@
       ],
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
-        "scope": "docs/evidence/2026-10-13-native-tower-sign-retention/next-diagnostic-scope-v1.json",
-        "task": "Prepare the scoped retained-quadratic-projection coverage diagnostic described in next-diagnostic-scope-v1.json. Fork this frozen combination into a new source and target; count only existing root/recursive retained reads, actual closed-form copies and original retries. Retain no new scalar owners and preserve every original arithmetic operation, proof, budget and gate.",
-        "runner_source_and_measurements_prepared_or_executed": false
+        "scope": "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json",
+        "task": "The retained-projection diagnostic is complete. Prepare the private temporary inline-storage experiment from this frozen uninstrumented source; keep persistent certificate fields and opaque atom vectors unchanged. Counts are not speedup or allocation evidence.",
+        "diagnostic_completed": true,
+        "storage_source_runner_or_measurements_prepared": false
       },
       "native_runtime_admitted": false
+    },
+    "retained_quadratic_projection_coverage": {
+      "status": "coverage-recorded-temporary-inline-storage-experiment-next",
+      "evidence": [
+        "docs/evidence/2026-10-13-retained-quadratic-projection/preparation-failure-v1.json",
+        "docs/evidence/2026-10-13-retained-quadratic-projection/preparation-v2/protocol.json",
+        "docs/evidence/2026-10-13-retained-quadratic-projection/assessment-v2.json",
+        "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json"
+      ],
+      "qualification": "All eleven recorded commands executed once in sequence. Formatting, four counter calibrations, five site controls, eleven sign regressions, six cache controls, 883 scalar library tests, five endpoint tests, strict four-crate release Clippy and warning-denied scalar docs pass. Focused totals overlap. Both original boards emitted reports with 12/197 findings; the original 120-second worker-CPU assertion fails at 132.683149469 seconds under instrumentation.",
+      "observations": {
+        "quadratic_queries": 11265114,
+        "root_copies": 70338,
+        "projectable_root_copies": 70334,
+        "root_copy_percent_of_queries": 0.6243878224401458,
+        "projectable_root_copy_percent_of_queries": 0.6243523145882057,
+        "recursive_copies": 35239829,
+        "original_root_retries": 866619,
+        "recursive_single_radical_copies": 30843135,
+        "recursive_single_radical_percent": 87.52350926560966,
+        "recursive_single_term_copies": 34848811,
+        "recursive_single_term_percent": 98.89040891770502
+      },
+      "result": "Root-only reuse is uncommon. Recursive copies are predominantly single-term and single-radical; this motivates a temporary-storage experiment, not a speedup claim. Original board gate still fails; no native runtime is admitted.",
+      "preserved_failure": "Preparation v1 stopped before compilation after rustfmt moved optional commas. Its never-compiled source is archived. Version 2 preserves all original tokens outside seven explicit instrumentation/test changes.",
+      "next_step": "Compare a matched Vec baseline with separate temporary radical, polynomial-term and combined inline-storage variants from the uninstrumented endpoint/P4 parent. Qualify correctness, ownership and proof retention before fixed cost measurements. Persistent certificates, opaque atom vectors, all original budgets and full native limits remain unchanged.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {

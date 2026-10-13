@@ -1,0 +1,10 @@
+
+running 5 tests
+test computable::node::retained_projection_site_tests::missing_and_approximation_only_cells_are_distinguished ... ok
+test computable::node::retained_projection_site_tests::reads_outside_quadratic_projection_are_not_counted ... ok
+test computable::node::retained_projection_site_tests::recursive_copy_is_separate_from_the_missing_root_cell ... ok
+test computable::node::retained_projection_site_tests::retained_nonquadratic_root_declines_and_runs_original_retry ... ok
+test computable::node::retained_projection_site_tests::retained_quadratic_root_copy_preserves_value_and_owners ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 878 filtered out; finished in 0.00s
+

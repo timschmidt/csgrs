@@ -1,0 +1,121 @@
+{
+  "queries": {
+    "started": 11265114,
+    "succeeded": 10382236,
+    "declined": 882878,
+    "unwound": 0,
+    "original_retries": 866619
+  },
+  "reads": [
+    {
+      "role": "root",
+      "missing_cell": 11188200,
+      "missing_form": 6576,
+      "completed_copies": 70338
+    },
+    {
+      "role": "recursive",
+      "missing_cell": 38569137,
+      "missing_form": 6549574,
+      "completed_copies": 35239829
+    }
+  ],
+  "copies": [
+    {
+      "role": "root",
+      "shape": "empty",
+      "copies": 0,
+      "term_entries": 0,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "root",
+      "shape": "rational",
+      "copies": 70128,
+      "term_entries": 70128,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "root",
+      "shape": "quadratic",
+      "copies": 206,
+      "term_entries": 206,
+      "radical_entries": 206,
+      "nonempty_radical_vectors": 206
+    },
+    {
+      "role": "root",
+      "shape": "multiple_radicals",
+      "copies": 4,
+      "term_entries": 4,
+      "radical_entries": 12,
+      "nonempty_radical_vectors": 4
+    },
+    {
+      "role": "root",
+      "shape": "nonzero_power",
+      "copies": 0,
+      "term_entries": 0,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "root",
+      "shape": "multiple_powers",
+      "copies": 0,
+      "term_entries": 0,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "recursive",
+      "shape": "empty",
+      "copies": 374875,
+      "term_entries": 0,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "recursive",
+      "shape": "rational",
+      "copies": 2966349,
+      "term_entries": 2966349,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "recursive",
+      "shape": "quadratic",
+      "copies": 30843135,
+      "term_entries": 30843135,
+      "radical_entries": 30843135,
+      "nonempty_radical_vectors": 30843135
+    },
+    {
+      "role": "recursive",
+      "shape": "multiple_radicals",
+      "copies": 1039094,
+      "term_entries": 1039094,
+      "radical_entries": 2120225,
+      "nonempty_radical_vectors": 1039094
+    },
+    {
+      "role": "recursive",
+      "shape": "nonzero_power",
+      "copies": 233,
+      "term_entries": 233,
+      "radical_entries": 0,
+      "nonempty_radical_vectors": 0
+    },
+    {
+      "role": "recursive",
+      "shape": "multiple_powers",
+      "copies": 16143,
+      "term_entries": 32286,
+      "radical_entries": 16136,
+      "nonempty_radical_vectors": 16136
+    }
+  ]
+}

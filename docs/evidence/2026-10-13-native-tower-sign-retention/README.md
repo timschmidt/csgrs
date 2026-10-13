@@ -47,8 +47,10 @@ direct costs remain recorded in the sibling
 main-worktree entries remain byte-identical. No new application speedup, paired
 native cost improvement or complete report identity is claimed here.
 
-`next-diagnostic-scope-v1.json` records four reviewed source sections and a
-question about actual retained-form copies during quadratic projection. Its
-runner, source fork and measurements are not yet prepared or executed. Any
-follow-up must preserve the original retry, proof availability, budgets and
-owners; counts alone cannot justify a runtime optimization.
+`next-diagnostic-scope-v1.json` records the original question about retained-form
+copies during quadratic projection. The separate
+[completed diagnostic](../2026-10-13-retained-quadratic-projection/README.md)
+observed little root reuse but frequent single-term recursive copies. Its
+decision proposes testing private temporary inline storage from this
+uninstrumented parent. Original retries, proof availability, budgets and owners
+must be preserved; counts alone cannot justify a runtime optimization.

@@ -1,0 +1,78 @@
+{
+  "status": "coverage-recorded-temporary-inline-storage-experiment-next",
+  "assessment_sha256": "feeb89973c4747d5df46b60889e2f6e4081cb6bb5e4641e6151415421c670f54",
+  "preparation_sha256": "c8ace408ffee365b876107ab8bbb532684d0aef9a13ee12cc7e95fc8dad376ec",
+  "result_sha256": "02a0e7e0d09a6c8bdf5d7ec83297ed47252dceb95f095081894ac31d1fefa75b",
+  "observations": {
+    "quadratic_queries": 11265114,
+    "root_copies": 70338,
+    "projectable_root_copies": 70334,
+    "root_copy_percent_of_queries": 0.6243878224401458,
+    "projectable_root_copy_percent_of_queries": 0.6243523145882057,
+    "recursive_copies": 35239829,
+    "original_root_retries": 866619,
+    "recursive_single_radical_copies": 30843135,
+    "recursive_single_radical_percent": 87.52350926560966,
+    "recursive_single_term_copies": 34848811,
+    "recursive_single_term_percent": 98.89040891770502
+  },
+  "qualification": "All eleven recorded commands executed once in sequence. Formatting, four counter calibrations, five site controls, eleven sign regressions, six cache controls, 883 scalar library tests, five endpoint tests, strict four-crate release Clippy and warning-denied scalar docs pass. Focused totals overlap. Both original boards emitted reports with 12/197 findings; the original 120-second worker-CPU assertion fails at 132.683149469 seconds under instrumentation.",
+  "decision": "Do not advance a root-only projection shortcut first: root reuse covers only 0.6244% of the observed queries. No runtime implementation of that shortcut was tested or rejected. Investigate temporary storage instead because recursive retained-form copies are frequent and predominantly single-term/single-radical.",
+  "limits": [
+    "These are counts of existing operations under instrumentation, not time shares, allocations or projected savings.",
+    "Root projectability uses only retained vector lengths and pi powers. It does not run an additional mathematical recognizer.",
+    "The full-board assertion retains its original worker CPU metric and limit. Instrumentation changes execution cost and is not a benchmark of an optimization.",
+    "The 12/197 finding counts do not establish complete report-byte identity.",
+    "Focused test totals overlap the full scalar library. This is not the complete workflow/feature/target matrix.",
+    "The parent remains unadmitted. All native tradeoffs and original limits, all 35 pending entries and the entire properties/targets/future-work plan remain open."
+  ],
+  "next_experiment": {
+    "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+    "parent_preparation": "docs/evidence/2026-10-13-native-tower-sign-retention/preparation-v1/protocol.json",
+    "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+    "variants": [
+      "matched Vec baseline",
+      "one inline radical slot only",
+      "one inline polynomial term slot only",
+      "both inline slots"
+    ],
+    "scope": "Change only private temporary RadicalCoefficient.radicals and/or PiLaurentPolynomial.terms. Keep persistent ClosedRadicalCoefficient and ClosedPiLaurentPolynomial Vec fields and opaque atom vectors unchanged. Start from the uninstrumented combined parent, inheriting none of the rejected coefficient scaling, zero guards, coefficient merge or prepass experiments.",
+    "dependency": {
+      "package": "smallvec",
+      "version": "1.15.1",
+      "registry_checksum": "67b1b7a3b5fe4f1376887184045fcf45c69e92af734b7aaddc05fb777b6fbd03",
+      "already_locked": true,
+      "proposed_direct_dependency": "smallvec = { version = \"1.15.1\", default-features = false }",
+      "features_added": [],
+      "matching": "Add the same direct dependency to all four variants. Verify unchanged package versions/checksums and record resolved feature sets. Do not enable union or other new features."
+    },
+    "source_review": {
+      "algebra_sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "smallvec_source_sha256": "881e5b2c9afecd0091df0d1232fd557edbb9d58304d073356b066728af14ab2e",
+      "smallvec_manifest_sha256": "23b775d343d15c7c212134c69a791d75fcdfb4527224b20daf401b494dd4f0c9",
+      "findings": [
+        "SmallVec::from_buf constructs a one-element inline value. FromIterator reserves the iterator lower bound and extends in order; overflow spills to heap storage.",
+        "remove and insert shift elements to preserve order. Clone copies the current slice; capacity and spill state can differ from the original Vec.",
+        "SmallVec::retain preserves retained order but swaps rejected elements to the tail and drops them after traversal. Only the radical vector uses retain in this scope; its entries own Rational values, not opaque Computable values.",
+        "Terms can contain opaque owners through coefficients. Check ownership and drop behavior on cancellation, overflow and release; inline terms increase the coefficient/memo/stack footprint and must be measured."
+      ]
+    },
+    "invariants": [
+      "Identical exact arithmetic, operand ownership and ordered insertion/removal.",
+      "Unchanged eight-term/eight-radical bounds, 512-pass and depth budgets.",
+      "Mandatory original retry after a retained projection declines, with first memo released before retry.",
+      "Unchanged retained proofs, cold/warm/cloned semantics, shared and opaque owners, abort receipts and original 120/60-second full-fixture assertions."
+    ],
+    "qualification": [
+      "Shared baseline/candidate tests for empty, one, two, eight and rejected ninth entries; cancellation after spilling and regrowth; mixed pi/radical and opaque-owner cases; zero/negative scaling, inverse and power limits.",
+      "Inherited cache-frontier and P4 regressions, default and all-feature scalar tests, doctests, formatting, strict Clippy and warning-denied docs. Record private and persistent type sizes.",
+      "Use fresh matched targets and unchanged scalar timing/allocation probes with a closed balanced five-block schedule. Include every adverse timing and requested-allocation row, spilling costs and executable sizes.",
+      "Advance supported candidates to complete native qualification and fixed endpoint/broad/abort controls. Original full-board/neck gates, full report bytes and production CLI sizes remain required before admission."
+    ],
+    "tradeoffs": "Fewer requested heap allocations, if observed, do not establish smaller total memory: inline fields can enlarge temporary structs, memo entries and stack frames and increase move/clone/branch costs. Counts alone establish no allocation reduction or speedup.",
+    "source_or_runner_prepared": false,
+    "measurements_executed": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

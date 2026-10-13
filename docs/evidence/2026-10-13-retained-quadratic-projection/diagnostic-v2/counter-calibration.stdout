@@ -1,0 +1,9 @@
+
+running 4 tests
+test retained_projection_diagnostic::tests::all_shapes_roles_reset_and_disabled_callbacks_are_observed ... ok
+test retained_projection_diagnostic::tests::joined_workers_keep_separate_roots_and_aggregate_counts ... ok
+test retained_projection_diagnostic::tests::nested_scopes_restore_context_on_return_and_unwind ... ok
+test retained_projection_diagnostic::tests::report_unwind_ends_recording_after_query_scope_drops ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 879 filtered out; finished in 0.00s
+

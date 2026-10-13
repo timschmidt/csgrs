@@ -27,10 +27,32 @@ the included legacy file byte-identical outside the explicit insertions. The
 counter and site-test inputs are unchanged. Version 2 froze a 10,133-file source
 with seven changed files and recovered all original tokens from the explicit
 replacements. Formatting, all nine counter/site checks, the P4 and cache
-controls and the full 883-test scalar library pass. Native qualification and
-the board observation are still in progress; no board counts are recorded yet.
-Counts are
-coverage, not allocation measurements, time shares or predicted savings. A
-separate measured optimization would need independent qualification and fixed
-cost controls. The parent remains unadmitted; all 35 pending native entries,
-original limits and the complete properties, targets and future work stay open.
+controls and the full 883-test scalar library pass. The five endpoint controls,
+strict release all-feature/all-target Clippy for hyperreal, hypersolve,
+hypercurve and hyperdrc, and warning-denied scalar docs also pass.
+
+The complete-board observation issued 11,265,114 quadratic queries. Only 70,338
+queries (0.6244%) copied an existing root form; 70,334 had a rational or
+single-radical shape. Recursive reads copied 35,239,829 forms, including
+30,843,135 single-radical forms (87.52%) and 34,848,811 single-term forms
+(98.89%). The unchanged original retry ran 866,619 times. See
+[assessment-v2.json](assessment-v2.json) for every shape and outcome count.
+
+Both original boards completed with 12 and 197 findings. The original assertion
+still fails: 132.683149469 seconds of instrumented worker CPU exceeds 120
+seconds. This instrumentation changes execution cost; its duration is not an
+optimization benchmark. Finding counts do not establish complete report-byte
+identity. All eleven commands, source guards, executable identity and artifact
+hashes are recorded in [diagnostic-v2/](diagnostic-v2/).
+
+[decision-v1.json](decision-v1.json) defers a root-only shortcut because observed
+coverage is small. The next experiment will test private inline storage for
+temporary single-term and single-radical forms, starting from the uninstrumented
+parent. Persistent certificates and opaque-owner vectors remain outside that
+experiment. Counts justify investigating this storage choice; they are not
+allocation measurements, time shares or predicted savings. Each storage variant
+needs independent qualification and a fixed set of cost controls, including
+larger in-memory layouts and spilling costs.
+
+The parent remains unadmitted; all 35 pending native entries, original limits
+and the complete properties, targets and future work stay open.

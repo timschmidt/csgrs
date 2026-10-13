@@ -1,0 +1,29 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-quadratic-projection-v2/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+  "sha256": "62d00dd903ad7de7e9842f8fe2b6cc522c073da7fa5667dc20060f8ac1e80063",
+  "bytes": 54178880,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-quadratic-projection-v2/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/retained-quadratic-projection-v2/source/crates/hyperdrc#0.3.0",
+  "target": {
+    "kind": [
+      "lib"
+    ],
+    "crate_types": [
+      "lib"
+    ],
+    "name": "hyperdrc",
+    "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-quadratic-projection-v2/source/crates/hyperdrc/src/lib.rs",
+    "edition": "2024",
+    "doc": true,
+    "doctest": true,
+    "test": true
+  },
+  "profile": {
+    "opt_level": "3",
+    "debuginfo": 0,
+    "debug_assertions": false,
+    "overflow_checks": false,
+    "test": true
+  }
+}
