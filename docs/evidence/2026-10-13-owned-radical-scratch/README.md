@@ -15,7 +15,8 @@ term Vecs keep their original behavior. Publication eligibility, cache locks,
 arithmetic and insertion order are unchanged.
 
 This may reduce reconstruction on repeated reads, but publication still adds a
-shared allocation, and the two-form scratch enum may enlarge coefficients.
+shared allocation. The measured scratch coefficient remains 56 bytes, while
+the closed coefficient shrinks from 32 to 16 bytes.
 The private unreachable arm follows an exhaustive conversion under exclusive
 access; it is not a numeric-domain failure path. Source review covers mutation,
 consuming iteration, empty states, republishing, unique-buffer transfer and
@@ -43,17 +44,27 @@ source and failure remain frozen in
 
 Version 2 changes only that expression to `std::mem::take(self)`. The existing
 Default implementation already delegates directly to `Self::new`; exact byte
-comparison binds this correction. Preparation froze fresh v2 source trees with the same 10,134/10,135 file
-counts and exact parent-token recovery. The qualifier is rerunning all 26
-commands in fresh targets. No v1 cost
-probe executed, and no v1 pass is relabelled as a v2 execution. The correction and preserved failure are bound in
+comparison binds this correction. Preparation froze fresh v2 source trees with
+the same 10,134/10,135 file counts and exact parent-token recovery. All 26
+commands passed in fresh targets. No v1 cost probe executed, and no v1 pass is
+relabelled as a v2 execution. The correction and preserved failure are bound in
 [preparation-v2/protocol.json](preparation-v2/protocol.json).
 
-Qualification records every layout rather than assuming the scratch enum's
-size. If it passes, the fixed three-suite comparison uses
-twelve preflights and 60 measurement processes, with separate timing/allocation
-executables and all builds before probes. Every original phase and sample stays
-in scope. See [scope-v1.json](scope-v1.json).
+The independent [qualification assessment](correctness-v2.json) verifies all
+commands, logs, source bindings and inventories. Baseline passes 888 all-feature
+and 801 default scalar library tests; candidate passes 890 and 803, including
+two additional buffer-ownership controls. Both pass 28 doctests, shared storage,
+memo and alias controls, inherited cache and P4 controls, formatting, strict
+default/all-feature/all-target Clippy and warning-denied docs. Counts overlap;
+these are scoped checks, not full-workflow coverage. The other five recorded
+type layouts are unchanged. Both sources retain the original local memo
+entries, while only candidate reads share the immutable retained array.
+
+The next fixed three-suite cost comparison uses twelve preflights and 60
+measurement processes, with separate timing/allocation executables and all
+builds before probes. Every original phase and sample stays in scope. No cost
+claim follows from the smaller closed coefficient. See
+[scope-v2.json](scope-v2.json).
 
 The eight-term/eight-radical and original work/depth limits remain intact, as
 does the mandatory original retry after releasing its first memo. No manifest,

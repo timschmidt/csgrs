@@ -1,0 +1,928 @@
+{
+  "complete": true,
+  "phases": [
+    {
+      "name": "baseline-format",
+      "variant": "baseline",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.441517462022603,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "baseline-storage-regressions",
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.292073413729668,
+      "stdout_sha256": "af9722652a3079910daec4744d0fd1393ffc817c0b0bd45fc2564d3f2146caee",
+      "stderr_sha256": "f5fa330ea9d8479dad1c0898bfff7335571ebf7d7994da0b6b1cd8e9c25a1e66"
+    },
+    {
+      "name": "baseline-memo-regressions",
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "memo_publication_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.1455573569983244,
+      "stdout_sha256": "a464222ebfc76861049fe269438db8276991ed7e97222ed05b85b4964c2f1ccb",
+      "stderr_sha256": "8e7b22416fb992a98c24986d73bc7a01087c91eda94f98ab02a3d3f4b94842d5"
+    },
+    {
+      "name": "baseline-alias-regressions",
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "shared_radical_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14394908817484975,
+      "stdout_sha256": "34ca5a704ad4428c612ef04244e9f003169e336555ec5cf9c33ab84f7aa54076",
+      "stderr_sha256": "8e7b22416fb992a98c24986d73bc7a01087c91eda94f98ab02a3d3f4b94842d5"
+    },
+    {
+      "name": "baseline-buffer-ownership",
+      "variant": "baseline",
+      "phase": "buffer-ownership",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "radical_storage::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14768315199762583,
+      "stdout_sha256": "a8a79a340b1c4fdbeee9420823d1fcf0549967e0c95b9254a3078d64149dc29b",
+      "stderr_sha256": "8e7b22416fb992a98c24986d73bc7a01087c91eda94f98ab02a3d3f4b94842d5"
+    },
+    {
+      "name": "baseline-cache-frontiers",
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16193055408075452,
+      "stdout_sha256": "db98dae7eae77093c2ff8171b4421e204c125958ab20eefe6f9f77313f4341ee",
+      "stderr_sha256": "8e7b22416fb992a98c24986d73bc7a01087c91eda94f98ab02a3d3f4b94842d5"
+    },
+    {
+      "name": "baseline-sign-regressions",
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.1584721808321774,
+      "stdout_sha256": "dce24d697af53b3201321543e52db09deb02ecb614af716f85e3cdaccd079718",
+      "stderr_sha256": "af0d85026a9a30f61bddcfa7fa9f1b1fff9bdf1aeca9c5caa482a67b9bd589d4"
+    },
+    {
+      "name": "baseline-all-feature-library",
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.557595834136009,
+      "stdout_sha256": "2b31ccef5c58d4ed42643ac5b8ccc2bdf1d7bd9f2a5384b8fadb01fc78f4c6c8",
+      "stderr_sha256": "af0d85026a9a30f61bddcfa7fa9f1b1fff9bdf1aeca9c5caa482a67b9bd589d4"
+    },
+    {
+      "name": "baseline-default-library",
+      "variant": "baseline",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.60375765198842,
+      "stdout_sha256": "37ff30cf4665d803b4fa92440d78ab8cf9f3d6c42a3bc53ccbf962e25331ceb9",
+      "stderr_sha256": "c4d7a1a6166ae832b06e71592ad307789252efd68e86dbe2cc65905f8268d5f6"
+    },
+    {
+      "name": "baseline-doctests",
+      "variant": "baseline",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.289561854675412,
+      "stdout_sha256": "88e4a29be8bc57b918d4f92dd054569dd4ca5e539f56721e41aad9ed3d1e03a6",
+      "stderr_sha256": "e7e15c820e59a677eaa27fd85e4c46c7d05f328f70744c53c783ff5eeebd28a4"
+    },
+    {
+      "name": "baseline-all-feature-clippy",
+      "variant": "baseline",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.774928170256317,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "60129d762067868c5ff1a962dcee893aadfcae4a5cafb4b55c8648f47d9dcc06"
+    },
+    {
+      "name": "baseline-default-clippy",
+      "variant": "baseline",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.811827830038965,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "6ee78ba7e707ac020786d9893fbde729a35795b7798a552bfdbc895d95cf986e"
+    },
+    {
+      "name": "baseline-docs",
+      "variant": "baseline",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/baseline/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.2397655309177935,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b82c261d8367a7881204c4592a87e8b9447358f1d9e38b0825a222e26e0d93af"
+    },
+    {
+      "name": "candidate-format",
+      "variant": "candidate",
+      "phase": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 10.425906233955175,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "candidate-storage-regressions",
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "temporary_storage_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 26.742630625143647,
+      "stdout_sha256": "b8d03cff608ac0dd8e7b981cbe42a6acea609862f7be8bcd5bf51166f2a8967e",
+      "stderr_sha256": "711a3eaa19d7e4349479f50682558ac8e558467be909d7ed21fe1dea5795d4d2"
+    },
+    {
+      "name": "candidate-memo-regressions",
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "memo_publication_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.18626250606030226,
+      "stdout_sha256": "a51bc05de078ff0442aed0384b36090d2ded96d00735107d20dc4dcabb5715ee",
+      "stderr_sha256": "d0c5dde412005ee6bcde20436d92e8e83d441be8ac56a1a89127d2d99837b49d"
+    },
+    {
+      "name": "candidate-alias-regressions",
+      "variant": "candidate",
+      "phase": "alias-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "shared_radical_tests",
+        "--",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14687201706692576,
+      "stdout_sha256": "7c35aebe49bb85296c9448bc04635d0d3a76db27c3409e6a9b9c3c4c706ef04d",
+      "stderr_sha256": "774ee1f49e93ee254933ca946c61e0d9c5e80f1e62c1dc3ca09b87468335af51"
+    },
+    {
+      "name": "candidate-buffer-ownership",
+      "variant": "candidate",
+      "phase": "buffer-ownership",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "radical_storage::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.14973420090973377,
+      "stdout_sha256": "3d832f1a40e034c79dd8836b00172a4ace28a37e30160daa27561441928bc9e3",
+      "stderr_sha256": "774ee1f49e93ee254933ca946c61e0d9c5e80f1e62c1dc3ca09b87468335af51"
+    },
+    {
+      "name": "candidate-cache-frontiers",
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.16154866106808186,
+      "stdout_sha256": "bb1e69be535b744317be1a83bc4de63df43ab18d396ed7bb02c5875d0d52f1f1",
+      "stderr_sha256": "774ee1f49e93ee254933ca946c61e0d9c5e80f1e62c1dc3ca09b87468335af51"
+    },
+    {
+      "name": "candidate-sign-regressions",
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_tower_sign_retention_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.15357438707724214,
+      "stdout_sha256": "516115c75e918b6b6e539823a6b87612589a6f3307a2f9184008abae4701a631",
+      "stderr_sha256": "774ee1f49e93ee254933ca946c61e0d9c5e80f1e62c1dc3ca09b87468335af51"
+    },
+    {
+      "name": "candidate-all-feature-library",
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.4960420252755284,
+      "stdout_sha256": "0b8e22075bef3c71c263c569dc6b685cabb4653cd10a77bf0f99f27820ef2e93",
+      "stderr_sha256": "c508fbaf73ea48f67a7c9d550240b05eabfacc4f8b5e7316c77e8a936b92c191"
+    },
+    {
+      "name": "candidate-default-library",
+      "variant": "candidate",
+      "phase": "default-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--lib",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.579064555931836,
+      "stdout_sha256": "75f5456fd8ed4dd0efceed924650d262be20c5eb50ad1eb54d1e1eedf98efec0",
+      "stderr_sha256": "824f8a022f6307b2fb2d5b151f9048a53a38e1d2670fad830b9ca208356727c6"
+    },
+    {
+      "name": "candidate-doctests",
+      "variant": "candidate",
+      "phase": "doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.529077889863402,
+      "stdout_sha256": "472918252d542deaf4e6a89aae2e7e809b9d50f08c64488651184015b54213cc",
+      "stderr_sha256": "21b559a0f9abec6693b69daa53d9ad95286562a27c718d12cba8a00e2d850f66"
+    },
+    {
+      "name": "candidate-all-feature-clippy",
+      "variant": "candidate",
+      "phase": "all-feature-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 9.546208485029638,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "d72b272a36d8b0ed9d3615df8acb7209c7769d52d36de33aa529832a0d8b2679"
+    },
+    {
+      "name": "candidate-default-clippy",
+      "variant": "candidate",
+      "phase": "default-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 8.977678775321692,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "5e647b2563d97e898330e73768b54735c102220287ea02c0b0755c460ea18c30"
+    },
+    {
+      "name": "candidate-docs",
+      "variant": "candidate",
+      "phase": "docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/owned-radical-scratch-v2/candidate/qualification-target"
+      },
+      "exit_code": 0,
+      "seconds": 3.318274606950581,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "588654cc1b93d4cd2b2b2377132c44e53ddcb9ca57231d03331f253c3e774e99"
+    }
+  ],
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "buffer-ownership",
+      "passed": 0,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 888,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 801,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "buffer-ownership",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "passed": 890,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "default-library",
+      "passed": 803,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "candidate": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 16,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "candidate": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    }
+  },
+  "sharing": {
+    "baseline": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "candidate": {
+      "source_shares_closed": 0,
+      "views_share_closed": 1
+    }
+  },
+  "source_parent_and_main_unchanged": true,
+  "coefficient_layouts_recorded": true,
+  "focused_and_configuration_totals_overlap": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,11 @@
+
+running 3 tests
+test computable::node::memo_publication_tests::original_recognizer_keeps_zero_work_query_memo_reuse ... CLOSED_MEMO_INVENTORY	original	1
+ok
+test computable::node::memo_publication_tests::published_closed_value_survives_zero_work_reuse_and_releases_owners ... CLOSED_MEMO_INVENTORY	retained	1
+ok
+test computable::node::memo_publication_tests::rejected_opaque_publication_preserves_memo_and_releases_every_owner ... CLOSED_MEMO_INVENTORY	opaque	2
+ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 887 filtered out; finished in 0.00s
+
