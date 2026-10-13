@@ -1,0 +1,128 @@
+{
+  "status": "projection-inputs-recorded-preparation-and-qualification-pending",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "recursive_preparation_sha256": "92d7e1236ffee844ba9004fa2ed4e84c94f944ea050304245e3d9f084174ad74",
+  "recursive_decision_sha256": "0bfc035fe0ca48af1afb56907b27708791b4cf36efebc58a780a47b86a07c8e5",
+  "source_review": [
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "a38cffb31d85e5fd68c94f2b5b0c4a7f2926fc41093d9dc83b99f5fa83476228",
+      "sections": [
+        "Projection closure, retained first pass and original retry after dropping the memo",
+        "Rational projection and successful sign publication",
+        "Pi projection and compacting consumer",
+        "Owned normal form, graph-free closed coefficients and original representation frontiers"
+      ]
+    },
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "sections": [
+        "Quadratic projection shape matching and exact returned components; dispatch trace only after success"
+      ]
+    },
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "ab961bb6b174694823826f28f56b486fcd174a41ec0b1f5873a94666a0c39348",
+      "sections": [
+        "Immutable closed Arc cache publication/read lifetime and unchanged approximation state"
+      ]
+    },
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/retained_polynomial.rs",
+      "sha256": "e10a6480368b1d962ca78e12e3d25b7a4f44110b00c12a8905fecdbadfbd6b78",
+      "sections": [
+        "Owned and retained value variants; materialization and borrowed multiplication; existing ownership tests"
+      ]
+    }
+  ],
+  "contract": "Project exact rational, pi and quadratic components directly from owned or immutable retained polynomial slices. Preserve every accepted and declined shape, exact output, sign publication, work/depth limit and original retry. Compacting continues to materialize an owned polynomial before the original consuming reconstruction.",
+  "ownership": "The existing PiLaurentValue enum and graph-free ClosedPiLaurentPolynomial payload remain. A private read-only coefficient trait supplies rational and radical references plus an opaque-presence check; the closed implementation has no Computable field and always has no opaque atoms. Projection clones only the returned exact Rational components, with no new shared header, graph owner, cache guard, retained fact or recognition prepass.",
+  "control_variants": {
+    "baseline": "Unchanged endpoint/P4 parent runtime with shared tests only.",
+    "recursive": "Previously qualified recursive retained-view runtime, byte-identical outside the shared test declarations and files. It remains rejected and unadmitted.",
+    "projected": "The recursive design plus direct rational/pi/quadratic projection. No prior radical-array sharing or memo-omission experiment is included."
+  },
+  "invariants": [
+    "The first recognition pass uses the original 512-node budget and depth; only a failed reused-certificate pass triggers the original fresh pass.",
+    "Drop the first memo before retrying so opaque-owner counts cannot change the original recognizer.",
+    "Preserve rational zero, pi-power matching, zero/one/many radical distinctions, opaque rejection and multi-term rejection.",
+    "Successful bounded rational queries publish the same exact sign; quadratic dispatch trace remains after successful projection.",
+    "P4 may strengthen Unknown into Certified but never contradict or weaken any available fact.",
+    "No arithmetic change, new cache entry or new approximation; no public API, dependency, manifest or lockfile change.",
+    "Both original full-resolution board/neck fixtures and 120-second worker-CPU/60-second check-body-wall assertions remain."
+  ],
+  "cost_risks": [
+    "The projection trait is private and read-only, but new generic code and dispatch may change code generation, branch cost and probe size.",
+    "The recursive control already adds Arc header retention, and the combined candidate inherits that cost.",
+    "Earlier board instrumentation found only 0.6244 percent root retained-copy coverage; root projection alone does not predict native improvement.",
+    "The previous recursive-only samples are closed; all comparisons here need newly built sources and fresh fixed samples. Contrasts share samples and are not independent experiments."
+  ],
+  "qualification": "Three fresh sources run shared mathematical projection, storage, memo, alias, inherited cache and P4 controls; candidate-specific helper controls supplement them. Default/all-feature libraries, 28 doctests, formatting, strict default/all-feature/all-target Clippy and warning-denied docs run before costs. Counts overlap and do not establish full-workflow coverage.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "variant_order": [
+      "baseline",
+      "recursive",
+      "projected"
+    ],
+    "block_order": [
+      [
+        "baseline",
+        "recursive",
+        "projected"
+      ],
+      [
+        "projected",
+        "recursive",
+        "baseline"
+      ],
+      [
+        "recursive",
+        "baseline",
+        "projected"
+      ],
+      [
+        "projected",
+        "baseline",
+        "recursive"
+      ],
+      [
+        "baseline",
+        "projected",
+        "recursive"
+      ]
+    ],
+    "comparisons": [
+      {
+        "reference": "baseline",
+        "variant": "recursive"
+      },
+      {
+        "reference": "baseline",
+        "variant": "projected"
+      },
+      {
+        "reference": "recursive",
+        "variant": "projected"
+      }
+    ],
+    "measurement_processes": 90,
+    "preflight_processes": 18,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "separate_fresh_build_targets": true,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

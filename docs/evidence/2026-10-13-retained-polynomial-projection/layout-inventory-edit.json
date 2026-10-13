@@ -1,0 +1,5 @@
+{
+  "origin_path": "docs/evidence/2026-10-13-owned-radical-scratch/temporary_storage_tests.rs",
+  "before": "    // The persistent representation still owns only closed rational data.\n",
+  "after": "    println!(\"CACHED_EVALUATION_LAYOUT\\t{}\", std::mem::size_of::<CachedEvaluation>());\n    // The persistent representation still owns only closed rational data.\n"
+}
