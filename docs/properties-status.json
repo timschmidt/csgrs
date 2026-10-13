@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Use a separate diagnostic to classify duplicate-loop comparisons by source-metadata presence/equality while preserving every original geometry query and validation result. The fresh parent profile attributes about 7.98% of total sampled cycle weight to subcurve equality below CurveRegion2::new. Only consider metadata-first comparison after observing actual mismatch coverage; preserve duplicate errors, arrangement-index uniqueness, cache facts, complete reports and all original limits."
+      "next_step": "Fork the integer-leaf parent into separate source/target directories; swap only the two existing conjunction operands. Cover absent/equal/different provenance, shared/independently equal geometry, error ordering, reused arrangement indices, retained cache facts and clones. Run complete curve validation, original native caps, complete report replay and measured cost/memory/size controls before any admission."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -118,6 +118,15 @@
       "scope": "Frozen integer-leaf parent; no rejected coefficient merge. Separate frame-pointer and line-table build. Profile worker CPU is 167.461374814 seconds / original 120; profiling timing is not release qualification or matched speedup evidence.",
       "source_review": "CurveRegion2::new invokes duplicate-loop validation; the validator currently compares geometry before three-index source metadata. BezierSubcurve2 itself is a family enum with no cheap parameter fields. An observed repeated zero_status path is not assumed removable because warming may strengthen a fact.",
       "next_step": "Use a separate diagnostic to classify duplicate-loop comparisons by source-metadata presence/equality while preserving every original geometry query and validation result. The fresh parent profile attributes about 7.98% of total sampled cycle weight to subcurve equality below CurveRegion2::new. Only consider metadata-first comparison after observing actual mismatch coverage; preserve duplicate errors, arrangement-index uniqueness, cache facts, complete reports and all original limits.",
+      "runtime_admitted": false
+    },
+    "isolated_region_source_comparisons": {
+      "status": "advance-isolated-metadata-first-trial",
+      "evidence": "docs/evidence/2026-10-12-region-source-comparisons/assessment-v1.json",
+      "result": "34023542 of 34056513 observed comparisons have unequal source metadata, accounting for 13.877654666 of 13.905321204 instrumented geometry seconds. Four unequal-source pairs have equal geometry. These observations support a separate trial, not a speedup or admission claim.",
+      "validation": "Two new diagnostic regressions, three existing provenance/duplicate regressions, strict release all-feature/all-target curve Clippy and workspace formatting pass. These counts overlap no full-suite execution: no full curve suite ran here.",
+      "original_full_board": "168.485821121 worker CPU seconds / original 120; failed. Both boards completed with 12 and 197 findings. Complete report identity is not checked here.",
+      "next_step": "Fork the integer-leaf parent into separate source/target directories; swap only the two existing conjunction operands. Cover absent/equal/different provenance, shared/independently equal geometry, error ordering, reused arrangement indices, retained cache facts and clones. Run complete curve validation, original native caps, complete report replay and measured cost/memory/size controls before any admission.",
       "runtime_admitted": false
     }
   },

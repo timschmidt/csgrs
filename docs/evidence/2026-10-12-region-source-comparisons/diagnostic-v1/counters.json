@@ -1,0 +1,37 @@
+[
+  {
+    "metadata_kind": "both_absent",
+    "same_fragment_count": false,
+    "geometry_equal": false,
+    "calls": 1465,
+    "geometry_nanos": 33489
+  },
+  {
+    "metadata_kind": "both_absent",
+    "same_fragment_count": true,
+    "geometry_equal": false,
+    "calls": 31506,
+    "geometry_nanos": 27633049
+  },
+  {
+    "metadata_kind": "unequal",
+    "same_fragment_count": false,
+    "geometry_equal": false,
+    "calls": 17966107,
+    "geometry_nanos": 400085257
+  },
+  {
+    "metadata_kind": "unequal",
+    "same_fragment_count": true,
+    "geometry_equal": false,
+    "calls": 16057431,
+    "geometry_nanos": 13477510843
+  },
+  {
+    "metadata_kind": "unequal",
+    "same_fragment_count": true,
+    "geometry_equal": true,
+    "calls": 4,
+    "geometry_nanos": 58566
+  }
+]

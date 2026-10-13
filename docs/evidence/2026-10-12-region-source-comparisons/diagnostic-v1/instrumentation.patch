@@ -1,0 +1,172 @@
+--- a/crates/hypercurve/src/bezier_region.rs
++++ b/crates/hypercurve/src/bezier_region.rs
+@@ -26,6 +26,7 @@
+ mod point_location;
+ #[cfg(test)]
+ mod retained_circular_tests;
++mod source_comparison_diagnostic;
+ use corner_edit::*;
+ pub(crate) use native_fragments::materialized_native_subcurve_segment;
+ use native_fragments::retained_native_fragment_segment;
+@@ -1526,7 +1527,7 @@
+ fn validate_retained_region_loops(boundary_loops: &[CurveRegionBoundaryLoop2]) -> CurveResult<()> {
+     for (index, boundary_loop) in boundary_loops.iter().enumerate() {
+         if boundary_loops[index + 1..].iter().any(|candidate| {
+-            boundary_loop.fragments == candidate.fragments
++            source_comparison_diagnostic::fragments_equal(boundary_loop, candidate)
+                 && boundary_loop.arrangement_sources == candidate.arrangement_sources
+         }) {
+             return Err(CurveError::Topology(
+--- a/crates/hypercurve/src/bezier_region/source_comparison_diagnostic.rs
++++ b/crates/hypercurve/src/bezier_region/source_comparison_diagnostic.rs
+@@ -0,0 +1,150 @@
++//! Diagnostic counters for the existing duplicate-loop geometry comparison.
++use super::CurveRegionBoundaryLoop2;
++use std::cell::RefCell;
++
++// Metadata kinds: both absent, left absent, right absent, equal, unequal.
++const ROWS: usize = 5 * 2 * 2;
++
++#[derive(Default)]
++struct Counters {
++    calls: [u64; ROWS],
++    nanos: [u128; ROWS],
++}
++
++impl Drop for Counters {
++    fn drop(&mut self) {
++        for (index, &calls) in self.calls.iter().enumerate() {
++            if calls != 0 {
++                eprintln!(
++                    "REGION_SOURCE_COMPARISON {} {} {} {calls} {}",
++                    index / 4,
++                    (index / 2) % 2,
++                    index % 2,
++                    self.nanos[index],
++                );
++            }
++        }
++    }
++}
++
++thread_local! {
++    static COUNTERS: RefCell<Counters> = RefCell::new(Counters::default());
++}
++
++fn metadata_kind(left: &CurveRegionBoundaryLoop2, right: &CurveRegionBoundaryLoop2) -> usize {
++    match (&left.arrangement_sources, &right.arrangement_sources) {
++        (None, None) => 0,
++        (None, Some(_)) => 1,
++        (Some(_), None) => 2,
++        (Some(left), Some(right)) if left == right => 3,
++        (Some(_), Some(_)) => 4,
++    }
++}
++
++pub(super) fn fragments_equal(
++    left: &CurveRegionBoundaryLoop2,
++    right: &CurveRegionBoundaryLoop2,
++) -> bool {
++    let started = std::time::Instant::now();
++    let equal = left.fragments == right.fragments;
++    let nanos = started.elapsed().as_nanos();
++    // Observe only immutable integer metadata after the original geometry
++    // query. The caller keeps its original conditional metadata comparison.
++    // Counters retain only integers, never a curve, point or scalar owner.
++    let kind = metadata_kind(left, right);
++    let same_length = usize::from(left.fragments.len() == right.fragments.len());
++    let index = (kind * 2 + same_length) * 2 + usize::from(equal);
++    COUNTERS.with(|counters| {
++        let mut counters = counters.borrow_mut();
++        counters.calls[index] += 1;
++        counters.nanos[index] += nanos;
++    });
++    equal
++}
++
++#[cfg(test)]
++mod tests {
++    use super::super::*;
++    use super::{COUNTERS, fragments_equal, metadata_kind};
++    use crate::QuadraticBezier2;
++
++    fn boundary(offset: i32, source_start: Option<usize>) -> CurveRegionBoundaryLoop2 {
++        let points = [
++            Point2::from_values(offset, 0),
++            Point2::from_values(offset + 2, 0),
++        ];
++        let fragments = (0..2)
++            .map(|index| {
++                let start = &points[index];
++                let end = &points[1 - index];
++                BezierSplitFragment2::Materialized {
++                    start: BezierParameter2::Exact(Real::zero()),
++                    end: BezierParameter2::Exact(Real::one()),
++                    curve: BezierSubcurve2::Quadratic(QuadraticBezier2::new(
++                        start.clone(),
++                        start.lerp(end, (Real::one() / Real::from(2)).unwrap()),
++                        end.clone(),
++                    )),
++                }
++            })
++            .collect();
++        let mut boundary = CurveRegionBoundaryLoop2::new(fragments, &CurveContext::STRICT).unwrap();
++        if let Some(first) = source_start {
++            boundary.arrangement_sources = Some(vec![
++                CurveRegionFragmentSource2::new(first, first, 0),
++                CurveRegionFragmentSource2::new(first + 1, first, 1),
++            ]);
++        }
++        boundary
++    }
++
++    #[test]
++    fn observation_covers_all_metadata_classes_and_preserves_geometry_results() {
++        for (left_source, right_source, kind) in [
++            (None, None, 0),
++            (None, Some(0), 1),
++            (Some(0), None, 2),
++            (Some(0), Some(0), 3),
++            (Some(0), Some(10), 4),
++        ] {
++            for offset in [0, 4] {
++                let left = boundary(0, left_source);
++                let right = boundary(offset, right_source);
++                assert_eq!(metadata_kind(&left, &right), kind);
++                let equal = offset == 0;
++                let index = (kind * 2 + 1) * 2 + usize::from(equal);
++                let before = COUNTERS.with(|counters| counters.borrow().calls[index]);
++                assert_eq!(fragments_equal(&left, &right), equal);
++                assert_eq!(
++                    COUNTERS.with(|counters| counters.borrow().calls[index]),
++                    before + 1
++                );
++                assert_eq!(metadata_kind(&left, &right), kind);
++            }
++        }
++    }
++
++    #[test]
++    fn validation_keeps_duplicate_and_arrangement_index_errors() {
++        let error = |left, right| match CurveRegion2::new(vec![left, right]) {
++            Ok(_) => None,
++            Err(CurveError::Topology(message)) => Some(message),
++            Err(other) => panic!("unexpected region error: {other:?}"),
++        };
++        let duplicate = Some("Bezier region must not duplicate boundary loop evidence".to_owned());
++        for source in [None, Some(0)] {
++            let original = boundary(0, source);
++            assert_eq!(error(original.clone(), original), duplicate);
++            assert_eq!(error(boundary(0, source), boundary(0, source)), duplicate);
++        }
++        assert_eq!(error(boundary(0, None), boundary(0, Some(0))), None);
++        assert_eq!(error(boundary(0, Some(0)), boundary(0, Some(10))), None);
++        assert_eq!(
++            error(boundary(0, Some(0)), boundary(4, Some(0))),
++            Some(
++                "retained Bezier region boundary loops must not reuse arrangement source fragments"
++                    .to_owned()
++            ),
++        );
++    }
++}

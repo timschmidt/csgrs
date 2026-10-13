@@ -1,0 +1,142 @@
+{
+  "scope": "Observe source metadata around unchanged duplicate-loop geometry queries.\n\nThe previous goal turn made progress through five committed checkpoints. This\nseparate diagnostic forks the frozen integer-leaf parent, without the rejected\ncoefficient merge. Every original geometry comparison, conditional source\ncomparison, validation ordering and error remains. Additional observations read\nonly integer provenance; counters retain no expression owners. Timers and\ncounters perturb execution. Only exiting-thread counters are collected.\n",
+  "previous_goal_turn": "progress",
+  "base_commit": "7909d8e55451e69a197f636fc49aeaf0a09c8491",
+  "runner_sha256": "16da7c63a0a3ef7176d05f4fe3e7373485ac0da95cdee04ae4c3a60c54ba32cc",
+  "parent_preparation_sha256": "50b27f8d53d95c13339fff7287c006a0ff908db14e5e4451d0ad9d39894ae02b",
+  "parent_delta_sha256": "ffbd4b3f2774d8abcc9ee045de609a1f8aebbd7a52528b504392deae012aba36",
+  "prior_profile_assessment_sha256": "35c4079edbd9a26c51eb1da8e6ee3d634fb03fe1b05df2518b0ec8a7f84c877b",
+  "only_instrumented_sources": {
+    "crates/hypercurve/src/bezier_region.rs": "375d27895b9d0d7bffe25ffbfecb5890dff0bf3e18f5bf2fd53fc59871175fda",
+    "crates/hypercurve/src/bezier_region/source_comparison_diagnostic.rs": "847fb71b1a1c12a74277c5b60f06344aea82e62747288014ae7a90140788f3f8"
+  },
+  "instrumentation_archive_sha256": "8cb6d350a9ebcaefad46783d841b295c8f2228e21668044e64d44d9ad74fe67c",
+  "instrumentation_patch_sha256": "e65f28894fa0f4dbb154978a1d5ff1a71e937cf04556c7c57c35a831dbea64aa",
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "diagnostic-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "source_comparison_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "provenance-constructor",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "reused-source-regression",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "duplicate-boundary-regression",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-curve-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/region-source-comparisons/diagnostic-v1/target"
+  },
+  "metadata_kinds": [
+    "both_absent",
+    "left_absent",
+    "right_absent",
+    "equal",
+    "unequal"
+  ],
+  "row_contract": "Metadata kind, equal fragment counts, geometry equality, call count, and geometry-query wall nanoseconds. Original geometry equality executes once. Extra metadata observation executes afterward; the original conditional metadata check remains.",
+  "unchanged_worker_limit_seconds": 120,
+  "runtime_admitted": false
+}

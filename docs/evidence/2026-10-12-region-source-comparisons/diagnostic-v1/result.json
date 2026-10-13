@@ -1,0 +1,169 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.565888633951545,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diagnostic-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "source_comparison_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 128.6319541069679,
+      "sources_unchanged": true,
+      "stdout_sha256": "adc446a8e675bc6d3b38796d8c11acf696e5089777ad2dc2e3dbc441e0cb48b2",
+      "stderr_sha256": "18619bfcc9f598742466d0678c17e511b7ecf59210199d09fc919cee2c28fda4"
+    },
+    {
+      "name": "provenance-constructor",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::certified_boundary_constructors_validate_arrangement_sources",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.920256779063493,
+      "sources_unchanged": true,
+      "stdout_sha256": "b32ff4ab4d2393d48dd3a696c35b3ef7d736b4a4befb282fa7c218c3239c9c32",
+      "stderr_sha256": "8b9367a8afef41179fdee6e46acab1e6ea150676ceb552dcee12ede5b0ec785d"
+    },
+    {
+      "name": "reused-source-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::retained_region_constructor_rejects_reused_arrangement_sources_across_loops",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.91034030681476,
+      "sources_unchanged": true,
+      "stdout_sha256": "3867f25ce4935779439d900a35d53d6ce29269b43c38db6a94b5294876db5079",
+      "stderr_sha256": "cb378237b7e7738f9e1f301ec8ddb9c2f8319a9d32917edd1a88e61875b1f164"
+    },
+    {
+      "name": "duplicate-boundary-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "bezier_region::tests::native_boundary_loops_convert_into_unified_region_validation",
+        "--",
+        "--exact",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.9030943037942052,
+      "sources_unchanged": true,
+      "stdout_sha256": "f150f47acb2506e9428ca78e29d3dfb06cc8fc4fa98ca35c6c1dd7957309c8f9",
+      "stderr_sha256": "ed3b7f1d6dde3e04416bf07518785e05901ea7ff0e5b5906f021ad76b34b0e4e"
+    },
+    {
+      "name": "strict-curve-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 39.3977101999335,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e65939657bf30df5ed831f6969fdfb540527d43f4ac1d84af7dff22c36163d81"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 133.93131278734654,
+      "sources_unchanged": true,
+      "stdout_sha256": "844d799a241e4167db805ac71eb06c1fba693153d56403d1642f9c554070c8d2",
+      "stderr_sha256": "d0452ace9e278ed922080e22f42d2b520162ae69ee4f615b206f04fe0c7758bb"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/region-source-comparisons/diagnostic-v1/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 170.84381814021617,
+      "sources_unchanged": true,
+      "stdout_sha256": "c0dd7fa53ac7e8c04130a30601502838b8fb67abe5af179e9643001325d2abac",
+      "stderr_sha256": "2063b1980376cea46a952274211737196a46b3ca33c9c7a36ff3cf37b9fba0c4"
+    }
+  ],
+  "complete": true,
+  "rows": 5,
+  "observed_comparisons": 34056513,
+  "timing_is_perturbed": true,
+  "runtime_admitted": false
+}

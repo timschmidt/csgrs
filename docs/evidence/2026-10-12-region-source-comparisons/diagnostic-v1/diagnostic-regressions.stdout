@@ -1,0 +1,7 @@
+
+running 2 tests
+test bezier_region::source_comparison_diagnostic::tests::observation_covers_all_metadata_classes_and_preserves_geometry_results ... ok
+test bezier_region::source_comparison_diagnostic::tests::validation_keeps_duplicate_and_arrangement_index_errors ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 1763 filtered out; finished in 0.00s
+

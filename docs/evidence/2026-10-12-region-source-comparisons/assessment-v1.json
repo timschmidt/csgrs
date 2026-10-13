@@ -1,0 +1,93 @@
+{
+  "decision": "advance-isolated-metadata-first-trial",
+  "goal_turn_classification": "progress",
+  "parent": "Frozen integer-leaf candidate; rejected coefficient merge absent.",
+  "observed_comparisons": 34056513,
+  "metadata_mismatch_comparisons": 34023542,
+  "metadata_mismatch_call_percent": 99.90318738738755,
+  "geometry_query_seconds": 13.905321204,
+  "metadata_mismatch_geometry_seconds": 13.877654666,
+  "metadata_mismatch_geometry_percent": 99.80103632563309,
+  "rows": [
+    {
+      "metadata_kind": "both_absent",
+      "same_fragment_count": false,
+      "geometry_equal": false,
+      "calls": 1465,
+      "geometry_nanos": 33489
+    },
+    {
+      "metadata_kind": "both_absent",
+      "same_fragment_count": true,
+      "geometry_equal": false,
+      "calls": 31506,
+      "geometry_nanos": 27633049
+    },
+    {
+      "metadata_kind": "unequal",
+      "same_fragment_count": false,
+      "geometry_equal": false,
+      "calls": 17966107,
+      "geometry_nanos": 400085257
+    },
+    {
+      "metadata_kind": "unequal",
+      "same_fragment_count": true,
+      "geometry_equal": false,
+      "calls": 16057431,
+      "geometry_nanos": 13477510843
+    },
+    {
+      "metadata_kind": "unequal",
+      "same_fragment_count": true,
+      "geometry_equal": true,
+      "calls": 4,
+      "geometry_nanos": 58566
+    }
+  ],
+  "diagnostic_validation": "Two new diagnostic regressions, three existing provenance/duplicate regressions, strict release all-feature/all-target curve Clippy and workspace formatting pass. These counts overlap no full-suite execution: no full curve suite ran here.",
+  "original_full_board_worker_cpu_seconds": 168.485821121,
+  "original_worker_cpu_limit_seconds": 120,
+  "full_board_passed": false,
+  "observed_finding_counts": [
+    12,
+    197
+  ],
+  "complete_report_identity_checked": false,
+  "limits": [
+    "Counters observe only exiting threads. Geometry timers and counters perturb execution; this is neither a matched performance comparison nor a predicted saving.",
+    "Original geometry queries and conditional metadata comparisons remain. Four equal-geometry pairs had unequal source metadata; their final duplicate result stayed false.",
+    "Checking metadata first avoids queries and their incidental warming. Later facts, outcomes, reports, allocation/retention and original caps require separate checks.",
+    "The two original board fixtures ran to completion, but the unchanged CPU assertion failed. Finding counts do not establish complete report identity."
+  ],
+  "next_step": "Fork the integer-leaf parent into separate source/target directories; swap only the two existing conjunction operands. Cover absent/equal/different provenance, shared/independently equal geometry, error ordering, reused arrangement indices, retained cache facts and clones. Run complete curve validation, original native caps, complete report replay and measured cost/memory/size controls before any admission.",
+  "artifacts_sha256": {
+    "diagnostic-v1/binary.json": "519992cb3ce26a0c2d4ba23cdba352474a916e81b1471964f1406701fb0f98ad",
+    "diagnostic-v1/build-board-tests.stderr": "d0452ace9e278ed922080e22f42d2b520162ae69ee4f615b206f04fe0c7758bb",
+    "diagnostic-v1/build-board-tests.stdout": "844d799a241e4167db805ac71eb06c1fba693153d56403d1642f9c554070c8d2",
+    "diagnostic-v1/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/counters.json": "c44c5b7b16241212bf320a53dde4f4f9d51d1efd35220485db2b4882bd24429e",
+    "diagnostic-v1/diagnostic-regressions.stderr": "18619bfcc9f598742466d0678c17e511b7ecf59210199d09fc919cee2c28fda4",
+    "diagnostic-v1/diagnostic-regressions.stdout": "adc446a8e675bc6d3b38796d8c11acf696e5089777ad2dc2e3dbc441e0cb48b2",
+    "diagnostic-v1/duplicate-boundary-regression.stderr": "ed3b7f1d6dde3e04416bf07518785e05901ea7ff0e5b5906f021ad76b34b0e4e",
+    "diagnostic-v1/duplicate-boundary-regression.stdout": "f150f47acb2506e9428ca78e29d3dfb06cc8fc4fa98ca35c6c1dd7957309c8f9",
+    "diagnostic-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/full-board.stderr": "2063b1980376cea46a952274211737196a46b3ca33c9c7a36ff3cf37b9fba0c4",
+    "diagnostic-v1/full-board.stdout": "c0dd7fa53ac7e8c04130a30601502838b8fb67abe5af179e9643001325d2abac",
+    "diagnostic-v1/instrumentation.patch": "e65f28894fa0f4dbb154978a1d5ff1a71e937cf04556c7c57c35a831dbea64aa",
+    "diagnostic-v1/instrumentation.tar.gz": "8cb6d350a9ebcaefad46783d841b295c8f2228e21668044e64d44d9ad74fe67c",
+    "diagnostic-v1/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/protocol.json": "73237ea237d0d42133b9ab053958a7f6cb5f9d94edb498cf857233ecb5de7af4",
+    "diagnostic-v1/provenance-constructor.stderr": "8b9367a8afef41179fdee6e46acab1e6ea150676ceb552dcee12ede5b0ec785d",
+    "diagnostic-v1/provenance-constructor.stdout": "b32ff4ab4d2393d48dd3a696c35b3ef7d736b4a4befb282fa7c218c3239c9c32",
+    "diagnostic-v1/result.json": "8aa6d913cf81280fd6fa0d488e9c3444fe9c935990b669c086f8e86a73ed59d5",
+    "diagnostic-v1/reused-source-regression.stderr": "cb378237b7e7738f9e1f301ec8ddb9c2f8319a9d32917edd1a88e61875b1f164",
+    "diagnostic-v1/reused-source-regression.stdout": "3867f25ce4935779439d900a35d53d6ce29269b43c38db6a94b5294876db5079",
+    "diagnostic-v1/strict-curve-clippy.stderr": "e65939657bf30df5ed831f6969fdfb540527d43f4ac1d84af7dff22c36163d81",
+    "diagnostic-v1/strict-curve-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
