@@ -1,0 +1,9 @@
+
+running 4 tests
+test coefficient_zero_diagnostic::tests::bins_loops_disabled_reset_and_unwind_are_observable ... ok
+test coefficient_zero_diagnostic::tests::joined_workers_contribute_to_both_counter_sets ... ok
+test computable::node::coefficient_zero_site_tests::coefficient_zero_sites_count_actual_entries_before_insertion_declines ... ok
+test computable::node::coefficient_zero_site_tests::coefficient_zero_sites_match_all_shapes_and_stored_zero_flags ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 863 filtered out; finished in 0.00s
+

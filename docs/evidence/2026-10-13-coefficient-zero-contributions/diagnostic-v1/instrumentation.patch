@@ -1,0 +1,433 @@
+--- a/crates/hyperreal/src/coefficient_zero_diagnostic.rs
++++ b/crates/hyperreal/src/coefficient_zero_diagnostic.rs
+@@ -0,0 +1,242 @@
++//! Diagnostic-only coefficient shape and executed linear-product counters.
++//!
++//! Inputs are vector lengths and stored-sign zero flags. No scalar owners,
++//! approximation queries, timestamps, allocation hooks or dynamic maps are kept.
++use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
++
++const SHAPES: [&str; 4] = ["rational", "radical", "opaque", "mixed"];
++const TERMS: [&str; 4] = ["left_radical", "right_radical", "left_atom", "right_atom"];
++static ACTIVE: AtomicBool = AtomicBool::new(false);
++static ELIGIBLE: [[AtomicU64; 5]; 64] = [const { [const { AtomicU64::new(0) }; 5] }; 64];
++static LINEAR: [[AtomicU64; 2]; 4] = [const { [const { AtomicU64::new(0) }; 2] }; 4];
++
++/// The original multiplier's four linear contribution loops, in source order.
++#[derive(Clone, Copy)]
++pub enum LinearTerm {
++    /// An owned-left radical scaled by the right rational constant.
++    LeftRadical,
++    /// A borrowed-right radical scaled by the left rational constant.
++    RightRadical,
++    /// An owned-left opaque atom scaled by the right rational constant.
++    LeftAtom,
++    /// A borrowed-right opaque atom scaled by the left rational constant.
++    RightAtom,
++}
++
++/// Fixed counters collected after all measured workers have returned.
++#[derive(Debug, PartialEq, Eq)]
++pub struct Snapshot {
++    /// Calls and four vector-length sums after the unsupported-product guard.
++    /// Index is `(4 * left_shape + right_shape) * 4 + 2 * left_zero + right_zero`.
++    /// Passing that guard does not guarantee later term insertion succeeds.
++    pub eligible: [[u64; 5]; 64],
++    /// Actual loop entries and entries with a zero scale, in [`LinearTerm`] order.
++    pub linear: [[u64; 2]; 4],
++}
++
++/// Prints counters on normal return or unwinding after the original assertion.
++pub struct Report {
++    finished: bool,
++}
++
++impl Report {
++    /// Starts while no prior diagnostic or measured worker is active.
++    pub fn begin() -> Self {
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        for row in &ELIGIBLE {
++            for value in row {
++                value.store(0, Ordering::Relaxed);
++            }
++        }
++        for row in &LINEAR {
++            for value in row {
++                value.store(0, Ordering::Relaxed);
++            }
++        }
++        ACTIVE.store(true, Ordering::Release);
++        Self { finished: false }
++    }
++
++    /// Ends after its workers have returned, without printing.
++    pub fn finish(mut self) -> Snapshot {
++        self.finished = true;
++        finish()
++    }
++}
++
++fn snapshot() -> Snapshot {
++    Snapshot {
++        eligible: std::array::from_fn(|index| {
++            std::array::from_fn(|field| ELIGIBLE[index][field].load(Ordering::Relaxed))
++        }),
++        linear: std::array::from_fn(|index| {
++            std::array::from_fn(|field| LINEAR[index][field].load(Ordering::Relaxed))
++        }),
++    }
++}
++
++fn finish() -> Snapshot {
++    assert!(ACTIVE.swap(false, Ordering::AcqRel));
++    snapshot()
++}
++
++impl Drop for Report {
++    fn drop(&mut self) {
++        if !self.finished {
++            let counters = finish();
++            for (index, row) in counters.eligible.into_iter().enumerate() {
++                let pair = index / 4;
++                eprintln!(
++                    "COEFFICIENT_ZERO_SHAPE\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
++                    SHAPES[pair / 4],
++                    SHAPES[pair % 4],
++                    (index / 2) % 2,
++                    index % 2,
++                    row[0],
++                    row[1],
++                    row[2],
++                    row[3],
++                    row[4],
++                );
++            }
++            for (index, row) in counters.linear.into_iter().enumerate() {
++                eprintln!(
++                    "COEFFICIENT_ZERO_TERM\t{}\t{}\t{}",
++                    TERMS[index], row[0], row[1]
++                );
++            }
++        }
++    }
++}
++
++fn shape(radicals: usize, atoms: usize) -> usize {
++    usize::from(radicals != 0) + 2 * usize::from(atoms != 0)
++}
++
++/// Observes inputs immediately after the original unsupported-product guard.
++pub fn record_eligible(lengths: [usize; 4], zero: [bool; 2]) {
++    if !ACTIVE.load(Ordering::Acquire) {
++        return;
++    }
++    let pair = 4 * shape(lengths[0], lengths[1]) + shape(lengths[2], lengths[3]);
++    let index = 4 * pair + 2 * usize::from(zero[0]) + usize::from(zero[1]);
++    for (counter, value) in ELIGIBLE[index].iter().zip([
++        1,
++        lengths[0] as u64,
++        lengths[1] as u64,
++        lengths[2] as u64,
++        lengths[3] as u64,
++    ]) {
++        counter.fetch_add(value, Ordering::Relaxed);
++    }
++}
++
++/// Records one actual entry to an existing linear-term loop.
++pub fn record_linear(term: LinearTerm, zero_scale: bool) {
++    if !ACTIVE.load(Ordering::Acquire) {
++        return;
++    }
++    let row = &LINEAR[term as usize];
++    row[0].fetch_add(1, Ordering::Relaxed);
++    row[1].fetch_add(u64::from(zero_scale), Ordering::Relaxed);
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    #[test]
++    fn bins_loops_disabled_reset_and_unwind_are_observable() {
++        let report = Report::begin();
++        for left in 0..4 {
++            for right in 0..4 {
++                let lengths = [
++                    usize::from(left & 1 != 0) * 3,
++                    usize::from(left & 2 != 0) * 5,
++                    usize::from(right & 1 != 0) * 7,
++                    usize::from(right & 2 != 0) * 11,
++                ];
++                for flags in 0..4 {
++                    let count = (4 * left + right) * 4 + flags + 1;
++                    for _ in 0..count {
++                        record_eligible(lengths, [flags & 2 != 0, flags & 1 != 0]);
++                    }
++                }
++            }
++        }
++        for (index, term) in [
++            LinearTerm::LeftRadical,
++            LinearTerm::RightRadical,
++            LinearTerm::LeftAtom,
++            LinearTerm::RightAtom,
++        ]
++        .into_iter()
++        .enumerate()
++        {
++            for iteration in 0..index + 3 {
++                record_linear(term, iteration % 2 == 0);
++            }
++        }
++        let actual = report.finish();
++        for (index, row) in actual.eligible.into_iter().enumerate() {
++            let pair = index / 4;
++            let left = pair / 4;
++            let right = pair % 4;
++            let count = (index + 1) as u64;
++            assert_eq!(
++                row,
++                [
++                    count,
++                    u64::from(left & 1 != 0) * 3 * count,
++                    u64::from(left & 2 != 0) * 5 * count,
++                    u64::from(right & 1 != 0) * 7 * count,
++                    u64::from(right & 2 != 0) * 11 * count
++                ]
++            );
++        }
++        assert_eq!(actual.linear, [[3, 2], [4, 2], [5, 3], [6, 3]]);
++        record_eligible([1, 2, 3, 4], [true, true]);
++        record_linear(LinearTerm::LeftAtom, true);
++        assert_eq!(
++            snapshot(),
++            actual,
++            "disabled calls must not mutate counters"
++        );
++        let empty = Snapshot {
++            eligible: [[0; 5]; 64],
++            linear: [[0; 2]; 4],
++        };
++        assert_eq!(Report::begin().finish(), empty);
++        assert!(
++            std::panic::catch_unwind(|| {
++                let _report = Report::begin();
++                record_linear(LinearTerm::RightAtom, true);
++                panic!("intentional diagnostic calibration unwind");
++            })
++            .is_err()
++        );
++        assert!(!ACTIVE.load(Ordering::Acquire));
++        assert_eq!(snapshot().linear, [[0, 0], [0, 0], [0, 0], [1, 1]]);
++        assert_eq!(Report::begin().finish(), empty);
++    }
++
++    #[test]
++    fn joined_workers_contribute_to_both_counter_sets() {
++        let report = Report::begin();
++        std::thread::scope(|scope| {
++            for _ in 0..4 {
++                scope.spawn(|| {
++                    for _ in 0..1000 {
++                        record_eligible([2, 0, 0, 0], [true, false]);
++                        record_linear(LinearTerm::LeftRadical, false);
++                        record_linear(LinearTerm::LeftRadical, false);
++                    }
++                });
++            }
++        });
++        let actual = report.finish();
++        assert_eq!(actual.eligible[18], [4000, 8000, 0, 0, 0]);
++        assert_eq!(actual.eligible.iter().map(|row| row[0]).sum::<u64>(), 4000);
++        assert_eq!(actual.linear, [[8000, 0], [0, 0], [0, 0], [0, 0]]);
++    }
++}
+--- a/crates/hyperreal/src/computable/node/coefficient_zero_site_tests.rs
++++ b/crates/hyperreal/src/computable/node/coefficient_zero_site_tests.rs
+@@ -0,0 +1,108 @@
++use super::*;
++use crate::coefficient_zero_diagnostic::{Report, Snapshot};
++
++fn coefficient(shape: usize, zero: bool) -> RadicalCoefficient {
++    let atom = Computable {
++        internal: Arc::new(Node::new(
++            Approximation::AtanRational(Rational::fraction(1, 37).unwrap()),
++            BoundCache::Invalid,
++            ExactSignCache::Unknown,
++        )),
++        signal: None,
++    };
++    RadicalCoefficient {
++        rational: Rational::from(i32::from(!zero)),
++        radicals: if shape & 1 != 0 {
++            vec![
++                (Rational::from(2), Rational::one()),
++                (Rational::from(3), Rational::from(2)),
++            ]
++        } else {
++            Vec::new()
++        },
++        atoms: if shape & 2 != 0 {
++            vec![(atom, Rational::from(3))]
++        } else {
++            Vec::new()
++        },
++    }
++}
++
++#[test]
++fn coefficient_zero_sites_match_all_shapes_and_stored_zero_flags() {
++    for left in 0..4 {
++        for right in 0..4 {
++            for flags in 0..4 {
++                // Construct inputs while recording is inactive.
++                let left_zero = flags & 2 != 0;
++                let right_zero = flags & 1 != 0;
++                let first = coefficient(left, left_zero);
++                let second = coefficient(right, right_zero);
++                let report = Report::begin();
++                let product = first.multiply(&second);
++                let actual = report.finish();
++                let eligible = matches!(
++                    (left, right),
++                    (0, 0) | (0, 1) | (0, 2) | (0, 3) | (1, 0) | (1, 1) | (2, 0) | (3, 0)
++                );
++                assert_eq!(product.is_some(), eligible);
++                let mut expected = Snapshot {
++                    eligible: [[0; 5]; 64],
++                    linear: [[0; 2]; 4],
++                };
++                if eligible {
++                    let lr = u64::from(left & 1 != 0) * 2;
++                    let la = u64::from(left & 2 != 0);
++                    let rr = u64::from(right & 1 != 0) * 2;
++                    let ra = u64::from(right & 2 != 0);
++                    expected.eligible[(4 * left + right) * 4 + flags] = [1, lr, la, rr, ra];
++                    expected.linear = [
++                        [lr, lr * u64::from(right_zero)],
++                        [rr, rr * u64::from(left_zero)],
++                        [la, la * u64::from(right_zero)],
++                        [ra, ra * u64::from(left_zero)],
++                    ];
++                }
++                assert_eq!(actual, expected, "shape/zero case {left}/{right}/{flags}");
++            }
++        }
++    }
++}
++
++#[test]
++fn coefficient_zero_sites_count_actual_entries_before_insertion_declines() {
++    for left_zero in [false, true] {
++        let first = RadicalCoefficient {
++            rational: Rational::from(i32::from(!left_zero)),
++            radicals: [2, 3, 5, 7, 11, 13, 17, 19]
++                .into_iter()
++                .map(|value| (Rational::from(value), Rational::one()))
++                .collect(),
++            atoms: Vec::new(),
++        };
++        let second = RadicalCoefficient {
++            rational: Rational::one(),
++            radicals: [23, 29, 31]
++                .into_iter()
++                .map(|value| (Rational::from(value), Rational::one()))
++                .collect(),
++            atoms: Vec::new(),
++        };
++        let report = Report::begin();
++        assert!(first.multiply(&second).is_none());
++        let actual = report.finish();
++        let index = 20 + 2 * usize::from(left_zero);
++        assert_eq!(actual.eligible[index], [1, 8, 0, 3, 0]);
++        assert_eq!(actual.eligible.iter().map(|row| row[0]).sum::<u64>(), 1);
++        assert_eq!(
++            actual.linear,
++            if left_zero {
++                // Three zero products precede the later radical cross-product decline.
++                [[8, 0], [3, 3], [0, 0], [0, 0]]
++            } else {
++                // The first new right radicand exceeds the eight-term limit.
++                [[8, 0], [1, 0], [0, 0], [0, 0]]
++            }
++        );
++    }
++}
+--- a/crates/hyperreal/src/lib.rs
++++ b/crates/hyperreal/src/lib.rs
+@@ -28,6 +28,8 @@
+     SymbolicFacts, ZeroKnowledge, ZeroOneMinusOneStatus, ZeroOneStatus,
+ };
+ 
++pub mod coefficient_zero_diagnostic;
++
+ mod trace;
+ pub(crate) use trace::trace_dispatch;
+ 
+--- a/crates/hyperreal/src/computable/node/algebra.rs
++++ b/crates/hyperreal/src/computable/node/algebra.rs
+@@ -1,3 +1,6 @@
++#[cfg(test)]
++mod coefficient_zero_site_tests;
++
+ #[derive(Clone)]
+ struct PiAtanLinearForm {
+     constant: Rational,
+@@ -164,11 +167,28 @@
+         {
+             return None;
+         }
++        crate::coefficient_zero_diagnostic::record_eligible(
++            [
++                self.radicals.len(),
++                self.atoms.len(),
++                other.radicals.len(),
++                other.atoms.len(),
++            ],
++            [self.rational.is_zero(), other.rational.is_zero()],
++        );
+         let mut result = Self::rational(&self.rational * &other.rational);
+         for (radicand, coefficient) in &self.radicals {
++            crate::coefficient_zero_diagnostic::record_linear(
++                crate::coefficient_zero_diagnostic::LinearTerm::LeftRadical,
++                other.rational.is_zero(),
++            );
+             result.insert_radical(radicand.clone(), coefficient * &other.rational)?;
+         }
+         for (radicand, coefficient) in &other.radicals {
++            crate::coefficient_zero_diagnostic::record_linear(
++                crate::coefficient_zero_diagnostic::LinearTerm::RightRadical,
++                self.rational.is_zero(),
++            );
+             result.insert_radical(radicand.clone(), coefficient * &self.rational)?;
+         }
+         for (left, left_coefficient) in self.radicals {
+@@ -183,9 +203,17 @@
+             }
+         }
+         for (atom, coefficient) in self.atoms {
++            crate::coefficient_zero_diagnostic::record_linear(
++                crate::coefficient_zero_diagnostic::LinearTerm::LeftAtom,
++                other.rational.is_zero(),
++            );
+             result.insert_atom(atom, coefficient * &other.rational);
+         }
+         for (atom, coefficient) in &other.atoms {
++            crate::coefficient_zero_diagnostic::record_linear(
++                crate::coefficient_zero_diagnostic::LinearTerm::RightAtom,
++                self.rational.is_zero(),
++            );
+             result.insert_atom(atom.clone(), coefficient * &self.rational);
+         }
+         Some(result)
+--- a/crates/hyperdrc/src/app.rs
++++ b/crates/hyperdrc/src/app.rs
+@@ -8720,6 +8720,7 @@
+         let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK
+             .lock()
+             .unwrap_or_else(std::sync::PoisonError::into_inner);
++        let _coefficient_zero_report = hyperreal::coefficient_zero_diagnostic::Report::begin();
+         let root = complex_zip_temp_root("kicad-smoke-suite");
+         let _ = fs::remove_dir_all(&root);
+         fs::create_dir_all(&root).unwrap();

@@ -1,0 +1,78 @@
+{
+  "decision": "advance-isolated-zero-radical-contribution-guard-experiment",
+  "assessment_sha256": "d362012d31d02d318e37723dfec9d182a28f52ae920be74d2914eabada258cdb",
+  "eligible_multiplication_calls": 19938583,
+  "executed_linear_entries": 29365695,
+  "executed_zero_scale_entries": 9488190,
+  "zero_percent_of_executed_linear_entries": 32.310456129167044,
+  "linear_rows": [
+    {
+      "term": "left_radical",
+      "entries": 10673994,
+      "zero_scale_entries": 4721952,
+      "input_length_sum": 10673994,
+      "input_zero_scale_length_sum": 4721952,
+      "entries_not_reached": 0,
+      "zero_scale_entries_not_reached": 0,
+      "zero_percent_of_executed_entries": 44.23791131979276
+    },
+    {
+      "term": "right_radical",
+      "entries": 17980956,
+      "zero_scale_entries": 4766238,
+      "input_length_sum": 17980956,
+      "input_zero_scale_length_sum": 4766238,
+      "entries_not_reached": 0,
+      "zero_scale_entries_not_reached": 0,
+      "zero_percent_of_executed_entries": 26.507144558943363
+    },
+    {
+      "term": "left_atom",
+      "entries": 76218,
+      "zero_scale_entries": 0,
+      "input_length_sum": 76218,
+      "input_zero_scale_length_sum": 0,
+      "entries_not_reached": 0,
+      "zero_scale_entries_not_reached": 0,
+      "zero_percent_of_executed_entries": 0.0
+    },
+    {
+      "term": "right_atom",
+      "entries": 634527,
+      "zero_scale_entries": 0,
+      "input_length_sum": 634527,
+      "input_zero_scale_length_sum": 0,
+      "entries_not_reached": 0,
+      "zero_scale_entries_not_reached": 0,
+      "zero_percent_of_executed_entries": 0.0
+    }
+  ],
+  "coverage_screen": {
+    "minimum_executed_zero_entries": 100000,
+    "minimum_percent": 5,
+    "passed": true,
+    "meaning": "Permission to investigate a separate isolated runtime candidate, never runtime admission or a speedup prediction."
+  },
+  "original_worker_cpu_seconds": 133.052481708,
+  "original_worker_cpu_limit_seconds": 120,
+  "original_assertion_passed": false,
+  "why": "The preregistered coverage screen passes. All observed zero contributions are radical entries; neither opaque loop has one. Limit the next experiment to the two radical loops and retain opaque ownership and arithmetic unchanged.",
+  "next_step": {
+    "name": "coefficient-zero-radicals",
+    "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+    "change": "Guard only the existing two borrowed radical linear loops with the opposite rational constant being nonzero. Keep the rational product, unsupported-product guard, radical cross-products, both opaque loops, term insertion order, normal-form budgets and original retry unchanged.",
+    "source_reasoning": "Rational multiplication by stored zero returns the shared zero before canonicalization, product-cache lookup or publication. insert_radical immediately accepts and discards that zero before inspecting the radicand or term limit. The skipped radicand clone only increments its Arc count; the original vector remains owned through the unchanged cross-product loop. Thus the guard removes zero temporaries and radicand clone/drop pairs without changing nonzero arithmetic, input owners or certificate publication.",
+    "qualification": [
+      "Fresh baseline and candidate from the frozen endpoint source, both with identical new tests and separate qualification/cost targets. No diagnostic counters, rejected scaling, merge or prepass code.",
+      "Exact zero/positive/negative rational scaling in both directions for radical, opaque and mixed coefficients; independent mixed-radical component products and cancellation; eight/nine-term success/decline; unsupported opaque products; zero and nonzero owner release; cold/warm/cloned facts.",
+      "The existing six retained-cache regressions include the mandatory original retry. Full scalar release all-feature library tests, 28 doctests, strict all-target/all-feature Clippy, formatting and warning-denied docs.",
+      "Three unchanged scalar probe suites with fixed five paired blocks, time and allocation modes, construction/first/warm/cloned/opaque and mixed-field controls; no extension to remove adverse rows.",
+      "Only a candidate supported by scalar costs advances to full native tests, five fixed native endpoint/broad blocks and effective final-abort controls, original 120-second board worker CPU and separate 60-second neck check-body wall assertions. Complete unnormalized reports and production binary size remain required for retention."
+    ],
+    "cost_risks": "Two extra stored-sign branches affect nonzero and empty-vector cases. Zero multiplication is already cheap; no allocation or runtime improvement follows from coverage alone. The existing endpoint parent remains unadmitted and its earlier timing/memory tradeoffs remain open."
+  },
+  "limits": "The diagnostic adds synchronization overhead and is not a speedup benchmark. Input length sums happen to equal executed entry counts on these boards; the separate early-decline regression proves that equality is not a general invariant. Finding counts 12/197 do not establish complete report identity.",
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

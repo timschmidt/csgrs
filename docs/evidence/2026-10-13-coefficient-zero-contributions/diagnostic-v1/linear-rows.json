@@ -1,0 +1,22 @@
+[
+  {
+    "term": "left_radical",
+    "entries": 10673994,
+    "zero_scale_entries": 4721952
+  },
+  {
+    "term": "right_radical",
+    "entries": 17980956,
+    "zero_scale_entries": 4766238
+  },
+  {
+    "term": "left_atom",
+    "entries": 76218,
+    "zero_scale_entries": 0
+  },
+  {
+    "term": "right_atom",
+    "entries": 634527,
+    "zero_scale_entries": 0
+  }
+]
