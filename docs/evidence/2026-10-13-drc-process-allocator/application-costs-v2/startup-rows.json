@@ -1,0 +1,142 @@
+[
+  {
+    "name": "startup-01-baseline",
+    "phase": "startup",
+    "block": 1,
+    "variant": "baseline",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.002407499337568879,
+      "user_seconds": 0.0009137199999997847,
+      "system_seconds": 0.0013645799999999753,
+      "cpu_seconds": 0.00227829999999976
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-01-candidate",
+    "phase": "startup",
+    "block": 1,
+    "variant": "candidate",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.0027408001199364664,
+      "user_seconds": 0.0007191999999997733,
+      "system_seconds": 0.0018924600000000068,
+      "cpu_seconds": 0.00261165999999978
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-02-candidate",
+    "phase": "startup",
+    "block": 2,
+    "variant": "candidate",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.0029272177629172803,
+      "user_seconds": 0.000814700000000812,
+      "system_seconds": 0.0019637800000000282,
+      "cpu_seconds": 0.0027784800000008403
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-02-baseline",
+    "phase": "startup",
+    "block": 2,
+    "variant": "baseline",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.0023138609621673823,
+      "user_seconds": 0.0007939799999985553,
+      "system_seconds": 0.00139166000000003,
+      "cpu_seconds": 0.0021856399999985853
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-03-baseline",
+    "phase": "startup",
+    "block": 3,
+    "variant": "baseline",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.002449715007096529,
+      "user_seconds": 0.0008444599999984348,
+      "system_seconds": 0.0014702599999999676,
+      "cpu_seconds": 0.0023147199999984025
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-03-candidate",
+    "phase": "startup",
+    "block": 3,
+    "variant": "candidate",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.002913436656817794,
+      "user_seconds": 0.0009312199999999394,
+      "system_seconds": 0.001841879999999989,
+      "cpu_seconds": 0.0027730999999999286
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-04-candidate",
+    "phase": "startup",
+    "block": 4,
+    "variant": "candidate",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.002968073720112443,
+      "user_seconds": 0.0008132800000021234,
+      "system_seconds": 0.0020065799999999714,
+      "cpu_seconds": 0.0028198600000020947
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-04-baseline",
+    "phase": "startup",
+    "block": 4,
+    "variant": "baseline",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.0023439404182136058,
+      "user_seconds": 0.0008444599999984348,
+      "system_seconds": 0.0013679600000000391,
+      "cpu_seconds": 0.002212419999998474
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-05-baseline",
+    "phase": "startup",
+    "block": 5,
+    "variant": "baseline",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.0024136816617101433,
+      "user_seconds": 0.0008793400000013207,
+      "system_seconds": 0.0014038600000000655,
+      "cpu_seconds": 0.002283200000001386
+    },
+    "all_complete_help_bytes_identical": true
+  },
+  {
+    "name": "startup-05-candidate",
+    "phase": "startup",
+    "block": 5,
+    "variant": "candidate",
+    "repetitions": 50,
+    "metrics_seconds_per_process": {
+      "wall_seconds": 0.00294013244099915,
+      "user_seconds": 0.0006638599999996586,
+      "system_seconds": 0.002139919999999904,
+      "cpu_seconds": 0.002803779999999563
+    },
+    "all_complete_help_bytes_identical": true
+  }
+]

@@ -1,0 +1,335 @@
+{
+  "status": "retain-isolated-drc-allocator-with-startup-tradeoff-await-combined-admission-review",
+  "scope": "Process-owned Rust allocation on the frozen endpoint/P4 native parent. Mathematical source is unchanged between the measured variants; no runtime source has been promoted to the main worktree.",
+  "governing_ladder": "Exactness > completeness > performance > memory > binary size > source size.",
+  "previous_goal_turn": "progress",
+  "this_goal_turn": "progress",
+  "qualification_assessment_sha256": "6746b05440c0106b1f29b204f20a159698c19549a2b551436937bdd54b7517bf",
+  "application_assessment_sha256": "8d55156c8293fdc937bf2b7bb2bcb20b1f744886fc4f134f49393cbddae81e11",
+  "preparation_sha256": "7d3a199d3ce5d95eda80c04d58fcb83db36b1e3cfcff4fa847a76e4b1c13e7b9",
+  "scope_sha256": "cd77259d988caab7e4057d7b7bb04cbe5f82934598de1c903f4393c7706cf949",
+  "qualification": {
+    "distinct_commands": 34,
+    "reused_verified_commands": 27,
+    "continuation_commands": 7,
+    "tests": [
+      {
+        "variant": "baseline",
+        "phase": "allocator-contracts",
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "result_groups": 1
+      },
+      {
+        "variant": "baseline",
+        "phase": "drc-tests",
+        "passed": 1646,
+        "failed": 0,
+        "ignored": 0,
+        "result_groups": 10
+      },
+      {
+        "variant": "candidate",
+        "phase": "allocator-contracts",
+        "passed": 2,
+        "failed": 0,
+        "ignored": 0,
+        "result_groups": 1
+      },
+      {
+        "variant": "candidate",
+        "phase": "drc-tests",
+        "passed": 1646,
+        "failed": 0,
+        "ignored": 0,
+        "result_groups": 10
+      }
+    ],
+    "focused_counts_overlap_full_suite": true,
+    "format_strict_default_and_all_feature_drc_clippy_and_warning_denied_docs": true,
+    "actual_allocator_dispatch_verified": true,
+    "allocator_extra_features_empty": true,
+    "library_consumer_integration_and_doctest_allocators_unchanged": true
+  },
+  "original_gates": [
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+      "variant": "baseline",
+      "passed": false,
+      "assertion_seconds": 132.223696162,
+      "process_wall_seconds": 133.42387921409681
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+      "variant": "baseline",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 119.79389858385548
+    },
+    {
+      "name": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "failure_pattern": "KiCad smoke suite took ([0-9.]+)s of worker time",
+      "variant": "candidate",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 109.624899786897
+    },
+    {
+      "name": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall",
+      "failure_pattern": "complex project copper neck regression fixture took ([0-9.]+)s",
+      "variant": "candidate",
+      "passed": true,
+      "assertion_seconds": null,
+      "process_wall_seconds": 99.86350104305893
+    }
+  ],
+  "candidate_original_gates_passed": true,
+  "complete_reports": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_reports": 12,
+      "bytes": 147892,
+      "sha256": "43558fbdf1a416705acd6423bbc3574f94dc640cf3b35d204d0be6bc1858d960",
+      "findings": 12,
+      "all_current_reports_byte_and_value_identical": true,
+      "identical_to_prior_endpoint_and_metadata_reports": true
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_reports": 12,
+      "bytes": 128807,
+      "sha256": "3217a0418584ad64cd9e9175864068a24eeeb75b6fc6c34b3fc9ce4563a71617",
+      "findings": 197,
+      "all_current_reports_byte_and_value_identical": true,
+      "identical_to_prior_endpoint_and_metadata_reports": true
+    }
+  ],
+  "closed_sample": {
+    "preflight_board_runs": 4,
+    "board_measurements": 20,
+    "startup_measurements": 10,
+    "startup_processes": 500,
+    "blocks": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "sample_extension_or_filtering": false,
+    "ratios_are_descriptive_not_significance_claims": true
+  },
+  "comparisons": [
+    {
+      "fixture": "cparti-fpga",
+      "metric": "process_wall_seconds",
+      "unit": "seconds",
+      "baseline_median": 107.46154130343348,
+      "candidate_median": 85.16619224566966,
+      "ratio_of_medians": 0.7925271796092184,
+      "median_paired_ratio": 0.7914539600829196,
+      "paired_ratio_range": [
+        0.7882630109499291,
+        0.8014273746354966
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "cparti-fpga",
+      "metric": "cpu_seconds",
+      "unit": "seconds",
+      "baseline_median": 106.74,
+      "candidate_median": 84.60000000000001,
+      "ratio_of_medians": 0.7925801011804385,
+      "median_paired_ratio": 0.7924422933730454,
+      "paired_ratio_range": [
+        0.7880546714098482,
+        0.8013640238704177
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "cparti-fpga",
+      "metric": "max_rss_kib",
+      "unit": "KiB",
+      "baseline_median": 1891904,
+      "candidate_median": 1773996,
+      "ratio_of_medians": 0.9376775988633673,
+      "median_paired_ratio": 0.9376517054440582,
+      "paired_ratio_range": [
+        0.9373286114488081,
+        0.9425378229776835
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "process_wall_seconds",
+      "unit": "seconds",
+      "baseline_median": 25.65168601507321,
+      "candidate_median": 21.72834895318374,
+      "ratio_of_medians": 0.8470534428191553,
+      "median_paired_ratio": 0.8469525651212263,
+      "paired_ratio_range": [
+        0.8374473048075325,
+        0.8643081340358212
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "cpu_seconds",
+      "unit": "seconds",
+      "baseline_median": 25.470000000000002,
+      "candidate_median": 21.580000000000002,
+      "ratio_of_medians": 0.8472712995681193,
+      "median_paired_ratio": 0.8486040110106174,
+      "paired_ratio_range": [
+        0.837490257209665,
+        0.8637083993660856
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "max_rss_kib",
+      "unit": "KiB",
+      "baseline_median": 532516,
+      "candidate_median": 524528,
+      "ratio_of_medians": 0.9849995117517596,
+      "median_paired_ratio": 0.9850940165805598,
+      "paired_ratio_range": [
+        0.9829638921647424,
+        0.9871364275034
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5
+    },
+    {
+      "fixture": "startup-help",
+      "metric": "wall_seconds",
+      "unit": "seconds per process",
+      "baseline_median": 0.002407499337568879,
+      "candidate_median": 0.0029272177629172803,
+      "ratio_of_medians": 1.215874794745829,
+      "median_paired_ratio": 1.2181111070446655,
+      "paired_ratio_range": [
+        1.138442730665155,
+        1.2662752419169894
+      ],
+      "candidate_higher_blocks": 5,
+      "candidate_lower_blocks": 0
+    },
+    {
+      "fixture": "startup-help",
+      "metric": "cpu_seconds",
+      "unit": "seconds per process",
+      "baseline_median": 0.00227829999999976,
+      "candidate_median": 0.0027784800000008403,
+      "ratio_of_medians": 1.2195408857486427,
+      "median_paired_ratio": 1.2280045550095746,
+      "paired_ratio_range": [
+        1.1463196242812865,
+        1.2745590801041573
+      ],
+      "candidate_higher_blocks": 5,
+      "candidate_lower_blocks": 0
+    }
+  ],
+  "binary_sizes": {
+    "cli": {
+      "baseline_bytes": 42848680,
+      "candidate_bytes": 43006936,
+      "candidate_minus_baseline_bytes": 158256
+    },
+    "test": {
+      "baseline_bytes": 54162984,
+      "candidate_bytes": 54184592,
+      "candidate_minus_baseline_bytes": 21608
+    }
+  },
+  "retention_judgment": [
+    "Keep this isolated candidate available for combined admission review: both original gates pass, complete report bytes/values are preserved, and board CLI wall time, total CPU and peak RSS are lower in all five pairs for both fixtures.",
+    "The candidate is not a universal performance improvement. Help startup wall time and CPU are higher in every pair; the median wall batch average rises from 2.407499337568879 ms to 2.9272177629172803 ms per process. Both executable sizes increase.",
+    "This trial changes allocator selection only at the DRC process boundary. It does not resolve the inherited cache/curve parent admission questions, library-consumer timings, the full workflow/platform matrix or the whole properties/targets/future-work plan."
+  ],
+  "measurement_limits": [
+    "Five fixed blocks, no sample extension or filtering. Ratios are descriptive, not significance claims.",
+    "Preflight runs check reports and are excluded from cost samples. Fresh processes share OS file caches.",
+    "RSS is resident process memory, not allocated/live payload. Startup batches include identical launch/wait overhead.",
+    "Whole CLI timing does not replace either original assertion metric.",
+    "Inherited scalar/native costs, other platforms and the complete properties/target/future-work plan remain open.",
+    "Peak RSS includes process/allocator overhead and retained pages; it is not requested/live payload or allocation traffic.",
+    "Passing original assertions do not print their internal durations. Whole-process wall times are not substitutions for worker-CPU or check-body assertions.",
+    "Direct mimalloc is a new DRC dependency edge using already locked packages. No package versions change, no C malloc override is enabled, and native dependencies may retain their own allocator."
+  ],
+  "preserved_failures": {
+    "preparation_v1": {
+      "path": "docs/evidence/2026-10-13-drc-process-allocator/preparation-failure-v1.json",
+      "sha256": "2c8ebdda3acce7f9182728b7345ea3031689d13353bfc34c0ac093c08325f3e3"
+    },
+    "qualification_reader_v2": {
+      "path": "docs/evidence/2026-10-13-drc-process-allocator/qualification-failure-v2.json",
+      "sha256": "5887119d2724118b43ae6a000a94ac81b67e1c19c1eec9c1b2847486238e93ac"
+    }
+  },
+  "unexecuted_superseded_runners": [
+    "qualify_v1.py",
+    "assess_qualification_v1.py",
+    "assess_qualification_v2.py",
+    "application_costs_v1.py",
+    "assess_application_v1.py"
+  ],
+  "next_step": {
+    "action": "Review combined native admission against the current main worktree before promoting this isolated allocator candidate or its inherited cache/curve changes.",
+    "inventory": "docs/evidence/2026-10-13-drc-process-allocator/admission-boundary-inventory-v1.json",
+    "inventory_sha256": "477902df1658fdeb2fc3cb3c2116e0a6531833ea43daf1ccfd4a12abd212300f",
+    "bounded_review": [
+      "Read the exact diffs and necessary caller context for the eight inherited kernel paths and three inherited regression files identified in the inventory. Compare relevant documentation separately; the source-hash inventory is not credited as source reading.",
+      "Map each inherited change to its preserved correctness, cache ownership/publication/budget and fixed cost evidence. Preserve all earlier adverse scalar/native rows and the original mandatory fallback/frontiers; allocator gains in DRC cannot erase library-consumer tradeoffs.",
+      "Review the six allocator-related paths and the added direct native build dependency, with the measured startup and executable-size costs explicit. Independently linked library consumers retain their own allocator; current runtime coverage is Linux x86-64 only.",
+      "Specify remaining combined admission checks and any distinct unresolved comparison before changing main. Do not extend or rerun this closed five-block sample to remove adverse rows. The 35 user-authorized pending native paths remain in scope and must be reconciled, including the two overlapping curve files."
+    ],
+    "new_runtime_prototype_prepared": false,
+    "additional_measurements_executed": false
+  },
+  "main_source_files_unchanged": 1134,
+  "pending_native_paths_unchanged": 35,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,492 @@
+{
+  "assessor_sha256": "ccf8671ffa7b335dcab75ff5019a6f06f5ba11f67b8618f068bb9fe3af9186ab",
+  "preflight_board_runs": 4,
+  "board_measurements": 20,
+  "startup_measurements": 10,
+  "startup_processes": 500,
+  "reports": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_reports": 12,
+      "bytes": 147892,
+      "sha256": "43558fbdf1a416705acd6423bbc3574f94dc640cf3b35d204d0be6bc1858d960",
+      "findings": 12,
+      "all_current_reports_byte_and_value_identical": true,
+      "identical_to_prior_endpoint_and_metadata_reports": true
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_reports": 12,
+      "bytes": 128807,
+      "sha256": "3217a0418584ad64cd9e9175864068a24eeeb75b6fc6c34b3fc9ce4563a71617",
+      "findings": 197,
+      "all_current_reports_byte_and_value_identical": true,
+      "identical_to_prior_endpoint_and_metadata_reports": true
+    }
+  ],
+  "comparisons": [
+    {
+      "fixture": "cparti-fpga",
+      "metric": "process_wall_seconds",
+      "unit": "seconds",
+      "baseline": [
+        108.2403828278184,
+        107.48441106267273,
+        106.26813475694507,
+        107.25942124100402,
+        107.46154130343348
+      ],
+      "candidate": [
+        85.6672796299681,
+        84.72598549444228,
+        85.16619224566966,
+        85.66009920882061,
+        84.74005760811269
+      ],
+      "paired_candidate_over_baseline": [
+        0.7914539600829196,
+        0.7882630109499291,
+        0.8014273746354966,
+        0.7986254094766061,
+        0.7885617178041088
+      ],
+      "baseline_median": 107.46154130343348,
+      "candidate_median": 85.16619224566966,
+      "ratio_of_medians": 0.7925271796092184,
+      "median_paired_ratio": 0.7914539600829196,
+      "paired_ratio_range": [
+        0.7882630109499291,
+        0.8014273746354966
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -22.573103197850287,
+        -22.75842556823045,
+        -21.10194251127541,
+        -21.59932203218341,
+        -22.721483695320785
+      ]
+    },
+    {
+      "fixture": "cparti-fpga",
+      "metric": "cpu_seconds",
+      "unit": "seconds",
+      "baseline": [
+        107.44,
+        106.82000000000001,
+        105.57000000000001,
+        106.52999999999999,
+        106.74
+      ],
+      "candidate": [
+        85.14,
+        84.17999999999999,
+        84.60000000000001,
+        85.08000000000001,
+        84.21
+      ],
+      "paired_candidate_over_baseline": [
+        0.7924422933730454,
+        0.7880546714098482,
+        0.8013640238704177,
+        0.798648268093495,
+        0.7889263631253512
+      ],
+      "baseline_median": 106.74,
+      "candidate_median": 84.60000000000001,
+      "ratio_of_medians": 0.7925801011804385,
+      "median_paired_ratio": 0.7924422933730454,
+      "paired_ratio_range": [
+        0.7880546714098482,
+        0.8013640238704177
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -22.299999999999997,
+        -22.640000000000015,
+        -20.97,
+        -21.449999999999974,
+        -22.53
+      ]
+    },
+    {
+      "fixture": "cparti-fpga",
+      "metric": "max_rss_kib",
+      "unit": "KiB",
+      "baseline": [
+        1892236,
+        1891900,
+        1891824,
+        1892008,
+        1891904
+      ],
+      "candidate": [
+        1783504,
+        1773332,
+        1773872,
+        1773996,
+        1781896
+      ],
+      "paired_candidate_over_baseline": [
+        0.9425378229776835,
+        0.9373286114488081,
+        0.9376517054440582,
+        0.9376260565494438,
+        0.9418532864246811
+      ],
+      "baseline_median": 1891904,
+      "candidate_median": 1773996,
+      "ratio_of_medians": 0.9376775988633673,
+      "median_paired_ratio": 0.9376517054440582,
+      "paired_ratio_range": [
+        0.9373286114488081,
+        0.9425378229776835
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -108732,
+        -118568,
+        -117952,
+        -118012,
+        -110008
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "process_wall_seconds",
+      "unit": "seconds",
+      "baseline": [
+        25.65168601507321,
+        25.748868320137262,
+        25.82267053797841,
+        25.400090909097344,
+        25.635623476002365
+      ],
+      "candidate": [
+        21.725761270150542,
+        21.72834895318374,
+        21.625125844962895,
+        21.95350517798215,
+        21.979756442829967
+      ],
+      "paired_candidate_over_baseline": [
+        0.8469525651212263,
+        0.8438564632446693,
+        0.8374473048075325,
+        0.8643081340358212,
+        0.8573911402391022
+      ],
+      "baseline_median": 25.65168601507321,
+      "candidate_median": 21.72834895318374,
+      "ratio_of_medians": 0.8470534428191553,
+      "median_paired_ratio": 0.8469525651212263,
+      "paired_ratio_range": [
+        0.8374473048075325,
+        0.8643081340358212
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -3.9259247449226677,
+        -4.020519366953522,
+        -4.197544693015516,
+        -3.446585731115192,
+        -3.655867033172399
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "cpu_seconds",
+      "unit": "seconds",
+      "baseline": [
+        25.43,
+        25.58,
+        25.66,
+        25.240000000000002,
+        25.470000000000002
+      ],
+      "candidate": [
+        21.580000000000002,
+        21.58,
+        21.490000000000002,
+        21.8,
+        21.83
+      ],
+      "paired_candidate_over_baseline": [
+        0.8486040110106174,
+        0.8436278342455042,
+        0.837490257209665,
+        0.8637083993660856,
+        0.857086768747546
+      ],
+      "baseline_median": 25.470000000000002,
+      "candidate_median": 21.580000000000002,
+      "ratio_of_medians": 0.8472712995681193,
+      "median_paired_ratio": 0.8486040110106174,
+      "paired_ratio_range": [
+        0.837490257209665,
+        0.8637083993660856
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -3.849999999999998,
+        -4.0,
+        -4.169999999999998,
+        -3.4400000000000013,
+        -3.640000000000004
+      ]
+    },
+    {
+      "fixture": "hvp109a",
+      "metric": "max_rss_kib",
+      "unit": "KiB",
+      "baseline": [
+        532532,
+        532516,
+        532672,
+        532356,
+        532244
+      ],
+      "candidate": [
+        523760,
+        523444,
+        524732,
+        525508,
+        524528
+      ],
+      "paired_candidate_over_baseline": [
+        0.9835277504450437,
+        0.9829638921647424,
+        0.9850940165805598,
+        0.9871364275034,
+        0.9855028896521144
+      ],
+      "baseline_median": 532516,
+      "candidate_median": 524528,
+      "ratio_of_medians": 0.9849995117517596,
+      "median_paired_ratio": 0.9850940165805598,
+      "paired_ratio_range": [
+        0.9829638921647424,
+        0.9871364275034
+      ],
+      "candidate_higher_blocks": 0,
+      "candidate_lower_blocks": 5,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        -8772,
+        -9072,
+        -7940,
+        -6848,
+        -7716
+      ]
+    },
+    {
+      "fixture": "startup-help",
+      "metric": "wall_seconds",
+      "unit": "seconds per process",
+      "baseline": [
+        0.002407499337568879,
+        0.0023138609621673823,
+        0.002449715007096529,
+        0.0023439404182136058,
+        0.0024136816617101433
+      ],
+      "candidate": [
+        0.0027408001199364664,
+        0.0029272177629172803,
+        0.002913436656817794,
+        0.002968073720112443,
+        0.00294013244099915
+      ],
+      "paired_candidate_over_baseline": [
+        1.138442730665155,
+        1.2650793676796248,
+        1.1892961623608946,
+        1.2662752419169894,
+        1.2181111070446655
+      ],
+      "baseline_median": 0.002407499337568879,
+      "candidate_median": 0.0029272177629172803,
+      "ratio_of_medians": 1.215874794745829,
+      "median_paired_ratio": 1.2181111070446655,
+      "paired_ratio_range": [
+        1.138442730665155,
+        1.2662752419169894
+      ],
+      "candidate_higher_blocks": 5,
+      "candidate_lower_blocks": 0,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        0.0003333007823675873,
+        0.000613356800749898,
+        0.0004637216497212649,
+        0.0006241333018988373,
+        0.0005264507792890069
+      ]
+    },
+    {
+      "fixture": "startup-help",
+      "metric": "cpu_seconds",
+      "unit": "seconds per process",
+      "baseline": [
+        0.00227829999999976,
+        0.0021856399999985853,
+        0.0023147199999984025,
+        0.002212419999998474,
+        0.002283200000001386
+      ],
+      "candidate": [
+        0.00261165999999978,
+        0.0027784800000008403,
+        0.0027730999999999286,
+        0.0028198600000020947,
+        0.002803779999999563
+      ],
+      "paired_candidate_over_baseline": [
+        1.1463196242812865,
+        1.2712432056526413,
+        1.198028271238786,
+        1.2745590801041573,
+        1.2280045550095746
+      ],
+      "baseline_median": 0.00227829999999976,
+      "candidate_median": 0.0027784800000008403,
+      "ratio_of_medians": 1.2195408857486427,
+      "median_paired_ratio": 1.2280045550095746,
+      "paired_ratio_range": [
+        1.1463196242812865,
+        1.2745590801041573
+      ],
+      "candidate_higher_blocks": 5,
+      "candidate_lower_blocks": 0,
+      "equal_blocks": 0,
+      "paired_deltas": [
+        0.00033336000000001994,
+        0.000592840000002255,
+        0.0004583800000015261,
+        0.0006074400000036207,
+        0.0005205799999981769
+      ]
+    }
+  ],
+  "binary_sizes": {
+    "cli": {
+      "baseline_bytes": 42848680,
+      "candidate_bytes": 43006936,
+      "candidate_minus_baseline_bytes": 158256
+    },
+    "test": {
+      "baseline_bytes": 54162984,
+      "candidate_bytes": 54184592,
+      "candidate_minus_baseline_bytes": 21608
+    }
+  },
+  "artifacts_sha256": {
+    "application-costs-v2/board-rows.json": "4aa9af46a7193e613621c81fa6f150e123ad220b9f47237d39076800c5b05b22",
+    "application-costs-v2/commands.json": "78eee385f485da5fe3331ea17e2b713cf2f421e51284ec9a0beb03e24b360991",
+    "application-costs-v2/preflight-00-cparti-fpga-baseline.resources.tsv": "70eadb6d7c96cabdda0523dcb38147b03ecd095012167260901eaeeaacff183b",
+    "application-costs-v2/preflight-00-cparti-fpga-baseline.stderr.gz": "7ac431bd1a5e5717cd13767de7258d687ccb607b23d619817c1501b4c3ec0c46",
+    "application-costs-v2/preflight-00-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/preflight-00-cparti-fpga-candidate.resources.tsv": "969a29e09590d5bcede827fb2900ec7c3ae7dd6a5957fa3d14d0ae93074f401c",
+    "application-costs-v2/preflight-00-cparti-fpga-candidate.stderr.gz": "92782b33b0b2e7e4403dde35f9450c7036895a788c515e65d6238bc266d9c171",
+    "application-costs-v2/preflight-00-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/preflight-00-hvp109a-baseline.resources.tsv": "781f85e653bdd9d168f0787e36cfc1634f10278098e8e77b1d1579d5194d717d",
+    "application-costs-v2/preflight-00-hvp109a-baseline.stderr.gz": "4eb2e7e9a1d738ff2dbc28200bc8921a9f49e044640926512c53edd4ac055471",
+    "application-costs-v2/preflight-00-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/preflight-00-hvp109a-candidate.resources.tsv": "9977a4f7e54d4bd8f0fe07781ed8ad2877c74b036b5312d2fb67fa66c1a4ff7a",
+    "application-costs-v2/preflight-00-hvp109a-candidate.stderr.gz": "814f7ff51e475cae1d7b75f991122387621e0512baa1ef4feb86671957e2dee7",
+    "application-costs-v2/preflight-00-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/protocol.json": "d2cc73760416a3995703600ab5d31a1ce8fd4e129b0706ce80d2af789f6033af",
+    "application-costs-v2/result.json": "0a12d8fb443cfcec65b65a78dca4077e275bb2ccea2b3670222f889362ca9cdb",
+    "application-costs-v2/sample-01-cparti-fpga-baseline.resources.tsv": "0442046fe7c9835e13443985777b733e6057dc65236c9b3e038baa157938a67e",
+    "application-costs-v2/sample-01-cparti-fpga-baseline.stderr.gz": "69ae164d3e43343c59a83b09d168ff7dd731783eb1e34eab5450353db5ca29ae",
+    "application-costs-v2/sample-01-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-01-cparti-fpga-candidate.resources.tsv": "7ca509bf80c7e6b2116a8c3a5d1b25efa909aad3a656a166c7742c4cdf1a1e88",
+    "application-costs-v2/sample-01-cparti-fpga-candidate.stderr.gz": "b9b44aa9a8359de402d835bcc0a3cff504119fc3e188fb67eb8242d25fffab01",
+    "application-costs-v2/sample-01-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-01-hvp109a-baseline.resources.tsv": "b4b69fbf3ccd07d21917d42e3eab77d41700b91547bef74787df1fea9d301e59",
+    "application-costs-v2/sample-01-hvp109a-baseline.stderr.gz": "503c46b9bc5ec53e004666151421c1c97244b68803d7b75169f7913c25a5f704",
+    "application-costs-v2/sample-01-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-01-hvp109a-candidate.resources.tsv": "87378285be2a5711f0e523b798fef4405f986aa94554f5147eecfb06ae672860",
+    "application-costs-v2/sample-01-hvp109a-candidate.stderr.gz": "10d5fbd43b98a18d6b9093024f5836f3c50a7346dde1b299d99da8e9a3b81ed9",
+    "application-costs-v2/sample-01-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-02-cparti-fpga-baseline.resources.tsv": "695f03b4d559cac0517ee4d681c6dd3fc6031d8f832d960adf01de6499130dc3",
+    "application-costs-v2/sample-02-cparti-fpga-baseline.stderr.gz": "635d9e614ca09d244d9bfc6a53f8a55f6fbe2f9112fe6bc1e83e3de352ce9332",
+    "application-costs-v2/sample-02-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-02-cparti-fpga-candidate.resources.tsv": "02ab41d4befb0ed8c9d158ea7f845fa7e0dab5233a1afa8349523c5e59f2ba61",
+    "application-costs-v2/sample-02-cparti-fpga-candidate.stderr.gz": "b8ecf6235379de4073694db8cb0d9fd1f02d4721b177708bc0bb9d809d3d8d29",
+    "application-costs-v2/sample-02-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-02-hvp109a-baseline.resources.tsv": "0b61af08fcb9000338ff209f02e4e0e2a355d9800370a5dc1e7292735424e4e3",
+    "application-costs-v2/sample-02-hvp109a-baseline.stderr.gz": "7ca0fbf1099f1e8f364b620a54f317db9aba6b0c06ed35c18f98fbc0d6c8388d",
+    "application-costs-v2/sample-02-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-02-hvp109a-candidate.resources.tsv": "e7502defc69649ebf7aebd59e0ccc37d2a840cd0646b9656d57f13f9dcd92296",
+    "application-costs-v2/sample-02-hvp109a-candidate.stderr.gz": "1396fa1c877a5e9e6b0e402f8e3dc0d01e52582d16b6bc169311129d4e04f340",
+    "application-costs-v2/sample-02-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-03-cparti-fpga-baseline.resources.tsv": "99909e62da829ac348b91d28d69816e8bc2819e6a6c59ae7b48d481d04a92597",
+    "application-costs-v2/sample-03-cparti-fpga-baseline.stderr.gz": "6402a612417c6dbc8d192a78dd21822a1220036158a2b391030c860821af7711",
+    "application-costs-v2/sample-03-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-03-cparti-fpga-candidate.resources.tsv": "bddae5dd6471ae47c6832318c6474c9d24786419dfb0cab18af308c76a705143",
+    "application-costs-v2/sample-03-cparti-fpga-candidate.stderr.gz": "d66799fdcf887e97d57d47accbfcfcad2600b16e7acc6c962a7394d3e9afddc6",
+    "application-costs-v2/sample-03-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-03-hvp109a-baseline.resources.tsv": "55c68aced5798a3a2636e6e4a0de21b535b802983a4d079afafc3ddb7b1e0ac8",
+    "application-costs-v2/sample-03-hvp109a-baseline.stderr.gz": "1089c74c7b9a4fd1ac23d7c5abb16aebd1beb61574a82f081630116b00d3f754",
+    "application-costs-v2/sample-03-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-03-hvp109a-candidate.resources.tsv": "24ef81884120f508f0b85d75560de519b51ff9e38945b8ad1da585b604b0beb1",
+    "application-costs-v2/sample-03-hvp109a-candidate.stderr.gz": "2fc31f203ca071c5be4db7e69f8d291c046fbbffb1625faf5a32be358ab5d43f",
+    "application-costs-v2/sample-03-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-04-cparti-fpga-baseline.resources.tsv": "350b7c4d4eb538adc8f95db5b3ab159fa6bbd030ceec9bea51a8c31889988bc5",
+    "application-costs-v2/sample-04-cparti-fpga-baseline.stderr.gz": "2c65540e80a6c97f26b64e4e173d9fbd97959a932f28a89d940800b6b7f65046",
+    "application-costs-v2/sample-04-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-04-cparti-fpga-candidate.resources.tsv": "ea4b0dc6dc94de96ecd6347721997bcbb8172bcb4d07ec4a7f5f5d8d9497dc03",
+    "application-costs-v2/sample-04-cparti-fpga-candidate.stderr.gz": "af7e32ec71a4b88e4a25a11dde3e602bd17f55cec03c73e6dea3b312e84378b5",
+    "application-costs-v2/sample-04-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-04-hvp109a-baseline.resources.tsv": "73f4db916ef655bc6f2ae06aaf8976aead9ba2f40dc80001aab852d5dfbae0b4",
+    "application-costs-v2/sample-04-hvp109a-baseline.stderr.gz": "13a2ee0b5300472e4930e0a735247ce2081853cf0204c7483b5a8db8f9c7d761",
+    "application-costs-v2/sample-04-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-04-hvp109a-candidate.resources.tsv": "a5f605bb45c04980a6b137aa0d2bb9f37b2ceb00eef93b257ac16a15cbf00077",
+    "application-costs-v2/sample-04-hvp109a-candidate.stderr.gz": "97a7a55017c4b63de229c09e9fe17761c7a47cc143ff6a5a0e694d46cba6c95a",
+    "application-costs-v2/sample-04-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-05-cparti-fpga-baseline.resources.tsv": "9d55ba26d6ca53742ce2557ee78a27dc47774d00c9e2008d7cba53d70d5f7d34",
+    "application-costs-v2/sample-05-cparti-fpga-baseline.stderr.gz": "52a42554f9763fb80f4afb582669c7454e3f5fefea93aed4813225f88f4d6972",
+    "application-costs-v2/sample-05-cparti-fpga-baseline.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-05-cparti-fpga-candidate.resources.tsv": "63b781c6c563e755521f1882260b5c5271481722510261c1bb0800b5938173dd",
+    "application-costs-v2/sample-05-cparti-fpga-candidate.stderr.gz": "018c94a6e434d6b1d88087354e2c4dd7180364270792a4eeafc06b875284cbe4",
+    "application-costs-v2/sample-05-cparti-fpga-candidate.stdout.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "application-costs-v2/sample-05-hvp109a-baseline.resources.tsv": "7cadce4913674c070806593d0f9fc6417a3982fd825cb3e1da7d56479aa1635b",
+    "application-costs-v2/sample-05-hvp109a-baseline.stderr.gz": "1f456f6cde878470176ecea3a5e06ef236d1290a15a7ad7b743a38c0b62b1593",
+    "application-costs-v2/sample-05-hvp109a-baseline.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/sample-05-hvp109a-candidate.resources.tsv": "de8514d3b920ec287cf7e724e714e6afeb661f1372cb47d27cdab9ef919da717",
+    "application-costs-v2/sample-05-hvp109a-candidate.stderr.gz": "b36ef1b7e509a9c08bfbf6361abb9c0bba8918fed0b1646dba4d0fdde2049293",
+    "application-costs-v2/sample-05-hvp109a-candidate.stdout.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "application-costs-v2/startup-01-baseline.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-01-candidate.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-02-baseline.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-02-candidate.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-03-baseline.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-03-candidate.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-04-baseline.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-04-candidate.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-05-baseline.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-05-candidate.processes.json.gz": "ea98ad67f6d271c8653a5ede01db013bb0a20e32430c53374bb76ddcab1d0d6e",
+    "application-costs-v2/startup-rows.json": "cd81759eb361894a69b6508262cb73db0fa49e072e41f305d7131d808fadcdd7"
+  },
+  "inputs_sources_dependencies_binaries_and_prior_evidence_unchanged": true,
+  "limits": [
+    "Five fixed blocks, no sample extension or filtering. Ratios are descriptive, not significance claims.",
+    "Preflight runs check reports and are excluded from cost samples. Fresh processes share OS file caches.",
+    "RSS is resident process memory, not allocated/live payload. Startup batches include identical launch/wait overhead.",
+    "Whole CLI timing does not replace either original assertion metric.",
+    "Inherited scalar/native costs, other platforms and the complete properties/target/future-work plan remain open."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

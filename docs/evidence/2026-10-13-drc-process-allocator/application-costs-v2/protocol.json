@@ -1,0 +1,167 @@
+{
+  "scope": "Fixed fresh-process DRC timing/RSS/startup trial; execute only after gate success.",
+  "runner_sha256": "247da490f5d720fb14182d464b740d1446e16d9136c74640ea4a43264a3e66a4",
+  "assessor_sha256": "ccf8671ffa7b335dcab75ff5019a6f06f5ba11f67b8618f068bb9fe3af9186ab",
+  "preparation_sha256": "7d3a199d3ce5d95eda80c04d58fcb83db36b1e3cfcff4fa847a76e4b1c13e7b9",
+  "qualification_assessment_sha256": "6746b05440c0106b1f29b204f20a159698c19549a2b551436937bdd54b7517bf",
+  "scope_sha256": "cd77259d988caab7e4057d7b7bb04cbe5f82934598de1c903f4393c7706cf949",
+  "design": {
+    "variants": [
+      "baseline",
+      "candidate"
+    ],
+    "fixtures": [
+      "CPArti FPGA dev board.zip",
+      "HVP109A.zip"
+    ],
+    "complete_report_preflight_runs": 4,
+    "blocks": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "board_measurements": 20,
+    "startup_help_runs_per_measurement": 50,
+    "startup_measurements": 10,
+    "timing": "Fresh CLI processes, same extracted absolute input paths, original four checks and 0.0762 minimum width. Whole-process wall and user/system CPU are application measurements, not replacements for original internal assertions.",
+    "memory": "Maximum process RSS from the same uninstrumented CLI run, in KiB. This includes allocator overhead/retention but is not requested/live payload or allocation traffic.",
+    "output": "Every full report must match complete bytes and JSON values without field normalization. Freeze every executable before any measurement. Retain all samples, including startup adverse rows; do not extend/filter a closed set.",
+    "size": "Record CLI and unit-test executable byte sizes."
+  },
+  "fixtures": [
+    {
+      "label": "cparti-fpga",
+      "zip": "CPArti FPGA dev board.zip",
+      "board": "CPArti FPGA dev board.kicad_pcb",
+      "expected_findings": 12,
+      "order": [
+        "baseline",
+        "candidate"
+      ],
+      "archive_sha256": "f57195393ff7a938af0a9651781ba13536d248cbb43f13a41739e2a97cf99e35",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb",
+      "board_sha256": "d8f8b4a4d886d8544594738c7c3da545667ce7c3126f28721a5e26ae971c227a"
+    },
+    {
+      "label": "hvp109a",
+      "zip": "HVP109A.zip",
+      "board": "HVP109A.kicad_pcb",
+      "expected_findings": 197,
+      "order": [
+        "candidate",
+        "baseline"
+      ],
+      "archive_sha256": "986b7e26b60c83c97a851c403fb90a927c9018d30ad6b94c7bba5925aa99e28a",
+      "board_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/inputs/hvp109a/HVP109A.kicad_pcb",
+      "board_sha256": "87b88a9ba7d943b7f3173876eeaa87523b08c906149cdc5684ebfcf183984aa6"
+    }
+  ],
+  "input_root": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/report-replay-v1/inputs",
+  "input_files": 108,
+  "prior_report_evidence": "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-coordinate-reuse/report-replay-v1",
+  "prior_artifacts_sha256": {
+    "protocol.json": "983fdc9879b4bc5c55ad378669b6ffc4ec62c937f88bbcd80612ab7f82d9c279",
+    "result.json": "16b15ed38431e951db3ffb164ad1f55a410e3742c20e4748f800f87d79310515",
+    "input-hashes.json.gz": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+    "cparti-fpga-baseline.json.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "cparti-fpga-candidate.json.gz": "37ce5661e2e940054a4b0f890c1a53ba724c6b4e00cae4dc285592656e74c923",
+    "hvp109a-baseline.json.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995",
+    "hvp109a-candidate.json.gz": "57589119e9869f46f80fd83e9f164cb1549d23bbc700c6a5bb25c531074f2995"
+  },
+  "binaries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/application-costs-v2/bins/baseline/hyperdrc",
+      "sha256": "bcfedd7bd23ce661f3fbf75a3f4950855cc1de6d9ab72234fff1b08984c07903",
+      "bytes": 42848680,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/source/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "allocator_dependency_features": {},
+      "qualified_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/baseline/target/release/hyperdrc"
+    },
+    "candidate": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/application-costs-v2/bins/candidate/hyperdrc",
+      "sha256": "2b10a5dbb8bde078af838456a2f0b14b6506b45cb00797e1a691a8c4dc2ea3e7",
+      "bytes": 43006936,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": [],
+      "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc#0.3.0",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperdrc",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/source/crates/hyperdrc/src/main.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "allocator_dependency_features": {
+        "libmimalloc_sys": [],
+        "mimalloc": []
+      },
+      "qualified_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/drc-process-allocator-v2/candidate/target/release/hyperdrc"
+    }
+  },
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+  "timeout_seconds": 1800,
+  "inherited_allocator_settings": [],
+  "board_resource_format": "wall_seconds\t%e\nuser_seconds\t%U\nsystem_seconds\t%S\nmax_rss_kib\t%M",
+  "startup_processes_per_measurement": 50,
+  "startup_metric": "Wall time of a serial 50-process --help batch, including identical Python launch/wait overhead, divided by 50. Child user/system CPU deltas are divided by 50. This is not the internal Rust main duration.",
+  "memory_metric": "Maximum CLI process resident set in KiB, measured by GNU time. Not live/requested payload or allocation traffic. No startup RSS claim.",
+  "comparison": "Every complete JSON report compared without normalization. Preflight checks are excluded from the fixed 20-board timing sample; all 10 startup batches are retained.",
+  "cache_state": "Fresh processes with the same frozen input files. OS filesystem caches are not reset.",
+  "original_gate_metrics_replaced": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

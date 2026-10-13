@@ -1,0 +1,15 @@
+{
+  "complete": true,
+  "commands": 34,
+  "preflight_board_runs": 4,
+  "board_measurements": 20,
+  "startup_measurements": 10,
+  "startup_processes": 500,
+  "complete_report_bytes_and_values_identical": true,
+  "complete_report_bytes_equal_to_prior_endpoint_and_metadata_reports": true,
+  "inputs_sources_dependencies_binaries_and_prior_evidence_unchanged": true,
+  "all_original_gates_preserved": true,
+  "no_sample_filtering_or_extension": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
