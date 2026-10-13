@@ -1,0 +1,31 @@
+{
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "dd04001accb0eff43afa4006ab428e86aebcdc9e8744d289a60380d0efffb203",
+    "bytes": 54167264,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperdrc#0.3.0",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperdrc",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperdrc/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    }
+  }
+}

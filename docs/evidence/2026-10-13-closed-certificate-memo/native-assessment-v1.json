@@ -1,0 +1,101 @@
+{
+  "decision": "native-qualification-recorded-await-fixed-controls-and-complete-reports",
+  "assessor_sha256": "a563d2adc048100767f634228f7385163255bb61c0b2c2c149d698b3c740393d",
+  "test_counts": [
+    {
+      "variant": "candidate",
+      "phase": "solver-tests",
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 11
+    },
+    {
+      "variant": "candidate",
+      "phase": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 1
+    },
+    {
+      "variant": "candidate",
+      "phase": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "result_groups": 51
+    },
+    {
+      "variant": "candidate",
+      "phase": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    }
+  ],
+  "strict_four_crate_clippy_passed_for_candidate": true,
+  "warning_denied_four_crate_docs_passed_for_candidate": true,
+  "formatting": "Previously passed on the same unchanged source in qualification-v1.",
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "variant": "candidate",
+      "passed": false,
+      "observed_assertion_seconds": 132.328922579,
+      "process_wall_seconds": 133.6844756482169,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "variant": "candidate",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 120.63621033122763,
+      "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+    }
+  ],
+  "all_original_gates_passed": false,
+  "limits": [
+    "Full all-feature release solver, curve and DRC suites ran, with the two named DRC limits executed separately. This does not qualify every workspace/default/feature/workflow combination.",
+    "The 33 ignored curve results remain ignored, not covered by this run.",
+    "The native assertions retain their original metrics and limits. Process wall times include setup and cannot replace assertion measurements.",
+    "The original complete boards produced 12 and 197 findings. This test output does not compare complete report bytes.",
+    "Standalone native gates do not establish a matched application speedup. Scalar and inherited endpoint timing tradeoffs remain open."
+  ],
+  "artifacts_sha256": {
+    "native-validation-v1/binaries.json": "c942215652e4b1498c0d92048e75f174835165edd1396bfdf351221b785cc4eb",
+    "native-validation-v1/candidate-build-board-tests.stderr": "c663462ee6e8bd687c13f4f43386d516f3f0bb8fc1cb3522d98b83bf3664d8fd",
+    "native-validation-v1/candidate-build-board-tests.stdout": "153cfd29a52ecbc590d7e251133741700ab442c57fd0de45b39435cbfafa41e0",
+    "native-validation-v1/candidate-copper-neck.stderr": "8f90bff170f945b7ef99cd85d1cd0fc9ab4347e68778d2cb0ad2a7597ad4014d",
+    "native-validation-v1/candidate-copper-neck.stdout": "98b54bb3ddc07772f3c17fa1c3b15dfcfbf51009267f8b2875c13182b9d1932e",
+    "native-validation-v1/candidate-curve-tests.stderr": "a3ed5180f785780f4e2113e3b8dcc559214ea64aaa5f9660deb25d817ed2312b",
+    "native-validation-v1/candidate-curve-tests.stdout": "5a11763f941e30d12a3d579bf1bb0790630cbd97c2f8a1140191cdec6bef2498",
+    "native-validation-v1/candidate-drc-tests-except-separate-gates.stderr": "1311f6b826d8d94c32600356d85db32fb74176dd89584584b16ed782bd5f658b",
+    "native-validation-v1/candidate-drc-tests-except-separate-gates.stdout": "7b6157bd97266cb0fdd17584f006dfe5664a5995639a408cba1b41088c1a646a",
+    "native-validation-v1/candidate-endpoint-regressions.stderr": "f20eb476d3b891ef10d0b3adb60b86e342757525426c04aa6b0df32432ddd9fc",
+    "native-validation-v1/candidate-endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "native-validation-v1/candidate-full-board.stderr": "ab2567a40421f3a4974b7b32e5f6e2892c9d80a48de6ee08f35876036d2d7511",
+    "native-validation-v1/candidate-full-board.stdout": "81d0f484d680045f67e4868de6989cc88405d8174f4f5608889b190e7fd02347",
+    "native-validation-v1/candidate-solver-tests.stderr": "c729f8e62f64b7700b93243650fca60a1f96359c2b6a08940b6e30560008680d",
+    "native-validation-v1/candidate-solver-tests.stdout": "158cb4caa68c5a4a8c53dee521b512e5fe7191d597c4400253c2ddc620507d25",
+    "native-validation-v1/candidate-stack-docs.stderr": "43a5d6bb20c3974eade5808064b3f2acb35ba36e23674c3889edd23353900127",
+    "native-validation-v1/candidate-stack-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/candidate-strict-stack-clippy.stderr": "ef5e0952c429555852657ce3436b1677ffec4d7bb1d8e561b7500b0d26adaf2e",
+    "native-validation-v1/candidate-strict-stack-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-validation-v1/commands.json": "f9133a04878ce2d66b568d85922c90a32e3e03a8114d892916dff51cab3072d1",
+    "native-validation-v1/protocol.json": "fcdfc70f35e3ec7adb11f20c4dcd9193cc1a15673e86468de0ae3773ca287f35",
+    "native-validation-v1/result.json": "5d377a19d32141ff3f8dd93a338d850a43aa486c2882b0c306be8aa218c8bee6",
+    "native-validation-v1/tests.json": "82a80b4f4abdd14723788869944e50e539bce6f773209215ce7a19faad993f65"
+  },
+  "main_and_all_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

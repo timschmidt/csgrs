@@ -1,0 +1,118 @@
+   Compiling memchr v2.8.0
+   Compiling num-traits v0.2.19
+   Compiling iana-time-zone v0.1.65
+   Compiling hashbrown v0.16.1
+   Compiling bytes v1.11.1
+   Compiling arrow-schema v57.3.1
+   Compiling lexical-util v1.0.7
+   Compiling simd-adler32 v0.3.9
+   Compiling ahash v0.8.12
+   Compiling crc32fast v1.5.0
+   Compiling adler2 v2.0.1
+   Compiling generic-array v0.14.7
+   Compiling thiserror v2.0.21
+   Compiling utf8parse v0.2.2
+   Compiling bumpalo v3.20.2
+   Compiling zlib-rs v0.6.8
+   Compiling hashbrown v0.17.1
+   Compiling anstyle-parse v1.0.0
+   Compiling miniz_oxide v0.8.9
+   Compiling encoding_rs v0.8.35
+   Compiling zopfli v0.8.3
+   Compiling byteorder v1.5.0
+   Compiling uuid v1.23.1
+   Compiling lexical-write-integer v1.0.6
+   Compiling lexical-parse-integer v1.0.6
+   Compiling anstyle-query v1.1.5
+   Compiling strum v0.27.2
+   Compiling is_terminal_polyfill v1.70.2
+   Compiling serde_json v1.0.149
+   Compiling aho-corasick v1.1.4
+   Compiling lexical-parse-float v1.0.6
+   Compiling colorchoice v1.0.5
+   Compiling indexmap v2.14.0
+   Compiling lexical-write-float v1.0.6
+   Compiling anstream v1.0.0
+   Compiling crypto-common v0.1.7
+   Compiling block-buffer v0.10.4
+   Compiling flatbuffers v25.12.19
+   Compiling typed-path v0.12.3
+   Compiling ryu v1.0.23
+   Compiling lexical-core v1.0.6
+   Compiling base64 v0.22.1
+   Compiling integer-encoding v3.0.4
+   Compiling num-integer v0.1.46
+   Compiling half v2.7.1
+   Compiling num-complex v0.4.6
+   Compiling chrono v0.4.44
+   Compiling atoi v2.0.0
+   Compiling ordered-float v2.10.1
+   Compiling num-bigint v0.4.6
+   Compiling num-iter v0.1.45
+   Compiling ciborium-ll v0.2.2
+   Compiling strsim v0.11.1
+   Compiling debug_unsafe v0.1.4
+   Compiling foldhash v0.1.5
+   Compiling regex-automata v0.4.14
+   Compiling atoi_simd v0.17.0
+   Compiling ciborium v0.2.2
+   Compiling clap_builder v4.6.7
+   Compiling hashbrown v0.15.5
+   Compiling thrift v0.17.0
+   Compiling codepage v0.1.3
+   Compiling quick-xml v0.39.4
+   Compiling libsqlite3-sys v0.37.0
+   Compiling digest v0.10.7
+   Compiling hashlink v0.11.1
+   Compiling xattr v1.6.1
+   Compiling filetime v0.2.29
+   Compiling num-rational v0.4.2
+   Compiling arrow-buffer v57.3.1
+   Compiling flate2 v1.1.9
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperreal)
+   Compiling gerber-types v0.7.0
+   Compiling zip v7.2.0
+   Compiling arrow-data v57.3.1
+   Compiling fallible-iterator v0.3.0
+   Compiling cpufeatures v0.2.17
+   Compiling fallible-streaming-iterator v0.1.9
+   Compiling twox-hash v2.1.5
+   Compiling smallvec v1.15.1
+   Compiling fast-float2 v0.2.4
+   Compiling regex v1.12.3
+   Compiling clap v4.6.7
+   Compiling sha2 v0.10.9
+   Compiling rusqlite v0.39.0
+   Compiling zip v2.4.2
+   Compiling tar v0.4.46
+   Compiling arrow-array v57.3.1
+   Compiling lazy-regex v3.6.0
+   Compiling calamine v0.35.0
+   Compiling gerber_parser v0.4.0
+   Compiling proptest v1.11.0
+   Compiling arrow-select v57.3.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperlattice)
+   Compiling arrow-ord v57.3.1
+   Compiling arrow-ipc v57.3.1
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hypersolve)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hypermesh)
+   Compiling arrow-cast v57.3.1
+   Compiling parquet v57.3.1
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hypercurve)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperphysics)
+   Compiling hyperpath v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperpath)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source)
+   Compiling hyperdrc v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source/crates/hyperdrc)
+    Finished `release` profile [optimized] target(s) in 2m 01s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d)
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/hyperdrc-5da1690b41025398)
+     Running tests/artifact_numeric_keys.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/artifact_numeric_keys-03d9b7a570505404)
+     Running tests/diagnostic_formatting.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/diagnostic_formatting-e5ef4baeabfbc955)
+     Running tests/kicad_pad_sources.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/kicad_pad_sources-e4732b4399bed56a)
+     Running tests/kicad_rule_export.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/kicad_rule_export-c09b25b29b958a07)
+     Running tests/native_linear_strokes.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/native_linear_strokes-28ed5b0b1f09e479)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/readme-990ac56b4fb5e9a5)
+   Doc-tests hyperdrc

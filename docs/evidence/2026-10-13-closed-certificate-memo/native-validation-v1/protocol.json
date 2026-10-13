@@ -1,0 +1,164 @@
+{
+  "scope": "Qualify the frozen closed-certificate memo candidate with native consumers, sequentially.\n\nThe candidate gets a new native Cargo target. Full all-feature solver, curve and DRC\ntests include integration tests and doctests. The two original expensive DRC\nlimits are skipped only in the combined command and executed individually from\nthe bound test executable. Their original fixtures and assertions are intact.\nGate failures are recorded, never turned into skips or larger limits.\n",
+  "runner_sha256": "30b2ac8a5b2902b37b72cafffb8b4e792162812fdb75510ee9e6a11dc0d4d67e",
+  "assessor_sha256": "a563d2adc048100767f634228f7385163255bb61c0b2c2c149d698b3c740393d",
+  "preparation_sha256": "8010428cf8e80ccb68523ec30731cf9013e3dd00c0e327a8020e859c4d034807",
+  "scalar_decision_sha256": "3860a09c4f5dac45ad7ccd76dc0126af7a2c44f7aad9c9eb5c9993c5c35a0863",
+  "cost_assessment_sha256": "6db3000a1f9ec300295ddab41f96a14a5db1df1129fdb49db8f70585d8c4b271",
+  "scalar_correctness_sha256": "419a22699c068b8a34d19102dd2e7d82a9d53ef0de943cc0d47835940251a523",
+  "variants": {
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    }
+  },
+  "variant_order": [
+    "candidate"
+  ],
+  "commands": [
+    [
+      "strict-stack-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "solver-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersolve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "endpoint-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_proof_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "curve-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "drc-tests-except-separate-gates",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ]
+    ],
+    [
+      "stack-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time"
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "command_timeout_seconds": 1800,
+  "source_format_already_qualified": "qualification-v1/result.json and correctness-v1.json; source remains frozen",
+  "gate_duration_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time.",
+  "runtime_admitted": false
+}

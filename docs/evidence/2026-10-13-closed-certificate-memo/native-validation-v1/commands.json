@@ -1,0 +1,269 @@
+[
+  {
+    "name": "candidate-strict-stack-clippy",
+    "variant": "candidate",
+    "phase": "strict-stack-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypersolve",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 41.01150166615844,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ef5e0952c429555852657ce3436b1677ffec4d7bb1d8e561b7500b0d26adaf2e"
+  },
+  {
+    "name": "candidate-solver-tests",
+    "variant": "candidate",
+    "phase": "solver-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypersolve",
+      "--all-features",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 55.44341977406293,
+    "stdout_sha256": "158cb4caa68c5a4a8c53dee521b512e5fe7191d597c4400253c2ddc620507d25",
+    "stderr_sha256": "c729f8e62f64b7700b93243650fca60a1f96359c2b6a08940b6e30560008680d"
+  },
+  {
+    "name": "candidate-endpoint-regressions",
+    "variant": "candidate",
+    "phase": "endpoint-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "endpoint_proof_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 110.40694605791941,
+    "stdout_sha256": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "stderr_sha256": "f20eb476d3b891ef10d0b3adb60b86e342757525426c04aa6b0df32432ddd9fc"
+  },
+  {
+    "name": "candidate-curve-tests",
+    "variant": "candidate",
+    "phase": "curve-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 995.5412109498866,
+    "stdout_sha256": "5a11763f941e30d12a3d579bf1bb0790630cbd97c2f8a1140191cdec6bef2498",
+    "stderr_sha256": "a3ed5180f785780f4e2113e3b8dcc559214ea64aaa5f9660deb25d817ed2312b"
+  },
+  {
+    "name": "candidate-drc-tests-except-separate-gates",
+    "variant": "candidate",
+    "phase": "drc-tests-except-separate-gates",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--",
+      "--test-threads=2",
+      "--skip",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--skip",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 314.63945989497006,
+    "stdout_sha256": "7b6157bd97266cb0fdd17584f006dfe5664a5995639a408cba1b41088c1a646a",
+    "stderr_sha256": "1311f6b826d8d94c32600356d85db32fb74176dd89584584b16ed782bd5f658b"
+  },
+  {
+    "name": "candidate-stack-docs",
+    "variant": "candidate",
+    "phase": "stack-docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypersolve",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.39679070515558,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "43a5d6bb20c3974eade5808064b3f2acb35ba36e23674c3889edd23353900127"
+  },
+  {
+    "name": "candidate-build-board-tests",
+    "variant": "candidate",
+    "phase": "build-board-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.20834721997380257,
+    "stdout_sha256": "153cfd29a52ecbc590d7e251133741700ab442c57fd0de45b39435cbfafa41e0",
+    "stderr_sha256": "c663462ee6e8bd687c13f4f43386d516f3f0bb8fc1cb3522d98b83bf3664d8fd"
+  },
+  {
+    "name": "candidate-full-board",
+    "variant": "candidate",
+    "phase": "full-board",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 101,
+    "seconds": 133.6844756482169,
+    "stdout_sha256": "81d0f484d680045f67e4868de6989cc88405d8174f4f5608889b190e7fd02347",
+    "stderr_sha256": "ab2567a40421f3a4974b7b32e5f6e2892c9d80a48de6ee08f35876036d2d7511"
+  },
+  {
+    "name": "candidate-copper-neck",
+    "variant": "candidate",
+    "phase": "copper-neck",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+      "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "--exact",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/closed-certificate-memo/candidate/native-target"
+    },
+    "exit_code": 0,
+    "seconds": 120.63621033122763,
+    "stdout_sha256": "98b54bb3ddc07772f3c17fa1c3b15dfcfbf51009267f8b2875c13182b9d1932e",
+    "stderr_sha256": "8f90bff170f945b7ef99cd85d1cd0fc9ab4347e68778d2cb0ad2a7597ad4014d"
+  }
+]

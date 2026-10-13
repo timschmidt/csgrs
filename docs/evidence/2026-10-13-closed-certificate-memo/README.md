@@ -77,9 +77,20 @@ of medians of 0.625348, but a median paired ratio of 1.041420 and is slower in
 three pairs. These descriptive statistics establish neither statistical
 significance nor an application speedup. All adverse rows remain in the evidence.
 
-The candidate remains unadmitted. Nine native validation phases are running serially:
-strict four-crate Clippy, solver tests, focused endpoint controls, full curve/DRC
-tests, four-crate docs, a bound DRC executable and both original assertions.
+The candidate remains unadmitted. All nine native validation phases completed
+serially. Strict four-crate Clippy and warning-denied docs pass. The full suites
+pass 974 solver results, 2,494 curve results with 33 existing ignores, and 1,644
+DRC results excluding the two separately executed timing gates. The five focused
+endpoint controls also pass and overlap the full curve count.
+
+The original board assertion fails at **132.328922579 seconds of worker CPU
+against 120**. Both complete boards emit reports with 12 and 197 findings.
+The original copper-neck assertion passes its 60-second check-body wall limit;
+it does not print its passing internal duration. Its 120.636210331-second whole
+process wall time includes setup and is a different metric. These are standalone
+gate outcomes, not a matched application-speedup result. See
+[native-assessment-v1.json](native-assessment-v1.json).
+
 The prepared native cost controls retain the declared 36-process sample set,
 and a separate replay protocol compares both complete reports and production
 CLI sizes. These follow-up runners have not executed. The earlier endpoint
