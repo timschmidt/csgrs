@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Profile the frozen metadata-first source with the complete original boards in a separate target, keeping the original assertions and all existing inputs. Identify a remaining concrete caller or allocation site before proposing another optimization. Preserve the rejected point-equality and coefficient-merge experiments. The 120-second full-board CPU gate, broader native validation, pending scalar-cache tradeoffs and accurate two-pass budget documentation still precede runtime admission."
+      "next_step": "Instrument the initial and repeated point-equality stages inside contains_endpoint in a separate source and target. Observe the Zero/NonZero/Unknown coordinate facts that the existing comparisons already request, final endpoint outcomes and policy categories. Keep every original query, short circuit, temporary lifetime and validation result; counters must retain no scalar or geometry owners. Only evaluate reuse of an already computed negative coordinate proof if the diagnostic supports it. Preserve preview/approximation receipts, shared budgets, aborts, cache strengthening, full reports and the original limits."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -182,6 +182,15 @@
       "decision_evidence": "docs/evidence/2026-10-12-region-metadata-first/decision-v1.json",
       "report_evidence": "docs/evidence/2026-10-12-region-metadata-first/report-assessment-v1.json",
       "report_summary": "Both complete original-board reports are byte-identical without normalization across four fresh CLI processes reading the same 108 extracted inputs. Production executable size delta: 0 bytes. Standalone replay durations are not a matched speedup or a replacement for either original cap."
+    },
+    "isolated_region_metadata_profile": {
+      "status": "diagnose-existing-negative-coordinate-proofs-at-endpoint-comparison",
+      "evidence": "docs/evidence/2026-10-12-region-metadata-profile/assessment-v1.json",
+      "result": "7326 samples, zero lost. Normal-form work has 29.031% inclusive sampled weight. Point equality has 7.569%; contains_endpoint accounts for 4.114% of total weight through point equality and 12.800% inclusive overall. Subcurve equality under CurveRegion2::new has 0.056%. Groups overlap; these are not speedup estimates.",
+      "profiled_worker_cpu_seconds": 146.569979545,
+      "original_worker_cpu_limit_seconds": 120,
+      "next_step": "Instrument the initial and repeated point-equality stages inside contains_endpoint in a separate source and target. Observe the Zero/NonZero/Unknown coordinate facts that the existing comparisons already request, final endpoint outcomes and policy categories. Keep every original query, short circuit, temporary lifetime and validation result; counters must retain no scalar or geometry owners. Only evaluate reuse of an already computed negative coordinate proof if the diagnostic supports it. Preserve preview/approximation receipts, shared budgets, aborts, cache strengthening, full reports and the original limits.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
