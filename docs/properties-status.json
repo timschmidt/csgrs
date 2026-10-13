@@ -2746,7 +2746,7 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "outlined_same_radicand_products": {
-      "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
+      "status": "qualified-cost-setup-failure-corrected-runner-pending",
       "evidence": "docs/evidence/2026-10-13-outlined-same-radicand-products",
       "source_review": "scope-v1.json",
       "contract": {
@@ -2834,7 +2834,7 @@
         "Static symbol sizes and first stack adjustments do not establish cause, whole-program size or peak stack use.",
         "P4 allows only stronger cached facts, never contradiction or weakening."
       ],
-      "next_step": "Run the fixed 90-measurement scalar trial and 18 preflights after all builds, then independently assess every contrast and inspect existing binary code generation. No sample extension.",
+      "next_step": "Commit and run measure_v2.py, independently assess its unchanged 90-measurement plan, then inspect the existing binaries with inspect_codegen_v2.py.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2939,6 +2939,13 @@
           "cancelled_radical_capacity": 0,
           "cancelled_atom_capacity": 0
         }
+      },
+      "cost_setup_failure": {
+        "evidence": "cost-setup-failure-v1.json",
+        "cause": "The binary-output parent used a version suffix absent from the frozen work directory.",
+        "commands_executed": 0,
+        "measurements_executed": 0,
+        "correction": "Version 2 fixes the binary parent and uses fresh cost output paths; sources, completed qualification, cost targets and fixed samples are unchanged."
       }
     }
   },

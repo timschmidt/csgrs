@@ -1,0 +1,22 @@
+{
+  "status": "setup-failure-before-any-build-or-probe",
+  "runner_sha256": "1700a84bac3010b122f106f28bd15aecec4fc98c4f0d561c4e488ec1ab1c0992",
+  "preparation_sha256": "80150bd77492a8bc1aa841b542ded888d8054bf0702ded3d9d6cd735c27f9733",
+  "correctness_sha256": "a57ccb757eead397f09472ded6e0c41094d027187a7c29f6483abcb9e8813cc3",
+  "exception": "FileNotFoundError: missing target/outlined-same-radicand-products-v1 parent for cost-v1-binaries",
+  "failing_line": 38,
+  "exit_code": 1,
+  "commands_executed": 0,
+  "measurements_executed": 0,
+  "preflights_executed": 0,
+  "cost_v1_directory_empty": true,
+  "all_cost_targets_absent": true,
+  "sources_and_qualification_unchanged": true,
+  "corrected_runner_sha256": "837b1dd04dca086fb20998dcff7ee8504ac698e2ae3976c1b4416712499634c6",
+  "corrected_assessor_sha256": "39e4aa1ae6ab18a41a4782d8f006f29ffb405eb79e516411151d8f2e50594bd2",
+  "new_binary_directory": "/home/tim/Documents/GitHub/workspace/csgrs/target/outlined-same-radicand-products/cost-v2-binaries",
+  "correction": "Correct binary parent and use fresh version-2 cost outputs/assessor. Keep version-1 qualification and all source maps. Bind this failure in the new protocol and verify it around each command.",
+  "sample_plan_changed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

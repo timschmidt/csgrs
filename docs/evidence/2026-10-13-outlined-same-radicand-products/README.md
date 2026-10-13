@@ -66,3 +66,10 @@ outlined both reuse the capacity-one input buffer in the surviving-radical
 control and release radical capacity on cancellation; baseline capacities are
 four in both cases. Empty atom capacities are zero throughout. These local
 observations do not establish total memory or timing behavior.
+
+The first cost runner stopped during directory setup, before any build,
+preflight or measurement. Its binary parent had an incorrect version suffix.
+The [failure record](cost-setup-failure-v1.json) preserves the original runner
+and confirms that every cost target is absent. Version 2 corrects that parent
+and uses fresh cost output paths. Frozen sources, completed qualification,
+probe code, sample counts and block order are unchanged; no sample is replaced.
