@@ -30,8 +30,12 @@ Construction, first, warm, cloned and opaque controls retain every sample.
 No smaller-layout or reduced-allocation result can excuse a significant
 performance regression.
 
-Preparation and qualification inputs are ready but have not executed. Both
-variants will use fresh sources and targets. All arithmetic, insertion order,
+Preparation froze a 10,134-file baseline and a 10,135-file candidate. The
+baseline adds only shared tests and their declarations to the parent. The
+candidate differs only in algebra.rs and its new private storage helper. Exact
+parent-token recovery, unchanged manifests/lockfiles, identical shared tests
+and main/native source guards pass. Qualification is running serially from
+fresh targets; the fixed cost runners are prepared but unexecuted. All arithmetic, insertion order,
 eight-term/eight-radical bounds, original work/depth limits and the mandatory
 original retry remain intact, including release of the first query memo.
 Manifests, lockfiles, the main runtime and the 35 pending native entries stay
