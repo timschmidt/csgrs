@@ -1,6 +1,6 @@
 This candidate adds a private direct product for coefficients containing one
-equal, non-unit radicand on each side. Inputs and fixed qualification/cost
-protocols are prepared; no source is qualified or admitted yet.
+equal, non-unit radicand on each side. Preparation passed and both source maps are frozen. Qualification and
+costs remain pending; no runtime is admitted.
 
 The [coverage diagnostic](../2026-10-13-same-radicand-product-coverage/README.md)
 observed 6,379,817 equal-radicand single-radical/no-atom products, or 29.06% of
@@ -50,3 +50,10 @@ receipts, complete report bytes, production CLI size and remaining workflows
 are separate retention requirements. The full plan remains incomplete, with
 all 39 properties, 14 targets and crate future work in scope. Individual ledger
 statuses remain unchanged.
+
+Preparation freezes 10,136 files per variant. Their only differing file is the
+declared algebra implementation; all 28 shared tests are byte-identical. The
+original general fallback is recovered exactly, and the test-only oracle
+matches the parent method after its name change and formatting. Manifests,
+lockfiles, parent source, main runtime and all 35 pending native paths remain
+unchanged. Source maps and delta archives are committed before compilation.

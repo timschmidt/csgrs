@@ -2452,7 +2452,7 @@
       "scope_wording_review": "Individual property/target statuses remain unchanged; the full plan remains incomplete and all 39 properties, 14 targets and crate future work stay in scope."
     },
     "direct_same_radicand_products": {
-      "status": "prototype-inputs-prepared-qualification-and-costs-pending",
+      "status": "frozen-direct-product-variants-await-scalar-qualification",
       "evidence": "docs/evidence/2026-10-13-direct-same-radicand-products",
       "contract": "After the original opaque-product guard, recognize exactly one equal non-unit radicand on each side. Preserve arithmetic order and zero-skipping, select the same original left/right radicand payload, reuse the owned left vector for a surviving radical and discard scratch buffers on exact cancellation. General fallback, Box cache layout, memo, work/depth limits and mandatory original retry are unchanged.",
       "coverage_motivation": "6,379,817 observed equal-radicand single-radical/no-atom products, 29.05971939075416 percent of 21,954,159 multiplications. These are instrumented operation counts, not eligibility counts for the non-unit guard, time shares or savings.",
@@ -2507,9 +2507,18 @@
           ]
         ]
       },
-      "next_step": "Freeze the committed inputs and exact fallback/oracle recovery, run both variants through scalar qualification, then execute the fixed scalar costs only if qualification passes.",
+      "next_step": "Run the committed 28-command scalar qualification in fresh targets, then assess it independently before starting the fixed cost trial.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation": {
+        "status": "passed",
+        "source_files_per_variant": 10136,
+        "only_variant_difference": "crates/hyperreal/src/computable/node/algebra.rs",
+        "shared_tests": 28,
+        "original_general_fallback_recovered": true,
+        "original_test_oracle_verified": true,
+        "main_and_35_pending_native_paths_unchanged": true
+      }
     }
   },
   "status_meanings": {
