@@ -3924,19 +3924,25 @@
       }
     },
     "drc_process_allocator": {
-      "status": "frozen-sources-ready-for-serial-qualification",
+      "status": "serial-qualification-running-conditional-cost-runners-ready",
       "evidence": "docs/evidence/2026-10-13-drc-process-allocator/preparation-v2/protocol.json",
-      "result": "V2 source preparation verifies the unchanged parent, 10132-file baseline, 10133-file candidate and 150 archived dependency/source inputs. Shared allocator tests are identical; format and locked metadata pass. V1 stopped before copying or compilation because checksum manifests were absent; preserved and replaced with locked-archive verification.",
-      "next_step": "Freeze the baseline and candidate source copies, commit their input identities, then run serial DRC qualification and the two original native gates. Execute the fixed application cost design only if both candidate gates pass.",
+      "result": "Baseline formatting, both strict Clippy modes, two shared allocator controls, all 1646 DRC tests, warning-denied docs and both executable allocator-identity checks pass. Original gates and candidate qualification remain in progress. Conditional application runners are prepared but have not executed.",
+      "next_step": "Complete both variants and independently assess original gates. The fixed cost runner requires both candidate gates to pass before any application measurement.",
       "source_review_complete": true,
       "prototype_prepared": true,
-      "qualification_executed": false,
+      "qualification_executed": true,
       "conditional_costs_executed": false,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation_version": 2,
-      "qualification_version": 2
+      "qualification_version": 2,
+      "conditional_cost_runners": {
+        "runner": "docs/evidence/2026-10-13-drc-process-allocator/application_costs_v1.py",
+        "assessor": "docs/evidence/2026-10-13-drc-process-allocator/assess_application_v1.py",
+        "unchanged_design": "4 complete-report preflights, 20 full-board samples, 10 batches of 50 fresh help processes, no sample extension/filtering.",
+        "prior_reports": "Reuse the 108 frozen endpoint replay inputs at identical absolute paths and compare complete bytes against both current variants and earlier reports."
+      }
     }
   },
   "status_meanings": {
