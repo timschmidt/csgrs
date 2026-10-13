@@ -45,16 +45,28 @@ opaque left operand that owns the same node whose closed cache is borrowed.
 Shared projection/storage/memo/alias tests and inherited cache/P4 controls
 remain unchanged.
 
-Qualification is running 28 sequential commands across two fresh
+All 28 qualification commands passed across two fresh
 targets: focused controls, default/all-feature scalar libraries, 28 doctests
 per variant, formatting, strict default/all-feature/all-target Clippy and
 warning-denied docs. Counts overlap. Existing layouts, memo counts, ordinary
 copy sharing and the temporary product-lookup result size are recorded.
 
-After qualification, three unchanged scalar suites will run twelve preflights
+With qualification complete, three unchanged scalar suites will run twelve preflights
 and sixty measurements in five fixed paired blocks. Timing and allocation
 executables are separate, all builds finish before probes, and all samples
 are retained. No earlier sample set is extended. Native correctness, costs,
 reports and production size remain separate admission obligations. Both full
 fixtures and the 120-second board worker-CPU and 60-second neck check-body-wall
 assertions remain unchanged. The full properties plan is still open.
+
+The [independent qualification assessment](correctness-v1.json) verifies every
+command, log and source binding. Baseline passes 894 all-feature and 807 default
+library tests; candidate passes 902 and 815. Each passes 28 doctests. The eight
+private controls also pass, including concurrent readers/writers and poison
+recovery; they do not prove all possible schedules or a lock-duration bound.
+
+All eight existing layouts match, including 56-byte scratch coefficients,
+32-byte closed coefficients and 64-byte cache values. The temporary product
+lookup result is 32 bytes; no node or cache field was added. Memo counts remain
+1/1/2 for retained/original/opaque controls, and ordinary copying remains 0/0
+for the recorded sharing checks. Costs and native admission remain open.

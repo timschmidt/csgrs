@@ -1,0 +1,812 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.624795469921082,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-projection-regressions",
+    "variant": "baseline",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 27.466380388010293,
+    "stdout_sha256": "89eb5079d893ce73168c1bd78da8da3daf80c92173ee56abe2b1e87969590fef",
+    "stderr_sha256": "4121ff6d3050c756e7c96fab781288c804c08bbac48073214df25971d7ae94b1"
+  },
+  {
+    "name": "baseline-storage-regressions",
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.155261960811913,
+    "stdout_sha256": "ec278804e72c83fe0940470cc6255815972860dcd5ebe58d7fb63ce9560d61c3",
+    "stderr_sha256": "79e63f9af561bdae7779f9ffd8ae46d310e8e628e15ca145ec67a9af747aaef0"
+  },
+  {
+    "name": "baseline-memo-regressions",
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15020775701850653,
+    "stdout_sha256": "4c07176726695048c8c8c1f27de1c1b6ef5a8308cb207fd1dec90641ded05d92",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-alias-regressions",
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15393662173300982,
+    "stdout_sha256": "7a2dd8d8d8ec856a34dba2b244fd3cb3f96e9aa440d6cd972c146b40b579c40b",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-buffer-ownership",
+    "variant": "baseline",
+    "phase": "buffer-ownership",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "cached_product::",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14622760098427534,
+    "stdout_sha256": "62aef7e8d878582cc014f6317b76f2abbfa0ce30f4457a1eb15b94067359e3c3",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-cache-frontiers",
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16353679401800036,
+    "stdout_sha256": "dc9ca259f4a6b06561df6196d1547c2bcafadad27ba9b3d1164d570f03ec61bc",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-sign-regressions",
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.154504862613976,
+    "stdout_sha256": "e4b81c3fea8ea50c4325655bf671fa3ccd3ce73fc4f7a098f8f952837c96cc65",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-all-feature-library",
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.48256725538522,
+    "stdout_sha256": "b82d4e209833142e50950fbe400b09a410aa19827e8da06d60cd2d7588da9196",
+    "stderr_sha256": "cbcbb4755f57d069c9a2ffad20f51874195be6b2f2003a94e34c5ddfbbbb41c3"
+  },
+  {
+    "name": "baseline-default-library",
+    "variant": "baseline",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.20653499197215,
+    "stdout_sha256": "7b2e7602c0b5786e8e81cf4c28d75e2eaf7e8fe510f1e0e6596bf0cb226bbfa9",
+    "stderr_sha256": "084c3d972b872a560a0b652828313f619c339f97f135ce96bb1c7d06944d261b"
+  },
+  {
+    "name": "baseline-doctests",
+    "variant": "baseline",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.266078142914921,
+    "stdout_sha256": "c7f2cb80bd32b5e425585756dc120daa0a547604b0ff5d346f0417b20a1aabd1",
+    "stderr_sha256": "206d52767bf1ace598cffd173dd59fa437e33a127b6700d49f18f1363db79f8c"
+  },
+  {
+    "name": "baseline-all-feature-clippy",
+    "variant": "baseline",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.956504776142538,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "460e2e93dc0349f6436fed30b35fa49245233a9761b19f44d369b9f64bb63264"
+  },
+  {
+    "name": "baseline-default-clippy",
+    "variant": "baseline",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.042038954328746,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "4c081ff003cacd94bb455b996ccab235ebb7cafd6ac8de5533e931d558f83700"
+  },
+  {
+    "name": "baseline-docs",
+    "variant": "baseline",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.431722429115325,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a7a1a23c4b5aeca400cbfd479dd66fdf0328deb7ed93c261bcae2203f98d7f70"
+  },
+  {
+    "name": "candidate-format",
+    "variant": "candidate",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.529820756986737,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-projection-regressions",
+    "variant": "candidate",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.993675218895078,
+    "stdout_sha256": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "stderr_sha256": "820073b4241e88d9bd7dfe3bf4193fac3c88b3e7afabf016d98f14ca2a6fdb48"
+  },
+  {
+    "name": "candidate-storage-regressions",
+    "variant": "candidate",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1697842157445848,
+    "stdout_sha256": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "stderr_sha256": "3386f85b2680f76c3ddfa0aaca194693e3286abf5ad8931c7544e601f80bf25a"
+  },
+  {
+    "name": "candidate-memo-regressions",
+    "variant": "candidate",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15637760516256094,
+    "stdout_sha256": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "stderr_sha256": "3386f85b2680f76c3ddfa0aaca194693e3286abf5ad8931c7544e601f80bf25a"
+  },
+  {
+    "name": "candidate-alias-regressions",
+    "variant": "candidate",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14965555490925908,
+    "stdout_sha256": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "stderr_sha256": "393bb1f0be04d28abf7b0ecafc4a76393848de51b152cb9c57f2b30ec436bfd4"
+  },
+  {
+    "name": "candidate-buffer-ownership",
+    "variant": "candidate",
+    "phase": "buffer-ownership",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "cached_product::",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14383701421320438,
+    "stdout_sha256": "cf0d7052117b1e58edbd5f3faa96f5b4be5d8c2fa351f50e295e4d4f7e6743b9",
+    "stderr_sha256": "168632ef65a0bd20210a7d26ed1728a0a13ae5be2adfad7da4bc2056300af8b5"
+  },
+  {
+    "name": "candidate-cache-frontiers",
+    "variant": "candidate",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16938639292493463,
+    "stdout_sha256": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "stderr_sha256": "3386f85b2680f76c3ddfa0aaca194693e3286abf5ad8931c7544e601f80bf25a"
+  },
+  {
+    "name": "candidate-sign-regressions",
+    "variant": "candidate",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14543233439326286,
+    "stdout_sha256": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "stderr_sha256": "393bb1f0be04d28abf7b0ecafc4a76393848de51b152cb9c57f2b30ec436bfd4"
+  },
+  {
+    "name": "candidate-all-feature-library",
+    "variant": "candidate",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.4327443591319025,
+    "stdout_sha256": "8066945cc3622ec68645b5878f496d8b8b9d5db2e2367a129bd68b198ba91059",
+    "stderr_sha256": "cab5c8e46135eb4ddd2d6687ae1e97f46f02c1aa66848e36a250ea8e9b17ad50"
+  },
+  {
+    "name": "candidate-default-library",
+    "variant": "candidate",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.53373886086047,
+    "stdout_sha256": "51455d5ab69e26265ead84d19e20a967a776babd8d69f53b044e614d3f7a0099",
+    "stderr_sha256": "80cb31b8b04f4c318ce04b4788d74b5bd19ca4431bd8b3c499357b381d36de74"
+  },
+  {
+    "name": "candidate-doctests",
+    "variant": "candidate",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.351175552234054,
+    "stdout_sha256": "65551ef255ea6fec148e95f02daf6e28b8e787a3fb226fb25188fcb359937aaa",
+    "stderr_sha256": "166f4b4eaee05c81626d49731b6b0426bafec7234e04b9ab653e624f759ad754"
+  },
+  {
+    "name": "candidate-all-feature-clippy",
+    "variant": "candidate",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.059673277195543,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f1029647a409cd0baec0b57325718630ff042bbb84a39a62c242f7042cc48c03"
+  },
+  {
+    "name": "candidate-default-clippy",
+    "variant": "candidate",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.340474624652416,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "689b6491ce08aa433dc6cf8930be1789e251b25605bbd720ae0bdacd1c81c886"
+  },
+  {
+    "name": "candidate-docs",
+    "variant": "candidate",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.358518614899367,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ca0967b5e31d262514017995bfbba82957c639b24551d477cab8a413c5b2e10c"
+  }
+]

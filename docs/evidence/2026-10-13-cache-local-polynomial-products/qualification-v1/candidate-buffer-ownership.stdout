@@ -1,0 +1,14 @@
+
+running 8 tests
+test computable::node::cached_product::tests::borrowed_product_preserves_box_buffers_and_releases_the_graph ... CACHED_PRODUCT_LAYOUT	32	64
+ok
+test computable::node::cached_product::tests::borrowed_products_match_owned_order_at_term_radical_and_power_frontiers ... ok
+test computable::node::cached_product::tests::cold_fallback_preserves_recognizer_work_and_memo_frontiers ... ok
+test computable::node::cached_product::tests::concurrent_product_readers_and_exact_approximation_writers_complete ... ok
+test computable::node::cached_product::tests::misses_return_original_left_buffers_without_creating_a_cache_or_owners ... ok
+test computable::node::cached_product::tests::opaque_left_can_reference_the_borrowed_node_without_evaluation ... ok
+test computable::node::cached_product::tests::poisoned_cache_recovers_for_products_and_subsequent_writes ... ok
+test computable::node::cached_product::tests::zero_work_hits_and_product_declines_preserve_reuse_and_memo_accounting ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

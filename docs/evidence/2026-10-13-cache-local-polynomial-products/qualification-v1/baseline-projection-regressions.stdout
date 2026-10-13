@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::projection_tests::affine_surd_queries_return_exact_signed_components ... ok
+test computable::node::projection_tests::concurrent_projections_keep_exact_outputs_and_release_the_graph ... ok
+test computable::node::projection_tests::multiradical_and_mixed_power_forms_decline_until_exact_cancellation ... ok
+test computable::node::projection_tests::pi_powers_preserve_rational_and_pi_projection_boundaries ... ok
+test computable::node::projection_tests::published_rational_sign_survives_high_precision_and_zero_depth_queries ... ok
+test computable::node::projection_tests::rational_and_zero_queries_reuse_closed_forms_at_zero_depth ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 888 filtered out; finished in 0.00s
+

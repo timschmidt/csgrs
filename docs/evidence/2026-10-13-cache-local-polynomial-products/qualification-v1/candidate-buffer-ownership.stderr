@@ -1,0 +1,6 @@
+    Finished `release` profile [optimized] target(s) in 0.12s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc)
+
+thread 'computable::node::cached_product::tests::poisoned_cache_recovers_for_products_and_subsequent_writes' (8752) panicked at crates/hyperreal/src/computable/node/cached_product.rs:446:13:
+deliberate poison for recovery control
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
