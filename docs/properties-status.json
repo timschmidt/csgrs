@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Compare complete unnormalized reports for both original boards against the frozen metadata-first parent using shared input paths; then decide retention with the original 138.312559051/120 CPU failure, passing separate copper-neck gate, all fixed control timings, phase memory increases and production executable size. Do not extend sampling to remove adverse controls."
+      "next_step": "Attribute the remaining cost tradeoffs before extending this candidate. In separate diagnostic copies of both frozen trees, observe whether the mixed-quadratic aggregation, warm polygon area and unit-rectangle controls execute endpoint classification, and which earlier stages warm the shared facts they use. Also trace the extra aborted-unknown first-query and approximate non-endpoint first-query allocations without changing original query order or retaining owners. Do not extend the fixed five-pair samples to remove adverse rows. Resolve the changed caller/cache-work behavior or reject this trial as a parent; then select the next concrete full-board cost from a fresh profile. The original 120-second worker CPU gate, broader native/workflow qualification and the entire properties/future-work plan remain open."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -214,7 +214,7 @@
       "runtime_admitted": false
     },
     "isolated_endpoint_coordinate_reuse": {
-      "status": "fixed-cost-controls-complete-report-replay-pending-no-runtime-admission",
+      "status": "retain-isolated-endpoint-proof-trial-for-cost-attribution-no-runtime-admission",
       "evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/validation-assessment-v1.json",
       "validation": {
         "endpoint-regressions": {
@@ -258,11 +258,15 @@
           "timing_note": "Process wall time includes setup and is not the asserted metric. Passing assertions need not print the measured interval."
         }
       ],
-      "next_step": "Compare complete unnormalized reports for both original boards against the frozen metadata-first parent using shared input paths; then decide retention with the original 138.312559051/120 CPU failure, passing separate copper-neck gate, all fixed control timings, phase memory increases and production executable size. Do not extend sampling to remove adverse controls.",
+      "next_step": "Attribute the remaining cost tradeoffs before extending this candidate. In separate diagnostic copies of both frozen trees, observe whether the mixed-quadratic aggregation, warm polygon area and unit-rectangle controls execute endpoint classification, and which earlier stages warm the shared facts they use. Also trace the extra aborted-unknown first-query and approximate non-endpoint first-query allocations without changing original query order or retaining owners. Do not extend the fixed five-pair samples to remove adverse rows. Resolve the changed caller/cache-work behavior or reject this trial as a parent; then select the next concrete full-board cost from a fresh profile. The original 120-second worker CPU gate, broader native/workflow qualification and the entire properties/future-work plan remain open.",
       "runtime_admitted": false,
       "cost_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/controls-assessment-v1.json",
       "cost_summary": "Twenty arc cost processes, ten broad capability processes and six effective final-abort processes complete. All variant witnesses match, all 231 historical witnesses are preserved, and every 210-row abort receipt set is identical. The 21 intended exact non-endpoint/off-circle query rows have median paired ratios from 0.267 to 0.635; 20 are faster in all five pairs and the remaining row in four.",
-      "cost_tradeoffs": "Approximate non-endpoint construction is slower in all five pairs (median 1.015). Approximate endpoint cloned queries have median 1.117 with four slower pairs. Nine broad operations are slower in all five pairs, including mixed-quadratic aggregation at 1.065 and warm polygon area at 1.047. Five memory rows have at least one increased median: opaque construction, off-circle warm, aborted-unknown first, approximate non-endpoint first and near-endpoint warm. Preserve every sample and phase; focused savings are not application speedup or admission evidence."
+      "cost_tradeoffs": "Approximate non-endpoint construction is slower in all five pairs (median 1.015). Approximate endpoint cloned queries have median 1.117 with four slower pairs. Nine broad operations are slower in all five pairs, including mixed-quadratic aggregation at 1.065 and warm polygon area at 1.047. Five memory rows have at least one increased median: opaque construction, off-circle warm, aborted-unknown first, approximate non-endpoint first and near-endpoint warm. Preserve every sample and phase; focused savings are not application speedup or admission evidence.",
+      "decision_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/decision-v1.json",
+      "report_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/report-assessment-v1.json",
+      "report_summary": "Both complete unnormalized reports are byte-identical across four fresh CLI runs on the same 108 extracted files: CPArti 147892 bytes / 12 findings and HVP109A 128807 bytes / 197 findings. Production executable size increases 968 bytes. Standalone durations and RSS do not establish a matched performance or memory improvement.",
+      "source_review": "Global Point2 equality, the original policy retry, later whole endpoint call, and point/radius/sweep order remain unchanged. Public normal-form docs now correctly describe the existing at-most-two 512-expansion passes."
     }
   },
   "status_meanings": {
