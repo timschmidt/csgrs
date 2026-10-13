@@ -1792,7 +1792,7 @@
       "native_executed": false
     },
     "retained_polynomial_projection": {
-      "status": "v2-sources-frozen-scalar-qualification-running",
+      "status": "v2-scalar-qualification-passed-fixed-costs-next",
       "evidence": "docs/evidence/2026-10-13-retained-polynomial-projection",
       "scope": "Three fresh variants: unchanged endpoint/P4 baseline, rejected recursive-view control and direct rational/pi/quadratic projection from owned or retained slices. Only five consumer/wrapper methods and private projection definitions change from the recursive runtime.",
       "controls": "Six new shared public-query controls, fourteen unchanged shared storage/memo/alias tests, inherited cache/P4 checks, five recursive-view controls and three projected helper controls. All configurations and focused counts overlap.",
@@ -1802,7 +1802,7 @@
         "Borrowed projection may change generated code and binary size.",
         "Root retained-copy counts do not predict application improvement."
       ],
-      "next_step": "Finish all 42 sequential qualification commands, independently verify their evidence, then run eighteen preflights and ninety fixed scalar measurements only if qualification passes.",
+      "next_step": "Run the predeclared eighteen preflights and ninety measurements with separate fresh targets and unchanged probes. Assess all three contrasts from the same closed sample set; retain every adverse result. Native correctness, costs, full reports, production size and original full-fixture gates remain open.",
       "native_limits": "120-second full-board worker CPU and 60-second copper-neck check-body wall; no fixture or limit change.",
       "runtime_admitted": false,
       "plan_complete": false,
@@ -1823,6 +1823,85 @@
         "baseline_and_recursive_runtime_preserved": true,
         "only_declared_projection_changes": true,
         "main_and_pending_native_unchanged": true
+      },
+      "qualification_v2": {
+        "status": "three-variants-pass-scoped-scalar-qualification-costs-next",
+        "all_42_commands_passed": true,
+        "scope": "Each variant passes six shared projection controls, three shared alias-isolation controls, three shared publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests and 28 doctests. Baseline passes 894 all-feature and 807 default scalar tests; recursive control passes 899 and 812, including five retained-view controls; projected candidate passes 902 and 815, including those five and three additional private projection controls. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+        "evidence": "correctness-v2.json"
+      },
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "recursive": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "projected": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        }
+      },
+      "retained_view_layouts": {
+        "recursive": {
+          "PiLaurentValue": 24,
+          "CachedEvaluation": 64
+        },
+        "projected": {
+          "PiLaurentValue": 24,
+          "CachedEvaluation": 64
+        }
+      },
+      "memo_inventories": {
+        "baseline": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "recursive": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "projected": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        }
+      },
+      "ordinary_copy_sharing": {
+        "baseline": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "recursive": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "projected": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        }
       }
     }
   },
