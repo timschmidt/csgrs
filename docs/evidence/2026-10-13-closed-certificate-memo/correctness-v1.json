@@ -1,0 +1,196 @@
+{
+  "status": "two-variants-pass-scoped-scalar-qualification-costs-next",
+  "assessor_sha256": "16061deb70bc2ed7bccccf0da6811d586e64f79e226c7990335d651858aada14",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 885,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 798,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "passed": 885,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "default-library",
+      "passed": 798,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    },
+    "candidate": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "candidate": {
+      "original": 1,
+      "retained": 0,
+      "opaque": 2
+    }
+  },
+  "all_recorded_layouts_match": true,
+  "manifests_and_lockfiles_unchanged": true,
+  "source_parent_and_main_unchanged": true,
+  "all_22_commands_passed": true,
+  "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "remaining": "Fixed scalar time/allocation/size controls, native qualification and original full-fixture gates, endpoint/broad/abort controls, complete report bytes and production CLI size. Unchanged layouts are not total-memory or performance evidence; no runtime is admitted.",
+  "artifacts_sha256": {
+    "qualification-v1/baseline-all-feature-clippy.stderr": "7f91a755e9e8f214239753d9d0c73a2ab170aa249b7fad04a7854f0990963787",
+    "qualification-v1/baseline-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-all-feature-library.stderr": "692ca80ca18fc8f03fa961c23aa400a7ec708bfa248b531661c6e695b36a9ad8",
+    "qualification-v1/baseline-all-feature-library.stdout": "785a398033581f0c2979d4f1da27c096aefad734f0deb9e5b1fa968bb78d85c5",
+    "qualification-v1/baseline-cache-frontiers.stderr": "f9dcce9c314e6c7d310ef9f52163b6e04514686863610853873318ef28c25a05",
+    "qualification-v1/baseline-cache-frontiers.stdout": "f59f7dd5c1f4405a568065faf1710bc08008e353474124dc07de81c3994823d6",
+    "qualification-v1/baseline-default-clippy.stderr": "85e409bd1f307d20d3adc583937ee8c7226a83054ed436fb30be6ec76dd56e8f",
+    "qualification-v1/baseline-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-default-library.stderr": "8c787a8fbba07f0c63957d55160c00f88f1a286262c920b14049c57a2c126b3c",
+    "qualification-v1/baseline-default-library.stdout": "69de7f6fe64c23a9c9d60d8bf6cf63d3aa333617237c313483fad974d5726a22",
+    "qualification-v1/baseline-docs.stderr": "9399bccc76a9d4feac0f420fb2cd764b8b4692908f6a4cb48e98c8d334fc7ddc",
+    "qualification-v1/baseline-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-doctests.stderr": "f577944b397adda0618b0472fd269fe114736d1b1cc61df40ee865791a8d9c5e",
+    "qualification-v1/baseline-doctests.stdout": "415f06bec23df19c3250eb4f1cf05ab25af59a173ecb078af24cd4ce364fad2e",
+    "qualification-v1/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/baseline-memo-regressions.stderr": "f9dcce9c314e6c7d310ef9f52163b6e04514686863610853873318ef28c25a05",
+    "qualification-v1/baseline-memo-regressions.stdout": "9b3f4dcf37dae59bb8c99640980baaa3b97f6afe2e5488e1c25c634c1f7da572",
+    "qualification-v1/baseline-sign-regressions.stderr": "f9dcce9c314e6c7d310ef9f52163b6e04514686863610853873318ef28c25a05",
+    "qualification-v1/baseline-sign-regressions.stdout": "15b41999931e74c4c6de8e5eea1827dc82f3d36e0186debcadfc14c01d6ded17",
+    "qualification-v1/baseline-storage-regressions.stderr": "ebeb41cd7be053b677c98bb32ca14e031240f176f5b482dfb9b12bc432be28db",
+    "qualification-v1/baseline-storage-regressions.stdout": "9c780cd7bc3b19077e5554432c4485dab55363c3d1f775b59393296b744ed947",
+    "qualification-v1/candidate-all-feature-clippy.stderr": "d819d170cdaeec74ad46c4eb548c19492cfac40c956631d7ac4196071ab539d1",
+    "qualification-v1/candidate-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/candidate-all-feature-library.stderr": "26025ce419ddca2196ce64275ded76eb90d5227e0f56eac0f5559714316e7336",
+    "qualification-v1/candidate-all-feature-library.stdout": "62aeec7f51596faa6077a934d1b7dcee38594f74edd0b651fdcf16d305205d10",
+    "qualification-v1/candidate-cache-frontiers.stderr": "fedaef676ddfb233681a647f15b5bf4bfbba492d8cd587313854f92314858e46",
+    "qualification-v1/candidate-cache-frontiers.stdout": "f59f7dd5c1f4405a568065faf1710bc08008e353474124dc07de81c3994823d6",
+    "qualification-v1/candidate-default-clippy.stderr": "2d603da219e60471085dbe614e1f3797dba8e56e9c92f7ba357f007dd63b09a5",
+    "qualification-v1/candidate-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/candidate-default-library.stderr": "40d736d17b761b1c13a0f5d880efd1a69463b7a962a9eb68fc4499a63bccb09e",
+    "qualification-v1/candidate-default-library.stdout": "d358b50db41b3844d091625bb3bf1dc5f7c94f8ea86678dee71cc4122bd2c55b",
+    "qualification-v1/candidate-docs.stderr": "d8cee0bf510cf494aed21bd94e72370be3528d7f7507022e926d825cece966cf",
+    "qualification-v1/candidate-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/candidate-doctests.stderr": "1d217e5fb58d377d44645543f472404f9437ec1692daa9467af75639957a9e08",
+    "qualification-v1/candidate-doctests.stdout": "12311c0c959a3da90fdbe5e134e4ab85436f325752b799112782dcd8c1508b84",
+    "qualification-v1/candidate-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/candidate-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v1/candidate-memo-regressions.stderr": "22d23a3dc538fb4fec2b9d455861dbfc6c0e5e3ad96ec0c75733c2386d7644d8",
+    "qualification-v1/candidate-memo-regressions.stdout": "326f69cac8cdaf7c6c9a40c1768ac29679b242196cf0b7e052f00211d4e4abd6",
+    "qualification-v1/candidate-sign-regressions.stderr": "22d23a3dc538fb4fec2b9d455861dbfc6c0e5e3ad96ec0c75733c2386d7644d8",
+    "qualification-v1/candidate-sign-regressions.stdout": "15b41999931e74c4c6de8e5eea1827dc82f3d36e0186debcadfc14c01d6ded17",
+    "qualification-v1/candidate-storage-regressions.stderr": "1148584240d2a6ec17671e9ca8e4bd4ba81ad54444eda8eb8e85d50788e51460",
+    "qualification-v1/candidate-storage-regressions.stdout": "9c780cd7bc3b19077e5554432c4485dab55363c3d1f775b59393296b744ed947",
+    "qualification-v1/commands.json": "a145ba0cd4f4b515ef03d7f444fbae292bc9506047d144e6ff4206847af7a4a1",
+    "qualification-v1/layouts.json": "f42dc076f7a8e00981365bc7fbea55c2bd3c3635b8130fbcb8ffa2b8903e83d9",
+    "qualification-v1/memo-inventories.json": "f79c632b0664595686647bc156ba12e12121d1a8c03a08db6dc1047b7362ece6",
+    "qualification-v1/protocol.json": "f481c7712fc059fcb3ea616c529786c5489412a0b84b357cca5b1f8d5a117de3",
+    "qualification-v1/result.json": "c4877f821d2db89d015c155a1ceff08ac723c747a798ca38594f85668d0dad6d",
+    "qualification-v1/tests.json": "5d1aeea47f82d51236d6679927aa338ad4b1f3c109c318b339ae769558647382"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,12 @@
+{
+  "baseline": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  },
+  "candidate": {
+    "original": 1,
+    "retained": 0,
+    "opaque": 2
+  }
+}
