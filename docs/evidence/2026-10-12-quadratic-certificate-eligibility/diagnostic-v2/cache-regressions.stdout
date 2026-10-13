@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::persistent_laurent_cache_tests::concurrent_publication_keeps_approximations_and_releases_the_graph ... ok
+test computable::node::persistent_laurent_cache_tests::expansion_at_a_term_limit_retries_the_original_proof ... ok
+test computable::node::persistent_laurent_cache_tests::integer_leaf_values_survive_word_boundaries_warming_and_cloning ... ok
+test computable::node::persistent_laurent_cache_tests::opaque_coefficients_are_not_retained_and_nodes_are_reclaimed ... ok
+test computable::node::persistent_laurent_cache_tests::successful_cold_rational_facts_survive_warming_and_cloning ... ok
+test computable::node::persistent_laurent_cache_tests::warm_proof_is_available_with_no_new_work ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 858 filtered out; finished in 0.02s
+

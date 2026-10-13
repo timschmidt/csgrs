@@ -1,0 +1,140 @@
+{
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.521603520959616,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diagnostic-format",
+      "command": [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs"
+      ],
+      "exit_code": 0,
+      "seconds": 0.7303817491047084,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "diagnostic-regression",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_certificate_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 28.99496537586674,
+      "sources_unchanged": true,
+      "stdout_sha256": "b9f6428fc47bce16b1e87b4e45f17efb388934d22a09b8cc0d16c75cd89b5ca6",
+      "stderr_sha256": "80877e32fcaf1071ed8a49ecd53d8097d820d9058ec720708dd06d3f4f04affe"
+    },
+    {
+      "name": "cache-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 0.9160997970029712,
+      "sources_unchanged": true,
+      "stdout_sha256": "cdd445b05f6feed04abd06e7e43af62a31a12b888edf674e76fd85cd383b6edf",
+      "stderr_sha256": "a782cbb152f9a1d4f84def3fa65bd97e55691322697eb36adbc843d0b1712644"
+    },
+    {
+      "name": "strict-scalar-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 10.124596924055368,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "b6f3651d44bef35cffe8006d70502b8bbc7a09231dd3a7ae55ebad348f54efdd"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "exit_code": 0,
+      "seconds": 123.85456447210163,
+      "sources_unchanged": true,
+      "stdout_sha256": "45c14bbabe9345b428fa2245b7b1f70bcf41fc0bac4df077baec7c72999e5658",
+      "stderr_sha256": "d2012ccf5c6bd50bce6f29761e1db5779a7e569863e789b3e05a10902a98af2d"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-eligibility/diagnostic-v2/target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "exit_code": 101,
+      "seconds": 165.00529903173447,
+      "sources_unchanged": true,
+      "stdout_sha256": "d0dc2cbdefa91a62fd83f3eec75a90e8419c71092a208f71081416cc69585b7a",
+      "stderr_sha256": "be6858fc46d8ceb9ee6b416b97124a97a08ef3b29c58db8f3cddc3daf501ab5b"
+    }
+  ],
+  "complete": true,
+  "shape_rows": 76,
+  "mask_rows": 28,
+  "observed_calls": 19296432,
+  "timing_is_perturbed": true,
+  "runtime_admitted": false
+}

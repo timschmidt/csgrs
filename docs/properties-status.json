@@ -82,7 +82,16 @@
       "native_result": "Twelve curve and 26 DRC focused tests plus strict consumer Clippy pass. The unchanged copper-neck check passes its 60-second assertion. Full-board worker CPU remains above the original 120-second limit at 154.353265288 seconds, with 12/197 findings.",
       "report_evidence": "docs/evidence/2026-10-12-small-integer-certificates/report-assessment-v1.json",
       "report_result": "Complete unnormalized JSON reports are byte-identical against the persistent-cache baseline: CPArti 147909 bytes / 12 findings and HVP109A 128818 bytes / 197 findings. Both sources use the same pending native geometry. Four fresh CLI processes preserve all 108 extracted input files.",
-      "next_step": "Use a separate diagnostic build of the current integer-leaf candidate to classify successful quadratic projections by root operation and locations of retained child certificates. Quantify the eligibility of a shallow consumer that reads existing certificates before doing arithmetic; preserve the original fallback and all unsupported/first/warm/cloned controls. Also retain unresolved scalar control-cost and memory observations, recognition-budget documentation, broader integration and the full properties plan."
+      "next_step": "Prototype consuming the existing owned Laurent coefficient when merging equal exponents, avoiding its temporary vector clone. Preserve arithmetic order, radical/atom limits, recursive memo ownership at traversal boundaries and original fallback. Use the same three fixed cost probes, focused cache/frontier regressions and original native gates before any admission. Earlier inline-vector experiments remain rejected."
+    },
+    "isolated_quadratic_eligibility": {
+      "status": "diagnostic-complete-shallow-path-not-advanced",
+      "evidence": "docs/evidence/2026-10-12-quadratic-certificate-eligibility/assessment-v2.json",
+      "qualification": "One diagnostic regression, six inherited cache regressions, formatting and strict release all-feature all-target scalar Clippy pass. These are focused diagnostic checks, not full runtime admission.",
+      "result": "Observed 19296432 calls. Shallow existing-certificate lanes cover 2448961 successful calls (14.15% of successes), accounting for 0.52533 of 46.4174 instrumented projection seconds (1.13%). No eligible query declined. LinearCombination3 did not appear in the exiting-thread counters.",
+      "decision": "Do not build the shallow consumer as the next board-cost candidate: eligible calls occupy only a small observed projection-time share. Keep both earlier recursive direct-consumer rejections.",
+      "remaining": "Prototype consuming the existing owned Laurent coefficient when merging equal exponents, avoiding its temporary vector clone. Preserve arithmetic order, radical/atom limits, recursive memo ownership at traversal boundaries and original fallback. Use the same three fixed cost probes, focused cache/frontier regressions and original native gates before any admission. Earlier inline-vector experiments remain rejected.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {

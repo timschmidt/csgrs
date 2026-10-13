@@ -1,0 +1,139 @@
+   Compiling proc-macro2 v1.0.106
+   Compiling unicode-ident v1.0.24
+   Compiling quote v1.0.45
+   Compiling libc v0.2.186
+   Compiling cfg-if v1.0.4
+   Compiling autocfg v1.5.0
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling zerocopy v0.8.48
+   Compiling getrandom v0.3.4
+   Compiling crossbeam-utils v0.8.21
+   Compiling getrandom v0.4.2
+   Compiling zmij v1.0.21
+   Compiling rustix v1.1.4
+   Compiling either v1.15.0
+   Compiling rayon-core v1.13.0
+   Compiling bitflags v2.11.1
+   Compiling serde_json v1.0.149
+   Compiling regex-syntax v0.8.10
+   Compiling linux-raw-sys v0.12.1
+   Compiling once_cell v1.21.4
+   Compiling gmp-mpfr-sys v1.7.1
+   Compiling anstyle v1.0.14
+   Compiling libm v0.2.16
+   Compiling plotters-backend v0.3.7
+   Compiling clap_lex v1.1.1
+   Compiling num-traits v0.2.19
+   Compiling memchr v2.8.0
+   Compiling ciborium-io v0.2.2
+   Compiling itoa v1.0.18
+   Compiling fastrand v2.4.1
+   Compiling plotters-svg v0.3.7
+   Compiling clap_builder v4.6.7
+   Compiling itertools v0.10.5
+   Compiling fnv v1.0.7
+   Compiling rug v1.30.0
+   Compiling same-file v1.0.6
+   Compiling bit-vec v0.8.0
+   Compiling crossbeam-epoch v0.9.18
+   Compiling quick-error v1.2.3
+   Compiling cast v0.3.0
+   Compiling walkdir v2.5.0
+   Compiling unarray v0.1.4
+   Compiling syn v2.0.117
+   Compiling crossbeam-deque v0.8.6
+   Compiling bit-set v0.8.0
+   Compiling az v1.3.0
+   Compiling oorandom v11.1.5
+   Compiling anes v0.1.6
+   Compiling wait-timeout v0.2.1
+   Compiling num-integer v0.1.46
+   Compiling plotters v0.3.7
+   Compiling rand_core v0.9.5
+   Compiling is-terminal v0.4.17
+   Compiling num-iter v0.1.45
+   Compiling rayon v1.12.0
+   Compiling rand_xorshift v0.4.0
+   Compiling rand v0.9.4
+   Compiling criterion-plot v0.5.0
+   Compiling regex-automata v0.4.14
+   Compiling tempfile v3.27.0
+   Compiling clap v4.6.7
+   Compiling rusty-fork v0.3.1
+   Compiling serde_derive v1.0.228
+   Compiling zerocopy-derive v0.8.48
+   Compiling regex v1.12.3
+   Compiling num-bigint v0.4.6
+   Compiling tinytemplate v1.2.1
+   Compiling num-complex v0.4.6
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling half v2.7.1
+   Compiling ppv-lite86 v0.2.21
+   Compiling ciborium-ll v0.2.2
+   Compiling rand_chacha v0.9.0
+   Compiling ciborium v0.2.2
+   Compiling proptest v1.11.0
+   Compiling criterion v0.5.1
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-eligibility/diagnostic-v1/source/crates/hyperreal)
+error[E0271]: type mismatch resolving `<Iter<'_, Rational> as IntoIterator>::Item == &Computable`
+   --> crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs:145:24
+    |
+145 |                 .chain(combination.values.iter())
+    |                  ----- ^^^^^^^^^^^^^^^^^^^^^^^^^ expected `&Computable`, found `&Rational`
+    |                  |
+    |                  required by a bound introduced by this call
+    |
+    = note: expected reference `&node::Computable`
+               found reference `&rational::arithmetic::Rational`
+note: the method call chain might not have had the expected associated types
+   --> crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs:145:43
+    |
+145 |                 .chain(combination.values.iter())
+    |                        ------------------ ^^^^^^ `IntoIterator::Item` is `&Rational` here
+    |                        |
+    |                        this expression has type `[Rational; 3]`
+note: required by a bound in `std::iter::Iterator::chain`
+   --> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/iter/traits/iterator.rs:513:33
+    |
+510 |     fn chain<U>(self, other: U) -> Chain<Self, U::IntoIter>
+    |        ----- required by a bound in this associated function
+...
+513 |         U: [const] IntoIterator<Item = Self::Item>,
+    |                                 ^^^^^^^^^^^^^^^^^ required by this bound in `Iterator::chain`
+
+error[E0599]: the method `enumerate` exists for struct `Chain<Iter<'_, Computable>, Iter<'_, Rational>>`, but its trait bounds were not satisfied
+   --> crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs:146:18
+    |
+142 |               for (index, child) in combination
+    |  ___________________________________-
+143 | |                 .coefficients
+144 | |                 .iter()
+145 | |                 .chain(combination.values.iter())
+146 | |                 .enumerate()
+    | |                 -^^^^^^^^^ method cannot be called on `Chain<Iter<'_, Computable>, Iter<'_, Rational>>` due to unsatisfied trait bounds
+    | |_________________|
+    |
+    |
+   ::: /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/slice/iter.rs:67:1
+    |
+ 67 |   pub struct Iter<'a, T: 'a> {
+    |   -------------------------- doesn't satisfy `<_ as Iterator>::Item = &Computable`
+    |
+   ::: /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/iter/adapters/chain.rs:23:1
+    |
+ 23 |   pub struct Chain<A, B> {
+    |   ---------------------- doesn't satisfy `_: Iterator`
+    |
+    = note: the following trait bounds were not satisfied:
+            `<std::slice::Iter<'_, rational::arithmetic::Rational> as Iterator>::Item = &node::Computable`
+            which is required by `std::iter::Chain<std::slice::Iter<'_, node::Computable>, std::slice::Iter<'_, rational::arithmetic::Rational>>: Iterator`
+            `std::iter::Chain<std::slice::Iter<'_, node::Computable>, std::slice::Iter<'_, rational::arithmetic::Rational>>: Iterator`
+            which is required by `&mut std::iter::Chain<std::slice::Iter<'_, node::Computable>, std::slice::Iter<'_, rational::arithmetic::Rational>>: Iterator`
+    = note: the full name for the type has been written to '/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-eligibility/diagnostic-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc.long-type-18343894605248705590.txt'
+    = note: consider using `--verbose` to print the full type name to the console
+
+Some errors have detailed explanations: E0271, E0599.
+For more information about an error, try `rustc --explain E0271`.
+error: could not compile `hyperreal` (lib test) due to 2 previous errors

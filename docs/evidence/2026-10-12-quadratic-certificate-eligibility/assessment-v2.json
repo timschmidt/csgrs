@@ -1,0 +1,159 @@
+{
+  "status": "diagnostic-complete-shallow-path-not-advanced",
+  "previous_goal_turn": "progress",
+  "scope": "Root and immediate-child certificate observations on the complete original two-board test; only exiting-thread counters are collected.",
+  "evidence_sha256": {
+    "diagnose_v1.py": "bd01634a1b80d70aae18b3388e8736ed083276f7fa6e8802dce4fceabe9a5c20",
+    "diagnostic-v1/result.json": "34971f315dcad721cb3be9b4731f692543e703cbfd2d6b6a169df8299f6b6bf4",
+    "diagnostic-v1-correction.json": "34fcdc29d579fe0d64f22a6bf312820c15fd10e0f39688942821d2579894dff5",
+    "diagnose_v2.py": "f5f887b718803df076caf31cf9058c33147d2e168c9eb3150f98b3a6b19df5f9",
+    "diagnostic-v2/protocol.json": "f410b20bf21c66e1425e3e32454bc7444bcaf41f801d1c1773668f238a9c057a",
+    "diagnostic-v2/result.json": "1df7e50ca3a93652e2186267f058447f18f82f7c80dd685cab1e07222a60be5f",
+    "diagnostic-v2/counters.json": "49190f3b9fb98572353a610d124ea862c567daa4ec869193dd8423edd652d804",
+    "diagnostic-v2/instrumentation.patch": "64185534bbfa540b72ae8d8fb278f073c93a09743aba3d022abd351303d259d2",
+    "diagnostic-v2/instrumentation.tar.gz": "c6bf954ba95a0099b77c9a3580ee07543a3d3e009818d78cf6d94b716049a0eb"
+  },
+  "qualification": "One diagnostic regression, six inherited cache regressions, formatting and strict release all-feature all-target scalar Clippy pass. These are focused diagnostic checks, not full runtime admission.",
+  "failed_attempt": "The frozen v1 build failed before executing tests because LinearCombination3 coefficients and values have different types. The corrected v2 observes only its Computable coefficients; the original source and compiler logs remain available.",
+  "aggregate": {
+    "lane": {
+      "affine_add": {
+        "calls": 2323864,
+        "successes": 2323864,
+        "projection_nanos": 502255622
+      },
+      "decline": {
+        "calls": 16847471,
+        "successes": 14857461,
+        "projection_nanos": 45892073358
+      },
+      "negate": {
+        "calls": 1244,
+        "successes": 1244,
+        "projection_nanos": 389589
+      },
+      "offset_at_most_64": {
+        "calls": 49,
+        "successes": 49,
+        "projection_nanos": 30529
+      },
+      "rational_add": {
+        "calls": 52513,
+        "successes": 52513,
+        "projection_nanos": 15229638
+      },
+      "rational_scale": {
+        "calls": 837,
+        "successes": 837,
+        "projection_nanos": 477104
+      },
+      "retained_root": {
+        "calls": 70334,
+        "successes": 70334,
+        "projection_nanos": 6861788
+      },
+      "same_field_add": {
+        "calls": 120,
+        "successes": 120,
+        "projection_nanos": 85711
+      }
+    },
+    "operation": {
+      "add": {
+        "calls": 18641462,
+        "successes": 16728251,
+        "projection_nanos": 42499403161
+      },
+      "inverse": {
+        "calls": 129,
+        "successes": 21,
+        "projection_nanos": 4656510
+      },
+      "multiply": {
+        "calls": 588348,
+        "successes": 543194,
+        "projection_nanos": 2649076146
+      },
+      "negate": {
+        "calls": 39221,
+        "successes": 34745,
+        "projection_nanos": 124870949
+      },
+      "offset": {
+        "calls": 6463,
+        "successes": 63,
+        "projection_nanos": 2185359
+      },
+      "other": {
+        "calls": 5153,
+        "successes": 0,
+        "projection_nanos": 937624
+      },
+      "ratio": {
+        "calls": 148,
+        "successes": 148,
+        "projection_nanos": 16150
+      },
+      "sqrt": {
+        "calls": 15508,
+        "successes": 0,
+        "projection_nanos": 1136257440
+      }
+    },
+    "root": {
+      "multiradical": {
+        "calls": 4,
+        "successes": 0,
+        "projection_nanos": 68876
+      },
+      "quadratic": {
+        "calls": 206,
+        "successes": 206,
+        "projection_nanos": 27019
+      },
+      "rational": {
+        "calls": 70128,
+        "successes": 70128,
+        "projection_nanos": 6834769
+      },
+      "unretained": {
+        "calls": 19226094,
+        "successes": 17236088,
+        "projection_nanos": 46410472675
+      }
+    }
+  },
+  "totals": {
+    "calls": 19296432,
+    "successes": 17306422,
+    "projection_nanos": 46417403339
+  },
+  "shallow_eligible": {
+    "calls": 2448961,
+    "all_original_queries_succeeded": true,
+    "fraction_of_successes": 0.14150591034934892,
+    "projection_nanos": 525329981,
+    "fraction_of_observed_projection_nanos": 0.011317521946743984
+  },
+  "linear_combination3_rows_observed": 0,
+  "full_board": {
+    "exit_code": 101,
+    "worker_cpu_seconds": 162.689070218,
+    "unchanged_worker_limit_seconds": 120,
+    "findings": [
+      12,
+      197
+    ],
+    "report_equality_asserted_here": false
+  },
+  "limitations": [
+    "Observation, timing, TLS counters and Rational radicand equality perturb timing and cache warmth; this is not matched application performance evidence.",
+    "Projection wall timers exclude observation and cover a different boundary from the prior per-pass diagnostic. They are not additive whole-process CPU samples.",
+    "Counters come only from threads whose TLS destructors run. No universal call coverage or proof is claimed.",
+    "Finding counts do not establish report equality. The preceding separate integer-leaf report replay retains its own complete-byte evidence."
+  ],
+  "decision": "Do not build the shallow consumer as the next board-cost candidate: eligible calls occupy only a small observed projection-time share. Keep both earlier recursive direct-consumer rejections.",
+  "next_step": "Prototype consuming the existing owned Laurent coefficient when merging equal exponents, avoiding its temporary vector clone. Preserve arithmetic order, radical/atom limits, recursive memo ownership at traversal boundaries and original fallback. Use the same three fixed cost probes, focused cache/frontier regressions and original native gates before any admission. Earlier inline-vector experiments remain rejected.",
+  "runtime_admitted": false,
+  "full_properties_plan_complete": false
+}

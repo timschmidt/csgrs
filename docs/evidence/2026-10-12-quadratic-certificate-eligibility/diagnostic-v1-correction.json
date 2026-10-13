@@ -1,0 +1,14 @@
+{
+  "scope": "Correct the observer after the first build failed before executing a test.",
+  "failure": "The diagnostic tried to chain [Computable; 3] coefficients and [Rational; 3] values into one iterator. The compiler rejected the mismatched item types.",
+  "correction": "Inspect only the three Computable coefficients for LinearCombination3 child cache locations. Its Rational values are intrinsically exact and have no Computable cache cells. Update the mask contract accordingly.",
+  "failed_result_sha256": "34971f315dcad721cb3be9b4731f692543e703cbfd2d6b6a169df8299f6b6bf4",
+  "failed_protocol_sha256": "e8575b6bace7bc6b0f9cb94b60c8515e5428731b73d042a2f184227c28f274fc",
+  "failed_source_archive_sha256": "8cd987a60ddc1733f82c2a81fbcf34a3b3e3818487db429caf02c2f8426992f1",
+  "new_runner": "diagnose_v2.py",
+  "new_helper": "quadratic_certificate_diagnostic_v2.rs",
+  "new_source_and_target": "target/quadratic-certificate-eligibility/diagnostic-v2",
+  "failed_artifacts_preserved": true,
+  "runtime_candidate_unchanged": true,
+  "runtime_admitted": false
+}

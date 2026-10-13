@@ -1,0 +1,934 @@
+{
+  "shapes": [
+    {
+      "operation": "other",
+      "root": "unretained",
+      "left": "absent",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 5153,
+      "projection_nanos": 937624
+    },
+    {
+      "operation": "ratio",
+      "root": "unretained",
+      "left": "absent",
+      "right": "absent",
+      "lane": "decline",
+      "success": true,
+      "calls": 148,
+      "projection_nanos": 16150
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 311370,
+      "projection_nanos": 10096517505
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 3694950,
+      "projection_nanos": 14834902196
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": false,
+      "calls": 132378,
+      "projection_nanos": 4191400121
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": true,
+      "calls": 2923028,
+      "projection_nanos": 2080070484
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "retained_rational",
+      "lane": "decline",
+      "success": true,
+      "calls": 15642,
+      "projection_nanos": 24318163
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": true,
+      "calls": 357,
+      "projection_nanos": 1349068
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 19288,
+      "projection_nanos": 517883967
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 215677,
+      "projection_nanos": 302114343
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "retained_rational",
+      "lane": "rational_add",
+      "success": true,
+      "calls": 61,
+      "projection_nanos": 39949
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "retained_quadratic",
+      "lane": "affine_add",
+      "success": true,
+      "calls": 5087,
+      "projection_nanos": 1170012
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "retained_multiradical",
+      "lane": "decline",
+      "success": false,
+      "calls": 18,
+      "projection_nanos": 1283402
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 132,
+      "projection_nanos": 5094748
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 196216,
+      "projection_nanos": 160119338
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "intrinsic_rational",
+      "lane": "rational_add",
+      "success": true,
+      "calls": 52370,
+      "projection_nanos": 15159850
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "retained_rational",
+      "lane": "rational_add",
+      "success": true,
+      "calls": 82,
+      "projection_nanos": 29839
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "retained_quadratic",
+      "lane": "affine_add",
+      "success": true,
+      "calls": 110,
+      "projection_nanos": 38298
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 1400487,
+      "projection_nanos": 4351699195
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 7252619,
+      "projection_nanos": 4536200774
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "intrinsic_rational",
+      "lane": "affine_add",
+      "success": true,
+      "calls": 2318564,
+      "projection_nanos": 501006545
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_rational",
+      "lane": "affine_add",
+      "success": true,
+      "calls": 103,
+      "projection_nanos": 40767
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": false,
+      "calls": 46,
+      "projection_nanos": 2920590
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_quadratic",
+      "lane": "same_field_add",
+      "success": true,
+      "calls": 120,
+      "projection_nanos": 85711
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_multiradical",
+      "lane": "decline",
+      "success": false,
+      "calls": 1,
+      "projection_nanos": 25988
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 9799,
+      "projection_nanos": 453429858
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 2725,
+      "projection_nanos": 3417221
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": false,
+      "calls": 28618,
+      "projection_nanos": 385975789
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "retained_rational",
+      "lane": "decline",
+      "success": false,
+      "calls": 6,
+      "projection_nanos": 243924
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": false,
+      "calls": 11,
+      "projection_nanos": 147700
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_laurent",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 12,
+      "projection_nanos": 5600777
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_laurent",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 1,
+      "projection_nanos": 3550
+    },
+    {
+      "operation": "add",
+      "root": "unretained",
+      "left": "retained_laurent",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": false,
+      "calls": 11045,
+      "projection_nanos": 22197874
+    },
+    {
+      "operation": "add",
+      "root": "rational",
+      "left": "unavailable",
+      "right": "unavailable",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 49774,
+      "projection_nanos": 4858360
+    },
+    {
+      "operation": "add",
+      "root": "rational",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 737,
+      "projection_nanos": 54645
+    },
+    {
+      "operation": "add",
+      "root": "quadratic",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 28,
+      "projection_nanos": 2610
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 39005,
+      "projection_nanos": 990479883
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 477277,
+      "projection_nanos": 1210931086
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": false,
+      "calls": 2,
+      "projection_nanos": 227804
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "intrinsic_rational",
+      "lane": "decline",
+      "success": true,
+      "calls": 24,
+      "projection_nanos": 41578
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "retained_rational",
+      "lane": "decline",
+      "success": true,
+      "calls": 749,
+      "projection_nanos": 713757
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": false,
+      "calls": 38,
+      "projection_nanos": 6545562
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": true,
+      "calls": 1530,
+      "projection_nanos": 17152344
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 876,
+      "projection_nanos": 980644
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "intrinsic_rational",
+      "right": "retained_quadratic",
+      "lane": "rational_scale",
+      "success": true,
+      "calls": 470,
+      "projection_nanos": 339892
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 84,
+      "projection_nanos": 1667338
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 1621,
+      "projection_nanos": 2332745
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "retained_rational",
+      "lane": "rational_scale",
+      "success": true,
+      "calls": 96,
+      "projection_nanos": 43218
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "retained_quadratic",
+      "lane": "rational_scale",
+      "success": true,
+      "calls": 159,
+      "projection_nanos": 42227
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 2667,
+      "projection_nanos": 136771463
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 36862,
+      "projection_nanos": 158141113
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_rational",
+      "lane": "rational_scale",
+      "success": true,
+      "calls": 112,
+      "projection_nanos": 51767
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "retained_quadratic",
+      "lane": "decline",
+      "success": true,
+      "calls": 3529,
+      "projection_nanos": 5149395
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 3354,
+      "projection_nanos": 115216622
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": true,
+      "calls": 4,
+      "projection_nanos": 14529
+    },
+    {
+      "operation": "multiply",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "retained_multiradical",
+      "lane": "decline",
+      "success": true,
+      "calls": 128,
+      "projection_nanos": 222850
+    },
+    {
+      "operation": "multiply",
+      "root": "rational",
+      "left": "retained_rational",
+      "right": "retained_rational",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 343,
+      "projection_nanos": 32859
+    },
+    {
+      "operation": "multiply",
+      "root": "rational",
+      "left": "retained_quadratic",
+      "right": "retained_quadratic",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 19274,
+      "projection_nanos": 1888905
+    },
+    {
+      "operation": "multiply",
+      "root": "quadratic",
+      "left": "intrinsic_rational",
+      "right": "unavailable",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 24,
+      "projection_nanos": 3430
+    },
+    {
+      "operation": "multiply",
+      "root": "quadratic",
+      "left": "intrinsic_rational",
+      "right": "retained_quadratic",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 96,
+      "projection_nanos": 13579
+    },
+    {
+      "operation": "multiply",
+      "root": "quadratic",
+      "left": "retained_quadratic",
+      "right": "unavailable",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 20,
+      "projection_nanos": 2680
+    },
+    {
+      "operation": "multiply",
+      "root": "multiradical",
+      "left": "retained_multiradical",
+      "right": "unavailable",
+      "lane": "decline",
+      "success": false,
+      "calls": 4,
+      "projection_nanos": 68876
+    },
+    {
+      "operation": "negate",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 4387,
+      "projection_nanos": 83782023
+    },
+    {
+      "operation": "negate",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "decline",
+      "success": true,
+      "calls": 33477,
+      "projection_nanos": 39588225
+    },
+    {
+      "operation": "negate",
+      "root": "unretained",
+      "left": "retained_rational",
+      "right": "absent",
+      "lane": "negate",
+      "success": true,
+      "calls": 792,
+      "projection_nanos": 234457
+    },
+    {
+      "operation": "negate",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "absent",
+      "lane": "negate",
+      "success": true,
+      "calls": 452,
+      "projection_nanos": 155132
+    },
+    {
+      "operation": "negate",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 89,
+      "projection_nanos": 1108042
+    },
+    {
+      "operation": "negate",
+      "root": "quadratic",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 24,
+      "projection_nanos": 3070
+    },
+    {
+      "operation": "offset",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 6400,
+      "projection_nanos": 2153180
+    },
+    {
+      "operation": "offset",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "absent",
+      "lane": "offset_at_most_64",
+      "success": true,
+      "calls": 49,
+      "projection_nanos": 30529
+    },
+    {
+      "operation": "offset",
+      "root": "quadratic",
+      "left": "retained_quadratic",
+      "right": "absent",
+      "lane": "retained_root",
+      "success": true,
+      "calls": 14,
+      "projection_nanos": 1650
+    },
+    {
+      "operation": "inverse",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 87,
+      "projection_nanos": 4355239
+    },
+    {
+      "operation": "inverse",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "absent",
+      "lane": "decline",
+      "success": true,
+      "calls": 21,
+      "projection_nanos": 48838
+    },
+    {
+      "operation": "inverse",
+      "root": "unretained",
+      "left": "retained_multiradical",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 21,
+      "projection_nanos": 252433
+    },
+    {
+      "operation": "sqrt",
+      "root": "unretained",
+      "left": "unavailable",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 12131,
+      "projection_nanos": 1110495353
+    },
+    {
+      "operation": "sqrt",
+      "root": "unretained",
+      "left": "retained_quadratic",
+      "right": "absent",
+      "lane": "decline",
+      "success": false,
+      "calls": 3377,
+      "projection_nanos": 25762087
+    }
+  ],
+  "child_masks": [
+    {
+      "operation": "other",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 5153
+    },
+    {
+      "operation": "ratio",
+      "retained_mask": 0,
+      "success": true,
+      "calls": 148
+    },
+    {
+      "operation": "add",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 463036
+    },
+    {
+      "operation": "add",
+      "retained_mask": 0,
+      "success": true,
+      "calls": 6884194
+    },
+    {
+      "operation": "add",
+      "retained_mask": 1,
+      "success": false,
+      "calls": 1450093
+    },
+    {
+      "operation": "add",
+      "retained_mask": 1,
+      "success": true,
+      "calls": 9822495
+    },
+    {
+      "operation": "add",
+      "retained_mask": 2,
+      "success": false,
+      "calls": 18
+    },
+    {
+      "operation": "add",
+      "retained_mask": 2,
+      "success": true,
+      "calls": 21147
+    },
+    {
+      "operation": "add",
+      "retained_mask": 3,
+      "success": false,
+      "calls": 64
+    },
+    {
+      "operation": "add",
+      "retained_mask": 3,
+      "success": true,
+      "calls": 415
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 39007
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 0,
+      "success": true,
+      "calls": 478201
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 1,
+      "success": false,
+      "calls": 6109
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 1,
+      "success": true,
+      "calls": 38507
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 2,
+      "success": false,
+      "calls": 38
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 2,
+      "success": true,
+      "calls": 2845
+    },
+    {
+      "operation": "multiply",
+      "retained_mask": 3,
+      "success": true,
+      "calls": 23641
+    },
+    {
+      "operation": "negate",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 4387
+    },
+    {
+      "operation": "negate",
+      "retained_mask": 0,
+      "success": true,
+      "calls": 33501
+    },
+    {
+      "operation": "negate",
+      "retained_mask": 1,
+      "success": false,
+      "calls": 89
+    },
+    {
+      "operation": "negate",
+      "retained_mask": 1,
+      "success": true,
+      "calls": 1244
+    },
+    {
+      "operation": "offset",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 6400
+    },
+    {
+      "operation": "offset",
+      "retained_mask": 1,
+      "success": true,
+      "calls": 63
+    },
+    {
+      "operation": "inverse",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 87
+    },
+    {
+      "operation": "inverse",
+      "retained_mask": 1,
+      "success": false,
+      "calls": 21
+    },
+    {
+      "operation": "inverse",
+      "retained_mask": 1,
+      "success": true,
+      "calls": 21
+    },
+    {
+      "operation": "sqrt",
+      "retained_mask": 0,
+      "success": false,
+      "calls": 12131
+    },
+    {
+      "operation": "sqrt",
+      "retained_mask": 1,
+      "success": false,
+      "calls": 3377
+    }
+  ]
+}

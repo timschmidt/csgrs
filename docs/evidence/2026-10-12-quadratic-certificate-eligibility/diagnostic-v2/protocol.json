@@ -1,0 +1,153 @@
+{
+  "scope": "Observe shallow certificate eligibility on the full original board fixtures.\n\nThe previous goal turn made progress through six committed checkpoints. This\ndiagnostic forks the frozen integer-leaf candidate into separate source and\nbuild directories. It observes the root and immediate children before the\nunchanged quadratic query, then counts the actual outcome and query duration.\nCounters contain only integers. Temporary radicand clones/read guards are gone\nbefore recognition. Exact radicand comparisons can touch Rational's existing\nlazy canonicalization cache, so observation perturbs timing/cache warmth.\nOnly counters from exiting threads are printed; this is not a whole-system CPU\nprofile, matched performance evidence, or runtime admission.\n",
+  "previous_goal_turn": "progress",
+  "base_commit": "961ad6c7d1b3ab2be2b3267a68ec8510d8b334e8",
+  "runner_sha256": "f5f887b718803df076caf31cf9058c33147d2e168c9eb3150f98b3a6b19df5f9",
+  "preparation_sha256": "50b27f8d53d95c13339fff7287c006a0ff908db14e5e4451d0ad9d39894ae02b",
+  "runtime_delta_sha256": "ffbd4b3f2774d8abcc9ee045de609a1f8aebbd7a52528b504392deae012aba36",
+  "prior_report_assessment_sha256": "19bb678c59865d77073d8dcd6526a8313d49f13c66fe4e5d1bf89a284a92682e",
+  "only_instrumented_sources": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "2bb9ec71d24b881971c693f37b6136555457e100ff8830e990f78f90542297f9",
+    "crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs": "633152d127afc587794f3f4eb5f1926a104fc49e2da22e2f579b845920057415"
+  },
+  "instrumentation_archive_sha256": "c6bf954ba95a0099b77c9a3580ee07543a3d3e009818d78cf6d94b716049a0eb",
+  "instrumentation_patch_sha256": "64185534bbfa540b72ae8d8fb278f073c93a09743aba3d022abd351303d259d2",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-certificate-eligibility/diagnostic-v2/target"
+  },
+  "commands": [
+    [
+      "format",
+      [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ]
+    ],
+    [
+      "diagnostic-format",
+      [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "crates/hyperreal/src/computable/node/quadratic_certificate_diagnostic.rs"
+      ]
+    ],
+    [
+      "diagnostic-regression",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "quadratic_certificate_diagnostic::tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "cache-regressions",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "persistent_laurent_cache_tests",
+        "--",
+        "--test-threads=1"
+      ]
+    ],
+    [
+      "strict-scalar-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "operations": [
+    "other",
+    "one",
+    "integer",
+    "ratio",
+    "constant",
+    "add",
+    "multiply",
+    "negate",
+    "offset",
+    "inverse",
+    "square",
+    "sqrt",
+    "linear_combination3"
+  ],
+  "root_kinds": [
+    "unretained",
+    "rational",
+    "quadratic",
+    "multiradical",
+    "laurent"
+  ],
+  "child_kinds": [
+    "unavailable",
+    "intrinsic_rational",
+    "retained_rational",
+    "retained_quadratic",
+    "retained_multiradical",
+    "retained_laurent",
+    "absent"
+  ],
+  "lanes": [
+    "decline",
+    "retained_root",
+    "rational_add",
+    "affine_add",
+    "same_field_add",
+    "negate",
+    "offset_at_most_64",
+    "rational_scale",
+    "intrinsic_only"
+  ],
+  "mask_contract": "Bit 0/1 denotes a retained immediate left/right operand. For LinearCombination3, bits 0..2 denote the Computable coefficients; its three Rational values have no Computable certificate cells. A retained proof may be wider than quadratic.",
+  "duration_contract": "Elapsed wall nanoseconds around the complete original projection call after observation, including its retries and memo destruction. Instrumentation and cache observations perturb execution. This boundary differs from the earlier per-pass diagnostic timers.",
+  "unchanged_full_board_limit_seconds": 120,
+  "runtime_admitted": false
+}
