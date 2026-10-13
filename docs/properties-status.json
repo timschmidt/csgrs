@@ -1148,15 +1148,49 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "two-frozen-sources-scalar-qualification-running",
+      "status": "two-sources-pass-scalar-qualification-fixed-costs-next",
       "evidence": [
         "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
-        "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json"
+        "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/correctness-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Complete the sequential 22-command scalar qualification and independently assess memo inventories, layouts, P4/cache-frontier behavior and all test/check outputs before any fixed cost comparison.",
+      "next_step": "Run the prepared five-block scalar comparison: 12 preflights and 60 measurement processes, with separate time/allocation executables and fresh targets. Retain every adverse row and require independent assessment before native follow-up.",
       "runtime_admitted": false,
-      "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged."
+      "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
+      "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56
+        },
+        "candidate": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56
+        }
+      },
+      "memo_inventories": {
+        "baseline": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "candidate": {
+          "original": 1,
+          "retained": 0,
+          "opaque": 2
+        }
+      }
     }
   },
   "status_meanings": {
