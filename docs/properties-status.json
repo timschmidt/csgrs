@@ -3697,6 +3697,14 @@
           "finding": "The current bound and combined fact snapshot are read from existing packed atomic metadata. A diagnostic can classify these Copy values without retaining scalar/DAG owners, materializing polynomials or invoking a recognizer."
         }
       ]
+    },
+    "bound_sign_fallback_coverage": {
+      "status": "diagnostic-inputs-prepared",
+      "evidence": "docs/evidence/2026-10-13-bound-sign-fallback-coverage",
+      "result": "Fixed root-bound/result counters and three shared parent-reference tests, three counter calibrations and five site controls prepared. Original fallback remains unchanged. Never-compiled draft formatting review preserved unrelated parent bytes and records moved trailing-comma formatting. No frozen source or measurement exists yet.",
+      "next_step": "Freeze parent-reference and diagnostic copies; qualify all counters and existing scalar/P4/cache/endpoint checks before one original complete-board observation.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
