@@ -46,3 +46,10 @@ production CLI size and remaining workflows are separate retention gates.
 All 39 properties, 14 targets and crate future work remain in scope. Existing
 main runtime, the 35 pending native paths, and individual ledger statuses are
 protected by source hashes.
+
+Preparation passed. Each frozen source contains 10,136 files. The baseline
+and direct sources match their previously qualified sources byte for byte;
+only the declared algebra file differs across variants. Exact arithmetic and
+fallback recovery, shared-test identity, manifest/lockfile identity, and all
+parent/main/native source guards pass. The frozen maps and deltas are committed
+before compilation.
