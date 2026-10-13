@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "tests": [
+    {
+      "name": "counter-calibration",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "full_board_exit_code": 101,
+  "original_worker_cpu_limit_seconds": 120,
+  "instrumented_worker_cpu_seconds": 134.127171383,
+  "both_reports_emitted": true,
+  "finding_counts": [
+    12,
+    197
+  ],
+  "shape_rows": 16,
+  "coefficient_multiplications": 21954159,
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false
+}

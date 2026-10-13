@@ -1,0 +1,10 @@
+
+running 5 tests
+test segment::endpoint_proof_tests::certified_negative_endpoints_reuse_proofs_inside_shared_budgets ... ok
+test segment::endpoint_proof_tests::coordinate_facts_preserve_unknown_and_lazy_y_queries ... ok
+test segment::endpoint_proof_tests::endpoint_receipts_match_independent_controls_across_contexts_and_warming ... ok
+test segment::endpoint_proof_tests::final_coordinate_abort_preserves_shared_equality_and_unknown_facts ... ok
+test segment::endpoint_proof_tests::unknown_endpoint_retries_preserve_approximation_receipts ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1766 filtered out; finished in 0.01s
+

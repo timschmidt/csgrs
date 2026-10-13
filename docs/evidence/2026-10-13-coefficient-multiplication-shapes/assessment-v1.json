@@ -1,0 +1,240 @@
+{
+  "decision": "complete-original-full-board-coefficient-shape-observation",
+  "assessor_sha256": "7018a564357970acb5aeb755d7cf30016d8dcd708efd5973b791a5d2a8388e86",
+  "tests": [
+    {
+      "name": "counter-calibration",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "strict_all_feature_all_target_clippy_and_format_passed": true,
+  "original_worker_cpu_limit_seconds": 120,
+  "instrumented_worker_cpu_seconds": 134.127171383,
+  "original_assertion_passed": false,
+  "both_reports_emitted": true,
+  "finding_counts": [
+    12,
+    197
+  ],
+  "total_multiplication_calls": 21954159,
+  "rows": [
+    {
+      "left": "rational",
+      "right": "rational",
+      "calls": 1719083,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 7.830329551680846
+    },
+    {
+      "left": "rational",
+      "right": "radical",
+      "calls": 7977215,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 8568658,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 36.33578038675952
+    },
+    {
+      "left": "rational",
+      "right": "opaque",
+      "calls": 600243,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 616948,
+      "percent_of_calls": 2.7340742134554095
+    },
+    {
+      "left": "rational",
+      "right": "mixed",
+      "calls": 17018,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 19826,
+      "right_atom_length_sum": 17579,
+      "percent_of_calls": 0.07751606426827828
+    },
+    {
+      "left": "radical",
+      "right": "rational",
+      "calls": 1307308,
+      "left_radical_length_sum": 1319599,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 5.9547168260920404
+    },
+    {
+      "left": "radical",
+      "right": "radical",
+      "calls": 8276574,
+      "left_radical_length_sum": 9351537,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 9392472,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 37.6993443474651
+    },
+    {
+      "left": "radical",
+      "right": "opaque",
+      "calls": 984639,
+      "left_radical_length_sum": 1256445,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 1027073,
+      "percent_of_calls": 4.484977083385431
+    },
+    {
+      "left": "radical",
+      "right": "mixed",
+      "calls": 4518,
+      "left_radical_length_sum": 4576,
+      "left_atom_length_sum": 0,
+      "right_radical_length_sum": 4576,
+      "right_atom_length_sum": 4550,
+      "percent_of_calls": 0.020579244233404705
+    },
+    {
+      "left": "opaque",
+      "right": "rational",
+      "calls": 38284,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 73360,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 0.174381537457208
+    },
+    {
+      "left": "opaque",
+      "right": "radical",
+      "calls": 161216,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 176980,
+      "right_radical_length_sum": 166876,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 0.7343301102993742
+    },
+    {
+      "left": "opaque",
+      "right": "opaque",
+      "calls": 691422,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 1056774,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 916212,
+      "percent_of_calls": 3.1493895985721885
+    },
+    {
+      "left": "opaque",
+      "right": "mixed",
+      "calls": 14799,
+      "left_radical_length_sum": 0,
+      "left_atom_length_sum": 27126,
+      "right_radical_length_sum": 15107,
+      "right_atom_length_sum": 30870,
+      "percent_of_calls": 0.06740863997568752
+    },
+    {
+      "left": "mixed",
+      "right": "rational",
+      "calls": 2858,
+      "left_radical_length_sum": 2858,
+      "left_atom_length_sum": 2858,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 0.013018034532773493
+    },
+    {
+      "left": "mixed",
+      "right": "radical",
+      "calls": 1736,
+      "left_radical_length_sum": 7830,
+      "left_atom_length_sum": 1784,
+      "right_radical_length_sum": 1918,
+      "right_atom_length_sum": 0,
+      "percent_of_calls": 0.007907385566443242
+    },
+    {
+      "left": "mixed",
+      "right": "opaque",
+      "calls": 76610,
+      "left_radical_length_sum": 82640,
+      "left_atom_length_sum": 135562,
+      "right_radical_length_sum": 0,
+      "right_atom_length_sum": 88622,
+      "percent_of_calls": 0.34895438262973316
+    },
+    {
+      "left": "mixed",
+      "right": "mixed",
+      "calls": 80636,
+      "left_radical_length_sum": 82368,
+      "left_atom_length_sum": 153774,
+      "right_radical_length_sum": 82370,
+      "right_atom_length_sum": 153774,
+      "percent_of_calls": 0.36729259362656524
+    }
+  ],
+  "right_rational_calls": 3067533,
+  "right_rational_percent": 13.972445949762868,
+  "right_rational_with_owned_left_vectors_calls": 1348450,
+  "right_rational_with_owned_left_vectors_percent": 6.142116398082022,
+  "right_rational_with_owned_left_radical_elements": 1322457,
+  "right_rational_with_owned_left_atom_elements": 76218,
+  "other_right_shapes_calls": 18886626,
+  "source_review": "Only a fixed-counter record call is inserted at the original multiply entry; its arguments are four existing vector lengths. The original function body, unsupported-product guard, scalar operations, vector insertion order, normalizer passes and cache publication are unchanged. The report guard is created after the geometry-test lock and prints after the original timer assertion.",
+  "limits": [
+    "Presence of radical/opaque vectors only. Radical, opaque and mixed rows may also have a nonzero rational constant; no rational value is queried.",
+    "Counters include every active process thread and add synchronization overhead. Operand frequencies and length sums are not allocation counts, durations or a speedup prediction. No arithmetic or runtime admission change is made.",
+    "A call with existing left vectors is potential reuse coverage, not proof of saved allocations or bytes. No rational coefficient value or zero/one scale distribution was queried.",
+    "The full-board report counts are diagnostic checks; the prior complete byte-identical report replay remains a separate artifact.",
+    "The original failed release gate and all fixed endpoint timing/memory tradeoffs remain unresolved. A diagnostic does not admit a runtime change."
+  ],
+  "artifacts_sha256": {
+    "diagnostic-v1/binary.json": "a1acb265c705ced6a7f365f039d520be1e6c6692e6e558940d6f66ed0658150a",
+    "diagnostic-v1/build-board.stderr": "e81202f4e388ae5407f6c465f8b2c12b8ca40f2b83b0646aab44fe3cc2bf9f2c",
+    "diagnostic-v1/build-board.stdout": "03239e733c4d54b45cded339cdcbfce2c1298a22089bcdfca876b54794bdb993",
+    "diagnostic-v1/cache-frontiers.stderr": "efdebc1bebd0fdd6dc0673adf12875b21f5dcd9ca270b9e389a24b7f85575ad2",
+    "diagnostic-v1/cache-frontiers.stdout": "117ed05023164d0b308e58c84fb94af3137a7c1ffc4d7de6c30c784b4bce3fd9",
+    "diagnostic-v1/commands.json": "d4b9c19113caefa885fb131cf18f4bcd637eecdde54940551b79db73fe301339",
+    "diagnostic-v1/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/counter-calibration.stderr": "67227eea4d99c8410a13ee7b039d7c7e4629f525344f5b1bb5d1edf1d12e03db",
+    "diagnostic-v1/counter-calibration.stdout": "82f4080c1bed8d2f09dddc93cfa488d4d691b0ce6626c679db7533d7d522cad2",
+    "diagnostic-v1/endpoint-regressions.stderr": "2b87379187a91460df966955314a12bf71d760b622201275b77ac66c52d15003",
+    "diagnostic-v1/endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "diagnostic-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/full-board.stderr": "5850c630d9a23d6633166f3f33308f10ed5e8d3411f014a285e546448712a6fa",
+    "diagnostic-v1/full-board.stdout": "d7afd643ed22727e46c40a14682552d6100f1a9a852f640cb550482239b19669",
+    "diagnostic-v1/instrumentation.patch": "6492655285c9567a588223cb012bb8325742c570a382f41397fbe44f6c311a01",
+    "diagnostic-v1/instrumentation.tar.gz": "a55d96b832197a7b9aca13c0175078081d9e2ad168a4c08d77e21727c98ef99e",
+    "diagnostic-v1/parent-source-hashes.json.gz": "465e26e05c529388505c2bed55bb22cf35355a930141b29ee1afc69eb1022a5a",
+    "diagnostic-v1/prepare-format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "diagnostic-v1/protocol.json": "44082e974f1ca047693b394862cbe8e5b7877a6217b48c72eb7db068dce281f4",
+    "diagnostic-v1/result.json": "80766e29ab381b25ecb2e1df33b1f96ee37d361fa023d78d7253081abec3f404",
+    "diagnostic-v1/rows.json": "80e70ff8bfd540e52032f632e5ba8ca8be4450ddd1400cf715464cdb89922562",
+    "diagnostic-v1/strict-clippy.stderr": "08db3fbafc7c73fc5af8afac00e54c5b3483b2ced7e4591cebb68930a89f19ed",
+    "diagnostic-v1/strict-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "source_parent_and_main_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

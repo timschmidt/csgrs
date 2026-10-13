@@ -1,0 +1,146 @@
+[
+  {
+    "left": "rational",
+    "right": "rational",
+    "calls": 1719083,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "rational",
+    "right": "radical",
+    "calls": 7977215,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 8568658,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "rational",
+    "right": "opaque",
+    "calls": 600243,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 616948
+  },
+  {
+    "left": "rational",
+    "right": "mixed",
+    "calls": 17018,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 19826,
+    "right_atom_length_sum": 17579
+  },
+  {
+    "left": "radical",
+    "right": "rational",
+    "calls": 1307308,
+    "left_radical_length_sum": 1319599,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "radical",
+    "right": "radical",
+    "calls": 8276574,
+    "left_radical_length_sum": 9351537,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 9392472,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "radical",
+    "right": "opaque",
+    "calls": 984639,
+    "left_radical_length_sum": 1256445,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 1027073
+  },
+  {
+    "left": "radical",
+    "right": "mixed",
+    "calls": 4518,
+    "left_radical_length_sum": 4576,
+    "left_atom_length_sum": 0,
+    "right_radical_length_sum": 4576,
+    "right_atom_length_sum": 4550
+  },
+  {
+    "left": "opaque",
+    "right": "rational",
+    "calls": 38284,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 73360,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "opaque",
+    "right": "radical",
+    "calls": 161216,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 176980,
+    "right_radical_length_sum": 166876,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "opaque",
+    "right": "opaque",
+    "calls": 691422,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 1056774,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 916212
+  },
+  {
+    "left": "opaque",
+    "right": "mixed",
+    "calls": 14799,
+    "left_radical_length_sum": 0,
+    "left_atom_length_sum": 27126,
+    "right_radical_length_sum": 15107,
+    "right_atom_length_sum": 30870
+  },
+  {
+    "left": "mixed",
+    "right": "rational",
+    "calls": 2858,
+    "left_radical_length_sum": 2858,
+    "left_atom_length_sum": 2858,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "mixed",
+    "right": "radical",
+    "calls": 1736,
+    "left_radical_length_sum": 7830,
+    "left_atom_length_sum": 1784,
+    "right_radical_length_sum": 1918,
+    "right_atom_length_sum": 0
+  },
+  {
+    "left": "mixed",
+    "right": "opaque",
+    "calls": 76610,
+    "left_radical_length_sum": 82640,
+    "left_atom_length_sum": 135562,
+    "right_radical_length_sum": 0,
+    "right_atom_length_sum": 88622
+  },
+  {
+    "left": "mixed",
+    "right": "mixed",
+    "calls": 80636,
+    "left_radical_length_sum": 82368,
+    "left_atom_length_sum": 153774,
+    "right_radical_length_sum": 82370,
+    "right_atom_length_sum": 153774
+  }
+]

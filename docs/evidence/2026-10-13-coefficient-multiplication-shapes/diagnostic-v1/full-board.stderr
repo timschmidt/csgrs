@@ -1,0 +1,153 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (5.641s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.006s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (7 finding(s), 61.257s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/5 after 0.001s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/5 after 14.038s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/5 after 39.021s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/5 after 39.170s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu
+hyperdrc: check min-copper-neck progress 5/5 after 40.546s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/cparti-fpga/CPArti FPGA dev board.kicad_pcb:unknown
+hyperdrc: finished check min-copper-neck (5 finding(s), 40.690s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (0 finding(s), 0.006s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.001s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (12 active finding(s), 0 waived, 108.591s)
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (2.774s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.003s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (1 finding(s), 14.737s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/4 after 0.002s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/hvp109a/HVP109A.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/4 after 3.333s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/hvp109a/HVP109A.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/4 after 4.934s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/hvp109a/HVP109A.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/4 after 6.570s: opening copper layer /tmp/hyperdrc-complex-project-kicad-smoke-suite-7792/hvp109a/HVP109A.kicad_pcb:In2.Cu
+hyperdrc: finished check min-copper-neck (4 finding(s), 8.610s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (192 finding(s), 0.005s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.002s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.001s)
+hyperdrc: finished run (197 active finding(s), 0 waived, 26.415s)
+
+thread 'zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite' (7793) panicked at crates/hyperdrc/src/app.rs:8770:9:
+complex project KiCad smoke suite took 134.127171383s of worker time
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+COEFFICIENT_SHAPE	rational	rational	1719083	0	0	0	0
+COEFFICIENT_SHAPE	rational	radical	7977215	0	0	8568658	0
+COEFFICIENT_SHAPE	rational	opaque	600243	0	0	0	616948
+COEFFICIENT_SHAPE	rational	mixed	17018	0	0	19826	17579
+COEFFICIENT_SHAPE	radical	rational	1307308	1319599	0	0	0
+COEFFICIENT_SHAPE	radical	radical	8276574	9351537	0	9392472	0
+COEFFICIENT_SHAPE	radical	opaque	984639	1256445	0	0	1027073
+COEFFICIENT_SHAPE	radical	mixed	4518	4576	0	4576	4550
+COEFFICIENT_SHAPE	opaque	rational	38284	0	73360	0	0
+COEFFICIENT_SHAPE	opaque	radical	161216	0	176980	166876	0
+COEFFICIENT_SHAPE	opaque	opaque	691422	0	1056774	0	916212
+COEFFICIENT_SHAPE	opaque	mixed	14799	0	27126	15107	30870
+COEFFICIENT_SHAPE	mixed	rational	2858	2858	2858	0	0
+COEFFICIENT_SHAPE	mixed	radical	1736	7830	1784	1918	0
+COEFFICIENT_SHAPE	mixed	opaque	76610	82640	135562	0	88622
+COEFFICIENT_SHAPE	mixed	mixed	80636	82368	153774	82370	153774

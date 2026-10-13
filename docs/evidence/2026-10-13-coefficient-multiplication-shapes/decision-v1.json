@@ -1,0 +1,27 @@
+{
+  "decision": "advance-two-isolated-scaling-variants-with-separate-cost-results",
+  "runner_sha256": "35526acd3ba1f3b73a239101a75c897550912d228c7912b378165532c2d9aae8",
+  "assessment_sha256": "727aa6da7f30ef2a79a838c44ab19e39a2ea1a406806fe40239b33ce18e55acd",
+  "total_calls": 21954159,
+  "right_rational_calls": 3067533,
+  "right_rational_with_owned_left_vectors_calls": 1348450,
+  "left_rational_with_borrowed_right_vectors_calls": 8594476,
+  "left_rational_with_borrowed_right_vectors_percent": 39.147370664483205,
+  "either_scaling_direction_calls": 11662009,
+  "either_scaling_direction_percent": 53.119816614246076,
+  "variants": {
+    "right": "When the right coefficient has no radical or opaque vectors, consume the owned left coefficient through the existing scale_in_place helper; preserve the original general multiplication body otherwise.",
+    "both": "Include the right-scalar branch; additionally, when only the left coefficient is rational, clone the borrowed right coefficient once and scale its vectors through the existing helper."
+  },
+  "why_two_variants": "Right scaling can retain already owned vectors; left scaling still clones vectors and can change operand/cache work. Their costs must remain separately visible, including the more frequent unmodified shapes.",
+  "required_qualification": [
+    "Fork both variants from the frozen uninstrumented endpoint candidate into separate source and Cargo targets; never inherit diagnostic counters.",
+    "Exact component/zero/negative-scale cases in both directions; opaque owner release and unchanged unsupported products; existing eight/nine-term cache frontiers and cold/warm/cloned facts.",
+    "Full scalar library/doctests, strict Clippy, formatting and warning-denied docs before scalar cost admission.",
+    "Three original scalar probe suites, time and requested-allocation modes, construction/first/warm/cloned/opaque and mixed-field declines, five fixed sample blocks with all variants and separate targets. No extension to remove adverse rows.",
+    "Only supported candidates advance to native consumer qualification, original 120-second worker and separate 60-second copper-neck assertions, broad endpoint controls and complete unnormalized report identity."
+  ],
+  "limits": "Operand counts are not time shares or guaranteed allocation savings. The instrumented test still fails at 134.127171383 worker-CPU seconds / 120. Original release and endpoint cost tradeoffs remain unchanged; this decision admits experiments only.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
