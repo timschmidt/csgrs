@@ -90,13 +90,14 @@ executables grow by 1,584–2,616 bytes. Smaller coefficient fields therefore
 do not establish lower total heap cost. No native test, gate, cost control,
 complete-report replay or production CLI build was run for this rejected source.
 
-The next source review considers separating ordinary owned scratch Vecs from
-immutable shared cache payloads. In this version, newly built and mutated
+The next [owned-scratch experiment](../2026-10-13-owned-radical-scratch/README.md)
+separates ordinary owned scratch Vecs from immutable shared cache payloads.
+In this version, newly built and mutated
 nonempty arrays also pay for a shared header. A shared read view could instead
 become an ordinary owned Vec when first mutated. That is a distinct hypothesis
-requiring review of publication, empty states, consuming iteration, alias
-isolation and release. It may enlarge coefficient layouts, which must be
-measured. No follow-up candidate has been prepared; this source and sample
+whose review covers publication, empty states, consuming iteration, alias
+isolation and release. Its inputs are prepared but unexecuted. It may enlarge
+coefficient layouts, which must be measured. This rejected source and sample
 set remain frozen.
 
 All arithmetic, insertion order,

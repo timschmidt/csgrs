@@ -1,0 +1,4 @@
+{
+  "before": "        if width == 1 {\n            let shared = source.terms[0].1.radicals.as_ptr() == closed.terms[0].1.radicals.as_ptr()\n                && first.terms[0].1.radicals.as_ptr() == second.terms[0].1.radicals.as_ptr();\n            println!(\"RADICAL_STORAGE_SHARED\\t{}\", u8::from(shared));\n        }\n",
+  "after": "        if width == 1 {\n            let source_shared = source.terms[0].1.radicals.as_ptr()\n                == closed.terms[0].1.radicals.as_ptr();\n            let views_shared = closed.terms[0].1.radicals.as_ptr()\n                == first.terms[0].1.radicals.as_ptr()\n                && first.terms[0].1.radicals.as_ptr() == second.terms[0].1.radicals.as_ptr();\n            println!(\n                \"RADICAL_STORAGE_SHARING\\t{}\\t{}\",\n                u8::from(source_shared),\n                u8::from(views_shared)\n            );\n        }\n"
+}

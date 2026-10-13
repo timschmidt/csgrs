@@ -1,0 +1,119 @@
+{
+  "status": "inputs-prepared-not-executed",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "previous_decision_sha256": "a9724d81d9e437477545afc665d5227faba94835b99a23e69bfeecad431971c1",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": [
+        "RadicalCoefficient fields, constructors, cloning, insertion, scaling, multiplication and inverse",
+        "ClosedPiLaurentPolynomial conversions copy rational/radical arrays but exclude opaque atoms",
+        "PiLaurentPolynomial retains ordered Vec terms, bounded arithmetic and original memo/retry"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "sections": [
+        "Cache reconstruction under the read lock and closed-only publication under the write lock; no escaping guards"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "sections": [
+        "Rational holds an Arc of rational data, with no Computable owners"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "sections": [
+        "into_parts and inverse unique/shared ownership paths preserve exact numeric parts; inverse may retain a pair"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "sections": [
+        "Owned negation mutates only a unique RationalData owner and clears sign-dependent caches"
+      ]
+    },
+    {
+      "path": "docs/evidence/2026-10-13-shared-radical-storage/radical_storage.rs",
+      "sha256": "a38db75bcd3a181ecb38d7c572cb860944ef033e36c18ad2b573fc4bbaef668a",
+      "sections": [
+        "Every newly constructed nonempty array receives an Arc header",
+        "Writable access uses Arc::make_mut; shared cloning and consuming iteration have different allocation behavior",
+        "Prior helper ownership controls and the fixed scalar rejection establish the next question, not an application speedup"
+      ]
+    }
+  ],
+  "inference": "Keep scratch arrays in ordinary owned Vecs, and introduce shared storage only for reads from an immutable retained payload. A write unwraps or copies a retained buffer into an owned Vec, without allocating a new shared header. Publishing an owned array still copies it into a retained Arc and can cost more than baseline.",
+  "ownership": "The two-form scratch storage is private: Owned(Vec) or Retained(Arc<Vec>). Cloning owned scratch preserves the original deep Vec copy; cloning a retained read shares rational data. Closed storage exposes only immutable reads and conversion to a scratch view. Empty retained storage is None. Polynomial terms and opaque Computable owners keep their original Vec behavior.",
+  "publication_and_release": "Closed conversion first rejects every opaque atom, then copies owned arrays or shares already-retained arrays. The original cache publication and lock scope are unchanged. Exclusive writable access first converts the only non-owned variant before returning a mutable Vec; its unreachable arm is a private construction invariant, not a numeric-domain path. Unique retained buffers can be unwrapped after the cache owner is dropped; shared buffers are copied before mutation or consumption.",
+  "cost_risk": "Owned publication adds an Arc allocation. The scratch enum may enlarge coefficients, even while closed coefficients shrink. Retained reads can avoid copies, but borrowed-to-owned transitions, first-query costs, stack/heap layouts and binary size must all be measured. The prior rejected version is not the new baseline and its samples are not extended.",
+  "candidate_runtime_files": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/radical_storage.rs"
+  ],
+  "alias_control_change": {
+    "origin_path": "docs/evidence/2026-10-13-shared-radical-storage/shared_radical_tests.rs",
+    "origin_sha256": "dfe87834fa5845b1546eb12f9eaed389f041121d53c162ff3e42b3f5f364f26c",
+    "edit_path": "docs/evidence/2026-10-13-owned-radical-scratch/alias-inventory-edit.json",
+    "edit_sha256": "a237829f9b2287ed3a08fb079e60415fa883ae518db48c252b0671e8f64a22a6",
+    "meaning": "Only the pointer-inventory observation changes. It separately records whether the original scratch shares its closed payload and whether two returned views share that payload. Baseline expects 0/0; candidate expects 0/1. Every mathematical assertion, graph-release check and concurrent mutation control is preserved by exact token recovery."
+  },
+  "invariants": [
+    "Unchanged arithmetic and insertion order, recognition eligibility, local memo insertion and original non-retaining recognition",
+    "Eight-term/eight-radical bounds and original 512 work/depth plus mandatory original retry with first memo dropped",
+    "Graph-free closed certificates, original opaque node ownership and release",
+    "No dependency feature, manifest, lockfile, approximation or public API change",
+    "P4 warming may strengthen facts but never contradict or weaken them",
+    "Original full-resolution fixtures and 120-second worker-CPU/60-second neck check-body assertions"
+  ],
+  "qualification_next": "Two fresh sources/targets with identical eight storage, three memo and three mathematical alias controls; candidate-only two buffer transition/release controls; inherited six cache-frontier and eleven P4 controls; default/all-feature scalar library tests, doctests, formatting, strict Clippy and warning-denied docs. Record all seven layouts without assuming the scratch enum size.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "block_order": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "separate_fresh_build_targets": true,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}
