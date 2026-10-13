@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. Storage candidates remain rejected. Prepare and qualify the narrower closed-certificate memo candidate; all 35 pending entries, native costs, complete reports and original limits remain open. See closed_certificate_memo."
+      "next_step": "The endpoint/P4 parent still fails the original board cap at 133.31248412 worker-CPU seconds / 120; its separate neck check passes. Storage candidates are rejected. The memo candidate passes scalar correctness and advances provisionally after mixed scalar costs. Execute native qualification while retaining all scalar concerns, original limits, 35 pending entries and full-report obligations. See closed_certificate_memo."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -642,11 +642,11 @@
       ],
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
-        "scope": "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
-        "task": "Complete the sequential 22-command scalar qualification and independently assess memo inventories, layouts, P4/cache-frontier behavior and all test/check outputs before any fixed cost comparison.",
+        "scope": "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json",
+        "task": "Execute the prepared nine native validation phases serially, including solver/curve/DRC tests, strict four-crate checks and both original full-fixture assertions. Native controls and complete reports remain subsequent work. Scalar regressions remain open; no runtime is admitted.",
         "retained_projection_diagnostic_and_both_storage_comparisons_complete": true,
-        "replacement_inputs_prepared": true,
-        "replacement_candidate_prepared": true
+        "memo_candidate_scalar_comparison_complete": true,
+        "memo_candidate_native_validation_executed": false
       },
       "native_runtime_admitted": false
     },
@@ -674,7 +674,7 @@
       },
       "result": "Root-only reuse is uncommon. Recursive copies are predominantly single-term and single-radical; this motivates a temporary-storage experiment, not a speedup claim. Original board gate still fails; no native runtime is admitted.",
       "preserved_failure": "Preparation v1 stopped before compilation after rustfmt moved optional commas. Its never-compiled source is archived. Version 2 preserves all original tokens outside seven explicit instrumentation/test changes.",
-      "next_step": "Both nonunion and union storage experiments are complete and rejected after fixed scalar costs. Recursive copy coverage still motivates examining ownership at the closed-certificate conversion boundary, subject to the unchanged proof, owner, retry and budget contracts. See radical_union_storage.",
+      "next_step": "Both inline-storage experiments remain rejected. The closed-certificate memo investigation removes a redundant local copy before successful persistent publication. Its fixed scalar costs are complete and mixed; native investigation is prepared with regressions open. See closed_certificate_memo.",
       "runtime_admitted": false
     },
     "temporary_laurent_storage": {
@@ -970,8 +970,8 @@
       "scope": "Compare unchanged Vec, Vec with the SmallVec union feature, and radical-only inline storage with union. Terms, persistent certificates and opaque atoms remain Vec. Use the uninstrumented endpoint/P4 parent and exactly the prior eight storage tests; preserve all arithmetic, limits, original retries, proof monotonicity and owner release.",
       "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and all seven matching private layouts are bound by completed qualification.",
       "next_step": {
-        "status": "distinct-memo-candidate-frozen-qualification-running",
-        "task": "The recursive-copy review identified a redundant query-memo copy immediately before successful persistent publication. Test skipping only that copy; leave radical arrays, arithmetic and all recognition semantics intact. See closed_certificate_memo.",
+        "status": "distinct-memo-candidate-qualified-scalar-costs-complete",
+        "task": "The memo candidate completed its fixed comparison and advances only to native investigation. Its three all-five-slower scalar phases and other adverse rows remain unresolved; no runtime is admitted. See closed_certificate_memo.",
         "candidate_prepared": true
       },
       "runtime_admitted": false,
@@ -1148,14 +1148,16 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "two-sources-pass-scalar-qualification-fixed-costs-next",
+      "status": "advance-closed-certificate-memo-to-native-investigation-with-scalar-regressions-open",
       "evidence": [
         "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
         "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json",
-        "docs/evidence/2026-10-13-closed-certificate-memo/correctness-v1.json"
+        "docs/evidence/2026-10-13-closed-certificate-memo/correctness-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/cost-assessment-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/scalar-decision-v1.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Run the prepared five-block scalar comparison: 12 preflights and 60 measurement processes, with separate time/allocation executables and fresh targets. Retain every adverse row and require independent assessment before native follow-up.",
+      "next_step": "Execute the prepared nine native validation phases serially, including solver/curve/DRC tests, strict four-crate checks and both original full-fixture assertions. Native controls and complete reports remain subsequent work. Scalar regressions remain open; no runtime is admitted.",
       "runtime_admitted": false,
       "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification": "Each variant passes three new publication/memo controls, eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 885 all-feature scalar library tests, 798 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1190,7 +1192,58 @@
           "retained": 0,
           "opaque": 2
         }
-      }
+      },
+      "costs": {
+        "timing_rows": 68,
+        "memory_rows": 68,
+        "all_five_slower_rows": 3,
+        "at_least_four_slower_rows": 7,
+        "all_five_faster_rows": 7,
+        "at_least_four_faster_rows": 28,
+        "ratio_of_medians_above_one_rows": 16,
+        "memory_fields": {
+          "allocation_calls": {
+            "reduced_rows": 21,
+            "increased_rows": 0,
+            "min_delta": -3000,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 21,
+            "increased_rows": 0,
+            "min_delta": -352000,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 0,
+            "increased_rows": 0,
+            "min_delta": 0,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 17,
+            "increased_rows": 0,
+            "min_delta": -352,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_delta_bytes_range": [
+          -216,
+          -208
+        ]
+      },
+      "decision": "The exact source change demonstrably removes a redundant closed-result memo copy while preserving opaque ownership, original memo reuse, retry behavior and every tested fact. Twenty-one phases reduce allocation calls/bytes, seventeen reduce peak requested bytes, and all six probe executables are smaller. Timing is mixed: seven phases are faster in every block and twenty-eight in at least four, but three phases are slower in every block and seven in at least four. This supports investigating native impact, not retaining the change or declaring the scalar performance concerns resolved.",
+      "unresolved_costs": [
+        "Affine-surd first and warm queries are slower in all five pairs: ratios of medians 1.107208 and 1.089591. Opaque-decline construction is also slower in all five pairs, ratio of medians 1.025741. The full arrays and ranges remain attached.",
+        "Rational radical-Laurent construction is slower in four pairs, with a ratio of medians 1.153210 and variable samples. It is an adverse result, not discarded as noise.",
+        "Some large apparent integer gains depend on variable baseline timings. Signed-word construction has ratio of medians 0.625348 but median paired ratio 1.041420 and is slower in three pairs. These statistics do not establish a large speedup.",
+        "All three all-five-slower phases have identical requested-memory counters. The allocation savings elsewhere do not explain or excuse these timing costs. No causal attribution or statistical significance is established."
+      ],
+      "retention_requirement": "Review native results together with every scalar adverse row and inherited native tradeoff. A native timing improvement alone does not dismiss scalar regressions. Do not admit a lower-rung improvement at the expense of a higher rung; meaningful regressions must be resolved before retention."
     }
   },
   "status_meanings": {
