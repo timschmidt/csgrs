@@ -1,0 +1,62 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-rational-time",
+    "sha256": "91ead4e50903268dc396988c11549cbb03a8a521cb64026e2bde0773b5866710",
+    "bytes": 6178072
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-rational-memory",
+    "sha256": "662fe9175fb365df9444ed99a341e9a0f8532351b21f44c41196c9a8956c7458",
+    "bytes": 6179952
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-quadratic-time",
+    "sha256": "7d5baa2616b6045d48f1551b8ea746cebfa5401ba0cf8bb61b05934d9e4ffb5b",
+    "bytes": 6153112
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-quadratic-memory",
+    "sha256": "29ba8fecaa0a88356caf2d5f78208d11ce33ab90f4e535f7f66f7763d4fd05ac",
+    "bytes": 6156352
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-integer-time",
+    "sha256": "474ad80c54727f728da4b89d105eb24c742a8781f456a898931c2f47f3af9d2f",
+    "bytes": 6048920
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-integer-memory",
+    "sha256": "7b91dbf8e0b8988ec19abbac41122bfa00bf0845f588599497036792e3483196",
+    "bytes": 6051816
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-rational-time",
+    "sha256": "89315a8f2040bbbfa175de8c47ccd5d1ed20cb50858092dfa054bb12e5d317e7",
+    "bytes": 6180040
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-rational-memory",
+    "sha256": "6610bc36f4c22b8fc40502377d8795ffee5934d85e05b8e56a3dbb8f268ae4a1",
+    "bytes": 6181928
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-quadratic-time",
+    "sha256": "8551fc2bc5e3f1848ddf5d36c2e0af3adb3aeb0c31ddf429117d5582f0b61aca",
+    "bytes": 6155096
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-quadratic-memory",
+    "sha256": "4034e129bbe79705f32dfd19442b5ae96d72834097404b5a4641f4e6f3749e62",
+    "bytes": 6158320
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-integer-time",
+    "sha256": "5d29d483016608b7eea4d5e3d78b38378915230e52385e4b8ffd52fb28a9626b",
+    "bytes": 6050888
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-integer-memory",
+    "sha256": "c34ea366a8bc555a474a5a2d66d7dc39766d6a2480032a1be58d3a4d9a2df2f0",
+    "bytes": 6053784
+  }
+}

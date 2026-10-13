@@ -1,0 +1,120 @@
+{
+  "scope": "Inspect existing quadratic timing binaries without compiling or rerunning probes.",
+  "runner_sha256": "db8fe392041b801aa5c062b3b4c93fc2b03088a0177c909d5e9bfba2adc3a90d",
+  "cost_assessment_sha256": "cb2e2af11db8fe58c63f2161ffe7686dbf566d522f7002bf403d1aa190740757",
+  "binaries_sha256": "e2b7fec05c618f77e73fbfa7c6e429d35b1e0bbf7fd669cb13829b04a8b15669",
+  "tool_versions": {
+    "nm": "GNU nm version 2.45.1-5.fc43",
+    "objdump": "GNU objdump version 2.45.1-5.fc43"
+  },
+  "commands": [
+    {
+      "variant": "baseline",
+      "command": [
+        "/usr/bin/nm",
+        "-S",
+        "--size-sort",
+        "--demangle",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "baseline",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcd040",
+        "--stop-address=0xcd9e9",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "candidate",
+      "command": [
+        "/usr/bin/nm",
+        "-S",
+        "--size-sort",
+        "--demangle",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-quadratic-time"
+      ],
+      "exit_code": 0
+    },
+    {
+      "variant": "candidate",
+      "command": [
+        "/usr/bin/objdump",
+        "-d",
+        "--demangle",
+        "--start-address=0xcd0f0",
+        "--stop-address=0xce131",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-quadratic-time"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "rows": [
+    {
+      "variant": "baseline",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/baseline-quadratic-time",
+        "sha256": "7d5baa2616b6045d48f1551b8ea746cebfa5401ba0cf8bb61b05934d9e4ffb5b",
+        "bytes": 6153112
+      },
+      "symbols": [
+        {
+          "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+          "address": 847648,
+          "code_bytes": 2359,
+          "kind": "t"
+        },
+        {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+          "address": 839744,
+          "code_bytes": 2473,
+          "kind": "t"
+        }
+      ],
+      "first_stack_pointer_subtraction_bytes": 248
+    },
+    {
+      "variant": "candidate",
+      "binary": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/direct-same-radicand-products-v2/cost-v2-binaries/candidate-quadratic-time",
+        "sha256": "8551fc2bc5e3f1848ddf5d36c2e0af3adb3aeb0c31ddf429117d5582f0b61aca",
+        "bytes": 6155096
+      },
+      "symbols": [
+        {
+          "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+          "address": 849520,
+          "code_bytes": 2359,
+          "kind": "t"
+        },
+        {
+          "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+          "address": 839920,
+          "code_bytes": 4161,
+          "kind": "t"
+        }
+      ],
+      "first_stack_pointer_subtraction_bytes": 264
+    }
+  ],
+  "limits": [
+    "Only the two existing quadratic timing executables are inspected. These are static symbol/disassembly observations, not a new timing or allocation sample.",
+    "Both multipliers have standalone symbols in both binaries. This does not prove which other call sites inline them and does not establish a lost-inlining explanation.",
+    "The first stack-pointer subtraction excludes register pushes, callees and dynamic path behavior. It is not a total stack-memory or peak measurement.",
+    "A larger body or frame can motivate an isolated helper-boundary experiment but cannot causally explain the measured slowdowns."
+  ],
+  "artifacts_sha256": {
+    "baseline-coefficient.asm": "fd869d81a1b6cc064c0a30318762bbe79b5041881977b8647b2391036dc455e6",
+    "baseline-symbols.txt.gz": "22f60f99eb67712cda914839960aea04a38a85ae5a50b7d41ba2e7df77c799b3",
+    "candidate-coefficient.asm": "870a47bd222dabc9902df6fe126427210b5004b47e7d877c521e53ab80da483a",
+    "candidate-symbols.txt.gz": "388f609bcd34ecd6685228d152ca63bde8c730eda49207a9380e0a17b37bb71d"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

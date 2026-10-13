@@ -1,8 +1,8 @@
 This candidate adds a private direct product for coefficients containing one
-equal, non-unit radicand on each side. Both version 2 variants passed all 28 scoped qualification commands. The
-candidate reuses the tested input vector and releases cancellation capacity,
-with unchanged layouts and memo inventories. Fixed costs remain next; no
-runtime is admitted.
+equal, non-unit radicand on each side. This direct-product version is **rejected for runtime admission** after the
+fixed scalar trial. All 28 qualification commands passed, and six phases save
+allocations, but eight quadratic phases are slower in all five pairs. See the
+[decision](decision-v1.json) for the complete favorable and adverse evidence.
 
 The [coverage diagnostic](../2026-10-13-same-radicand-product-coverage/README.md)
 observed 6,379,817 equal-radicand single-radical/no-atom products, or 29.06% of
@@ -89,3 +89,62 @@ reuses the capacity-one input. In the conjugate control, baseline radical
 capacity is four and candidate capacity is zero. Empty atom capacities are
 zero for both. These local observations do not establish total-memory or
 runtime improvement; the fixed allocation and timing probes remain required.
+
+The [cost assessment](cost-assessment-v2.json) verifies all twelve preflights,
+sixty measurements, binary/source identities and paired summaries. Every
+mathematical witness and representation inventory matches. The sample set is
+closed: 68 timing and 68 memory phases, with all five pairs retained.
+
+| Fixed-trial observation | Phases |
+| --- | ---: |
+| Slower in all five pairs | 8 |
+| Slower in at least four | 14 |
+| Faster in all five | 10 |
+| Faster in at least four | 32 |
+| Fewer requested allocation calls/bytes | 6 |
+| Lower peak requested bytes | 4 |
+| Increased measured memory fields | 0 |
+
+All eight consistently slower phases are quadratic: multiradical-square first
+and cloned, pi-transport first/warm/cloned, mixed-field-decline first/warm and
+opaque-decline construction. Multiradical cloned has median paired ratio
+1.075481; mixed-field first/warm have 1.062335 and 1.060469. Pi-transport paired
+medians range from 1.035174 to 1.054946. Their requested memory counters match.
+Opaque warm/cloned are slower in four pairs, with substantial variation and
+median paired ratios 1.231191 and 1.521822. These are descriptive observations,
+not significance or universal-slowdown claims.
+
+Rational conjugate-product first/warm/cloned save 1,000 allocations and 64,000
+allocated bytes per 1,000 inputs; quadratic conjugate-then-affine first/warm/
+cloned save 857 calls and 54,848 bytes. Retained bytes match everywhere; four
+phases reduce peak requested bytes by 64. Every memory delta repeats five
+times. Counters exclude native C heaps, stack frames and allocator bookkeeping.
+
+Conjugate-then-affine warm is faster in all five pairs, median paired ratio
+0.944369. Its cloned phase is slower in three pairs despite allocation savings:
+median paired ratio 1.008369, while the ratio of medians is 0.981806. Both
+summaries remain. Other consistently faster phases and every range are retained
+in the decision; two favorable radical-Laurent rows have timer-scale totals
+and are not treated as persuasive evidence of a practical effect.
+
+All six probe executables grow by 1,968 to 1,984 bytes. A [static code
+inspection](codegen-v1/protocol.json) uses the existing quadratic timing
+binaries without rerunning a probe. The coefficient multiplier symbol grows
+from 2,473 to 4,161 bytes; the polynomial multiplier symbol remains 2,359 bytes.
+The first stack-pointer subtraction changes from 248 to 264 bytes. These are
+static observations, not total stack use or a causal explanation for timing.
+Both binaries retain separate multiplier symbols; the observation does not
+establish lost inlining.
+
+Native qualification, fixture assertions, matched native costs, complete
+reports and production CLI size were not executed for this rejected version.
+The original 120-second board worker-CPU and 60-second neck check-body-wall
+limits remain. The next source review will consider a private non-inlined
+helper for the qualified direct arithmetic. If review succeeds, a fresh
+three-source trial will compare the unchanged parent, this version as a
+control, and the extracted-helper candidate. No existing sample set is
+extended, and comparisons sharing samples are not independent.
+
+All sources, failures, samples and code-generation evidence remain frozen.
+Main runtime and all 35 pending native paths are unchanged. The full plan
+remains incomplete, with individual property and target statuses preserved.

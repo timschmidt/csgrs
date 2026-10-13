@@ -1,0 +1,2252 @@
+{
+  "status": "reject-direct-same-radicand-products-on-scalar-timing-costs",
+  "decision_runner_sha256": "d27cc27cf79be8e2dec1bb9d4921d65475933dfb6f80bbaa1a0ff6c5c208fc90",
+  "inputs_sha256": {
+    "preparation-v2/protocol.json": "68b7166e375b692f0cce1ea11b052451928ef8d7d91bf286e5907c075fa701bc",
+    "correctness-v2.json": "a0d8944f16643e36ed9ca953d55d9c9326dcb28fd07ffe338efaa0eb8744eb83",
+    "cost-assessment-v2.json": "cb2e2af11db8fe58c63f2161ffe7686dbf566d522f7002bf403d1aa190740757",
+    "cost-v2/result.json": "8a5296aa2192851cce0f0447c0c0512defec82903eff655028a335f9de04fbb2",
+    "codegen-v1/protocol.json": "3c610f902cad81d2f18e905b25f292e8ba581777aaf8dc570ef9e3cab08f30a1"
+  },
+  "decision": "Reject this direct-product version for runtime admission. It preserves all tested exact witnesses and saves requested allocations in six phases, but eight quadratic phases are slower in every fixed pair and fourteen phases in at least four. Multiradical, pi-transport and mixed-field costs remain unresolved under the performance-before-memory ladder. The favorable rows and unchanged measured retention do not erase those timing costs.",
+  "qualification": "Both variants pass twenty shared projection/storage/memo/alias tests, eight shared direct-product controls, six inherited cache tests, eleven P4 tests and 28 doctests. Each passes 902 all-feature and 815 default library tests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "closed_sample_set": {
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "blocks": 5,
+    "timing_inputs_per_phase": 4096,
+    "allocation_inputs_per_phase": 1000,
+    "extended": false,
+    "all_witnesses_and_inventories_match": true
+  },
+  "summary": {
+    "timing_rows": 68,
+    "memory_rows": 68,
+    "all_five_slower_rows": 8,
+    "at_least_four_slower_rows": 14,
+    "all_five_faster_rows": 10,
+    "at_least_four_faster_rows": 32,
+    "ratio_of_medians_above_one_rows": 23,
+    "memory_fields": {
+      "allocation_calls": {
+        "reduced_rows": 6,
+        "increased_rows": 0,
+        "min_delta": -1000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "allocated_bytes": {
+        "reduced_rows": 6,
+        "increased_rows": 0,
+        "min_delta": -64000,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "retained_bytes_delta": {
+        "reduced_rows": 0,
+        "increased_rows": 0,
+        "min_delta": 0,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      },
+      "peak_bytes_delta": {
+        "reduced_rows": 4,
+        "increased_rows": 0,
+        "min_delta": -64,
+        "max_delta": 0,
+        "all_five_deltas_equal": true
+      }
+    },
+    "probe_binary_delta_bytes_range": [
+      1968,
+      1984
+    ]
+  },
+  "slower_in_all_five_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_first",
+      "reference_ns": [
+        3818768,
+        3625511,
+        3704786,
+        3775911,
+        3657630
+      ],
+      "candidate_ns": [
+        4036784,
+        3753383,
+        3773432,
+        3823608,
+        3885953
+      ],
+      "reference_median_ns": 3704786,
+      "candidate_median_ns": 3823608,
+      "ratio_of_medians": 1.0320725677542508,
+      "block_ratios": [
+        1.0570906637952344,
+        1.0352700626201383,
+        1.0185290054540261,
+        1.0126319184959602,
+        1.0624237552732234
+      ],
+      "median_block_ratio": 1.0352700626201383,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3625511,
+        3818768
+      ],
+      "candidate_range_ns": [
+        3753383,
+        4036784
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_cloned",
+      "reference_ns": [
+        2041830,
+        2057719,
+        2118634,
+        2097096,
+        2086377
+      ],
+      "candidate_ns": [
+        2195949,
+        2182960,
+        2521767,
+        2603671,
+        2185880
+      ],
+      "reference_median_ns": 2086377,
+      "candidate_median_ns": 2195949,
+      "ratio_of_medians": 1.0525178335459027,
+      "block_ratios": [
+        1.075480818677363,
+        1.0608639955212544,
+        1.1902796802090403,
+        1.2415602337708909,
+        1.0476917642401158
+      ],
+      "median_block_ratio": 1.075480818677363,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        2041830,
+        2118634
+      ],
+      "candidate_range_ns": [
+        2182960,
+        2603671
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_first",
+      "reference_ns": [
+        984583,
+        978103,
+        978533,
+        969083,
+        980652
+      ],
+      "candidate_ns": [
+        1009661,
+        997872,
+        1016730,
+        1255084,
+        1060677
+      ],
+      "reference_median_ns": 978533,
+      "candidate_median_ns": 1016730,
+      "ratio_of_medians": 1.0390349635628027,
+      "block_ratios": [
+        1.0254706814966337,
+        1.0202115728098164,
+        1.0390349635628027,
+        1.2951253917363115,
+        1.081603871709842
+      ],
+      "median_block_ratio": 1.0390349635628027,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        969083,
+        984583
+      ],
+      "candidate_range_ns": [
+        997872,
+        1255084
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_warm",
+      "reference_ns": [
+        977243,
+        964284,
+        978772,
+        971103,
+        972903
+      ],
+      "candidate_ns": [
+        1014180,
+        994782,
+        1008461,
+        1005261,
+        1022760
+      ],
+      "reference_median_ns": 972903,
+      "candidate_median_ns": 1008461,
+      "ratio_of_medians": 1.0365483506577737,
+      "block_ratios": [
+        1.0377971497365548,
+        1.031627611782421,
+        1.030332906948707,
+        1.0351744356674832,
+        1.0512456020795495
+      ],
+      "median_block_ratio": 1.0351744356674832,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        964284,
+        978772
+      ],
+      "candidate_range_ns": [
+        994782,
+        1022760
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_cloned",
+      "reference_ns": [
+        1410624,
+        1410823,
+        1454810,
+        1415862,
+        1411834
+      ],
+      "candidate_ns": [
+        1471880,
+        1490948,
+        1460240,
+        1629608,
+        1489408
+      ],
+      "reference_median_ns": 1411834,
+      "candidate_median_ns": 1489408,
+      "ratio_of_medians": 1.0549455530891025,
+      "block_ratios": [
+        1.0434247538677919,
+        1.0567930916918706,
+        1.0037324461613544,
+        1.1509652776894923,
+        1.0549455530891025
+      ],
+      "median_block_ratio": 1.0549455530891025,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1410624,
+        1454810
+      ],
+      "candidate_range_ns": [
+        1460240,
+        1629608
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_first",
+      "reference_ns": [
+        1367667,
+        1290192,
+        1311560,
+        1320149,
+        1297581
+      ],
+      "candidate_ns": [
+        1385615,
+        1370616,
+        1390915,
+        1469349,
+        1418153
+      ],
+      "reference_median_ns": 1311560,
+      "candidate_median_ns": 1390915,
+      "ratio_of_medians": 1.0605042849736193,
+      "block_ratios": [
+        1.0131230774742683,
+        1.0623349082927191,
+        1.0605042849736193,
+        1.1130175457467302,
+        1.0929205960938084
+      ],
+      "median_block_ratio": 1.0623349082927191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1290192,
+        1367667
+      ],
+      "candidate_range_ns": [
+        1370616,
+        1469349
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_warm",
+      "reference_ns": [
+        1322209,
+        1359857,
+        1316470,
+        1308690,
+        1297571
+      ],
+      "candidate_ns": [
+        1362557,
+        1365277,
+        1396075,
+        1470399,
+        1414073
+      ],
+      "reference_median_ns": 1316470,
+      "candidate_median_ns": 1396075,
+      "ratio_of_medians": 1.0604685256785191,
+      "block_ratios": [
+        1.03051559927364,
+        1.0039857132036678,
+        1.0604685256785191,
+        1.1235655502831075,
+        1.0897846823025483
+      ],
+      "median_block_ratio": 1.0604685256785191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1297571,
+        1359857
+      ],
+      "candidate_range_ns": [
+        1362557,
+        1470399
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_construction",
+      "reference_ns": [
+        3271345,
+        3257497,
+        3285145,
+        3234609,
+        4197173
+      ],
+      "candidate_ns": [
+        3319772,
+        3283805,
+        3421465,
+        3392298,
+        5242131
+      ],
+      "reference_median_ns": 3271345,
+      "candidate_median_ns": 3392298,
+      "ratio_of_medians": 1.0369734772700525,
+      "block_ratios": [
+        1.014803391265672,
+        1.0080761394408038,
+        1.0414958852653384,
+        1.0487505599594882,
+        1.2489671023805786
+      ],
+      "median_block_ratio": 1.0414958852653384,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3234609,
+        4197173
+      ],
+      "candidate_range_ns": [
+        3283805,
+        5242131
+      ]
+    }
+  ],
+  "slower_in_at_least_four_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_first",
+      "reference_ns": [
+        2220508,
+        2173291,
+        2126705,
+        2163531,
+        2174101
+      ],
+      "candidate_ns": [
+        2217088,
+        2262715,
+        2289964,
+        2299162,
+        2227067
+      ],
+      "reference_median_ns": 2173291,
+      "candidate_median_ns": 2262715,
+      "ratio_of_medians": 1.0411468137492863,
+      "block_ratios": [
+        0.9984598118988988,
+        1.0411468137492863,
+        1.0767661711426832,
+        1.0626896494665434,
+        1.0243622536395502
+      ],
+      "median_block_ratio": 1.0411468137492863,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        2126705,
+        2220508
+      ],
+      "candidate_range_ns": [
+        2217088,
+        2299162
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_cloned",
+      "reference_ns": [
+        3173233,
+        2981595,
+        2994505,
+        3034022,
+        3008784
+      ],
+      "candidate_ns": [
+        3001864,
+        2986445,
+        3273915,
+        3357950,
+        4079650
+      ],
+      "reference_median_ns": 3008784,
+      "candidate_median_ns": 3273915,
+      "ratio_of_medians": 1.0881189876042947,
+      "block_ratios": [
+        0.9459954563689461,
+        1.0016266461407402,
+        1.093307575041618,
+        1.1067652113267472,
+        1.3559132194268515
+      ],
+      "median_block_ratio": 1.093307575041618,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        2981595,
+        3173233
+      ],
+      "candidate_range_ns": [
+        2986445,
+        4079650
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_first",
+      "reference_ns": [
+        3818768,
+        3625511,
+        3704786,
+        3775911,
+        3657630
+      ],
+      "candidate_ns": [
+        4036784,
+        3753383,
+        3773432,
+        3823608,
+        3885953
+      ],
+      "reference_median_ns": 3704786,
+      "candidate_median_ns": 3823608,
+      "ratio_of_medians": 1.0320725677542508,
+      "block_ratios": [
+        1.0570906637952344,
+        1.0352700626201383,
+        1.0185290054540261,
+        1.0126319184959602,
+        1.0624237552732234
+      ],
+      "median_block_ratio": 1.0352700626201383,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3625511,
+        3818768
+      ],
+      "candidate_range_ns": [
+        3753383,
+        4036784
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_cloned",
+      "reference_ns": [
+        2041830,
+        2057719,
+        2118634,
+        2097096,
+        2086377
+      ],
+      "candidate_ns": [
+        2195949,
+        2182960,
+        2521767,
+        2603671,
+        2185880
+      ],
+      "reference_median_ns": 2086377,
+      "candidate_median_ns": 2195949,
+      "ratio_of_medians": 1.0525178335459027,
+      "block_ratios": [
+        1.075480818677363,
+        1.0608639955212544,
+        1.1902796802090403,
+        1.2415602337708909,
+        1.0476917642401158
+      ],
+      "median_block_ratio": 1.075480818677363,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        2041830,
+        2118634
+      ],
+      "candidate_range_ns": [
+        2182960,
+        2603671
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_first",
+      "reference_ns": [
+        984583,
+        978103,
+        978533,
+        969083,
+        980652
+      ],
+      "candidate_ns": [
+        1009661,
+        997872,
+        1016730,
+        1255084,
+        1060677
+      ],
+      "reference_median_ns": 978533,
+      "candidate_median_ns": 1016730,
+      "ratio_of_medians": 1.0390349635628027,
+      "block_ratios": [
+        1.0254706814966337,
+        1.0202115728098164,
+        1.0390349635628027,
+        1.2951253917363115,
+        1.081603871709842
+      ],
+      "median_block_ratio": 1.0390349635628027,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        969083,
+        984583
+      ],
+      "candidate_range_ns": [
+        997872,
+        1255084
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_warm",
+      "reference_ns": [
+        977243,
+        964284,
+        978772,
+        971103,
+        972903
+      ],
+      "candidate_ns": [
+        1014180,
+        994782,
+        1008461,
+        1005261,
+        1022760
+      ],
+      "reference_median_ns": 972903,
+      "candidate_median_ns": 1008461,
+      "ratio_of_medians": 1.0365483506577737,
+      "block_ratios": [
+        1.0377971497365548,
+        1.031627611782421,
+        1.030332906948707,
+        1.0351744356674832,
+        1.0512456020795495
+      ],
+      "median_block_ratio": 1.0351744356674832,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        964284,
+        978772
+      ],
+      "candidate_range_ns": [
+        994782,
+        1022760
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "pi_transport_cloned",
+      "reference_ns": [
+        1410624,
+        1410823,
+        1454810,
+        1415862,
+        1411834
+      ],
+      "candidate_ns": [
+        1471880,
+        1490948,
+        1460240,
+        1629608,
+        1489408
+      ],
+      "reference_median_ns": 1411834,
+      "candidate_median_ns": 1489408,
+      "ratio_of_medians": 1.0549455530891025,
+      "block_ratios": [
+        1.0434247538677919,
+        1.0567930916918706,
+        1.0037324461613544,
+        1.1509652776894923,
+        1.0549455530891025
+      ],
+      "median_block_ratio": 1.0549455530891025,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1410624,
+        1454810
+      ],
+      "candidate_range_ns": [
+        1460240,
+        1629608
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_first",
+      "reference_ns": [
+        1367667,
+        1290192,
+        1311560,
+        1320149,
+        1297581
+      ],
+      "candidate_ns": [
+        1385615,
+        1370616,
+        1390915,
+        1469349,
+        1418153
+      ],
+      "reference_median_ns": 1311560,
+      "candidate_median_ns": 1390915,
+      "ratio_of_medians": 1.0605042849736193,
+      "block_ratios": [
+        1.0131230774742683,
+        1.0623349082927191,
+        1.0605042849736193,
+        1.1130175457467302,
+        1.0929205960938084
+      ],
+      "median_block_ratio": 1.0623349082927191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1290192,
+        1367667
+      ],
+      "candidate_range_ns": [
+        1370616,
+        1469349
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_warm",
+      "reference_ns": [
+        1322209,
+        1359857,
+        1316470,
+        1308690,
+        1297571
+      ],
+      "candidate_ns": [
+        1362557,
+        1365277,
+        1396075,
+        1470399,
+        1414073
+      ],
+      "reference_median_ns": 1316470,
+      "candidate_median_ns": 1396075,
+      "ratio_of_medians": 1.0604685256785191,
+      "block_ratios": [
+        1.03051559927364,
+        1.0039857132036678,
+        1.0604685256785191,
+        1.1235655502831075,
+        1.0897846823025483
+      ],
+      "median_block_ratio": 1.0604685256785191,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        1297571,
+        1359857
+      ],
+      "candidate_range_ns": [
+        1362557,
+        1470399
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "mixed_field_decline_cloned",
+      "reference_ns": [
+        2074908,
+        2020942,
+        2121825,
+        2031241,
+        2542306
+      ],
+      "candidate_ns": [
+        2111325,
+        2109605,
+        2188230,
+        2132294,
+        2237767
+      ],
+      "reference_median_ns": 2074908,
+      "candidate_median_ns": 2132294,
+      "ratio_of_medians": 1.0276571298582877,
+      "block_ratios": [
+        1.0175511396167927,
+        1.0438721150829662,
+        1.031296171927468,
+        1.0497493896588341,
+        0.8802115087640906
+      ],
+      "median_block_ratio": 1.031296171927468,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        2020942,
+        2542306
+      ],
+      "candidate_range_ns": [
+        2109605,
+        2237767
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_construction",
+      "reference_ns": [
+        3271345,
+        3257497,
+        3285145,
+        3234609,
+        4197173
+      ],
+      "candidate_ns": [
+        3319772,
+        3283805,
+        3421465,
+        3392298,
+        5242131
+      ],
+      "reference_median_ns": 3271345,
+      "candidate_median_ns": 3392298,
+      "ratio_of_medians": 1.0369734772700525,
+      "block_ratios": [
+        1.014803391265672,
+        1.0080761394408038,
+        1.0414958852653384,
+        1.0487505599594882,
+        1.2489671023805786
+      ],
+      "median_block_ratio": 1.0414958852653384,
+      "slower_blocks": 5,
+      "faster_blocks": 0,
+      "reference_range_ns": [
+        3234609,
+        4197173
+      ],
+      "candidate_range_ns": [
+        3283805,
+        5242131
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_first",
+      "reference_ns": [
+        716641,
+        717861,
+        726771,
+        702712,
+        721241
+      ],
+      "candidate_ns": [
+        936336,
+        718161,
+        706591,
+        719101,
+        1139402
+      ],
+      "reference_median_ns": 717861,
+      "candidate_median_ns": 719101,
+      "ratio_of_medians": 1.0017273539027751,
+      "block_ratios": [
+        1.3065621419929923,
+        1.0004179082022844,
+        0.9722333444785222,
+        1.023322499117704,
+        1.5797798516723258
+      ],
+      "median_block_ratio": 1.023322499117704,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        702712,
+        726771
+      ],
+      "candidate_range_ns": [
+        706591,
+        1139402
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_warm",
+      "reference_ns": [
+        717431,
+        707881,
+        746538,
+        755128,
+        721821
+      ],
+      "candidate_ns": [
+        1107884,
+        722950,
+        702022,
+        929707,
+        1106564
+      ],
+      "reference_median_ns": 721821,
+      "candidate_median_ns": 929707,
+      "ratio_of_medians": 1.2880021501175498,
+      "block_ratios": [
+        1.544237703695547,
+        1.0212874762848558,
+        0.940370081630138,
+        1.231191268235319,
+        1.5330171884719341
+      ],
+      "median_block_ratio": 1.231191268235319,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        707881,
+        755128
+      ],
+      "candidate_range_ns": [
+        702022,
+        1107884
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "opaque_decline_cloned",
+      "reference_ns": [
+        921837,
+        932236,
+        921987,
+        951325,
+        950105
+      ],
+      "candidate_ns": [
+        1440312,
+        889109,
+        930966,
+        1452301,
+        1445891
+      ],
+      "reference_median_ns": 932236,
+      "candidate_median_ns": 1440312,
+      "ratio_of_medians": 1.545007916450341,
+      "block_ratios": [
+        1.5624367431552433,
+        0.9537381092341424,
+        1.0097387490279146,
+        1.5266086773710352,
+        1.521822324900932
+      ],
+      "median_block_ratio": 1.521822324900932,
+      "slower_blocks": 4,
+      "faster_blocks": 1,
+      "reference_range_ns": [
+        921837,
+        951325
+      ],
+      "candidate_range_ns": [
+        889109,
+        1452301
+      ]
+    }
+  ],
+  "faster_in_all_five_blocks": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "multiradical_square_cloned",
+      "reference_ns": [
+        6510704,
+        5897616,
+        5688890,
+        9758721,
+        6553661
+      ],
+      "candidate_ns": [
+        6334106,
+        5494044,
+        5634483,
+        6669723,
+        6363564
+      ],
+      "reference_median_ns": 6510704,
+      "candidate_median_ns": 6334106,
+      "ratio_of_medians": 0.9728757443127503,
+      "block_ratios": [
+        0.9728757443127503,
+        0.9315703158700058,
+        0.9904362713991658,
+        0.6834628226383355,
+        0.9709937697418283
+      ],
+      "median_block_ratio": 0.9709937697418283,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        5688890,
+        9758721
+      ],
+      "candidate_range_ns": [
+        5494044,
+        6669723
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_warm",
+      "reference_ns": [
+        3210420,
+        3109077,
+        3442754,
+        5076943,
+        3194361
+      ],
+      "candidate_ns": [
+        2879053,
+        2990865,
+        2926300,
+        3136165,
+        2873713
+      ],
+      "reference_median_ns": 3210420,
+      "candidate_median_ns": 2926300,
+      "ratio_of_medians": 0.9115006759240224,
+      "block_ratios": [
+        0.8967839098934096,
+        0.9619784263947145,
+        0.8499881199760424,
+        0.6177270455862908,
+        0.8996206126984395
+      ],
+      "median_block_ratio": 0.8967839098934096,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        3109077,
+        5076943
+      ],
+      "candidate_range_ns": [
+        2873713,
+        3136165
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "quadratic_reciprocal_cloned",
+      "reference_ns": [
+        3621002,
+        3544547,
+        3725535,
+        5989249,
+        3680428
+      ],
+      "candidate_ns": [
+        3427705,
+        3286875,
+        3341861,
+        3363870,
+        3369769
+      ],
+      "reference_median_ns": 3680428,
+      "candidate_median_ns": 3363870,
+      "ratio_of_medians": 0.9139888078234379,
+      "block_ratios": [
+        0.946617814627001,
+        0.9273046739117862,
+        0.8970150595820466,
+        0.5616513856745645,
+        0.915591610540948
+      ],
+      "median_block_ratio": 0.915591610540948,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        3544547,
+        5989249
+      ],
+      "candidate_range_ns": [
+        3286875,
+        3427705
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "pi_parameter_transport_first",
+      "reference_ns": [
+        9151893,
+        9896742,
+        9290433,
+        15621719,
+        8743351
+      ],
+      "candidate_ns": [
+        8831405,
+        8375586,
+        8609640,
+        8650948,
+        8626839
+      ],
+      "reference_median_ns": 9290433,
+      "candidate_median_ns": 8626839,
+      "ratio_of_medians": 0.9285723281143086,
+      "block_ratios": [
+        0.9649812339370664,
+        0.8462972966254956,
+        0.9267210688672961,
+        0.5537769563003918,
+        0.986674216784846
+      ],
+      "median_block_ratio": 0.9267210688672961,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        8743351,
+        15621719
+      ],
+      "candidate_range_ns": [
+        8375586,
+        8831405
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "pi_parameter_transport_warm",
+      "reference_ns": [
+        7858481,
+        7876800,
+        8020220,
+        12461996,
+        7279481
+      ],
+      "candidate_ns": [
+        7149570,
+        7079355,
+        7358316,
+        7044198,
+        6991971
+      ],
+      "reference_median_ns": 7876800,
+      "candidate_median_ns": 7079355,
+      "ratio_of_medians": 0.8987602833638025,
+      "block_ratios": [
+        0.9097903271637355,
+        0.8987602833638025,
+        0.9174705930760004,
+        0.5652543942398954,
+        0.9605040524180226
+      ],
+      "median_block_ratio": 0.9097903271637355,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        7279481,
+        12461996
+      ],
+      "candidate_range_ns": [
+        6991971,
+        7358316
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "radical_laurent_transport_warm",
+      "reference_ns": [
+        16659,
+        16489,
+        16879,
+        14499,
+        16329
+      ],
+      "candidate_ns": [
+        14949,
+        15399,
+        15009,
+        14349,
+        14759
+      ],
+      "reference_median_ns": 16489,
+      "candidate_median_ns": 14949,
+      "ratio_of_medians": 0.9066044029352902,
+      "block_ratios": [
+        0.8973527822798487,
+        0.9338953241554976,
+        0.8892114461757213,
+        0.9896544589282019,
+        0.9038520423785903
+      ],
+      "median_block_ratio": 0.9038520423785903,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        14499,
+        16879
+      ],
+      "candidate_range_ns": [
+        14349,
+        15399
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "radical_laurent_transport_cloned",
+      "reference_ns": [
+        16369,
+        16519,
+        16649,
+        14639,
+        16259
+      ],
+      "candidate_ns": [
+        15029,
+        14709,
+        14699,
+        14579,
+        14249
+      ],
+      "reference_median_ns": 16369,
+      "candidate_median_ns": 14699,
+      "ratio_of_medians": 0.8979778850265746,
+      "block_ratios": [
+        0.9181379436740179,
+        0.8904292027362432,
+        0.8828758483993032,
+        0.9959013593824715,
+        0.8763761608955041
+      ],
+      "median_block_ratio": 0.8904292027362432,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        14639,
+        16649
+      ],
+      "candidate_range_ns": [
+        14249,
+        15029
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "multiradical_square_construction",
+      "reference_ns": [
+        2176031,
+        2204119,
+        2196240,
+        2140443,
+        2214798
+      ],
+      "candidate_ns": [
+        1963155,
+        1948646,
+        2076238,
+        2018272,
+        2049090
+      ],
+      "reference_median_ns": 2196240,
+      "candidate_median_ns": 2018272,
+      "ratio_of_medians": 0.918966961716388,
+      "block_ratios": [
+        0.9021723495667111,
+        0.8840929187580162,
+        0.9453602520671693,
+        0.9429225632263976,
+        0.9251814386684474
+      ],
+      "median_block_ratio": 0.9251814386684474,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        2140443,
+        2214798
+      ],
+      "candidate_range_ns": [
+        1948646,
+        2076238
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_warm",
+      "reference_ns": [
+        3373069,
+        4463694,
+        3220269,
+        4103139,
+        3266906
+      ],
+      "candidate_ns": [
+        3185422,
+        3338951,
+        3216440,
+        3397167,
+        3201341
+      ],
+      "reference_median_ns": 3373069,
+      "candidate_median_ns": 3216440,
+      "ratio_of_medians": 0.9535648396163849,
+      "block_ratios": [
+        0.9443690597494447,
+        0.7480241701156038,
+        0.9988109688973188,
+        0.8279434355014539,
+        0.9799305520269025
+      ],
+      "median_block_ratio": 0.9443690597494447,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        3220269,
+        4463694
+      ],
+      "candidate_range_ns": [
+        3185422,
+        3397167
+      ]
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "integer",
+      "name": "wide_integer_affine_first",
+      "reference_ns": [
+        2226887,
+        1544425,
+        1332039,
+        1335938,
+        1353007
+      ],
+      "candidate_ns": [
+        1321460,
+        1307631,
+        1310990,
+        1322590,
+        1287932
+      ],
+      "reference_median_ns": 1353007,
+      "candidate_median_ns": 1310990,
+      "ratio_of_medians": 0.9689454673922604,
+      "block_ratios": [
+        0.5934113405844123,
+        0.8466782135746314,
+        0.9841979101212502,
+        0.990008518359385,
+        0.9519034269593579
+      ],
+      "median_block_ratio": 0.9519034269593579,
+      "slower_blocks": 0,
+      "faster_blocks": 5,
+      "reference_range_ns": [
+        1332039,
+        2226887
+      ],
+      "candidate_range_ns": [
+        1287932,
+        1322590
+      ]
+    }
+  ],
+  "memory_saving_rows": [
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "conjugate_product_first",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            19411,
+            19411,
+            19411,
+            19411,
+            19411
+          ],
+          "candidate": [
+            18411,
+            18411,
+            18411,
+            18411,
+            18411
+          ],
+          "reference_median": 19411,
+          "candidate_median": 18411,
+          "block_deltas": [
+            -1000,
+            -1000,
+            -1000,
+            -1000,
+            -1000
+          ],
+          "median_block_delta": -1000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            1384816,
+            1384816,
+            1384816,
+            1384816,
+            1384816
+          ],
+          "candidate": [
+            1320816,
+            1320816,
+            1320816,
+            1320816,
+            1320816
+          ],
+          "reference_median": 1384816,
+          "candidate_median": 1320816,
+          "block_deltas": [
+            -64000,
+            -64000,
+            -64000,
+            -64000,
+            -64000
+          ],
+          "median_block_delta": -64000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            176488,
+            176488,
+            176488,
+            176488,
+            176488
+          ],
+          "candidate": [
+            176488,
+            176488,
+            176488,
+            176488,
+            176488
+          ],
+          "reference_median": 176488,
+          "candidate_median": 176488,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            177336,
+            177336,
+            177336,
+            177336,
+            177336
+          ],
+          "candidate": [
+            177272,
+            177272,
+            177272,
+            177272,
+            177272
+          ],
+          "reference_median": 177336,
+          "candidate_median": 177272,
+          "block_deltas": [
+            -64,
+            -64,
+            -64,
+            -64,
+            -64
+          ],
+          "median_block_delta": -64,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        }
+      }
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "conjugate_product_warm",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            11382,
+            11382,
+            11382,
+            11382,
+            11382
+          ],
+          "candidate": [
+            10382,
+            10382,
+            10382,
+            10382,
+            10382
+          ],
+          "reference_median": 11382,
+          "candidate_median": 10382,
+          "block_deltas": [
+            -1000,
+            -1000,
+            -1000,
+            -1000,
+            -1000
+          ],
+          "median_block_delta": -1000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            822088,
+            822088,
+            822088,
+            822088,
+            822088
+          ],
+          "candidate": [
+            758088,
+            758088,
+            758088,
+            758088,
+            758088
+          ],
+          "reference_median": 822088,
+          "candidate_median": 758088,
+          "block_deltas": [
+            -64000,
+            -64000,
+            -64000,
+            -64000,
+            -64000
+          ],
+          "median_block_delta": -64000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            13760,
+            13760,
+            13760,
+            13760,
+            13760
+          ],
+          "candidate": [
+            13760,
+            13760,
+            13760,
+            13760,
+            13760
+          ],
+          "reference_median": 13760,
+          "candidate_median": 13760,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            14392,
+            14392,
+            14392,
+            14392,
+            14392
+          ],
+          "candidate": [
+            14328,
+            14328,
+            14328,
+            14328,
+            14328
+          ],
+          "reference_median": 14392,
+          "candidate_median": 14328,
+          "block_deltas": [
+            -64,
+            -64,
+            -64,
+            -64,
+            -64
+          ],
+          "median_block_delta": -64,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        }
+      }
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "rational",
+      "name": "conjugate_product_cloned",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            15716,
+            15716,
+            15716,
+            15716,
+            15716
+          ],
+          "candidate": [
+            14716,
+            14716,
+            14716,
+            14716,
+            14716
+          ],
+          "reference_median": 15716,
+          "candidate_median": 14716,
+          "block_deltas": [
+            -1000,
+            -1000,
+            -1000,
+            -1000,
+            -1000
+          ],
+          "median_block_delta": -1000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            1251456,
+            1251456,
+            1251456,
+            1251456,
+            1251456
+          ],
+          "candidate": [
+            1187456,
+            1187456,
+            1187456,
+            1187456,
+            1187456
+          ],
+          "reference_median": 1251456,
+          "candidate_median": 1187456,
+          "block_deltas": [
+            -64000,
+            -64000,
+            -64000,
+            -64000,
+            -64000
+          ],
+          "median_block_delta": -64000,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            144440,
+            144440,
+            144440,
+            144440,
+            144440
+          ],
+          "candidate": [
+            144440,
+            144440,
+            144440,
+            144440,
+            144440
+          ],
+          "reference_median": 144440,
+          "candidate_median": 144440,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            145016,
+            145016,
+            145016,
+            145016,
+            145016
+          ],
+          "candidate": [
+            145016,
+            145016,
+            145016,
+            145016,
+            145016
+          ],
+          "reference_median": 145016,
+          "candidate_median": 145016,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        }
+      }
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_first",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            22416,
+            22416,
+            22416,
+            22416,
+            22416
+          ],
+          "candidate": [
+            21559,
+            21559,
+            21559,
+            21559,
+            21559
+          ],
+          "reference_median": 22416,
+          "candidate_median": 21559,
+          "block_deltas": [
+            -857,
+            -857,
+            -857,
+            -857,
+            -857
+          ],
+          "median_block_delta": -857,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            1578528,
+            1578528,
+            1578528,
+            1578528,
+            1578528
+          ],
+          "candidate": [
+            1523680,
+            1523680,
+            1523680,
+            1523680,
+            1523680
+          ],
+          "reference_median": 1578528,
+          "candidate_median": 1523680,
+          "block_deltas": [
+            -54848,
+            -54848,
+            -54848,
+            -54848,
+            -54848
+          ],
+          "median_block_delta": -54848,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            282736,
+            282736,
+            282736,
+            282736,
+            282736
+          ],
+          "candidate": [
+            282736,
+            282736,
+            282736,
+            282736,
+            282736
+          ],
+          "reference_median": 282736,
+          "candidate_median": 282736,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            283584,
+            283584,
+            283584,
+            283584,
+            283584
+          ],
+          "candidate": [
+            283520,
+            283520,
+            283520,
+            283520,
+            283520
+          ],
+          "reference_median": 283584,
+          "candidate_median": 283520,
+          "block_deltas": [
+            -64,
+            -64,
+            -64,
+            -64,
+            -64
+          ],
+          "median_block_delta": -64,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        }
+      }
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_warm",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            15548,
+            15548,
+            15548,
+            15548,
+            15548
+          ],
+          "candidate": [
+            14691,
+            14691,
+            14691,
+            14691,
+            14691
+          ],
+          "reference_median": 15548,
+          "candidate_median": 14691,
+          "block_deltas": [
+            -857,
+            -857,
+            -857,
+            -857,
+            -857
+          ],
+          "median_block_delta": -857,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            1098032,
+            1098032,
+            1098032,
+            1098032,
+            1098032
+          ],
+          "candidate": [
+            1043184,
+            1043184,
+            1043184,
+            1043184,
+            1043184
+          ],
+          "reference_median": 1098032,
+          "candidate_median": 1043184,
+          "block_deltas": [
+            -54848,
+            -54848,
+            -54848,
+            -54848,
+            -54848
+          ],
+          "median_block_delta": -54848,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            145040,
+            145040,
+            145040,
+            145040,
+            145040
+          ],
+          "candidate": [
+            145040,
+            145040,
+            145040,
+            145040,
+            145040
+          ],
+          "reference_median": 145040,
+          "candidate_median": 145040,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            145552,
+            145552,
+            145552,
+            145552,
+            145552
+          ],
+          "candidate": [
+            145488,
+            145488,
+            145488,
+            145488,
+            145488
+          ],
+          "reference_median": 145552,
+          "candidate_median": 145488,
+          "block_deltas": [
+            -64,
+            -64,
+            -64,
+            -64,
+            -64
+          ],
+          "median_block_delta": -64,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        }
+      }
+    },
+    {
+      "comparison": "candidate_vs_baseline",
+      "reference": "baseline",
+      "variant": "candidate",
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_cloned",
+      "fields": {
+        "allocation_calls": {
+          "reference": [
+            22548,
+            22548,
+            22548,
+            22548,
+            22548
+          ],
+          "candidate": [
+            21691,
+            21691,
+            21691,
+            21691,
+            21691
+          ],
+          "reference_median": 22548,
+          "candidate_median": 21691,
+          "block_deltas": [
+            -857,
+            -857,
+            -857,
+            -857,
+            -857
+          ],
+          "median_block_delta": -857,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "allocated_bytes": {
+          "reference": [
+            1594032,
+            1594032,
+            1594032,
+            1594032,
+            1594032
+          ],
+          "candidate": [
+            1539184,
+            1539184,
+            1539184,
+            1539184,
+            1539184
+          ],
+          "reference_median": 1594032,
+          "candidate_median": 1539184,
+          "block_deltas": [
+            -54848,
+            -54848,
+            -54848,
+            -54848,
+            -54848
+          ],
+          "median_block_delta": -54848,
+          "increased_blocks": 0,
+          "decreased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "reference": [
+            305040,
+            305040,
+            305040,
+            305040,
+            305040
+          ],
+          "candidate": [
+            305040,
+            305040,
+            305040,
+            305040,
+            305040
+          ],
+          "reference_median": 305040,
+          "candidate_median": 305040,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        },
+        "peak_bytes_delta": {
+          "reference": [
+            305696,
+            305696,
+            305696,
+            305696,
+            305696
+          ],
+          "candidate": [
+            305696,
+            305696,
+            305696,
+            305696,
+            305696
+          ],
+          "reference_median": 305696,
+          "candidate_median": 305696,
+          "block_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "median_block_delta": 0,
+          "increased_blocks": 0,
+          "decreased_blocks": 0
+        }
+      }
+    }
+  ],
+  "adverse_costs": [
+    "Quadratic multiradical-square first and cloned queries are slower in all five pairs: median paired ratios 1.035270 and 1.075481, with ranges 1.012632..1.062424 and 1.047692..1.241560. Their requested memory counters match.",
+    "Quadratic pi-transport first/warm/cloned queries are slower in all five pairs: median paired ratios 1.039035, 1.035174 and 1.054946. Mixed-field-decline first/warm queries are also slower in all five, at 1.062335 and 1.060469. Their requested memory counters match.",
+    "Quadratic opaque-decline construction is slower in all five pairs, median paired ratio 1.041496. Opaque warm and cloned queries are slower in four pairs, at median paired ratios 1.231191 and 1.521822; variation is substantial and every sample remains.",
+    "Conjugate-then-affine cloned queries save allocations but are slower in three pairs. Their median paired ratio is 1.008369 while the ratio of medians is 0.981806. Both summaries and all paired observations remain visible."
+  ],
+  "favorable_costs": [
+    "Rational conjugate-product first/warm/cloned phases save 1,000 requested allocations and 64,000 allocated bytes per 1,000 inputs. Quadratic conjugate-then-affine first/warm/cloned save 857 calls and 54,848 bytes. Every paired memory delta repeats five times. Retained bytes match in all phases; four phases reduce peak requested bytes by 64.",
+    "Quadratic conjugate-then-affine warm is faster in every pair, median paired ratio 0.944369. First queries are faster in three pairs; cloned queries in two. Rational conjugate-product first/warm/cloned are faster in four pairs each.",
+    "Other all-five-faster phases include rational multiradical-square cloned, quadratic-reciprocal warm/cloned, pi-parameter-transport first/warm, quadratic multiradical-square construction and integer wide-affine first. Complete favorable ranges remain attached.",
+    "Rational radical-Laurent warm/cloned are also faster in all five pairs, but their total phase medians are only about 15,000 to 16,500 ns across 4,096 inputs. These timer-scale rows are preserved without claiming a practical effect."
+  ],
+  "code_generation_observation": {
+    "evidence": "codegen-v1/protocol.json",
+    "scope": "Existing baseline and candidate quadratic timing binaries only; no additional cost sample.",
+    "coefficient_symbol_bytes": [
+      2473,
+      4161
+    ],
+    "polynomial_symbol_bytes": [
+      2359,
+      2359
+    ],
+    "first_stack_pointer_subtraction_bytes": [
+      248,
+      264
+    ],
+    "interpretation": "Both binaries contain separate coefficient and polynomial multiplier symbols. The coefficient body grows by 1,688 bytes and its first stack-pointer subtraction by 16 bytes. This motivates testing a helper boundary; it does not establish lost inlining, total stack use or the cause of a timing change."
+  },
+  "native": {
+    "status": "not-executed-after-scalar-cost-rejection",
+    "original_fixture_gates_run": false,
+    "matched_native_costs_run": false,
+    "complete_report_identity_established": false,
+    "production_cli_size_measured": false
+  },
+  "next_step": {
+    "status": "helper-boundary-source-review-pending",
+    "task": "Keep all sources and samples frozen. Review extracting the qualified direct arithmetic into a private non-inlined helper while leaving the original opaque guard, eligibility conditions and general fallback in the entry method. Establish ownership and bounds for the helper call before preparing any new source.",
+    "comparison": "Use a fresh three-source experiment if that review succeeds: unchanged parent, this direct version as a control, and the extracted-helper candidate. Shared correctness tests and new fixed costs distinguish the source change from variation across separate historical runs.",
+    "fixed_scalar_costs_if_qualified": {
+      "variants": [
+        "baseline",
+        "direct",
+        "outlined"
+      ],
+      "block_order": [
+        [
+          "baseline",
+          "direct",
+          "outlined"
+        ],
+        [
+          "outlined",
+          "direct",
+          "baseline"
+        ],
+        [
+          "direct",
+          "baseline",
+          "outlined"
+        ],
+        [
+          "outlined",
+          "baseline",
+          "direct"
+        ],
+        [
+          "baseline",
+          "outlined",
+          "direct"
+        ]
+      ],
+      "suites": [
+        "rational",
+        "quadratic",
+        "integer"
+      ],
+      "modes": [
+        "time",
+        "memory"
+      ],
+      "measurement_processes": 90,
+      "preflight_processes": 18,
+      "timing_inputs": 4096,
+      "allocation_inputs": 1000,
+      "all_builds_before_probes": true,
+      "sample_extension_planned": false,
+      "shared_comparisons_are_not_independent": true
+    },
+    "candidate_prepared": false
+  },
+  "limits": [
+    "The comparison uses a new closed sample set. It neither extends previous samples nor establishes native workload performance.",
+    "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+    "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Private coefficient layouts do not establish total memory or eventual reclamation.",
+    "Native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open. Dependencies, Box payloads and existing owned coefficient layouts are unchanged. The original cache-read lock lifetime is unchanged. Eligibility comparisons, code generation and reused vector capacities remain cost risks; native behavior still requires evidence.",
+    "Only the two existing quadratic timing executables are inspected. These are static symbol/disassembly observations, not a new timing or allocation sample.",
+    "Both multipliers have standalone symbols in both binaries. This does not prove which other call sites inline them and does not establish a lost-inlining explanation.",
+    "The first stack-pointer subtraction excludes register pushes, callees and dynamic path behavior. It is not a total stack-memory or peak measurement.",
+    "A larger body or frame can motivate an isolated helper-boundary experiment but cannot causally explain the measured slowdowns.",
+    "All six probe binaries grow by 1,968 to 1,984 bytes. These are probe sizes, not production CLI sizes.",
+    "Timing variation affects favorable and adverse rows. No sample is removed, appended or selectively repeated, and no statistical significance or native speedup is claimed.",
+    "The version 1 test-import failure and all of its sources/logs remain preserved. Version 2 changed only that import before qualification; candidate arithmetic remained unchanged.",
+    "Main runtime and all 35 original native paths remain unchanged. The full plan is incomplete; all 39 properties, 14 targets and crate future work remain in scope, with individual ledger statuses unchanged."
+  ],
+  "source_parent_main_and_pending_native_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
