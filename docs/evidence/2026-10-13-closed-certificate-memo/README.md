@@ -46,14 +46,44 @@ zero-work reuse and final owner release pass in both. All seven measured private
 layouts match: Rational 8 bytes, coefficient 56, polynomial 24, closed
 coefficient 32, closed polynomial 24, Computable 16 and Node 56.
 
-The prepared fixed scalar comparison covers timing, requested allocations and
-probe sizes through 12 preflights and 60 measurement processes, in five
+The fixed scalar comparison completed 12 preflights and 60 measurement processes, in five
 predeclared alternating pairs. Each timing phase uses 4,096 inputs; allocation
 phases use 1,000. Separate executables and fresh targets keep the allocation
-wrapper out of timing. All builds precede every probe. No sample is added to
-either completed storage experiment. Native qualification, fixed endpoint/broad/final-abort
+wrapper out of timing. All builds preceded every probe. Every mathematical
+witness and representation inventory matches. No sample was added to either
+completed storage experiment. See [cost-assessment-v1.json](cost-assessment-v1.json)
+for all samples and [scalar-decision-v1.json](scalar-decision-v1.json) for the
+provisional decision to investigate native impact with scalar concerns open.
+
+Of 68 timing phases, seven are faster in all five blocks and 28 in at least four;
+three are slower in all five and seven in at least four. Allocation calls and
+allocated bytes decrease in 21 phases; peak requested bytes decrease in 17.
+No memory counter increases, and retained requested-byte deltas match in every
+pair. Every memory delta repeats across the five blocks. The largest reductions
+per 1,000 inputs are 3,000 calls, 352,000 allocated bytes and 352 peak bytes.
+All six probe executables shrink by 208–216 bytes.
+
+| Adverse phase | Slower pairs | Baseline median ns/input | Candidate median ns/input | Ratio of medians |
+| --- | ---: | ---: | ---: | ---: |
+| First affine-surd query | 5 / 5 | 459.658 | 508.937 | 1.107208 |
+| Warm affine-surd query | 5 / 5 | 378.702 | 412.631 | 1.089591 |
+| Opaque-decline construction | 5 / 5 | 796.164 | 816.658 | 1.025741 |
+| Radical-Laurent construction | 4 / 5 | 728.993 | 840.682 | 1.153210 |
+
+The first three adverse phases have unchanged memory counters. Savings elsewhere
+do not explain or excuse their timing costs. Some apparent large integer gains
+also depend on variable baseline samples: signed-word construction has a ratio
+of medians of 0.625348, but a median paired ratio of 1.041420 and is slower in
+three pairs. These descriptive statistics establish neither statistical
+significance nor an application speedup. All adverse rows remain in the evidence.
+
+The candidate remains unadmitted. Nine native validation phases are prepared:
+strict four-crate Clippy, solver tests, focused endpoint controls, full curve/DRC
+tests, four-crate docs, a bound DRC executable and both original assertions.
+They have not run. A native gain alone will not dismiss scalar regressions;
+meaningful regressions must be resolved before retention. Fixed endpoint/broad/final-abort
 controls, complete report bytes, production CLI size and the original full-board
 120-second worker-CPU and 60-second neck check-body limits remain required.
-The parent still fails the board assertion at 133.31248412 seconds. No candidate
-is admitted, and all 39 properties, 14 targets and crate-specific future work
+The parent still fails the board assertion at 133.31248412 seconds. All 39
+properties, 14 targets and crate-specific future work
 remain in scope.
