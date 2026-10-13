@@ -1,0 +1,31 @@
+{
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/native-v2-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "ee82fafc4bdc1a379bb770276700d101e353cd35bc7c294ba3916073357e6e45",
+    "bytes": 54170224,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperdrc#0.3.0",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperdrc",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/cache-local-polynomial-products/candidate/source/crates/hyperdrc/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    }
+  }
+}

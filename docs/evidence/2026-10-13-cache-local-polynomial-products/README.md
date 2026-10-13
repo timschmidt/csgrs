@@ -1,9 +1,8 @@
-The candidate advances to native investigation with scalar timing concerns
-still open. All 28 scoped qualification commands passed, and the fixed scalar
-trial saves allocations without increased measured retention. A repeated
-conjugate-then-affine slowdown remains unresolved; no runtime is admitted.
-The [reviewed scalar decision](scalar-decision-v2.json) preserves every result
-and the requirements that remain before retention.
+The cache-local product candidate is **rejected for runtime admission**. Its
+original board assertion fails at 136.412555334 worker-CPU seconds against 120,
+and the scalar conjugate-then-affine timing concerns remain unresolved.
+Allocation savings do not resolve those costs. All samples and qualified
+sources remain frozen; see the [final decision](decision-v1.json).
 
 This experiment tests a typed borrowed multiplication operation inside the
 original Box-backed polynomial cache. The inputs and fixed protocol were
@@ -129,3 +128,31 @@ They retain the declared five paired blocks: twenty endpoint timing/allocation
 processes, ten broad processes with 231 witnesses each, and six final-abort
 processes with 210 receipts each. Four preflights follow all builds. This
 follow-up depends on completed native qualification and a decision to continue.
+
+Native qualification is complete. The [assessment](native-assessment-v2.json)
+verifies all nine commands, logs, the bound executable and unchanged sources.
+Strict four-crate all-feature/all-target Clippy and warning-denied docs pass.
+Solver tests pass 974 results, endpoint regressions 5, curve tests 2,494 with
+33 existing ignores, and DRC tests excluding the two separate assertions 1,644.
+These counts describe this run, not every workflow/feature combination.
+
+The original full-board worker-CPU assertion fails at 136.412555334 seconds
+against 120. Copper-neck passes its original 60-second check-body wall limit;
+its internal passing duration is not printed. The 123.42606854019687-second
+neck subprocess duration includes setup and is not the asserted metric. Both
+complete boards emit reports with 12 and 197 findings. Complete report bytes
+and production CLI size were not compared.
+
+The prepared native cost runners remain unexecuted after rejection. No native
+paired speedup or slowdown is inferred from the standalone assertion, and no
+scalar sample set is extended. All favorable and adverse scalar rows remain
+recorded. The provisional native-assessment decision label awaiting controls is
+superseded by the final rejection; the executed runner and assessment remain
+unchanged.
+
+The next source review considers direct multiplication of same-radicand
+single-radical coefficients in the unchanged parent. Prior recursive-copy
+counts do not establish coverage of that product shape or its time share.
+Operation order, cancellation, bounds and ownership need review before any new
+candidate. No rejected cache or storage change is inherited. Main runtime and
+all 35 pending native paths remain unchanged; the full properties plan is open.

@@ -2055,7 +2055,7 @@
       "native_executed": false
     },
     "cache_local_polynomial_products": {
-      "status": "advance-cache-local-products-to-native-investigation-with-scalar-costs-open",
+      "status": "reject-cache-local-products-on-original-board-gate-and-unresolved-scalar-costs",
       "evidence": "docs/evidence/2026-10-13-cache-local-polynomial-products",
       "contract": "Typed multiplication borrows a closed right operand under the original Box-backed cache read lock, returns an owned product, and returns the unchanged left polynomial on a miss. No Arc payload or recursive result enum. Cache-hit decline marks reuse; cache misses enter the preserved original recognizer body once.",
       "source_review": "Product coefficient operations use Rational arithmetic and immutable structural comparison; inspected helpers do not evaluate expressions or call EvaluationCache. The typed method accepts no arbitrary callback. The parent retains the borrowed node, and the guard must be released before recursion, publication and return. Scoped inspection is not a whole-crate formal proof.",
@@ -2063,8 +2063,13 @@
         "Read-lock duration may delay writers; coefficient bit sizes are unbounded, so no fixed-duration or wait-free claim.",
         "Dispatch, temporary Result moves and code generation may regress cold paths or probe size."
       ],
-      "controls": "Twenty unchanged shared tests plus inherited cache/P4 controls; eight candidate tests cover exact products, frontiers, misses, zero work, fallback accounting, concurrent readers/writers, poison recovery and opaque self-reference. Fresh qualification will run 28 commands; counts overlap.",
-      "next_step": "Run the committed native validation runner in a fresh target: strict four-crate all-feature/all-target Clippy, full solver/curve/DRC suites, warning-denied docs, then both original assertions separately from a bound executable. Record gate failures without enlarging limits. Fixed native costs, reports and production CLI size follow only if investigation continues.",
+      "controls": "Twenty unchanged shared tests plus inherited cache/P4 controls; eight candidate tests cover exact products, frontiers, misses, zero work, fallback accounting, concurrent readers/writers, poison recovery and opaque self-reference. All 28 scalar qualification commands passed; counts overlap.",
+      "next_step": {
+        "status": "source-review-pending",
+        "task": "Keep this trial frozen. Review the unchanged parent coefficient multiplier for a direct product of two single-radical coefficients with the same radicand. Establish exact operation order, zero/cancellation behavior, insertion bounds, opaque fallback and storage ownership before preparing a distinct candidate. Do not inherit cache-local borrowing, rejected sharing/storage changes or scaling branches.",
+        "motivation": "Prior diagnostics observed many single-radical recursive certificate reads, but those are read counts, not same-field multiplication coverage or time share. Review the multiplication-shape evidence before attributing potential benefit or deciding whether a runtime prototype is justified.",
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2191,8 +2196,87 @@
       ],
       "scalar_interpretation_review": "One overbroad first-block sentence corrected; all measured samples, summaries and decision unchanged. Original artifacts retained; native v1 runners unexecuted. Native v2 binds the corrected interpretation.",
       "retention_requirement": "Keep every scalar adverse row and inherited endpoint tradeoff open. Native timing gains alone do not dismiss them. Resolve meaningful regressions and complete original gates, matched native costs, complete report identity, production size and remaining workflow obligations before runtime retention.",
-      "native_qualification": "Version 2 is running in its fresh target; four-crate Clippy, solver and endpoint controls have passed. Full curve/DRC suites, docs and original full-fixture gates remain in progress or pending.",
-      "native_cost_inputs": "Native cost runner and assessor prepared but unexecuted: fixed 36 measurements and four preflights, including 231 broad witnesses and 210 final-abort receipts per corresponding process. Further work remains conditional on qualification and review."
+      "native_qualification": {
+        "status": "complete-original-board-assertion-failed",
+        "evidence": "native-assessment-v2.json",
+        "strict_four_crate_clippy_and_docs_passed": true,
+        "tests": [
+          {
+            "variant": "candidate",
+            "phase": "solver-tests",
+            "passed": 974,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 11
+          },
+          {
+            "variant": "candidate",
+            "phase": "endpoint-regressions",
+            "passed": 5,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 1
+          },
+          {
+            "variant": "candidate",
+            "phase": "curve-tests",
+            "passed": 2494,
+            "failed": 0,
+            "ignored": 33,
+            "result_groups": 51
+          },
+          {
+            "variant": "candidate",
+            "phase": "drc-tests-except-separate-gates",
+            "passed": 1644,
+            "failed": 0,
+            "ignored": 0,
+            "result_groups": 10
+          }
+        ],
+        "gates": [
+          {
+            "label": "full-board",
+            "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+            "limit_seconds": 120,
+            "metric": "worker CPU",
+            "variant": "candidate",
+            "passed": false,
+            "observed_assertion_seconds": 136.412555334,
+            "process_wall_seconds": 137.6849957439117,
+            "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+          },
+          {
+            "label": "copper-neck",
+            "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+            "limit_seconds": 60,
+            "metric": "check body wall time",
+            "variant": "candidate",
+            "passed": true,
+            "observed_assertion_seconds": null,
+            "process_wall_seconds": 123.42606854019687,
+            "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+          }
+        ],
+        "all_original_gates_passed": false
+      },
+      "native_cost_inputs": {
+        "status": "prepared-not-executed-after-original-gate-rejection",
+        "measurement_processes_executed": 0,
+        "preflight_processes_executed": 0,
+        "reason": "The unchanged original gate and unresolved scalar costs prevent admission. The prepared fixed native controls remain intact and unexecuted; no native cost identity or speedup is claimed."
+      },
+      "decision": "decision-v1.json",
+      "reports_and_production_size": {
+        "complete_report_identity_established": false,
+        "production_cli_size_measured": false,
+        "finding_counts": [
+          12,
+          197
+        ],
+        "status": "not-executed-for-rejected-candidate"
+      },
+      "main_and_35_pending_native_paths_unchanged": true
     }
   },
   "status_meanings": {
