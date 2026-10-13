@@ -1,0 +1,7 @@
+
+running 2 tests
+test computable::node::radical_storage::tests::consuming_owned_and_retained_views_reuses_or_releases_buffers ... ok
+test computable::node::radical_storage::tests::publication_and_mutation_keep_scratch_arrays_owned ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 888 filtered out; finished in 0.00s
+

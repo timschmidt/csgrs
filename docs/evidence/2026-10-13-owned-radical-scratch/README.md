@@ -34,9 +34,22 @@ Preparation froze a 10,134-file shared-test baseline and a 10,135-file
 candidate. They differ only in algebra.rs and the private storage helper. Exact
 parent-token recovery and unchanged mathematical alias controls are verified;
 all manifests, lockfiles, main runtime and pending native entries are unchanged.
-Qualification is running serially from fresh targets through default/all-feature
-scalar suites, doctests, formatting, strict Clippy and warning-denied docs. Qualification records every layout rather than assuming
-the scratch enum's size. If it passes, the fixed three-suite comparison uses
+Version 1 completed 23 successful commands before warning-denied Clippy rejected
+`mem::replace(self, Self::new())` in the helper. Its tests passed, including
+890 all-feature and 803 default candidate library tests, but qualification is
+incomplete: candidate default Clippy and docs did not execute. The original
+source and failure remain frozen in
+[qualification-failure-v1.json](qualification-failure-v1.json).
+
+Version 2 changes only that expression to `std::mem::take(self)`. The existing
+Default implementation already delegates directly to `Self::new`; exact byte
+comparison binds this correction. New preparation and qualification runners
+will use fresh source trees and targets and rerun all 26 commands. No v1 cost
+probe executed, and no v1 pass is relabelled as a v2 execution. The corrected
+inputs are prepared but unexecuted; see [scope-v2.json](scope-v2.json).
+
+Qualification records every layout rather than assuming the scratch enum's
+size. If it passes, the fixed three-suite comparison uses
 twelve preflights and 60 measurement processes, with separate timing/allocation
 executables and all builds before probes. Every original phase and sample stays
 in scope. See [scope-v1.json](scope-v1.json).

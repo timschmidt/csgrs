@@ -1,0 +1,9 @@
+
+running 3 tests
+test computable::node::shared_radical_tests::closed_views_isolate_scaling_cancellation_and_frontier_failures ... RADICAL_STORAGE_SHARING	0	0
+ok
+test computable::node::shared_radical_tests::concurrent_cached_views_mutate_independently_and_outlive_the_graph ... ok
+test computable::node::shared_radical_tests::consuming_cached_products_and_inverses_preserves_live_certificates ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 885 filtered out; finished in 0.00s
+

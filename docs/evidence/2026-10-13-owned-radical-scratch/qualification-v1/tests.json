@@ -1,0 +1,128 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "buffer-ownership",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "passed": 888,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "default-library",
+    "passed": 801,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "buffer-ownership",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "all-feature-library",
+    "passed": 890,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "default-library",
+    "passed": 803,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "candidate",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  }
+]
