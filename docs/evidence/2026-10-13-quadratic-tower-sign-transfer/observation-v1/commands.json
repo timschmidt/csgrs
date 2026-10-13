@@ -1,0 +1,81 @@
+[
+  {
+    "name": "build-main",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/main-target"
+    },
+    "exit_code": 0,
+    "seconds": 14.08999853907153,
+    "stdout_sha256": "109fa498a375d1deea59a90b21f43074ffb0a0f87eb7d4451b930de4dc0402fa",
+    "stderr_sha256": "3fb0c73acd399adb5f473098c0b9b8636e6f7fd0a112b5060f67f037bb2fb644"
+  },
+  {
+    "name": "build-endpoint",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/endpoint-target"
+    },
+    "exit_code": 0,
+    "seconds": 13.873912816867232,
+    "stdout_sha256": "62464c67487c4ef9ae7dee031f982241efefec03d888196d44de916a086a6457",
+    "stderr_sha256": "93926dbb1d346312250bc6d717cb5776480c043851cc44f46041f018f16e73ff"
+  },
+  {
+    "name": "link-main",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-quadratic-tower-sign-transfer/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/main-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/main-target/release/libhyperreal.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/bins/main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 1,
+    "seconds": 0.05010417103767395,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "8df156461aa90707ee62b35e409fa36708d47b115c2da1480ea022ba77f3eaf9"
+  }
+]

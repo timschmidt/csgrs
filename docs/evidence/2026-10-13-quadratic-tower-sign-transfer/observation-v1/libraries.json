@@ -1,0 +1,46 @@
+{
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/main-target/release/libhyperreal.rlib",
+    "sha256": "cf644233d17ab66766b02b4c22840354ef70ef72b9866e513cf80cd5749937fd",
+    "bytes": 11688292,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    }
+  },
+  "endpoint": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-transfer/endpoint-target/release/libhyperreal.rlib",
+    "sha256": "954ee260a783dc9058fa0465a5f9ddd3124c3b48c68d7e87f2d66387bcfb3d6f",
+    "bytes": 11699900,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/baseline/source/crates/hyperreal#0.13.1",
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": false
+    }
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "status": "probe-compile-failure-no-observation-executed",
+  "cause": "One missing escaped closing brace in the successful-compaction JSON format string. Both scalar libraries built; the first probe compile failed before observation.",
+  "commands": [
+    {
+      "name": "build-main",
+      "exit_code": 0,
+      "seconds": 14.08999853907153
+    },
+    {
+      "name": "build-endpoint",
+      "exit_code": 0,
+      "seconds": 13.873912816867232
+    },
+    {
+      "name": "link-main",
+      "exit_code": 1,
+      "seconds": 0.05010417103767395
+    }
+  ],
+  "probe_sha256": "6896af967a1205188008d6919a3279cf96ac4bc6cc465582cc9b29eb769fad33",
+  "runner_sha256": "18f8dab24d47e0c13e10057fd706dcf092f6344fff1d7eaa645e3db2dba098e4",
+  "assessor_sha256": "3d0d7f69406c9b3cd17ff632029641e4c97feef6ad887d8e6ef30cca7efec441",
+  "artifacts_sha256": {
+    "observation-v1/build-artifacts.json": "7826b4b68a4381b9691b6adea97e6c24fa01eeafc39f9085009e875a3259e8dd",
+    "observation-v1/build-endpoint.stderr": "93926dbb1d346312250bc6d717cb5776480c043851cc44f46041f018f16e73ff",
+    "observation-v1/build-endpoint.stdout": "62464c67487c4ef9ae7dee031f982241efefec03d888196d44de916a086a6457",
+    "observation-v1/build-main.stderr": "3fb0c73acd399adb5f473098c0b9b8636e6f7fd0a112b5060f67f037bb2fb644",
+    "observation-v1/build-main.stdout": "109fa498a375d1deea59a90b21f43074ffb0a0f87eb7d4451b930de4dc0402fa",
+    "observation-v1/commands.json": "f01ee3ed7485836f14999624abec15a3af7ca8e4d49167be51b10c34dcdfdacf",
+    "observation-v1/endpoint-source-hashes.json.gz": "11a34afd9427b443355c2e8052f530228c618da2d5b98aa34a813120c972eaa4",
+    "observation-v1/libraries.json": "ab7127ff85c5da3b9d9cd395f4dede12bfe72b273936355da520bfebb62f5bd2",
+    "observation-v1/link-main.stderr": "8df156461aa90707ee62b35e409fa36708d47b115c2da1480ea022ba77f3eaf9",
+    "observation-v1/link-main.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observation-v1/main-source-hashes.json.gz": "03dc4f44d3273cd6cd1d32b38e8fd74bd5cd75d6f745114d2451f67240a89fe0",
+    "observation-v1/parent-source-hashes.json.gz": "465e26e05c529388505c2bed55bb22cf35355a930141b29ee1afc69eb1022a5a",
+    "observation-v1/protocol.json": "c29614890b72a72e63ff2bd889a21274c8b173dba3ae10405aac350978a3815d"
+  },
+  "correction": "probe_v2.rs adds exactly one closing brace. The same fixed 12 cases per source use new observation-v2 outputs and new target/quadratic-tower-sign-transfer-v2 build targets. Version 1 inputs and outputs remain unchanged.",
+  "runtime_admitted": false,
+  "behavioral_conclusion": null
+}

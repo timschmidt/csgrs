@@ -1,0 +1,10 @@
+error: invalid format string: unmatched `}` found
+  --> /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-quadratic-tower-sign-transfer/probe.rs:85:490
+   |
+85 | ..."all_definite_signs_agree\":{definite_agreement}}",
+   |                                                    ^ unmatched `}` in format string
+   |
+   = note: if you intended to print `}`, you can escape it using `}}`
+
+error: aborting due to 1 previous error
+
