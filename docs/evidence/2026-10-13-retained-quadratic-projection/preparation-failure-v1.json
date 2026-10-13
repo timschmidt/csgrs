@@ -1,0 +1,21 @@
+{
+  "status": "preparation-stopped-before-compilation-on-token-recovery-check",
+  "runner_sha256": "3b59d8d6f0c96dc4af41e1d2d0218f729543218959386420f09fd6df899e2c33",
+  "failed_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/retained-quadratic-projection/source",
+  "source_hashes_sha256": "70fa53e718f9b8d15c0151097681ebfda5eba8d470d4e548ca646e8a8237ac9b",
+  "source_changes_sha256": {
+    "crates/hyperdrc/src/app.rs": "c503cf73b7751094cbc31b9c1ddd380cf356dfc1a00d4e628b4a1d54d32a3882",
+    "crates/hyperreal/src/computable/node/algebra.rs": "4e187532eaab0a78e67f4948cfdf5965011ae8ac621b715df76ee0d3bf2b89fc",
+    "crates/hyperreal/src/computable/node/representation.rs": "49271d1d52283916ee6e1fd2727a6b3eaa67ed4e277d6205222205f882ca6a02",
+    "crates/hyperreal/src/computable/node/retained_projection_site_tests.rs": "728c4d7e525e5f31f4d1989bae84e1351ddd52e290c3b40cf06f2708c1d724e4",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c63327606692877ac2cbb51a038d363e76f024fdaef314ab242de535ab470c8d",
+    "crates/hyperreal/src/lib.rs": "48e0caeb12aff87d0aa58515d94544594290e8a632564fd51b94e727ef2d4859",
+    "crates/hyperreal/src/retained_projection_diagnostic.rs": "39e51abae0254035fc00c551db738458129d2ca19e69a2ced2fa844724c415a7"
+  },
+  "archive_sha256": "8a066ca3903cba743f21ee602d2cfda41f6816d2d1616ffa3bd523cc836c0a21",
+  "stderr_sha256": "bc7e712ae94c431d2aae399db86f41c3139cdf8cb9d3aeb3317e6659607e07b9",
+  "reason": "rustfmt removed the optional trailing comma after the new fold closure and moved an optional comma in the new retry call. Formatting the included structural-analysis file also moved an existing optional comma inside integer-leaf construction. The strict token recovery check correctly stopped.",
+  "correction": "Use the exact formatted new cache/retry fragments and leave the included structural-analysis file unformatted as a whole, preserving its original bytes outside the explicit insertions. New input modules keep their already-checked crate formatting. Freeze a fresh source and use version-2 runners.",
+  "compiled_or_executed": false,
+  "runtime_admitted": false
+}

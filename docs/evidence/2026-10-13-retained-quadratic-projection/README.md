@@ -20,7 +20,12 @@ and warning-denied scalar docs. Focused counts overlap the full scalar suite.
 Only after those checks does one complete-board observation run, preserving
 both original fixtures and the 120-second worker-CPU assertion.
 
-The inputs are prepared but have not been compiled or executed. Counts are
+Preparation version 1 stopped before compilation because rustfmt moved optional
+commas in two inserted calls and an unrelated legacy expression. Its source and
+failure remain archived. Version 2 uses the formatted call fragments and leaves
+the included legacy file byte-identical outside the explicit insertions. The
+counter and site-test inputs are unchanged. Version 2 is prepared but has not
+executed; no diagnostic has been compiled or run. Counts are
 coverage, not allocation measurements, time shares or predicted savings. A
 separate measured optimization would need independent qualification and fixed
 cost controls. The parent remains unadmitted; all 35 pending native entries,

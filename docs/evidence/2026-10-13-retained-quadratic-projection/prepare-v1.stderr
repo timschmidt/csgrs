@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-retained-quadratic-projection/prepare_v1.py", line 204, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-retained-quadratic-projection/prepare_v1.py", line 152, in main
+    assert recovered.count(after) == 1, name
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: crates/hyperreal/src/computable/node/representation.rs
