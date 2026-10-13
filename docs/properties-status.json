@@ -2452,7 +2452,7 @@
       "scope_wording_review": "Individual property/target statuses remain unchanged; the full plan remains incomplete and all 39 properties, 14 targets and crate future work stay in scope."
     },
     "direct_same_radicand_products": {
-      "status": "version-2-frozen-awaits-scalar-qualification",
+      "status": "two-variants-pass-scoped-scalar-qualification-costs-next",
       "evidence": "docs/evidence/2026-10-13-direct-same-radicand-products",
       "contract": "After the original opaque-product guard, recognize exactly one equal non-unit radicand on each side. Preserve arithmetic order and zero-skipping, select the same original left/right radicand payload, reuse the owned left vector for a surviving radical and discard scratch buffers on exact cancellation. General fallback, Box cache layout, memo, work/depth limits and mandatory original retry are unchanged.",
       "coverage_motivation": "6,379,817 observed equal-radicand single-radical/no-atom products, 29.05971939075416 percent of 21,954,159 multiplications. These are instrumented operation counts, not eligibility counts for the non-unit guard, time shares or savings.",
@@ -2507,7 +2507,7 @@
           ]
         ]
       },
-      "next_step": "Run version 2 scalar qualification in fresh targets, independently assess all 28 commands and observed storage, then execute fixed costs if qualification passes.",
+      "next_step": "Run the committed version 2 fixed scalar trial: twelve preflights and sixty measurements after all builds, retain every sample and assess witnesses, timing, allocations and size before a native-investigation decision.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2530,6 +2530,73 @@
         "candidate_compiled": false,
         "costs_executed": false,
         "version_2_change": "Test import only; no arithmetic or dependency change."
+      },
+      "qualification": {
+        "evidence": "correctness-v2.json",
+        "all_28_commands_passed": true,
+        "scope": "Both variants pass twenty shared projection/storage/memo/alias tests, eight shared direct-product controls, six inherited cache tests, eleven P4 tests and 28 doctests. Each passes 902 all-feature and 815 default library tests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals."
+      },
+      "layouts": {
+        "baseline": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        },
+        "candidate": {
+          "Rational": 8,
+          "RadicalCoefficient": 56,
+          "PiLaurentPolynomial": 24,
+          "ClosedRadicalCoefficient": 32,
+          "ClosedPiLaurentPolynomial": 24,
+          "Computable": 16,
+          "Node": 56,
+          "CachedEvaluation": 64
+        }
+      },
+      "direct_product_storage": {
+        "baseline": {
+          "reused_input_buffer": 0,
+          "input_capacity": 1,
+          "output_capacity": 4,
+          "atom_capacity": 0,
+          "cancelled_radical_capacity": 4,
+          "cancelled_atom_capacity": 0
+        },
+        "candidate": {
+          "reused_input_buffer": 1,
+          "input_capacity": 1,
+          "output_capacity": 1,
+          "atom_capacity": 0,
+          "cancelled_radical_capacity": 0,
+          "cancelled_atom_capacity": 0
+        }
+      },
+      "memo_inventories": {
+        "baseline": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        },
+        "candidate": {
+          "original": 1,
+          "retained": 1,
+          "opaque": 2
+        }
+      },
+      "ordinary_copy_sharing": {
+        "baseline": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        },
+        "candidate": {
+          "source_shares_closed": 0,
+          "views_share_closed": 0
+        }
       }
     }
   },

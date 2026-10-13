@@ -1,0 +1,282 @@
+{
+  "status": "two-variants-pass-scoped-scalar-qualification-costs-next",
+  "assessor_sha256": "f82c1f6e5cd622bcafc9e6f029b6547272437b1597f48b9cf8822e627de5ca50",
+  "tests": [
+    {
+      "variant": "baseline",
+      "phase": "projection-regressions",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "direct-product-controls",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "all-feature-library",
+      "passed": 902,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "default-library",
+      "passed": 815,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "baseline",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "projection-regressions",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "storage-regressions",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "memo-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "alias-regressions",
+      "passed": 3,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "direct-product-controls",
+      "passed": 8,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "all-feature-library",
+      "passed": 902,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "default-library",
+      "passed": 815,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "variant": "candidate",
+      "phase": "doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "layouts": {
+    "baseline": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    },
+    "candidate": {
+      "Rational": 8,
+      "RadicalCoefficient": 56,
+      "PiLaurentPolynomial": 24,
+      "ClosedRadicalCoefficient": 32,
+      "ClosedPiLaurentPolynomial": 24,
+      "Computable": 16,
+      "Node": 56,
+      "CachedEvaluation": 64
+    }
+  },
+  "memo_inventories": {
+    "baseline": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    },
+    "candidate": {
+      "original": 1,
+      "retained": 1,
+      "opaque": 2
+    }
+  },
+  "sharing": {
+    "baseline": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    },
+    "candidate": {
+      "source_shares_closed": 0,
+      "views_share_closed": 0
+    }
+  },
+  "layouts_recorded": true,
+  "direct_product_storage": {
+    "baseline": {
+      "reused_input_buffer": 0,
+      "input_capacity": 1,
+      "output_capacity": 4,
+      "atom_capacity": 0,
+      "cancelled_radical_capacity": 4,
+      "cancelled_atom_capacity": 0
+    },
+    "candidate": {
+      "reused_input_buffer": 1,
+      "input_capacity": 1,
+      "output_capacity": 1,
+      "atom_capacity": 0,
+      "cancelled_radical_capacity": 0,
+      "cancelled_atom_capacity": 0
+    }
+  },
+  "manifests_and_lockfiles_unchanged": true,
+  "source_parent_and_main_unchanged": true,
+  "all_28_commands_passed": true,
+  "qualification": "Both variants pass twenty shared projection/storage/memo/alias tests, eight shared direct-product controls, six inherited cache tests, eleven P4 tests and 28 doctests. Each passes 902 all-feature and 815 default library tests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
+  "remaining": "Fixed scalar time/allocation/size controls, native qualification and original full-fixture gates, endpoint/broad/abort controls, complete report bytes and production CLI size. Private layouts do not establish total-memory or performance behavior; eligibility comparisons, code generation and reused vector capacities remain cost risks; no runtime is admitted.",
+  "artifacts_sha256": {
+    "qualification-v2/baseline-alias-regressions.stderr": "8ac8f2d3a2c3a16ce061db3499fc84f581b6cc97990da52829c209bd0b9ed485",
+    "qualification-v2/baseline-alias-regressions.stdout": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "qualification-v2/baseline-all-feature-clippy.stderr": "d50e0ab574d60298e479a199ff98aabb51b3b58e9690cc789651614ac2117568",
+    "qualification-v2/baseline-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/baseline-all-feature-library.stderr": "8ac8f2d3a2c3a16ce061db3499fc84f581b6cc97990da52829c209bd0b9ed485",
+    "qualification-v2/baseline-all-feature-library.stdout": "b08cf81066f786e8c58465c8f27ad21fb959ec24165dac195ae19a11d826be8f",
+    "qualification-v2/baseline-cache-frontiers.stderr": "8ac8f2d3a2c3a16ce061db3499fc84f581b6cc97990da52829c209bd0b9ed485",
+    "qualification-v2/baseline-cache-frontiers.stdout": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "qualification-v2/baseline-default-clippy.stderr": "b6d381da0b3268a45f7a0e37921e6be9047ea956bb06ad2e6846ff04d4781e18",
+    "qualification-v2/baseline-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/baseline-default-library.stderr": "229e9a4f87e070805dfc57e553af7e3fb7a6b57bbb242dc39899292ef540cb15",
+    "qualification-v2/baseline-default-library.stdout": "49f1ab040ddb711f9bbf0bce4ea2239fd99a89cf2033d3d548c0f52510f3212a",
+    "qualification-v2/baseline-direct-product-controls.stderr": "8895ce342640996b731737070b2beb8419a368640ea3941acffd052972101db0",
+    "qualification-v2/baseline-direct-product-controls.stdout": "37b685a9c64995d14c416a9528a7648827785097be3f4c0584f2c53549788e9c",
+    "qualification-v2/baseline-docs.stderr": "5a049eb999ccbf2e96b2979d6a100cff36d7a16f6c360c6e201047fc2fd0a97a",
+    "qualification-v2/baseline-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/baseline-doctests.stderr": "395d2aee4f5ad8843b7e96632272f3ab7f69c116eff71010371bfa38af72afc8",
+    "qualification-v2/baseline-doctests.stdout": "5d0a3331af01d71a63325b60407152d0b37a28066dba43bd921377a12a59bc1f",
+    "qualification-v2/baseline-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/baseline-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/baseline-memo-regressions.stderr": "8ac8f2d3a2c3a16ce061db3499fc84f581b6cc97990da52829c209bd0b9ed485",
+    "qualification-v2/baseline-memo-regressions.stdout": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "qualification-v2/baseline-projection-regressions.stderr": "5d382f15c96760244f7f2b0a3a2d6cbf8f4ede2ea88cb4f98be6e9aa2f17ebee",
+    "qualification-v2/baseline-projection-regressions.stdout": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "qualification-v2/baseline-sign-regressions.stderr": "8895ce342640996b731737070b2beb8419a368640ea3941acffd052972101db0",
+    "qualification-v2/baseline-sign-regressions.stdout": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "qualification-v2/baseline-storage-regressions.stderr": "8ac8f2d3a2c3a16ce061db3499fc84f581b6cc97990da52829c209bd0b9ed485",
+    "qualification-v2/baseline-storage-regressions.stdout": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "qualification-v2/candidate-alias-regressions.stderr": "35586199f9a0f20ddd88b58d942eaa86efa9cc9188c0413763349da561f6be5a",
+    "qualification-v2/candidate-alias-regressions.stdout": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "qualification-v2/candidate-all-feature-clippy.stderr": "f32b487302ae6d9354e8feb8ed520c7d3f166e10ca2566394523de29cea35f18",
+    "qualification-v2/candidate-all-feature-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/candidate-all-feature-library.stderr": "690078e75d1967114b8c510ccb5b87b0743e9154f4525dc5ea4cb7add9c9d289",
+    "qualification-v2/candidate-all-feature-library.stdout": "6ca27304c74ae95bd8471bdfe4ec558b5444a8790373f76880ce457bacbc5070",
+    "qualification-v2/candidate-cache-frontiers.stderr": "35586199f9a0f20ddd88b58d942eaa86efa9cc9188c0413763349da561f6be5a",
+    "qualification-v2/candidate-cache-frontiers.stdout": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "qualification-v2/candidate-default-clippy.stderr": "f7a4387678b537473295496e07509df6e967899d9caa59a8ca61c61c9ccbeab6",
+    "qualification-v2/candidate-default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/candidate-default-library.stderr": "50d113685e826d77bb7416c9b064a6b5b9ebf5a88cf52664194538ac3afc3b70",
+    "qualification-v2/candidate-default-library.stdout": "ddb8a4f00339403df24e998bcbb72a7bfca0bd63739e4349bf56319170b9d9e6",
+    "qualification-v2/candidate-direct-product-controls.stderr": "35586199f9a0f20ddd88b58d942eaa86efa9cc9188c0413763349da561f6be5a",
+    "qualification-v2/candidate-direct-product-controls.stdout": "002fef7dffefa8ee0afbbf301bcd3503dcfa184574da992002bf4ed0ee8c7e6a",
+    "qualification-v2/candidate-docs.stderr": "18e30e3b2858d087231653532aba06df7ad21fa568067db46a171d6b3900e382",
+    "qualification-v2/candidate-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/candidate-doctests.stderr": "4adb400cfffb3a4509641cba280492df2d181a502d8094c1520e2d8eddf39ca5",
+    "qualification-v2/candidate-doctests.stdout": "1c57b356f0028654ad304ceaab56939c8a82010ae04d05c43b5868296b73d32d",
+    "qualification-v2/candidate-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/candidate-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/candidate-memo-regressions.stderr": "690078e75d1967114b8c510ccb5b87b0743e9154f4525dc5ea4cb7add9c9d289",
+    "qualification-v2/candidate-memo-regressions.stdout": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "qualification-v2/candidate-projection-regressions.stderr": "b6e6bff9477307fe02e89d7a7b0b0cebc1ee3926343f677e6d28a0ba8a2c9b42",
+    "qualification-v2/candidate-projection-regressions.stdout": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "qualification-v2/candidate-sign-regressions.stderr": "690078e75d1967114b8c510ccb5b87b0743e9154f4525dc5ea4cb7add9c9d289",
+    "qualification-v2/candidate-sign-regressions.stdout": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "qualification-v2/candidate-storage-regressions.stderr": "690078e75d1967114b8c510ccb5b87b0743e9154f4525dc5ea4cb7add9c9d289",
+    "qualification-v2/candidate-storage-regressions.stdout": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "qualification-v2/commands.json": "389eada05466d377a098ed0ce3fb524c1d8f27660e28b24732f74f82cff67392",
+    "qualification-v2/direct-product-storage.json": "39acdac68f1d2efecc34b211cacd6b9757cc4160bc14548bc6fc69d8715ea21b",
+    "qualification-v2/layouts.json": "202851affaae65bbc6f795311ad1ce85bc547921e81783d60716180648c92657",
+    "qualification-v2/memo-inventories.json": "0e324ebbad5b4fdb5d6d1abe3ea71c5cb8d505161bcc8546c954ce9972058c9c",
+    "qualification-v2/protocol.json": "3f9e11ea7f939ca0a93b7d5892ae5c3e066c3aa503d2bb6b6bf792c7e0d3a996",
+    "qualification-v2/result.json": "c20caacbe5087af419086d609e02a3b9127fef33585ac39181af0a622b119bf8",
+    "qualification-v2/sharing.json": "def0cabf41a1c4129c732b9d5d89315f6eefd707886046888184dff37a751922",
+    "qualification-v2/tests.json": "f4f5bb968d1305d60a9d1c926ec154ca89c90d5c167e7aaca124104452874b61"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

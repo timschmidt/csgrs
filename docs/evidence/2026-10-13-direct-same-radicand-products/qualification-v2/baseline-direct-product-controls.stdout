@@ -1,0 +1,15 @@
+
+running 8 tests
+test computable::node::same_radicand_product_tests::affine_conjugate_and_unit_products_have_independent_exact_answers ... ok
+test computable::node::same_radicand_product_tests::cancelled_products_discard_radical_and_atom_entries ... SAME_RADICAND_CANCEL	4	0
+ok
+test computable::node::same_radicand_product_tests::consumed_vector_reuse_and_empty_atom_capacity_are_observable ... SAME_RADICAND_STORAGE	0	1	4	0
+ok
+test computable::node::same_radicand_product_tests::equal_distinct_payloads_follow_the_first_surviving_linear_contribution ... ok
+test computable::node::same_radicand_product_tests::opaque_inputs_keep_original_declines_linear_results_and_graph_release ... ok
+test computable::node::same_radicand_product_tests::signed_zero_and_fractional_grid_matches_original_general_multiplication ... ok
+test computable::node::same_radicand_product_tests::unequal_and_wide_radical_shapes_keep_order_and_original_declines ... ok
+test computable::node::same_radicand_product_tests::wide_unreduced_and_aliased_coefficients_keep_exact_results ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

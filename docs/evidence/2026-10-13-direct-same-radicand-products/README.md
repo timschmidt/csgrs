@@ -1,7 +1,8 @@
 This candidate adds a private direct product for coefficients containing one
-equal, non-unit radicand on each side. Version 1 preparation passed; qualification stopped on a shared-test import
-error before tests ran. Version 2 corrects that import only. Qualification and
-costs remain pending; no runtime is admitted.
+equal, non-unit radicand on each side. Both version 2 variants passed all 28 scoped qualification commands. The
+candidate reuses the tested input vector and releases cancellation capacity,
+with unchanged layouts and memo inventories. Fixed costs remain next; no
+runtime is admitted.
 
 The [coverage diagnostic](../2026-10-13-same-radicand-product-coverage/README.md)
 observed 6,379,817 equal-radicand single-radical/no-atom products, or 29.06% of
@@ -73,3 +74,18 @@ corresponding version 1 source only at the supported test import. The original
 fallback/oracle checks, byte-identical shared tests, manifest/lockfile checks
 and parent/main/native guards all pass. Frozen version 2 evidence is committed
 before qualification.
+
+The [independent qualification assessment](correctness-v2.json) verifies every
+command, log and source binding. Each variant passes 902 all-feature and 815
+default library tests, 28 doctests, all shared/cache/P4 controls, formatting,
+strict default/all-feature all-target Clippy and warning-denied docs. These
+counts overlap and do not cover the complete workflow matrix.
+
+All eight existing layouts match, including 56-byte coefficients and 64-byte
+cache values. Memo inventories stay 1/1/2 for retained/original/opaque controls;
+ordinary-copy sharing remains 0/0. In the dedicated surviving-radical control,
+the baseline allocates a distinct capacity-four vector while the candidate
+reuses the capacity-one input. In the conjugate control, baseline radical
+capacity is four and candidate capacity is zero. Empty atom capacities are
+zero for both. These local observations do not establish total-memory or
+runtime improvement; the fixed allocation and timing probes remain required.
