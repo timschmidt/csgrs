@@ -1,0 +1,44 @@
+{
+  "scope": "Count existing root-bound signs at the original exact-sign quadratic fallback without bypassing it.",
+  "previous_goal_turn": "progress",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "profile_decision_sha256": "336fb70b758e09664b699c238d5d3f3453747d553b04a5fb48921305c6edbcb1",
+  "next_diagnostic_sha256": "710aa5da5f7078388f1bacdb9ae959f311556bf110a032595a561d264d8c57dc",
+  "bound_tags": [
+    "invalid",
+    "unknown",
+    "zero",
+    "negative",
+    "positive",
+    "nonzero_unsigned",
+    "nonzero_zero_sign"
+  ],
+  "outcomes": [
+    "unknown",
+    "negative",
+    "zero",
+    "positive"
+  ],
+  "additional_tag_rationale": "NonZero with Some(NoSign) is representable by the packed cache. Preserve this anomalous combination explicitly rather than treating it as eligible or silently omitting it. This refinement precedes execution.",
+  "fixed_run_count": 1,
+  "original_limits": {
+    "full_board_worker_cpu_seconds": 120,
+    "copper_neck_check_body_wall_seconds": 60
+  },
+  "changes": "One extra stored atomic bound read, fixed-tag/result counter operations, diagnostic-only public counter module, shared reference tests and candidate-only site tests. Original normalization call, result publication, arithmetic, memo lifetime, budgets and fallback retained byte-for-byte under explicit insertion removal.",
+  "reference": "Separate copy of unchanged parent with only the same three new semantic reference tests. Run these tests in both copies; main and original parent stay untouched.",
+  "controls": {
+    "counter_calibrations": 3,
+    "shared_reference_tests": 3,
+    "site_tests": 5,
+    "candidate_scalar_library": 885,
+    "reference_scalar_test_filter": 3,
+    "p4": 11,
+    "cache_frontiers": 6,
+    "endpoint": 5,
+    "scalar_docs": 28
+  },
+  "cost_limit": "Instrumented counts are not time shares, allocation counts or speedup evidence. No native optimization retained; complete report bytes are not compared.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

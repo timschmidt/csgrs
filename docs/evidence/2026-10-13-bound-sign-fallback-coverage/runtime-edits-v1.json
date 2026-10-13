@@ -1,0 +1,34 @@
+{
+  "reference": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": [
+      {
+        "before": "#[derive(Clone, Copy)]\nstruct Binary64Interval {",
+        "after": "#[cfg(test)]\nmod bound_sign_reference_tests;\n\n#[derive(Clone, Copy)]\nstruct Binary64Interval {"
+      }
+    ]
+  },
+  "diagnostic": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": [
+      {
+        "before": "#[derive(Clone, Copy)]\nstruct Binary64Interval {",
+        "after": "#[cfg(test)]\nmod bound_sign_reference_tests;\n\n#[cfg(test)]\nmod bound_sign_site_tests;\n\n#[derive(Clone, Copy)]\nstruct Binary64Interval {"
+      },
+      {
+        "before": "        if result.is_none() {\n            result = self.exact_quadratic_surd_sign();\n        }",
+        "after": "        if result.is_none() {\n            let diagnostic_bound = match self.internal.facts.bound() {\n                BoundCache::Invalid => crate::bound_sign_diagnostic::BoundTag::Invalid,\n                BoundCache::Valid(BoundInfo::Unknown) => {\n                    crate::bound_sign_diagnostic::BoundTag::Unknown\n                }\n                BoundCache::Valid(BoundInfo::Zero) => crate::bound_sign_diagnostic::BoundTag::Zero,\n                BoundCache::Valid(BoundInfo::NonZero { sign, .. }) => match sign {\n                    None => crate::bound_sign_diagnostic::BoundTag::Unsigned,\n                    Some(Sign::Minus) => crate::bound_sign_diagnostic::BoundTag::Negative,\n                    Some(Sign::Plus) => crate::bound_sign_diagnostic::BoundTag::Positive,\n                    Some(Sign::NoSign) => crate::bound_sign_diagnostic::BoundTag::NonzeroZeroSign,\n                },\n            };\n            let diagnostic_observation =\n                crate::bound_sign_diagnostic::Observation::begin(diagnostic_bound);\n            result = self.exact_quadratic_surd_sign();\n            diagnostic_observation.complete(match result {\n                None => crate::bound_sign_diagnostic::Outcome::Unknown,\n                Some(Sign::Minus) => crate::bound_sign_diagnostic::Outcome::Negative,\n                Some(Sign::NoSign) => crate::bound_sign_diagnostic::Outcome::Zero,\n                Some(Sign::Plus) => crate::bound_sign_diagnostic::Outcome::Positive,\n            });\n        }"
+      }
+    ],
+    "crates/hyperreal/src/lib.rs": [
+      {
+        "before": "mod trace;",
+        "after": "pub mod bound_sign_diagnostic;\n\nmod trace;"
+      }
+    ],
+    "crates/hyperdrc/src/app.rs": [
+      {
+        "before": "    pub(crate) fn complex_project_zip_kicad_board_completes_smoke_check_suite() {\n        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK\n            .lock()\n            .unwrap_or_else(std::sync::PoisonError::into_inner);",
+        "after": "    pub(crate) fn complex_project_zip_kicad_board_completes_smoke_check_suite() {\n        let _geometry_guard = super::COMPLEX_PROJECT_GEOMETRY_TEST_LOCK\n            .lock()\n            .unwrap_or_else(std::sync::PoisonError::into_inner);\n        let _bound_sign_report = hyperreal::bound_sign_diagnostic::Report::begin();"
+      }
+    ]
+  }
+}

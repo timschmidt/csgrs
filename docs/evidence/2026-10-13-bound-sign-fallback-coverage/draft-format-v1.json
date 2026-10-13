@@ -1,0 +1,11 @@
+{
+  "scope": "Review never-compiled mutable draft formatting before source preparation.",
+  "first_review": "Direct rustfmt also reformatted an unchanged exact_rational Int arm in the parent included file; initial exact-byte recovery assertion and then whitespace-only review caught this (rustfmt also moved a trailing comma) before preparation or compilation.",
+  "unrelated_original": "            Approximation::Int(n) => Some(num::ToPrimitive::to_i64(n).map_or_else(\n                || Rational::from_bigint(n.clone()),\n                Rational::new,\n            )),\n",
+  "unrelated_formatter_output": "            Approximation::Int(n) => Some(\n                num::ToPrimitive::to_i64(n)\n                    .map_or_else(|| Rational::from_bigint(n.clone()), Rational::new),\n            ),\n",
+  "formatting_only_with_trailing_comma_placement": true,
+  "action": "Preserve the original included-file arm byte-for-byte. New instrumentation text is taken from formatted draft output. Check Cargo workspace formatting and direct formatting of new standalone modules; do not require unchanged included parent text to match direct standalone rustfmt.",
+  "original_bytes_recovered_from_insertions": true,
+  "source_compiled": false,
+  "runtime_admitted": false
+}
