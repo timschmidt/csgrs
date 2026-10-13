@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  },
+  "recursive": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  },
+  "projected": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  }
+}

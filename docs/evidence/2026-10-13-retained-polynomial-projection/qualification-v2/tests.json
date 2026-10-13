@@ -1,0 +1,212 @@
+[
+  {
+    "variant": "baseline",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "buffer-ownership",
+    "passed": 0,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "passed": 894,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "default-library",
+    "passed": 807,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "baseline",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "buffer-ownership",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "all-feature-library",
+    "passed": 899,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "default-library",
+    "passed": 812,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "recursive",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "projection-regressions",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "storage-regressions",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "memo-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "alias-regressions",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "buffer-ownership",
+    "passed": 8,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "cache-frontiers",
+    "passed": 6,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "sign-regressions",
+    "passed": 11,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "all-feature-library",
+    "passed": 902,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "default-library",
+    "passed": 815,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "variant": "projected",
+    "phase": "doctests",
+    "passed": 28,
+    "failed": 0,
+    "ignored": 0
+  }
+]

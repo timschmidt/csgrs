@@ -1,0 +1,14 @@
+
+running 8 tests
+test computable::node::retained_polynomial::tests::all_owned_and_retained_combinations_preserve_exact_arithmetic ... ok
+test computable::node::retained_polynomial::tests::borrowed_products_preserve_order_and_both_frontiers ... ok
+test computable::node::retained_polynomial::tests::cache_views_share_closed_buffers_and_outlive_the_graph ... RETAINED_POLYNOMIAL_LAYOUT	24	64
+ok
+test computable::node::retained_polynomial::tests::closed_right_operands_preserve_opaque_left_owners_and_declines ... ok
+test computable::node::retained_polynomial::tests::concurrent_cache_reads_mutate_only_materialized_owned_values ... ok
+test computable::node::retained_polynomial::tests::projection_tests::projected_components_do_not_retain_or_mutate_the_closed_payload ... ok
+test computable::node::retained_polynomial::tests::projection_tests::quadratic_and_opaque_coefficients_preserve_acceptance_and_owner_counts ... ok
+test computable::node::retained_polynomial::tests::projection_tests::zero_rational_powers_and_multiple_terms_keep_exact_projection_shapes ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 894 filtered out; finished in 0.00s
+

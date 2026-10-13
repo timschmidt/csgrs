@@ -34,13 +34,13 @@ Three additional private tests cover owned/retained projection shapes,
 opaque ownership, payload immutability and release. Five inherited view tests
 remain in both experimental variants.
 
-Qualification is running 42 sequential commands: shared and inherited controls,
+All 42 sequential qualification commands passed: shared and inherited controls,
 default/all-feature scalar libraries, doctests, formatting, strict
 default/all-feature/all-target Clippy and warning-denied scalar docs. Counts
 overlap and do not establish full-workflow coverage. Type layouts, memo counts
 and ordinary-copy sharing are recorded separately from correctness.
 
-If qualification passes, three unchanged scalar suites will run eighteen
+With qualification complete, three unchanged scalar suites will run eighteen
 preflights and ninety measurements in five predeclared three-source blocks,
 with separate timing and allocation executables. Every library and probe build
 finishes before measurements. All three paired contrasts share those samples;
@@ -58,3 +58,14 @@ The [failure assessment](preparation-failure-assessment-v1.json) records the
 removed optional trailing comma and equivalent closure formatting. Version 1
 ran no qualification or costs. Its partial preparation files and complete
 frozen source maps remain available alongside the new runners.
+
+The [qualification assessment](correctness-v2.json) independently verifies all
+42 commands and their logs. Baseline passes 894 all-feature and 807 default
+library tests, recursive control 899 and 812, and projected candidate 902 and
+815. Each passes 28 doctests. Focused and configuration counts overlap.
+
+All eight existing type layouts match across the variants, including 56-byte
+scratch coefficients, 32-byte closed coefficients and 64-byte cache values.
+The recursive and projected result enums are both 24 bytes. Memo inventories
+remain 1/1/2 for retained/original/opaque controls; ordinary deep-copy sharing
+remains 0/0. These observations do not measure heap headers or total memory.
