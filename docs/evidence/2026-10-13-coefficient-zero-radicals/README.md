@@ -40,5 +40,12 @@ All ranges remain recorded. Four probe sizes are unchanged and two add 16 bytes.
 qualification with these tradeoffs open. The cost sample set is closed. No
 statistical significance or application speedup is inferred.
 
+Native qualification and fixed-control runners are prepared. They retain the
+120-second worker-CPU board limit and 60-second check-body copper-neck limit,
+run full all-feature curve/DRC suites and strict consumer Clippy/docs, then use
+new separate control targets. Fixed controls comprise 20 endpoint processes
+(10 time and 10 memory), 10 broad processes and six final-abort processes. Four
+endpoint preflights precede measurements; all builds finish before any probe.
+
 Preparation and results are committed separately. No runtime change is admitted;
 the endpoint parent's earlier tradeoffs and the full properties plan stay open.
