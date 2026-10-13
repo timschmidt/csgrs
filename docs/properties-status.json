@@ -3924,17 +3924,19 @@
       }
     },
     "drc_process_allocator": {
-      "status": "inputs-ready-for-separate-source-preparation",
-      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/scope-v1.json",
-      "result": "Pinned allocator wrapper, vendored build features and DRC process ownership reviewed. An isolated native CLI/lib-test MiMalloc trial and two identical allocator contract controls are specified. No build, gate or cost result yet.",
+      "status": "frozen-sources-ready-for-serial-qualification",
+      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/preparation-v2/protocol.json",
+      "result": "V2 source preparation verifies the unchanged parent, 10132-file baseline, 10133-file candidate and 150 archived dependency/source inputs. Shared allocator tests are identical; format and locked metadata pass. V1 stopped before copying or compilation because checksum manifests were absent; preserved and replaced with locked-archive verification.",
       "next_step": "Freeze the baseline and candidate source copies, commit their input identities, then run serial DRC qualification and the two original native gates. Execute the fixed application cost design only if both candidate gates pass.",
       "source_review_complete": true,
-      "prototype_prepared": false,
+      "prototype_prepared": true,
       "qualification_executed": false,
       "conditional_costs_executed": false,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation_version": 2,
+      "qualification_version": 2
     }
   },
   "status_meanings": {
