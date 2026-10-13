@@ -1,0 +1,88 @@
+{
+  "scope": "Qualify the isolated sign-transfer repair before measuring or admitting it.\n\nAll commands are sequential. Main, the frozen baseline, candidate sources and\nexecuted inputs are checked before and after each command. The original public\nprobe is linked to the final all-feature candidate library and runs its twelve\nunchanged cases in fresh processes after all builds/tests have terminated.\n",
+  "runner_sha256": "438e98f748af30cd0f48f7cf55da808e7bd5e3df9b78d09ae12c0fba80679fc3",
+  "preparation_protocol_sha256": "ed196e6383b9a51132a7b043b45e8500e0c232a9e28191b8623519aac2fe6c4c",
+  "failed_preparation_sha256": "6e6491738bffa195065630037c95d870eec6b6712cb6383feabaf522182770bc",
+  "second_failed_preparation_sha256": "903d29270d157e6a9d9d1fe27e6ed1a09711ab5c37ba8700d9695476b35ca17b",
+  "baseline_protocol_sha256": "172d762d3f75c67d483463a778214ec9abd177080910e776f39dd8b7087f312b",
+  "baseline_result_sha256": "e8918607716d44ab558ff84429b293a606dca0aa51835970fd9256207c9436f3",
+  "probe_sha256": "9eb071304074f352efdd68b45cf6235a29fd00310734c0e556a58e7d1ced068b",
+  "original_observations_sha256": "f48d5e96674e2d65735bf4ef3180dbe388868a40bedd051f2214a5709fcc8a6e",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target",
+  "source_count": 10128,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "cases": [
+    {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": 1
+    },
+    {
+      "family": "quadratic",
+      "shape": "linear",
+      "scale": -7
+    },
+    {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": 1
+    },
+    {
+      "family": "quadratic",
+      "shape": "square",
+      "scale": -7
+    },
+    {
+      "family": "nested",
+      "shape": "linear",
+      "scale": 1
+    },
+    {
+      "family": "nested",
+      "shape": "linear",
+      "scale": -7
+    },
+    {
+      "family": "nested",
+      "shape": "square",
+      "scale": 1
+    },
+    {
+      "family": "nested",
+      "shape": "square",
+      "scale": -7
+    },
+    {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": 1
+    },
+    {
+      "family": "biquadratic",
+      "shape": "linear",
+      "scale": -7
+    },
+    {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": 1
+    },
+    {
+      "family": "biquadratic",
+      "shape": "square",
+      "scale": -7
+    }
+  ],
+  "command_timeout_seconds": 1800,
+  "probe_timeout_seconds": 120,
+  "full_pre_push_matrix": false,
+  "runtime_admitted": false
+}

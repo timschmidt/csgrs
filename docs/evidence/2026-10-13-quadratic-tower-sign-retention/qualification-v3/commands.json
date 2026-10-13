@@ -1,0 +1,50 @@
+[
+  {
+    "name": "fmt",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 10.464456823188812,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "test_summaries": []
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--tests",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 30.42393628321588,
+    "stdout_sha256": "aeab47860925c21f078c422ab076c1e868107d4909018039b3805afc4ec6a1ba",
+    "stderr_sha256": "afcafb6e2990b82880b4e9b40eef38f95bb38a4fe317515f0f9fd3dc739d9c87",
+    "test_summaries": []
+  }
+]

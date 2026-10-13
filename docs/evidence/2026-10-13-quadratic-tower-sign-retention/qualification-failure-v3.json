@@ -1,0 +1,101 @@
+{
+  "status": "artifact-selection-guard-stopped-before-tests",
+  "cause": "The --lib --tests all-feature Cargo build emits three executable artifacts named hyperreal: the library test, CLI test and CLI binary. The original name-only filter required a unique match. Format and compilation passed; no test executed.",
+  "runner_sha256": "438e98f748af30cd0f48f7cf55da808e7bd5e3df9b78d09ae12c0fba80679fc3",
+  "executables": [
+    {
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/Cargo.toml",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperreal",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/src/main.rs",
+        "edition": "2024",
+        "required-features": [
+          "simple"
+        ],
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      },
+      "executable": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target/release/deps/hyperreal-87f8ffbf1b6d3d7d",
+      "sha256": "fbb7a1ce56b6c114f7cf8e9fded350b09aa69c305feb2f092b48f050db504f1b"
+    },
+    {
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/Cargo.toml",
+      "target": {
+        "kind": [
+          "bin"
+        ],
+        "crate_types": [
+          "bin"
+        ],
+        "name": "hyperreal",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/src/main.rs",
+        "edition": "2024",
+        "required-features": [
+          "simple"
+        ],
+        "doc": true,
+        "doctest": false,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": false
+      },
+      "executable": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target/release/hyperreal",
+      "sha256": "a4a397ce2f9741fc4056cdbf2b187e966cb51b4d5b8c7a7d5dfebbd906daa4f4"
+    },
+    {
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/Cargo.toml",
+      "target": {
+        "kind": [
+          "lib"
+        ],
+        "crate_types": [
+          "lib"
+        ],
+        "name": "hyperreal",
+        "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/src/lib.rs",
+        "edition": "2024",
+        "doc": true,
+        "doctest": true,
+        "test": true
+      },
+      "profile": {
+        "opt_level": "3",
+        "debuginfo": 0,
+        "debug_assertions": false,
+        "overflow_checks": false,
+        "test": true
+      },
+      "executable": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "sha256": "26cb89525bf1dbc7eb301a4e4e8b8f7fd23db74d4264136174ac07787cd1edd2"
+    }
+  ],
+  "artifacts_sha256": {
+    "qualification-v3/build-tests.stderr": "afcafb6e2990b82880b4e9b40eef38f95bb38a4fe317515f0f9fd3dc739d9c87",
+    "qualification-v3/build-tests.stdout": "aeab47860925c21f078c422ab076c1e868107d4909018039b3805afc4ec6a1ba",
+    "qualification-v3/commands.json": "705f23f31470a845cadad363a751d6b5033c332707f4c047fd5958fb32570daf",
+    "qualification-v3/fmt.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/fmt.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v3/protocol.json": "369a9cb434a5fee2391f36cb4e3c9d5e9fe890e3e3577a9622fa4a0c6cffe736"
+  },
+  "correction": "Version 4 requires target.kind == [lib] and a test profile, then continues from these source-bound successful format/build prerequisites. No source or test input changes; no build or format repetition.",
+  "runtime_admitted": false
+}
