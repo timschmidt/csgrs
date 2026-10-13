@@ -67,3 +67,9 @@ compiled. Version 2 changes only that test import to the crate's supported
 `num::BigUint` path. All arithmetic, other tests and declared sample sizes stay
 unchanged. Fresh version 2 targets and evidence directories will preserve the
 original attempt.
+
+Version 2 preparation passed. Both fresh 10,136-file trees differ from their
+corresponding version 1 source only at the supported test import. The original
+fallback/oracle checks, byte-identical shared tests, manifest/lockfile checks
+and parent/main/native guards all pass. Frozen version 2 evidence is committed
+before qualification.
