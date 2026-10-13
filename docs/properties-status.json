@@ -3638,13 +3638,65 @@
       "main_and_35_pending_native_paths_unchanged": true
     },
     "native_normal_form_attribution": {
-      "status": "fixed-profile-inputs-frozen",
-      "evidence": "docs/evidence/2026-10-13-native-normal-form-attribution/inputs-v1.json",
+      "status": "diagnose-existing-bound-sign-coverage-before-quadratic-fallback",
+      "evidence": "docs/evidence/2026-10-13-native-normal-form-attribution/decision-v1.json",
       "source": "Unchanged endpoint/P4 parent, 10131 files.",
-      "result": "No profile executed yet. One complete-board run fixed at 49 Hz; no new arithmetic, owners, scalar queries or cache writes. Previous direct/outlined/borrowed same-radicand series remains rejected and closed.",
-      "next_step": "Execute the fixed profile, verify all source/binary/log hashes and review predeclared normal-form, Rational and native-consumer attribution. Do not infer removable work from percentages alone.",
+      "result": "Fixed unchanged-parent profile: 7071 samples, no lost samples; normal form 26.983% and coefficient multiplication 9.085% of total sampled cycle weight. The original assertion fails at 141.705158972 worker-CPU seconds / 120. These diagnostic percentages do not predict savings.",
+      "next_step": "Prepare the separately frozen existing-bound-sign coverage diagnostic specified in next-diagnostic-v1.json. No instrumented source or runner has been prepared or executed; no fallback bypass is admitted.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "quality": {
+        "samples": 7071,
+        "total_period": 592405909310,
+        "lost_samples": 0,
+        "empty_stack_period_percent": 0.0,
+        "unknown_leaf_period_percent": 0.3271698086633659
+      },
+      "profiled_worker_cpu_seconds": 141.705158972,
+      "original_worker_cpu_limit_seconds": 120,
+      "profiled_gate_passed": false,
+      "source_review": [
+        {
+          "path": "crates/hyperreal/src/computable/node/approximation_queries.rs",
+          "source_sha256": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+          "start": "    pub(crate) fn immediate_sign(",
+          "end_before": "    /// An approximation of this Computable",
+          "body_sha256": "a6067312909ddd9004b6d13c0797e7a21e59b1ce3ea8f903e1e9ed483b5972ac",
+          "finding": "Existing root-only sign inspection accepts a Valid exact-sign cache or, when that is unavailable, the known sign of an already Valid bound. It performs no graph traversal or new approximation."
+        },
+        {
+          "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+          "source_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+          "start": "    fn exact_sign(&self)",
+          "end_before": "    fn exact_quadratic_surd_sign(",
+          "body_sha256": "b5d68377b068e4e6ad930777766d8cc2cd43fb19954e82ec38c289ce337f596f",
+          "finding": "The exact-sign path consults retained exact signs, separated existing approximations, inverse-trig structure and cached Unknown state before its iterative structural walk. If that walk remains inconclusive, it calls exact_quadratic_surd_sign, without consulting the root bound cache at that final call site. Cached Unknown and the direct resolver already avoid some repeated work; their removal is not proposed."
+        },
+        {
+          "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+          "source_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+          "start": "    fn exact_quadratic_surd_sign(",
+          "end_before": "    pub(crate) fn exact_pure_quadratic_surd(",
+          "body_sha256": "0dd5c4e01fbb49da4aed6d93febe0a8e5d454c3568f841ea14b242f5a62847df",
+          "finding": "The sign fallback invokes full quadratic projection, then uses exact rational coefficient signs and, for opposing signs, rational square comparison. The hypothesis concerns avoiding this entire fallback when a root sign certificate is already present, not changing multiplication formulas."
+        },
+        {
+          "path": "crates/hyperreal/src/computable/node/bounds.rs",
+          "source_sha256": "fe98a730f5da97e168cf6a8d68b3a8c42f1e623af445146795d0a0ba56af3948",
+          "start": "pub(crate) enum BoundInfo {",
+          "end_before": "#[cfg(verus_keep_ghost)]\nverus! {",
+          "body_sha256": "3577205585fc67127b34939d57ef9987dbc310ce597b285c6f6d58c0c57be808",
+          "finding": "BoundInfo distinguishes Unknown, exact Zero and NonZero with optional sign and optional magnitude. A nonzero fact alone does not certify a sign. An inexact or missing magnitude does not by itself invalidate a stored sign."
+        },
+        {
+          "path": "crates/hyperreal/src/computable/node/representation.rs",
+          "source_sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+          "start": "    fn bound(&self) -> BoundCache {",
+          "end_before": "    #[cfg(not(verus_keep_ghost))]\n    fn set_bound(",
+          "body_sha256": "8e5ab50fe54ee487695da98ab29f55493f7c099a95b1e397d7e146a60d4c4c12",
+          "finding": "The current bound and combined fact snapshot are read from existing packed atomic metadata. A diagnostic can classify these Copy values without retaining scalar/DAG owners, materializing polynomials or invoking a recognizer."
+        }
+      ]
     }
   },
   "status_meanings": {

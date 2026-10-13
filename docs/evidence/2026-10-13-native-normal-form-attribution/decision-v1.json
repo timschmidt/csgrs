@@ -1,0 +1,842 @@
+{
+  "status": "diagnose-existing-bound-sign-coverage-before-quadratic-fallback",
+  "decision_runner_sha256": "1bcf236295d7d19feee9cbacd8791fdd778b397a0f3c47ffba1913b40ad016bf",
+  "assessment_sha256": "0425a84efda03164761df7dee93a3816140d179b9e5aa53cd6567174999be02a",
+  "next_diagnostic_sha256": "710aa5da5f7078388f1bacdb9ae959f311556bf110a032595a561d264d8c57dc",
+  "closed_profile": {
+    "runs": 1,
+    "samples": 7071,
+    "lost_samples": 0,
+    "unknown_leaf_period_percent": 0.3271698086633659,
+    "worker_cpu_seconds": 141.705158972,
+    "original_limit_seconds": 120,
+    "gate_passed": false,
+    "finding_counts": [
+      12,
+      197
+    ]
+  },
+  "recovered_cost": {
+    "groups": {
+      "normal_form": {
+        "samples": 1898,
+        "period": 159851134318,
+        "inclusive_percent": 26.983379437282338
+      },
+      "retained_normalizer": {
+        "samples": 1144,
+        "period": 96206145594,
+        "inclusive_percent": 16.239903093818786
+      },
+      "original_normalizer": {
+        "samples": 713,
+        "period": 60180644621,
+        "inclusive_percent": 10.158684050112686
+      },
+      "coefficient_multiply": {
+        "samples": 638,
+        "period": 53821793113,
+        "inclusive_percent": 9.085289708822874
+      },
+      "polynomial_multiply": {
+        "samples": 698,
+        "period": 58818795302,
+        "inclusive_percent": 9.928799557470438
+      },
+      "polynomial_insert": {
+        "samples": 349,
+        "period": 29454369512,
+        "inclusive_percent": 4.971991171780636
+      },
+      "quadratic_projection": {
+        "samples": 1852,
+        "period": 155876809496,
+        "inclusive_percent": 26.31250077798114
+      },
+      "quadratic_sign": {
+        "samples": 0,
+        "period": 0,
+        "inclusive_percent": 0.0
+      },
+      "exact_sign": {
+        "samples": 1998,
+        "period": 168183896125,
+        "inclusive_percent": 28.389976109605463
+      },
+      "structural_facts": {
+        "samples": 974,
+        "period": 82040876919,
+        "inclusive_percent": 13.848760728021173
+      },
+      "zero_status": {
+        "samples": 0,
+        "period": 0,
+        "inclusive_percent": 0.0
+      },
+      "rational_arithmetic": {
+        "samples": 2329,
+        "period": 196900036848,
+        "inclusive_percent": 33.237351915908086
+      },
+      "rational_word_constructor": {
+        "samples": 348,
+        "period": 29439705395,
+        "inclusive_percent": 4.9695158222323705
+      },
+      "rational_wide_gcd": {
+        "samples": 194,
+        "period": 16657760682,
+        "inclusive_percent": 2.811882937056113
+      },
+      "approximation_cache_lookup": {
+        "samples": 237,
+        "period": 20057934250,
+        "inclusive_percent": 3.3858430401820803
+      },
+      "approximation_evaluation": {
+        "samples": 814,
+        "period": 69542785541,
+        "inclusive_percent": 11.739043187803341
+      },
+      "rational_interval_construction": {
+        "samples": 437,
+        "period": 37352538256,
+        "inclusive_percent": 6.305227154048154
+      },
+      "cached_rational_interval": {
+        "samples": 362,
+        "period": 30950022398,
+        "inclusive_percent": 5.224462131724646
+      },
+      "point_equality": {
+        "samples": 321,
+        "period": 27187424903,
+        "inclusive_percent": 4.5893237180341995
+      },
+      "coordinate_equality": {
+        "samples": 217,
+        "period": 18477847360,
+        "inclusive_percent": 3.1191193520540543
+      },
+      "endpoint_membership": {
+        "samples": 446,
+        "period": 38046367822,
+        "inclusive_percent": 6.42234778959484
+      },
+      "curve_comparison": {
+        "samples": 1345,
+        "period": 113883286775,
+        "inclusive_percent": 19.223860698426293
+      },
+      "curve_zero_test": {
+        "samples": 589,
+        "period": 50206965490,
+        "inclusive_percent": 8.475095319099392
+      },
+      "curve_sign_test": {
+        "samples": 361,
+        "period": 31060815284,
+        "inclusive_percent": 5.24316432295178
+      },
+      "regularization": {
+        "samples": 3752,
+        "period": 314908809630,
+        "inclusive_percent": 53.15760776201363
+      },
+      "topology_construction": {
+        "samples": 1181,
+        "period": 98251961913,
+        "inclusive_percent": 16.58524338952631
+      },
+      "region_construction": {
+        "samples": 133,
+        "period": 11350791740,
+        "inclusive_percent": 1.9160497155102223
+      }
+    },
+    "exclusive_partition": [
+      {
+        "symbol": "other",
+        "period": 432554774992,
+        "total_profile_percent": 73.01662056271766
+      },
+      {
+        "symbol": "normal_form_without_recovered_multiply",
+        "period": 101032339016,
+        "total_profile_percent": 17.0545798798119
+      },
+      {
+        "symbol": "normal_form_with_coefficient_multiply",
+        "period": 53821793113,
+        "total_profile_percent": 9.085289708822874
+      },
+      {
+        "symbol": "normal_form_with_other_polynomial_multiply",
+        "period": 4997002189,
+        "total_profile_percent": 0.843509848647563
+      }
+    ],
+    "intersections": [
+      {
+        "symbol": "allocator_leaf",
+        "period": 175234734929,
+        "total_profile_percent": 29.580180105411717
+      },
+      {
+        "symbol": "rational_arithmetic_with_normal_form",
+        "period": 92715168463,
+        "total_profile_percent": 15.650615060708837
+      },
+      {
+        "symbol": "rational_arithmetic_with_coefficient_multiply",
+        "period": 48493510237,
+        "total_profile_percent": 8.185858627487768
+      },
+      {
+        "symbol": "allocator_leaf_with_normal_form",
+        "period": 46757250166,
+        "total_profile_percent": 7.892772410130096
+      },
+      {
+        "symbol": "allocator_leaf_with_coefficient_multiply",
+        "period": 13051395969,
+        "total_profile_percent": 2.2031171134335086
+      }
+    ],
+    "normal_form_nearest_consumers": [
+      {
+        "symbol": "hypercurve::classify::compare_reals",
+        "period": 42932259988,
+        "total_profile_percent": 7.247101913281892
+      },
+      {
+        "symbol": "hypercurve::classify::is_zero",
+        "period": 35923900051,
+        "total_profile_percent": 6.064068485211782
+      },
+      {
+        "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+        "period": 14824676703,
+        "total_profile_percent": 2.5024525363474046
+      },
+      {
+        "symbol": "hypercurve::classify::real_sign",
+        "period": 12835261061,
+        "total_profile_percent": 2.1666328541438364
+      },
+      {
+        "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+        "period": 10374137350,
+        "total_profile_percent": 1.7511873509302418
+      },
+      {
+        "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+        "period": 7019164675,
+        "total_profile_percent": 1.1848573021790947
+      },
+      {
+        "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+        "period": 5746368768,
+        "total_profile_percent": 0.9700053084705108
+      },
+      {
+        "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+        "period": 4837186359,
+        "total_profile_percent": 0.8165324286913468
+      },
+      {
+        "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+        "period": 4569238953,
+        "total_profile_percent": 0.7713020550929318
+      },
+      {
+        "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+        "period": 4514710298,
+        "total_profile_percent": 0.7620974448513642
+      },
+      {
+        "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+        "period": 3672823733,
+        "total_profile_percent": 0.6199843173876999
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2>::signed_area_with_cache",
+        "period": 3595757783,
+        "total_profile_percent": 0.6069753401326009
+      },
+      {
+        "symbol": "hypercurve::intersect::line_point_at_for_policy",
+        "period": 1882534050,
+        "total_profile_percent": 0.3177777298326862
+      },
+      {
+        "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+        "period": 1235968400,
+        "total_profile_percent": 0.2086353934989582
+      },
+      {
+        "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+        "period": 953114918,
+        "total_profile_percent": 0.16088882690419698
+      },
+      {
+        "symbol": "hyperlimit::resolve::exact_rational_normal_form_sign",
+        "period": 924761134,
+        "total_profile_percent": 0.15610261806421008
+      },
+      {
+        "symbol": "<hypercurve::segment::CircularArc2>::try_from_center",
+        "period": 860311817,
+        "total_profile_percent": 0.1452233685518163
+      },
+      {
+        "symbol": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+        "period": 859697071,
+        "total_profile_percent": 0.14511959747351696
+      },
+      {
+        "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+        "period": 644652077,
+        "total_profile_percent": 0.1088193191305018
+      },
+      {
+        "symbol": "hypercurve::segment::directed_radial_angle",
+        "period": 488768373,
+        "total_profile_percent": 0.08250565453833657
+      },
+      {
+        "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+        "period": 484368259,
+        "total_profile_percent": 0.08176290131274416
+      },
+      {
+        "symbol": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+        "period": 327987218,
+        "total_profile_percent": 0.055365284654574166
+      },
+      {
+        "symbol": "hypercurve::contour::arc_signed_area_contribution",
+        "period": 174008607,
+        "total_profile_percent": 0.02937320581468796
+      },
+      {
+        "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::try_new_with_endpoint_equality",
+        "period": 169476672,
+        "total_profile_percent": 0.02860820078540347
+      }
+    ],
+    "coefficient_multiply_nearest_consumers": [
+      {
+        "symbol": "hypercurve::classify::is_zero",
+        "period": 18374574247,
+        "total_profile_percent": 3.101686522405159
+      },
+      {
+        "symbol": "hypercurve::classify::compare_reals",
+        "period": 11652212768,
+        "total_profile_percent": 1.966930542872508
+      },
+      {
+        "symbol": "hypercurve::classify::real_sign",
+        "period": 4792776281,
+        "total_profile_percent": 0.8090358664015266
+      },
+      {
+        "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+        "period": 4250661834,
+        "total_profile_percent": 0.7175252250523504
+      },
+      {
+        "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+        "period": 2890540528,
+        "total_profile_percent": 0.4879324264956664
+      },
+      {
+        "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+        "period": 1989759041,
+        "total_profile_percent": 0.33587764904599887
+      },
+      {
+        "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+        "period": 1803536010,
+        "total_profile_percent": 0.30444260964591896
+      },
+      {
+        "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2>::signed_area_with_cache",
+        "period": 1634898737,
+        "total_profile_percent": 0.27597610207910234
+      },
+      {
+        "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+        "period": 1070924210,
+        "total_profile_percent": 0.18077540976040404
+      },
+      {
+        "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+        "period": 999508553,
+        "total_profile_percent": 0.16872021991883396
+      },
+      {
+        "symbol": "hypercurve::intersect::line_point_at_for_policy",
+        "period": 775249876,
+        "total_profile_percent": 0.13086464260678393
+      },
+      {
+        "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+        "period": 695057175,
+        "total_profile_percent": 0.11732785984690164
+      },
+      {
+        "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+        "period": 589485777,
+        "total_profile_percent": 0.09950707238666792
+      },
+      {
+        "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+        "period": 523539076,
+        "total_profile_percent": 0.08837505969678593
+      },
+      {
+        "symbol": "hyperlimit::resolve::exact_rational_normal_form_sign",
+        "period": 418779278,
+        "total_profile_percent": 0.07069127289560122
+      },
+      {
+        "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+        "period": 351577535,
+        "total_profile_percent": 0.059347405127929444
+      },
+      {
+        "symbol": "<hypercurve::segment::CircularArc2>::try_from_center",
+        "period": 253773913,
+        "total_profile_percent": 0.042837842940422574
+      },
+      {
+        "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+        "period": 173883892,
+        "total_profile_percent": 0.029352153526376847
+      },
+      {
+        "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+        "period": 173603129,
+        "total_profile_percent": 0.029304759839786684
+      },
+      {
+        "symbol": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+        "period": 163996212,
+        "total_profile_percent": 0.027683081721958727
+      },
+      {
+        "symbol": "hypercurve::segment::directed_radial_angle",
+        "period": 156542083,
+        "total_profile_percent": 0.026424801059518655
+      },
+      {
+        "symbol": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+        "period": 86912958,
+        "total_profile_percent": 0.014671183496672268
+      }
+    ],
+    "normal_form_rational_symbols": [
+      {
+        "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+        "period": 54060422226,
+        "total_profile_percent": 9.12557106139715
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::add_ref",
+        "period": 23185274252,
+        "total_profile_percent": 3.913747970374715
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+        "period": 16986507202,
+        "total_profile_percent": 2.867376394301147
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add",
+        "period": 12057583160,
+        "total_profile_percent": 2.0353583532014348
+      },
+      {
+        "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+        "period": 7359281499,
+        "total_profile_percent": 1.2422701028711316
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_div_words",
+        "period": 6869530104,
+        "total_profile_percent": 1.1595985110954126
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path",
+        "period": 6643801958,
+        "total_profile_percent": 1.1214948827465807
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator",
+        "period": 6196892075,
+        "total_profile_percent": 1.0460550743353962
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference",
+        "period": 5935047019,
+        "total_profile_percent": 1.001854796808627
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes",
+        "period": 4374619241,
+        "total_profile_percent": 0.7384496292576322
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_product_pair",
+        "period": 4213656225,
+        "total_profile_percent": 0.711278560659164
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::reduce",
+        "period": 3764306012,
+        "total_profile_percent": 0.6354268167892594
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_magnitudes",
+        "period": 3168722386,
+        "total_profile_percent": 0.5348904081140486
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::add_sub_words",
+        "period": 3007175403,
+        "total_profile_percent": 0.5076207640302886
+      },
+      {
+        "symbol": "<alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::drop_slow",
+        "period": 2858458472,
+        "total_profile_percent": 0.48251687349462236
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced",
+        "period": 2628139174,
+        "total_profile_percent": 0.4436382440987302
+      },
+      {
+        "symbol": "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+        "period": 2497766843,
+        "total_profile_percent": 0.42163098033732543
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+        "period": 2335191268,
+        "total_profile_percent": 0.3941877066553734
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_linear",
+        "period": 2208268687,
+        "total_profile_percent": 0.3727627716563569
+      },
+      {
+        "symbol": "<alloc::raw_vec::RawVec<(core::option::Option<&hyperreal::computable::node::Computable>, hyperreal::rational::arithmetic::Rational)>>::grow_one",
+        "period": 2114416111,
+        "total_profile_percent": 0.3569201585890237
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_secondary_product",
+        "period": 1993422043,
+        "total_profile_percent": 0.3364959754236453
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_negation",
+        "period": 1710908462,
+        "total_profile_percent": 0.28880678519779907
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+        "period": 1521407146,
+        "total_profile_percent": 0.25681836087220106
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::reduce_with_possible_divisor",
+        "period": 1514272933,
+        "total_profile_percent": 0.255614083047169
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_entry",
+        "period": 1455545731,
+        "total_profile_percent": 0.2457007447301353
+      },
+      {
+        "symbol": "<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>",
+        "period": 1339202108,
+        "total_profile_percent": 0.22606157145863465
+      },
+      {
+        "symbol": "core::ptr::drop_glue::<hyperreal::rational::arithmetic::CachedRationalArithmetic>",
+        "period": 1185643913,
+        "total_profile_percent": 0.2001404601755187
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_pair",
+        "period": 1177467166,
+        "total_profile_percent": 0.19876019929839076
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_sum_pair",
+        "period": 1021548891,
+        "total_profile_percent": 0.17244069901156808
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::is_minus_one",
+        "period": 931265963,
+        "total_profile_percent": 0.15720065387002713
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained",
+        "period": 847481957,
+        "total_profile_percent": 0.1430576474139324
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced",
+        "period": 832960957,
+        "total_profile_percent": 0.14060645647005524
+      },
+      {
+        "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+        "period": 739387455,
+        "total_profile_percent": 0.12481095198074502
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes",
+        "period": 678283895,
+        "total_profile_percent": 0.11449647688187745
+      },
+      {
+        "symbol": "<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>",
+        "period": 591983681,
+        "total_profile_percent": 0.0999287265195427
+      },
+      {
+        "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+        "period": 570497128,
+        "total_profile_percent": 0.09630172809459006
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::try_perfect",
+        "period": 511138938,
+        "total_profile_percent": 0.0862818769980443
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::inverse",
+        "period": 430785116,
+        "total_profile_percent": 0.0727178965013623
+      },
+      {
+        "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Add<hyperreal::rational::arithmetic::Rational>>::add",
+        "period": 427987095,
+        "total_profile_percent": 0.0722455816651955
+      },
+      {
+        "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+        "period": 427347612,
+        "total_profile_percent": 0.07213763490268854
+      },
+      {
+        "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+        "period": 345599519,
+        "total_profile_percent": 0.05833829703058402
+      },
+      {
+        "symbol": "<alloc::vec::Vec<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)>>::retain::<<hyperreal::computable::node::RadicalCoefficient>::scale_in_place::{closure#0}>",
+        "period": 342543911,
+        "total_profile_percent": 0.05782250069027422
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_primitive_integer",
+        "period": 335516413,
+        "total_profile_percent": 0.05663623669635403
+      },
+      {
+        "symbol": "<alloc::vec::Vec<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)> as core::clone::Clone>::clone",
+        "period": 257630933,
+        "total_profile_percent": 0.04348892017300664
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialEq>::eq",
+        "period": 256695050,
+        "total_profile_percent": 0.043330940148619296
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Sub>::sub",
+        "period": 251103668,
+        "total_profile_percent": 0.042387097099093926
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::apply_lehmer_gcd_matrix::{closure#0}",
+        "period": 173896794,
+        "total_profile_percent": 0.029354331424975975
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::subtract_ref",
+        "period": 171784315,
+        "total_profile_percent": 0.028997738256879374
+      },
+      {
+        "symbol": "core::ptr::drop_glue::<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>",
+        "period": 159967768,
+        "total_profile_percent": 0.02700306757343477
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::learn_dyadic_denominator_shift",
+        "period": 89324165,
+        "total_profile_percent": 0.015078202900447027
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_dyadic_with_word_numerators",
+        "period": 89324165,
+        "total_profile_percent": 0.015078202900447027
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::maybe_reduce",
+        "period": 86182636,
+        "total_profile_percent": 0.014547902822303128
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::add_one",
+        "period": 86006664,
+        "total_profile_percent": 0.0145181981895109
+      },
+      {
+        "symbol": "<alloc::raw_vec::RawVec<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)>>::grow_one",
+        "period": 86006066,
+        "total_profile_percent": 0.014518097245210615
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::is_dyadic",
+        "period": 85888545,
+        "total_profile_percent": 0.014498259326960123
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_sum",
+        "period": 84334372,
+        "total_profile_percent": 0.014235909985811548
+      },
+      {
+        "symbol": "<hyperreal::rational::arithmetic::Rational>::from_integer_magnitude",
+        "period": 79988942,
+        "total_profile_percent": 0.013502387593190364
+      }
+    ]
+  },
+  "interpretation": [
+    "Normal-form work remains prominent in this profile of the unchanged endpoint/P4 source. Rational arithmetic appears inside much of the recovered coefficient-multiplication work. The prior helper series preserved that arithmetic and remains closed.",
+    "Comparison and zero testing are the largest recovered direct native consumers of normal-form stacks. The profile cannot identify redundant invocations or existing certificate availability.",
+    "The 10.159% recovered original-normalizer weight is not permission to omit the mandatory original retry. Earlier frontier evidence establishes why that retry is necessary.",
+    "The next question is whether an already certified root-bound sign could avoid a full sign-only quadratic normalization. This is distinct from coefficient helper boundaries, storage layouts and cache-copy/memo changes.",
+    "The proposed counter diagnostic observes coverage at one existing call site. No bypass or new arithmetic is implemented or admitted."
+  ],
+  "source_review": [
+    {
+      "path": "crates/hyperreal/src/computable/node/approximation_queries.rs",
+      "source_sha256": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+      "start": "    pub(crate) fn immediate_sign(",
+      "end_before": "    /// An approximation of this Computable",
+      "body_sha256": "a6067312909ddd9004b6d13c0797e7a21e59b1ce3ea8f903e1e9ed483b5972ac",
+      "finding": "Existing root-only sign inspection accepts a Valid exact-sign cache or, when that is unavailable, the known sign of an already Valid bound. It performs no graph traversal or new approximation."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "source_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "start": "    fn exact_sign(&self)",
+      "end_before": "    fn exact_quadratic_surd_sign(",
+      "body_sha256": "b5d68377b068e4e6ad930777766d8cc2cd43fb19954e82ec38c289ce337f596f",
+      "finding": "The exact-sign path consults retained exact signs, separated existing approximations, inverse-trig structure and cached Unknown state before its iterative structural walk. If that walk remains inconclusive, it calls exact_quadratic_surd_sign, without consulting the root bound cache at that final call site. Cached Unknown and the direct resolver already avoid some repeated work; their removal is not proposed."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "source_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "start": "    fn exact_quadratic_surd_sign(",
+      "end_before": "    pub(crate) fn exact_pure_quadratic_surd(",
+      "body_sha256": "0dd5c4e01fbb49da4aed6d93febe0a8e5d454c3568f841ea14b242f5a62847df",
+      "finding": "The sign fallback invokes full quadratic projection, then uses exact rational coefficient signs and, for opposing signs, rational square comparison. The hypothesis concerns avoiding this entire fallback when a root sign certificate is already present, not changing multiplication formulas."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/bounds.rs",
+      "source_sha256": "fe98a730f5da97e168cf6a8d68b3a8c42f1e623af445146795d0a0ba56af3948",
+      "start": "pub(crate) enum BoundInfo {",
+      "end_before": "#[cfg(verus_keep_ghost)]\nverus! {",
+      "body_sha256": "3577205585fc67127b34939d57ef9987dbc310ce597b285c6f6d58c0c57be808",
+      "finding": "BoundInfo distinguishes Unknown, exact Zero and NonZero with optional sign and optional magnitude. A nonzero fact alone does not certify a sign. An inexact or missing magnitude does not by itself invalidate a stored sign."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "source_sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "start": "    fn bound(&self) -> BoundCache {",
+      "end_before": "    #[cfg(not(verus_keep_ghost))]\n    fn set_bound(",
+      "body_sha256": "8e5ab50fe54ee487695da98ab29f55493f7c099a95b1e397d7e146a60d4c4c12",
+      "finding": "The current bound and combined fact snapshot are read from existing packed atomic metadata. A diagnostic can classify these Copy values without retaining scalar/DAG owners, materializing polynomials or invoking a recognizer."
+    }
+  ],
+  "earlier_evidence": [
+    {
+      "path": "docs/evidence/2026-10-13-retained-quadratic-projection/assessment-v2.json",
+      "sha256": "feeb89973c4747d5df46b60889e2f6e4081cb6bb5e4641e6151415421c670f54",
+      "limit": "Invocation/materialization counts, not cycle cost or projected savings."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-same-radicand-product-coverage/decision-v2.json",
+      "sha256": "338cc4b35ec6f35683e5140d9afe47d0c7d29fac5116b404e476ea72a8446626",
+      "limit": "Equal singleton coverage does not measure nonunit eligibility, cost or predicted savings."
+    }
+  ],
+  "next_step": {
+    "scope": "Observe existing root-bound certificates at the exact-sign quadratic fallback in a separate frozen copy of the unchanged endpoint/P4 parent.",
+    "rationale": "The existing immediate-sign consumer already treats a known root-bound sign as a certificate. The exact-sign fallback does not check that cache at this site. Availability and agreement at this point have not been measured.",
+    "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+    "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+    "site": "Computable::exact_sign, inside the final result.is_none() branch immediately before the existing exact_quadratic_surd_sign call.",
+    "observations": [
+      "Read only the already-stored BoundCache at that site; classify Invalid, Valid Unknown, Valid Zero, Valid NonZero positive, Valid NonZero negative and Valid NonZero without a sign.",
+      "Run the original quadratic fallback unchanged, then count its already-computed result as negative, zero, positive or None against the entry bound category.",
+      "Record starts/completions so interrupted or unwound observations cannot be silently counted as completed. Preserve contradictory outcomes explicitly if any occur."
+    ],
+    "instrumentation_constraints": [
+      "Fixed-size integer counters and Copy metadata only. No retained addresses/owners, new scalar comparisons, cheap_bound call, cache writes, new normalization pass or arithmetic change.",
+      "The diagnostic must preserve all original branches, arithmetic order, original result publication, per-pass memo handling, budgets and mandatory original retry.",
+      "Counters do not bypass the fallback. This observes possible coverage; it is not a runtime optimization.",
+      "Freeze the source, counters, qualification and measurement commands before execution. Use one complete-board diagnostic run and retain the original 120-second assertion. Do not extend the sample set based on outcomes."
+    ],
+    "qualification_requirements": [
+      "Independent counter-category controls for every bound tag and every already-computed result, including explicit mismatch and unfinished-observation accounting.",
+      "Site controls demonstrating that the original fallback still executes and cache/result outcomes agree with the uninstrumented parent, including absent/unknown bounds and valid positive/negative/zero certificates.",
+      "Existing P4 sign-retention, persistent-cache eight/nine-term frontier, root retry/memo lifetime, abort/no-approximation and endpoint controls, plus scalar library/docs and proportionate strict stack checks.",
+      "Removing only the declared instrumentation and test additions must recover the unchanged parent source. Keep main runtime, all 35 pending native paths and original full-resolution fixtures intact."
+    ],
+    "decision_rules": [
+      "Zero eligible known-sign observations close this particular omission hypothesis for the measured boards.",
+      "Any disagreement between an existing known sign and a definite fallback result becomes a correctness investigation before optimization.",
+      "Nonzero agreeing coverage only justifies considering a separate bounded prototype; it does not predict time savings or admit a change.",
+      "Any later prototype must preserve facts, certainty/escalation receipts, proof-cache behavior and P4 monotonicity, and pass fixed scalar/native cost qualification, complete report replay and both original native gates."
+    ],
+    "separate_copper_neck_gate": "Not executed by this planned coverage diagnostic; its original 60-second check-body limit remains mandatory for any retained optimization.",
+    "instrumented_source_prepared": false,
+    "runner_prepared": false,
+    "executed": false,
+    "runtime_admitted": false,
+    "plan_complete": false
+  },
+  "limits": [
+    "The allocator pattern is a declared subset, not a complete allocation model.",
+    "Recovered symbols and ancestors can omit inlined frames; absent symbol weight does not establish zero cost.",
+    "Percentages are sampled cycle periods, not counts, wall seconds, predicted savings or matched speedup evidence.",
+    "This single fixed profile does not identify expression identity, cache hit rates, duplicate requests or operand shapes.",
+    "The profile build enables frame pointers and line tables; its assertion result does not replace the parent release result.",
+    "The original copper-neck check-body gate was not rerun. Whole-process wall time is not either assertion metric.",
+    "Matching finding counts do not establish report-byte identity. No full report replay or CLI size measurement was performed.",
+    "Previous closed samples remain closed and all rejected helper/storage candidates remain rejected.",
+    "All 35 pending native paths and all 39 properties, 14 targets and crate future work remain in scope.",
+    "The earlier endpoint-only profile used a different source and binary. Comparing its percentages with this run does not establish a matched performance change.",
+    "Zero separately recovered quadratic-sign or zero-status symbol samples do not mean those operations are free; inline frames were not expanded.",
+    "The parent release full-board failure remains 133.31248412 worker-CPU seconds / 120. The profile result does not replace it."
+  ],
+  "main_and_35_pending_native_paths_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

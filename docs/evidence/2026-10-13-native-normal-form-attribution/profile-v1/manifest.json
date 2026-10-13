@@ -1,0 +1,32 @@
+{
+  "complete": true,
+  "scope": "Profile the unchanged endpoint/P4 parent on the original complete board fixtures.\n\nThis separate build enables frame pointers and line tables. Sampled userspace\ncycle periods diagnose this build; neither its runtime nor its percentages are\nmatched release-speedup evidence. The allocation-instrumented copies are not used.\nAll commands run sequentially. Raw logs are preserved losslessly as gzip files.\n",
+  "binary": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-attribution-v1/target/release/deps/hyperdrc-313c6a3a257f8485",
+  "binary_sha256": "73c235654fc1ffe48db18ab7ed72e68f2f711243d4316501d782035e19529e33",
+  "record_exit_code": 101,
+  "profiled_worker_cpu_seconds": 141.705158972,
+  "source_unchanged": true,
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "closed_profile_runs": 1,
+  "complete_reports_observed": 2,
+  "artifacts_sha256": {
+    "binary.json": "eec018ef86c47d58c04d520681dc629de68faad8f7864617fccbaf6ee4a913b8",
+    "build.stderr.gz": "7a1e1560151c838df35f9f12d158b42096cfb358637cba48bd5773f3dc646a1c",
+    "build.stdout.gz": "193a794282389d285dd218d56d1c551f8e90d421295214f147eb522a65eb4d90",
+    "commands.json": "f82335b26fc4a3e1ba1832bb1cdf138336078f585da701af820941938c24b605",
+    "header.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "header.stdout.gz": "6f67c5f49ed908eea2fb7fe6ccdf0a7abd7f7e6a1b77e469de1a3212019e75cd",
+    "inclusive-cost.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "inclusive-cost.stdout.gz": "0077fb4da0011327fb288896260c3b0da7991069a91ce01a4173fc277acf148c",
+    "perf.data": "c3d10dc2142a0fc5dcd789cfc784c61473f1095a154fe4cf7038d5dfff9fed0d",
+    "protocol.json": "c74cf6b7d07bb85487494dbb6866bc363b719499307b5da9ecac8f36a4d92bad",
+    "record.stderr.gz": "61200bb44de869ff173335206c13fa30d775b4fe7e88c2475cf78d84a27d6264",
+    "record.stdout.gz": "0e1f73981d9815e7243e528a0b641ea54d6c4a0f01fc715c75e3724f4772fd45",
+    "self-cost.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "self-cost.stdout.gz": "a47894cf516f67d9db92ca0df48bdd43cd95344ea3f220a86480b1ab22859e96",
+    "source-hashes.json.gz": "aaaa56f5c78db04bd65971940547754963d4265c148eefc9d19a79499e9ba739",
+    "stacks.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stacks.stdout.gz": "ad44cc5b78782e3eb89969ea6f458f946b7e7d61f6b4807710d0bf7179a614ea"
+  }
+}

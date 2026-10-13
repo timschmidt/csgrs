@@ -1,0 +1,511 @@
+{
+  "status": "native-normal-form-profile-observed-await-review",
+  "assessor_sha256": "de088ca5e0a43189ff5e414c89b42a12fc5940c5d6e7d2e272ae40baae691eaa",
+  "quality": {
+    "samples": 7071,
+    "total_period": 592405909310,
+    "lost_samples": 0,
+    "empty_stack_period_percent": 0.0,
+    "unknown_leaf_period_percent": 0.3271698086633659
+  },
+  "profiled_worker_cpu_seconds": 141.705158972,
+  "original_worker_cpu_limit_seconds": 120,
+  "profiled_gate_passed": false,
+  "record_process_wall_seconds": 144.60075184423476,
+  "finding_counts": [
+    12,
+    197
+  ],
+  "groups": {
+    "normal_form": {
+      "samples": 1898,
+      "period": 159851134318,
+      "inclusive_percent": 26.983379437282338
+    },
+    "retained_normalizer": {
+      "samples": 1144,
+      "period": 96206145594,
+      "inclusive_percent": 16.239903093818786
+    },
+    "original_normalizer": {
+      "samples": 713,
+      "period": 60180644621,
+      "inclusive_percent": 10.158684050112686
+    },
+    "coefficient_multiply": {
+      "samples": 638,
+      "period": 53821793113,
+      "inclusive_percent": 9.085289708822874
+    },
+    "polynomial_multiply": {
+      "samples": 698,
+      "period": 58818795302,
+      "inclusive_percent": 9.928799557470438
+    },
+    "polynomial_insert": {
+      "samples": 349,
+      "period": 29454369512,
+      "inclusive_percent": 4.971991171780636
+    },
+    "quadratic_projection": {
+      "samples": 1852,
+      "period": 155876809496,
+      "inclusive_percent": 26.31250077798114
+    },
+    "quadratic_sign": {
+      "samples": 0,
+      "period": 0,
+      "inclusive_percent": 0.0
+    },
+    "exact_sign": {
+      "samples": 1998,
+      "period": 168183896125,
+      "inclusive_percent": 28.389976109605463
+    },
+    "structural_facts": {
+      "samples": 974,
+      "period": 82040876919,
+      "inclusive_percent": 13.848760728021173
+    },
+    "zero_status": {
+      "samples": 0,
+      "period": 0,
+      "inclusive_percent": 0.0
+    },
+    "rational_arithmetic": {
+      "samples": 2329,
+      "period": 196900036848,
+      "inclusive_percent": 33.237351915908086
+    },
+    "rational_word_constructor": {
+      "samples": 348,
+      "period": 29439705395,
+      "inclusive_percent": 4.9695158222323705
+    },
+    "rational_wide_gcd": {
+      "samples": 194,
+      "period": 16657760682,
+      "inclusive_percent": 2.811882937056113
+    },
+    "approximation_cache_lookup": {
+      "samples": 237,
+      "period": 20057934250,
+      "inclusive_percent": 3.3858430401820803
+    },
+    "approximation_evaluation": {
+      "samples": 814,
+      "period": 69542785541,
+      "inclusive_percent": 11.739043187803341
+    },
+    "rational_interval_construction": {
+      "samples": 437,
+      "period": 37352538256,
+      "inclusive_percent": 6.305227154048154
+    },
+    "cached_rational_interval": {
+      "samples": 362,
+      "period": 30950022398,
+      "inclusive_percent": 5.224462131724646
+    },
+    "point_equality": {
+      "samples": 321,
+      "period": 27187424903,
+      "inclusive_percent": 4.5893237180341995
+    },
+    "coordinate_equality": {
+      "samples": 217,
+      "period": 18477847360,
+      "inclusive_percent": 3.1191193520540543
+    },
+    "endpoint_membership": {
+      "samples": 446,
+      "period": 38046367822,
+      "inclusive_percent": 6.42234778959484
+    },
+    "curve_comparison": {
+      "samples": 1345,
+      "period": 113883286775,
+      "inclusive_percent": 19.223860698426293
+    },
+    "curve_zero_test": {
+      "samples": 589,
+      "period": 50206965490,
+      "inclusive_percent": 8.475095319099392
+    },
+    "curve_sign_test": {
+      "samples": 361,
+      "period": 31060815284,
+      "inclusive_percent": 5.24316432295178
+    },
+    "regularization": {
+      "samples": 3752,
+      "period": 314908809630,
+      "inclusive_percent": 53.15760776201363
+    },
+    "topology_construction": {
+      "samples": 1181,
+      "period": 98251961913,
+      "inclusive_percent": 16.58524338952631
+    },
+    "region_construction": {
+      "samples": 133,
+      "period": 11350791740,
+      "inclusive_percent": 1.9160497155102223
+    }
+  },
+  "exclusive_recovered_stack_partition": [
+    {
+      "symbol": "other",
+      "period": 432554774992,
+      "total_profile_percent": 73.01662056271766
+    },
+    {
+      "symbol": "normal_form_without_recovered_multiply",
+      "period": 101032339016,
+      "total_profile_percent": 17.0545798798119
+    },
+    {
+      "symbol": "normal_form_with_coefficient_multiply",
+      "period": 53821793113,
+      "total_profile_percent": 9.085289708822874
+    },
+    {
+      "symbol": "normal_form_with_other_polynomial_multiply",
+      "period": 4997002189,
+      "total_profile_percent": 0.843509848647563
+    }
+  ],
+  "intersections": [
+    {
+      "symbol": "allocator_leaf",
+      "period": 175234734929,
+      "total_profile_percent": 29.580180105411717
+    },
+    {
+      "symbol": "rational_arithmetic_with_normal_form",
+      "period": 92715168463,
+      "total_profile_percent": 15.650615060708837
+    },
+    {
+      "symbol": "rational_arithmetic_with_coefficient_multiply",
+      "period": 48493510237,
+      "total_profile_percent": 8.185858627487768
+    },
+    {
+      "symbol": "allocator_leaf_with_normal_form",
+      "period": 46757250166,
+      "total_profile_percent": 7.892772410130096
+    },
+    {
+      "symbol": "allocator_leaf_with_coefficient_multiply",
+      "period": 13051395969,
+      "total_profile_percent": 2.2031171134335086
+    }
+  ],
+  "normal_form_nearest_consumers": [
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 42932259988,
+      "total_profile_percent": 7.247101913281892
+    },
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 35923900051,
+      "total_profile_percent": 6.064068485211782
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 14824676703,
+      "total_profile_percent": 2.5024525363474046
+    },
+    {
+      "symbol": "hypercurve::classify::real_sign",
+      "period": 12835261061,
+      "total_profile_percent": 2.1666328541438364
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 10374137350,
+      "total_profile_percent": 1.7511873509302418
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+      "period": 7019164675,
+      "total_profile_percent": 1.1848573021790947
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 5746368768,
+      "total_profile_percent": 0.9700053084705108
+    },
+    {
+      "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+      "period": 4837186359,
+      "total_profile_percent": 0.8165324286913468
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 4569238953,
+      "total_profile_percent": 0.7713020550929318
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 4514710298,
+      "total_profile_percent": 0.7620974448513642
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "period": 3672823733,
+      "total_profile_percent": 0.6199843173876999
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2>::signed_area_with_cache",
+      "period": 3595757783,
+      "total_profile_percent": 0.6069753401326009
+    },
+    {
+      "symbol": "hypercurve::intersect::line_point_at_for_policy",
+      "period": 1882534050,
+      "total_profile_percent": 0.3177777298326862
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+      "period": 1235968400,
+      "total_profile_percent": 0.2086353934989582
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+      "period": 953114918,
+      "total_profile_percent": 0.16088882690419698
+    },
+    {
+      "symbol": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "period": 924761134,
+      "total_profile_percent": 0.15610261806421008
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::try_from_center",
+      "period": 860311817,
+      "total_profile_percent": 0.1452233685518163
+    },
+    {
+      "symbol": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+      "period": 859697071,
+      "total_profile_percent": 0.14511959747351696
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "period": 644652077,
+      "total_profile_percent": 0.1088193191305018
+    },
+    {
+      "symbol": "hypercurve::segment::directed_radial_angle",
+      "period": 488768373,
+      "total_profile_percent": 0.08250565453833657
+    },
+    {
+      "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 484368259,
+      "total_profile_percent": 0.08176290131274416
+    },
+    {
+      "symbol": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+      "period": 327987218,
+      "total_profile_percent": 0.055365284654574166
+    },
+    {
+      "symbol": "hypercurve::contour::arc_signed_area_contribution",
+      "period": 174008607,
+      "total_profile_percent": 0.02937320581468796
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::try_new_with_endpoint_equality",
+      "period": 169476672,
+      "total_profile_percent": 0.02860820078540347
+    }
+  ],
+  "coefficient_multiply_nearest_consumers": [
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 18374574247,
+      "total_profile_percent": 3.101686522405159
+    },
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 11652212768,
+      "total_profile_percent": 1.966930542872508
+    },
+    {
+      "symbol": "hypercurve::classify::real_sign",
+      "period": 4792776281,
+      "total_profile_percent": 0.8090358664015266
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 4250661834,
+      "total_profile_percent": 0.7175252250523504
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 2890540528,
+      "total_profile_percent": 0.4879324264956664
+    },
+    {
+      "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+      "period": 1989759041,
+      "total_profile_percent": 0.33587764904599887
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 1803536010,
+      "total_profile_percent": 0.30444260964591896
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2>::signed_area_with_cache",
+      "period": 1634898737,
+      "total_profile_percent": 0.27597610207910234
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+      "period": 1070924210,
+      "total_profile_percent": 0.18077540976040404
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 999508553,
+      "total_profile_percent": 0.16872021991883396
+    },
+    {
+      "symbol": "hypercurve::intersect::line_point_at_for_policy",
+      "period": 775249876,
+      "total_profile_percent": 0.13086464260678393
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 695057175,
+      "total_profile_percent": 0.11732785984690164
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+      "period": 589485777,
+      "total_profile_percent": 0.09950707238666792
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+      "period": 523539076,
+      "total_profile_percent": 0.08837505969678593
+    },
+    {
+      "symbol": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "period": 418779278,
+      "total_profile_percent": 0.07069127289560122
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "period": 351577535,
+      "total_profile_percent": 0.059347405127929444
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::try_from_center",
+      "period": 253773913,
+      "total_profile_percent": 0.042837842940422574
+    },
+    {
+      "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 173883892,
+      "total_profile_percent": 0.029352153526376847
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "period": 173603129,
+      "total_profile_percent": 0.029304759839786684
+    },
+    {
+      "symbol": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+      "period": 163996212,
+      "total_profile_percent": 0.027683081721958727
+    },
+    {
+      "symbol": "hypercurve::segment::directed_radial_angle",
+      "period": 156542083,
+      "total_profile_percent": 0.026424801059518655
+    },
+    {
+      "symbol": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+      "period": 86912958,
+      "total_profile_percent": 0.014671183496672268
+    }
+  ],
+  "source_review": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "finding": "The retained recognizer copies closed forms into owned polynomials. Failed projections that reused certificates drop the first memo before retrying the original recognizer; each pass retains its 512-node bound. Coefficient multiplication retains the original arithmetic and insertion order. The helper series did not remove its rational arithmetic."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "finding": "Exact quadratic recognition projects after shared normal-form cancellation, covering expressions with intermediate independent radicals. Exact quadratic signs then compare rational squares when signs oppose. A restricted prepass cannot replace this coverage without proof."
+    },
+    {
+      "path": "crates/hypercurve/src/classify.rs",
+      "sha256": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+      "finding": "Comparison tries exact rationals and already-certified separated enclosures before the predicate cascade. Zero testing and sign classification consult scalar facts; unresolved comparisons retain their difference-sign fallback. This review does not establish duplicate invocation counts."
+    },
+    {
+      "path": "crates/hyperlimit/src/resolve.rs",
+      "sha256": "a8b1e52851cb59f9c711146f82ca3db3c482740a35b009184383fd26e9a0b2ca",
+      "finding": "The direct sign resolver already avoids a duplicate structural-facts pass and retains exact normal forms, quadratic/radical towers and policy-authorized terminal approximation after bounded refinement. Any proposed omission must preserve certainty and escalation receipts."
+    }
+  ],
+  "related_count_evidence": [
+    {
+      "path": "docs/evidence/2026-10-13-retained-quadratic-projection/assessment-v2.json",
+      "sha256": "feeb89973c4747d5df46b60889e2f6e4081cb6bb5e4641e6151415421c670f54",
+      "limit": "Invocation/materialization counts, not cycle cost or projected savings."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-same-radicand-product-coverage/decision-v2.json",
+      "sha256": "338cc4b35ec6f35683e5140d9afe47d0c7d29fac5116b404e476ea72a8446626",
+      "limit": "Equal singleton coverage does not measure nonunit eligibility, cost or predicted savings."
+    }
+  ],
+  "source_parent_main_and_binary_unchanged": true,
+  "commands_verified": 6,
+  "compiler_warnings": 0,
+  "artifacts_sha256": {
+    "profile-v1/binary.json": "eec018ef86c47d58c04d520681dc629de68faad8f7864617fccbaf6ee4a913b8",
+    "profile-v1/build.stderr.gz": "7a1e1560151c838df35f9f12d158b42096cfb358637cba48bd5773f3dc646a1c",
+    "profile-v1/build.stdout.gz": "193a794282389d285dd218d56d1c551f8e90d421295214f147eb522a65eb4d90",
+    "profile-v1/commands.json": "f82335b26fc4a3e1ba1832bb1cdf138336078f585da701af820941938c24b605",
+    "profile-v1/header.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "profile-v1/header.stdout.gz": "6f67c5f49ed908eea2fb7fe6ccdf0a7abd7f7e6a1b77e469de1a3212019e75cd",
+    "profile-v1/inclusive-cost.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "profile-v1/inclusive-cost.stdout.gz": "0077fb4da0011327fb288896260c3b0da7991069a91ce01a4173fc277acf148c",
+    "profile-v1/manifest.json": "4c75c0292b7868cb0f6201596053dcd88b94e2a046265d77aba373daf4d0846a",
+    "profile-v1/observations.json": "947d79ec387dff621a64ff038c954cddc74b2d5779cb5b420de550f8fce41197",
+    "profile-v1/perf.data": "c3d10dc2142a0fc5dcd789cfc784c61473f1095a154fe4cf7038d5dfff9fed0d",
+    "profile-v1/protocol.json": "c74cf6b7d07bb85487494dbb6866bc363b719499307b5da9ecac8f36a4d92bad",
+    "profile-v1/record.stderr.gz": "61200bb44de869ff173335206c13fa30d775b4fe7e88c2475cf78d84a27d6264",
+    "profile-v1/record.stdout.gz": "0e1f73981d9815e7243e528a0b641ea54d6c4a0f01fc715c75e3724f4772fd45",
+    "profile-v1/self-cost.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "profile-v1/self-cost.stdout.gz": "a47894cf516f67d9db92ca0df48bdd43cd95344ea3f220a86480b1ab22859e96",
+    "profile-v1/source-hashes.json.gz": "aaaa56f5c78db04bd65971940547754963d4265c148eefc9d19a79499e9ba739",
+    "profile-v1/stacks.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "profile-v1/stacks.stdout.gz": "ad44cc5b78782e3eb89969ea6f458f946b7e7d61f6b4807710d0bf7179a614ea"
+  },
+  "inputs_sha256": "d827d62e231fb88c5aa6c431760a4af668141b63aa0e21090db8590339772628",
+  "limits": [
+    "The allocator pattern is a declared subset, not a complete allocation model.",
+    "Recovered symbols and ancestors can omit inlined frames; absent symbol weight does not establish zero cost.",
+    "Percentages are sampled cycle periods, not counts, wall seconds, predicted savings or matched speedup evidence.",
+    "This single fixed profile does not identify expression identity, cache hit rates, duplicate requests or operand shapes.",
+    "The profile build enables frame pointers and line tables; its assertion result does not replace the parent release result.",
+    "The original copper-neck check-body gate was not rerun. Whole-process wall time is not either assertion metric.",
+    "Matching finding counts do not establish report-byte identity. No full report replay or CLI size measurement was performed.",
+    "Previous closed samples remain closed and all rejected helper/storage candidates remain rejected.",
+    "All 35 pending native paths and all 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,35 @@
+{
+  "scope": "Profile the unchanged endpoint/P4 parent on the original complete board fixtures.\n\nThis separate build enables frame pointers and line tables. Sampled userspace\ncycle periods diagnose this build; neither its runtime nor its percentages are\nmatched release-speedup evidence. The allocation-instrumented copies are not used.\nAll commands run sequentially. Raw logs are preserved losslessly as gzip files.\n",
+  "runner_sha256": "9236f859b826f0c31ac35b0ee2503011648ecc9e778ee242213c3812ee786244",
+  "previous_goal_turn": "progress",
+  "parent_decision_sha256": "950b1506e770387514750e08d99977ad4474f0a6542f6d85f63f29d27dcd54f8",
+  "inputs_sha256": "d827d62e231fb88c5aa6c431760a4af668141b63aa0e21090db8590339772628",
+  "command_timeout_seconds": 1800,
+  "base_commit": "07b5241eb2c7d43acd8bd5008e0ceea7d174c9a4",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "parent_validation_sha256": "72233143bd1d50e4995013769236d8a995877ff5daff563fe6a1e42fa0031af6",
+  "frozen_inputs_sha256": {
+    "profile_v1.py": "9236f859b826f0c31ac35b0ee2503011648ecc9e778ee242213c3812ee786244",
+    "analyze_v1.py": "c0288c8cffd0993312326c1ad6a0845bd2342cdc6e657186a8368dd4975d4bf5",
+    "inputs-v1.json": "d827d62e231fb88c5aa6c431760a4af668141b63aa0e21090db8590339772628"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "source_count": 10131,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-normal-form-attribution-v1/target",
+    "RUSTFLAGS": "-Cforce-frame-pointers=yes",
+    "CARGO_PROFILE_RELEASE_DEBUG": "1",
+    "DEBUGINFOD_URLS": ""
+  },
+  "inherited_rustflags": null,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "perf_version": "perf version 7.2.5-100.fc43.x86_64\n",
+  "perf_event_paranoid": "2",
+  "sampling": "49 Hz cycles:u, frame-pointer call chains; no inline expansion during decoding.",
+  "original_worker_limit_seconds": 120,
+  "runtime_admitted": false
+}

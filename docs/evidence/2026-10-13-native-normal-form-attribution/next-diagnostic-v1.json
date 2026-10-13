@@ -1,0 +1,36 @@
+{
+  "scope": "Observe existing root-bound certificates at the exact-sign quadratic fallback in a separate frozen copy of the unchanged endpoint/P4 parent.",
+  "rationale": "The existing immediate-sign consumer already treats a known root-bound sign as a certificate. The exact-sign fallback does not check that cache at this site. Availability and agreement at this point have not been measured.",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "site": "Computable::exact_sign, inside the final result.is_none() branch immediately before the existing exact_quadratic_surd_sign call.",
+  "observations": [
+    "Read only the already-stored BoundCache at that site; classify Invalid, Valid Unknown, Valid Zero, Valid NonZero positive, Valid NonZero negative and Valid NonZero without a sign.",
+    "Run the original quadratic fallback unchanged, then count its already-computed result as negative, zero, positive or None against the entry bound category.",
+    "Record starts/completions so interrupted or unwound observations cannot be silently counted as completed. Preserve contradictory outcomes explicitly if any occur."
+  ],
+  "instrumentation_constraints": [
+    "Fixed-size integer counters and Copy metadata only. No retained addresses/owners, new scalar comparisons, cheap_bound call, cache writes, new normalization pass or arithmetic change.",
+    "The diagnostic must preserve all original branches, arithmetic order, original result publication, per-pass memo handling, budgets and mandatory original retry.",
+    "Counters do not bypass the fallback. This observes possible coverage; it is not a runtime optimization.",
+    "Freeze the source, counters, qualification and measurement commands before execution. Use one complete-board diagnostic run and retain the original 120-second assertion. Do not extend the sample set based on outcomes."
+  ],
+  "qualification_requirements": [
+    "Independent counter-category controls for every bound tag and every already-computed result, including explicit mismatch and unfinished-observation accounting.",
+    "Site controls demonstrating that the original fallback still executes and cache/result outcomes agree with the uninstrumented parent, including absent/unknown bounds and valid positive/negative/zero certificates.",
+    "Existing P4 sign-retention, persistent-cache eight/nine-term frontier, root retry/memo lifetime, abort/no-approximation and endpoint controls, plus scalar library/docs and proportionate strict stack checks.",
+    "Removing only the declared instrumentation and test additions must recover the unchanged parent source. Keep main runtime, all 35 pending native paths and original full-resolution fixtures intact."
+  ],
+  "decision_rules": [
+    "Zero eligible known-sign observations close this particular omission hypothesis for the measured boards.",
+    "Any disagreement between an existing known sign and a definite fallback result becomes a correctness investigation before optimization.",
+    "Nonzero agreeing coverage only justifies considering a separate bounded prototype; it does not predict time savings or admit a change.",
+    "Any later prototype must preserve facts, certainty/escalation receipts, proof-cache behavior and P4 monotonicity, and pass fixed scalar/native cost qualification, complete report replay and both original native gates."
+  ],
+  "separate_copper_neck_gate": "Not executed by this planned coverage diagnostic; its original 60-second check-body limit remains mandatory for any retained optimization.",
+  "instrumented_source_prepared": false,
+  "runner_prepared": false,
+  "executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
