@@ -1,0 +1,165 @@
+{
+  "status": "prototype-inputs-recorded-preparation-and-qualification-pending",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "projection_decision_sha256": "46edc6cfd99501156880538bda5e003608411e0f078525ce5269140bad397863",
+  "baseline_preparation_sha256": "96d02c50dafc86f244b0f3633f454dd622aee507b01ca39c89cbd2d47855721e",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": [
+        "RadicalCoefficient insert_radical, insert_atom and multiply; polynomial insertion and multiplication; retained normalizer, left-before-right traversal, cache work accounting and original retry"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "sections": [
+        "CachedEvaluation Box fields; EvaluationCache cell lifetime, read/write access, closed publication and exclusive drop"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/primitive_constructors.rs",
+      "sha256": "22fa8cf51c5134d5023d066f09a18f68e23dbbcf22d59441a0e731dce3954478",
+      "sections": [
+        "Complete internal_structural_eq, including bounded traversal and iterative immutable-DAG fallback"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "sections": [
+        "RationalData numeric/cache fields"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "sections": [
+        "Raw rational construction, canonicalized_ref and into_parts"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "sections": [
+        "Rational multiplication operators and numeric retained-product dispatch"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/squares_powers.rs",
+      "sha256": "3105cea7ca98cae95bd7a5a07e81de1447c038e0c949ffe72b70a8cfee6008a8",
+      "sections": [
+        "Square extraction, square-reduction publication and extract_square_reduced_retained"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/comparison.rs",
+      "sha256": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "sections": [
+        "Rational equality and numeric comparison entry points"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/trace.rs",
+      "sha256": "379e1cc310d081c0cd7caae6ebcc59e059a0b65428c659cf0424a799f5a03222",
+      "sections": [
+        "Feature-dependent trace_dispatch macro"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/dispatch_trace.rs",
+      "sha256": "3707c3b0c61ae8aca19c8f15eb435c5942ca806f609ae4fbf288ae16f22de126",
+      "sections": [
+        "record, record_active and rational counter recording; no registered callback"
+      ]
+    }
+  ],
+  "contract": "A typed cache multiplication entry point borrows only a closed right polynomial under its read guard and returns an owned product. Cache miss returns the identical owned left input; cache-hit decline remains distinct and marks reuse. Preserve original Box payloads and owned normalizer results.",
+  "lock_review": "Inspected product insertion and coefficient operations use Rational arithmetic and immutable structural comparison. The closed right payload has no Computable fields; rational fields and tracing do not call EvaluationCache or user callbacks. The parent expression retains the right node while its cache is borrowed. The guard must be released before recursive normalization, publication or returning the product. This is scoped source inspection, not a whole-crate formal proof.",
+  "risks": [
+    "A product holds a read lock longer than a shallow clone; arbitrary coefficient bit sizes mean no constant wall-time bound or wait-free writer claim.",
+    "Additional helper dispatch, Result moves and code generation can regress non-hit paths or increase binaries.",
+    "Concurrent publication after a miss remains allowed; no second root cache probe is added.",
+    "Opaque left atoms retain original ownership and structural comparisons; they must never be evaluated in the borrowed kernel."
+  ],
+  "invariants": [
+    "Left normalization precedes the right lookup.",
+    "A retained cache hit still bypasses the depth/work counters, including zero depth/work.",
+    "A miss enters the exact original body once with original sharing, memo and work accounting.",
+    "A cached product decline marks reuse and preserves the mandatory original retry after dropping the first memo.",
+    "No new cache field, shared owner, public API, dependency, approximation or looser bound.",
+    "P4 permits Unknown to become Certified but forbids contradictory or weaker available facts.",
+    "Both original full-resolution 120-second board worker-CPU and 60-second neck check-body-wall gates remain."
+  ],
+  "planned_controls": [
+    "Original shared projection/storage/memo/alias tests plus inherited cache/P4 controls.",
+    "Exact owned/borrowed products, term/radical/power frontiers and rejection order.",
+    "Original allocation/buffer/owner recovery on cache misses; box and vector stability on hits.",
+    "Zero-work cache hits, hit decline versus miss and unchanged memo contents.",
+    "Cold fallback work accounting, opaque left atoms and guard release before later writes.",
+    "Concurrent readers with accurate approximation writers, poison recovery, graph release and unchanged cache layouts."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "borrowed_kernel_review": [
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "a38cffb31d85e5fd68c94f2b5b0c4a7f2926fc41093d9dc83b99f5fa83476228",
+      "sections": [
+        "Qualified coefficient multiply/multiply_parts factoring copied unchanged"
+      ]
+    },
+    {
+      "path": "target/retained-polynomial-views-v2/candidate/source/crates/hyperreal/src/computable/node/retained_polynomial.rs",
+      "sha256": "e10a6480368b1d962ca78e12e3d25b7a4f44110b00c12a8905fecdbadfbd6b78",
+      "sections": [
+        "Qualified multiply_closed operation/insertion order copied unchanged"
+      ]
+    }
+  ],
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "variants": [
+      "baseline",
+      "candidate"
+    ],
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false,
+    "block_order": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ]
+  },
+  "qualification": "Twenty-eight sequential commands across fresh baseline/candidate targets: twenty shared tests in four focused groups, eight candidate helper tests, six inherited cache and eleven P4 controls, all-feature/default scalar libraries (894/807 baseline, 902/815 candidate), 28 doctests each, formatting, strict all-feature/default all-target Clippy and warning-denied docs. Counts overlap."
+}
