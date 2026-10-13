@@ -1,0 +1,127 @@
+{
+  "scope": "Qualify the frozen zero-radical candidate with native consumers, sequentially.\n\nThe candidate gets a new native Cargo target. Full all-feature curve and DRC\ntests include integration tests and doctests. The two original expensive DRC\nlimits are skipped only in the combined command and executed individually from\nthe bound test executable. Their original fixtures and assertions are intact.\nGate failures are recorded, never turned into skips or larger limits.\n",
+  "runner_sha256": "ce30925079cdc961607f5e95fb56d9850025df81912bd84568115a43caea761b",
+  "assessor_sha256": "575b7470a20ae3523d2f780d7e99843b5cc78c48529deb64cfad46833fbfa985",
+  "preparation_sha256": "4d6df8de3bf13743ebcdb0817631a28b80eea92690671807280c474684496cff",
+  "scalar_decision_sha256": "67070f204469baf5eab6927278b87211b2131407b9a1f45917f32bdca0fe1b7e",
+  "cost_assessment_sha256": "d0f4bfa6ac0a07f4a7bc496c6e349a126953a448fd1d070bf7b269ac7d3e0999",
+  "variants": {
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+    }
+  },
+  "variant_order": [
+    "candidate"
+  ],
+  "commands": [
+    [
+      "strict-consumer-clippy",
+      [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ]
+    ],
+    [
+      "curve-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ]
+    ],
+    [
+      "drc-tests-except-separate-gates",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ]
+    ],
+    [
+      "consumer-docs",
+      [
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ]
+    ],
+    [
+      "build-board-tests",
+      [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ]
+    ]
+  ],
+  "gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU"
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time"
+    }
+  ],
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "RUSTDOCFLAGS": "-D warnings"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "command_timeout_seconds": 1800,
+  "source_format_already_qualified": "validation-v1/result.json; source remains frozen",
+  "gate_duration_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time.",
+  "runtime_admitted": false
+}

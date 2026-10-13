@@ -1,0 +1,229 @@
+{
+  "complete": true,
+  "all_passed": false,
+  "tests": [
+    {
+      "variant": "candidate",
+      "phase": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "result_groups": 51
+    },
+    {
+      "variant": "candidate",
+      "phase": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "result_groups": 10
+    }
+  ],
+  "phases": [
+    {
+      "name": "candidate-strict-consumer-clippy",
+      "variant": "candidate",
+      "phase": "strict-consumer-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 40.3737161969766,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "1e8435a4a8871f65ec87fc47b2b8de80af83e90ceae702d1e0190e05cc12e239"
+    },
+    {
+      "name": "candidate-curve-tests",
+      "variant": "candidate",
+      "phase": "curve-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 1056.9921322907321,
+      "stdout_sha256": "0a794bfcded69818cb1697bff66b4c41a372e9a514325403852188f62bed78eb",
+      "stderr_sha256": "b7c85bc513229bc8486854f7987ece6fb20ba4577805d1db31a3b5ac65c69dba"
+    },
+    {
+      "name": "candidate-drc-tests-except-separate-gates",
+      "variant": "candidate",
+      "phase": "drc-tests-except-separate-gates",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 321.6181958387606,
+      "stdout_sha256": "5066af83cd6994e85ce0202ecf094459cdbe54b86c9b4926c742406d876c4d26",
+      "stderr_sha256": "4c0bf396d7e9ee45978786fc715ac42836f79b19b1d8c4719c856c15e8f54b3e"
+    },
+    {
+      "name": "candidate-consumer-docs",
+      "variant": "candidate",
+      "phase": "consumer-docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 35.976146711967885,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "3d36fc9b06a5ee94295a9701ab052df83df95b54a9f9d27539031876209ed40b"
+    },
+    {
+      "name": "candidate-build-board-tests",
+      "variant": "candidate",
+      "phase": "build-board-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 0.21500627370551229,
+      "stdout_sha256": "a151eb39c8e5c33d7bc5d12a9c9430a87f261cf139f2c17286060dcfd80f18b5",
+      "stderr_sha256": "09f2b93c4bce5bfb43dca18ca8d9c1dca2831c7d2ffb73b00b96f8f73a607f86"
+    },
+    {
+      "name": "candidate-full-board",
+      "variant": "candidate",
+      "phase": "full-board",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 101,
+      "seconds": 136.51485151285306,
+      "stdout_sha256": "21cee6639ebc159a50324107cab2e7dc14a436bd85f5366aee2579561772566f",
+      "stderr_sha256": "5513ae020179f1b443928284e9d954bd8757c162ebfd8b6b0509a462aabc76cd"
+    },
+    {
+      "name": "candidate-copper-neck",
+      "variant": "candidate",
+      "phase": "copper-neck",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source",
+      "extra_environment": {
+        "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target"
+      },
+      "exit_code": 0,
+      "seconds": 121.35244134766981,
+      "stdout_sha256": "c72ecf3c2b3b9185e64678cc8eac6ff811851acc9aba2d0a3f8b39444e54d650",
+      "stderr_sha256": "b403545304518f6a4ff353ebbd4302d03218d4a07cecf863ce3974108f9e0b42"
+    }
+  ],
+  "source_parent_main_and_binaries_unchanged": true,
+  "runtime_admitted": false
+}

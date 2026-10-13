@@ -40,12 +40,20 @@ All ranges remain recorded. Four probe sizes are unchanged and two add 16 bytes.
 qualification with these tradeoffs open. The cost sample set is closed. No
 statistical significance or application speedup is inferred.
 
-Native qualification and fixed-control runners are prepared. They retain the
-120-second worker-CPU board limit and 60-second check-body copper-neck limit,
-run full all-feature curve/DRC suites and strict consumer Clippy/docs, then use
-new separate control targets. Fixed controls comprise 20 endpoint processes
-(10 time and 10 memory), 10 broad processes and six final-abort processes. Four
-endpoint preflights precede measurements; all builds finish before any probe.
+[Native qualification](native-assessment-v1.json) passes 2,494 curve results
+with 33 existing ignores and 1,644 DRC results outside the two separately run
+assertions. Strict consumer Clippy and warning-denied scalar/curve/DRC docs pass.
+The original board worker-CPU assertion fails at **135.297041172 / 120 seconds**;
+the original 60-second copper-neck check-body assertion passes. Its check time
+is not printed. The 121.352-second whole subprocess includes setup and is not
+the asserted interval. Both complete boards emit 12/197 findings; this is not
+a complete report-byte comparison.
+
+Fixed native controls remain prepared: 20 endpoint processes (10 time and 10
+memory), 10 broad processes and six final-abort processes, with new separate
+targets. Four endpoint preflights precede measurements; all builds finish before
+any probe. Complete-report verification inputs are committed but unexecuted.
+The closed native costs will determine whether report replay is warranted.
 
 Preparation and results are committed separately. No runtime change is admitted;
 the endpoint parent's earlier tradeoffs and the full properties plan stay open.

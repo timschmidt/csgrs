@@ -1,0 +1,31 @@
+{
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/native-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+    "sha256": "5cc260961adad3cd1d4a5b6a257aaf2c787a359dbc5f63bf4ada9f1a85eddc8d",
+    "bytes": 54167496,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperdrc/Cargo.toml",
+    "features": [],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperdrc#0.3.0",
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperdrc",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-zero-radicals/candidate/source/crates/hyperdrc/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    },
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    }
+  }
+}
