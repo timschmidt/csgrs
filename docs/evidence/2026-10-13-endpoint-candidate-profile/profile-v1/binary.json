@@ -1,0 +1,8 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-candidate-profile-v1/target/release/deps/hyperdrc-313c6a3a257f8485",
+  "sha256": "6cd34ac359120c53b6d339bfa3b176cfc31707cc18061b6e022f6159bee35b8a",
+  "bytes": 322166904,
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc/Cargo.toml",
+  "features": [],
+  "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source/crates/hyperdrc#0.3.0"
+}

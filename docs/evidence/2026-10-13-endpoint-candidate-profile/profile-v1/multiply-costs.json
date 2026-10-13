@@ -1,0 +1,606 @@
+{
+  "scope": "Attribute sampled coefficient-multiplication work without guessing operand shapes.",
+  "runner_sha256": "b52d942920791788ddb60aab7587ea43277d9918566812b208b590d64d2d89ea",
+  "stacks_sha256": "589710bb9eb2fc9aba407e9fb4630cc7cf3cf2e35eaf090381dad4192b5d3db6",
+  "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+  "selected_samples": 619,
+  "total_period": 570010335327,
+  "selected_period": 52592208162,
+  "inclusive_percent": 9.226535889358782,
+  "allocator_leaf_subset_total_percent": 1.9466478132601686,
+  "allocator_leaf_subset_of_selected_percent": 21.09836060471288,
+  "leaf_symbols": [
+    {
+      "symbol": "hyperreal::verified::gcd::gcd_u128",
+      "period": 5081928411,
+      "total_profile_percent": 0.8915502221700298,
+      "selected_percent": 9.66289225838572
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 3826847322,
+      "total_profile_percent": 0.671364549873405,
+      "selected_percent": 7.276453025535924
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 3554706199,
+      "total_profile_percent": 0.6236213588935643,
+      "selected_percent": 6.758997812091144
+    },
+    {
+      "symbol": "__memcmp_avx2_movbe",
+      "period": 3092226873,
+      "total_profile_percent": 0.542486106190701,
+      "selected_percent": 5.879629285530283
+    },
+    {
+      "symbol": "_int_malloc",
+      "period": 2557096037,
+      "total_profile_percent": 0.4486052056465013,
+      "selected_percent": 4.862119554142633
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_word_magnitude_difference",
+      "period": 2522390772,
+      "total_profile_percent": 0.4425166730622473,
+      "selected_percent": 4.796130187632109
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_secondary_product",
+      "period": 2106504675,
+      "total_profile_percent": 0.36955552284706444,
+      "selected_percent": 4.005355068019439
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_product_pair",
+      "period": 1783466621,
+      "total_profile_percent": 0.3128832076311164,
+      "selected_percent": 3.3911232924587997
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_div_words",
+      "period": 1775483516,
+      "total_profile_percent": 0.31148268828870473,
+      "selected_percent": 3.375944038194728
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+      "period": 1757116741,
+      "total_profile_percent": 0.30826050548574496,
+      "selected_percent": 3.341021041724557
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+      "period": 1612824894,
+      "total_profile_percent": 0.28294660535843874,
+      "selected_percent": 3.06666129901222
+    },
+    {
+      "symbol": "hyperreal::verified::fixed_gcd::gcd_fixed::<8>",
+      "period": 1600547222,
+      "total_profile_percent": 0.2807926668701205,
+      "selected_percent": 3.0433162590736402
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 1427934031,
+      "total_profile_percent": 0.25051019999151974,
+      "selected_percent": 2.715105679916555
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 1187923760,
+      "total_profile_percent": 0.208403898381688,
+      "selected_percent": 2.2587447865676857
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVec<u64>>::grow_one",
+      "period": 1094577472,
+      "total_profile_percent": 0.19202765356387258,
+      "selected_percent": 2.0812540683372114
+    },
+    {
+      "symbol": "__udivti3",
+      "period": 1079964670,
+      "total_profile_percent": 0.1894640505738291,
+      "selected_percent": 2.0534689600280336
+    },
+    {
+      "symbol": "malloc",
+      "period": 926766899,
+      "total_profile_percent": 0.1625877359694431,
+      "selected_percent": 1.7621752943806352
+    },
+    {
+      "symbol": "hyperreal::verified::limbs::shift_right::<8>",
+      "period": 861100669,
+      "total_profile_percent": 0.1510675536270775,
+      "selected_percent": 1.6373160570621945
+    },
+    {
+      "symbol": "num_bigint::biguint::division::div_rem_core",
+      "period": 770633145,
+      "total_profile_percent": 0.13519634596764074,
+      "selected_percent": 1.4652990850397754
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint>::normalized",
+      "period": 691789632,
+      "total_profile_percent": 0.12136440150741098,
+      "selected_percent": 1.3153842673216487
+    },
+    {
+      "symbol": "__rustc::__rust_alloc",
+      "period": 681601830,
+      "total_profile_percent": 0.11957710023082001,
+      "selected_percent": 1.2960129529082693
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVecInner>::finish_grow",
+      "period": 597069314,
+      "total_profile_percent": 0.10474710316567803,
+      "selected_percent": 1.1352809377405202
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::is_minus_one",
+      "period": 587041115,
+      "total_profile_percent": 0.10298780190770224,
+      "selected_percent": 1.1162130960383614
+    },
+    {
+      "symbol": "<std::sys::sync::once::futex::Once>::call",
+      "period": 513896743,
+      "total_profile_percent": 0.09015568861662673,
+      "selected_percent": 0.9771347523896348
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 512834439,
+      "total_profile_percent": 0.08996932287303182,
+      "selected_percent": 0.975114863822249
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::insert_radical",
+      "period": 503156904,
+      "total_profile_percent": 0.08827154049958622,
+      "selected_percent": 0.9567137824867966
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 498448436,
+      "total_profile_percent": 0.08744550845978138,
+      "selected_percent": 0.9477609962004774
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::add_ref",
+      "period": 431475537,
+      "total_profile_percent": 0.07569609009851967,
+      "selected_percent": 0.820417229242256
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes",
+      "period": 430433470,
+      "total_profile_percent": 0.07551327464142761,
+      "selected_percent": 0.8184358197589536
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::add_sub_words",
+      "period": 425587569,
+      "total_profile_percent": 0.07466313198616856,
+      "selected_percent": 0.8092217152948985
+    },
+    {
+      "symbol": "num_bigint::biguint::division::div_rem_ref",
+      "period": 423213041,
+      "total_profile_percent": 0.0742465556799446,
+      "selected_percent": 0.8047067346865815
+    },
+    {
+      "symbol": "__umodti3",
+      "period": 417237663,
+      "total_profile_percent": 0.0731982627579273,
+      "selected_percent": 0.7933450174116689
+    },
+    {
+      "symbol": "[unknown]",
+      "period": 415000688,
+      "total_profile_percent": 0.07280581811940742,
+      "selected_percent": 0.7890915831517696
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+      "period": 388205122,
+      "total_profile_percent": 0.06810492686545708,
+      "selected_percent": 0.7381418950963423
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes",
+      "period": 349657704,
+      "total_profile_percent": 0.06134234457335068,
+      "selected_percent": 0.6648469730020613
+    },
+    {
+      "symbol": "__memmove_avx_unaligned_erms",
+      "period": 349101875,
+      "total_profile_percent": 0.061244832481805685,
+      "selected_percent": 0.6637901073190539
+    },
+    {
+      "symbol": "num_bigint::biguint::shift::biguint_shl2",
+      "period": 344764401,
+      "total_profile_percent": 0.06048388592852754,
+      "selected_percent": 0.655542737315803
+    },
+    {
+      "symbol": "<alloc::vec::into_iter::IntoIter<(hyperreal::rational::arithmetic::Rational, hyperreal::rational::arithmetic::Rational)> as core::ops::drop::Drop>::drop",
+      "period": 339028800,
+      "total_profile_percent": 0.059477658384125276,
+      "selected_percent": 0.6446369373875463
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::mac3",
+      "period": 258687448,
+      "total_profile_percent": 0.04538293991662411,
+      "selected_percent": 0.4918740951191172
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as core::ops::arith::Div<&num_bigint::biguint::BigUint>>::div",
+      "period": 258608583,
+      "total_profile_percent": 0.0453691042025831,
+      "selected_percent": 0.49172413944553706
+    },
+    {
+      "symbol": "__rustc::__rust_no_alloc_shim_is_unstable_v2",
+      "period": 258555495,
+      "total_profile_percent": 0.04535979068724666,
+      "selected_percent": 0.49162319673585564
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+      "period": 255126894,
+      "total_profile_percent": 0.04475829264633252,
+      "selected_percent": 0.4851039781675102
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator",
+      "period": 254482161,
+      "total_profile_percent": 0.04464518364461063,
+      "selected_percent": 0.4838780684319577
+    },
+    {
+      "symbol": "<alloc::sync::Arc<hyperreal::rational::arithmetic::RationalData>>::drop_slow",
+      "period": 252415567,
+      "total_profile_percent": 0.04428262986761386,
+      "selected_percent": 0.47994860041336024
+    },
+    {
+      "symbol": "<alloc::raw_vec::RawVec<(core::option::Option<&hyperreal::computable::node::Computable>, hyperreal::rational::arithmetic::Rational)>>::grow_one",
+      "period": 252107940,
+      "total_profile_percent": 0.04422866119705922,
+      "selected_percent": 0.47936367156030196
+    },
+    {
+      "symbol": "hyperreal::verified::fixed_gcd::gcd_fixed::<4>",
+      "period": 247858949,
+      "total_profile_percent": 0.04348323769564807,
+      "selected_percent": 0.4712845451107872
+    },
+    {
+      "symbol": "num_bigint::biguint::shift::biguint_shr2",
+      "period": 247480618,
+      "total_profile_percent": 0.04341686503947807,
+      "selected_percent": 0.4705651780919417
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::mul3",
+      "period": 172682202,
+      "total_profile_percent": 0.030294573852057742,
+      "selected_percent": 0.32834179821483495
+    },
+    {
+      "symbol": "core::ptr::drop_glue::<(hyperreal::computable::node::Computable, hyperreal::rational::arithmetic::Rational)>",
+      "period": 172643338,
+      "total_profile_percent": 0.030287755730070937,
+      "selected_percent": 0.32826790133665046
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::cmp::PartialEq>::eq",
+      "period": 167463942,
+      "total_profile_percent": 0.029379106240929882,
+      "selected_percent": 0.3184196820262046
+    },
+    {
+      "symbol": "__rustc::__rdl_alloc",
+      "period": 167089879,
+      "total_profile_percent": 0.029313482343113113,
+      "selected_percent": 0.317708430277946
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add",
+      "period": 166658159,
+      "total_profile_percent": 0.029237743365546624,
+      "selected_percent": 0.31688754822129195
+    },
+    {
+      "symbol": "realloc",
+      "period": 162431221,
+      "total_profile_percent": 0.028496188741352815,
+      "selected_percent": 0.30885035383884707
+    },
+    {
+      "symbol": "<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::initialize::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalProduct>>::try_insert::{closure#0}>::{closure#0}, !>",
+      "period": 161534707,
+      "total_profile_percent": 0.028338908435288593,
+      "selected_percent": 0.30714570208275715
+    },
+    {
+      "symbol": "__rustc::__rust_dealloc",
+      "period": 94038825,
+      "total_profile_percent": 0.016497740334138394,
+      "selected_percent": 0.17880752356001448
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalSquareReduction>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 91848589,
+      "total_profile_percent": 0.016113495371502144,
+      "selected_percent": 0.17464295987930076
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_square_reduction",
+      "period": 86711991,
+      "total_profile_percent": 0.015212354167272353,
+      "selected_percent": 0.1648761176425616
+    },
+    {
+      "symbol": "__rustc::__rust_realloc",
+      "period": 86550773,
+      "total_profile_percent": 0.015184070820461191,
+      "selected_percent": 0.16456957413424683
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path",
+      "period": 86494205,
+      "total_profile_percent": 0.015174146789878913,
+      "selected_percent": 0.16446201447478975
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+      "period": 86393579,
+      "total_profile_percent": 0.015156493425761879,
+      "selected_percent": 0.16427068194946579
+    },
+    {
+      "symbol": "num_bigint::biguint::multiplication::scalar_mul",
+      "period": 86362985,
+      "total_profile_percent": 0.015151126154661005,
+      "selected_percent": 0.1642125098341103
+    },
+    {
+      "symbol": "<&num_bigint::biguint::BigUint as core::ops::arith::Mul>::mul",
+      "period": 86235916,
+      "total_profile_percent": 0.015128833751852712,
+      "selected_percent": 0.1639708979976029
+    },
+    {
+      "symbol": "__libc_calloc2",
+      "period": 86231300,
+      "total_profile_percent": 0.015128023941974905,
+      "selected_percent": 0.16396212103203836
+    },
+    {
+      "symbol": "<&num_bigint::biguint::BigUint as core::ops::arith::Rem>::rem",
+      "period": 86210486,
+      "total_profile_percent": 0.015124372429237323,
+      "selected_percent": 0.16392254482725935
+    },
+    {
+      "symbol": "num_bigint::biguint::shift::biguint_shr::<usize>",
+      "period": 86009707,
+      "total_profile_percent": 0.015089148681954772,
+      "selected_percent": 0.16354077914938261
+    },
+    {
+      "symbol": "<std::sync::once::Once>::call_once_force::<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::initialize<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::get_or_init<<std::sync::once_lock::OnceLock<hyperreal::rational::arithmetic::CachedRationalLinearEntry>>::try_insert::{closure#0}>::{closure#0}, !>::{closure#0}>::{closure#0}",
+      "period": 85997894,
+      "total_profile_percent": 0.015087076263391832,
+      "selected_percent": 0.16351831764716995
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retained_negation",
+      "period": 85954630,
+      "total_profile_percent": 0.01507948622557696,
+      "selected_percent": 0.1634360545106484
+    },
+    {
+      "symbol": "__libc_calloc",
+      "period": 85604136,
+      "total_profile_percent": 0.015017997165067394,
+      "selected_percent": 0.16276961738574128
+    },
+    {
+      "symbol": "<num_bigint::biguint::BigUint as num_integer::roots::Roots>::sqrt",
+      "period": 81404043,
+      "total_profile_percent": 0.014281152104601864,
+      "selected_percent": 0.15478346668626422
+    },
+    {
+      "symbol": "malloc_consolidate",
+      "period": 81026938,
+      "total_profile_percent": 0.014214994532251238,
+      "selected_percent": 0.15406643081121899
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 80373377,
+      "total_profile_percent": 0.014100336786681577,
+      "selected_percent": 0.15282373531916657
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_sum_pair",
+      "period": 77549003,
+      "total_profile_percent": 0.013604841560550331,
+      "selected_percent": 0.14745340747269153
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::one",
+      "period": 75798470,
+      "total_profile_percent": 0.013297736076402264,
+      "selected_percent": 0.14412490490324661
+    }
+  ],
+  "nearest_recovered_curve_or_predicate_ancestors": [
+    {
+      "symbol": "hypercurve::classify::is_zero",
+      "period": 15069059349,
+      "total_profile_percent": 2.643646687626335,
+      "selected_percent": 28.652646229613925
+    },
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 12050496379,
+      "total_profile_percent": 2.114083838863544,
+      "selected_percent": 22.91308313558694
+    },
+    {
+      "symbol": "hypercurve::classify::real_sign",
+      "period": 5009377166,
+      "total_profile_percent": 0.8788221643606254,
+      "selected_percent": 9.524941699670785
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign::<hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#0}, hyperlimit::predicates::orient::orient2d_real_coordinates::{closure#1}>",
+      "period": 4436235725,
+      "total_profile_percent": 0.7782728575360037,
+      "selected_percent": 8.435157754424466
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2>::signed_area_with_cache",
+      "period": 2810409650,
+      "total_profile_percent": 0.4930453845872359,
+      "selected_percent": 5.343775719291123
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 2562805644,
+      "total_profile_percent": 0.44960687292271384,
+      "selected_percent": 4.872975928498342
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 1889935880,
+      "total_profile_percent": 0.3315616863185109,
+      "selected_percent": 3.593566321038323
+    },
+    {
+      "symbol": "<hypercurve::curve::CurveDerivative2>::new",
+      "period": 1741199505,
+      "total_profile_percent": 0.3054680585749589,
+      "selected_percent": 3.3107556534545495
+    },
+    {
+      "symbol": "hypercurve::intersect::line_point_at_for_policy",
+      "period": 1212424290,
+      "total_profile_percent": 0.21270215904146086,
+      "selected_percent": 2.3053306418801895
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+      "period": 1121868299,
+      "total_profile_percent": 0.19681543113712377,
+      "selected_percent": 2.133145456726792
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 1114214922,
+      "total_profile_percent": 0.19547275776338408,
+      "selected_percent": 2.1185931546511205
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 1107723478,
+      "total_profile_percent": 0.1943339285882471,
+      "selected_percent": 2.106250177950077
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::relation_to_line_with_contacts",
+      "period": 419409689,
+      "total_profile_percent": 0.07357931304164786,
+      "selected_percent": 0.7974749561914012
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::try_new_with_common_weight_sign_and_implicit_conic",
+      "period": 332798138,
+      "total_profile_percent": 0.05838457960750526,
+      "selected_percent": 0.6327898174096066
+    },
+    {
+      "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 258354243,
+      "total_profile_percent": 0.04532448395901259,
+      "selected_percent": 0.4912405316852077
+    },
+    {
+      "symbol": "hypercurve::contour::arc_signed_area_contribution",
+      "period": 252266025,
+      "total_profile_percent": 0.04425639490471372,
+      "selected_percent": 0.47966425791239625
+    },
+    {
+      "symbol": "hypercurve::bezier_parameter::represented_roots::exact_low_degree_root_candidates",
+      "period": 173929452,
+      "total_profile_percent": 0.030513385674002073,
+      "selected_percent": 0.33071334724004053
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::try_new_with_endpoint_equality",
+      "period": 172189080,
+      "total_profile_percent": 0.030208062789110594,
+      "selected_percent": 0.32740416502308717
+    },
+    {
+      "symbol": "hypercurve::segment::directed_radial_angle",
+      "period": 171909320,
+      "total_profile_percent": 0.030158982977278845,
+      "selected_percent": 0.32687222310663777
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+      "period": 171733728,
+      "total_profile_percent": 0.030128177921805725,
+      "selected_percent": 0.3265383485534737
+    },
+    {
+      "symbol": "hyperlimit::resolve::exact_rational_normal_form_sign",
+      "period": 168159576,
+      "total_profile_percent": 0.02950114508073459,
+      "selected_percent": 0.31974237606076045
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::try_from_center",
+      "period": 86576949,
+      "total_profile_percent": 0.015188663017896521,
+      "selected_percent": 0.16461934576566298
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "period": 86455282,
+      "total_profile_percent": 0.015167318317202595,
+      "selected_percent": 0.16438800541268667
+    },
+    {
+      "symbol": "hypercurve::offset::unit_direction_for_delta",
+      "period": 86362985,
+      "total_profile_percent": 0.015151126154661005,
+      "selected_percent": 0.1642125098341103
+    },
+    {
+      "symbol": "hypersolve::bivariate_arithmetic::polynomial_trim_structural_zeros",
+      "period": 86313408,
+      "total_profile_percent": 0.015142428593068274,
+      "selected_percent": 0.1641182430182974
+    }
+  ],
+  "limits": "Inclusive sampled cycle periods are not invocation counts or predicted savings. The profile does not reveal operand shapes; a pure-rational scaling opportunity is a hypothesis requiring a separate observation.",
+  "runtime_admitted": false
+}

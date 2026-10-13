@@ -1,0 +1,1437 @@
+{
+  "scope": "Attribute a declared allocator-leaf subset and point-equality stacks.",
+  "runner_sha256": "07816609881f65e5a6b0b9fe1c1ce5dcaf01d41642bb7b31a9d37d5dd83d1cb1",
+  "stacks_sha256": "589710bb9eb2fc9aba407e9fb4630cc7cf3cf2e35eaf090381dad4192b5d3db6",
+  "samples": 6786,
+  "total_period": 570010335327,
+  "allocator_symbol_pattern": "^(?:_int_malloc|_int_free|_int_realloc|unlink_chunk|malloc|cfree@|free@|__libc_malloc|__libc_free|__libc_realloc|__rustc::__rust_alloc|__rustc::__rust_dealloc|__rustc::__rust_realloc)",
+  "project_symbol_pattern": "^<?&?(?:hyperreal|hypercurve|hyperlimit|hypersolve|hyperlattice|hyperdrc|hypermesh|hyperpath|hypertri)::",
+  "allocator_leaf_period": 163797492609,
+  "allocator_leaf_total_percent": 28.73588116872191,
+  "allocator_leaf_with_normal_form_total_percent": 7.351409232599422,
+  "allocator_leaves": [
+    {
+      "symbol": "_int_malloc",
+      "period": 47247281596,
+      "total_profile_percent": 8.288846476598616,
+      "selected_weight_percent": 28.844935806669337
+    },
+    {
+      "symbol": "unlink_chunk.isra.0",
+      "period": 32533145580,
+      "total_profile_percent": 5.707465911356956,
+      "selected_weight_percent": 19.861809275468993
+    },
+    {
+      "symbol": "malloc_consolidate",
+      "period": 24299244169,
+      "total_profile_percent": 4.262947996383287,
+      "selected_weight_percent": 14.834930487614104
+    },
+    {
+      "symbol": "cfree@GLIBC_2.2.5",
+      "period": 17112988756,
+      "total_profile_percent": 3.0022242923337044,
+      "selected_weight_percent": 10.447650011865756
+    },
+    {
+      "symbol": "_int_free_chunk",
+      "period": 11445949983,
+      "total_profile_percent": 2.0080249907106964,
+      "selected_weight_percent": 6.98786642010605
+    },
+    {
+      "symbol": "malloc",
+      "period": 11067644109,
+      "total_profile_percent": 1.9416567425309548,
+      "selected_weight_percent": 6.756906917628774
+    },
+    {
+      "symbol": "__libc_malloc2",
+      "period": 9030611609,
+      "total_profile_percent": 1.584289099568585,
+      "selected_weight_percent": 5.513278295753231
+    },
+    {
+      "symbol": "__rustc::__rust_alloc",
+      "period": 5148695225,
+      "total_profile_percent": 0.9032634859236944,
+      "selected_weight_percent": 3.143329695095162
+    },
+    {
+      "symbol": "__rustc::__rust_dealloc",
+      "period": 3248715577,
+      "total_profile_percent": 0.5699397669932242,
+      "selected_weight_percent": 1.9833732038591025
+    },
+    {
+      "symbol": "_int_realloc",
+      "period": 945105125,
+      "total_profile_percent": 0.16580491026672664,
+      "selected_weight_percent": 0.5769960882466343
+    },
+    {
+      "symbol": "_int_free_create_chunk",
+      "period": 944992225,
+      "total_profile_percent": 0.16578510360832013,
+      "selected_weight_percent": 0.5769271616726058
+    },
+    {
+      "symbol": "_int_free_merge_chunk",
+      "period": 513603692,
+      "total_profile_percent": 0.09010427709268798,
+      "selected_weight_percent": 0.3135601673867012
+    },
+    {
+      "symbol": "__rustc::__rust_realloc",
+      "period": 172893663,
+      "total_profile_percent": 0.030331671600448338,
+      "selected_weight_percent": 0.10555330258486521
+    },
+    {
+      "symbol": "__rustc::__rust_alloc_zeroed",
+      "period": 86621300,
+      "total_profile_percent": 0.01519644375400801,
+      "selected_weight_percent": 0.052883166048684996
+    }
+  ],
+  "allocator_nearest_recovered_project_callers": [
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_word_parts",
+      "period": 16927264979,
+      "total_profile_percent": 2.969641764353145,
+      "selected_weight_percent": 10.334263796947717
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_boolean_region_from_topology",
+      "period": 8034672172,
+      "total_profile_percent": 1.4095660506560321,
+      "selected_weight_percent": 4.905247353925934
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::interval_from_approximation::scaled_integer",
+      "period": 7986141528,
+      "total_profile_percent": 1.40105205696289,
+      "selected_weight_percent": 4.87561891259451
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::interval_from_approximation",
+      "period": 6880852570,
+      "total_profile_percent": 1.2071452294023117,
+      "selected_weight_percent": 4.2008289995166415
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_retained::<true>",
+      "period": 6428275475,
+      "total_profile_percent": 1.1277471787090083,
+      "selected_weight_percent": 3.9245261771771425
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_retained::<false>",
+      "period": 5519396320,
+      "total_profile_percent": 0.9682975865400172,
+      "selected_weight_percent": 3.36964640428002
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_wide_magnitudes",
+      "period": 4557885639,
+      "total_profile_percent": 0.7996145607404225,
+      "selected_weight_percent": 2.7826345607622343
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_split_topology",
+      "period": 4508991650,
+      "total_profile_percent": 0.7910368234662464,
+      "selected_weight_percent": 2.7527842936908606
+    },
+    {
+      "symbol": "hyperdrc::app::run::{closure#0}",
+      "period": 4221665396,
+      "total_profile_percent": 0.740629622720462,
+      "selected_weight_percent": 2.5773687550135533
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts_reduced",
+      "period": 4125281378,
+      "total_profile_percent": 0.7237204524780124,
+      "selected_weight_percent": 2.5185253524285836
+    },
+    {
+      "symbol": "hypercurve::events::visit_aabb_pair_candidates::<&mut hypercurve::curve_region_boolean::build_unary_carrier_pairs::{closure#0}, hypercurve::error::ExactCurveError>",
+      "period": 3346085511,
+      "total_profile_percent": 0.5870219018187518,
+      "selected_weight_percent": 2.042818517977818
+    },
+    {
+      "symbol": "hypercurve::bezier_region::offset_spans::exact_offset_span_runs_from_boundary_loop",
+      "period": 3116607460,
+      "total_profile_percent": 0.5467633246004362,
+      "selected_weight_percent": 1.9027198831667311
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::approx_signal",
+      "period": 2666605745,
+      "total_profile_percent": 0.4678170867674247,
+      "selected_weight_percent": 1.6279893559576266
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::build_regularized_region",
+      "period": 2604208075,
+      "total_profile_percent": 0.4568703256066461,
+      "selected_weight_percent": 1.589894957193569
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::build_region_carriers",
+      "period": 2592529282,
+      "total_profile_percent": 0.45482145170450883,
+      "selected_weight_percent": 1.5827649377934074
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::insert",
+      "period": 2567911277,
+      "total_profile_percent": 0.45050258176930363,
+      "selected_weight_percent": 1.567735400644896
+    },
+    {
+      "symbol": "hypercurve::finite_projection::append_bezier_subcurve_samples",
+      "period": 2425209469,
+      "total_profile_percent": 0.4254676307945751,
+      "selected_weight_percent": 1.4806145261266013
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::regularized_region_raw",
+      "period": 2275463606,
+      "total_profile_percent": 0.39919690310433165,
+      "selected_weight_percent": 1.389193185900437
+    },
+    {
+      "symbol": "hypercurve::classify::compare_reals",
+      "period": 2217932401,
+      "total_profile_percent": 0.38910389225269576,
+      "selected_weight_percent": 1.3540698124692379
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::add",
+      "period": 2160546928,
+      "total_profile_percent": 0.3790364479550271,
+      "selected_weight_percent": 1.3190354098749415
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::multiply_with_known_msd",
+      "period": 1997641594,
+      "total_profile_percent": 0.3504570830025398,
+      "selected_weight_percent": 1.2195800815880364
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Neg>::neg",
+      "period": 1985522836,
+      "total_profile_percent": 0.3483310236578355,
+      "selected_weight_percent": 1.2121814591750983
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::inverse",
+      "period": 1971289181,
+      "total_profile_percent": 0.34583393647926103,
+      "selected_weight_percent": 1.2034916710878185
+    },
+    {
+      "symbol": "<hypercurve::curve_intersection::CurveIntersectionBatchCache>::circular_support_relation",
+      "period": 1735929681,
+      "total_profile_percent": 0.30454354481206775,
+      "selected_weight_percent": 1.0598023531067275
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 1620972020,
+      "total_profile_percent": 0.2843758997931311,
+      "selected_weight_percent": 0.9896195565517065
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial",
+      "period": 1590030038,
+      "total_profile_percent": 0.27894758032551137,
+      "selected_weight_percent": 0.9707291684833974
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::multiply",
+      "period": 1537979593,
+      "total_profile_percent": 0.2698160888815641,
+      "selected_weight_percent": 0.9389518535984563
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::at_precision",
+      "period": 1378782168,
+      "total_profile_percent": 0.2418872224850149,
+      "selected_weight_percent": 0.8417602406718658
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::multiply",
+      "period": 1378472022,
+      "total_profile_percent": 0.2418328118926487,
+      "selected_weight_percent": 0.8415708934510628
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::shifted_big_integer",
+      "period": 1351921563,
+      "total_profile_percent": 0.23717492108707783,
+      "selected_weight_percent": 0.8253615738961059
+    },
+    {
+      "symbol": "hyperdrc::checks::layer::convex_polygon_width_at_least",
+      "period": 1286135823,
+      "total_profile_percent": 0.22563377245820948,
+      "selected_weight_percent": 0.7851987246655399
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_actions",
+      "period": 1169079306,
+      "total_profile_percent": 0.20509791376490213,
+      "selected_weight_percent": 0.7137345556263808
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::cell_or_init",
+      "period": 1129105394,
+      "total_profile_percent": 0.198085073905241,
+      "selected_weight_percent": 0.689330084371487
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::msd",
+      "period": 1122649286,
+      "total_profile_percent": 0.19695244391594505,
+      "selected_weight_percent": 0.6853885661606978
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::negate",
+      "period": 1121119307,
+      "total_profile_percent": 0.19668403141442045,
+      "selected_weight_percent": 0.6844544987487794
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_retained::<false>::{closure#1}",
+      "period": 1097621709,
+      "total_profile_percent": 0.19256172054675522,
+      "selected_weight_percent": 0.6701089812285015
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::propagate_regularized_face_windings::<core::iter::adapters::cloned::Cloned<core::slice::iter::Iter<(usize, hypercurve::curve_region_boolean::LoopWindings)>>>",
+      "period": 1046033344,
+      "total_profile_percent": 0.1835112942995881,
+      "selected_weight_percent": 0.638613770784013
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::insert_radical",
+      "period": 1014734148,
+      "total_profile_percent": 0.17802030684546685,
+      "selected_weight_percent": 0.6195053000122936
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::rational",
+      "period": 990665735,
+      "total_profile_percent": 0.1737978548111204,
+      "selected_weight_percent": 0.6048112942515013
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::multiply",
+      "period": 916353956,
+      "total_profile_percent": 0.1607609369879779,
+      "selected_weight_percent": 0.5594432133264842
+    },
+    {
+      "symbol": "hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::min_copper_neck_width::{closure#0}>",
+      "period": 872097694,
+      "total_profile_percent": 0.15299682127688094,
+      "selected_weight_percent": 0.5324243247616611
+    },
+    {
+      "symbol": "hypercurve::curve::promote_native_bezier_fragments",
+      "period": 866661019,
+      "total_profile_percent": 0.15204303593948332,
+      "selected_weight_percent": 0.5291051805468117
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_entry",
+      "period": 866606996,
+      "total_profile_percent": 0.15203355839203342,
+      "selected_weight_percent": 0.5290721989674606
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::build_cross_operand_carrier_pairs",
+      "period": 864972841,
+      "total_profile_percent": 0.15174686973066687,
+      "selected_weight_percent": 0.5280745310703696
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::certified_rational_outer_envelope",
+      "period": 858123202,
+      "total_profile_percent": 0.15054520046688577,
+      "selected_weight_percent": 0.5238927582660992
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::gcd_magnitudes_with_mixed_width_fast_path",
+      "period": 774905745,
+      "total_profile_percent": 0.1359459113237757,
+      "selected_weight_percent": 0.47308767225745807
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::add_ref",
+      "period": 765476565,
+      "total_profile_percent": 0.13429169921293904,
+      "selected_weight_percent": 0.4673310639908661
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::get",
+      "period": 691158316,
+      "total_profile_percent": 0.12125364632265845,
+      "selected_weight_percent": 0.42195903306643395
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::arrangement_starts_by_vertex",
+      "period": 688679403,
+      "total_profile_percent": 0.12081875719059071,
+      "selected_weight_percent": 0.4204456319999613
+    },
+    {
+      "symbol": "<hyperreal::computable::node::EvaluationCache>::store",
+      "period": 688008985,
+      "total_profile_percent": 0.12070114213022247,
+      "selected_weight_percent": 0.4200363351363028
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Sub>::sub",
+      "period": 687813587,
+      "total_profile_percent": 0.12066686240091057,
+      "selected_weight_percent": 0.419917042711927
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_quadratic_surd_parts",
+      "period": 678749253,
+      "total_profile_percent": 0.11907665719966627,
+      "selected_weight_percent": 0.4143831765607293
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_laurent_polynomial_retained::<true>::{closure#1}",
+      "period": 641358982,
+      "total_profile_percent": 0.11251707947226415,
+      "selected_weight_percent": 0.3915560438589766
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::subcurve_between_exact_native",
+      "period": 612370330,
+      "total_profile_percent": 0.10743144326474346,
+      "selected_weight_percent": 0.37385818320295383
+    },
+    {
+      "symbol": "<hyperdrc::PcbRegion as hyperdrc::projection::PcbRegionExt>::try_to_multipolygon",
+      "period": 612328936,
+      "total_profile_percent": 0.10742418129115552,
+      "selected_weight_percent": 0.3738329117538366
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::shift_left",
+      "period": 608746228,
+      "total_profile_percent": 0.10679564742466963,
+      "selected_weight_percent": 0.37164563285051894
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::algebraic_separation_bound_bits::parse",
+      "period": 602562204,
+      "total_profile_percent": 0.10571075060495629,
+      "selected_weight_percent": 0.36787022463058855
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_sign",
+      "period": 599648714,
+      "total_profile_percent": 0.10519962127634006,
+      "selected_weight_percent": 0.36609150997898227
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::append_native_arc_span_contact",
+      "period": 587678623,
+      "total_profile_percent": 0.10309964338854737,
+      "selected_weight_percent": 0.3587836502496678
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::append_native_line_arc_contact",
+      "period": 521776567,
+      "total_profile_percent": 0.09153808881389325,
+      "selected_weight_percent": 0.3185497889430638
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::apply_lehmer_gcd_matrix::{closure#0}",
+      "period": 517132452,
+      "total_profile_percent": 0.09072334656938012,
+      "selected_weight_percent": 0.31571451049891447
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::zero",
+      "period": 513753935,
+      "total_profile_percent": 0.09013063503581437,
+      "selected_weight_percent": 0.3136518922340154
+    },
+    {
+      "symbol": "<hyperreal::computable::approximation::Approximation>::approximate",
+      "period": 506867127,
+      "total_profile_percent": 0.0889224450130757,
+      "selected_weight_percent": 0.3094474273851917
+    },
+    {
+      "symbol": "hypercurve::bezier_region::path_retained_fragments",
+      "period": 506664127,
+      "total_profile_percent": 0.0888868316237354,
+      "selected_weight_percent": 0.30932349386413066
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_linear",
+      "period": 505058130,
+      "total_profile_percent": 0.08860508287279763,
+      "selected_weight_percent": 0.30834301670637976
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::build_native_coincident_arc_evidence",
+      "period": 500851422,
+      "total_profile_percent": 0.08786707730705877,
+      "selected_weight_percent": 0.3057747795905395
+    },
+    {
+      "symbol": "hyperdrc::kicad::load_kicad_pcb",
+      "period": 450575842,
+      "total_profile_percent": 0.0790469600417888,
+      "selected_weight_percent": 0.27508103745859336
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_with_policy::{closure#0}",
+      "period": 449133748,
+      "total_profile_percent": 0.07879396568175272,
+      "selected_weight_percent": 0.2742006247141551
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::reversed",
+      "period": 439358619,
+      "total_profile_percent": 0.07707906186436979,
+      "selected_weight_percent": 0.2682328111388068
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve",
+      "period": 434631383,
+      "total_profile_percent": 0.07624973725268742,
+      "selected_weight_percent": 0.2653467864966077
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::dot_products::<2>",
+      "period": 433411031,
+      "total_profile_percent": 0.07603564429254839,
+      "selected_weight_percent": 0.26460174945082515
+    },
+    {
+      "symbol": "hyperdrc::kicad::footprint_graphics::push_graphic_features",
+      "period": 431682697,
+      "total_profile_percent": 0.07573243329918833,
+      "selected_weight_percent": 0.2635465843365912
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::from_arc",
+      "period": 430308280,
+      "total_profile_percent": 0.07549131188176499,
+      "selected_weight_percent": 0.26270748907444286
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::sign_until",
+      "period": 429219855,
+      "total_profile_percent": 0.0753003635896826,
+      "selected_weight_percent": 0.262042994775621
+    },
+    {
+      "symbol": "hyperlimit::predicates::orient::orient2d_real_coordinates",
+      "period": 428965995,
+      "total_profile_percent": 0.07525582755511151,
+      "selected_weight_percent": 0.2618880107181995
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::multiply_rational",
+      "period": 427362746,
+      "total_profile_percent": 0.07497456090069546,
+      "selected_weight_percent": 0.2609092112418076
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::carrier_bounds_decided_disjoint::{closure#0}",
+      "period": 426238278,
+      "total_profile_percent": 0.0747772893899333,
+      "selected_weight_percent": 0.2602227123326428
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::add",
+      "period": 425601977,
+      "total_profile_percent": 0.07466565965963465,
+      "selected_weight_percent": 0.25983424423715196
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::structural_facts",
+      "period": 419557926,
+      "total_profile_percent": 0.0736053190613308,
+      "selected_weight_percent": 0.25614429092728797
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced",
+      "period": 419463914,
+      "total_profile_percent": 0.07358882602705169,
+      "selected_weight_percent": 0.25608689566530773
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::multiply",
+      "period": 410963646,
+      "total_profile_percent": 0.07209757797886962,
+      "selected_weight_percent": 0.25089739742293177
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_reduced_dyadic_word",
+      "period": 345145301,
+      "total_profile_percent": 0.06055070927827987,
+      "selected_weight_percent": 0.2107146425152516
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::boolean_region_raw",
+      "period": 345103570,
+      "total_profile_percent": 0.06054338818295692,
+      "selected_weight_percent": 0.2106891653242792
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::try_new_unary",
+      "period": 343754719,
+      "total_profile_percent": 0.06030675194736547,
+      "selected_weight_percent": 0.209865678359665
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::loop_windings_from_boundary_side_ray",
+      "period": 343319646,
+      "total_profile_percent": 0.06023042473485091,
+      "selected_weight_percent": 0.20960006196159317
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::power_of_two_rational",
+      "period": 342025492,
+      "total_profile_percent": 0.060003384290179394,
+      "selected_weight_percent": 0.20880996806004043
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Add>::add",
+      "period": 340504565,
+      "total_profile_percent": 0.05973655983003562,
+      "selected_weight_percent": 0.2078814269842435
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::scaled",
+      "period": 340074401,
+      "total_profile_percent": 0.059661093829975594,
+      "selected_weight_percent": 0.2076188075795455
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::regularized_incident_ray_sectors::{closure#0}",
+      "period": 335449736,
+      "total_profile_percent": 0.058849763804293354,
+      "selected_weight_percent": 0.20479540355403977
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::co_directed_ray_precedes",
+      "period": 335293277,
+      "total_profile_percent": 0.058822315354624406,
+      "selected_weight_percent": 0.20469988377683934
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_new_with_lineage_and_exact_line_image",
+      "period": 334723314,
+      "total_profile_percent": 0.058722323658917164,
+      "selected_weight_percent": 0.2043519156908073
+    },
+    {
+      "symbol": "<hyperdrc::checks::spatial::envelope::EnvelopeSpatialIndex>::near_enclosure",
+      "period": 324071501,
+      "total_profile_percent": 0.05685361841975877,
+      "selected_weight_percent": 0.19784887780522326
+    },
+    {
+      "symbol": "hyperdrc::sexp::parse",
+      "period": 291978591,
+      "total_profile_percent": 0.05122338542028357,
+      "selected_weight_percent": 0.17825583673431455
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::try_from_native_contours_raw",
+      "period": 261349435,
+      "total_profile_percent": 0.04584994671194351,
+      "selected_weight_percent": 0.15955643205349038
+    },
+    {
+      "symbol": "hypercurve::rational_bezier_general::project_homogeneous::<&hyperreal::real::arithmetic::Real, <hypercurve::rational_bezier::RationalQuadraticBezier2>::materialize_homogeneous_subcurve::{closure#0}::{closure#0}>",
+      "period": 260142946,
+      "total_profile_percent": 0.04563828581296913,
+      "selected_weight_percent": 0.15881985850722735
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::from_certified_arrangement_traversal",
+      "period": 259034486,
+      "total_profile_percent": 0.04544382267233781,
+      "selected_weight_percent": 0.1581431326414377
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::offset_with_policy::{closure#0}",
+      "period": 259033204,
+      "total_profile_percent": 0.04544359776413518,
+      "selected_weight_percent": 0.15814234996767415
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::reduce",
+      "period": 258932036,
+      "total_profile_percent": 0.04542584931402296,
+      "selected_weight_percent": 0.15808058589644902
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::inverse",
+      "period": 258860234,
+      "total_profile_percent": 0.04541325270032142,
+      "selected_weight_percent": 0.15803675006059079
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::coordinate_equality",
+      "period": 258838955,
+      "total_profile_percent": 0.04540951961011564,
+      "selected_weight_percent": 0.1580237590192378
+    },
+    {
+      "symbol": "hypercurve::intersect::line_circle_relation_from_supports",
+      "period": 257867994,
+      "total_profile_percent": 0.045239178663675966,
+      "selected_weight_percent": 0.15743097766188346
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_fraction_parts",
+      "period": 257866912,
+      "total_profile_percent": 0.04523898884255643,
+      "selected_weight_percent": 0.1574303170901111
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::rational_offset_parts",
+      "period": 257430025,
+      "total_profile_percent": 0.0451623433901982,
+      "selected_weight_percent": 0.15716359322697915
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::contains_endpoint",
+      "period": 254850872,
+      "total_profile_percent": 0.0447098686120838,
+      "selected_weight_percent": 0.15558899464252055
+    },
+    {
+      "symbol": "hyperreal::computable::approximation::sqrt",
+      "period": 248599348,
+      "total_profile_percent": 0.04361312990182627,
+      "selected_weight_percent": 0.1517723770005625
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_fragment_geometric_decision",
+      "period": 247460187,
+      "total_profile_percent": 0.043413280718504615,
+      "selected_weight_percent": 0.15107690786861475
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::exact_quadratic_surd_parts::{closure#0}",
+      "period": 245268171,
+      "total_profile_percent": 0.04302872348082883,
+      "selected_weight_percent": 0.14973866027697882
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::split_carrier_with_refinement",
+      "period": 237640966,
+      "total_profile_percent": 0.041690641602782796,
+      "selected_weight_percent": 0.14508217568828805
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::retained_native_line_arc_region",
+      "period": 175452597,
+      "total_profile_percent": 0.030780599249897362,
+      "selected_weight_percent": 0.10711555726852415
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::mul_wide_with_dyadic_denominator",
+      "period": 174914751,
+      "total_profile_percent": 0.030686242013428754,
+      "selected_weight_percent": 0.10678719693074785
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezierOverlapParameterCorrespondence2>::for_overlap::{closure#0}",
+      "period": 174898492,
+      "total_profile_percent": 0.030683389609008637,
+      "selected_weight_percent": 0.10677727064937381
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::classify_sweep_uncached",
+      "period": 174506859,
+      "total_profile_percent": 0.03061468331094207,
+      "selected_weight_percent": 0.10653817480378913
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::offset_exact_boundary_walk_raw",
+      "period": 173480802,
+      "total_profile_percent": 0.030434676574851684,
+      "selected_weight_percent": 0.1059117567899009
+    },
+    {
+      "symbol": "<&hyperreal::real::arithmetic::Real as core::ops::arith::Add>::add",
+      "period": 173419484,
+      "total_profile_percent": 0.030423919226045926,
+      "selected_weight_percent": 0.10587432154042101
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::project_to_finite_profiles_exact_with_policy::{closure#0}",
+      "period": 173265923,
+      "total_profile_percent": 0.030396979188211014,
+      "selected_weight_percent": 0.10578057102107298
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2 as core::convert::From<hypercurve::rational_bezier::RationalQuadraticBezier2>>::from",
+      "period": 173107474,
+      "total_profile_percent": 0.030369181622065287,
+      "selected_weight_percent": 0.10568383632906017
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::radical",
+      "period": 173058161,
+      "total_profile_percent": 0.03036053037542224,
+      "selected_weight_percent": 0.10565373025160164
+    },
+    {
+      "symbol": "hyperlimit::predicates::order::compare_reals_with_policy",
+      "period": 172992262,
+      "total_profile_percent": 0.030348969356978214,
+      "selected_weight_percent": 0.10561349825601346
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::certified_rational_interval",
+      "period": 172950681,
+      "total_profile_percent": 0.030341674576967577,
+      "selected_weight_percent": 0.10558811264153446
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::build_native_arc_evidence",
+      "period": 172883743,
+      "total_profile_percent": 0.03032993128112688,
+      "selected_weight_percent": 0.10554724632610203
+    },
+    {
+      "symbol": "<hypercurve::bbox::Aabb2>::include_point",
+      "period": 172786000,
+      "total_profile_percent": 0.030312783697312645,
+      "selected_weight_percent": 0.10548757325147609
+    },
+    {
+      "symbol": "<hypercurve::contour::Contour2>::classify_point_with_policy",
+      "period": 172750083,
+      "total_profile_percent": 0.030306482583495227,
+      "selected_weight_percent": 0.10546564556538766
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2>::certified_bounds",
+      "period": 172592743,
+      "total_profile_percent": 0.030278879575225258,
+      "selected_weight_percent": 0.10536958792891604
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::regularized_opposite_from_left",
+      "period": 172393091,
+      "total_profile_percent": 0.03024385354365594,
+      "selected_weight_percent": 0.10524769839518759
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::fold_ref",
+      "period": 172069497,
+      "total_profile_percent": 0.030187083695822504,
+      "selected_weight_percent": 0.10505014103649685
+    },
+    {
+      "symbol": "hypercurve::bezier_region::certified_f64_enclosure",
+      "period": 171625585,
+      "total_profile_percent": 0.03010920580967061,
+      "selected_weight_percent": 0.10477912834092423
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_new",
+      "period": 171491965,
+      "total_profile_percent": 0.030085764129455576,
+      "selected_weight_percent": 0.10469755200060811
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::constant_rational_sum_bound",
+      "period": 171243559,
+      "total_profile_percent": 0.030042184919640457,
+      "selected_weight_percent": 0.1045458976644865
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::perfect_nth_root",
+      "period": 170855197,
+      "total_profile_percent": 0.029974052470817893,
+      "selected_weight_percent": 0.10430879879696779
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalCoefficient>::insert_atom",
+      "period": 170669907,
+      "total_profile_percent": 0.02994154604268555,
+      "selected_weight_percent": 0.10419567740722692
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::fraction",
+      "period": 170586386,
+      "total_profile_percent": 0.02992689350135012,
+      "selected_weight_percent": 0.10414468700519472
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square",
+      "period": 168667115,
+      "total_profile_percent": 0.029590185396066563,
+      "selected_weight_percent": 0.10297295295149862
+    },
+    {
+      "symbol": "<hyperreal::computable::node::PiLaurentPolynomial>::inverse_monomial",
+      "period": 168584276,
+      "total_profile_percent": 0.029575652501684487,
+      "selected_weight_percent": 0.10292237891725639
+    },
+    {
+      "symbol": "<hypercurve::point::Point2 as core::cmp::PartialEq>::eq",
+      "period": 168036671,
+      "total_profile_percent": 0.029479583190996313,
+      "selected_weight_percent": 0.10258806061281983
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::from_integer_magnitude",
+      "period": 164349419,
+      "total_profile_percent": 0.028832708604435573,
+      "selected_weight_percent": 0.10033695655666568
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::pair_result",
+      "period": 160457879,
+      "total_profile_percent": 0.028149994667719405,
+      "selected_weight_percent": 0.09796113264262722
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::translated",
+      "period": 94571580,
+      "total_profile_percent": 0.01659120442890685,
+      "selected_weight_percent": 0.05773689114139936
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2>::new",
+      "period": 91375811,
+      "total_profile_percent": 0.016030553366647306,
+      "selected_weight_percent": 0.055785842349933064
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::subtract_ref",
+      "period": 88529590,
+      "total_profile_percent": 0.015531225402994297,
+      "selected_weight_percent": 0.05404819609255463
+    },
+    {
+      "symbol": "<hypersolve::classification::Classification<hypercurve::bbox::Aabb2>>::map::<hypercurve::bbox::Aabb2, hypercurve::curve_region_boolean::carrier_optional_outer_bounds_uncached::{closure#1}>",
+      "period": 87949028,
+      "total_profile_percent": 0.015429374267318495,
+      "selected_weight_percent": 0.05369375721149932
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::circular_conic_provenance",
+      "period": 87740458,
+      "total_profile_percent": 0.01539278370271402,
+      "selected_weight_percent": 0.05356642314998357
+    },
+    {
+      "symbol": "<hypercurve::events::DenseAabbRankSchedule>::try_new",
+      "period": 86896298,
+      "total_profile_percent": 0.01524468814239129,
+      "selected_weight_percent": 0.05305105506555563
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::compact_pi_laurent",
+      "period": 86848713,
+      "total_profile_percent": 0.015236340048146174,
+      "selected_weight_percent": 0.053022003949301004
+    },
+    {
+      "symbol": "hypercurve::contour::arc_signed_area_contribution",
+      "period": 86605866,
+      "total_profile_percent": 0.015193736083805653,
+      "selected_weight_percent": 0.05287374343802462
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::signed_product_sum::<2, 3>",
+      "period": 86558644,
+      "total_profile_percent": 0.015185451672616352,
+      "selected_weight_percent": 0.052844913936884015
+    },
+    {
+      "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 86541089,
+      "total_profile_percent": 0.015182371903897785,
+      "selected_weight_percent": 0.05283419643460704
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::lerp",
+      "period": 86486594,
+      "total_profile_percent": 0.015172811550931775,
+      "selected_weight_percent": 0.05280092669455669
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::radical_tower_sign",
+      "period": 86445657,
+      "total_profile_percent": 0.0151656297513287,
+      "selected_weight_percent": 0.05277593424848932
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_minor_arc_span",
+      "period": 86433273,
+      "total_profile_percent": 0.015163457159143526,
+      "selected_weight_percent": 0.05276837369319465
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances",
+      "period": 86352228,
+      "total_profile_percent": 0.0151492389958968,
+      "selected_weight_percent": 0.05271889491381341
+    },
+    {
+      "symbol": "hyperlimit::resolve::resolve_real_sign_direct",
+      "period": 86339398,
+      "total_profile_percent": 0.015146988159516327,
+      "selected_weight_percent": 0.052711062071078375
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::sweep_fraction_for_incident_point",
+      "period": 86333218,
+      "total_profile_percent": 0.015145903968648726,
+      "selected_weight_percent": 0.052707289119550506
+    },
+    {
+      "symbol": "hypercurve::bezier_region::point_location::classify_point_with_retained_ray_skipping_origin",
+      "period": 86305966,
+      "total_profile_percent": 0.01514112300270635,
+      "selected_weight_percent": 0.05269065150223053
+    },
+    {
+      "symbol": "hypercurve::arc_bezier::rational_bezier_circular_arc",
+      "period": 86305959,
+      "total_profile_percent": 0.015141121774658442,
+      "selected_weight_percent": 0.05269064722866084
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::offset_left",
+      "period": 86297174,
+      "total_profile_percent": 0.015139580574533542,
+      "selected_weight_percent": 0.05268528389869768
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::region_from_line_contours",
+      "period": 86294836,
+      "total_profile_percent": 0.015139170406532175,
+      "selected_weight_percent": 0.05268385652642063
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::reduce_with_possible_divisor",
+      "period": 86274936,
+      "total_profile_percent": 0.015135679241764332,
+      "selected_weight_percent": 0.05267170737829692
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_negation_pair",
+      "period": 86273301,
+      "total_profile_percent": 0.015135392404860039,
+      "selected_weight_percent": 0.05267070919451891
+    },
+    {
+      "symbol": "hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::tiny_layer_feature_readiness::{closure#0}>",
+      "period": 86271326,
+      "total_profile_percent": 0.015135045919914486,
+      "selected_weight_percent": 0.05266950343735588
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 86264676,
+      "total_profile_percent": 0.015133879274401615,
+      "selected_weight_percent": 0.05266544354614871
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::native_arc_span_parameter",
+      "period": 86217050,
+      "total_profile_percent": 0.015125523987304464,
+      "selected_weight_percent": 0.05263636739898589
+    },
+    {
+      "symbol": "<hyperdrc::checks::spatial::envelope::EnvelopeSpatialIndex>::new",
+      "period": 86215556,
+      "total_profile_percent": 0.015125261886793754,
+      "selected_weight_percent": 0.05263545529711168
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::supporting_line_circle_relation_with_policy::{closure#0}",
+      "period": 86193071,
+      "total_profile_percent": 0.015121317221476922,
+      "selected_weight_percent": 0.05262172798075179
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::pi_atan_linear_form",
+      "period": 86160325,
+      "total_profile_percent": 0.015115572413361958,
+      "selected_weight_percent": 0.05260173622173374
+    },
+    {
+      "symbol": "hypercurve::bbox::ordered_coordinate_pair",
+      "period": 86158050,
+      "total_profile_percent": 0.015115173297791764,
+      "selected_weight_percent": 0.05260034731158392
+    },
+    {
+      "symbol": "<&hyperreal::rational::arithmetic::Rational as core::ops::arith::Add<hyperreal::rational::arithmetic::Rational>>::add",
+      "period": 86120528,
+      "total_profile_percent": 0.015108590610132517,
+      "selected_weight_percent": 0.052577439757016176
+    },
+    {
+      "symbol": "<hypercurve::bezier_arrangement::BezierArrangementGraph2>::traverse_retained_with_successor_rule",
+      "period": 86100245,
+      "total_profile_percent": 0.01510503225360055,
+      "selected_weight_percent": 0.052565056783579325
+    },
+    {
+      "symbol": "<hypercurve::point::Point2>::distance_squared",
+      "period": 86017744,
+      "total_profile_percent": 0.0150905586563889,
+      "selected_weight_percent": 0.052514689101702205
+    },
+    {
+      "symbol": "hyperdrc::checks::run_geometry_check::<hyperdrc::checks::layer::duplicate_layer_island_readiness::{closure#0}>",
+      "period": 86009731,
+      "total_profile_percent": 0.015089152892404744,
+      "selected_weight_percent": 0.05250979708542505
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::extract_square_reduced_retained",
+      "period": 85976818,
+      "total_profile_percent": 0.015083378786575397,
+      "selected_weight_percent": 0.05248970337124436
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::with_parallel_tangent_contacts",
+      "period": 85948987,
+      "total_profile_percent": 0.015078496243527464,
+      "selected_weight_percent": 0.05247271226865988
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::try_perfect",
+      "period": 85935522,
+      "total_profile_percent": 0.015076134005658168,
+      "selected_weight_percent": 0.0524644917521028
+    },
+    {
+      "symbol": "hypercurve::intersect::line_arc_hit_candidate",
+      "period": 85926660,
+      "total_profile_percent": 0.015074579297006277,
+      "selected_weight_percent": 0.05245908141287303
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::materialized_circular_arc",
+      "period": 85926441,
+      "total_profile_percent": 0.01507454087665029,
+      "selected_weight_percent": 0.05245894771119268
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::inverse_ref",
+      "period": 85891111,
+      "total_profile_percent": 0.015068342743421751,
+      "selected_weight_percent": 0.05243737839444841
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::material_components_with_policy::{closure#0}",
+      "period": 85869027,
+      "total_profile_percent": 0.015064468427706524,
+      "selected_weight_percent": 0.05242389589258087
+    },
+    {
+      "symbol": "<hyperreal::real::arithmetic::Real>::sqrt",
+      "period": 85842422,
+      "total_profile_percent": 0.015059800968477957,
+      "selected_weight_percent": 0.0524076532752024
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::multiply_magnitudes",
+      "period": 85789038,
+      "total_profile_percent": 0.015050435524258533,
+      "selected_weight_percent": 0.052375061811713135
+    },
+    {
+      "symbol": "<hypercurve::bezier::QuadraticBezier2>::from_line_segment",
+      "period": 85687933,
+      "total_profile_percent": 0.01503269812657749,
+      "selected_weight_percent": 0.052313336202615225
+    },
+    {
+      "symbol": "hyperdrc::app::run_checks",
+      "period": 85654724,
+      "total_profile_percent": 0.015026872091865163,
+      "selected_weight_percent": 0.05229306177748757
+    },
+    {
+      "symbol": "hyperdrc::waiver::apply_waivers",
+      "period": 85542936,
+      "total_profile_percent": 0.01500726051764066,
+      "selected_weight_percent": 0.05222481409053008
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::one",
+      "period": 85482689,
+      "total_profile_percent": 0.014996691060164869,
+      "selected_weight_percent": 0.05218803269721302
+    },
+    {
+      "symbol": "<hyperdrc::cli::Cli as clap_builder::derive::Args>::augment_args",
+      "period": 85367399,
+      "total_profile_percent": 0.01497646511111539,
+      "selected_weight_percent": 0.05211764700438974
+    },
+    {
+      "symbol": "<hyperreal::computable::node::RadicalElement as core::clone::Clone>::clone",
+      "period": 85171010,
+      "total_profile_percent": 0.014942011525306751,
+      "selected_weight_percent": 0.05199774956464761
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::retain_product_pair",
+      "period": 84805159,
+      "total_profile_percent": 0.01487782830312182,
+      "selected_weight_percent": 0.05177439388674763
+    },
+    {
+      "symbol": "<hypercurve::curve_region_boolean::CurveRegionBooleanContext>::fragment_side_classification_with_reference_tangent",
+      "period": 84467426,
+      "total_profile_percent": 0.01481857797394906,
+      "selected_weight_percent": 0.05156820452778949
+    },
+    {
+      "symbol": "<hyperdrc::geometry::types::Polygon>::from_exact_region",
+      "period": 83744733,
+      "total_profile_percent": 0.014691792027237163,
+      "selected_weight_percent": 0.05112699325618283
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational as core::ops::arith::Mul>::mul",
+      "period": 83574995,
+      "total_profile_percent": 0.014662013970686201,
+      "selected_weight_percent": 0.05102336651727714
+    },
+    {
+      "symbol": "hyperreal::computable::node::tower_from_computable",
+      "period": 81527325,
+      "total_profile_percent": 0.014302780133491774,
+      "selected_weight_percent": 0.04977324359574501
+    },
+    {
+      "symbol": "hyperreal::computable::node::scale",
+      "period": 80051240,
+      "total_profile_percent": 0.01404382254824848,
+      "selected_weight_percent": 0.048872079007393494
+    },
+    {
+      "symbol": "<hyperreal::computable::node::Computable>::inverse",
+      "period": 80038941,
+      "total_profile_percent": 0.01404166486807362,
+      "selected_weight_percent": 0.04886457034544507
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::exact_line_retained_circle_intersections",
+      "period": 79279254,
+      "total_profile_percent": 0.013908388863601845,
+      "selected_weight_percent": 0.04840077386852742
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2 as core::clone::Clone>::clone",
+      "period": 72526249,
+      "total_profile_percent": 0.012723672625759248,
+      "selected_weight_percent": 0.044277997083341784
+    },
+    {
+      "symbol": "<hypercurve::curve::Curve2 as core::convert::From<hypercurve::segment::LineSeg2>>::from",
+      "period": 63172628,
+      "total_profile_percent": 0.011082716239480029,
+      "selected_weight_percent": 0.038567518338512664
+    },
+    {
+      "symbol": "<no recovered project-prefixed caller>",
+      "period": 424,
+      "total_profile_percent": 7.438461615906707e-08,
+      "selected_weight_percent": 2.58856221329424e-07
+    },
+    {
+      "symbol": "hypercurve::policy::resolve_uncached_evaluation::<alloc::vec::Vec<hypercurve::rational_bezier_general::RationalBezier2>, hypercurve::error::ExactCurveError, <hypercurve::curve::Curve2>::rational_evaluators_with_policy::{closure#0}>::{closure#0}",
+      "period": 226,
+      "total_profile_percent": 3.96484038961065e-08,
+      "selected_weight_percent": 1.3797525004823074e-07
+    },
+    {
+      "symbol": "<hyperreal::rational::arithmetic::Rational>::signed_product_sum::<2, 2>",
+      "period": 1,
+      "total_profile_percent": 1.754354154694978e-10,
+      "selected_weight_percent": 6.105099559656227e-10
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::try_from_subcurve",
+      "period": 1,
+      "total_profile_percent": 1.754354154694978e-10,
+      "selected_weight_percent": 6.105099559656227e-10
+    }
+  ],
+  "point_equality_total_percent": 4.083520101025342,
+  "point_equality_nearest_recovered_project_callers": [
+    {
+      "symbol": "<hypercurve::curve_intersection::CurveIntersectionBatchCache>::circular_support_relation",
+      "period": 6408790322,
+      "total_profile_percent": 1.1243287927969665,
+      "selected_weight_percent": 27.533323333333314
+    },
+    {
+      "symbol": "<hypercurve::segment::LineSeg2>::try_new",
+      "period": 3286036895,
+      "total_profile_percent": 0.5764872479224235,
+      "selected_weight_percent": 14.117409334600111
+    },
+    {
+      "symbol": "hypercurve::intersect::opposed_shared_endpoint_intersection",
+      "period": 2581483432,
+      "total_profile_percent": 0.45288361842054503,
+      "selected_weight_percent": 11.09052012029595
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::contains_endpoint",
+      "period": 2222238125,
+      "total_profile_percent": 0.38985926873153276,
+      "selected_weight_percent": 9.54713725135434
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::sweep_fraction_for_incident_point",
+      "period": 1380771603,
+      "total_profile_percent": 0.24223623984078946,
+      "selected_weight_percent": 5.932044751780841
+    },
+    {
+      "symbol": "<hypercurve::bezier_split::BezierSubcurve2 as core::cmp::PartialEq>::eq",
+      "period": 1207781846,
+      "total_profile_percent": 0.211887709949527,
+      "selected_weight_percent": 5.188849441351435
+    },
+    {
+      "symbol": "hypercurve::intersect::intersect_non_parallel",
+      "period": 1027225957,
+      "total_profile_percent": 0.18021181254734747,
+      "selected_weight_percent": 4.413148658239679
+    },
+    {
+      "symbol": "hypercurve::bezier_region::share_line_image_vertices",
+      "period": 781460523,
+      "total_profile_percent": 0.13709585152551604,
+      "selected_weight_percent": 3.3572958656697263
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier::RationalQuadraticBezier2 as core::cmp::PartialEq>::eq",
+      "period": 601534050,
+      "total_profile_percent": 0.10553037598079966,
+      "selected_weight_percent": 2.5842991676299514
+    },
+    {
+      "symbol": "<hypercurve::segment::CircularArc2>::intersect_arc_with_policy",
+      "period": 570556174,
+      "total_profile_percent": 0.10009575943437707,
+      "selected_weight_percent": 2.4512126047633207
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegion2>::try_from_boundary_paths_with_loop_semantics_raw",
+      "period": 501989805,
+      "total_profile_percent": 0.08806679000162718,
+      "selected_weight_percent": 2.156639071753663
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionData2>::new",
+      "period": 347390078,
+      "total_profile_percent": 0.060944522663911246,
+      "selected_weight_percent": 1.4924506591410809
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::locally_decidable_contact_parameter_cmp",
+      "period": 337212222,
+      "total_profile_percent": 0.05915896626796252,
+      "selected_weight_percent": 1.4487247473842026
+    },
+    {
+      "symbol": "<hypercurve::curve_string::CurveString2>::try_new",
+      "period": 337004059,
+      "total_profile_percent": 0.05912244710557215,
+      "selected_weight_percent": 1.4478304414548353
+    },
+    {
+      "symbol": "<hypercurve::bezier_offset::BezierAlgebraicChord2>::shares_retained_support",
+      "period": 258823565,
+      "total_profile_percent": 0.04540681965907157,
+      "selected_weight_percent": 1.1119528871100757
+    },
+    {
+      "symbol": "<hypercurve::curve_point::CurvePoint2>::same_point",
+      "period": 248360454,
+      "total_profile_percent": 0.0435712194336831,
+      "selected_weight_percent": 1.067001468236747
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::split_algebraic_chord_carrier::{closure#2}",
+      "period": 235779227,
+      "total_profile_percent": 0.04136402664782203,
+      "selected_weight_percent": 1.0129502396091017
+    },
+    {
+      "symbol": "<hypercurve::curve::CurvePath2>::try_new_raw",
+      "period": 174485150,
+      "total_profile_percent": 0.030610874783507644,
+      "selected_weight_percent": 0.749619789451299
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::homogeneous_line_distances",
+      "period": 173012969,
+      "total_profile_percent": 0.030352602098126343,
+      "selected_weight_percent": 0.7432950333832085
+    },
+    {
+      "symbol": "<hypercurve::bezier_region::CurveRegionBoundaryLoop2 as core::cmp::PartialEq>::eq",
+      "period": 172399578,
+      "total_profile_percent": 0.030244991593196092,
+      "selected_weight_percent": 0.7406597946120504
+    },
+    {
+      "symbol": "hypercurve::curve_region_boolean::parameter_location_in_carrier",
+      "period": 168424570,
+      "total_profile_percent": 0.029547634413221512,
+      "selected_weight_percent": 0.7235824406938103
+    },
+    {
+      "symbol": "<hypercurve::curve_intersection::CurveIntersectionContext>::try_new_with_optional_batch_cache",
+      "period": 86506167,
+      "total_profile_percent": 0.015176245348318759,
+      "selected_weight_percent": 0.3716461526541308
+    },
+    {
+      "symbol": "hypercurve::curve_intersection::build_native_coincident_arc_evidence",
+      "period": 85768165,
+      "total_profile_percent": 0.01504677366083144,
+      "selected_weight_percent": 0.3684755624700685
+    },
+    {
+      "symbol": "<hypercurve::rational_bezier_general::RationalBezier2>::retained_circle_point_parameters",
+      "period": 81451685,
+      "total_profile_percent": 0.014289510198665662,
+      "selected_weight_percent": 0.3499311830270572
+    }
+  ],
+  "limits": "The declared symbol subset is not an exhaustive allocation model. Callers are recovered ancestors with the selected prefix, not exact allocation sites; inline frames are absent. Each selected sample is attributed once. Percentages are sampled cycle periods, not calls, bytes, wall seconds or a speedup prediction. Point and allocator categories overlap.",
+  "runtime_admitted": false
+}
