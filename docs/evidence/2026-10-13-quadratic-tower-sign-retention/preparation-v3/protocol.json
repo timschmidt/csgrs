@@ -1,0 +1,28 @@
+{
+  "scope": "Prepare exact sign transfer across an already established tower equality.",
+  "runner_sha256": "4166813990866047ca17f4d2e620ca925a1ed98cb3d0e3dc714a4dfd767cc807",
+  "failed_preparation_sha256": "6e6491738bffa195065630037c95d870eec6b6712cb6383feabaf522182770bc",
+  "second_failed_preparation_sha256": "903d29270d157e6a9d9d1fe27e6ed1a09711ab5c37ba8700d9695476b35ca17b",
+  "qualification_runner_sha256": "438e98f748af30cd0f48f7cf55da808e7bd5e3df9b78d09ae12c0fba80679fc3",
+  "test_sha256": "ce7ed7ea7ebea9801a4fceed64ea9ed75c0c7ea9d2c93c2b73d9a455d5fe2319",
+  "baseline_protocol_sha256": "172d762d3f75c67d483463a778214ec9abd177080910e776f39dd8b7087f312b",
+  "baseline_result_sha256": "e8918607716d44ab558ff84429b293a606dca0aa51835970fd9256207c9436f3",
+  "base_commit": "6e7bd8caf186f4ab39e3dc151c9049c7866eab9e",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target",
+  "source_count": 10128,
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "ce7ed7ea7ebea9801a4fceed64ea9ed75c0c7ea9d2c93c2b73d9a455d5fe2319"
+  },
+  "patch_sha256": "95392aa7cdf9bfb6ab663f2ef414d5a9485ef4a90f6a383291e2ec15935cbfa7",
+  "delta_archive_sha256": "1e7e6891dac0736167ff598c2e0996d43fc56ac19700573af4cfc3546208b667",
+  "baseline_runtime_recovered_after_removing_transfer_and_doc": true,
+  "new_test_functions": 10,
+  "shared_baseline_test_functions": 9,
+  "extra_test": "A negative tower reconstructed after cancellation reverses the payload scale. This control checks both outer signs and the shared positive root.",
+  "proof": "Before multiplying by the original outer rational, source_payload = rebuilt_scale * rebuilt_payload. For nonzero rebuilt_scale, sign(rebuilt_payload) = sign(source_payload) * sign(rebuilt_scale). Only a retained exact sign is copied; Unknown and zero-scale provide no inferred payload sign. Named/rational outputs already expose their exact sign and skip the transfer.",
+  "limits": "No new cache field, owner, numerical refinement, recognition budget, public API, or rejected experimental runtime. This has not yet passed candidate qualification or matched resource controls.",
+  "runtime_admitted": false
+}
