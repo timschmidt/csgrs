@@ -1,0 +1,23 @@
+{
+  "status": "normalization-control-representation-assumption-failed",
+  "candidate_source": "target/quadratic-tower-sign-retention/candidate-v3/source",
+  "candidate_runtime_changed": false,
+  "focused_passes": 9,
+  "focused_failures": 1,
+  "failed_test": "normalized_negative_tower_scale_preserves_payload_sign",
+  "cause": "sqrt(3 + sqrt(5)) denests through the existing exact square-conjugate-norm fold: its norm is 4. The test incorrectly expected its rebuilt outer scale to reverse. It failed before testing the rebuilt sign; the six original regressions and three controls all passed.",
+  "correction": "Keep the original denested fixture with its observed scale invariant, and add sqrt(3 + sqrt(2)), whose conjugate norm 7 is not a rational square, for the genuine nested negative-scale path. Run all eleven tests on a fresh unchanged baseline and candidate before full qualification. Runtime candidate bytes stay identical to preparation-v3.",
+  "source_review_sha256": {
+    "crates/hyperreal/src/real/arithmetic/elementary_functions.rs": "46e3e19125a205306982e3a054fdcf39bdbe8beb8cefc1a91194058490bf88db",
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "3f3a2b11c2302deb8883a6ddbb50e571b7de0f13d5b45a2d7ec2aae311ea8a20"
+  },
+  "runner_sha256": "1b33a4d766bd5d195d797525239471373f2d09546544a4ad6ffa6731e9e7fab4",
+  "artifacts_sha256": {
+    "qualification-v4/bindings.json": "704dde2f5b8c6aba3fc69440d5c49629c4c9700e27e36ce28823950a4fae6a9f",
+    "qualification-v4/commands.json": "3ce2017ae886633c5b9cccc07a64a0f98f63cf5555d6b6ee49c9d3d82db6f350",
+    "qualification-v4/focused-regressions.stderr": "2f6ddf3bd0721bcff856b7808e439c9c34e3f83d88afc4328412cc44e24652e6",
+    "qualification-v4/focused-regressions.stdout": "5ac135a1328ba66c0a3dc4e50f851683cba40f55d181eb3f0ea9bf2cbf53c3c3",
+    "qualification-v4/protocol.json": "54814c990081659742c0d53c1cea7a97d798d5197f8dcf76be209327493bc544"
+  },
+  "runtime_admitted": false
+}

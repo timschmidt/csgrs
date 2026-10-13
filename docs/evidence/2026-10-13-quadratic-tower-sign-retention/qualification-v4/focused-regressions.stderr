@@ -1,0 +1,6 @@
+
+thread 'real::arithmetic::quadratic_tower_sign_retention_tests::normalized_negative_tower_scale_preserves_payload_sign' (29) panicked at crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs:211:9:
+assertion `left != right` failed
+  left: Minus
+ right: Minus
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

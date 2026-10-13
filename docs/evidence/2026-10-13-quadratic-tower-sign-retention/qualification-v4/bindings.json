@@ -1,0 +1,37 @@
+{
+  "unit-tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "26cb89525bf1dbc7eb301a4e4e8b8f7fd23db74d4264136174ac07787cd1edd2",
+    "bytes": 10202808,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "profile": {
+      "opt_level": "3",
+      "debuginfo": 0,
+      "debug_assertions": false,
+      "overflow_checks": false,
+      "test": true
+    },
+    "target": {
+      "kind": [
+        "lib"
+      ],
+      "crate_types": [
+        "lib"
+      ],
+      "name": "hyperreal",
+      "src_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source/crates/hyperreal/src/lib.rs",
+      "edition": "2024",
+      "doc": true,
+      "doctest": true,
+      "test": true
+    }
+  }
+}

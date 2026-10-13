@@ -1,0 +1,24 @@
+[
+  {
+    "name": "focused-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "quadratic_tower_sign_retention_tests",
+      "--nocapture",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v3/source",
+    "extra_environment": {},
+    "exit_code": 101,
+    "seconds": 0.007913758978247643,
+    "stdout_sha256": "5ac135a1328ba66c0a3dc4e50f851683cba40f55d181eb3f0ea9bf2cbf53c3c3",
+    "stderr_sha256": "2f6ddf3bd0721bcff856b7808e439c9c34e3f83d88afc4328412cc44e24652e6",
+    "test_summaries": [
+      "test result: FAILED. 9 passed; 1 failed; 0 ignored; 0 measured; 857 filtered out; finished in 0.00s"
+    ]
+  }
+]
