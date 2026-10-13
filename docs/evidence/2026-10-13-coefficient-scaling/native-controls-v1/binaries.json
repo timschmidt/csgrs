@@ -1,0 +1,62 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+    "sha256": "736a1644ef1451730477a0fad51acc2a9c3f702a9044ee4d512d53828feb465d",
+    "bytes": 8593816
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+    "sha256": "636a9b46e1f378f1c221440f5ec49b461dcc02400619f3d32d9de1db481b43f7",
+    "bytes": 8596160
+  },
+  "baseline-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-abort",
+    "sha256": "3db1045f8213336b8b06c1718f4c08712806fa2e5f8bf652586f6c85b7cd12c5",
+    "bytes": 8530776
+  },
+  "baseline-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad",
+    "sha256": "19ceb2433dcb135cf6485d9c0896dbcf5a93c00cce4f685fe70ff82daea0b390",
+    "bytes": 26357520
+  },
+  "right-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+    "sha256": "dd3cbc4cfacd90418a25218bfdc12825ca9db141056a1cd524a48353f65a9b8c",
+    "bytes": 8594424
+  },
+  "right-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+    "sha256": "4ad2a9771c964ae1bc604947368a2b29a7228656bfb47be1780348c3ef9efd81",
+    "bytes": 8596784
+  },
+  "right-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-abort",
+    "sha256": "98b3001d79b4284f5d762b107d9024c1011012601071f2da7f9e83a9b2fe0b88",
+    "bytes": 8531392
+  },
+  "right-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad",
+    "sha256": "a1d99f48725be97f187e8931d70681a9c41537c2c3c7e8c35442f915353de742",
+    "bytes": 26358168
+  },
+  "both-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+    "sha256": "551faf3da400ac6ef6135ef3a059fe3a57b29df0d5ba40e576153077142a5dda",
+    "bytes": 8595168
+  },
+  "both-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+    "sha256": "6895c263acab61653bf5219f0c6e001868f31241da8153dc7a2f13c11dabd226",
+    "bytes": 8597512
+  },
+  "both-abort": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-abort",
+    "sha256": "49e012513bacd1fd846ed1f532dbc563ee0f10fd4b5855752fba8f055ee211ad",
+    "bytes": 8532136
+  },
+  "both-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad",
+    "sha256": "cd56822a514bd13994dfa64fac549197ec8b5dcc65d46438fb22a1313ece0f45",
+    "bytes": 26358920
+  }
+}

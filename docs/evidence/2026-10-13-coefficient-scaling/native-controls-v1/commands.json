@@ -1,0 +1,1412 @@
+[
+  {
+    "name": "build-libraries-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 119.27203023387119,
+    "stdout_sha256": "ebb4f021c6a4fdd6336203eb8606e5d2fa16193dba7eef404ff63fbaa31c12e7",
+    "stderr_sha256": "bc21896ef157f8ed1b99ab46971779c7f1ce2e07d4be3c215995d3c5e4135692"
+  },
+  {
+    "name": "build-libraries-right",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 119.31286924611777,
+    "stdout_sha256": "a91f3a5034bcea7fe017c2e34047c61fe551e41677123bb7dacc8383bf82591d",
+    "stderr_sha256": "d7bd7c848244737ec7a654aa24c23d6023ef3e420b135af54baed11ac83dcfd8"
+  },
+  {
+    "name": "build-libraries-both",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target"
+    },
+    "exit_code": 0,
+    "seconds": 121.20935509400442,
+    "stdout_sha256": "793fb515612b9bcaa5b5db76c0de5c7015d4cd7c96c54f27a867a8a5de913e0d",
+    "stderr_sha256": "d0d9ca1c84b8314104ca597e1822a3d029781717db41288a0f11ac8b03bbca6f"
+  },
+  {
+    "name": "build-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.173210320994258,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.126788350753486,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1172669329680502,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.5531668481417,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-right-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1871793838217854,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-right-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1884351880289614,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-right-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1748489192686975,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-right-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.551298636011779,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-both-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1670795301906765,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-both-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1724420632235706,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-both-abort",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/final_abort.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/libhypercurve.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.133911722805351,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-both-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-coefficient-scaling/native-controls-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/libhypercurve.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/native-controls-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.5346809243783355,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6129642110317945,
+    "stdout_sha256": "2445f959eb0dc0161c872bd8444b0faf716f976ee29593c28b3d66759c1178cb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-baseline-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.684139764867723,
+    "stdout_sha256": "7198f671b267e0bb5fa856c9eb4955d483223d8e10e210cd93fc417a8368d23c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-right-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.602864442858845,
+    "stdout_sha256": "6eec6429afe75e4c1cdf442c15381b7adc648117ee286b606ae42fbb378fb857",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-right-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.594844602048397,
+    "stdout_sha256": "354fc71f9a23cd2c16a2fd0c2853983fad8ecbfbf48321d4a4896ffd91505370",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-both-time",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.622380436398089,
+    "stdout_sha256": "9bcc164f7d036a4966c0dd2a91d3c63ea160756d497aae823987f1cb44b489f0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-both-memory",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "42"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6124460268765688,
+    "stdout_sha256": "142e1507cc74faa1fa6248968b622e75d51d7f072fdf0626d95bb60cd0de2aba",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6279324661009014,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6418521022424102,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-1-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.655751959886402,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6641497248783708,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6463162060827017,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6687747482210398,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6574297151528299,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6394071192480624,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "abort-3-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-abort"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.6490470487624407,
+    "stdout_sha256": "260f0d0bceda83595dda7b7eac8a3baa59af27be58a8fec1ecbc3e68ea00eff6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.541614359244704,
+    "stdout_sha256": "0d0117919d2e3db94515d696dcf8019f270ea34a3294cba43bba5e250f478074",
+    "stderr_sha256": "43a27c116f8c748dc4a701b6a858ed54a62f7ab3272e7e79f27cdf707edbfdd0"
+  },
+  {
+    "name": "time-1-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.762276301626116,
+    "stdout_sha256": "102e44eaee190e6c978342bec2a7a5ca06cfb87cf07e2d0f20608c335f854a78",
+    "stderr_sha256": "aa349f298eeebbe8bc0f67c2fada1ab30c52d1535c16043c646151ccc12c22a8"
+  },
+  {
+    "name": "time-1-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.525747275911272,
+    "stdout_sha256": "3aaa2ea25b8cfdbcd3984b1449adca06604baf2206cf88f5cd74bd1056c936b5",
+    "stderr_sha256": "f4e366f48e96ec64c8c269cc0e7878e5b245b7e9154f3e5157d3de43d3eafc3b"
+  },
+  {
+    "name": "time-2-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.968537472188473,
+    "stdout_sha256": "9b4c87e523a95378161d261678cdc228d50ce5f8507934aff32dd2306ef84089",
+    "stderr_sha256": "f1a4640f173e382d95f935215cb311b7b318483ce3e7a4408ad577cf637ee196"
+  },
+  {
+    "name": "time-2-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.633177527226508,
+    "stdout_sha256": "e5d50b3cdd4428b47574cf808532ac19057e55b5fbee9938f5dc6eb0cf519608",
+    "stderr_sha256": "3fa41e584aac8c1a257d0107f9d087191508418865b0ceef18d1ebaaea87201d"
+  },
+  {
+    "name": "time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.517969779204577,
+    "stdout_sha256": "09745baf80b3d30048ac2781570c32c453b27bf412a7d4b27f69d13c53751033",
+    "stderr_sha256": "4636f9c57a3afd3ace5ea8df6f294db982b5831ad3f7915c5413122c743824f4"
+  },
+  {
+    "name": "time-3-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.550807299092412,
+    "stdout_sha256": "8bdadb89dfdb79d6dc76cddcd54c5a7472043b4b6a80e789b1bf813299c00d75",
+    "stderr_sha256": "62be9830bff891e1bed982414b419ed885890f84f90e3adf601f9e2871029e1a"
+  },
+  {
+    "name": "time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.561653817072511,
+    "stdout_sha256": "ec4113d3e9b8eee8ca44e08836f1012679d5a6f5247afa50cdea02173f647384",
+    "stderr_sha256": "ee67eb3bdbb533b82badde417d009b4f2c64a2eaeaeebf51d56a2486656f2201"
+  },
+  {
+    "name": "time-3-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.643329530954361,
+    "stdout_sha256": "73c61258b33b0472f818e86824b9b0670e6435deeffff4cb16c2986666f6b09d",
+    "stderr_sha256": "4d8b6650e87e8d20f92740887b851ae4bb64967c48e089e8a37f1d0a062aa29c"
+  },
+  {
+    "name": "time-4-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.7500195018947124,
+    "stdout_sha256": "536029a059853dc9de72f230dc9a5c97f3e858f8bf84e4597afe143bbafe100f",
+    "stderr_sha256": "5d4add48762823636b6b3d36667acc198d4d8e2581fed4c1881b29a3b4a84c9a"
+  },
+  {
+    "name": "time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.615218035876751,
+    "stdout_sha256": "bd54186e92c87b858dcc8766023f78256dc874ae317ccbd0260f2602bc90581a",
+    "stderr_sha256": "f22a40048bb1ddb46e70090da72876cde1ae3c74b85cef2295074e964d8b1ade"
+  },
+  {
+    "name": "time-4-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.598159215413034,
+    "stdout_sha256": "c27aed63a179a2df10d010715cf09bf906992b223a609afdf7d917d10f48b2ea",
+    "stderr_sha256": "1d1983119c128bdfdc5c84dd9c32e2b3fafe217346c2cd464715fb87ba58b171"
+  },
+  {
+    "name": "time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.854911585804075,
+    "stdout_sha256": "7fa4ece67eddbdeb385a6eb335a0b752e339552bff2e966307610cd7841cb553",
+    "stderr_sha256": "3eb6b737c77683920ec3629f65dc7e7f424a7d3c880b502929051158d1f15b19"
+  },
+  {
+    "name": "time-5-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.582193660084158,
+    "stdout_sha256": "c951c88b19529be5816ec1e6e0fc10833b3c7154df200aa6eeaddd9e25d2d410",
+    "stderr_sha256": "cad32936c902913ff705d90a87bfd145da90cab9346e79ebfbde2b7e2ed4bbf8"
+  },
+  {
+    "name": "time-5-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-time",
+      "8192"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 4.557793210726231,
+    "stdout_sha256": "63cdd796d228d47c5160d79a0e7309e67181f538e3dec1c88ca5379b8fccf26e",
+    "stderr_sha256": "f9cf968566084499efa81a566ab9bcaa5d2ed92a6cd30b667927fc9d8f255b77"
+  },
+  {
+    "name": "memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9718164769001305,
+    "stdout_sha256": "28a6e79ce9b0fcbbee722d55547a48175302f6e8235dfde71670ab18f0993c38",
+    "stderr_sha256": "6975b5e27ad5f0ddf15daf133d6f2d295e840fdab5f83b321b069c5dd2f71249"
+  },
+  {
+    "name": "memory-1-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9939547111280262,
+    "stdout_sha256": "574c315a03c03b2103a38b291248c405b44b755911f830dad65863999c2ed5ac",
+    "stderr_sha256": "87b749a4cd3bed91c6c578cd3cafcefa1a978041d6de0e3b278a1557d3144be1"
+  },
+  {
+    "name": "memory-1-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.077683043666184,
+    "stdout_sha256": "99510d0c9884d0501230df944db420bffede43d50e8543541ce961d320697e19",
+    "stderr_sha256": "cc5f06754597eab902bdf8989702b865d6889801dd25ecee84e44ebede6a7340"
+  },
+  {
+    "name": "memory-2-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.0708110257983208,
+    "stdout_sha256": "d0bea84bfb92811ee197835cc36dbd03728b31c386791bf636650e41a3b87267",
+    "stderr_sha256": "1f96e3e0118436c1d935f59a9835c55ae4ea1b887b097e270e37383e646a2719"
+  },
+  {
+    "name": "memory-2-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.0195250688120723,
+    "stdout_sha256": "8009c27680a5ac4bd0561d37cea2d4446566a33dc23700525d198fabd1a8c3cb",
+    "stderr_sha256": "bfcdb8d0ab1c98f2ac861f01d8f01b976b0c6c322192fa14844dbcdcf3a621aa"
+  },
+  {
+    "name": "memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9492821609601378,
+    "stdout_sha256": "3e21a89a105f3ac19f277a9a22af91741ad05d1d236e1777e9818fbc4391dc38",
+    "stderr_sha256": "f4ef601a8ac099c1775742ba317c250839324643b4fd0e2fa13bd68b1292fe51"
+  },
+  {
+    "name": "memory-3-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.0351921250112355,
+    "stdout_sha256": "2c1b998a0c390eb4d663c32c03e3ba9d1d5fb9574fa6973acc9f66c95f7ab3f1",
+    "stderr_sha256": "6c3524248a406fd241ea162827bc52cf0a186ddfd87b80e75cf90113d545c055"
+  },
+  {
+    "name": "memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9553616037592292,
+    "stdout_sha256": "73b079b48bbc9af152817974a5ad00c8f5a137354d9fc00374bad00ce6bdd6df",
+    "stderr_sha256": "faab895fdc6ca36b7e092a3d0a152a74836f5109a9648f6dd5c9e739b6678b57"
+  },
+  {
+    "name": "memory-3-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9646101407706738,
+    "stdout_sha256": "03320a0303551ed791ae049a021113ab1506cb943fcad3a9bfb34faa5721822f",
+    "stderr_sha256": "a1a58fd094a843cbf252ef3cedf1ee82f456fa915026ee6a8dc71a5869352ea5"
+  },
+  {
+    "name": "memory-4-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.1710514882579446,
+    "stdout_sha256": "c8f9cb841dac93cb6b3c822b47f5a62f7c899c691184718d34234ef10da10acd",
+    "stderr_sha256": "aef372c2e43c27c79d287019abe2c0d511b3e69483c9b5beac500f2422ecffad"
+  },
+  {
+    "name": "memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.001505672931671,
+    "stdout_sha256": "1fbae4dd7759fcb2884b9939cb533ea49d01d65ce23157382f4807f76c6c6b01",
+    "stderr_sha256": "07cc92a03dcdae9bbb9788391c6d975aac087e41de2c89949535ab99049f91d5"
+  },
+  {
+    "name": "memory-4-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.9863259829580784,
+    "stdout_sha256": "fe8cd01b5273d492030dffa34f6a8599d498f3f2730a8097c716e977ed9260d4",
+    "stderr_sha256": "feb70f29eef9a22e10874b7d65234a783014918dc3e0037db04f9a5552c2ebe9"
+  },
+  {
+    "name": "memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.0737467650324106,
+    "stdout_sha256": "e391c44735b862e9d28d762e5852cabd7cc6eefdcd801a5d4701c7f027f08d1d",
+    "stderr_sha256": "fb81824cb270d668ace1514c317c4f0399258b4a11cd448d423bf9bbeac9f5c0"
+  },
+  {
+    "name": "memory-5-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.034911885391921,
+    "stdout_sha256": "72d49750212799228dd68159586daa1930594b0615885ffe73937ac9cf70a2fa",
+    "stderr_sha256": "11871a4940a30d9777e7de77e2f04a43b7de7dce67e37136a15e1cb385d77675"
+  },
+  {
+    "name": "memory-5-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 1.966515190899372,
+    "stdout_sha256": "fb3a990fa84e207d6831c5b150567f687bcb25b863e435443778467a04d15644",
+    "stderr_sha256": "173e40a15816a19a4fe97b786616e10a9284389fcd5eb3fca6d7090d66bde12d"
+  },
+  {
+    "name": "broad-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.128422576002777,
+    "stdout_sha256": "b09840d27ce1a6e367e32bd2c075209c99975c88d8279bdd8db5a34f267e7f3b",
+    "stderr_sha256": "b7d10683e8077bf2aa26d607b51c055dc8b3e09c432d683f69f46e05942454cd"
+  },
+  {
+    "name": "broad-1-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.963696380145848,
+    "stdout_sha256": "1406edfd34cdf4d6a0386677adb2861060e349804205bea0c64f9391d42ecdfe",
+    "stderr_sha256": "b44d226b066e50eaef61050d3bc4fde1ecf47b207ad3141554310af6e35d357d"
+  },
+  {
+    "name": "broad-1-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.051948974374682,
+    "stdout_sha256": "0faa7607b6787be80914233dcaa920b9a6ea358a6ca66f7a6c10cc3b54c92a57",
+    "stderr_sha256": "eda8a45c77f4953c052e69a6dd65da9140872617334ddadc3fe72fef04c7d723"
+  },
+  {
+    "name": "broad-2-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.069419457111508,
+    "stdout_sha256": "bc951053274a6b3148e797d3b0e041b049f40eec21b85d110db2f6f2d8a6d3aa",
+    "stderr_sha256": "c97d090a22530c4304bf95a5a3a3585eed5950bee21ddb78ca0ecf7e58774426"
+  },
+  {
+    "name": "broad-2-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.071429640054703,
+    "stdout_sha256": "25bc63709f65c97775202486c078fbd280c959a8f4aed1a719b7c7131292bf9d",
+    "stderr_sha256": "628c0d46c6b15bf4d85b1c763721aa555678829afeb1a8c778042204904acd27"
+  },
+  {
+    "name": "broad-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.166294910944998,
+    "stdout_sha256": "c7ebaead174784115b440e665c52a4fe1c41e3a380d3082fc874d966668acc81",
+    "stderr_sha256": "2a8a16c49a4dff4311a8acc84c27dd4683cb99dac5c8d0f130424d1cc33a23a4"
+  },
+  {
+    "name": "broad-3-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.21682526031509,
+    "stdout_sha256": "1c3c9cce016bb86ba4e07a1d257480be77bbdabeb924248c169771cd12816a4f",
+    "stderr_sha256": "021f9cd4287f5b97c51cf118df6d8d44d458e58b46f47dceeb15cc29a0e57061"
+  },
+  {
+    "name": "broad-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.886570973787457,
+    "stdout_sha256": "978ab8fb2f84dfe5e254ce1ebeca99c7e525c92f2ccf1a186612bf97b96e5b14",
+    "stderr_sha256": "eaf3864767274b9b0a8016b1c7806bd7693fb6f8fbd8d9627f1a62bb9c6ff34e"
+  },
+  {
+    "name": "broad-3-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.00938224978745,
+    "stdout_sha256": "a6aa58d1838f21c20e2277e3ad8fc1708c6954a9c19ce205b735ea7b3bd3c056",
+    "stderr_sha256": "f3e646ffd92b546d8aa8e1942c5e5e90733ee32fee0c2bf470c9f4b8c3901ed4"
+  },
+  {
+    "name": "broad-4-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.081300243269652,
+    "stdout_sha256": "0685d75669e2254e29b01747c9af5292e1201d9ef565432f6b96b410d6319995",
+    "stderr_sha256": "635c0d51ec261c2cbd9e2446626da13088a7d329ecd3f5cf88dd4948e821534a"
+  },
+  {
+    "name": "broad-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.156168693676591,
+    "stdout_sha256": "b85de6a10fa8d0956200b5d95a2d619c3a5faa276c087476dcd22610ec2b551c",
+    "stderr_sha256": "1b17d6fa6e21ef3ca25a0ae353d33546e4eef1e45967fc719cb17bba3b3c6df0"
+  },
+  {
+    "name": "broad-4-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.015903803985566,
+    "stdout_sha256": "cfdf606bad347a57967b82d71d21928d907058e55469d2707db76d7eb41c8e2a",
+    "stderr_sha256": "20e6e3f87d7599d1981ac4233e2a80115a2058c0c528d9166f84ede705cc1404"
+  },
+  {
+    "name": "broad-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.054682927206159,
+    "stdout_sha256": "19332c1f13edb5d35c23a26cb7d9b83f43e2b30c66ba956c4f00014cebfb608b",
+    "stderr_sha256": "9b86e7e1d0d3aeb7d40cbe99d45edaa2bfd27a16975c721a7f68db36e16e23ac"
+  },
+  {
+    "name": "broad-5-both",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/both-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.047234288416803,
+    "stdout_sha256": "250507852d3d17f7eabba579656d0047a537694323baf92bb9b11a0b7d7ccbfd",
+    "stderr_sha256": "b2b3f0f29d6db314eea9d079242e9cb441142748e8e3c6b97891f1520c3cb8a8"
+  },
+  {
+    "name": "broad-5-right",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/native-controls-v1/right-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 7.069415017962456,
+    "stdout_sha256": "b6d97920dc2f1a3eea17adc924aabe58d269910d34845e87ef9664b9fd69237e",
+    "stderr_sha256": "3751461731b5b11e8b2794a25452cee1aee3f242a4883dfa98a9ee2dda75dc25"
+  }
+]

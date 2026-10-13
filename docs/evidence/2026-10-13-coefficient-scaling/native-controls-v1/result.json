@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "arc_trials": 30,
+  "broad_trials": 15,
+  "final_abort_trials": 9,
+  "all_variant_identities_match": true,
+  "source_and_main_unchanged": true,
+  "timing_is_fixed_five_three_variant_blocks": true,
+  "runtime_admitted": false
+}

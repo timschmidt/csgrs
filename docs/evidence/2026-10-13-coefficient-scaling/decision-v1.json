@@ -1,0 +1,515 @@
+{
+  "decision": "reject-both-scaling-variants-on-native-costs-and-original-board-failures",
+  "assessor_sha256": "e62e8d741f184b18aeb0b431b82fbee9f3bc72377e7ff905d0c6bc2ac62e4ea9",
+  "variants": {
+    "right": {
+      "decision": "rejected-for-runtime-admission",
+      "native_tests": [
+        {
+          "variant": "right",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "right",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        }
+      ],
+      "original_native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "right",
+          "passed": false,
+          "observed_assertion_seconds": 134.799982328,
+          "process_wall_seconds": 136.09671183628961,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "right",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 127.49625317566097,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        }
+      ],
+      "arc_all_five_slower": [
+        {
+          "name": "rational_non_endpoint_first",
+          "median_block_ratio": 1.106435913899658
+        },
+        {
+          "name": "pi_scaled_non_endpoint_cloned",
+          "median_block_ratio": 1.036913775234072
+        },
+        {
+          "name": "copied_endpoint_coordinates_construction",
+          "median_block_ratio": 1.037425125757343
+        },
+        {
+          "name": "copied_endpoint_coordinates_first",
+          "median_block_ratio": 1.0580549195947522
+        },
+        {
+          "name": "copied_endpoint_coordinates_warm",
+          "median_block_ratio": 1.0263689481032077
+        },
+        {
+          "name": "off_circle_construction",
+          "median_block_ratio": 1.044942910452535
+        },
+        {
+          "name": "other_sweep_construction",
+          "median_block_ratio": 1.0697125926580886
+        },
+        {
+          "name": "aborted_unknown_cloned",
+          "median_block_ratio": 1.078527320662548
+        },
+        {
+          "name": "approximate_non_endpoint_construction",
+          "median_block_ratio": 1.0633080510791255
+        },
+        {
+          "name": "approximate_non_endpoint_first",
+          "median_block_ratio": 1.0082233686339972
+        }
+      ],
+      "arc_all_five_faster_count": 0,
+      "arc_slower_median_count": 37,
+      "broad_all_five_slower": [
+        {
+          "name": "operation_construct_polygon_and_area_17",
+          "median_block_ratio": 1.0515239669208492
+        },
+        {
+          "name": "operation_affine_rectangle_identity",
+          "median_block_ratio": 1.0186767944739212
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "median_block_ratio": 1.0445165915949892
+        },
+        {
+          "name": "operation_point_power_huge_centers",
+          "median_block_ratio": 1.0400164169915862
+        },
+        {
+          "name": "operation_point_mouse_optional_order",
+          "median_block_ratio": 1.0214938358838273
+        },
+        {
+          "name": "operation_authored_decoupling_unknown_radius",
+          "median_block_ratio": 1.0455994574833776
+        },
+        {
+          "name": "operation_authored_rffence_huge_radius",
+          "median_block_ratio": 1.0417766051011434
+        },
+        {
+          "name": "operation_authored_rffence_unknown_radius",
+          "median_block_ratio": 1.0951681725207592
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "median_block_ratio": 1.0278250407803482
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "median_block_ratio": 1.010769322437486
+        },
+        {
+          "name": "operation_fixture_thermal_sparse_2002",
+          "median_block_ratio": 1.0135975982929244
+        },
+        {
+          "name": "operation_fixture_coverage_required_marker",
+          "median_block_ratio": 1.039635535307517
+        },
+        {
+          "name": "operation_fixture_coverage_sparse_2002",
+          "median_block_ratio": 1.038823900058102
+        },
+        {
+          "name": "operation_fixture_access_unknown_minimum",
+          "median_block_ratio": 1.0330000137168567
+        },
+        {
+          "name": "operation_fixture_access_unknown_side",
+          "median_block_ratio": 1.021761943915527
+        },
+        {
+          "name": "operation_fixture_access_unknown_spacing",
+          "median_block_ratio": 1.0280914933779643
+        },
+        {
+          "name": "operation_fixture_access_spacing_floor",
+          "median_block_ratio": 1.0142348047362304
+        },
+        {
+          "name": "operation_fixture_copper_unknown_clearance",
+          "median_block_ratio": 1.0641366678285453
+        }
+      ],
+      "broad_all_five_faster": [
+        {
+          "name": "operation_single_quadratic_aggregation_and_bounds",
+          "median_block_ratio": 0.9693591498793924
+        },
+        {
+          "name": "operation_stencil_unresolved_drill",
+          "median_block_ratio": 0.9844456750771937
+        },
+        {
+          "name": "operation_affine_quadratic_cap",
+          "median_block_ratio": 0.9835827721616806
+        },
+        {
+          "name": "operation_ipc_annotation_sparse_2002",
+          "median_block_ratio": 0.9723684118723029
+        },
+        {
+          "name": "operation_ipc_coverage_known_after_unknown",
+          "median_block_ratio": 0.9868055244433402
+        },
+        {
+          "name": "operation_authored_plated_ground_metadata",
+          "median_block_ratio": 0.9747877242298664
+        },
+        {
+          "name": "operation_fixture_copper_unused_huge_marker",
+          "median_block_ratio": 0.9613377806516047
+        },
+        {
+          "name": "operation_pad_trapezoid_construct_both_limits",
+          "median_block_ratio": 0.9813947042285797
+        }
+      ],
+      "broad_slower_median_count": 130,
+      "native_arc_memory": "All 48 rows have identical allocation calls, requested bytes and retained requested-byte deltas in every sample. The four opaque-translated rows each add 24 peak requested bytes in all five blocks; no row reduces a memory field.",
+      "peak_increase_rows": [
+        "opaque_translated_non_endpoint_construction",
+        "opaque_translated_non_endpoint_first",
+        "opaque_translated_non_endpoint_warm",
+        "opaque_translated_non_endpoint_cloned"
+      ],
+      "probe_binary_sizes": {
+        "time": {
+          "baseline_bytes": 8593816,
+          "candidate_bytes": 8594424,
+          "byte_delta": 608
+        },
+        "memory": {
+          "baseline_bytes": 8596160,
+          "candidate_bytes": 8596784,
+          "byte_delta": 624
+        },
+        "broad": {
+          "baseline_bytes": 26357520,
+          "candidate_bytes": 26358168,
+          "byte_delta": 648
+        },
+        "abort": {
+          "baseline_bytes": 8530776,
+          "candidate_bytes": 8531392,
+          "byte_delta": 616
+        }
+      },
+      "scalar_allocation_rows_with_reduction": 6
+    },
+    "both": {
+      "decision": "rejected-for-runtime-admission",
+      "native_tests": [
+        {
+          "variant": "both",
+          "phase": "curve-tests",
+          "passed": 2494,
+          "failed": 0,
+          "ignored": 33,
+          "result_groups": 51
+        },
+        {
+          "variant": "both",
+          "phase": "drc-tests-except-separate-gates",
+          "passed": 1644,
+          "failed": 0,
+          "ignored": 0,
+          "result_groups": 10
+        }
+      ],
+      "original_native_gates": [
+        {
+          "label": "full-board",
+          "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+          "limit_seconds": 120,
+          "metric": "worker CPU",
+          "variant": "both",
+          "passed": false,
+          "observed_assertion_seconds": 137.672192623,
+          "process_wall_seconds": 138.90158676775172,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        },
+        {
+          "label": "copper-neck",
+          "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+          "limit_seconds": 60,
+          "metric": "check body wall time",
+          "variant": "both",
+          "passed": true,
+          "observed_assertion_seconds": null,
+          "process_wall_seconds": 122.77485628472641,
+          "timing_note": "Whole subprocess durations include setup and are not either internal assertion metric. A passing copper-neck assertion does not print its check-body time."
+        }
+      ],
+      "arc_all_five_slower": [
+        {
+          "name": "rational_non_endpoint_first",
+          "median_block_ratio": 1.0189031075426926
+        },
+        {
+          "name": "copied_endpoint_coordinates_construction",
+          "median_block_ratio": 1.0281925626461261
+        },
+        {
+          "name": "copied_endpoint_coordinates_first",
+          "median_block_ratio": 1.0530263373139213
+        },
+        {
+          "name": "copied_endpoint_coordinates_warm",
+          "median_block_ratio": 1.0370114829234636
+        },
+        {
+          "name": "off_circle_construction",
+          "median_block_ratio": 1.082891752761953
+        },
+        {
+          "name": "off_circle_first",
+          "median_block_ratio": 1.0211816280801194
+        },
+        {
+          "name": "off_circle_warm",
+          "median_block_ratio": 1.0363001194547354
+        },
+        {
+          "name": "off_circle_cloned",
+          "median_block_ratio": 1.0402012687366358
+        },
+        {
+          "name": "other_sweep_construction",
+          "median_block_ratio": 1.0358837476883231
+        },
+        {
+          "name": "aborted_unknown_cloned",
+          "median_block_ratio": 1.1019005839423672
+        },
+        {
+          "name": "approximate_non_endpoint_construction",
+          "median_block_ratio": 1.0363693481273755
+        },
+        {
+          "name": "approximate_non_endpoint_first",
+          "median_block_ratio": 1.0407794630063425
+        },
+        {
+          "name": "approximate_non_endpoint_cloned",
+          "median_block_ratio": 1.0134298515022824
+        }
+      ],
+      "arc_all_five_faster_count": 0,
+      "arc_slower_median_count": 40,
+      "broad_all_five_slower": [
+        {
+          "name": "operation_stencil_matched_via",
+          "median_block_ratio": 1.0157389616133499
+        },
+        {
+          "name": "operation_mounting_hole_spacing",
+          "median_block_ratio": 1.016196977984897
+        },
+        {
+          "name": "operation_point_chassis_sparse_2002",
+          "median_block_ratio": 1.0378015095364868
+        },
+        {
+          "name": "operation_fixed_decimal_unknown_distance",
+          "median_block_ratio": 1.0637095734690245
+        },
+        {
+          "name": "operation_authored_decoupling_huge_centers",
+          "median_block_ratio": 1.0130523244654306
+        },
+        {
+          "name": "operation_authored_mountground_huge_radius",
+          "median_block_ratio": 1.0510482252819484
+        },
+        {
+          "name": "operation_dense_fiducial_huge_centers",
+          "median_block_ratio": 1.0430895638894349
+        },
+        {
+          "name": "operation_dense_fiducial_huge_pitch",
+          "median_block_ratio": 1.010264399738084
+        },
+        {
+          "name": "operation_dense_viaspacing_huge_centers",
+          "median_block_ratio": 1.0169967752811904
+        },
+        {
+          "name": "operation_dense_viaspacing_sparse_2002",
+          "median_block_ratio": 1.0844363114142144
+        },
+        {
+          "name": "operation_dense_maskbridge_huge_pitch",
+          "median_block_ratio": 1.0307212434677264
+        },
+        {
+          "name": "operation_fixture_coverage_sparse_2002",
+          "median_block_ratio": 1.1023928430958487
+        },
+        {
+          "name": "operation_rectangle_warm_area_original_large",
+          "median_block_ratio": 1.0359286165508528
+        },
+        {
+          "name": "operation_pad_round_construct_subnormal",
+          "median_block_ratio": 1.0079581672331015
+        },
+        {
+          "name": "operation_pad_round_warm_area_samples_4",
+          "median_block_ratio": 1.0504979165195283
+        }
+      ],
+      "broad_all_five_faster": [
+        {
+          "name": "operation_ipc_coverage_unknown",
+          "median_block_ratio": 0.9791679030939071
+        },
+        {
+          "name": "operation_point_edge_huge_centers",
+          "median_block_ratio": 0.9817579772703782
+        },
+        {
+          "name": "operation_point_power_huge_radius",
+          "median_block_ratio": 0.97486836935167
+        },
+        {
+          "name": "operation_point_mouse_huge_radius",
+          "median_block_ratio": 0.9802791262135923
+        },
+        {
+          "name": "operation_fixed_decimal_tiny_pi",
+          "median_block_ratio": 0.9565353329987037
+        },
+        {
+          "name": "operation_authored_plating_huge_radius",
+          "median_block_ratio": 0.8942128960304019
+        },
+        {
+          "name": "operation_authored_plating_unknown_radius",
+          "median_block_ratio": 0.9411640879907378
+        },
+        {
+          "name": "operation_fixture_thermal_alternative_after_unknown",
+          "median_block_ratio": 0.9856285425493534
+        },
+        {
+          "name": "operation_fixture_copper_large_shape",
+          "median_block_ratio": 0.9839948783610756
+        },
+        {
+          "name": "operation_pad_chamfer_construct_original_large",
+          "median_block_ratio": 0.9578669859838996
+        },
+        {
+          "name": "operation_pad_chamfer_construct_subnormal",
+          "median_block_ratio": 0.9739820504597326
+        },
+        {
+          "name": "operation_pad_trapezoid_construct_original_large",
+          "median_block_ratio": 0.9809445188989159
+        }
+      ],
+      "broad_slower_median_count": 119,
+      "native_arc_memory": "All 48 rows have identical allocation calls, requested bytes and retained requested-byte deltas in every sample. The four opaque-translated rows each add 24 peak requested bytes in all five blocks; no row reduces a memory field.",
+      "peak_increase_rows": [
+        "opaque_translated_non_endpoint_construction",
+        "opaque_translated_non_endpoint_first",
+        "opaque_translated_non_endpoint_warm",
+        "opaque_translated_non_endpoint_cloned"
+      ],
+      "probe_binary_sizes": {
+        "time": {
+          "baseline_bytes": 8593816,
+          "candidate_bytes": 8595168,
+          "byte_delta": 1352
+        },
+        "memory": {
+          "baseline_bytes": 8596160,
+          "candidate_bytes": 8597512,
+          "byte_delta": 1352
+        },
+        "broad": {
+          "baseline_bytes": 26357520,
+          "candidate_bytes": 26358920,
+          "byte_delta": 1400
+        },
+        "abort": {
+          "baseline_bytes": 8530776,
+          "candidate_bytes": 8532136,
+          "byte_delta": 1360
+        }
+      },
+      "scalar_allocation_rows_with_reduction": 18
+    }
+  },
+  "why": "Focused scalar allocation savings do not establish native benefit. The fixed native endpoint rows have no allocation savings and no all-five faster timing row for either variant, alongside persistent endpoint and broad-control slowdowns and four peak increases. Both original complete-board worker limits fail. The governing performance-before-memory ladder does not support runtime retention.",
+  "preserved_evidence": "All scalar and native samples, including faster broad rows, remain recorded. Every endpoint witness, all 231 historical broad witnesses and all nine 210-row final-abort receipt sets match. Functional tests, strict Clippy and docs pass. This rejection is a conservative decision on the measured workload, not a proof that every workload is slower or that scalar exactness failed.",
+  "complete_reports": {
+    "executed": false,
+    "prepared_runner": "replay_reports_v1.py",
+    "reason": "The closed native costs and original board failures settle rejection before runtime admission. Complete report replay and production CLI size are therefore left unexecuted for these rejected sources. Native finding counts are not claimed as complete report identity."
+  },
+  "sample_set_closed": true,
+  "sample_extension_planned": false,
+  "next_step": {
+    "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+    "parent_evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/decision-v1.json",
+    "question": "In the original coefficient multiplier, how many actually executed linear radical/opaque products are multiplied by an already stored zero rational constant and then discarded?",
+    "source_basis": "The original multiplier forms both linear radical contributions before radical cross-products and later forms opaque linear contributions. insert_radical/insert_atom immediately drop zero coefficients. Rational multiplication returns zero before canonicalization, product-cache lookup or publication when either stored sign is NoSign.",
+    "read_source_sha256": {
+      "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "crates/hyperreal/src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6"
+    },
+    "diagnostic_only": "Fork the unchanged endpoint parent. Use fixed integer counters for accepted coefficient shapes and stored-zero flags, plus actual entry counts at each of the four existing linear-term loops. Count zero scales from Rational::sign/is_zero only, which read the immutable stored sign. Preserve every original operation, early return, owner lifetime, insertion order, cache publication and query. Do not infer executed loop counts solely from input lengths, because later insertion can decline early.",
+    "qualification": "Calibrate reset/disabled behavior, all counter bins and joined worker aggregation; run existing scalar cache frontiers and endpoint regressions, strict Clippy and formatting. Observe the unchanged complete-board assertion once with instrumentation, reporting overhead and every original failure. Counts are coverage, not runtime shares or predicted savings.",
+    "runtime_followup": "Only if actual coverage warrants it, preregister a separate zero-contribution experiment that preserves nonzero arithmetic and original insertion order. Qualify zero/negative/mixed/opaque inputs, owner release, eight/nine-term frontiers, mandatory original retry, cold/warm/cloned facts and abort/budget receipts. Require fixed scalar/native cost controls and original gates before any retention; complete report identity remains an admission requirement.",
+    "exclusions": "Do not inherit either rejected scaling branch, the rejected coefficient merge or the rejected eight-node prepass. The endpoint parent remains unadmitted and all its prior timing and memory tradeoffs remain open."
+  },
+  "evidence_sha256": {
+    "correctness-v1.json": "79b09cb92eddc9676173a6fd142a316891379ef208493a032b89922bee4ef46a",
+    "cost-assessment-v1.json": "de088f21a495909a00cb8840ad396b5898794d5a92fce7cea96148ab92b56371",
+    "scalar-decision-v1.json": "9cd8e1610a93b557c9842154cca191c6e4f53d346147f202b154e42027e434c9",
+    "native-assessment-v1.json": "3152ae508b74577b7e2c7b1dee5489f449f5a7b646c85cbdfe736c5b91a46701",
+    "native-controls-assessment-v1.json": "6f4cc1444338912c9f110e48e187ccffdf7dbf3ccb238ef7cf3b12fb71af9bb3",
+    "native-controls-v1/result.json": "1b626ffebb27c4dc826f2ebe1d82428221734d643d9e3bea40a57cba1d3d6dd9",
+    "native-controls-v1/trials.json": "9dbe1190eb2996ca046bd058b15a5ae8ad28247cd7f27227317cfd845ac627c4",
+    "replay_reports_v1.py": "5cd36211b8359f4b0070381c8d268cdc83c764c3bb6d141c6c4c87593c53f567"
+  },
+  "source_parent_main_and_artifacts_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

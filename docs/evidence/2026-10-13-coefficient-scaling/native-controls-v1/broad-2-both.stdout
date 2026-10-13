@@ -1,0 +1,231 @@
+operation_union_and_bounds	100	14656676	1:5:6989848621284363973
+operation_intersection_and_bounds	100	10743824	1:5:13624378369209772120
+operation_difference_and_bounds	100	10753633	1:5:2432745174150323013
+operation_xor_and_bounds	100	12382221	2:10:14187356416306367205
+operation_circle_offset_and_bounds	100	9495010	1:209:6668936564042548741
+operation_drill_circle_and_bounds	100	11972420	1:129:9913634850734995192
+operation_classification	1000	20820863	inside
+operation_bounds	1000	8035769	-1,-1,1,1
+operation_single_quadratic_aggregation_and_bounds	100	58896	1:60:11214129054678714493
+operation_mixed_quadratic_aggregation_and_bounds	100	5246751	2:65:15816322678175161766
+operation_replacement_and_bounds	100	453099	1:60:11214129054678714493
+operation_area	1000	3310724	4
+operation_empty	1000	23018	false
+operation_clone_and_native_handoff	1000	163949	4:-1,-1,1,1
+operation_warm_polygon_area_17	10000	380874	pi:1:18:10621196167203660418
+operation_warm_polygon_area_1000000	10000	309519	pi:1:1000001:6778606631196480579
+operation_construct_polygon_and_area_17	100	15678366	pi:1:18:10621196167203660418
+operation_report_area_filter_17	1000	1970135	1:18:18155375565963265646
+operation_construct_polygon_and_area_128	100	19741478	pi:1:129:8138336853593010119
+operation_report_area_filter_128	1000	2635129	1:129:2978740627570813183
+operation_overlapping_duplicate_layer_area	1000	3026803	6:3:15:3438532539029117080
+operation_duplicate_paste_union_coverage	100	1572712	0:1:2:10:9335839296449926757
+operation_duplicate_mask_union_coverage	100	1581902	0:1:2:10:9335839296449926757
+operation_duplicate_aperture_windowpane	100	2017782	1:1:2:10:9335839296449926757
+operation_warm_polygon_bounds_17	10000	1129772	-1,-1,1,1:1:18:10621196167203660418
+operation_warm_polygon_bounds_1000000	10000	942865	-1,-1,1,1:1:1000001:6778606631196480579
+operation_construct_polygon_and_bounds_17	100	11906524	-1,-1,1,1:1:18:10621196167203660418
+operation_construct_polygon_and_bounds_128	100	11860447	-1,-1,1,1:1:129:8138336853593010119
+operation_warm_empty_polygon_bounds	10000	278811	empty
+operation_uncertain_polygon_bounds	100	434231	typed-ordering-failure
+operation_duplicate_islands_mixed_samples	100	3410766	1:0,0:2:147:7471357688392374296
+operation_sparse_duplicate_islands_1003	20	17495402	1:0,100:1003:5015:11751361449646193959
+operation_stencil_boundary_pair	100	7774237	1:592:13603480387489685670
+operation_stencil_below_pair_gap	100	646746	0:2:675868731199239589
+operation_stencil_unrepresentable_radius	100	7678424	1:592:13603480387489685670
+operation_stencil_unresolved_radius	100	2381017	1:386:4287583278619188511
+operation_stencil_sparse_1002_pads	20	43086109	1:595:8181286610853625539
+operation_stencil_matched_via	100	101778057	1:2350:14570347996384772535
+operation_stencil_unresolved_drill	100	1341268	1:372:13278150763124079330
+operation_stencil_unrepresentable_marker	100	57923402	1:382:7718597007234439459
+operation_affine_rectangle_identity	1000	317148	1:5:984759180658800760
+operation_affine_rectangle_quarterturn	1000	9604792	1:5:13613532800790371446
+operation_affine_circle_17	100	5087442	1:18:7585933311990618471
+operation_affine_circle_128	100	5020056	1:129:13472472099763521991
+operation_affine_quadratic_cap	100	570960	1:60:11050001721882960762
+operation_affine_empty	1000	2129555	certified-empty
+operation_affine_source_failure	1000	1830984	retained-source-failure
+operation_affine_exhausted_scope	1000	13161438	retained-budget-failure
+operation_drill_spacing_boundary	100	268732	0:2:675868731199239589
+operation_drill_spacing_huge_diameter	100	572510	1:706:10129987065530417744
+operation_drill_spacing_unprojectable_marker	100	240613	1:366:1077584065440551066
+operation_drill_spacing_unknown_threshold	100	1424643	1:356:3218853811944926175
+operation_drill_spacing_sparse_2002	20	42503709	1:304:14667549968101073016
+operation_drill_table_preserved_ipc_index	100	241184	1:366:2342232965630020837
+operation_drill_table_unknown_diameter	100	1013800	1:409:882067093923408699
+operation_ipc_drill_diameter	100	185527	1:315:14423388206050389667
+operation_mounting_hole_spacing	100	429141	1:429:15085276695194158159
+operation_castellation_rect_spacing	100	643906	1:435:13896596067071402722
+operation_castellation_circle_17	100	1732891	1:436:2803907158019846104
+operation_castellation_circle_128	100	1795717	1:436:2803907158019846104
+operation_ipc_annotation_small	100	168578	1:1:27:4545951824402980347
+operation_ipc_annotation_huge_tolerance	100	114873	1:1:27:4545951824402980347
+operation_ipc_annotation_huge_centers	100	105973	1:1:27:4545951824402980347
+operation_ipc_annotation_rollback	100	1451370	2:1:101:11899924627379244488
+operation_ipc_annotation_invalid_diameter	100	157549	1:1:81:13123836513132376695
+operation_ipc_annotation_sparse_2002	20	20629867	2002:2002:36045:14699214368872874768
+operation_ipc_coverage_boundary	100	210635	1:295:4051471181349304849
+operation_ipc_coverage_unknown	100	1266133	1:367:14537548270037980865
+operation_ipc_coverage_huge_centers	100	29808	0:2:675868731199239589
+operation_ipc_coverage_known_after_unknown	100	1199608	0:2:675868731199239589
+operation_ipc_coverage_sparse_2002	20	6539671	0:2:675868731199239589
+operation_board_copper_layers_32x32	20	954448924	32:1024:2771409333047367872
+operation_duplicate_layers_forward	100	1441571	1:466:386720640351701377
+operation_duplicate_layers_reversed	100	1466769	1:466:386720640351701377
+operation_duplicate_layers_source_failure	100	77815	1:555:1540148858451223145
+operation_point_edge_huge_centers	50	50390738	0:2:675868731199239589
+operation_point_edge_huge_radius	50	50154475	0:2:675868731199239589
+operation_point_edge_unknown_radius	25	25970771	1:387:11384102336937609451
+operation_point_edge_sparse_2002	10	17731895	0:2:675868731199239589
+operation_point_chassis_huge_centers	50	23659	0:2:675868731199239589
+operation_point_chassis_huge_radius	50	25968	0:2:675868731199239589
+operation_point_chassis_unknown_radius	25	386763	1:390:8295971350035335404
+operation_point_chassis_sparse_2002	10	4558878	0:2:675868731199239589
+operation_point_return_huge_centers	50	28698	0:2:675868731199239589
+operation_point_return_huge_radius	50	30908	0:2:675868731199239589
+operation_point_return_unknown_radius	25	387903	1:384:9287839964499257100
+operation_point_return_sparse_2002	10	6540742	0:2:675868731199239589
+operation_point_power_huge_centers	50	58186	0:2:675868731199239589
+operation_point_power_huge_radius	50	63176	0:2:675868731199239589
+operation_point_power_unknown_radius	25	377454	1:388:3827104599380057854
+operation_point_power_sparse_2002	10	25431137	0:2:675868731199239589
+operation_point_pairproximity_huge_centers	50	52496	0:2:675868731199239589
+operation_point_pairproximity_huge_radius	50	57906	0:2:675868731199239589
+operation_point_pairproximity_unknown_radius	25	401803	1:404:14691325698739303223
+operation_point_pairproximity_sparse_2002	10	16340451	0:2:675868731199239589
+operation_point_pairreturn_huge_centers	50	57366	0:2:675868731199239589
+operation_point_pairreturn_huge_radius	50	60546	0:2:675868731199239589
+operation_point_pairreturn_unknown_radius	25	412142	1:401:12553351427457390750
+operation_point_pairreturn_sparse_2002	10	5509922	0:2:675868731199239589
+operation_point_mouse_huge_centers	50	47616	0:2:675868731199239589
+operation_point_mouse_huge_radius	50	51097	0:2:675868731199239589
+operation_point_mouse_unknown_radius	25	383784	1:383:18200209260476227668
+operation_point_mouse_sparse_2002	10	25766345	0:2:675868731199239589
+operation_point_mouse_optional_order	25	1628539	3:1087:15843693286917255454
+operation_point_power_layer_copies	100	265912	1:376:9949264200803442228
+operation_point_edge_sub_ulp_outside	100	105651752	1:548:5269936504125934553
+operation_point_chassis_sub_ulp_outside	100	180498	1:392:14649991960197213025
+operation_fixed_decimal_unknown_distance	1000	346156	0.000000
+operation_fixed_decimal_pi	1000	681683	3.141593
+operation_fixed_decimal_tiny_pi	1000	564791	0.000000
+operation_authored_connector_huge_centers	50	709272	0:2:675868731199239589
+operation_authored_connector_huge_radius	50	705752	0:2:675868731199239589
+operation_authored_connector_unknown_radius	25	794416	1:391:7194926376853596909
+operation_authored_connector_sparse_2002	10	8339889	0:2:675868731199239589
+operation_authored_decoupling_huge_centers	50	25919	0:2:675868731199239589
+operation_authored_decoupling_huge_radius	50	30127	0:2:675868731199239589
+operation_authored_decoupling_unknown_radius	25	378634	1:390:5115058786618145201
+operation_authored_decoupling_sparse_2002	10	5810202	0:2:675868731199239589
+operation_authored_rffence_huge_centers	50	23779	0:2:675868731199239589
+operation_authored_rffence_huge_radius	50	27878	0:2:675868731199239589
+operation_authored_rffence_unknown_radius	25	410262	1:382:9936698604586586832
+operation_authored_rffence_sparse_2002	10	5104280	0:2:675868731199239589
+operation_authored_plating_huge_centers	50	18819	0:2:675868731199239589
+operation_authored_plating_huge_radius	50	21269	0:2:675868731199239589
+operation_authored_plating_unknown_radius	25	383794	1:374:1741266456268344312
+operation_authored_plating_sparse_2002	10	3389428	0:2:675868731199239589
+operation_authored_mountground_huge_centers	50	31427	0:2:675868731199239589
+operation_authored_mountground_huge_radius	50	81405	0:2:675868731199239589
+operation_authored_mountground_unknown_radius	25	549962	1:393:7101245581712260493
+operation_authored_mountground_sparse_2002	10	4543919	0:2:675868731199239589
+operation_authored_mountplating_huge_centers	50	33718	0:2:675868731199239589
+operation_authored_mountplating_huge_radius	50	80435	0:2:675868731199239589
+operation_authored_mountplating_unknown_radius	25	546583	1:398:5471472222003565946
+operation_authored_mountplating_sparse_2002	10	4142606	0:2:675868731199239589
+operation_authored_npth_closed_radius	100	177828	1:329:13063300925958579319
+operation_authored_plated_ground_metadata	100	34448	0:2:675868731199239589
+operation_authored_mount_unordered_thresholds	100	838442	0:2:675868731199239589
+operation_authored_connector_unknown_edge	25	260512	1:391:7194926376853596909
+operation_authored_negative_radius	100	165359	1:415:6446171119110081971
+operation_dense_fiducial_huge_centers	25	993372	0:2:675868731199239589
+operation_dense_fiducial_huge_pitch	25	665324	0:2:675868731199239589
+operation_dense_fiducial_unknown_pitch	10	1521216	1:381:16779048095004617194
+operation_dense_fiducial_sparse_2002	5	6906787	0:2:675868731199239589
+operation_dense_escape_huge_centers	25	902249	0:2:675868731199239589
+operation_dense_escape_huge_pitch	25	634226	0:2:675868731199239589
+operation_dense_escape_unknown_pitch	10	1588461	1:383:9868217385728915838
+operation_dense_escape_sparse_2002	5	6764776	0:2:675868731199239589
+operation_dense_viaspacing_huge_centers	25	1176350	0:2:675868731199239589
+operation_dense_viaspacing_huge_pitch	25	884660	0:2:675868731199239589
+operation_dense_viaspacing_unknown_pitch	10	1613050	1:388:305806210462999689
+operation_dense_viaspacing_sparse_2002	5	13303198	0:2:675868731199239589
+operation_dense_maskbridge_huge_centers	25	1263163	0:2:675868731199239589
+operation_dense_maskbridge_huge_pitch	25	903228	0:2:675868731199239589
+operation_dense_maskbridge_unknown_pitch	10	1554224	1:388:17890826612751812135
+operation_dense_maskbridge_sparse_2002	5	15874972	0:2:675868731199239589
+operation_dense_fiducial_huge_search_radius	25	310188	0:2:675868731199239589
+operation_dense_escape_huge_search_radius	25	263932	0:2:675868731199239589
+operation_dense_viaspacing_huge_search_radius	25	591899	0:2:675868731199239589
+operation_dense_fid_dimension_below_half	25	394003	1:402:11448535795081995528
+operation_dense_fid_unknown_radius	10	350116	1:381:16779048095004617194
+operation_dense_fid_count_after_unknown	10	280521	0:2:675868731199239589
+operation_dense_pitch_optional_order	10	2553535	1:387:495758706793454738
+operation_dense_viaspacing_optional_minimum	10	5766485	1:582:6270895369456009157
+operation_dense_viaspacing_required_large_shape	10	581280	0:2:675868731199239589
+operation_dense_maskbridge_optional_minimum	10	5187515	1:454:4450834183471783289
+operation_dense_maskbridge_required_large_shape	10	5175796	0:2:675868731199239589
+operation_fixture_thermal_huge_centers	100	46447	0:2:675868731199239589
+operation_fixture_thermal_huge_radius	100	72435	0:2:675868731199239589
+operation_fixture_thermal_unknown_radius	25	376004	1:387:6846429669101991331
+operation_fixture_thermal_alternative_after_unknown	25	330567	0:2:675868731199239589
+operation_fixture_thermal_sparse_2002	10	4092389	0:2:675868731199239589
+operation_fixture_thermal_negative_radius	100	157329	1:416:18254135242229701539
+operation_fixture_coverage_huge_covered	100	18089	0:2:675868731199239589
+operation_fixture_coverage_required_marker	100	90604	1:396:2025314618183263608
+operation_fixture_coverage_only_three_markers	100	126621	1:363:5053374561322852495
+operation_fixture_coverage_sparse_2002	10	1403904	0:2:675868731199239589
+operation_fixture_access_huge_centers	100	205776	0:2:675868731199239589
+operation_fixture_access_unknown_minimum	25	372554	1:391:9517972551065042715
+operation_fixture_access_unknown_side	25	546693	1:391:9517972551065042715
+operation_fixture_access_unknown_spacing	25	685253	1:391:9517972551065042715
+operation_fixture_access_huge_diameters	50	1126483	1:767:16864817555225746686
+operation_fixture_access_spacing_floor	25	700382	1:417:2187283145927925429
+operation_fixture_access_sub_ulp_spacing	50	420931	1:366:1588387161035046856
+operation_fixture_access_spacing_sparse_2002	5	23217090	1:369:1627537757082560965
+operation_fixture_access_parity_sparse_2002	10	3567106	1:417:2187283145927925429
+operation_fixture_copper_unused_huge_marker	100	157949	0:2:675868731199239589
+operation_fixture_copper_huge_radius	50	941386	1:848:16818511392106376267
+operation_fixture_copper_unknown_clearance	25	1042168	1:406:7047675501165528379
+operation_fixture_copper_maximum_order_unneeded	25	157179	0:2:675868731199239589
+operation_fixture_copper_minimum_radius_witness	25	161808	1:448:1749736189151914860
+operation_fixture_copper_empty_unknown	25	55526	0:2:675868731199239589
+operation_fixture_copper_large_shape	100	118512	0:2:675868731199239589
+operation_fixture_copper_sparse_2002	5	6219574	1:448:4387320022365547634
+operation_rectangle_construct_unit	100	2956278	[0, 0, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_original_large	100	4478863	[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_unit_large	100	3990637	[4906019910204099648, 0, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_subnormal	100	4255969	[0, 0, 1, 1, 0]:exact-area-bounds:report-points=4
+operation_rectangle_construct_beyond_float	100	5889127	[9218868437227405311, 0, 9218868437227405311, 4611686018427387904, 0]:exact-area-bounds:report-points=0
+operation_rectangle_construct_quarter_turn	100	4668030	[4607182418800017408, 4611686018427387904, 4616189618054758400, 4611686018427387904, 4636033603912859648]:exact-area-bounds:report-points=5
+operation_rectangle_construct_eighth_turn	100	6015128	[0, 0, 4611686018427387904, 4611686018427387904, 4631530004285489152]:exact-area-bounds:report-points=5
+operation_rectangle_construct_thirty_degrees	100	13412141	[0, 0, 4611686018427387904, 4618441417868443648, 4629137466983448576]:exact-area-bounds:report-points=5
+operation_rectangle_construct_zero_side	100	27498	[4906019910204099648, 0, 0, 4611686018427387904, 0]:exact-area-bounds:report-points=5
+operation_rectangle_construct_finite_dyadic	100	4656461	[4606732058837280358, 0, 4591870180066957722, 4591870180066957722, 0]:exact-area-bounds:report-points=5
+operation_rectangle_warm_bounds_original_large	1000	85264	[1e20-8192,-8192,1e20+8192,8192]
+operation_rectangle_warm_area_original_large	1000	26238	268435456
+operation_pad_round_construct_samples_4	100	15317581	[0, 0, 4611686018427387904, 4607182418800017408, 4598175219545276416, 0, 4616189618054758400]:exact-area-bounds:view=21:3819917693848457156
+operation_pad_round_construct_samples_128	100	15743102	[0, 0, 4611686018427387904, 4607182418800017408, 4598175219545276416, 0, 4638707616191610880]:exact-area-bounds:view=517:10011943452496251222
+operation_pad_round_construct_original_large	100	19474196	[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4661225614328463360, 0, 4620693217682128896]:exact-area-bounds:view=36:1662020241472811411
+operation_pad_round_construct_subnormal	100	19754577	[0, 0, 2, 4, 1, 0, 4620693217682128896]:exact-area-bounds:view=36:16019802235034728997
+operation_pad_round_construct_capsule	100	13769537	[0, 0, 4616189618054758400, 4611686018427387904, 4636666922610458624, 0, 4620693217682128896]:exact-area-bounds:view=37:4473108378523174519
+operation_pad_round_construct_circle	100	14307260	[0, 0, 4611686018427387904, 4611686018427387904, 4636666922610458624, 4631530004285489152, 4620693217682128896]:exact-area-bounds:view=37:17890801319108018343
+operation_pad_round_construct_zero_radius	100	3436935	[0, 0, 4611686018427387904, 4607182418800017408, 0, 0, 4620693217682128896]:exact-area-bounds:view=5:2891221050513716533
+operation_pad_round_construct_beyond_float	100	107706351	[9218868437227405311, 0, 9218868437227405311, 9218868437227405311, 9209861237972664319, 0, 4616189618054758400]:exact-area-bounds:view=0:14695981039346656037
+operation_pad_chamfer_construct_selected	100	11113579	[0, 0, 4611686018427387904, 4607182418800017408, 4596373779694328218, 4607182418800017408, 0, 4607182418800017408, 0, 0]:exact-area-bounds:view=7:11639732381145111389
+operation_pad_chamfer_construct_all	100	10096138	[0, 0, 4611686018427387904, 4607182418800017408, 4602678819172646912, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:7657479472244200005
+operation_pad_chamfer_construct_diamond	100	6732039	[0, 0, 4611686018427387904, 4611686018427387904, 4636666922610458624, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:14576275189783840472
+operation_pad_chamfer_construct_original_large	100	18542239	[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4661225614328463360, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=9:1944624322356870173
+operation_pad_chamfer_construct_subnormal	100	7697663	[0, 0, 1, 1, 1, 4607182418800017408, 4607182418800017408, 4607182418800017408, 4607182418800017408, 0]:exact-area-bounds:view=4:13380826962402805797
+operation_pad_trapezoid_construct_half_delta	100	5615975	[0, 0, 4611686018427387904, 4607182418800017408, 4602678819172646912, 4598175219545276416, 0]:exact-area-bounds:view=5:15514685407312271663
+operation_pad_trapezoid_construct_original_large	100	8358368	[4906019910204099648, 0, 4670232813583204352, 4670232813583204352, 4656722014701092864, 4661225614328463360, 0]:exact-area-bounds:view=5:523567971725089538
+operation_pad_trapezoid_construct_triangle	100	5699300	[0, 0, 4611686018427387904, 4607182418800017408, 4607182418800017408, 0, 0]:exact-area-bounds:view=5:9380243345501906501
+operation_pad_trapezoid_construct_both_limits	100	7328828	[0, 0, 4611686018427387904, 4607182418800017408, 4607182418800017408, 4611686018427387904, 0]:exact-area-bounds:view=5:17992881801385642328
+operation_pad_trapezoid_construct_subnormal	100	6473937	[0, 0, 1, 1, 0, 0, 4636033603912859648]:exact-area-bounds:view=4:13380826962402805797
+operation_pad_trapezoid_invalid_delta	100	88664	size=2,1:delta=1.5,0:retained-source-failure
+operation_pad_trapezoid_construct_zero_side	100	67206	[0, 0, 0, 4607182418800017408, 0, 0, 0]:exact-area-bounds:view=5:7890075589637878472
+operation_pad_round_warm_area_samples_4	1000	30088	2-(4-pi)/16
+operation_pad_round_warm_bounds_samples_4	1000	82275	[-1,-0.5,1,0.5]
+operation_pad_round_warm_area_samples_128	1000	29718	2-(4-pi)/16
+operation_pad_round_warm_bounds_samples_128	1000	81964	[-1,-0.5,1,0.5]
+operation_pad_chamfer_warm_area_original_large	1000	25338	234881024
+operation_pad_trapezoid_warm_bounds_original_large	1000	81815	[1e20-10240,-9216,1e20+10240,9216]
