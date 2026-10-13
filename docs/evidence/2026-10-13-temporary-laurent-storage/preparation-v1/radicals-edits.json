@@ -1,0 +1,30 @@
+[
+  {
+    "before": "struct RadicalCoefficient {\n    rational: Rational,\n    radicals: Vec<(Rational, Rational)>,",
+    "after": "struct RadicalCoefficient {\n    rational: Rational,\n    radicals: smallvec::SmallVec<[(Rational, Rational); 1]>,"
+  },
+  {
+    "before": "rational: value,\n            radicals: Vec::new(),",
+    "after": "rational: value,\n            radicals: smallvec::SmallVec::new(),"
+  },
+  {
+    "before": "radicals: vec![(radicand, value)],",
+    "after": "radicals: smallvec::SmallVec::from_buf([(radicand, value)]),"
+  },
+  {
+    "before": "rational: Rational::zero(),\n            radicals: Vec::new(),",
+    "after": "rational: Rational::zero(),\n            radicals: smallvec::SmallVec::new(),"
+  },
+  {
+    "before": "radicals: vec![(radicand.clone(), -coefficient * inverse_norm)],",
+    "after": "radicals: smallvec::SmallVec::from_buf([(\n                        radicand.clone(),\n                        -coefficient * inverse_norm,\n                    )]),"
+  },
+  {
+    "before": "ClosedRadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.clone(),",
+    "after": "ClosedRadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.to_vec(),"
+  },
+  {
+    "before": "RadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.clone(),\n                            atoms:",
+    "after": "RadicalCoefficient {\n                            rational: coefficient.rational.clone(),\n                            radicals: coefficient.radicals.iter().cloned().collect(),\n                            atoms:"
+  }
+]

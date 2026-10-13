@@ -1,0 +1,10 @@
+[
+  {
+    "before": "struct PiLaurentPolynomial {\n    terms: Vec<(i16, RadicalCoefficient)>,",
+    "after": "struct PiLaurentPolynomial {\n    terms: smallvec::SmallVec<[(i16, RadicalCoefficient); 1]>,"
+  },
+  {
+    "before": "let mut product = Self { terms: Vec::new() };",
+    "after": "let mut product = Self {\n            terms: smallvec::SmallVec::new(),\n        };"
+  }
+]

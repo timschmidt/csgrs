@@ -12,8 +12,11 @@ establish allocation savings or performance improvement. Inline slots may
 increase temporary/memo/stack sizes, move costs and spilling costs. Qualification
 records layouts separately from later requested-heap measurements.
 
-The preparation and sequential qualification runners are prepared but have not
-executed. Eight shared tests cover entry limits, cancellation after spilling,
+Preparation froze four separate 10,132-file sources, each with exactly four
+changed files. The baseline runtime body matches the parent; every candidate
+recovers the original source tokens after its explicit storage replacements.
+The lockfile changes only hyperreal's dependency list, preserving all package
+versions and checksums. Sequential qualification has started in fresh targets. Eight shared tests cover entry limits, cancellation after spilling,
 regrowth, retained copies, exact products/inverses, power limits, opaque owner
 release, and cold/warm/cloned proof queries. Existing P4/cache controls, default
 and all-feature libraries, doctests, strict Clippy and docs follow in every
