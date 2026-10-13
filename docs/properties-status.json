@@ -643,10 +643,10 @@
       "result": "Both complete boards retain 12/197 finding counts; complete report bytes and fixed native costs were not compared for this combination. The original full-board CPU cap still fails. The separate neck check passes its original limit.",
       "next_step": {
         "scope": "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
-        "task": "Freeze two sources from the uninstrumented endpoint/P4 parent and execute the prepared 22-command scalar qualification. No cost sample or native gate has run for this candidate.",
+        "task": "Complete the sequential 22-command scalar qualification and independently assess memo inventories, layouts, P4/cache-frontier behavior and all test/check outputs before any fixed cost comparison.",
         "retained_projection_diagnostic_and_both_storage_comparisons_complete": true,
         "replacement_inputs_prepared": true,
-        "replacement_candidate_prepared": false
+        "replacement_candidate_prepared": true
       },
       "native_runtime_admitted": false
     },
@@ -970,9 +970,9 @@
       "scope": "Compare unchanged Vec, Vec with the SmallVec union feature, and radical-only inline storage with union. Terms, persistent certificates and opaque atoms remain Vec. Use the uninstrumented endpoint/P4 parent and exactly the prior eight storage tests; preserve all arithmetic, limits, original retries, proof monotonicity and owner release.",
       "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and all seven matching private layouts are bound by completed qualification.",
       "next_step": {
-        "status": "source-review-complete-distinct-inputs-prepared",
+        "status": "distinct-memo-candidate-frozen-qualification-running",
         "task": "The recursive-copy review identified a redundant query-memo copy immediately before successful persistent publication. Test skipping only that copy; leave radical arrays, arithmetic and all recognition semantics intact. See closed_certificate_memo.",
-        "candidate_prepared": false
+        "candidate_prepared": true
       },
       "runtime_admitted": false,
       "qualification": "Each variant passes eight shared storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
@@ -1148,13 +1148,15 @@
       }
     },
     "closed_certificate_memo": {
-      "status": "inputs-prepared-not-executed",
+      "status": "two-frozen-sources-scalar-qualification-running",
       "evidence": [
-        "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json"
+        "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json",
+        "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/protocol.json"
       ],
       "scope": "A successfully published closed result makes the same node local memo copy redundant for retained visits because they check the persistent cache first. Closed coefficients contain only rational data, so the omitted copy owns no Computable node. This does not apply to the original non-retaining pass, failed publication or opaque results.",
-      "next_step": "Freeze two sources from the uninstrumented endpoint/P4 parent and execute the prepared 22-command scalar qualification. No cost sample or native gate has run for this candidate.",
-      "runtime_admitted": false
+      "next_step": "Complete the sequential 22-command scalar qualification and independently assess memo inventories, layouts, P4/cache-frontier behavior and all test/check outputs before any fixed cost comparison.",
+      "runtime_admitted": false,
+      "preparation": "Two frozen 10,133-file sources. Shared test inputs are identical. The candidate differs from baseline only in algebra.rs and representation.rs; parent-token recovery passes. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged."
     }
   },
   "status_meanings": {
