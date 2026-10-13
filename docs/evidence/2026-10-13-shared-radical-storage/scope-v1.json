@@ -1,0 +1,102 @@
+{
+  "status": "inputs-prepared-not-executed",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "source_review": [
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "sections": [
+        "RadicalCoefficient fields, constructors, cloning, insertion, scaling, multiplication and inverse",
+        "ClosedPiLaurentPolynomial conversions copy rational/radical arrays but exclude opaque atoms",
+        "PiLaurentPolynomial retains ordered Vec terms, bounded arithmetic and original memo/retry"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/computable/node/representation.rs",
+      "sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "sections": [
+        "Cache reconstruction under the read lock and closed-only publication under the write lock; no escaping guards"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/representation.rs",
+      "sha256": "186758b98318018ed83292edf23f3fc5078bb747c5548246cf31d81157fecfe9",
+      "sections": [
+        "Rational holds an Arc of rational data, with no Computable owners"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "sha256": "ced48307f5f6d8e0b6d8605eea87c4f3f8b6827e507055d3f1e3c32c7392e76d",
+      "sections": [
+        "into_parts and inverse unique/shared ownership paths preserve exact numeric parts; inverse may retain a pair"
+      ]
+    },
+    {
+      "path": "target/native-tower-sign-retention/source/crates/hyperreal/src/rational/arithmetic/ops.rs",
+      "sha256": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925",
+      "sections": [
+        "Owned negation mutates only a unique RationalData owner and clears sign-dependent caches"
+      ]
+    }
+  ],
+  "inference": "Persistent reads rebuild a polynomial and clone each radical Vec. Share only the rational/radical array through an optional Arc<Vec>, using copy-on-write for mutation and unwrapping or cloning on consuming iteration. The prior diagnostic counts cache copies, not allocation counts, time share or expected savings.",
+  "ownership": "Opaque atom Vecs and polynomial term Vecs retain their original cloning and ownership. The shared array owns only Rational pairs. Mutable access uses Arc::make_mut before exposing entries; consuming access uses Arc::unwrap_or_clone. No unsafe implementation, static memo, lock escape or expression-node owner is introduced.",
+  "rational_caveat": "Sharing the array changes Rational reference-count traffic. Rational ownership-sensitive paths were inspected: unique negation or extraction cannot mutate a shared live array because mutable and consuming storage access first obtains owned entries. Qualification still checks every admitted P4 test and exact witnesses; numerical cache costs and retention are measured rather than assumed identical.",
+  "cost_risk": "A new nonempty buffer allocates both a Vec payload and an Arc header; mutations of shared buffers copy. Empty storage is None and mutable empty iteration allocates nothing. Reference-count operations, retained capacity, first-query and construction costs can offset cheaper read copies. Smaller struct layouts are not proof of lower total memory.",
+  "candidate_runtime_files": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/radical_storage.rs"
+  ],
+  "invariants": [
+    "Unchanged arithmetic and insertion order, recognition eligibility, local memo insertion and original non-retaining recognition",
+    "Eight-term/eight-radical bounds and original 512 work/depth plus mandatory original retry with first memo dropped",
+    "Graph-free closed certificates, original opaque node ownership and release",
+    "No dependency feature, manifest, lockfile, approximation or public API change",
+    "P4 warming may strengthen facts but never contradict or weaken them",
+    "Original full-resolution fixtures and 120-second worker-CPU/60-second neck check-body assertions"
+  ],
+  "qualification_next": "Two fresh sources/targets; shared eight storage, three memo, three alias-isolation controls; candidate buffer ownership; inherited six cache and eleven P4 controls; default/all-feature scalar library tests, doctests, formatting, strict Clippy and warning-denied docs. Exact pointer-sharing inventory and all seven layouts are recorded.",
+  "fixed_scalar_costs_if_qualified": {
+    "suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "modes": [
+      "time",
+      "memory"
+    ],
+    "block_order": [
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ],
+      [
+        "candidate",
+        "baseline"
+      ],
+      [
+        "baseline",
+        "candidate"
+      ]
+    ],
+    "measurement_processes": 60,
+    "preflight_processes": 12,
+    "timing_inputs": 4096,
+    "memory_inputs": 1000,
+    "separate_fresh_build_targets": true,
+    "all_builds_before_probes": true,
+    "sample_extension_planned": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}
