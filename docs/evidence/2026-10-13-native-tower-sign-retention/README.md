@@ -1,10 +1,10 @@
 This checks the admitted P4 sign-retention repair in combination with the
-unchanged, still-unadmitted endpoint experiment. The source will contain exactly
+unchanged, still-unadmitted endpoint experiment. The source contains exactly
 that parent's 10,130 recorded files plus the three admitted file replacements
 (two replacements and one new test module). Rejected coefficient experiments
 are not inherited.
 
-The preparation freezes source bytes and fresh main guards. Qualification runs
+The preparation freezes source bytes and fresh main guards. Qualification ran
 the eleven P4 tests, six inherited cache controls, the complete scalar library
 and doctests, solver and curve suites, five endpoint controls, DRC suites,
 strict Clippy and warning-denied documentation. The full-board assertion keeps
@@ -22,6 +22,33 @@ scalar build, eleven sign regressions, six cache controls, 874 scalar library
 tests, 28 doctests, strict stack Clippy and 974 solver tests. The runner then
 stopped on its result-group count: the solver command includes an additional
 empty doctest group. `qualification-failure-v1.json` preserves that inventory
-error. Version 2 reuses the eight verified successful phases and corrects only
+error. Version 2 reused the eight verified successful phases and corrected only
 the expected group count before executing the seven remaining native phases.
-The continuation is prepared but has not executed.
+
+The completed combination passes eleven P4 regressions, six inherited cache
+controls, 874 scalar library tests, 28 scalar doctests, 974 solver results,
+five endpoint controls, 2,494 curve results with 33 existing ignores, and 1,644
+DRC results excluding the two separately executed timing gates. Focused totals
+overlap the full suites. Formatting, strict all-feature/all-target Clippy for
+the four listed crates and warning-denied documentation pass.
+
+The original board assertion fails at 133.31248412 seconds of worker CPU against
+its unchanged 120-second limit. Both boards complete with 12 and 197 findings;
+finding counts are not complete report-byte identity. The separate copper-neck
+assertion passes its unchanged 60-second check-body wall limit. Its 121.511-second
+whole-process duration includes setup and is not the asserted measurement.
+See `qualification-assessment-v2.json` and `qualification-v2/` for exact bindings
+and every original outcome.
+
+`decision-v1.json` keeps this frozen combination available for further work and
+does not admit the native changes. The admitted scalar repair and its accepted
+direct costs remain recorded in the sibling
+`2026-10-13-quadratic-tower-sign-retention/retention-v1.json`. All 35 pending native
+main-worktree entries remain byte-identical. No new application speedup, paired
+native cost improvement or complete report identity is claimed here.
+
+`next-diagnostic-scope-v1.json` records four reviewed source sections and a
+question about actual retained-form copies during quadratic projection. Its
+runner, source fork and measurements are not yet prepared or executed. Any
+follow-up must preserve the original retry, proof availability, budgets and
+owners; counts alone cannot justify a runtime optimization.

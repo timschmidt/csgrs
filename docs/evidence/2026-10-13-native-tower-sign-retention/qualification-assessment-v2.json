@@ -1,0 +1,136 @@
+{
+  "decision": "combined-native-qualification-complete-review-original-gates-and-open-costs",
+  "assessor_sha256": "827e51d5815b79fe9b8d52f3e55ffbc3a6b3e9678088f2c5d8787ca09f6c57eb",
+  "test_counts": [
+    {
+      "name": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-library",
+      "passed": 874,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "solver-tests",
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 11
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "groups": 51
+    },
+    {
+      "name": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 10
+    }
+  ],
+  "format_strict_stack_clippy_and_docs_passed": true,
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "passed": false,
+      "observed_assertion_seconds": 133.31248412,
+      "process_wall_seconds": 134.52721580676734,
+      "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 121.51144994283095,
+      "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+    }
+  ],
+  "all_original_gates_passed": false,
+  "source_parent_main_and_binaries_unchanged": true,
+  "limits": [
+    "The focused test totals overlap the full suites. The 33 ignored curve results remain ignored.",
+    "This covers the listed all-feature release configurations, not the full workflow/feature/target matrix.",
+    "Process wall measurements include setup and never replace the original native assertion metrics.",
+    "The complete boards retain 12 and 197 findings; these counts do not establish complete report identity.",
+    "This combined qualification does not settle inherited endpoint cost tradeoffs or establish an application speedup.",
+    "All pending native work and all properties, targets and crate-specific future work remain open."
+  ],
+  "artifacts_sha256": {
+    "qualification-v2/binaries.json": "94890f55c04fc544fefa3a04e204f6f386fb251d4b80871a1413c382fd0915db",
+    "qualification-v2/build-board-tests.stderr": "09f2b93c4bce5bfb43dca18ca8d9c1dca2831c7d2ffb73b00b96f8f73a607f86",
+    "qualification-v2/build-board-tests.stdout": "f8156092c1f08631bcda589c31bd2fa561ad0606a8b880285b0f63bfe799b4b6",
+    "qualification-v2/build-scalar-tests.stderr": "ff5e66fe7a89d77597925e17fd8c621c800be3938615841ed3b4edafb64d12a5",
+    "qualification-v2/build-scalar-tests.stdout": "ba39cfea38301c10e8003c74f3288ae01cd5ff79e08a5847b80371238c2cbfb7",
+    "qualification-v2/cache-frontiers.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/cache-frontiers.stdout": "9395ad4c909dbe9325b92bcbb9ffa2c70ca48eca1aba997195486b6f883a7585",
+    "qualification-v2/commands.json": "138911bfbe3cfb608c6b354cb740df64d0a3dcc45a821edd59aaa4160494841d",
+    "qualification-v2/copper-neck.stderr": "f55a5c15de4fd9c2cde22d4c772044be71f72950373dfbdc8e0114fa2e1a0fe4",
+    "qualification-v2/copper-neck.stdout": "44fd777c5aa409a120ea225c9e465be88d07c022cfab1ebaba7068571d0156c5",
+    "qualification-v2/curve-tests.stderr": "77c857e4db00f72563e716de2f86f58aff272a3aebdf74f7eb891619391a97db",
+    "qualification-v2/curve-tests.stdout": "4fab244d0a842f2a4181e8d029a933eb7f177c598304ce1fc0f8a6963e1f587c",
+    "qualification-v2/drc-tests-except-separate-gates.stderr": "c6ceb0934d561857101f7fbfbbd96d9be2a3713911fb300d6a7224c40f73665a",
+    "qualification-v2/drc-tests-except-separate-gates.stdout": "afcb53f85f1895a152f9a86b40382782e9a33c2a9423d519db892575ece9ee54",
+    "qualification-v2/endpoint-regressions.stderr": "d347247b6510506cf83524bef4ed6e889f6712bf679a4742d1fa06a6d59e03bc",
+    "qualification-v2/endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "qualification-v2/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/full-board.stderr": "1bdf9483e8d750bef18f5dca7feeb3cc08ce0e65b874d171071fcd7c463d732b",
+    "qualification-v2/full-board.stdout": "05e9bff64580b9a294f51b6c7baaca22bc26018fcea7ec4b31e984a9c105b655",
+    "qualification-v2/protocol.json": "24e60ee85710108bfcdf62803ce5517d914fe94ffb42707ab4077397ccbd3a38",
+    "qualification-v2/result.json": "66a7c884ba4b0ba3476e31feb880f9f02faaab22506e595a36c42f64de1f9c82",
+    "qualification-v2/scalar-doctests.stderr": "638a26019e8c3241a35ad552e1164238b200c1d78bb5c498709980a380e2dddf",
+    "qualification-v2/scalar-doctests.stdout": "88f9f6a2b9b8fc6d549b802a65836be67dced644ac59bdcbb14a557926d5bd86",
+    "qualification-v2/scalar-library.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/scalar-library.stdout": "fa824e797e0382b59fa9f1681c04909303d8b7dca1fc622b64550056f66a2df9",
+    "qualification-v2/sign-regressions.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/sign-regressions.stdout": "8460b859b5e06846eaf514b6c0fce72d1f085eca9c6a35cb0369e49c06fba4b9",
+    "qualification-v2/solver-tests.stderr": "f852a1094d443ea979da0ac12311a43fa67fd084de72fd74b32928aeeb1fd5cd",
+    "qualification-v2/solver-tests.stdout": "d04c5ac941ca3e70adcb63834bc645c3c1e1ae4af27c60e9dce645b3a4654f02",
+    "qualification-v2/stack-docs.stderr": "ce054da69d6ea59ab67e3228bd7c341b18e7d98dda5f593843eede2ba5f6a228",
+    "qualification-v2/stack-docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/strict-stack-clippy.stderr": "7691b484b669d02881f072ee38488a35d84a508c2462b8ebd30ee2ec4d17148e",
+    "qualification-v2/strict-stack-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "qualification-v2/tests.json": "6aad9420f01ec4ca98d9284901f2e04ef6aa5e3c8ed7683e928c2ed51d6d8397"
+  },
+  "reused_successful_phases": 8,
+  "newly_executed_phases": 7,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

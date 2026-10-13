@@ -1,0 +1,105 @@
+{
+  "decision": "combined-correctness-passes-original-board-cap-still-fails",
+  "scope": "The endpoint experiment plus exactly the three admitted P4 files. The scalar repair remains admitted; the pending native work remains unadmitted.",
+  "base_commit": "5d9092083fc32fe127e54a93bcb74b8280b003e1",
+  "preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "qualification_assessment_sha256": "72233143bd1d50e4995013769236d8a995877ff5daff563fe6a1e42fa0031af6",
+  "inventory_failure_sha256": "fc4cdb21ffaa55b8b66d67527dcf841fca204c7568b903c137c0a4b332a93a8e",
+  "next_diagnostic_scope_sha256": "395c4cee0f125a1110c92727769e6a6eac8df713227ea38e0198dcd525501724",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "source_files": 10131,
+  "qualified_test_counts": [
+    {
+      "name": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-library",
+      "passed": 874,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "solver-tests",
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 11
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "groups": 51
+    },
+    {
+      "name": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 10
+    }
+  ],
+  "native_gates": [
+    {
+      "label": "full-board",
+      "test": "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+      "limit_seconds": 120,
+      "metric": "worker CPU",
+      "passed": false,
+      "observed_assertion_seconds": 133.31248412,
+      "process_wall_seconds": 134.52721580676734,
+      "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+    },
+    {
+      "label": "copper-neck",
+      "test": "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+      "limit_seconds": 60,
+      "metric": "check body wall time",
+      "passed": true,
+      "observed_assertion_seconds": null,
+      "process_wall_seconds": 121.51144994283095,
+      "timing_note": "Process wall includes setup and is not worker CPU or copper-neck check-body wall. Passing assertions need not print their internal duration."
+    }
+  ],
+  "checks": "Formatting, strict release all-feature/all-target Clippy for hyperreal/hypersolve/hypercurve/hyperdrc and warning-denied docs pass. The first eight successful phases were reused after correcting the empty solver-doctest inventory; seven remaining phases then ran once.",
+  "finding_counts": [
+    12,
+    197
+  ],
+  "complete_native_reports_compared": false,
+  "new_paired_native_costs_collected": false,
+  "performance_interpretation": "The original complete-board worker-CPU assertion still fails. Its duration is a standalone gate result, not a matched speedup against an earlier run. The passing neck assertion does not print its internal check-body duration.",
+  "next_step": "Prepare the scoped retained-quadratic-projection coverage diagnostic described in next-diagnostic-scope-v1.json. Fork this frozen combination into a new source and target; count only existing root/recursive retained reads, actual closed-form copies and original retries. Retain no new scalar owners and preserve every original arithmetic operation, proof, budget and gate.",
+  "remaining_requirements": "All inherited endpoint timing/memory tradeoffs, complete native report identity, original native limits, all 35 pending entries, full workflow coverage, all 39 properties, all 14 targets and crate-specific future work remain in scope.",
+  "admitted_scalar_repair": true,
+  "native_runtime_admitted": false,
+  "main_and_pending_native_files_unchanged": true,
+  "plan_complete": false
+}

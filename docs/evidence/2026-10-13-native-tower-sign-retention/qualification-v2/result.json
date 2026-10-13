@@ -1,0 +1,406 @@
+{
+  "complete": true,
+  "all_passed": false,
+  "tests": [
+    {
+      "name": "sign-regressions",
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "cache-frontiers",
+      "passed": 6,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-library",
+      "passed": 874,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "scalar-doctests",
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "solver-tests",
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 11
+    },
+    {
+      "name": "endpoint-regressions",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    {
+      "name": "curve-tests",
+      "passed": 2494,
+      "failed": 0,
+      "ignored": 33,
+      "groups": 51
+    },
+    {
+      "name": "drc-tests-except-separate-gates",
+      "passed": 1644,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 10
+    }
+  ],
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 10.389719591941684,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "build-scalar-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 26.670739657711238,
+      "stdout_sha256": "ba39cfea38301c10e8003c74f3288ae01cd5ff79e08a5847b80371238c2cbfb7",
+      "stderr_sha256": "ff5e66fe7a89d77597925e17fd8c621c800be3938615841ed3b4edafb64d12a5"
+    },
+    {
+      "name": "sign-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "quadratic_tower_sign_retention_tests",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 0.008172797970473766,
+      "stdout_sha256": "8460b859b5e06846eaf514b6c0fce72d1f085eca9c6a35cb0369e49c06fba4b9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "cache-frontiers",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "persistent_laurent_cache_tests",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 0.02123827114701271,
+      "stdout_sha256": "9395ad4c909dbe9325b92bcbb9ffa2c70ca48eca1aba997195486b6f883a7585",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "scalar-library",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 3.302027605008334,
+      "stdout_sha256": "fa824e797e0382b59fa9f1681c04909303d8b7dca1fc622b64550056f66a2df9",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "scalar-doctests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "--all-features",
+        "--doc"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 9.203311373014003,
+      "stdout_sha256": "88f9f6a2b9b8fc6d549b802a65836be67dced644ac59bdcbb14a557926d5bd86",
+      "stderr_sha256": "638a26019e8c3241a35ad552e1164238b200c1d78bb5c498709980a380e2dddf"
+    },
+    {
+      "name": "strict-stack-clippy",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 39.629742881283164,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "7691b484b669d02881f072ee38488a35d84a508c2462b8ebd30ee2ec4d17148e"
+    },
+    {
+      "name": "solver-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypersolve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 52.08427495788783,
+      "stdout_sha256": "d04c5ac941ca3e70adcb63834bc645c3c1e1ae4af27c60e9dce645b3a4654f02",
+      "stderr_sha256": "f852a1094d443ea979da0ac12311a43fa67fd084de72fd74b32928aeeb1fd5cd"
+    },
+    {
+      "name": "endpoint-regressions",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_proof_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 108.73328616004437,
+      "stdout_sha256": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+      "stderr_sha256": "d347247b6510506cf83524bef4ed6e889f6712bf679a4742d1fa06a6d59e03bc"
+    },
+    {
+      "name": "curve-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--",
+        "--test-threads=2"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 996.385948473122,
+      "stdout_sha256": "4fab244d0a842f2a4181e8d029a933eb7f177c598304ce1fc0f8a6963e1f587c",
+      "stderr_sha256": "77c857e4db00f72563e716de2f86f58aff272a3aebdf74f7eb891619391a97db"
+    },
+    {
+      "name": "drc-tests-except-separate-gates",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--",
+        "--test-threads=2",
+        "--skip",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--skip",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 312.44722908735275,
+      "stdout_sha256": "afcb53f85f1895a152f9a86b40382782e9a33c2a9423d519db892575ece9ee54",
+      "stderr_sha256": "c6ceb0934d561857101f7fbfbbd96d9be2a3713911fb300d6a7224c40f73665a"
+    },
+    {
+      "name": "stack-docs",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "doc",
+        "--locked",
+        "-p",
+        "hyperreal",
+        "-p",
+        "hypersolve",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--no-deps"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 35.062529207672924,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "ce054da69d6ea59ab67e3228bd7c341b18e7d98dda5f593843eede2ba5f6a228"
+    },
+    {
+      "name": "build-board-tests",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--lib",
+        "--no-run",
+        "--message-format=json"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 0.22251427872106433,
+      "stdout_sha256": "f8156092c1f08631bcda589c31bd2fa561ad0606a8b880285b0f63bfe799b4b6",
+      "stderr_sha256": "09f2b93c4bce5bfb43dca18ca8d9c1dca2831c7d2ffb73b00b96f8f73a607f86"
+    },
+    {
+      "name": "full-board",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::kicad_board_completes_smoke_check_suite",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 101,
+      "seconds": 134.52721580676734,
+      "stdout_sha256": "05e9bff64580b9a294f51b6c7baaca22bc26018fcea7ec4b31e984a9c105b655",
+      "stderr_sha256": "1bdf9483e8d750bef18f5dca7feeb3cc08ce0e65b874d171071fcd7c463d732b"
+    },
+    {
+      "name": "copper-neck",
+      "command": [
+        "timeout",
+        "--signal=TERM",
+        "--kill-after=10s",
+        "1800",
+        "/usr/bin/time",
+        "-v",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hyperdrc-f2524bbb15bdb74d",
+        "zz_complex_project_performance_tests::min_copper_neck_width_completes_on_copper_layers",
+        "--exact",
+        "--test-threads=1",
+        "--nocapture"
+      ],
+      "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+      "exit_code": 0,
+      "seconds": 121.51144994283095,
+      "stdout_sha256": "44fd777c5aa409a120ea225c9e465be88d07c022cfab1ebaba7068571d0156c5",
+      "stderr_sha256": "f55a5c15de4fd9c2cde22d4c772044be71f72950373dfbdc8e0114fa2e1a0fe4"
+    }
+  ],
+  "source_parent_main_and_binaries_unchanged": true,
+  "reused_successful_phases": 8,
+  "newly_executed_phases": 7,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

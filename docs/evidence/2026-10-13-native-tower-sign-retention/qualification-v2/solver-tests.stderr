@@ -1,0 +1,36 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling bytemuck v1.25.0
+   Compiling num-complex v0.4.6
+   Compiling num-bigint v0.4.6
+   Compiling approx v0.5.1
+   Compiling rawpointer v0.2.1
+   Compiling typenum v1.20.1
+   Compiling roots v0.0.8
+   Compiling matrixmultiply v0.3.11
+   Compiling safe_arch v1.2.0
+   Compiling wide v1.7.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperreal)
+   Compiling serde_json v1.0.149
+   Compiling ciborium v0.2.2
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.5.1
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperlattice)
+   Compiling simba v0.10.2
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hyperlimit)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source/crates/hypersolve)
+   Compiling nalgebra v0.35.0
+    Finished `release` profile [optimized] target(s) in 46.82s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/hypersolve-446cab2e5e17d2ba)
+     Running tests/exact_value_root.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/exact_value_root-cf518a6a2438dfb9)
+     Running tests/exactcore_root_families.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/exactcore_root_families-5291b0014ded6b00)
+     Running tests/quadratic_extraction.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/quadratic_extraction-a28c387905b6532a)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/readme-8960651e4d8f5355)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/real_representations-eb14c664e6c29d21)
+     Running tests/residual_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/residual_props-3ff6cac4935f978d)
+     Running tests/smoke.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/smoke-18da9284e84484c0)
+     Running tests/square_free_growth.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/square_free_growth-d5dab42e1fcac109)
+     Running tests/tensor_remainder_scale.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/qualification-target/release/deps/tensor_remainder_scale-cd8f25f145b1993f)
+   Doc-tests hypersolve

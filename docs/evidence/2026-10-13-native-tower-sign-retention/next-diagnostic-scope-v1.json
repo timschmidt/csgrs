@@ -1,0 +1,60 @@
+{
+  "status": "conditional-next-diagnostic-scope-prepared-not-executed",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "prerequisite": "Finish and assess the current combined native qualification. Preserve every original gate outcome; do not treat a failed timing cap as passed. Use this combined source only after its scalar/native correctness checks complete.",
+  "prior_profile": {
+    "path": "docs/evidence/2026-10-13-endpoint-candidate-profile/assessment-v1.json",
+    "sha256": "3c008d0b84a3ef62c1e4cd839ed0fcac70047eeb26841633fb2b16a886213a6f",
+    "scope": "This earlier profile is of the endpoint parent before the admitted P4 repair. Its sampled quadratic-projection share motivates investigation; it does not establish current root-cache hit frequency, allocation cost or a predicted speedup."
+  },
+  "source_review": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "file_sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "begin": "    fn to_polynomial(&self) -> PiLaurentPolynomial {",
+      "end_before": "// This normal form is a bounded recognition fast path",
+      "body_sha256": "f1446ea00dc8a4077334519c7f088e764bca7d3314f305a5b96ed711afbc02fb",
+      "finding": "Every retained read clones the closed form into owned term and radical vectors, before the caller projects it. This source observation does not establish how often root reads occur or what they cost."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "file_sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "begin": "    fn project_pi_laurent_polynomial<T>(",
+      "end_before": "    fn pi_laurent_polynomial(&self,",
+      "body_sha256": "2cf66ad1857d914043eb8ac82dd994b0dab44d7cf7a3ae23f1d8fc4501daacc8",
+      "finding": "A failed retained projection releases its first memo and retries the original recognizer only when a certificate was reused. A failed cached quadratic projection must keep this behavior."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "file_sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "begin": "    fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {",
+      "end_before": "    fn store_pi_laurent_polynomial(",
+      "body_sha256": "89e80f0d8f6f71cf83546b6f0ee6c6e3f293944713f90658c0b025dd762f33ba",
+      "finding": "The existing accessor reads the cache once, holds a read guard while copying a present closed form, and returns an owned polynomial. Root and recursive reads share this accessor."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "file_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "begin": "    pub(crate) fn exact_quadratic_surd_parts(",
+      "end_before": "    #[cfg(test)]\n    pub(super) fn planning_msd(",
+      "body_sha256": "4b11f50694bd0f61db1e5c4ba6c750ec0a858c5cf321d029945d6ec781ab947c",
+      "finding": "Quadratic projection needs only an empty polynomial, or one zero-degree term with no opaque atoms and at most one radical. It clones the retained rational tuple only after successful recognition."
+    }
+  ],
+  "question": "During exact quadratic projection on the complete boards, how often does the root already have a retained closed form, what shape does that form have, and how many existing root and recursive closed-form copies actually execute?",
+  "diagnostic_constraints": [
+    "Use a new source and Cargo target forked from the frozen combined parent. Leave the parent and all main-worktree bytes unchanged. Inherit no rejected coefficient changes or recursive quadratic prepass.",
+    "Identify the active quadratic-projection root with a scoped thread-local cache-address value; retain no Computable, Rational, cache guard or other owner. Restore nested contexts on every return and unwind.",
+    "Count existing accessor outcomes at their actual sites: missing cache cell, missing closed form, present closed form, and execution of the existing to_polynomial copy. Separate root and recursive reads. Inspect only already-borrowed term powers and vector lengths; add no scalar query, cache read, refinement, cache publication or arithmetic operation.",
+    "Record root query success/decline and actual original-retry entries without altering early returns, first-memo release, term order, recognition budgets or retry. Counts of shapes and copied entries are coverage, not allocation measurements or time shares.",
+    "Use fixed counters and an explicit recording lifetime, aggregate joined worker counts and report after the original assertion, including unwinding. Preserve both complete boards, every check and the original 120-second worker-CPU limit. Instrumentation duration is not an optimization result.",
+    "Calibrate disabled/reset behavior, every shape bucket, root/child separation, nested scope restoration, unwinding and joined worker aggregation. Add site controls for missing, retained-quadratic and retained-nonquadratic roots. Run the eleven admitted P4 regressions, six existing cache/frontier controls, endpoint controls, formatting and strict scalar/native Clippy before the complete-board observation."
+  ],
+  "possible_followup": "Only if measured coverage warrants it, preregister direct projection of an already retained root certificate without first copying its vectors. Add no recursive recognition pass or negative cache. A declined retained projection must keep the original normalizer and mandatory original retry. Require independent correctness and fixed timing/allocation/size controls before any retention; complete native reports, inherited tradeoffs and original gates remain admission requirements.",
+  "diagnostic_runner_prepared": false,
+  "new_source_created": false,
+  "build_test_or_measurement_executed": false,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

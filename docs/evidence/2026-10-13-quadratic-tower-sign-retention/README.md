@@ -51,8 +51,11 @@ have been copied byte-for-byte into main and main formatting passes. All other
 guarded source files and all 35 pending native entries are unchanged; see
 `integration-v1/`. The scoped runtime repair is admitted.
 
-`next-native-inputs-v1.json` verifies the unchanged endpoint parent for a fresh
-fork with the admitted repair. That combined fork has not been created or run.
+`next-native-inputs-v1.json` recorded the unchanged endpoint parent for a fresh
+fork with the admitted repair. Subsequent combined qualification is recorded in
+`../2026-10-13-native-tower-sign-retention/qualification-assessment-v2.json`:
+the listed correctness checks pass, the original board CPU cap still fails,
+and the separate copper-neck limit passes. The native work remains unadmitted.
 Original application limits and failures, all 39 properties, all 14 targets and
 crate-specific future work remain in scope. This evidence qualifies the scoped
 scalar repair and its direct solver consumer. The full pre-push matrix and
