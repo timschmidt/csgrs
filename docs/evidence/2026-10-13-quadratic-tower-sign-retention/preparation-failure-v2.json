@@ -1,0 +1,23 @@
+{
+  "status": "test-input-format-identity-failed-before-candidate-compile",
+  "failed_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/candidate-v2/source",
+  "source_count": 10128,
+  "source_changes_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "ce7ed7ea7ebea9801a4fceed64ea9ed75c0c7ea9d2c93c2b73d9a455d5fe2319"
+  },
+  "runner_sha256": "5c3c247d2704e44b37882d2292f8ca0265196d63bd31ae7cf5f0fbe66756e9c0",
+  "qualification_executed": false,
+  "cause": "The crate-local crates/.rustfmt.toml uses rustfmt defaults, while the evidence test file was formatted under the root configuration. Formatting the copied test changed whitespace, violating its exact input byte guard. Runtime recovery checks passed. No candidate compilation or test ran.",
+  "correction": "Version 3 stores the test with the crate-local configuration and retains the same ten tests. Whitespace-stripped v2/v3 inputs are identical. Earlier failed trees and input versions remain immutable.",
+  "crate_format_config_sha256": "747e3cd4a9e48e62b56a0939eaf15bd779fd63329a1df5c2a2d524b017515682",
+  "artifacts_sha256": {
+    "preparation-v2/copy.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparation-v2/failed-delta.tar.gz": "2782d6e5ff0a267dc0c87067f22b20f261ba37b889d5a3c67c72ed5c7938db1d",
+    "preparation-v2/failed-source-hashes.json.gz": "64d6063ddad116dc45fd5914aa50f2bfa34cde751ecc8e7aa9473b65036cb710",
+    "preparation-v2/failed.patch": "95392aa7cdf9bfb6ab663f2ef414d5a9485ef4a90f6a383291e2ec15935cbfa7",
+    "preparation-v2/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "runtime_admitted": false
+}
