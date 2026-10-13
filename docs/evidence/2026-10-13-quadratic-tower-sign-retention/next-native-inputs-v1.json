@@ -1,0 +1,24 @@
+{
+  "status": "native-parent-layering-prepared-not-executed",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-coordinate-reuse/source",
+  "parent_source_count_verified": 10130,
+  "parent_preparation_sha256": "c4cfcdbfd171c86c8a6889ebb134c230fa9dc8628de58f63a777f48a341ca789",
+  "parent_existing_runtime_files_match_pre_repair_main": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "3f3a2b11c2302deb8883a6ddbb50e571b7de0f13d5b45a2d7ec2aae311ea8a20",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "15ca2ac16c6ad6010c5b20ae5efb977c6fb959878b09ed3e0aa0efce605c07c7"
+  },
+  "admitted_repair_files_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "d82d4c28c00e3ee1a0f682996d340c83f676a84ad06b967ac1bab8ab71f39d03"
+  },
+  "new_test_absent_in_parent": "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs",
+  "action": "Fork the unchanged endpoint parent into a new source and target. Layer exactly the admitted three-file P4 repair; freeze the combined source. Establish fresh main guards, then run the new P4 regressions and inherited cache/endpoint controls before revisiting the original native gates and remaining cost/report tradeoffs. Do not inherit either rejected coefficient experiment.",
+  "original_limits": {
+    "full_board_worker_cpu_seconds": 120,
+    "copper_neck_check_body_wall_seconds": 60
+  },
+  "no_new_native_source_build_test_or_measurement_executed": true,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

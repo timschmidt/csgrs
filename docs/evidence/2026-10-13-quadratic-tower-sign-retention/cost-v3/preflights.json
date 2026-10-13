@@ -1,0 +1,3862 @@
+[
+  {
+    "label": "baseline-time",
+    "rows": [
+      {
+        "name": "quadratic_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 87884,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "quadratic_first_compaction",
+        "iterations": 42,
+        "nanos": 123571,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_warm_compaction",
+        "iterations": 42,
+        "nanos": 52486,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_cloned_compaction",
+        "iterations": 42,
+        "nanos": 29158,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 146710,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 144430,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 60176,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 57006,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 139610,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 262752,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 180398,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 173948,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 166059,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "negative_normalized_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 285041,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 189137,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 152599,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 739729,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 145860,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 72565,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 63036,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 731829,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 279860,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 107812,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 95553,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 968493,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 243583,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 168308,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 162489,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 946595,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 348336,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 187687,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 188177,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 868961,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 138351,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 70435,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 51247,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 1189008,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 291390,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 108663,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 99843,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "rational_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 223505,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "rational_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 206146,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 7610,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 8019,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 197946,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "zero_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 316268,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 6739,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7029,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "opaque_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 68435,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "opaque_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 5180,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 4480,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 5319,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 67766,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "outside_tower_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 135071,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 123741,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 113452,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "aborted_known_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 99054,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "aborted_known_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 217754,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 150630,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 150550,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      }
+    ]
+  },
+  {
+    "label": "baseline-memory",
+    "rows": [
+      {
+        "name": "quadratic_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 99053,
+        "allocation_accounting": true,
+        "allocation_calls": 406,
+        "allocated_bytes": 23928,
+        "retained_bytes_delta": 22312,
+        "peak_bytes_delta": 22312
+      },
+      {
+        "name": "quadratic_first_compaction",
+        "iterations": 42,
+        "nanos": 159869,
+        "allocation_accounting": true,
+        "allocation_calls": 1261,
+        "allocated_bytes": 92568,
+        "retained_bytes_delta": 30576,
+        "peak_bytes_delta": 31324
+      },
+      {
+        "witness": "quadratic_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_warm_compaction",
+        "iterations": 42,
+        "nanos": 67026,
+        "allocation_accounting": true,
+        "allocation_calls": 673,
+        "allocated_bytes": 47544,
+        "retained_bytes_delta": 31920,
+        "peak_bytes_delta": 31920
+      },
+      {
+        "witness": "quadratic_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_cloned_compaction",
+        "iterations": 42,
+        "nanos": 40377,
+        "allocation_accounting": true,
+        "allocation_calls": 295,
+        "allocated_bytes": 29400,
+        "retained_bytes_delta": 14448,
+        "peak_bytes_delta": 14508
+      },
+      {
+        "witness": "quadratic_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 197646,
+        "allocation_accounting": true,
+        "allocation_calls": 2129,
+        "allocated_bytes": 102608,
+        "retained_bytes_delta": 30096,
+        "peak_bytes_delta": 30752
+      },
+      {
+        "name": "denested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 192697,
+        "allocation_accounting": true,
+        "allocation_calls": 1761,
+        "allocated_bytes": 119104,
+        "retained_bytes_delta": 46152,
+        "peak_bytes_delta": 46740
+      },
+      {
+        "witness": "denested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 83174,
+        "allocation_accounting": true,
+        "allocation_calls": 841,
+        "allocated_bytes": 56952,
+        "retained_bytes_delta": 41328,
+        "peak_bytes_delta": 41328
+      },
+      {
+        "witness": "denested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 76125,
+        "allocation_accounting": true,
+        "allocation_calls": 463,
+        "allocated_bytes": 38808,
+        "retained_bytes_delta": 23856,
+        "peak_bytes_delta": 23856
+      },
+      {
+        "witness": "denested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 196496,
+        "allocation_accounting": true,
+        "allocation_calls": 2608,
+        "allocated_bytes": 110352,
+        "retained_bytes_delta": 25008,
+        "peak_bytes_delta": 25528
+      },
+      {
+        "name": "nested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 390803,
+        "allocation_accounting": true,
+        "allocation_calls": 6133,
+        "allocated_bytes": 303072,
+        "retained_bytes_delta": 65184,
+        "peak_bytes_delta": 66156
+      },
+      {
+        "witness": "nested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 262972,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "nested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 224885,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "nested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 249092,
+        "allocation_accounting": true,
+        "allocation_calls": 2902,
+        "allocated_bytes": 128808,
+        "retained_bytes_delta": 28008,
+        "peak_bytes_delta": 28456
+      },
+      {
+        "name": "negative_normalized_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 411862,
+        "allocation_accounting": true,
+        "allocation_calls": 6385,
+        "allocated_bytes": 328272,
+        "retained_bytes_delta": 79968,
+        "peak_bytes_delta": 80468
+      },
+      {
+        "witness": "negative_normalized_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 279051,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "negative_normalized_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 263512,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "negative_normalized_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 1285261,
+        "allocation_accounting": true,
+        "allocation_calls": 13222,
+        "allocated_bytes": 862752,
+        "retained_bytes_delta": 110288,
+        "peak_bytes_delta": 111216
+      },
+      {
+        "name": "denested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 154789,
+        "allocation_accounting": true,
+        "allocation_calls": 1933,
+        "allocated_bytes": 180600,
+        "retained_bytes_delta": 48048,
+        "peak_bytes_delta": 49656
+      },
+      {
+        "witness": "denested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 77205,
+        "allocation_accounting": true,
+        "allocation_calls": 1051,
+        "allocated_bytes": 68040,
+        "retained_bytes_delta": 47376,
+        "peak_bytes_delta": 47376
+      },
+      {
+        "witness": "denested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 64605,
+        "allocation_accounting": true,
+        "allocation_calls": 673,
+        "allocated_bytes": 49896,
+        "retained_bytes_delta": 29904,
+        "peak_bytes_delta": 29904
+      },
+      {
+        "witness": "denested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 779446,
+        "allocation_accounting": true,
+        "allocation_calls": 13147,
+        "allocated_bytes": 858144,
+        "retained_bytes_delta": 112896,
+        "peak_bytes_delta": 113752
+      },
+      {
+        "name": "denested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 290849,
+        "allocation_accounting": true,
+        "allocation_calls": 4041,
+        "allocated_bytes": 407752,
+        "retained_bytes_delta": 172592,
+        "peak_bytes_delta": 173368
+      },
+      {
+        "witness": "denested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 97533,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "denested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "denested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 104523,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "denested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 1022230,
+        "allocation_accounting": true,
+        "allocation_calls": 16760,
+        "allocated_bytes": 1590656,
+        "retained_bytes_delta": 122672,
+        "peak_bytes_delta": 123704
+      },
+      {
+        "name": "nested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 268041,
+        "allocation_accounting": true,
+        "allocation_calls": 6217,
+        "allocated_bytes": 311472,
+        "retained_bytes_delta": 68208,
+        "peak_bytes_delta": 69036
+      },
+      {
+        "witness": "nested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 175408,
+        "allocation_accounting": true,
+        "allocation_calls": 3823,
+        "allocated_bytes": 213360,
+        "retained_bytes_delta": 62496,
+        "peak_bytes_delta": 63324
+      },
+      {
+        "witness": "nested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 165768,
+        "allocation_accounting": true,
+        "allocation_calls": 3445,
+        "allocated_bytes": 195216,
+        "retained_bytes_delta": 45024,
+        "peak_bytes_delta": 45852
+      },
+      {
+        "witness": "nested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 995961,
+        "allocation_accounting": true,
+        "allocation_calls": 16801,
+        "allocated_bytes": 1593648,
+        "retained_bytes_delta": 125664,
+        "peak_bytes_delta": 126624
+      },
+      {
+        "name": "nested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 363035,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 505344,
+        "retained_bytes_delta": 177408,
+        "peak_bytes_delta": 178164
+      },
+      {
+        "witness": "nested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 195806,
+        "allocation_accounting": true,
+        "allocation_calls": 3697,
+        "allocated_bytes": 210672,
+        "retained_bytes_delta": 60480,
+        "peak_bytes_delta": 61236
+      },
+      {
+        "witness": "nested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "nested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 196706,
+        "allocation_accounting": true,
+        "allocation_calls": 3697,
+        "allocated_bytes": 210672,
+        "retained_bytes_delta": 60480,
+        "peak_bytes_delta": 61236
+      },
+      {
+        "witness": "nested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 927956,
+        "allocation_accounting": true,
+        "allocation_calls": 16401,
+        "allocated_bytes": 1114696,
+        "retained_bytes_delta": 98360,
+        "peak_bytes_delta": 99360
+      },
+      {
+        "name": "biquadratic_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 134940,
+        "allocation_accounting": true,
+        "allocation_calls": 2437,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 66864,
+        "peak_bytes_delta": 67304
+      },
+      {
+        "witness": "biquadratic_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 71055,
+        "allocation_accounting": true,
+        "allocation_calls": 1177,
+        "allocated_bytes": 67704,
+        "retained_bytes_delta": 51408,
+        "peak_bytes_delta": 51408
+      },
+      {
+        "witness": "biquadratic_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 52046,
+        "allocation_accounting": true,
+        "allocation_calls": 463,
+        "allocated_bytes": 38808,
+        "retained_bytes_delta": 23856,
+        "peak_bytes_delta": 23856
+      },
+      {
+        "witness": "biquadratic_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 913557,
+        "allocation_accounting": true,
+        "allocation_calls": 16423,
+        "allocated_bytes": 1116864,
+        "retained_bytes_delta": 100800,
+        "peak_bytes_delta": 101728
+      },
+      {
+        "name": "biquadratic_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 279611,
+        "allocation_accounting": true,
+        "allocation_calls": 4537,
+        "allocated_bytes": 420168,
+        "retained_bytes_delta": 186816,
+        "peak_bytes_delta": 187496
+      },
+      {
+        "witness": "biquadratic_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 111212,
+        "allocation_accounting": true,
+        "allocation_calls": 1303,
+        "allocated_bytes": 79128,
+        "retained_bytes_delta": 58464,
+        "peak_bytes_delta": 58464
+      },
+      {
+        "witness": "biquadratic_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 104402,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "biquadratic_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "rational_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 237674,
+        "allocation_accounting": true,
+        "allocation_calls": 3529,
+        "allocated_bytes": 194880,
+        "retained_bytes_delta": 43552,
+        "peak_bytes_delta": 45936
+      },
+      {
+        "name": "rational_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 213175,
+        "allocation_accounting": true,
+        "allocation_calls": 2723,
+        "allocated_bytes": 224912,
+        "retained_bytes_delta": 56072,
+        "peak_bytes_delta": 58808
+      },
+      {
+        "witness": "rational_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 7759,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "rational_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7789,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "rational_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 221275,
+        "allocation_accounting": true,
+        "allocation_calls": 4159,
+        "allocated_bytes": 222432,
+        "retained_bytes_delta": 49936,
+        "peak_bytes_delta": 52320
+      },
+      {
+        "name": "zero_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 220064,
+        "allocation_accounting": true,
+        "allocation_calls": 2857,
+        "allocated_bytes": 238728,
+        "retained_bytes_delta": 54096,
+        "peak_bytes_delta": 56960
+      },
+      {
+        "witness": "zero_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 7380,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "zero_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7799,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "zero_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "opaque_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 46337,
+        "allocation_accounting": true,
+        "allocation_calls": 338,
+        "allocated_bytes": 19896,
+        "retained_bytes_delta": 18552,
+        "peak_bytes_delta": 18552
+      },
+      {
+        "name": "opaque_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 3180,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 2790,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 2800,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 44137,
+        "allocation_accounting": true,
+        "allocation_calls": 631,
+        "allocated_bytes": 35616,
+        "retained_bytes_delta": 34272,
+        "peak_bytes_delta": 34272
+      },
+      {
+        "name": "outside_tower_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 130681,
+        "allocation_accounting": true,
+        "allocation_calls": 2373,
+        "allocated_bytes": 151552,
+        "retained_bytes_delta": 2600,
+        "peak_bytes_delta": 5536
+      },
+      {
+        "witness": "outside_tower_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 119671,
+        "allocation_accounting": true,
+        "allocation_calls": 2353,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 4952
+      },
+      {
+        "witness": "outside_tower_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 120352,
+        "allocation_accounting": true,
+        "allocation_calls": 2353,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 4952
+      },
+      {
+        "witness": "outside_tower_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "aborted_known_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 103743,
+        "allocation_accounting": true,
+        "allocation_calls": 2647,
+        "allocated_bytes": 111216,
+        "retained_bytes_delta": 25872,
+        "peak_bytes_delta": 26368
+      },
+      {
+        "name": "aborted_known_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 235944,
+        "allocation_accounting": true,
+        "allocation_calls": 6133,
+        "allocated_bytes": 303072,
+        "retained_bytes_delta": 65184,
+        "peak_bytes_delta": 66156
+      },
+      {
+        "witness": "aborted_known_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 159579,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "aborted_known_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 150820,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "aborted_known_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      }
+    ]
+  },
+  {
+    "label": "candidate-time",
+    "rows": [
+      {
+        "name": "quadratic_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 73155,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "quadratic_first_compaction",
+        "iterations": 42,
+        "nanos": 103523,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_warm_compaction",
+        "iterations": 42,
+        "nanos": 41707,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_cloned_compaction",
+        "iterations": 42,
+        "nanos": 22979,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "quadratic_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 117891,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 116662,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 48657,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 44987,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 111632,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 220405,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 144390,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 137420,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 127531,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "negative_normalized_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 225164,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 157599,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 145540,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "negative_normalized_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 737219,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 144131,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 69515,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 59756,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 722250,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "denested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 280831,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 83814,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 84164,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "denested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 968054,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 243323,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 161549,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 152049,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 930005,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "nested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 344336,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 173008,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 173478,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "nested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 816274,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "biquadratic_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 132471,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 65436,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 46247,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 857961,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "biquadratic_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 272671,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 96183,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 86714,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "biquadratic_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 216555,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "rational_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 207845,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 7520,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7669,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "rational_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 205465,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "zero_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 214115,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 6620,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7040,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "zero_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "opaque_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 45067,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "opaque_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 3040,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 2550,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 2759,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "opaque_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 39497,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "outside_tower_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 119192,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 114992,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 114772,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "outside_tower_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "aborted_known_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 97053,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "name": "aborted_known_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 223344,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 149370,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 141790,
+        "allocation_accounting": false,
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": 0,
+        "peak_bytes_delta": 0
+      },
+      {
+        "witness": "aborted_known_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      }
+    ]
+  },
+  {
+    "label": "candidate-memory",
+    "rows": [
+      {
+        "name": "quadratic_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 77124,
+        "allocation_accounting": true,
+        "allocation_calls": 406,
+        "allocated_bytes": 23928,
+        "retained_bytes_delta": 22312,
+        "peak_bytes_delta": 22312
+      },
+      {
+        "name": "quadratic_first_compaction",
+        "iterations": 42,
+        "nanos": 101873,
+        "allocation_accounting": true,
+        "allocation_calls": 1261,
+        "allocated_bytes": 92568,
+        "retained_bytes_delta": 30576,
+        "peak_bytes_delta": 31324
+      },
+      {
+        "witness": "quadratic_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_warm_compaction",
+        "iterations": 42,
+        "nanos": 46897,
+        "allocation_accounting": true,
+        "allocation_calls": 673,
+        "allocated_bytes": 47544,
+        "retained_bytes_delta": 31920,
+        "peak_bytes_delta": 31920
+      },
+      {
+        "witness": "quadratic_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "quadratic_cloned_compaction",
+        "iterations": 42,
+        "nanos": 24219,
+        "allocation_accounting": true,
+        "allocation_calls": 295,
+        "allocated_bytes": 29400,
+        "retained_bytes_delta": 14448,
+        "peak_bytes_delta": 14508
+      },
+      {
+        "witness": "quadratic_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 130951,
+        "allocation_accounting": true,
+        "allocation_calls": 2129,
+        "allocated_bytes": 102608,
+        "retained_bytes_delta": 30096,
+        "peak_bytes_delta": 30752
+      },
+      {
+        "name": "denested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 120302,
+        "allocation_accounting": true,
+        "allocation_calls": 1761,
+        "allocated_bytes": 119104,
+        "retained_bytes_delta": 46152,
+        "peak_bytes_delta": 46740
+      },
+      {
+        "witness": "denested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 49616,
+        "allocation_accounting": true,
+        "allocation_calls": 841,
+        "allocated_bytes": 56952,
+        "retained_bytes_delta": 41328,
+        "peak_bytes_delta": 41328
+      },
+      {
+        "witness": "denested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 46197,
+        "allocation_accounting": true,
+        "allocation_calls": 463,
+        "allocated_bytes": 38808,
+        "retained_bytes_delta": 23856,
+        "peak_bytes_delta": 23856
+      },
+      {
+        "witness": "denested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 123352,
+        "allocation_accounting": true,
+        "allocation_calls": 2608,
+        "allocated_bytes": 110352,
+        "retained_bytes_delta": 25008,
+        "peak_bytes_delta": 25528
+      },
+      {
+        "name": "nested_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 228295,
+        "allocation_accounting": true,
+        "allocation_calls": 6133,
+        "allocated_bytes": 303072,
+        "retained_bytes_delta": 65184,
+        "peak_bytes_delta": 66156
+      },
+      {
+        "witness": "nested_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 155589,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "nested_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 146440,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "nested_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 136801,
+        "allocation_accounting": true,
+        "allocation_calls": 2902,
+        "allocated_bytes": 128808,
+        "retained_bytes_delta": 28008,
+        "peak_bytes_delta": 28456
+      },
+      {
+        "name": "negative_normalized_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 252243,
+        "allocation_accounting": true,
+        "allocation_calls": 6385,
+        "allocated_bytes": 328272,
+        "retained_bytes_delta": 79968,
+        "peak_bytes_delta": 80468
+      },
+      {
+        "witness": "negative_normalized_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 173428,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "negative_normalized_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "negative_normalized_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 154299,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "negative_normalized_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "ef1551eff423fcc1",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 851001,
+        "allocation_accounting": true,
+        "allocation_calls": 13222,
+        "allocated_bytes": 862752,
+        "retained_bytes_delta": 110288,
+        "peak_bytes_delta": 111216
+      },
+      {
+        "name": "denested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 153899,
+        "allocation_accounting": true,
+        "allocation_calls": 1933,
+        "allocated_bytes": 180600,
+        "retained_bytes_delta": 48048,
+        "peak_bytes_delta": 49656
+      },
+      {
+        "witness": "denested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 72385,
+        "allocation_accounting": true,
+        "allocation_calls": 1051,
+        "allocated_bytes": 68040,
+        "retained_bytes_delta": 47376,
+        "peak_bytes_delta": 47376
+      },
+      {
+        "witness": "denested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 77235,
+        "allocation_accounting": true,
+        "allocation_calls": 673,
+        "allocated_bytes": 49896,
+        "retained_bytes_delta": 29904,
+        "peak_bytes_delta": 29904
+      },
+      {
+        "witness": "denested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 809994,
+        "allocation_accounting": true,
+        "allocation_calls": 13147,
+        "allocated_bytes": 858144,
+        "retained_bytes_delta": 112896,
+        "peak_bytes_delta": 113752
+      },
+      {
+        "name": "denested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 298259,
+        "allocation_accounting": true,
+        "allocation_calls": 4041,
+        "allocated_bytes": 407752,
+        "retained_bytes_delta": 172592,
+        "peak_bytes_delta": 173368
+      },
+      {
+        "witness": "denested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 94264,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "denested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "denested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 90174,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "denested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 1069096,
+        "allocation_accounting": true,
+        "allocation_calls": 16760,
+        "allocated_bytes": 1590656,
+        "retained_bytes_delta": 122672,
+        "peak_bytes_delta": 123704
+      },
+      {
+        "name": "nested_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 272761,
+        "allocation_accounting": true,
+        "allocation_calls": 6217,
+        "allocated_bytes": 311472,
+        "retained_bytes_delta": 68208,
+        "peak_bytes_delta": 69036
+      },
+      {
+        "witness": "nested_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 173508,
+        "allocation_accounting": true,
+        "allocation_calls": 3823,
+        "allocated_bytes": 213360,
+        "retained_bytes_delta": 62496,
+        "peak_bytes_delta": 63324
+      },
+      {
+        "witness": "nested_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 195596,
+        "allocation_accounting": true,
+        "allocation_calls": 3445,
+        "allocated_bytes": 195216,
+        "retained_bytes_delta": 45024,
+        "peak_bytes_delta": 45852
+      },
+      {
+        "witness": "nested_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 996542,
+        "allocation_accounting": true,
+        "allocation_calls": 16801,
+        "allocated_bytes": 1593648,
+        "retained_bytes_delta": 125664,
+        "peak_bytes_delta": 126624
+      },
+      {
+        "name": "nested_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 369415,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 505344,
+        "retained_bytes_delta": 177408,
+        "peak_bytes_delta": 178164
+      },
+      {
+        "witness": "nested_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 201916,
+        "allocation_accounting": true,
+        "allocation_calls": 3697,
+        "allocated_bytes": 210672,
+        "retained_bytes_delta": 60480,
+        "peak_bytes_delta": 61236
+      },
+      {
+        "witness": "nested_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "nested_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 186707,
+        "allocation_accounting": true,
+        "allocation_calls": 3697,
+        "allocated_bytes": 210672,
+        "retained_bytes_delta": 60480,
+        "peak_bytes_delta": 61236
+      },
+      {
+        "witness": "nested_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 874189,
+        "allocation_accounting": true,
+        "allocation_calls": 16401,
+        "allocated_bytes": 1114696,
+        "retained_bytes_delta": 98360,
+        "peak_bytes_delta": 99360
+      },
+      {
+        "name": "biquadratic_tiny_linear_first_compaction",
+        "iterations": 42,
+        "nanos": 136770,
+        "allocation_accounting": true,
+        "allocation_calls": 2437,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 66864,
+        "peak_bytes_delta": 67304
+      },
+      {
+        "witness": "biquadratic_tiny_linear_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_warm_compaction",
+        "iterations": 42,
+        "nanos": 69426,
+        "allocation_accounting": true,
+        "allocation_calls": 1177,
+        "allocated_bytes": 67704,
+        "retained_bytes_delta": 51408,
+        "peak_bytes_delta": 51408
+      },
+      {
+        "witness": "biquadratic_tiny_linear_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_linear_cloned_compaction",
+        "iterations": 42,
+        "nanos": 48117,
+        "allocation_accounting": true,
+        "allocation_calls": 463,
+        "allocated_bytes": 38808,
+        "retained_bytes_delta": 23856,
+        "peak_bytes_delta": 23856
+      },
+      {
+        "witness": "biquadratic_tiny_linear_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 947734,
+        "allocation_accounting": true,
+        "allocation_calls": 16423,
+        "allocated_bytes": 1116864,
+        "retained_bytes_delta": 100800,
+        "peak_bytes_delta": 101728
+      },
+      {
+        "name": "biquadratic_tiny_square_first_compaction",
+        "iterations": 42,
+        "nanos": 290860,
+        "allocation_accounting": true,
+        "allocation_calls": 4537,
+        "allocated_bytes": 420168,
+        "retained_bytes_delta": 186816,
+        "peak_bytes_delta": 187496
+      },
+      {
+        "witness": "biquadratic_tiny_square_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_warm_compaction",
+        "iterations": 42,
+        "nanos": 101853,
+        "allocation_accounting": true,
+        "allocation_calls": 1303,
+        "allocated_bytes": 79128,
+        "retained_bytes_delta": 58464,
+        "peak_bytes_delta": 58464
+      },
+      {
+        "witness": "biquadratic_tiny_square_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "biquadratic_tiny_square_cloned_compaction",
+        "iterations": 42,
+        "nanos": 92684,
+        "allocation_accounting": true,
+        "allocation_calls": 967,
+        "allocated_bytes": 68376,
+        "retained_bytes_delta": 48384,
+        "peak_bytes_delta": 48384
+      },
+      {
+        "witness": "biquadratic_tiny_square_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 232134,
+        "allocation_accounting": true,
+        "allocation_calls": 3549,
+        "allocated_bytes": 195712,
+        "retained_bytes_delta": 44112,
+        "peak_bytes_delta": 46496
+      },
+      {
+        "name": "rational_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 221395,
+        "allocation_accounting": true,
+        "allocation_calls": 2723,
+        "allocated_bytes": 224912,
+        "retained_bytes_delta": 56072,
+        "peak_bytes_delta": 58808
+      },
+      {
+        "witness": "rational_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 8359,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "rational_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "rational_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 8430,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "rational_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 211925,
+        "allocation_accounting": true,
+        "allocation_calls": 4159,
+        "allocated_bytes": 222432,
+        "retained_bytes_delta": 49936,
+        "peak_bytes_delta": 52320
+      },
+      {
+        "name": "zero_cancellation_first_compaction",
+        "iterations": 42,
+        "nanos": 222264,
+        "allocation_accounting": true,
+        "allocation_calls": 2857,
+        "allocated_bytes": 238728,
+        "retained_bytes_delta": 54096,
+        "peak_bytes_delta": 56960
+      },
+      {
+        "witness": "zero_cancellation_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_warm_compaction",
+        "iterations": 42,
+        "nanos": 6990,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "zero_cancellation_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "zero_cancellation_cloned_compaction",
+        "iterations": 42,
+        "nanos": 7429,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 16968,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2372
+      },
+      {
+        "witness": "zero_cancellation_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "f666e5981bbeca5f",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "opaque_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 48537,
+        "allocation_accounting": true,
+        "allocation_calls": 338,
+        "allocated_bytes": 19896,
+        "retained_bytes_delta": 18552,
+        "peak_bytes_delta": 18552
+      },
+      {
+        "name": "opaque_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 3280,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 2700,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "opaque_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 2879,
+        "allocation_accounting": true,
+        "allocation_calls": 85,
+        "allocated_bytes": 5376,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 2080
+      },
+      {
+        "witness": "opaque_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 42497,
+        "allocation_accounting": true,
+        "allocation_calls": 631,
+        "allocated_bytes": 35616,
+        "retained_bytes_delta": 34272,
+        "peak_bytes_delta": 34272
+      },
+      {
+        "name": "outside_tower_decline_first_compaction",
+        "iterations": 42,
+        "nanos": 132071,
+        "allocation_accounting": true,
+        "allocation_calls": 2373,
+        "allocated_bytes": 151552,
+        "retained_bytes_delta": 2600,
+        "peak_bytes_delta": 5536
+      },
+      {
+        "witness": "outside_tower_decline_first_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_warm_compaction",
+        "iterations": 42,
+        "nanos": 130971,
+        "allocation_accounting": true,
+        "allocation_calls": 2353,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 4952
+      },
+      {
+        "witness": "outside_tower_decline_warm_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "outside_tower_decline_cloned_compaction",
+        "iterations": 42,
+        "nanos": 124372,
+        "allocation_accounting": true,
+        "allocation_calls": 2353,
+        "allocated_bytes": 150696,
+        "retained_bytes_delta": 2016,
+        "peak_bytes_delta": 4952
+      },
+      {
+        "witness": "outside_tower_decline_cloned_compaction",
+        "inputs": 42,
+        "covered": 0,
+        "value_equality_fnv1a64": "907beb9966461f89",
+        "immediate_known": 0,
+        "precision_zero_known": 0
+      },
+      {
+        "name": "aborted_known_tower_construct_and_prove_source",
+        "iterations": 42,
+        "nanos": 107273,
+        "allocation_accounting": true,
+        "allocation_calls": 2647,
+        "allocated_bytes": 111216,
+        "retained_bytes_delta": 25872,
+        "peak_bytes_delta": 26368
+      },
+      {
+        "name": "aborted_known_tower_first_compaction",
+        "iterations": 42,
+        "nanos": 239153,
+        "allocation_accounting": true,
+        "allocation_calls": 6133,
+        "allocated_bytes": 303072,
+        "retained_bytes_delta": 65184,
+        "peak_bytes_delta": 66156
+      },
+      {
+        "witness": "aborted_known_tower_first_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_warm_compaction",
+        "iterations": 42,
+        "nanos": 160239,
+        "allocation_accounting": true,
+        "allocation_calls": 3739,
+        "allocated_bytes": 207312,
+        "retained_bytes_delta": 56448,
+        "peak_bytes_delta": 57420
+      },
+      {
+        "witness": "aborted_known_tower_warm_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      },
+      {
+        "name": "aborted_known_tower_cloned_compaction",
+        "iterations": 42,
+        "nanos": 148999,
+        "allocation_accounting": true,
+        "allocation_calls": 3361,
+        "allocated_bytes": 189168,
+        "retained_bytes_delta": 38976,
+        "peak_bytes_delta": 39948
+      },
+      {
+        "witness": "aborted_known_tower_cloned_compaction",
+        "inputs": 42,
+        "covered": 42,
+        "value_equality_fnv1a64": "a2739ac778933769",
+        "immediate_known": 42,
+        "precision_zero_known": 42
+      }
+    ]
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "tested_file_transfer_matches": true,
+  "main_format_check_passed": true,
+  "all_other_guarded_sources_unchanged": true,
+  "all_35_pending_native_files_unchanged": true,
+  "guarded_main_sources": 1134,
+  "test_qualification": "Exact transferred source bytes were already qualified in the isolated source with default/all-feature scalar tests, docs, Clippy and full direct solver tests. Those suites were not repeated for a byte-identical integration.",
+  "scope": "Only the three-file sign-retention repair. Native geometry admission and full properties/targets/future-work plan remain open."
+}

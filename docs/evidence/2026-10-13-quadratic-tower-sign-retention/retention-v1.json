@@ -1,0 +1,249 @@
+{
+  "status": "retain-scoped-quadratic-tower-sign-proof-repair",
+  "scope": "Three hyperreal files from the current-main-based candidate only. This does not admit any pending native geometry or earlier optimization prototype.",
+  "base_commit": "78e151af5d32d7564d52fc76a02edbb98dee6732",
+  "files_sha256": {
+    "crates/hyperreal/src/computable/node/quadratic_tower.rs": "30946504f063620fb115ee1b59f09e0a33f01bb9c8a4fcc19f0c558d9a2fcab0",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign.rs": "4eeb2ac63238cca5dcd4fe1b9637f92d0adfe0b45b3b2f922d14b891a4f6fd39",
+    "crates/hyperreal/src/real/arithmetic/quadratic_tower_sign_retention_tests.rs": "d82d4c28c00e3ee1a0f682996d340c83f676a84ad06b967ac1bab8ab71f39d03"
+  },
+  "correctness_sha256": "6ee51e45a811750cd030fadcd140147a89b293c3cde76cc6cb130b4ff86bd77f",
+  "cost_assessment_sha256": "c3e6054c7b14c8f14309747180db83f29a3a7614489569cf56e6c434609cfd02",
+  "integration_result_sha256": "fb915e1979327303d98b978e03f0bebd5459e14ff309e116176e83ff23e21184",
+  "accepted_P4_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
+  "behavior": "Before multiplying by the original outer rational, source_payload = rebuilt_scale * rebuilt_payload. For nonzero rebuilt_scale, sign(rebuilt_payload) = sign(source_payload) * sign(rebuilt_scale). Only a retained exact sign is copied; Unknown and zero-scale provide no inferred payload sign. Named/rational outputs already expose their exact sign and skip the transfer.",
+  "qualification": {
+    "baseline-controls": {
+      "passed": 5,
+      "failed": 6,
+      "ignored": 0,
+      "groups": 1
+    },
+    "focused-regressions": {
+      "passed": 11,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "all-feature-tests": {
+      "passed": 983,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 23
+    },
+    "default-tests": {
+      "passed": 878,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 22
+    },
+    "doctests": {
+      "passed": 28,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 1
+    },
+    "solver-tests": {
+      "passed": 974,
+      "failed": 0,
+      "ignored": 0,
+      "groups": 10
+    }
+  },
+  "public_probe": "All twelve immediate signs and all eight formerly unavailable precision-0/-512 signs are retained; exact value differences are zero and original facts agree.",
+  "resource_evidence": {
+    "fixed_processes": 20,
+    "preflights": 4,
+    "timing_rows": 60,
+    "allocation_rows": 60,
+    "slower_in_all_five_pairs": [
+      {
+        "name": "rational_cancellation_construct_and_prove_source",
+        "median_ratio": 1.0244094858465438,
+        "median_block_ratio": 1.0292158935918592,
+        "slower_blocks": 5,
+        "baseline_median_ns_per_input": 3322.69287109375,
+        "candidate_median_ns_per_input": 3403.798095703125
+      },
+      {
+        "name": "zero_cancellation_construct_and_prove_source",
+        "median_ratio": 1.0255654082267405,
+        "median_block_ratio": 1.0309708287374426,
+        "slower_blocks": 5,
+        "baseline_median_ns_per_input": 3849.768310546875,
+        "candidate_median_ns_per_input": 3948.189208984375
+      },
+      {
+        "name": "zero_cancellation_first_compaction",
+        "median_ratio": 1.067633253564112,
+        "median_block_ratio": 1.0383152712830819,
+        "slower_blocks": 5,
+        "baseline_median_ns_per_input": 4757.7841796875,
+        "candidate_median_ns_per_input": 5079.568603515625
+      },
+      {
+        "name": "zero_cancellation_warm_compaction",
+        "median_ratio": 1.126723945739226,
+        "median_block_ratio": 1.1316728675761334,
+        "slower_blocks": 5,
+        "baseline_median_ns_per_input": 142.36083984375,
+        "candidate_median_ns_per_input": 160.4013671875
+      },
+      {
+        "name": "zero_cancellation_cloned_compaction",
+        "median_ratio": 1.0836443137698368,
+        "median_block_ratio": 1.0820128721442281,
+        "slower_blocks": 5,
+        "baseline_median_ns_per_input": 155.443359375,
+        "candidate_median_ns_per_input": 168.4453125
+      }
+    ],
+    "slower_in_at_least_four_pairs": 17,
+    "median_slower_rows": 35,
+    "faster_in_all_five_pairs": [
+      "denested_tower_cloned_compaction"
+    ],
+    "allocation_change": {
+      "name": "rational_cancellation_construct_and_prove_source",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            84001,
+            84001,
+            84001,
+            84001,
+            84001
+          ],
+          "candidate": [
+            84021,
+            84021,
+            84021,
+            84021,
+            84021
+          ],
+          "block_deltas": [
+            20,
+            20,
+            20,
+            20,
+            20
+          ],
+          "median_delta": 20,
+          "increased_blocks": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            4640000,
+            4640000,
+            4640000,
+            4640000,
+            4640000
+          ],
+          "candidate": [
+            4640832,
+            4640832,
+            4640832,
+            4640832,
+            4640832
+          ],
+          "block_deltas": [
+            832,
+            832,
+            832,
+            832,
+            832
+          ],
+          "median_delta": 832,
+          "increased_blocks": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1032208,
+            1032208,
+            1032208,
+            1032208,
+            1032208
+          ],
+          "candidate": [
+            1032768,
+            1032768,
+            1032768,
+            1032768,
+            1032768
+          ],
+          "block_deltas": [
+            560,
+            560,
+            560,
+            560,
+            560
+          ],
+          "median_delta": 560,
+          "increased_blocks": 5
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1034592,
+            1034592,
+            1034592,
+            1034592,
+            1034592
+          ],
+          "candidate": [
+            1035152,
+            1035152,
+            1035152,
+            1035152,
+            1035152
+          ],
+          "block_deltas": [
+            560,
+            560,
+            560,
+            560,
+            560
+          ],
+          "median_delta": 560,
+          "increased_blocks": 5
+        }
+      }
+    },
+    "allocation_rows_with_identical_four_fields_in_every_pair": 59,
+    "binary_sizes": [
+      {
+        "mode": "time",
+        "baseline_bytes": 6147368,
+        "candidate_bytes": 6147920,
+        "delta_bytes": 552
+      },
+      {
+        "mode": "memory",
+        "baseline_bytes": 6150496,
+        "candidate_bytes": 6151056,
+        "delta_bytes": 560
+      }
+    ],
+    "stronger_fact_rows_across_two_modes": 36
+  },
+  "retention_rationale": "Restore an already available exact certificate under the governing completeness-before-performance/memory/size ladder. Accept the recorded direct microbenchmark tradeoffs for this bounded proof transfer. The largest ratio of timing medians is 1.126724 (about 18 ns per zero-cancellation warm input); one construction phase adds 20 allocation calls, 832 allocated bytes and 560 retained/peak bytes per 1000 inputs. Every adverse pair and range remains recorded; the source change adds no cache field or owner. No speedup, statistical significance or native application benefit is claimed.",
+  "integration": {
+    "complete": true,
+    "tested_file_transfer_matches": true,
+    "main_format_check_passed": true,
+    "all_other_guarded_sources_unchanged": true,
+    "all_35_pending_native_files_unchanged": true,
+    "guarded_main_sources": 1134,
+    "test_qualification": "Exact transferred source bytes were already qualified in the isolated source with default/all-feature scalar tests, docs, Clippy and full direct solver tests. Those suites were not repeated for a byte-identical integration.",
+    "scope": "Only the three-file sign-retention repair. Native geometry admission and full properties/targets/future-work plan remain open."
+  },
+  "limits": [
+    "Feature/focused test totals overlap; these are not unique or universal coverage.",
+    "Allocation changes are observed in the fixed workload context; their source-level cause and eventual reclamation are not inferred.",
+    "Probe binaries add 552/560 bytes; these are not production executable size measurements.",
+    "Earlier main-worktree guards describe their historical checkpoint. New work must bind the current 1134 guarded main files. Frozen experimental sources remain unchanged.",
+    "All 35 pending native files, original 120-second board-worker and 60-second neck-check limits/failures, the isolated scalar prototype, full pre-push matrix and all properties/targets/future work remain open."
+  ],
+  "runtime_admitted": true,
+  "native_runtime_admitted": false,
+  "plan_complete": false
+}

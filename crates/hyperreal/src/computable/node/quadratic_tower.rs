@@ -825,6 +825,23 @@ impl Computable {
         ])
     }
 
+    /// Carry a sign across tower reconstruction without evaluating either DAG.
+    /// The caller has proved `source = scale * self`, with the supplied scale
+    /// sign. A zero scale says nothing about this payload and is ignored.
+    pub(crate) fn retain_sign_of_scaled_tower_source(&self, source: &Self, scale_sign: Sign) {
+        let Some(sign) = source.immediate_sign() else {
+            return;
+        };
+        let sign = match scale_sign {
+            Sign::Plus => private_sign(sign),
+            Sign::Minus => negate_sign(private_sign(sign)),
+            Sign::NoSign => return,
+        };
+        self.internal
+            .facts
+            .replace_exact_sign(ExactSignCache::Valid(sign));
+    }
+
     pub(crate) fn quadratic_tower_sign(&self) -> Option<RealSign> {
         let tower = tower_from_computable(self)?;
         let sign = tower.sign()?;

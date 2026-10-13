@@ -26,18 +26,34 @@ for `sqrt(3 + sqrt(5))`, which the existing square-root simplifier denests.
 Its failure remains recorded. Both that input and a genuinely nested
 `sqrt(3 + sqrt(2))` input now have controls passing on both baseline and candidate.
 
-`compaction_cost_probe_v1.rs` is prepared but has not been compiled or executed.
-It covers fifteen families, construction with source proof, first compaction,
-warm compaction and cloned compaction. Exact equality witnesses and sign-fact
-availability are reported separately so the intended strengthening is visible.
-The runner and assessor are prepared for five fixed paired blocks per mode,
-with separate fresh build targets, four preflights and twenty measurement
-processes. Timing uses 4,096 inputs; allocation mode uses 1,000. Execution and
-retention review remain to be done; samples will not be extended to remove
-adverse rows.
+The fixed cost set is complete: fifteen families, four phases, five paired
+blocks per mode, four preflights and twenty measurement processes. Timing uses
+4,096 inputs; allocation mode uses 1,000. Construction includes source proof;
+first compaction is not a claim of process-wide cold state. Value witnesses and
+fact availability are separate: all values match, paired facts never weaken,
+and eighteen unique fact rows strengthen in each mode. The metadata-guard stop
+and the original probe's integer-width compile failure are preserved. The final
+probe changes only that bounded numerator cast; the sampling plan is unchanged.
+See `cost-assessment-v3.json` and `cost-v3/` for every sample and artifact binding.
 
-The runtime repair is not admitted. All 35 pending native entries, original
-application limits and failures, all 39 properties, all 14 targets and
-crate-specific future work remain in scope. This evidence is a scoped scalar
-and direct-consumer qualification, not the full pre-push matrix or a universal
-cache, concurrency, resource or error-bound proof.
+Five timing rows are slower in every pair. The largest ratio of medians is
+1.126724 for zero-cancellation warm compaction, about 18 ns more per input.
+Seventeen rows are slower in at least four pairs; one is faster in every pair.
+One construction phase adds 20 allocation calls, 832 allocated bytes and 560
+retained/peak bytes per 1,000 inputs in every pair. The other 59 allocation rows
+match in all four fields. Timing/allocation probe binaries add 552/560 bytes;
+these are not production executable sizes. No application speedup, statistical
+significance or cause for the measured allocation increase is inferred.
+
+`retention-v1.json` accepts these costs under the governing priority of
+completeness over resource costs to restore already available certificates. The three qualified files
+have been copied byte-for-byte into main and main formatting passes. All other
+guarded source files and all 35 pending native entries are unchanged; see
+`integration-v1/`. The scoped runtime repair is admitted.
+
+`next-native-inputs-v1.json` verifies the unchanged endpoint parent for a fresh
+fork with the admitted repair. That combined fork has not been created or run.
+Original application limits and failures, all 39 properties, all 14 targets and
+crate-specific future work remain in scope. This evidence qualifies the scoped
+scalar repair and its direct solver consumer. The full pre-push matrix and
+universal cache, concurrency, resource and error-bound proofs remain open.

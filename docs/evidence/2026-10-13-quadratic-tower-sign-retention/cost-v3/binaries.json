@@ -1,0 +1,22 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v3/bins/baseline-time",
+    "sha256": "43a27a24100282600842ed96811c13a6e6cb9a80a013058f3dd9dc970ffbbe14",
+    "bytes": 6147368
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v3/bins/baseline-memory",
+    "sha256": "44a8c0ea5bdcdd4899b64b4e4275b6d5e337d303d7cff198bcf914c0187f1e4c",
+    "bytes": 6150496
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v3/bins/candidate-time",
+    "sha256": "23cbdfff1bae42ebdfc5c0c925f801bea037c7321f1759c4e6309af413080a34",
+    "bytes": 6147920
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/quadratic-tower-sign-retention/cost-v3/bins/candidate-memory",
+    "sha256": "2e19c1b654a494605b658b0f2b9cb29943cb6194fd6459f18f1fa740243c5cba",
+    "bytes": 6151056
+  }
+}

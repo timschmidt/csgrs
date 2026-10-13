@@ -1,0 +1,10 @@
+{
+  "complete": true,
+  "fixed_samples_closed": true,
+  "preflight_processes": 4,
+  "measured_processes": 20,
+  "mathematical_witnesses_match_within_each_mode": true,
+  "source_main_inputs_libraries_and_binaries_unchanged": true,
+  "runtime_admitted": false,
+  "next_step": "Audit every timing/allocation row and all fact strengthening before a scoped retention decision."
+}

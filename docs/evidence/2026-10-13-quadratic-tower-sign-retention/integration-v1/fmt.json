@@ -1,0 +1,20 @@
+{
+  "command": [
+    "cargo",
+    "fmt",
+    "--all",
+    "--",
+    "--check"
+  ],
+  "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "exit_code": 0,
+  "seconds": 10.366862276103348,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}
