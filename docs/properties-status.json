@@ -3636,6 +3636,15 @@
         }
       },
       "main_and_35_pending_native_paths_unchanged": true
+    },
+    "native_normal_form_attribution": {
+      "status": "fixed-profile-inputs-frozen",
+      "evidence": "docs/evidence/2026-10-13-native-normal-form-attribution/inputs-v1.json",
+      "source": "Unchanged endpoint/P4 parent, 10131 files.",
+      "result": "No profile executed yet. One complete-board run fixed at 49 Hz; no new arithmetic, owners, scalar queries or cache writes. Previous direct/outlined/borrowed same-radicand series remains rejected and closed.",
+      "next_step": "Execute the fixed profile, verify all source/binary/log hashes and review predeclared normal-form, Rational and native-consumer attribution. Do not infer removable work from percentages alone.",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {

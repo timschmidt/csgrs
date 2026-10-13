@@ -1,0 +1,74 @@
+{
+  "scope": "One fixed diagnostic profile of the unchanged endpoint/P4 native parent on both original complete board fixtures. No arithmetic or instrumentation edits.",
+  "previous_goal_turn": "progress",
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-tower-sign-retention/source",
+  "parent_preparation_sha256": "cd5bb7514557a11a3382e67965544e15628db8ffdb348ecb439bf9c8059910ca",
+  "parent_source_hashes_sha256": "70295fc6871b11394735865b0d43630800a5ab06eeb6fd14d223cd6c81541630",
+  "parent_qualification_sha256": "72233143bd1d50e4995013769236d8a995877ff5daff563fe6a1e42fa0031af6",
+  "closed_helper_series_decision_sha256": "504312dfc0d1b1addeec239b93ab4af5fec5ab4eefc72127c2ce5ee3676939ec",
+  "sample_design": {
+    "runs": 1,
+    "frequency_hz": 49,
+    "event": "cycles:u",
+    "call_graph": "fp",
+    "inline_decoding": false,
+    "fixtures": "Both original full-resolution board fixtures in the original test. No extension or rerun based on results."
+  },
+  "environment_changes": {
+    "RUSTFLAGS": "-Cforce-frame-pointers=yes",
+    "CARGO_PROFILE_RELEASE_DEBUG": "1"
+  },
+  "original_limits": {
+    "full_board_worker_cpu_seconds": 120,
+    "copper_neck_check_body_wall_seconds": 60
+  },
+  "measured_gate": "Only the original combined full-board assertion is executed by this diagnostic; the separate copper-neck gate is not rerun.",
+  "questions": [
+    "Which native consumers account for recovered normal-form stacks on the endpoint/P4 parent?",
+    "How does recovered normal-form work divide between coefficient multiplication, other polynomial multiplication and remaining normalization?",
+    "Which Rational and allocator symbols occur under normalization and under coefficient multiplication?"
+  ],
+  "source_review": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+      "finding": "The retained recognizer copies closed forms into owned polynomials. Failed projections that reused certificates drop the first memo before retrying the original recognizer; each pass retains its 512-node bound. Coefficient multiplication retains the original arithmetic and insertion order. The helper series did not remove its rational arithmetic."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+      "finding": "Exact quadratic recognition projects after shared normal-form cancellation, covering expressions with intermediate independent radicals. Exact quadratic signs then compare rational squares when signs oppose. A restricted prepass cannot replace this coverage without proof."
+    },
+    {
+      "path": "crates/hypercurve/src/classify.rs",
+      "sha256": "6997d26ebfe4c50d3abf7ed296cb9cc121ab70754421172e21693bde005e81df",
+      "finding": "Comparison tries exact rationals and already-certified separated enclosures before the predicate cascade. Zero testing and sign classification consult scalar facts; unresolved comparisons retain their difference-sign fallback. This review does not establish duplicate invocation counts."
+    },
+    {
+      "path": "crates/hyperlimit/src/resolve.rs",
+      "sha256": "a8b1e52851cb59f9c711146f82ca3db3c482740a35b009184383fd26e9a0b2ca",
+      "finding": "The direct sign resolver already avoids a duplicate structural-facts pass and retains exact normal forms, quadratic/radical towers and policy-authorized terminal approximation after bounded refinement. Any proposed omission must preserve certainty and escalation receipts."
+    }
+  ],
+  "related_count_evidence": [
+    {
+      "path": "docs/evidence/2026-10-13-retained-quadratic-projection/assessment-v2.json",
+      "sha256": "feeb89973c4747d5df46b60889e2f6e4081cb6bb5e4641e6151415421c670f54",
+      "limit": "Invocation/materialization counts, not cycle cost or projected savings."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-same-radicand-product-coverage/decision-v2.json",
+      "sha256": "338cc4b35ec6f35683e5140d9afe47d0c7d29fac5116b404e476ea72a8446626",
+      "limit": "Equal singleton coverage does not measure nonunit eligibility, cost or predicted savings."
+    }
+  ],
+  "constraints": [
+    "Freeze the runner, analysis definitions, source and sample count before execution.",
+    "No source changes, owner clones, added scalar queries or cache/budget changes.",
+    "Preserve all earlier rejection records and all pending native work.",
+    "The diagnostic build changes code generation. Sampled cycle periods are not calls, wall time or matched speedup evidence. Inclusive groups overlap; missing inline symbols do not prove zero cost.",
+    "No native candidate is retained, no report-byte identity is claimed, and the full properties plan remains active."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
