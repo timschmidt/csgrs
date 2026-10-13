@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  },
+  "outlined": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  },
+  "borrowed": {
+    "original": 1,
+    "retained": 1,
+    "opaque": 2
+  }
+}

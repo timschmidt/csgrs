@@ -1,0 +1,1217 @@
+[
+  {
+    "name": "baseline-format",
+    "variant": "baseline",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.561483336146921,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-projection-regressions",
+    "variant": "baseline",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 26.465927647892386,
+    "stdout_sha256": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "stderr_sha256": "913aa0d3f1d3dd24d39744dc355ee4e5f59129315c7d1f9ab18ecd31d66a7c22"
+  },
+  {
+    "name": "baseline-storage-regressions",
+    "variant": "baseline",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.143086195923388,
+    "stdout_sha256": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-memo-regressions",
+    "variant": "baseline",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14397919457405806,
+    "stdout_sha256": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-alias-regressions",
+    "variant": "baseline",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15784624498337507,
+    "stdout_sha256": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "stderr_sha256": "ff562f11139ea2f703fe2a07494570772f0f892e73c58e3254dd0a9678a51bf8"
+  },
+  {
+    "name": "baseline-direct-product-controls",
+    "variant": "baseline",
+    "phase": "direct-product-controls",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "same_radicand_product_tests::",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1455597160384059,
+    "stdout_sha256": "37b685a9c64995d14c416a9528a7648827785097be3f4c0584f2c53549788e9c",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-cache-frontiers",
+    "variant": "baseline",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16244620038196445,
+    "stdout_sha256": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-sign-regressions",
+    "variant": "baseline",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1462125927209854,
+    "stdout_sha256": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-all-feature-library",
+    "variant": "baseline",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.48279559193179,
+    "stdout_sha256": "4079b5e639e1d1cee0ee8e3f79dfd28059e85a33e89c74b5bf87a62daa57c1e4",
+    "stderr_sha256": "ccb9f29e460b21dc47ce6e2d2408f10a7494809d77146cbc1803dde5fa1bfcbb"
+  },
+  {
+    "name": "baseline-default-library",
+    "variant": "baseline",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.327356695663184,
+    "stdout_sha256": "6700ed42e80db9cd84074fedbe92ab364586a96eb9b0b5a50150fdf691439ec5",
+    "stderr_sha256": "75ce4c559ddc3c1d4d5ca15947b6e30e7e170e6c3d86d3d93ae08abe32517a4b"
+  },
+  {
+    "name": "baseline-doctests",
+    "variant": "baseline",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.286040941253304,
+    "stdout_sha256": "b139aea1dcd0f7a0863eb356fe2e5b9845d91c6dad21c350552043efd5cfc04f",
+    "stderr_sha256": "c1cdebe35dabb86598a8ba65d8c7557768f207ca6fbb6f11448fb493cc135697"
+  },
+  {
+    "name": "baseline-all-feature-clippy",
+    "variant": "baseline",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.951597712002695,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6f4073472791b24b4f35c96be692b96b57f7875567d1ab313439cdcb521f3efd"
+  },
+  {
+    "name": "baseline-default-clippy",
+    "variant": "baseline",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.788420526310802,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "c1b16dacead52221f343328c2b85b5cecbfafddf6dbebc02a18138f1a29c728b"
+  },
+  {
+    "name": "baseline-docs",
+    "variant": "baseline",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/baseline/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.3024830841459334,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "41fb84e6f2d96961c22fa050513030367d266a4875d9a948238fc4c7af8c2eb9"
+  },
+  {
+    "name": "outlined-format",
+    "variant": "outlined",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.586453136987984,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "outlined-projection-regressions",
+    "variant": "outlined",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 28.97825335059315,
+    "stdout_sha256": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "stderr_sha256": "2765cf9490123a2656bf6675f9461ca1a36cc19071f38006801a16ac361c06d3"
+  },
+  {
+    "name": "outlined-storage-regressions",
+    "variant": "outlined",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16536478186026216,
+    "stdout_sha256": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "stderr_sha256": "ce71a341cdc76512996d6ea6aee746aee6c40a00682215349e6e82573fb8e818"
+  },
+  {
+    "name": "outlined-memo-regressions",
+    "variant": "outlined",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14189481968060136,
+    "stdout_sha256": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "stderr_sha256": "020caaf5995d20c45b85a88d2904c142e8149b637da1b6d2366abda64a0f6662"
+  },
+  {
+    "name": "outlined-alias-regressions",
+    "variant": "outlined",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14834595704451203,
+    "stdout_sha256": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "stderr_sha256": "020caaf5995d20c45b85a88d2904c142e8149b637da1b6d2366abda64a0f6662"
+  },
+  {
+    "name": "outlined-direct-product-controls",
+    "variant": "outlined",
+    "phase": "direct-product-controls",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "same_radicand_product_tests::",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15403049811720848,
+    "stdout_sha256": "002fef7dffefa8ee0afbbf301bcd3503dcfa184574da992002bf4ed0ee8c7e6a",
+    "stderr_sha256": "020caaf5995d20c45b85a88d2904c142e8149b637da1b6d2366abda64a0f6662"
+  },
+  {
+    "name": "outlined-cache-frontiers",
+    "variant": "outlined",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.16397197684273124,
+    "stdout_sha256": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "stderr_sha256": "020caaf5995d20c45b85a88d2904c142e8149b637da1b6d2366abda64a0f6662"
+  },
+  {
+    "name": "outlined-sign-regressions",
+    "variant": "outlined",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.15643082419410348,
+    "stdout_sha256": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "stderr_sha256": "ce71a341cdc76512996d6ea6aee746aee6c40a00682215349e6e82573fb8e818"
+  },
+  {
+    "name": "outlined-all-feature-library",
+    "variant": "outlined",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.5060564181767404,
+    "stdout_sha256": "3d0f376d5c4cc4525c4750c88fd3d5ff0b2eb9086ae09c04523b82ed7091104e",
+    "stderr_sha256": "020caaf5995d20c45b85a88d2904c142e8149b637da1b6d2366abda64a0f6662"
+  },
+  {
+    "name": "outlined-default-library",
+    "variant": "outlined",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.547867299988866,
+    "stdout_sha256": "fffb984e9ae6c69905956d887381cf3da53db4abe90a278a99d1dec69728b342",
+    "stderr_sha256": "278ad21bfa88018cfe626c0952602524aa8cf8ed67dfd224c90f82d22132b92a"
+  },
+  {
+    "name": "outlined-doctests",
+    "variant": "outlined",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.680279553867877,
+    "stdout_sha256": "f177123a0bb80e8ed4ba764819dc64d3a9ec90d8509768852efcaa835fe1e348",
+    "stderr_sha256": "a74c7925e59e283fb548c6ac4d123eb60e248214b9df8c0aaee279cea7ccc0b1"
+  },
+  {
+    "name": "outlined-all-feature-clippy",
+    "variant": "outlined",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.065770361106843,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f62e3b079f862a1d340fdb09a030a2decee36fa0b27a9db60326c1405902b7bf"
+  },
+  {
+    "name": "outlined-default-clippy",
+    "variant": "outlined",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 8.958915621042252,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "16daa6f24dc89c9ad31e9ae3cb36b1402bbdaf2158cd4def939055628223a1fe"
+  },
+  {
+    "name": "outlined-docs",
+    "variant": "outlined",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/outlined/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.5223182043991983,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "ea7767ea3c29ef180a4ea066d52d971c95a57dc22341b4ee9aac3162b22885aa"
+  },
+  {
+    "name": "borrowed-format",
+    "variant": "borrowed",
+    "phase": "format",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 10.799738475587219,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "borrowed-projection-regressions",
+    "variant": "borrowed",
+    "phase": "projection-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "computable::node::projection_tests::",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 27.38997656479478,
+    "stdout_sha256": "51a756a78d41a48d2f77f9531df374b20085c87d29ea483cfc2eebfb540d8b21",
+    "stderr_sha256": "ed0305d741073b792d728f44b6495e0b4508e18ee2293c794eb83519c2e4fa81"
+  },
+  {
+    "name": "borrowed-storage-regressions",
+    "variant": "borrowed",
+    "phase": "storage-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "temporary_storage_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.19172202609479427,
+    "stdout_sha256": "9d25134def4ba89c4a6138db5979d5b945f9a2da23e5e15e96f76b43c4ffb43f",
+    "stderr_sha256": "de84ff8fe08070c53f959e18117ba1d97f4e9f6f27391c76239e0cc71510fb41"
+  },
+  {
+    "name": "borrowed-memo-regressions",
+    "variant": "borrowed",
+    "phase": "memo-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "memo_publication_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1481882892549038,
+    "stdout_sha256": "08abc7b9b67bf8e873fd05f7dbb3a84fe6a47cc43e587810ada37792949337f6",
+    "stderr_sha256": "65be9c22d8774ae0d7ae125c06c3984d6cc1df7558e2b06a0186842b9b44c2fb"
+  },
+  {
+    "name": "borrowed-alias-regressions",
+    "variant": "borrowed",
+    "phase": "alias-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "shared_radical_tests",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.14712832076475024,
+    "stdout_sha256": "d81fad6e2ac854205662a1fd3e56b6ccc54747acba7388b350101f49469340ee",
+    "stderr_sha256": "65be9c22d8774ae0d7ae125c06c3984d6cc1df7558e2b06a0186842b9b44c2fb"
+  },
+  {
+    "name": "borrowed-direct-product-controls",
+    "variant": "borrowed",
+    "phase": "direct-product-controls",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "same_radicand_product_tests::",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.153649534098804,
+    "stdout_sha256": "002fef7dffefa8ee0afbbf301bcd3503dcfa184574da992002bf4ed0ee8c7e6a",
+    "stderr_sha256": "65be9c22d8774ae0d7ae125c06c3984d6cc1df7558e2b06a0186842b9b44c2fb"
+  },
+  {
+    "name": "borrowed-cache-frontiers",
+    "variant": "borrowed",
+    "phase": "cache-frontiers",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "persistent_laurent_cache_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.17772015510126948,
+    "stdout_sha256": "dffea4c6d0d07c06344f054aefacbdeadaeb29f02c919548b6eafebe0465fdba",
+    "stderr_sha256": "d53bdfe999bd3ebaaef88e1036ae1cf826c02e4a9c78819358a3092e2f8fff2a"
+  },
+  {
+    "name": "borrowed-sign-regressions",
+    "variant": "borrowed",
+    "phase": "sign-regressions",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "quadratic_tower_sign_retention_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1542408843524754,
+    "stdout_sha256": "5ede7d239094ef466fa2c5d21b3ce75e52d08cabd053f95d6136a809f9e9a5a0",
+    "stderr_sha256": "65be9c22d8774ae0d7ae125c06c3984d6cc1df7558e2b06a0186842b9b44c2fb"
+  },
+  {
+    "name": "borrowed-all-feature-library",
+    "variant": "borrowed",
+    "phase": "all-feature-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.5327987456694245,
+    "stdout_sha256": "a4714c8ea483efee9d1bc78c885fba70c694a20084dae194ceb3571456be4907",
+    "stderr_sha256": "65be9c22d8774ae0d7ae125c06c3984d6cc1df7558e2b06a0186842b9b44c2fb"
+  },
+  {
+    "name": "borrowed-default-library",
+    "variant": "borrowed",
+    "phase": "default-library",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 35.81078999815509,
+    "stdout_sha256": "e7796a2bfd8c084bba7b7b2448fd797cc921c4231d013ace22f06673d4a5f4c0",
+    "stderr_sha256": "56a5af66099fabf904d27237544ce6b2d8b9ec9c9fdff5224ccde1c21574bd7d"
+  },
+  {
+    "name": "borrowed-doctests",
+    "variant": "borrowed",
+    "phase": "doctests",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--doc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.59136208705604,
+    "stdout_sha256": "b3e36d69afaf33926dde91b18d97d3a39b5f855440cea886a0ea3f2c9733e2d3",
+    "stderr_sha256": "738d66d6004f900d4f196ced38dd0f9ac9cf34427cc4b750b0bc1c13252a5f87"
+  },
+  {
+    "name": "borrowed-all-feature-clippy",
+    "variant": "borrowed",
+    "phase": "all-feature-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.060282267164439,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "700440577864eeb1107b48271e35957ac5b76c6611c897a6fdaac3907aed2780"
+  },
+  {
+    "name": "borrowed-default-clippy",
+    "variant": "borrowed",
+    "phase": "default-clippy",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "clippy",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 9.558677445165813,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "f4ca0d7445fb2f12a228a1320cfe136df8d541e5304b72536c32acc476fdef0a"
+  },
+  {
+    "name": "borrowed-docs",
+    "variant": "borrowed",
+    "phase": "docs",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "1800",
+      "cargo",
+      "doc",
+      "--locked",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--no-deps"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-same-radicand-fields/borrowed/qualification-target"
+    },
+    "exit_code": 0,
+    "seconds": 3.5073056728579104,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "49087db78e75fabbbb19eae350886f7201cce5fcbe3f9211c424c74d7adc3200"
+  }
+]

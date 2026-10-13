@@ -61,3 +61,15 @@ declared algebra file differs across variants. Shared-test identity, reviewed
 arithmetic substitutions, original general fallback recovery, manifest/lockfile
 identity and all parent/main/native source guards pass. Source records are
 committed before compilation.
+
+All 42 qualification commands passed. The [independent assessment](correctness-v1.json)
+verifies every command, log and source binding. Each variant passes 902
+all-feature tests, 815 default tests, 28 doctests, all shared/cache/P4 controls,
+formatting, both strict Clippy configurations and warning-denied docs. Counts
+overlap and do not cover the complete workflow matrix.
+
+All eight recorded layouts match. Memo inventories remain 1/1/2 and ordinary
+copy sharing remains 0/0. Outlined and borrowed reuse the capacity-one input
+buffer in the surviving-radical control and release radical capacity on
+cancellation; the baseline capacities are four. Atom capacities are zero
+throughout. These observations do not establish total-memory or timing gains.
