@@ -1,0 +1,25 @@
+{
+  "status": "failed-before-formatting-freeze-or-compilation",
+  "command": "PYTHONDONTWRITEBYTECODE=1 python3 docs/evidence/2026-10-13-same-radicand-product-coverage/prepare_v1.py",
+  "exit_code": 1,
+  "exception": "AssertionError at prepare_v1.py line 56: before-anchor count is not one for crates/hyperreal/src/computable/node/algebra.rs.",
+  "cause": "The prefix edit used only the first derive line, which is repeated for several structs. Reverse recovery from the completed mutable draft was unique, but the forward input anchor was not.",
+  "ambiguous_before_anchor_occurrences": 5,
+  "failed_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/same-radicand-product-coverage/source",
+  "source_hashes_sha256": "cb1042a3196fb494d03236875d39c3372dd065bd752227a38d5792f4f4f1076a",
+  "delta_sha256": "e816a975a068cfd0878ca3bef60966e307e295a4b95bdcbdf07b28ec5017f75c",
+  "patch_sha256": "41c10a121c9b5cdaa8bd0800fa5e2a4a08111495110a7a8c4eaa5046c87b9fd2",
+  "inputs_sha256": {
+    "prepare_v1.py": "ad31a541beebd8c49852a77d3b492fc9180ff7d813d3df31e848ef302f94d5bb",
+    "diagnose_v1.py": "73859ba1c9dda1dd6d2150222193f8c8811b5a03ccbcd7295d037df17f805563",
+    "assess_v1.py": "0e9ddf940128302573f24a89737ddff1b3537b1be07ce8c7b634cdf0cb0aee92",
+    "runtime-edits-v1.json": "b1a357c2c5ae15c0ac5053f1481cd95690d057c1be9855d17f67a6563e265c6c",
+    "scope-v1.json": "8f1bbdfa2d88041c5f877f5318de4068e4a61293ff3c16fed49f58dc4d2d5488",
+    "same_radicand_diagnostic.rs": "a6a8f86100b67fdb03a70d171f32965e28c8470e01d93a675cf649c02555d891",
+    "same_radicand_site_tests.rs": "2440d5f13751e546c2fa19f8524dbdec105941aa2e5ad49b6513bc5fe84f3a2c"
+  },
+  "compiled": false,
+  "diagnostic_executed": false,
+  "original_runtime_unchanged": true,
+  "correction": "Version 2 uses the full unique derive-and-PiAtanLinearForm declaration prefix. All other edit fragments and helper/site-test files remain unchanged; frozen output must exactly match the already formatted mutable draft. Original failed tree and inputs remain preserved."
+}

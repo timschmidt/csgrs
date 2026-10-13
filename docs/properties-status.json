@@ -2300,9 +2300,10 @@
         "This is focused instrumentation qualification, not all workflows or a whole-crate formal proof.",
         "The 35 original native paths and endpoint/P4 parent remain unadmitted and unchanged."
       ],
-      "next_step": "Freeze committed inputs in a separate source, qualify the counters, and observe one unchanged complete-board assertion. Review coverage before preparing any runtime candidate.",
+      "next_step": "Run committed version 2 preparation in a fresh source, then qualify the unchanged counters and observe one original complete-board assertion.",
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "preparation": "Version 1 failed before formatting or compilation on a repeated derive-line patch anchor. The failed 10,133-file tree and all inputs are preserved. Version 2 uses the unique full declaration; forward application matches the formatted mutable draft exactly. No arithmetic or helper/test change."
     }
   },
   "status_meanings": {

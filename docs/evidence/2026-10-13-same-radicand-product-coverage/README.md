@@ -45,3 +45,11 @@ standalone and crate-level rustfmt settings. The [draft review](draft-format-rev
 records the correction before frozen preparation. The prepared input files now
 match the crate formatting; frozen preparation checks formatting without
 editing its generated source.
+
+Version 1 preparation stopped before formatting or compilation because a
+derive-line patch anchor appeared five times. The [failure](preparation-failure-v1.json)
+preserves all 10,133 copied files, original inputs and the partial source delta.
+Version 2 uses the unique full declaration prefix. Forward application now
+recovers the already formatted draft bytes exactly; every other edit and both
+test/helper inputs remain unchanged. The old source and unexecuted version 1
+diagnostic runners remain preserved.
