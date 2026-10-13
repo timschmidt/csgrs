@@ -1,0 +1,2134 @@
+ENDPOINT_COST	rational_non_endpoint_construction	between	probe	1	5	218	4	176
+ENDPOINT_COST	rational_non_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	probe	1	10734	1199832	929	189160
+ENDPOINT_COST	rational_non_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	distance_squared	2000	430	17336	429	17160
+ENDPOINT_COST	rational_non_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	arithmetic_reuse	4600	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	rational_linear_retention	2300	3	528	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_construction	measured	rational_negation_retention	5	10	1760	0	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	arithmetic_reuse_ready	3169
+ENDPOINT_EVENT	rational_non_endpoint_construction	measured	arithmetic_reuse_first	1431
+ENDPOINT_COST	rational_non_endpoint_first	between	probe	1	2	63	2	63
+ENDPOINT_COST	rational_non_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	probe	1	8882	618488	7293	291720
+ENDPOINT_COST	rational_non_endpoint_first	measured	endpoint	2000	7583	517072	6006	240240
+ENDPOINT_COST	rational_non_endpoint_first	measured	coordinate_compare	8000	4292	288280	3432	137280
+ENDPOINT_COST	rational_non_endpoint_first	measured	distance_squared	6000	4160	265048	3432	137280
+ENDPOINT_COST	rational_non_endpoint_first	measured	policy_point_equal	4000	5150	322600	4290	171600
+ENDPOINT_COST	rational_non_endpoint_first	measured	is_zero	6000	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	arithmetic_reuse	7726	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	rational_linear_retention	3863	1582	278432	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	arithmetic_reuse_ready	7572
+ENDPOINT_EVENT	rational_non_endpoint_first	measured	arithmetic_reuse_first	154
+ENDPOINT_COST	rational_non_endpoint_warm	between	probe	1	3005	56119	3006	104119
+ENDPOINT_COST	rational_non_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	rational_non_endpoint_warm	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	rational_non_endpoint_warm	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	rational_non_endpoint_warm	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	rational_non_endpoint_warm	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	rational_non_endpoint_warm	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	probe	1	3006	80119	3006	104119
+ENDPOINT_COST	rational_non_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	rational_non_endpoint_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	cache_created	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	rational_non_endpoint_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	probe	1	3005	56116	14277	1407574
+ENDPOINT_COST	radical_non_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	probe	1	25104	1918400	6078	394992
+ENDPOINT_COST	radical_non_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	radical_non_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	arithmetic_reuse	2856	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	node_new	7142	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	rational_linear_retention	1428	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	radical_non_endpoint_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	radical_non_endpoint_first	between	probe	1	2	60	2	60
+ENDPOINT_COST	radical_non_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	radical_non_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	probe	1	367667	21500632	340836	19716816
+ENDPOINT_COST	radical_non_endpoint_first	measured	endpoint	2000	306672	18126040	281274	16641848
+ENDPOINT_COST	radical_non_endpoint_first	measured	coordinate_compare	8000	108872	5624536	98854	5222768
+ENDPOINT_COST	radical_non_endpoint_first	measured	distance_squared	6000	93296	4722320	67276	2937920
+ENDPOINT_COST	radical_non_endpoint_first	measured	policy_point_equal	4000	244375	14879488	228990	13796184
+ENDPOINT_COST	radical_non_endpoint_first	measured	is_zero	6000	130928	9512568	96137	7498936
+ENDPOINT_COST	radical_non_endpoint_first	measured	normal_form	8857	154643	9807480	108137	7325248
+ENDPOINT_COST	radical_non_endpoint_first	measured	normal_form_recursion	55642	154643	9807480	73281	3887696
+ENDPOINT_COST	radical_non_endpoint_first	measured	arithmetic_reuse	16890	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	cache_initialize	6571	6571	525680	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	cache_store_laurent	6571	26284	1051360	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	cache_load_laurent	55642	39140	1565600	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	node_new	83992	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	rational_linear_retention	8445	1434	252384	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	rational_product_retention	2932	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_first	measured	rational_negation_retention	2293	4581	806256	0	0
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	normal_form_reused	19570
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	cache_created	6571
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	cache_published_laurent	6571
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	arithmetic_reuse_ready	12883
+ENDPOINT_EVENT	radical_non_endpoint_first	measured	arithmetic_reuse_first	4007
+ENDPOINT_COST	radical_non_endpoint_warm	between	probe	1	3005	56116	3006	104116
+ENDPOINT_COST	radical_non_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	probe	1	331837	19127128	331836	19079128
+ENDPOINT_COST	radical_non_endpoint_warm	measured	endpoint	2000	273132	16038480	273132	16038480
+ENDPOINT_COST	radical_non_endpoint_warm	measured	coordinate_compare	8000	93140	4754208	93140	4754208
+ENDPOINT_COST	radical_non_endpoint_warm	measured	distance_squared	5000	91418	4452176	66847	2920760
+ENDPOINT_COST	radical_non_endpoint_warm	measured	policy_point_equal	4000	226562	13661376	226562	13661376
+ENDPOINT_COST	radical_non_endpoint_warm	measured	is_zero	5000	113141	8296992	93709	7364128
+ENDPOINT_COST	radical_non_endpoint_warm	measured	normal_form	8857	121143	7723384	99995	6721880
+ENDPOINT_COST	radical_non_endpoint_warm	measured	normal_form_recursion	52570	121143	7723384	71996	3805496
+ENDPOINT_COST	radical_non_endpoint_warm	measured	arithmetic_reuse	9144	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	cache_initialize	3714	3714	297120	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	cache_store_laurent	3714	14856	594240	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	cache_load_laurent	52570	41140	1645600	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	node_new	83992	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	rational_linear_retention	4572	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	rational_product_retention	1144	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_warm	measured	rational_negation_retention	572	1144	201344	0	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	normal_form_reused	20570
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	cache_created	3714
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	cache_published_laurent	3714
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	arithmetic_reuse_ready	5144
+ENDPOINT_EVENT	radical_non_endpoint_warm	measured	arithmetic_reuse_first	4000
+ENDPOINT_COST	radical_non_endpoint_cloned	between	probe	1	3006	80116	3006	104116
+ENDPOINT_COST	radical_non_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	probe	1	331837	19127128	331836	19079128
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	endpoint	2000	273132	16038480	273132	16038480
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	coordinate_compare	8000	93140	4754208	93140	4754208
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	distance_squared	5000	91418	4452176	66847	2920760
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	policy_point_equal	4000	226562	13661376	226562	13661376
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	is_zero	5000	113141	8296992	93709	7364128
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	normal_form	8857	121143	7723384	99995	6721880
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	normal_form_recursion	52570	121143	7723384	71996	3805496
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	arithmetic_reuse	9144	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	cache_initialize	3714	3714	297120	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	cache_store_laurent	3714	14856	594240	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	cache_load_laurent	52570	41140	1645600	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	node_new	83992	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	rational_linear_retention	4572	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	rational_product_retention	1144	0	0	0	0
+ENDPOINT_COST	radical_non_endpoint_cloned	measured	rational_negation_retention	572	1144	201344	0	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	normal_form_reused	20570
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	cache_created	3714
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	cache_published_laurent	3714
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	arithmetic_reuse_ready	5144
+ENDPOINT_EVENT	radical_non_endpoint_cloned	measured	arithmetic_reuse_first	4000
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	probe	1	3005	56122	48792	3382166
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	probe	1	58640	3785560	35633	1910872
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	distance_squared	2000	4572	315456	1857	133704
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	arithmetic_reuse	12568	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	node_new	17001	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	rational_linear_retention	6284	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	arithmetic_reuse_ready	9426
+ENDPOINT_EVENT	pi_scaled_non_endpoint_construction	measured	arithmetic_reuse_first	3142
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	probe	1	2	66	2	66
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	probe	1	576228	38807144	540070	37032408
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	endpoint	2000	480551	31095920	447826	29533944
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	coordinate_compare	8000	63563	2891056	63420	2865888
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	distance_squared	6000	66937	3859368	36499	1667928
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	policy_point_equal	4000	448841	29662976	416116	28101000
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	is_zero	6000	417155	30484112	335721	26859544
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	normal_form	5429	258013	26255296	224576	24495768
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	normal_form_recursion	164006	258013	26255296	132719	14511392
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	arithmetic_reuse	138550	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	cache_initialize	57856	29570	2365600	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	cache_store_laurent	16071	28714	1453688	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	cache_load_laurent	80432	18428	1398848	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	node_new	59643	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	rational_linear_retention	69275	1002	176352	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	rational_product_retention	433	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_first	measured	rational_negation_retention	143	286	50336	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	normal_form_reused	18428
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	normal_form_fallback	4429
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	cache_created	29570
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	cache_published_laurent	9857
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	arithmetic_reuse_ready	106694
+ENDPOINT_EVENT	pi_scaled_non_endpoint_first	measured	arithmetic_reuse_first	31856
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	probe	1	3005	56122	3006	104122
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	probe	1	437390	30483664	437389	30435664
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	endpoint	2000	391817	27378432	391817	27378432
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	coordinate_compare	8000	63420	2865888	63420	2865888
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	distance_squared	5000	57856	3301728	32568	1480992
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	policy_point_equal	4000	360107	25945488	360107	25945488
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	is_zero	5000	290827	22966304	248833	21197408
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	normal_form	4714	192271	20021520	181129	19486704
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	normal_form_recursion	133134	192271	20021520	107994	11615392
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	arithmetic_reuse	122252	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	cache_initialize	27710	17426	1394080	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	cache_store_laurent	9428	11142	534816	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	cache_load_laurent	59426	20712	1544960	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	node_new	50714	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	rational_linear_retention	61126	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	rational_product_retention	429	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_warm	measured	rational_negation_retention	143	286	50336	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	normal_form_reused	20712
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	normal_form_fallback	3714
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	cache_created	17426
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	cache_published_laurent	3714
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	arithmetic_reuse_ready	91400
+ENDPOINT_EVENT	pi_scaled_non_endpoint_warm	measured	arithmetic_reuse_first	30852
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	probe	1	3006	80122	3006	104122
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	probe	1	437390	30483664	437389	30435664
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	endpoint	2000	391817	27378432	391817	27378432
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	coordinate_compare	8000	63420	2865888	63420	2865888
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	distance_squared	5000	57856	3301728	32568	1480992
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	policy_point_equal	4000	360107	25945488	360107	25945488
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	is_zero	5000	290827	22966304	248833	21197408
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	normal_form	4714	192271	20021520	181129	19486704
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	normal_form_recursion	133134	192271	20021520	107994	11615392
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	arithmetic_reuse	122252	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	cache_initialize	27710	17426	1394080	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	cache_store_laurent	9428	11142	534816	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	cache_load_laurent	59426	20712	1544960	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	node_new	50714	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	rational_linear_retention	61126	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	rational_product_retention	429	0	0	0	0
+ENDPOINT_COST	pi_scaled_non_endpoint_cloned	measured	rational_negation_retention	143	286	50336	0	0
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	normal_form_reused	20712
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	normal_form_fallback	3714
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	cache_created	17426
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	cache_published_laurent	3714
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	arithmetic_reuse_ready	91400
+ENDPOINT_EVENT	pi_scaled_non_endpoint_cloned	measured	arithmetic_reuse_first	30852
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	probe	1	3005	56146	62146	3727906
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	probe	1	167214	11814104	128638	8939720
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	distance_squared	2000	5714	411408	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	normal_form	8857	87855	6786128	75855	6210128
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	normal_form_recursion	43284	87855	6786128	27856	1591944
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	arithmetic_reuse	3726	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	cache_initialize	4000	4000	320000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	cache_store_laurent	9571	12000	576000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	cache_load_laurent	43284	4000	256000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	node_new	39284	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	rational_linear_retention	1863	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	normal_form_reused	4000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	cache_created	4000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	cache_published_laurent	4000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	arithmetic_reuse_ready	3726
+ENDPOINT_EVENT	opaque_translated_non_endpoint_construction	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	probe	1	2	90	2	90
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	probe	1	625212	40915912	625068	40842744
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	endpoint	2000	368000	24044744	367857	24019576
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	coordinate_compare	8000	159571	10415984	159428	10390816
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	distance_squared	6000	40642	2926224	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	policy_point_equal	4000	288143	18824168	288143	18824168
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	is_zero	6000	271574	17415720	232997	15584640
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	normal_form	17000	515285	30913240	452136	27887832
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	normal_form_recursion	260634	515285	30913240	232708	11735784
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	arithmetic_reuse	33578	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	cache_initialize	20000	20000	1600000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	cache_store_laurent	94711	60000	2880000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	cache_load_laurent	260634	13000	832000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	node_new	75926	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	rational_linear_retention	16789	143	25168	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	rational_product_retention	715	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	normal_form_reused	13000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	cache_created	20000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	cache_published_laurent	20000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	arithmetic_reuse_ready	33435
+ENDPOINT_EVENT	opaque_translated_non_endpoint_first	measured	arithmetic_reuse_first	143
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	probe	1	3005	56146	3006	104146
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	probe	1	528141	34805640	528140	34757640
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	endpoint	2000	367857	24019576	367857	24019576
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	coordinate_compare	8000	159428	10390816	159428	10390816
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	distance_squared	5000	33856	2437632	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	policy_point_equal	4000	288143	18824168	288143	18824168
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	is_zero	5000	227144	14586528	194999	13060728
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	normal_form	15000	433714	26158968	383140	23752008
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	normal_form_recursion	220850	433714	26158968	195424	9923288
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	arithmetic_reuse	29430	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	cache_initialize	16000	16000	1280000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	cache_store_laurent	79569	48000	2304000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	cache_load_laurent	220850	11000	704000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	node_new	64426	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	rational_linear_retention	14715	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	rational_product_retention	715	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	normal_form_reused	11000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	cache_created	16000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	cache_published_laurent	16000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	arithmetic_reuse_ready	29430
+ENDPOINT_EVENT	opaque_translated_non_endpoint_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	probe	1	3006	80146	3006	104146
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	probe	1	528141	34805640	528140	34757640
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	endpoint	2000	367857	24019576	367857	24019576
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	coordinate_compare	8000	159428	10390816	159428	10390816
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	distance_squared	5000	33856	2437632	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	policy_point_equal	4000	288143	18824168	288143	18824168
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	is_zero	5000	227144	14586528	194999	13060728
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	normal_form	15000	433714	26158968	383140	23752008
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	normal_form_recursion	220850	433714	26158968	195424	9923288
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	arithmetic_reuse	29430	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	cache_initialize	16000	16000	1280000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	cache_store_laurent	79569	48000	2304000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	cache_load_laurent	220850	11000	704000	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	node_new	64426	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	rational_linear_retention	14715	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	rational_product_retention	715	0	0	0	0
+ENDPOINT_COST	opaque_translated_non_endpoint_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	normal_form_reused	11000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	cache_created	16000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	cache_published_laurent	16000
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	arithmetic_reuse_ready	29430
+ENDPOINT_EVENT	opaque_translated_non_endpoint_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_construction	between	probe	1	3005	56101	41721	3027523
+ENDPOINT_COST	stored_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_construction	measured	probe	1	9214	1064520	929	189160
+ENDPOINT_COST	stored_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	stored_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	arithmetic_reuse	2856	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	rational_linear_retention	1428	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_construction	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	stored_endpoint_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	stored_endpoint_first	between	probe	1	2	45	2	45
+ENDPOINT_COST	stored_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_first	measured	probe	1	1	48000	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	endpoint	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	coordinate_compare	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_first	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_warm	between	probe	1	3005	56101	3006	104101
+ENDPOINT_COST	stored_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_warm	measured	probe	1	1	48000	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	endpoint	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	coordinate_compare	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_cloned	between	probe	1	3006	80101	3006	104101
+ENDPOINT_COST	stored_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	probe	1	1	48000	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	endpoint	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	coordinate_compare	1000	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	stored_endpoint_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	cache_created	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	stored_endpoint_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	probe	1	3005	56137	11292	1003473
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	probe	1	10214	1176520	929	189160
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	arithmetic_reuse	2856	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	rational_linear_retention	1428	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	copied_endpoint_coordinates_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	probe	1	2	81	2	81
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	probe	1	715	173664	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	endpoint	1000	714	125664	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	coordinate_compare	1000	714	125664	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	arithmetic_reuse	1428	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	rational_linear_retention	714	714	125664	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	copied_endpoint_coordinates_first	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	probe	1	3005	56137	3006	104137
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	probe	1	1	48000	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	endpoint	1000	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	coordinate_compare	1000	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	probe	1	3006	80137	3006	104137
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	probe	1	1	48000	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	endpoint	1000	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	coordinate_compare	1000	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	distance_squared	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	copied_endpoint_coordinates_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	cache_created	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	copied_endpoint_coordinates_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_construction	between	probe	1	3005	56089	13006	1241144
+ENDPOINT_COST	off_circle_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_construction	between	cache_created	0
+ENDPOINT_EVENT	off_circle_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	off_circle_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_construction	measured	probe	1	10646	1193824	929	189160
+ENDPOINT_COST	off_circle_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	off_circle_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	arithmetic_reuse	4284	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	rational_linear_retention	2142	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_construction	measured	cache_created	0
+ENDPOINT_EVENT	off_circle_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_construction	measured	arithmetic_reuse_ready	2856
+ENDPOINT_EVENT	off_circle_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	off_circle_first	between	probe	1	2	30	2	33
+ENDPOINT_COST	off_circle_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_first	between	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_first	between	cache_created	0
+ENDPOINT_EVENT	off_circle_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	off_circle_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_first	measured	probe	1	7575	564616	6003	240120
+ENDPOINT_COST	off_circle_first	measured	endpoint	1000	4145	379456	2574	102960
+ENDPOINT_COST	off_circle_first	measured	coordinate_compare	4000	2573	219472	1716	68640
+ENDPOINT_COST	off_circle_first	measured	distance_squared	3000	2001	177144	1287	51480
+ENDPOINT_COST	off_circle_first	measured	policy_point_equal	2000	2573	219472	1716	68640
+ENDPOINT_COST	off_circle_first	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	arithmetic_reuse	6864	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	rational_linear_retention	3432	1571	276496	0	0
+ENDPOINT_COST	off_circle_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_first	measured	cache_created	0
+ENDPOINT_EVENT	off_circle_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_first	measured	arithmetic_reuse_ready	6720
+ENDPOINT_EVENT	off_circle_first	measured	arithmetic_reuse_first	144
+ENDPOINT_COST	off_circle_warm	between	probe	1	3005	56086	3006	104086
+ENDPOINT_COST	off_circle_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_warm	between	cache_created	0
+ENDPOINT_EVENT	off_circle_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	off_circle_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_warm	measured	probe	1	6004	288120	6003	240120
+ENDPOINT_COST	off_circle_warm	measured	endpoint	1000	2574	102960	2574	102960
+ENDPOINT_COST	off_circle_warm	measured	coordinate_compare	4000	1716	68640	1716	68640
+ENDPOINT_COST	off_circle_warm	measured	distance_squared	3000	1287	51480	1287	51480
+ENDPOINT_COST	off_circle_warm	measured	policy_point_equal	2000	1716	68640	1716	68640
+ENDPOINT_COST	off_circle_warm	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	arithmetic_reuse	3432	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	rational_linear_retention	1716	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_warm	measured	cache_created	0
+ENDPOINT_EVENT	off_circle_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_warm	measured	arithmetic_reuse_ready	3432
+ENDPOINT_EVENT	off_circle_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_cloned	between	probe	1	3006	80086	3006	104086
+ENDPOINT_COST	off_circle_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_cloned	between	cache_created	0
+ENDPOINT_EVENT	off_circle_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	off_circle_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	off_circle_cloned	measured	probe	1	6004	288120	6003	240120
+ENDPOINT_COST	off_circle_cloned	measured	endpoint	1000	2574	102960	2574	102960
+ENDPOINT_COST	off_circle_cloned	measured	coordinate_compare	4000	1716	68640	1716	68640
+ENDPOINT_COST	off_circle_cloned	measured	distance_squared	3000	1287	51480	1287	51480
+ENDPOINT_COST	off_circle_cloned	measured	policy_point_equal	2000	1716	68640	1716	68640
+ENDPOINT_COST	off_circle_cloned	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	arithmetic_reuse	3432	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	rational_linear_retention	1716	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	off_circle_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	off_circle_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	off_circle_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	off_circle_cloned	measured	cache_created	0
+ENDPOINT_EVENT	off_circle_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	off_circle_cloned	measured	arithmetic_reuse_ready	3432
+ENDPOINT_EVENT	off_circle_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_construction	between	probe	1	3005	56091	14290	1408823
+ENDPOINT_COST	other_sweep_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_construction	between	cache_created	0
+ENDPOINT_EVENT	other_sweep_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_construction	measured	probe	1	10662	1194864	929	189160
+ENDPOINT_COST	other_sweep_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	other_sweep_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	arithmetic_reuse	4572	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	rational_linear_retention	2286	1	176	0	0
+ENDPOINT_COST	other_sweep_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_construction	measured	cache_created	0
+ENDPOINT_EVENT	other_sweep_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_construction	measured	arithmetic_reuse_ready	3143
+ENDPOINT_EVENT	other_sweep_construction	measured	arithmetic_reuse_first	1429
+ENDPOINT_COST	other_sweep_first	between	probe	1	2	33	2	35
+ENDPOINT_COST	other_sweep_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_first	between	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_first	between	cache_created	0
+ENDPOINT_EVENT	other_sweep_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_first	measured	probe	1	8876	617432	7293	291720
+ENDPOINT_COST	other_sweep_first	measured	endpoint	2000	7583	517072	6006	240240
+ENDPOINT_COST	other_sweep_first	measured	coordinate_compare	8000	4292	288280	3432	137280
+ENDPOINT_COST	other_sweep_first	measured	distance_squared	6000	4154	263992	3432	137280
+ENDPOINT_COST	other_sweep_first	measured	policy_point_equal	4000	5150	322600	4290	171600
+ENDPOINT_COST	other_sweep_first	measured	is_zero	6000	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	arithmetic_reuse	7726	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	rational_linear_retention	3863	1576	277376	0	0
+ENDPOINT_COST	other_sweep_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_first	measured	cache_created	0
+ENDPOINT_EVENT	other_sweep_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_first	measured	arithmetic_reuse_ready	7578
+ENDPOINT_EVENT	other_sweep_first	measured	arithmetic_reuse_first	148
+ENDPOINT_COST	other_sweep_warm	between	probe	1	3005	56089	3006	104089
+ENDPOINT_COST	other_sweep_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_warm	between	cache_created	0
+ENDPOINT_EVENT	other_sweep_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_warm	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	other_sweep_warm	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	other_sweep_warm	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	other_sweep_warm	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	other_sweep_warm	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	other_sweep_warm	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_warm	measured	cache_created	0
+ENDPOINT_EVENT	other_sweep_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_cloned	between	probe	1	3006	80089	3006	104089
+ENDPOINT_COST	other_sweep_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_cloned	between	cache_created	0
+ENDPOINT_EVENT	other_sweep_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	other_sweep_cloned	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	other_sweep_cloned	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	other_sweep_cloned	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	other_sweep_cloned	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	other_sweep_cloned	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	other_sweep_cloned	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	other_sweep_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	cache_created	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	other_sweep_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_construction	between	probe	1	3005	56101	14287	1408589
+ENDPOINT_COST	aborted_unknown_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	cache_created	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_construction	measured	probe	1	76642	4713640	53929	2805160
+ENDPOINT_COST	aborted_unknown_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	aborted_unknown_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	normal_form	4000	14000	1040000	14000	1040000
+ENDPOINT_COST	aborted_unknown_construction	measured	normal_form_recursion	6000	14000	1040000	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	arithmetic_reuse	2856	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	cache_load_laurent	6000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	node_new	27714	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	rational_linear_retention	1428	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_construction	measured	cache_created	0
+ENDPOINT_EVENT	aborted_unknown_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_construction	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	aborted_unknown_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	aborted_unknown_first	between	probe	1	2	45	2	45
+ENDPOINT_COST	aborted_unknown_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_first	between	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_first	between	cache_created	0
+ENDPOINT_EVENT	aborted_unknown_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_first	measured	probe	1	1407548	62600136	1388833	61058344
+ENDPOINT_COST	aborted_unknown_first	measured	endpoint	1000	859849	28523624	841135	27317896
+ENDPOINT_COST	aborted_unknown_first	measured	coordinate_compare	4000	85784	4940512	85784	4940512
+ENDPOINT_COST	aborted_unknown_first	measured	distance_squared	3000	20998	1197600	12284	559936
+ENDPOINT_COST	aborted_unknown_first	measured	policy_point_equal	2000	812207	25713368	793493	24507640
+ENDPOINT_COST	aborted_unknown_first	measured	is_zero	3000	1296765	56190024	1266765	54025896
+ENDPOINT_COST	aborted_unknown_first	measured	normal_form	7000	182000	10136000	182000	10136000
+ENDPOINT_COST	aborted_unknown_first	measured	normal_form_recursion	71000	182000	10136000	115000	5404000
+ENDPOINT_COST	aborted_unknown_first	measured	arithmetic_reuse	1428	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	cache_initialize	152039	16500	1320000	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	cache_store_laurent	9000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	cache_load_laurent	71000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	node_new	29855	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	rational_linear_retention	714	714	125664	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_first	measured	cache_created	16500
+ENDPOINT_EVENT	aborted_unknown_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_first	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	aborted_unknown_first	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_warm	between	probe	1	6008	504549	6009	552549
+ENDPOINT_COST	aborted_unknown_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	cache_created	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_warm	measured	probe	1	362569	20724448	362568	20676448
+ENDPOINT_COST	aborted_unknown_warm	measured	endpoint	1000	195426	10958768	195426	10958768
+ENDPOINT_COST	aborted_unknown_warm	measured	coordinate_compare	4000	72284	4164512	72284	4164512
+ENDPOINT_COST	aborted_unknown_warm	measured	distance_squared	3000	20284	1071936	12284	559936
+ENDPOINT_COST	aborted_unknown_warm	measured	policy_point_equal	2000	159284	8876512	159284	8876512
+ENDPOINT_COST	aborted_unknown_warm	measured	is_zero	3000	266000	15216000	257000	14552000
+ENDPOINT_COST	aborted_unknown_warm	measured	normal_form	6000	158000	8800000	158000	8800000
+ENDPOINT_COST	aborted_unknown_warm	measured	normal_form_recursion	62000	158000	8800000	100000	4736000
+ENDPOINT_COST	aborted_unknown_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	cache_initialize	50000	6000	480000	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	cache_store_laurent	8000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	cache_load_laurent	62000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	node_new	29855	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_warm	measured	cache_created	6000
+ENDPOINT_EVENT	aborted_unknown_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_cloned	between	probe	1	6009	528549	6009	552549
+ENDPOINT_COST	aborted_unknown_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	cache_created	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	probe	1	362569	20724448	362568	20676448
+ENDPOINT_COST	aborted_unknown_cloned	measured	endpoint	1000	195426	10958768	195426	10958768
+ENDPOINT_COST	aborted_unknown_cloned	measured	coordinate_compare	4000	72284	4164512	72284	4164512
+ENDPOINT_COST	aborted_unknown_cloned	measured	distance_squared	3000	20284	1071936	12284	559936
+ENDPOINT_COST	aborted_unknown_cloned	measured	policy_point_equal	2000	159284	8876512	159284	8876512
+ENDPOINT_COST	aborted_unknown_cloned	measured	is_zero	3000	266000	15216000	257000	14552000
+ENDPOINT_COST	aborted_unknown_cloned	measured	normal_form	6000	158000	8800000	158000	8800000
+ENDPOINT_COST	aborted_unknown_cloned	measured	normal_form_recursion	62000	158000	8800000	100000	4736000
+ENDPOINT_COST	aborted_unknown_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	cache_initialize	50000	6000	480000	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	cache_store_laurent	8000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	cache_load_laurent	62000	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	node_new	29855	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	aborted_unknown_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	cache_created	6000
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	aborted_unknown_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_construction	between	probe	1	6008	504564	47437	3978698
+ENDPOINT_COST	approximate_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	probe	1	75642	4689640	52929	2781160
+ENDPOINT_COST	approximate_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	approximate_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	normal_form	4000	14000	1040000	14000	1040000
+ENDPOINT_COST	approximate_endpoint_construction	measured	normal_form_recursion	6000	14000	1040000	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	arithmetic_reuse	2856	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	cache_load_laurent	6000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	node_new	27714	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	rational_linear_retention	1428	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	arithmetic_reuse_ready	1428
+ENDPOINT_EVENT	approximate_endpoint_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	approximate_endpoint_first	between	probe	1	2	60	2	60
+ENDPOINT_COST	approximate_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_first	measured	probe	1	858646	28604144	840288	27413312
+ENDPOINT_COST	approximate_endpoint_first	measured	endpoint	1000	858645	28556144	840288	27413312
+ENDPOINT_COST	approximate_endpoint_first	measured	coordinate_compare	3500	82715	4801784	82715	4801784
+ENDPOINT_COST	approximate_endpoint_first	measured	distance_squared	1500	11930	658360	6073	263528
+ENDPOINT_COST	approximate_endpoint_first	measured	policy_point_equal	1500	811003	25745888	792646	24603056
+ENDPOINT_COST	approximate_endpoint_first	measured	is_zero	1500	764000	23096000	739000	21604000
+ENDPOINT_COST	approximate_endpoint_first	measured	normal_form	5000	128000	7176000	128000	7176000
+ENDPOINT_COST	approximate_endpoint_first	measured	normal_form_recursion	49000	128000	7176000	79000	3708000
+ENDPOINT_COST	approximate_endpoint_first	measured	arithmetic_reuse	714	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	cache_initialize	109000	13500	1080000	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	cache_store_laurent	7000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	cache_load_laurent	49000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	node_new	19216	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	rational_linear_retention	357	357	62832	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_first	measured	cache_created	13500
+ENDPOINT_EVENT	approximate_endpoint_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_first	measured	arithmetic_reuse_ready	714
+ENDPOINT_EVENT	approximate_endpoint_first	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_warm	between	probe	1	4006	123183	4007	171183
+ENDPOINT_COST	approximate_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	probe	1	198789	11245312	198788	11197312
+ENDPOINT_COST	approximate_endpoint_warm	measured	endpoint	1000	198788	11197312	198788	11197312
+ENDPOINT_COST	approximate_endpoint_warm	measured	coordinate_compare	3500	71215	4105784	71215	4105784
+ENDPOINT_COST	approximate_endpoint_warm	measured	distance_squared	1500	11573	595528	6073	263528
+ENDPOINT_COST	approximate_endpoint_warm	measured	policy_point_equal	1500	161646	9075056	161646	9075056
+ENDPOINT_COST	approximate_endpoint_warm	measured	is_zero	1500	116000	6496000	112000	6216000
+ENDPOINT_COST	approximate_endpoint_warm	measured	normal_form	4000	104000	5840000	104000	5840000
+ENDPOINT_COST	approximate_endpoint_warm	measured	normal_form_recursion	40000	104000	5840000	64000	3040000
+ENDPOINT_COST	approximate_endpoint_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	cache_initialize	25000	3000	240000	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	cache_store_laurent	6000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	cache_load_laurent	40000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	node_new	19216	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	cache_created	3000
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	probe	1	4007	147183	4007	171183
+ENDPOINT_COST	approximate_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	probe	1	197789	11205312	197788	11157312
+ENDPOINT_COST	approximate_endpoint_cloned	measured	endpoint	1000	197788	11157312	197788	11157312
+ENDPOINT_COST	approximate_endpoint_cloned	measured	coordinate_compare	3500	70215	4065784	70215	4065784
+ENDPOINT_COST	approximate_endpoint_cloned	measured	distance_squared	1500	11573	595528	6073	263528
+ENDPOINT_COST	approximate_endpoint_cloned	measured	policy_point_equal	1500	161646	9075056	161646	9075056
+ENDPOINT_COST	approximate_endpoint_cloned	measured	is_zero	1500	116000	6496000	112000	6216000
+ENDPOINT_COST	approximate_endpoint_cloned	measured	normal_form	4000	104000	5840000	104000	5840000
+ENDPOINT_COST	approximate_endpoint_cloned	measured	normal_form_recursion	40000	104000	5840000	64000	3040000
+ENDPOINT_COST	approximate_endpoint_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	cache_initialize	25000	3000	240000	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	cache_store_laurent	6000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	cache_load_laurent	40000	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	node_new	19216	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_endpoint_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	cache_created	3000
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_endpoint_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	probe	1	4006	123195	45078	3246499
+ENDPOINT_COST	approximate_non_endpoint_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	probe	1	10643	1193680	929	189160
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	arithmetic_reuse	4568	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	rational_linear_retention	2284	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	arithmetic_reuse_ready	3140
+ENDPOINT_EVENT	approximate_non_endpoint_construction	measured	arithmetic_reuse_first	1428
+ENDPOINT_COST	approximate_non_endpoint_first	between	probe	1	2	72	2	72
+ENDPOINT_COST	approximate_non_endpoint_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	probe	1	8865	616216	7293	291720
+ENDPOINT_COST	approximate_non_endpoint_first	measured	endpoint	2000	7577	516736	6006	240240
+ENDPOINT_COST	approximate_non_endpoint_first	measured	coordinate_compare	8000	4289	288112	3432	137280
+ENDPOINT_COST	approximate_non_endpoint_first	measured	distance_squared	6000	4146	262944	3432	137280
+ENDPOINT_COST	approximate_non_endpoint_first	measured	policy_point_equal	4000	5147	322432	4290	171600
+ENDPOINT_COST	approximate_non_endpoint_first	measured	is_zero	6000	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	arithmetic_reuse	7712	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	rational_linear_retention	3856	1571	276496	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	arithmetic_reuse_ready	7569
+ENDPOINT_EVENT	approximate_non_endpoint_first	measured	arithmetic_reuse_first	143
+ENDPOINT_COST	approximate_non_endpoint_warm	between	probe	1	3005	56128	3006	104128
+ENDPOINT_COST	approximate_non_endpoint_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	probe	1	3006	80128	3006	104128
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	probe	1	6436	305400	6435	257400
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	endpoint	2000	6006	240240	6006	240240
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	coordinate_compare	8000	3432	137280	3432	137280
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	distance_squared	5000	3003	120120	3003	120120
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	policy_point_equal	4000	4290	171600	4290	171600
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	is_zero	5000	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	approximate_non_endpoint_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	cache_created	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	approximate_non_endpoint_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	probe	1	3005	56128	14292	1409144
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	between	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	probe	1	30642	1776512	18356	637120
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	endpoint	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	distance_squared	2000	429	17160	429	17160
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	is_zero	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	arithmetic_reuse	4284	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	rational_linear_retention	2142	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_construction	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	arithmetic_reuse_ready	2142
+ENDPOINT_EVENT	near_endpoint_off_circle_construction	measured	arithmetic_reuse_first	2142
+ENDPOINT_COST	near_endpoint_off_circle_first	between	probe	1	2	72	2	72
+ENDPOINT_COST	near_endpoint_off_circle_first	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	between	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	probe	1	47429	2154816	40787	1528696
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	endpoint	1000	37999	1605080	31358	1026960
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	coordinate_compare	4000	17427	747944	11500	295488
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	distance_squared	3000	27001	1174872	17287	481208
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	policy_point_equal	2000	25073	1033776	22716	806944
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	arithmetic_reuse	5570	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	rational_linear_retention	2785	1928	339328	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_first	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	arithmetic_reuse_ready	4713
+ENDPOINT_EVENT	near_endpoint_off_circle_first	measured	arithmetic_reuse_first	857
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	probe	1	3005	56128	3006	104128
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	between	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	probe	1	31004	1368152	31003	1320152
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	endpoint	1000	21574	818416	21574	818416
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	coordinate_compare	4000	1716	86944	1716	86944
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	distance_squared	3000	26287	1049208	17287	481208
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	policy_point_equal	2000	20716	774944	20716	774944
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_warm	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_warm	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	probe	1	3006	80128	3006	104128
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	endpoint	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	distance_squared	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	is_zero	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	between	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	between	arithmetic_reuse_first	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	probe	1	31004	1368152	31003	1320152
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	endpoint	1000	21574	818416	21574	818416
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	coordinate_compare	4000	1716	86944	1716	86944
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	distance_squared	3000	26287	1049208	17287	481208
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	policy_point_equal	2000	20716	774944	20716	774944
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	is_zero	3000	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	normal_form	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	node_new	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	near_endpoint_off_circle_cloned	measured	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	normal_form_reused	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	normal_form_fallback	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	cache_created	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	cache_published_laurent	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	near_endpoint_off_circle_cloned	measured	arithmetic_reuse_first	0
+ENDPOINT_COST	process	tail	probe	1	3003	56056	21932	1845584
+ENDPOINT_COST	process	tail	endpoint	0	0	0	0	0
+ENDPOINT_COST	process	tail	coordinate_compare	0	0	0	0	0
+ENDPOINT_COST	process	tail	distance_squared	0	0	0	0	0
+ENDPOINT_COST	process	tail	policy_point_equal	0	0	0	0	0
+ENDPOINT_COST	process	tail	is_zero	0	0	0	0	0
+ENDPOINT_COST	process	tail	normal_form	0	0	0	0	0
+ENDPOINT_COST	process	tail	normal_form_recursion	0	0	0	0	0
+ENDPOINT_COST	process	tail	arithmetic_reuse	0	0	0	0	0
+ENDPOINT_COST	process	tail	cache_initialize	0	0	0	0	0
+ENDPOINT_COST	process	tail	cache_store_laurent	0	0	0	0	0
+ENDPOINT_COST	process	tail	cache_load_laurent	0	0	0	0	0
+ENDPOINT_COST	process	tail	node_new	0	0	0	0	0
+ENDPOINT_COST	process	tail	rational_linear_retention	0	0	0	0	0
+ENDPOINT_COST	process	tail	rational_product_retention	0	0	0	0	0
+ENDPOINT_COST	process	tail	rational_negation_retention	0	0	0	0	0
+ENDPOINT_EVENT	process	tail	normal_form_reused	0
+ENDPOINT_EVENT	process	tail	normal_form_fallback	0
+ENDPOINT_EVENT	process	tail	cache_created	0
+ENDPOINT_EVENT	process	tail	cache_published_laurent	0
+ENDPOINT_EVENT	process	tail	arithmetic_reuse_ready	0
+ENDPOINT_EVENT	process	tail	arithmetic_reuse_first	0

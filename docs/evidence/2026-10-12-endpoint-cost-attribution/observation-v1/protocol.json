@@ -1,0 +1,56 @@
+{
+  "scope": "Qualify and run frozen integer-only allocation diagnostics, sequentially.\n\nOne fresh process per variant and probe observes the original 1000-input arc\nmemory workload and 231-operation broad workload. These instrumented durations\nare not additional samples for the closed five-pair performance comparison.\n",
+  "runner_sha256": "df46ca041e4790194db901b29a42d0ee18692e614de7d70f3613f2b3bcaea6e1",
+  "preparation_sha256": "83ef2f1a20163ef165ddaf0f78e6b86b26c46d761f773624be33b079401ce0a2",
+  "prior_trials_sha256": "c917c1101ed06e4fe1f15702252446f779deb17d6fb831611eda1475f2ee7539",
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source"
+  },
+  "targets": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+  },
+  "probe_sha256": {
+    "affine_probe.rs": "cbab12dd46dd73164c1082fd561c9d52d9c405ef19bacced5138d28be8586cba",
+    "arc_cost.rs": "ee4fe4edd9a46e9dc9652ec49c425321f92d085829d0dee91eac42ad8535530c",
+    "authored_center_probe.rs": "b099e19b6e349362e73c747371a7439441690f462ca5290634f3d42985365910",
+    "broad_allocation.rs": "972c3ac78d858881ecf0dea9fc00f1933f5f45e599f5c1194fdd423bc1eb693b",
+    "dense_cluster_probe.rs": "ead76c7b85ac1e0f324708f4d69701fb3c92dc220dea27e26536be6747e80c7d",
+    "fixture_access_probe.rs": "bc2e4a78cb41ee54fa82f2d634e2e20257cd3e66f3e83ce35285da6eee72e81a",
+    "ipc_probe.rs": "e1db3f57de6ab3ac21d19ce83930840dbbc8898659410920b122360b3116f574",
+    "layer_order_probe.rs": "beeffd3e3e8598bd9c57067338608d725bfbf2c1510ffe761e795cb1461089a7",
+    "native_drill_probe.rs": "ffda31d3fdc4dc3a4fc5ca14fd36691b0fb4f54076dd8804995829c25465acc2",
+    "operation_probe.rs": "b7499b1bdbc9db487947d393a4345a531bf47c221924e5eb7280f013d3e23043",
+    "pad_probe.rs": "77165e2bfde17f6a7819d5e2dbb060f6a7193ae6972bc8191c04be80c57d4a13",
+    "point_consumer_probe.rs": "8c3674b7d3278bd70805dc72bc2f165d8861b48a7be61dc5de3b41f84fd431c4",
+    "rectangle_probe.rs": "6fc2244fe354cded084c2f8d4d1d3a4e236e20f80d69b44fe4734543b43c3872",
+    "trace_probe.rs": "108b2205a0b2fbaf1599822c490c37631a4c67575cad9a9ce8920d8c7fe003b7"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "processes_per_variant_probe": 1,
+  "arc_inputs_per_family": 1000,
+  "arc_families": 12,
+  "arc_measure_rows": 48,
+  "arc_witness_rows": 36,
+  "arc_fixture_rows": 12,
+  "broad_witness_rows": 231,
+  "cpu": 0,
+  "command_timeout_seconds": 1800,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "limits": "Integer TLS counters add fixed thread-local storage and execution overhead. Allocation rows overlap by active scope and exclude native C heaps. Node creation counts are function entries; the surrounding Arc allocation is not inside Node::new. No profiled durations support performance admission.",
+  "runtime_admitted": false
+}

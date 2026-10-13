@@ -1,0 +1,440 @@
+[
+  {
+    "name": "format-baseline",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target"
+    },
+    "exit_code": 0,
+    "seconds": 10.467732937075198,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "calibration-baseline",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "endpoint_cost_diagnostic::tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target"
+    },
+    "exit_code": 0,
+    "seconds": 26.8881804831326,
+    "stdout_sha256": "b109bead89d69a46abec4f8a3cad08b153aac7fe9497e9465c99afbfa439ce09",
+    "stderr_sha256": "75ed26e51ebc3fb2a8af232ad4cc34485dba9fff6975e281644f04c8de7be14f"
+  },
+  {
+    "name": "point-equality-baseline",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "point::equality_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target"
+    },
+    "exit_code": 0,
+    "seconds": 110.82201034296304,
+    "stdout_sha256": "dba679f5e85bcd1f75120b29bb137effeaf79c00fa60d036f79613da6517c575",
+    "stderr_sha256": "0e3e0699d6c63961d0190e7210f4b02a7dffee288768250b761bea86cba06417"
+  },
+  {
+    "name": "strict-clippy-baseline",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target"
+    },
+    "exit_code": 0,
+    "seconds": 39.748417395632714,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a69cbfa46fc26e766b32271eb36dc0a975286a6bdca4422e164e70159f548fc3"
+  },
+  {
+    "name": "format-candidate",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 10.580476239789277,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "calibration-candidate",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "endpoint_cost_diagnostic::tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 26.82983918301761,
+    "stdout_sha256": "b109bead89d69a46abec4f8a3cad08b153aac7fe9497e9465c99afbfa439ce09",
+    "stderr_sha256": "a7740130dad4c098a74416a7826c159d575fd8b0fb2ef6d017d55ee83ce52dac"
+  },
+  {
+    "name": "point-equality-candidate",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "point::equality_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 111.23468869365752,
+    "stdout_sha256": "0d24c20d13432e0b54adb27efbdcbc596c8f0ff13d26df0d3a829a1e4a6c5782",
+    "stderr_sha256": "8dfeffc1a197a1a1c88db3cd4873c801f3127ba056e3681b0cd22a07b589eb79"
+  },
+  {
+    "name": "endpoint-regressions-candidate",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "--all-features",
+      "--lib",
+      "endpoint_proof_tests",
+      "--",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 0.1832115170545876,
+    "stdout_sha256": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "stderr_sha256": "702f51f7e1aca12306fcdf2b61299ed470c2c0b722882bee458bd2d83de3cff5"
+  },
+  {
+    "name": "strict-clippy-candidate",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 39.99118114076555,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a4d4a129ab3e5a377bf39f529fb90c22f79b3fab54c67451fc12fa9b0711ed64"
+  },
+  {
+    "name": "build-libraries-baseline",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target"
+    },
+    "exit_code": 0,
+    "seconds": 110.5780437188223,
+    "stdout_sha256": "2fd9c6bfeb397ad9377e93e30ef728ac1a394a263acf5f630d6e5ab9c3624cab",
+    "stderr_sha256": "87aa83c8dde1d7bdbf8a40791077f92edf10fb5a8169905cac36dbf8a4aadd31"
+  },
+  {
+    "name": "build-libraries-candidate",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hypercurve",
+      "-p",
+      "hyperdrc",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source",
+    "extra_environment": {
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target"
+    },
+    "exit_code": 0,
+    "seconds": 109.2156115649268,
+    "stdout_sha256": "0def94e12c1b6aa4224f399bacfb36159fb509e24ba4eb4c3f42e7f2550ae33d",
+    "stderr_sha256": "deadc938f71934dc1aeaa292b8e73cc53ff9e1e61af7d32237902fec54933421"
+  },
+  {
+    "name": "build-baseline-arc",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-cost-attribution/preparation-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-arc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.6370668951421976,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-baseline-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-cost-attribution/preparation-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.8628419949673116,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-arc",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-cost-attribution/preparation-v1/probes/arc_cost.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-arc"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.6076183370314538,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-candidate-broad",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-12-endpoint-cost-attribution/preparation-v1/probes/operation_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps",
+      "--extern",
+      "hyperdrc=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/libhyperdrc.rlib",
+      "--extern",
+      "hyperlimit=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "--extern",
+      "hypercurve=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/libhypercurve.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 2.8017992982640862,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "observe-baseline-arc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-arc",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.7285094638355076,
+    "stdout_sha256": "89eaa1cb7d40bb32fc0e65a30657cd172793a20c72d8b910aab4ae9a0a81c5b2",
+    "stderr_sha256": "2b0953062ad4d0f937a2c63bffdb56d6c54bf96dd8963b2ae63d2980255d81d1"
+  },
+  {
+    "name": "observe-candidate-arc",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-arc",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 0.6067913440056145,
+    "stdout_sha256": "ad55caa2802513713f04c159cb9c5a5eb86ba9fe56a69833e6437dd69a5d04c2",
+    "stderr_sha256": "eff7a0a7f7b969530c28fbb7b92566b094effd733dab7104c25a51c884d4db10"
+  },
+  {
+    "name": "observe-baseline-broad",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.613523553591222,
+    "stdout_sha256": "dc8cc53789be06b08896946298a1abbaa0288a8e9c43934ae91f89ead1ba7664",
+    "stderr_sha256": "a5a0d01e4b39b881c2da54e075bd6e543e96258728a815a89e845b559cea4c80"
+  },
+  {
+    "name": "observe-candidate-broad",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-broad"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "extra_environment": {},
+    "exit_code": 0,
+    "seconds": 6.459856108296663,
+    "stdout_sha256": "c39be162c915bd199a241c6d975fb38232d9d269fb231186d0424a806253309b",
+    "stderr_sha256": "4d0e66e24dc443e7ec9e2a7286a52148560ff704c1b94bfffdf54c8ef802e676"
+  }
+]

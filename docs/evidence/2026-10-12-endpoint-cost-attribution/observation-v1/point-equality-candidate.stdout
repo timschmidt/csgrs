@@ -1,0 +1,10 @@
+
+running 5 tests
+test point::equality_tests::aborted_cached_operands_keep_exact_equality_behavior ... ok
+test point::equality_tests::overlapping_cached_enclosures_do_not_merge_tiny_separations ... ok
+test point::equality_tests::point_equality_matches_integer_oracle_before_and_after_preparation ... ok
+test point::equality_tests::shared_point_comparisons_are_stable_across_threads ... ok
+test point::equality_tests::unresolved_equality_remains_inconclusive_with_warm_enclosures ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 1766 filtered out; finished in 0.12s
+

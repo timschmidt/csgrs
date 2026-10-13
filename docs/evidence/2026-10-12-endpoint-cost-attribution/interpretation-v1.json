@@ -1,0 +1,914 @@
+{
+  "decision": "continue-isolated-endpoint-parent-diagnosis-no-production-retention",
+  "runner_sha256": "789ba4fc2021daa41f0b5269e483f9dab78eb57ca52dc6fcb3746570a5c94443",
+  "evidence_sha256": {
+    "docs/evidence/2026-10-12-endpoint-cost-attribution/assessment-v1.json": "32fb33affd1e215eb7dfb0a116f14081c9810e2c6b98468805b2706c61175391",
+    "docs/evidence/2026-10-12-endpoint-cost-attribution/all-window-comparisons-v1.json.gz": "bb85499b62aca136a96572a5069098e3c057537f6c20de7c52bc97e9d2899de1"
+  },
+  "broad_slower_in_all_five_prior_pairs": [
+    {
+      "label": "mixed_quadratic_aggregation_and_bounds",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 29900,
+        "allocated_bytes": 5782000,
+        "deallocations": 29900,
+        "deallocated_bytes": 5782000
+      }
+    },
+    {
+      "label": "warm_polygon_area_17",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 0,
+        "allocated_bytes": 0,
+        "deallocations": 0,
+        "deallocated_bytes": 0
+      }
+    },
+    {
+      "label": "stencil_sparse_1002_pads",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 250720,
+        "allocated_bytes": 40458280,
+        "deallocations": 250720,
+        "deallocated_bytes": 40458280
+      }
+    },
+    {
+      "label": "ipc_drill_diameter",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 2600,
+        "allocated_bytes": 169200,
+        "deallocations": 2600,
+        "deallocated_bytes": 169200
+      }
+    },
+    {
+      "label": "ipc_annotation_invalid_diameter",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 1900,
+        "allocated_bytes": 132800,
+        "deallocations": 1900,
+        "deallocated_bytes": 132800
+      }
+    },
+    {
+      "label": "point_return_huge_radius",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 500,
+        "allocated_bytes": 17100,
+        "deallocations": 500,
+        "deallocated_bytes": 17100
+      }
+    },
+    {
+      "label": "fixture_copper_huge_radius",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 3950,
+        "allocated_bytes": 491600,
+        "deallocations": 3950,
+        "deallocated_bytes": 491600
+      }
+    },
+    {
+      "label": "rectangle_construct_unit",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 22500,
+        "allocated_bytes": 3425700,
+        "deallocations": 22500,
+        "deallocated_bytes": 3425700
+      }
+    },
+    {
+      "label": "pad_round_warm_area_samples_128",
+      "endpoint_calls_in_measured_window": 0,
+      "all_recorded_counters_identical": true,
+      "measured_probe_counters": {
+        "entries": 1,
+        "allocations": 0,
+        "allocated_bytes": 0,
+        "deallocations": 0,
+        "deallocated_bytes": 0
+      }
+    }
+  ],
+  "broad_interpretation": "The nine observed measured loops do not execute the changed endpoint path and do not perform more recorded work. Setup and checked windows also agree. The preceding warm-area preparation window does execute endpoint classification and saves 96 allocation calls / 3840 requested bytes. Earlier state, code generation/layout and timing variability remain possible explanations for the original slower samples; none is established as their cause.",
+  "arc_phase_increases": [
+    {
+      "label": "opaque_translated_non_endpoint_construction",
+      "candidate_minus_baseline": {
+        "spans": {
+          "probe": {
+            "entries": 0,
+            "allocations": 11,
+            "allocated_bytes": 256,
+            "deallocations": 9,
+            "deallocated_bytes": 168
+          },
+          "endpoint": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "coordinate_compare": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "distance_squared": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "policy_point_equal": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "is_zero": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form_recursion": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "arithmetic_reuse": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_initialize": {
+            "entries": 1,
+            "allocations": 1,
+            "allocated_bytes": 80,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_store_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_load_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "node_new": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_linear_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_product_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_negation_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          }
+        },
+        "events": {
+          "normal_form_reused": 0,
+          "normal_form_fallback": 0,
+          "cache_created": 1,
+          "cache_published_laurent": 0,
+          "arithmetic_reuse_ready": 0,
+          "arithmetic_reuse_first": 0
+        }
+      },
+      "net_live_requested_bytes_delta": 88
+    },
+    {
+      "label": "off_circle_warm",
+      "candidate_minus_baseline": {
+        "spans": {
+          "probe": {
+            "entries": 0,
+            "allocations": -1573,
+            "allocated_bytes": -43472,
+            "deallocations": -1716,
+            "deallocated_bytes": -68640
+          },
+          "endpoint": {
+            "entries": 0,
+            "allocations": -1573,
+            "allocated_bytes": -43472,
+            "deallocations": -1716,
+            "deallocated_bytes": -68640
+          },
+          "coordinate_compare": {
+            "entries": -2000,
+            "allocations": -715,
+            "allocated_bytes": -9152,
+            "deallocations": -858,
+            "deallocated_bytes": -34320
+          },
+          "distance_squared": {
+            "entries": -2000,
+            "allocations": -858,
+            "allocated_bytes": -34320,
+            "deallocations": -858,
+            "deallocated_bytes": -34320
+          },
+          "policy_point_equal": {
+            "entries": -2000,
+            "allocations": -1716,
+            "allocated_bytes": -68640,
+            "deallocations": -1716,
+            "deallocated_bytes": -68640
+          },
+          "is_zero": {
+            "entries": -2000,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form_recursion": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "arithmetic_reuse": {
+            "entries": -1430,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_initialize": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_store_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_load_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "node_new": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_linear_retention": {
+            "entries": -715,
+            "allocations": 143,
+            "allocated_bytes": 25168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_product_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_negation_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          }
+        },
+        "events": {
+          "normal_form_reused": 0,
+          "normal_form_fallback": 0,
+          "cache_created": 0,
+          "cache_published_laurent": 0,
+          "arithmetic_reuse_ready": -1430,
+          "arithmetic_reuse_first": 0
+        }
+      },
+      "net_live_requested_bytes_delta": 25168
+    },
+    {
+      "label": "aborted_unknown_first",
+      "candidate_minus_baseline": {
+        "spans": {
+          "probe": {
+            "entries": 0,
+            "allocations": 128,
+            "allocated_bytes": 3080,
+            "deallocations": 125,
+            "deallocated_bytes": 2960
+          },
+          "endpoint": {
+            "entries": 0,
+            "allocations": 128,
+            "allocated_bytes": 3080,
+            "deallocations": 125,
+            "deallocated_bytes": 2960
+          },
+          "coordinate_compare": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "distance_squared": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "policy_point_equal": {
+            "entries": 0,
+            "allocations": 128,
+            "allocated_bytes": 3080,
+            "deallocations": 125,
+            "deallocated_bytes": 2960
+          },
+          "is_zero": {
+            "entries": 0,
+            "allocations": 128,
+            "allocated_bytes": 3080,
+            "deallocations": 125,
+            "deallocated_bytes": 2960
+          },
+          "normal_form": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form_recursion": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "arithmetic_reuse": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_initialize": {
+            "entries": 3,
+            "allocations": 1,
+            "allocated_bytes": 80,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_store_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_load_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "node_new": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_linear_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_product_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_negation_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          }
+        },
+        "events": {
+          "normal_form_reused": 0,
+          "normal_form_fallback": 0,
+          "cache_created": 1,
+          "cache_published_laurent": 0,
+          "arithmetic_reuse_ready": 0,
+          "arithmetic_reuse_first": 0
+        }
+      },
+      "net_live_requested_bytes_delta": 120
+    },
+    {
+      "label": "approximate_non_endpoint_first",
+      "candidate_minus_baseline": {
+        "spans": {
+          "probe": {
+            "entries": 0,
+            "allocations": 3,
+            "allocated_bytes": 168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "endpoint": {
+            "entries": 0,
+            "allocations": 3,
+            "allocated_bytes": 168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "coordinate_compare": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "distance_squared": {
+            "entries": 0,
+            "allocations": 3,
+            "allocated_bytes": 168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "policy_point_equal": {
+            "entries": 0,
+            "allocations": 3,
+            "allocated_bytes": 168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "is_zero": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form_recursion": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "arithmetic_reuse": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_initialize": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_store_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_load_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "node_new": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_linear_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_product_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_negation_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          }
+        },
+        "events": {
+          "normal_form_reused": 0,
+          "normal_form_fallback": 0,
+          "cache_created": 0,
+          "cache_published_laurent": 0,
+          "arithmetic_reuse_ready": 0,
+          "arithmetic_reuse_first": 0
+        }
+      },
+      "net_live_requested_bytes_delta": 168
+    },
+    {
+      "label": "near_endpoint_off_circle_warm",
+      "candidate_minus_baseline": {
+        "spans": {
+          "probe": {
+            "entries": 0,
+            "allocations": -19572,
+            "allocated_bytes": -718888,
+            "deallocations": -20144,
+            "deallocated_bytes": -765792
+          },
+          "endpoint": {
+            "entries": 0,
+            "allocations": -19572,
+            "allocated_bytes": -718888,
+            "deallocations": -20144,
+            "deallocated_bytes": -765792
+          },
+          "coordinate_compare": {
+            "entries": -2000,
+            "allocations": 286,
+            "allocated_bytes": 12584,
+            "deallocations": -286,
+            "deallocated_bytes": -34320
+          },
+          "distance_squared": {
+            "entries": -2000,
+            "allocations": -19858,
+            "allocated_bytes": -731472,
+            "deallocations": -13858,
+            "deallocated_bytes": -379472
+          },
+          "policy_point_equal": {
+            "entries": -2000,
+            "allocations": -20716,
+            "allocated_bytes": -774944,
+            "deallocations": -20716,
+            "deallocated_bytes": -774944
+          },
+          "is_zero": {
+            "entries": -2000,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "normal_form_recursion": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "arithmetic_reuse": {
+            "entries": 286,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_initialize": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_store_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "cache_load_laurent": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "node_new": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_linear_retention": {
+            "entries": 143,
+            "allocations": 143,
+            "allocated_bytes": 25168,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_product_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          },
+          "rational_negation_retention": {
+            "entries": 0,
+            "allocations": 0,
+            "allocated_bytes": 0,
+            "deallocations": 0,
+            "deallocated_bytes": 0
+          }
+        },
+        "events": {
+          "normal_form_reused": 0,
+          "normal_form_fallback": 0,
+          "cache_created": 0,
+          "cache_published_laurent": 0,
+          "arithmetic_reuse_ready": 286,
+          "arithmetic_reuse_first": 0
+        }
+      },
+      "net_live_requested_bytes_delta": 46904
+    }
+  ],
+  "arc_family_accounting": [
+    {
+      "family": "opaque_translated_non_endpoint",
+      "boundary": "immediately before construction through cloned measured query",
+      "includes_three_intervening_windows": true,
+      "totals": {
+        "baseline": {
+          "allocations": 1854721,
+          "allocated_bytes": 122477678,
+          "deallocations": 1816000,
+          "deallocated_bytes": 119506126,
+          "live_requested_bytes_increment": 2971552
+        },
+        "candidate": {
+          "allocations": 990303,
+          "allocated_bytes": 66005430,
+          "deallocations": 951580,
+          "deallocated_bytes": 63033790,
+          "live_requested_bytes_increment": 2971640
+        }
+      },
+      "candidate_minus_baseline": {
+        "allocations": -864418,
+        "allocated_bytes": -56472248,
+        "deallocations": -864420,
+        "deallocated_bytes": -56472336,
+        "live_requested_bytes_increment": 88
+      }
+    },
+    {
+      "family": "off_circle",
+      "boundary": "immediately before construction through cloned measured query",
+      "includes_three_intervening_windows": true,
+      "totals": {
+        "baseline": {
+          "allocations": 36242,
+          "allocated_bytes": 2470882,
+          "deallocations": 24952,
+          "deallocated_bytes": 1117725,
+          "live_requested_bytes_increment": 1353157
+        },
+        "candidate": {
+          "allocations": 30380,
+          "allocated_bytes": 2139298,
+          "deallocations": 19804,
+          "deallocated_bytes": 911805,
+          "live_requested_bytes_increment": 1227493
+        }
+      },
+      "candidate_minus_baseline": {
+        "allocations": -5862,
+        "allocated_bytes": -331584,
+        "deallocations": -5148,
+        "deallocated_bytes": -205920,
+        "live_requested_bytes_increment": -125664
+      }
+    },
+    {
+      "family": "aborted_unknown",
+      "boundary": "immediately before construction through cloned measured query",
+      "includes_three_intervening_windows": true,
+      "totals": {
+        "baseline": {
+          "allocations": 2221347,
+          "allocated_bytes": 109795815,
+          "deallocations": 2179918,
+          "deallocated_bytes": 106321543,
+          "live_requested_bytes_increment": 3474272
+        },
+        "candidate": {
+          "allocations": 2198907,
+          "allocated_bytes": 108576175,
+          "deallocations": 2157475,
+          "deallocated_bytes": 105101783,
+          "live_requested_bytes_increment": 3474392
+        }
+      },
+      "candidate_minus_baseline": {
+        "allocations": -22440,
+        "allocated_bytes": -1219640,
+        "deallocations": -22443,
+        "deallocated_bytes": -1219760,
+        "live_requested_bytes_increment": 120
+      }
+    },
+    {
+      "family": "approximate_non_endpoint",
+      "boundary": "immediately before construction through cloned measured query",
+      "includes_three_intervening_windows": true,
+      "totals": {
+        "baseline": {
+          "allocations": 38393,
+          "allocated_bytes": 2557024,
+          "deallocations": 27106,
+          "deallocated_bytes": 1204008,
+          "live_requested_bytes_increment": 1353016
+        },
+        "candidate": {
+          "allocations": 38396,
+          "allocated_bytes": 2557192,
+          "deallocations": 27106,
+          "deallocated_bytes": 1204008,
+          "live_requested_bytes_increment": 1353184
+        }
+      },
+      "candidate_minus_baseline": {
+        "allocations": 3,
+        "allocated_bytes": 168,
+        "deallocations": 0,
+        "deallocated_bytes": 0,
+        "live_requested_bytes_increment": 168
+      }
+    },
+    {
+      "family": "near_endpoint_off_circle",
+      "boundary": "immediately before construction through cloned measured query",
+      "includes_three_intervening_windows": true,
+      "totals": {
+        "baseline": {
+          "allocations": 146092,
+          "allocated_bytes": 6803960,
+          "deallocations": 127163,
+          "deallocated_bytes": 5014448,
+          "live_requested_bytes_increment": 1789512
+        },
+        "candidate": {
+          "allocations": 83230,
+          "allocated_bytes": 4353464,
+          "deallocations": 65015,
+          "deallocated_bytes": 2689616,
+          "live_requested_bytes_increment": 1663848
+        }
+      },
+      "candidate_minus_baseline": {
+        "allocations": -62862,
+        "allocated_bytes": -2450496,
+        "deallocations": -62148,
+        "deallocated_bytes": -2324832,
+        "live_requested_bytes_increment": -125664
+      }
+    }
+  ],
+  "arc_interpretation": [
+    "The off-circle and near-endpoint warm phases each add 143 allocations / 25168 requested bytes inside rational linear-retention scopes. Their phase net increases remain 25168 and 46904 bytes respectively.",
+    "Including construction, first/warm/cloned queries and all three intervening windows, each of those families has a 125664-byte smaller live requested-byte increment in the candidate. This is derived from probe-root allocation/deallocation totals, not a sum of overlapping scopes. It does not remove either adverse phase row or prove reclamation after all owners are dropped.",
+    "Opaque construction adds 11 allocations / 256 bytes, including one additional 80-byte evaluation-cache allocation; it retains 88 additional requested bytes in the phase. No endpoint call occurs in this construction window.",
+    "Aborted-unknown first queries add 128 allocations / 3080 bytes, wholly reflected in the existing policy equality and is_zero scopes, with one additional 80-byte evaluation-cache allocation. Their net phase increase is 120 bytes. The probe attaches abort to an intermediate, as previously documented; final-coordinate abort qualification remains the separate prior probe.",
+    "Approximate non-endpoint first queries add three allocations / 168 bytes inside squared distance, with unchanged call counts and no additional Laurent-cache or rational-retention counter activity. The 168-byte retention increase persists through the cloned measured query. These counters do not identify the specific retained scalar payload."
+  ],
+  "retention_basis": "Keep this source available only for the next isolated full-board profile. Correctness and report evidence remain intact; the diagnostic explains observed call and phase-memory changes but does not erase timing tradeoffs or qualify production retention. In particular, equal counters do not establish equal runtime or a universal cache-completeness theorem.",
+  "next_step": "Profile the frozen uninstrumented endpoint candidate on the original complete boards, using a separate frame-pointer target and the original 120-second worker assertion. Select the next substantial caller cost from that profile. Preserve all five original timing pairs, approximate controls, retained-memory increases, complete reports, original native gates and broader qualification before any production admission.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

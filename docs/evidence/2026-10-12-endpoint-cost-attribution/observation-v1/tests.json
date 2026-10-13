@@ -1,0 +1,32 @@
+[
+  {
+    "name": "calibration-baseline",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "point-equality-baseline",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "calibration-candidate",
+    "passed": 2,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "point-equality-candidate",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  },
+  {
+    "name": "endpoint-regressions-candidate",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  }
+]

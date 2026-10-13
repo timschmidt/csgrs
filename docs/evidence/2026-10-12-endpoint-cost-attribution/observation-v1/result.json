@@ -1,0 +1,41 @@
+{
+  "complete": true,
+  "tests": [
+    {
+      "name": "calibration-baseline",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "point-equality-baseline",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "calibration-candidate",
+      "passed": 2,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "point-equality-candidate",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    },
+    {
+      "name": "endpoint-regressions-candidate",
+      "passed": 5,
+      "failed": 0,
+      "ignored": 0
+    }
+  ],
+  "processes": 4,
+  "all_original_witnesses_match": true,
+  "original_arc_allocation_rows_match": true,
+  "parents_diagnostic_sources_probes_libraries_binaries_main_unchanged": true,
+  "instrumented_durations_not_performance_samples": true,
+  "runtime_admitted": false
+}

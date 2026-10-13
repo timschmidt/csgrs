@@ -1,0 +1,22 @@
+{
+  "baseline-arc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-arc",
+    "sha256": "92113d880829acb1aa66112f5e87295421410a59782ebf237baaa87d42a27a2c",
+    "bytes": 8623168
+  },
+  "baseline-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/baseline-broad",
+    "sha256": "fb5605b328c8723e0a0d41513984b4ccb021e074a075db0ddcc3b08ab11991a4",
+    "bytes": 26436392
+  },
+  "candidate-arc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-arc",
+    "sha256": "2d5de140189fc2d894388ce14d23480a762efe24b2de487b0890549f4e9a6474",
+    "bytes": 8623648
+  },
+  "candidate-broad": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/observation-v1/candidate-broad",
+    "sha256": "2754e82166b1ece5a84dbc3c5d6391dbfef5c8157b528f142e1a3e6fd3977dc0",
+    "bytes": 26426072
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "baseline": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/libhypercurve.rlib",
+      "sha256": "e276422beeaabbde9afc848bed0ac2fae647697f43720afffe6f0784571a9cb5",
+      "bytes": 48812294,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "d29ec078b089a1526a4f872b2b4a49573e384acf2d6c86490ab886e9c45c191f",
+      "bytes": 11498678,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/libhyperdrc.rlib",
+      "sha256": "28dae73b9fef0dfb04e90772ce956715ee408a3851eed156553dac1a4a9965fe",
+      "bytes": 26566150,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "4aa8b21cc4901384e4319fa9d28b8b6d467ab2a13583030790704721f27db779",
+      "bytes": 4001386,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "d70b94a84933f8c20edbd8fe49fc5a28d1faa512104826a150723b42ecb8d3bd",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  },
+  "candidate": {
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/libhypercurve.rlib",
+      "sha256": "383aa62258e5d7464f4e4eaa470b2a781f3866b8608fb170a52efbab1793fd44",
+      "bytes": 48802814,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source/crates/hypercurve/Cargo.toml",
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ]
+    },
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libhyperreal-8c9477bdadd3a02c.rlib",
+      "sha256": "98b1935b4079a4d2c9156f269c6f46b2fb8c4d0f99d05139edcc9726e54b783f",
+      "bytes": 11499672,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source/crates/hyperreal/Cargo.toml",
+      "features": [
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde"
+      ]
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/libhyperdrc.rlib",
+      "sha256": "c5f16d16c7c524267755469becdafa7214354fbcca07f0feac996451290d2933",
+      "bytes": 26566870,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source/crates/hyperdrc/Cargo.toml",
+      "features": []
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libhyperlimit-6d8c87cae35011be.rlib",
+      "sha256": "972a79b796e98a2aa81877bf494cadb29a0ce95d347bec95e205c6c20787cd85",
+      "bytes": 4001484,
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/source/crates/hyperlimit/Cargo.toml",
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ]
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/endpoint-cost-attribution/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "fe7dcb5de7c0bffa1b669d0d85d6acbfe983eec9fa621bbe5361e1a89e634252",
+      "bytes": 2042466,
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+      "features": [
+        "default",
+        "std"
+      ]
+    }
+  }
+}
