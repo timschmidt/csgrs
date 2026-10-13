@@ -2191,7 +2191,8 @@
       ],
       "scalar_interpretation_review": "One overbroad first-block sentence corrected; all measured samples, summaries and decision unchanged. Original artifacts retained; native v1 runners unexecuted. Native v2 binds the corrected interpretation.",
       "retention_requirement": "Keep every scalar adverse row and inherited endpoint tradeoff open. Native timing gains alone do not dismiss them. Resolve meaningful regressions and complete original gates, matched native costs, complete report identity, production size and remaining workflow obligations before runtime retention.",
-      "native_qualification": "Version 2 runner/assessor prepared but not yet executed; fresh target, full unchanged fixtures and 120-second worker-CPU/60-second check-body-wall assertions."
+      "native_qualification": "Version 2 is running in its fresh target; four-crate Clippy, solver and endpoint controls have passed. Full curve/DRC suites, docs and original full-fixture gates remain in progress or pending.",
+      "native_cost_inputs": "Native cost runner and assessor prepared but unexecuted: fixed 36 measurements and four preflights, including 231 broad witnesses and 210 final-abort receipts per corresponding process. Further work remains conditional on qualification and review."
     }
   },
   "status_meanings": {
