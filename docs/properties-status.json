@@ -3922,6 +3922,19 @@
         "separate_copper_neck_gate_executed": false,
         "complete_report_byte_identity_established": false
       }
+    },
+    "drc_process_allocator": {
+      "status": "inputs-ready-for-separate-source-preparation",
+      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/scope-v1.json",
+      "result": "Pinned allocator wrapper, vendored build features and DRC process ownership reviewed. An isolated native CLI/lib-test MiMalloc trial and two identical allocator contract controls are specified. No build, gate or cost result yet.",
+      "next_step": "Freeze the baseline and candidate source copies, commit their input identities, then run serial DRC qualification and the two original native gates. Execute the fixed application cost design only if both candidate gates pass.",
+      "source_review_complete": true,
+      "prototype_prepared": false,
+      "qualification_executed": false,
+      "conditional_costs_executed": false,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
