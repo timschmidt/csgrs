@@ -2055,7 +2055,7 @@
       "native_executed": false
     },
     "cache_local_polynomial_products": {
-      "status": "scalar-qualification-passed-fixed-costs-next",
+      "status": "advance-cache-local-products-to-native-investigation-with-scalar-costs-open",
       "evidence": "docs/evidence/2026-10-13-cache-local-polynomial-products",
       "contract": "Typed multiplication borrows a closed right operand under the original Box-backed cache read lock, returns an owned product, and returns the unchanged left polynomial on a miss. No Arc payload or recursive result enum. Cache-hit decline marks reuse; cache misses enter the preserved original recognizer body once.",
       "source_review": "Product coefficient operations use Rational arithmetic and immutable structural comparison; inspected helpers do not evaluate expressions or call EvaluationCache. The typed method accepts no arbitrary callback. The parent retains the borrowed node, and the guard must be released before recursion, publication and return. Scoped inspection is not a whole-crate formal proof.",
@@ -2064,7 +2064,7 @@
         "Dispatch, temporary Result moves and code generation may regress cold paths or probe size."
       ],
       "controls": "Twenty unchanged shared tests plus inherited cache/P4 controls; eight candidate tests cover exact products, frontiers, misses, zero work, fallback accounting, concurrent readers/writers, poison recovery and opaque self-reference. Fresh qualification will run 28 commands; counts overlap.",
-      "next_step": "Run the fixed twelve preflights and sixty scalar measurements with fresh build targets, separate timing/allocation probes and unchanged witnesses. Preserve every result; assess cost evidence before any native work.",
+      "next_step": "Run the committed native validation runner in a fresh target: strict four-crate all-feature/all-target Clippy, full solver/curve/DRC suites, warning-denied docs, then both original assertions separately from a bound executable. Record gate failures without enlarging limits. Fixed native costs, reports and production CLI size follow only if investigation continues.",
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation": {
@@ -2136,7 +2136,62 @@
           "source_shares_closed": 0,
           "views_share_closed": 0
         }
-      }
+      },
+      "scalar_cost_summary": {
+        "timing_rows": 68,
+        "memory_rows": 68,
+        "all_five_slower_rows": 2,
+        "at_least_four_slower_rows": 10,
+        "all_five_faster_rows": 5,
+        "at_least_four_faster_rows": 18,
+        "ratio_of_medians_above_one_rows": 28,
+        "memory_fields": {
+          "allocation_calls": {
+            "reduced_rows": 9,
+            "increased_rows": 0,
+            "min_delta": -2000,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 9,
+            "increased_rows": 0,
+            "min_delta": -96000,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 0,
+            "increased_rows": 0,
+            "min_delta": 0,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 2,
+            "increased_rows": 0,
+            "min_delta": -96,
+            "max_delta": 0,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_delta_bytes_range": [
+          2848,
+          2880
+        ]
+      },
+      "scalar_decision": "scalar-decision-v2.json",
+      "unresolved_scalar_costs": [
+        "Quadratic conjugate-then-affine cloned queries are slower in all five pairs: ratio of medians 1.058581, median paired ratio 1.054748, paired range 1.019898..1.420584. Warm queries are slower in four pairs: ratio of medians 1.089134, median paired ratio 1.086002, range 0.996013..1.170242. Both phases save 570 requested allocations and 22,800 allocated bytes per 1,000 inputs, with unchanged retained/peak bytes. Lower-rung savings do not resolve those timing costs.",
+        "Rational radical-Laurent warm is the second all-five-slower phase: ratio of medians 1.014889 and median paired ratio 1.014827. The phase medians are 16,119 and 16,359 ns across 4,096 inputs; this timer-scale difference remains recorded and is not treated as persuasive evidence of a practical effect.",
+        "Quadratic-reciprocal first/warm/cloned, quadratic pi-transport first/warm and opaque-decline first/cloned queries are also adverse in four pairs. Every row and range remains visible.",
+        "Large timing variation affects both favorable and adverse rows. The first block has lower candidate timings in 21 of 24 rational phases and 18 of 32 quadratic phases; ratios below 0.7 occur in 20 rational and 12 quadratic phases. The other first-block phases remain visible. No samples are discarded, no earlier samples are appended and no significance or application-speedup claim is made.",
+        "All six probes grow, by 2,848 to 2,880 bytes. Production CLI size remains unmeasured. The temporary product-lookup Result is 32 bytes; private type sizes do not measure stack frames or total memory.",
+        "A product holds a cache read lock across rational arithmetic. Scoped source inspection and passing concurrent-reader/writer tests do not prove all possible schedules, bounded waiting or a universal lock-duration bound."
+      ],
+      "scalar_interpretation_review": "One overbroad first-block sentence corrected; all measured samples, summaries and decision unchanged. Original artifacts retained; native v1 runners unexecuted. Native v2 binds the corrected interpretation.",
+      "retention_requirement": "Keep every scalar adverse row and inherited endpoint tradeoff open. Native timing gains alone do not dismiss them. Resolve meaningful regressions and complete original gates, matched native costs, complete report identity, production size and remaining workflow obligations before runtime retention.",
+      "native_qualification": "Version 2 runner/assessor prepared but not yet executed; fresh target, full unchanged fixtures and 120-second worker-CPU/60-second check-body-wall assertions."
     }
   },
   "status_meanings": {
