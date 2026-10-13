@@ -1,0 +1,873 @@
+{
+  "decision": "advance-both-isolated-variants-to-native-qualification-no-runtime-admission",
+  "assessor_sha256": "3ca63ec25231e7ea12bb8c6f4afae42c9b53ff1d57ab33019900356627a610bc",
+  "cost_assessment_sha256": "de088f21a495909a00cb8840ad396b5898794d5a92fce7cea96148ab92b56371",
+  "correctness_sha256": "79b09cb92eddc9676173a6fd142a316891379ef208493a032b89922bee4ef46a",
+  "source_review": {
+    "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source",
+    "files_sha256": {
+      "crates/hyperreal/src/computable/node/algebra.rs": "1268d7209e9b99cdb005aefdffce085b96cd36e317ab5c9783a093cd0eb9031b",
+      "crates/hyperreal/src/computable/node/primitive_constructors.rs": "22fa8cf51c5134d5023d066f09a18f68e23dbbcf22d59441a0e731dce3954478",
+      "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+      "crates/hyperreal/src/rational/arithmetic/comparison.rs": "f783483141e4762e9f487597440bf8433bb37609007b623aa5591cd413ca725c",
+      "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+      "crates/hyperreal/src/rational/arithmetic/ops.rs": "2458fd6b52d430739a11b04892cc63c69294c218138dc486fd79d6cf47839925"
+    },
+    "internal_structural_eq": "Reads immutable Approximation variants, exact rational/integer leaves, and Arc identity. Its initial 64-visit recursion falls back to an iterative identity-pair walk; it does not return Unknown on budget exhaustion. It never reads approximation/fact caches, signals or owner counts. Warming cannot change the atom equality used by insert_atom.",
+    "coefficient_invariants": "The production constructors create empty or singleton vectors; insert_radical and insert_atom merge equal identities and remove zero coefficients. Radicals exclude one and are capped at eight. add and general multiply use those insertion methods. The single-radical inverse and graph-free retained-certificate round trip preserve these identities. Rational scaling cannot introduce a new identity, duplicate or radicand one; scale_in_place removes zero coefficients. Thus reinsertion is redundant for these scalar-only products under the existing invariants.",
+    "arithmetic_and_owners": "The existing MulAssign delegates to exact borrowed Rational multiplication. The right branch consumes owned vectors; the both branch clones the borrowed vectors once and reverses the rational-constant product operand order. This can alter allocation/cache work even when values agree. The four shared tests cover zero, negative and fractional scales in both directions, unsupported products, opaque owner release and cold/warm/cloned cancellation.",
+    "unchanged_fallbacks": "Removing only the two added branches and the mut binding exactly recovers the baseline algebra file. General multiplication, polynomial insertion order, 512-node passes, retained cache and mandatory original retry are unchanged.",
+    "limits": "Source reasoning plus the recorded regressions, not a universal formal proof of cache behavior. No high-precision quadratic-tower hypothesis is resolved by this review."
+  },
+  "variants": {
+    "right": {
+      "decision": "advance-to-isolated-native-qualification-with-scalar-tradeoffs-open",
+      "faster_in_all_five_blocks": 6,
+      "slower_in_all_five_blocks": [
+        {
+          "variant": "right",
+          "suite": "integer",
+          "name": "wide_integer_affine_cloned",
+          "baseline_ns": [
+            1977524,
+            1978894,
+            3290185,
+            1911569,
+            1958206
+          ],
+          "candidate_ns": [
+            1977875,
+            3436374,
+            3301794,
+            2017312,
+            1970536
+          ],
+          "baseline_median_ns": 1977524,
+          "candidate_median_ns": 2017312,
+          "median_ratio": 1.0201201097938635,
+          "block_ratios": [
+            1.000177494685273,
+            1.736512415520993,
+            1.0035283730246172,
+            1.0553173858751632,
+            1.0062965796244112
+          ],
+          "median_block_ratio": 1.0062965796244112,
+          "slower_blocks": 5,
+          "faster_blocks": 0,
+          "baseline_range_ns": [
+            1911569,
+            3290185
+          ],
+          "candidate_range_ns": [
+            1970536,
+            3436374
+          ]
+        }
+      ],
+      "slower_in_at_least_four_blocks": [
+        {
+          "variant": "right",
+          "suite": "rational",
+          "name": "radical_laurent_transport_first",
+          "baseline_ns": [
+            14239,
+            14069,
+            15559,
+            18049,
+            15149
+          ],
+          "candidate_ns": [
+            16509,
+            16539,
+            17559,
+            17079,
+            17089
+          ],
+          "baseline_median_ns": 15149,
+          "candidate_median_ns": 17079,
+          "median_ratio": 1.127401148590666,
+          "block_ratios": [
+            1.1594213076761009,
+            1.175563295188002,
+            1.1285429654862138,
+            0.9462574103828467,
+            1.128061258168856
+          ],
+          "median_block_ratio": 1.1285429654862138,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            14069,
+            18049
+          ],
+          "candidate_range_ns": [
+            16509,
+            17559
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "rational",
+          "name": "radical_laurent_transport_warm",
+          "baseline_ns": [
+            18199,
+            13849,
+            15489,
+            14969,
+            13989
+          ],
+          "candidate_ns": [
+            16219,
+            16239,
+            16299,
+            16949,
+            16609
+          ],
+          "baseline_median_ns": 14969,
+          "candidate_median_ns": 16299,
+          "median_ratio": 1.0888502906005746,
+          "block_ratios": [
+            0.8912028133413924,
+            1.1725756372301248,
+            1.052295177222545,
+            1.1322733649542387,
+            1.1872900135821003
+          ],
+          "median_block_ratio": 1.1322733649542387,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            13849,
+            18199
+          ],
+          "candidate_range_ns": [
+            16219,
+            16949
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "rational",
+          "name": "radical_laurent_transport_cloned",
+          "baseline_ns": [
+            13439,
+            13619,
+            16099,
+            14839,
+            13819
+          ],
+          "candidate_ns": [
+            16349,
+            16319,
+            14669,
+            16749,
+            16609
+          ],
+          "baseline_median_ns": 13819,
+          "candidate_median_ns": 16349,
+          "median_ratio": 1.183081264925103,
+          "block_ratios": [
+            1.2165339683012129,
+            1.198252441442103,
+            0.9111746071184545,
+            1.1287148729698766,
+            1.2018959403719516
+          ],
+          "median_block_ratio": 1.198252441442103,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            13439,
+            16099
+          ],
+          "candidate_range_ns": [
+            14669,
+            16749
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "quadratic",
+          "name": "mixed_field_decline_first",
+          "baseline_ns": [
+            1381986,
+            1351628,
+            1323090,
+            1923459,
+            2202019
+          ],
+          "candidate_ns": [
+            1437032,
+            1405763,
+            1415003,
+            2104796,
+            1408074
+          ],
+          "baseline_median_ns": 1381986,
+          "candidate_median_ns": 1415003,
+          "median_ratio": 1.0238909800822873,
+          "block_ratios": [
+            1.0398310836723381,
+            1.0400517006158498,
+            1.0694684413002895,
+            1.0942765091431634,
+            0.6394467985971056
+          ],
+          "median_block_ratio": 1.0400517006158498,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            1323090,
+            2202019
+          ],
+          "candidate_range_ns": [
+            1405763,
+            2104796
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "quadratic",
+          "name": "mixed_field_decline_warm",
+          "baseline_ns": [
+            1379526,
+            1350267,
+            1326160,
+            1932228,
+            2192360
+          ],
+          "candidate_ns": [
+            1418623,
+            1424532,
+            1803537,
+            2094906,
+            2111376
+          ],
+          "baseline_median_ns": 1379526,
+          "candidate_median_ns": 1803537,
+          "median_ratio": 1.3073599192766212,
+          "block_ratios": [
+            1.0283408939012386,
+            1.0550002332871944,
+            1.3599693852928756,
+            1.0841919276607108,
+            0.9630608111806455
+          ],
+          "median_block_ratio": 1.0550002332871944,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            1326160,
+            2192360
+          ],
+          "candidate_range_ns": [
+            1418623,
+            2111376
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "integer",
+          "name": "wide_integer_affine_construction",
+          "baseline_ns": [
+            3765972,
+            5053714,
+            6723770,
+            3770372,
+            3831668
+          ],
+          "candidate_ns": [
+            4433047,
+            7186358,
+            4056873,
+            3873915,
+            3833108
+          ],
+          "baseline_median_ns": 3831668,
+          "candidate_median_ns": 4056873,
+          "median_ratio": 1.0587746641932443,
+          "block_ratios": [
+            1.1771322250935483,
+            1.4219953879463698,
+            0.6033628455464717,
+            1.0274622769318253,
+            1.0003758154412126
+          ],
+          "median_block_ratio": 1.0274622769318253,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            3765972,
+            6723770
+          ],
+          "candidate_range_ns": [
+            3833108,
+            7186358
+          ]
+        },
+        {
+          "variant": "right",
+          "suite": "integer",
+          "name": "wide_integer_affine_cloned",
+          "baseline_ns": [
+            1977524,
+            1978894,
+            3290185,
+            1911569,
+            1958206
+          ],
+          "candidate_ns": [
+            1977875,
+            3436374,
+            3301794,
+            2017312,
+            1970536
+          ],
+          "baseline_median_ns": 1977524,
+          "candidate_median_ns": 2017312,
+          "median_ratio": 1.0201201097938635,
+          "block_ratios": [
+            1.000177494685273,
+            1.736512415520993,
+            1.0035283730246172,
+            1.0553173858751632,
+            1.0062965796244112
+          ],
+          "median_block_ratio": 1.0062965796244112,
+          "slower_blocks": 5,
+          "faster_blocks": 0,
+          "baseline_range_ns": [
+            1911569,
+            3290185
+          ],
+          "candidate_range_ns": [
+            1970536,
+            3436374
+          ]
+        }
+      ],
+      "slower_median_block_ratio_rows": 21,
+      "allocation_rows_with_any_reduction": 6,
+      "memory_fields_increased_in_any_sample": 0,
+      "retained_requested_bytes_unchanged_in_every_sample": true,
+      "probe_binary_sizes": [
+        {
+          "variant": "right",
+          "suite": "rational",
+          "mode": "time",
+          "baseline_bytes": 6178136,
+          "candidate_bytes": 6178664,
+          "delta_bytes": 528
+        },
+        {
+          "variant": "right",
+          "suite": "rational",
+          "mode": "memory",
+          "baseline_bytes": 6180040,
+          "candidate_bytes": 6180568,
+          "delta_bytes": 528
+        },
+        {
+          "variant": "right",
+          "suite": "quadratic",
+          "mode": "time",
+          "baseline_bytes": 6153192,
+          "candidate_bytes": 6153704,
+          "delta_bytes": 512
+        },
+        {
+          "variant": "right",
+          "suite": "quadratic",
+          "mode": "memory",
+          "baseline_bytes": 6156440,
+          "candidate_bytes": 6156968,
+          "delta_bytes": 528
+        },
+        {
+          "variant": "right",
+          "suite": "integer",
+          "mode": "time",
+          "baseline_bytes": 6048976,
+          "candidate_bytes": 6049480,
+          "delta_bytes": 504
+        },
+        {
+          "variant": "right",
+          "suite": "integer",
+          "mode": "memory",
+          "baseline_bytes": 6051832,
+          "candidate_bytes": 6052360,
+          "delta_bytes": 528
+        }
+      ]
+    },
+    "both": {
+      "decision": "advance-to-isolated-native-qualification-with-scalar-tradeoffs-open",
+      "faster_in_all_five_blocks": 13,
+      "slower_in_all_five_blocks": [
+        {
+          "variant": "both",
+          "suite": "integer",
+          "name": "wide_integer_affine_warm",
+          "baseline_ns": [
+            1220747,
+            1226826,
+            2160532,
+            1270163,
+            1262813
+          ],
+          "candidate_ns": [
+            1240775,
+            1240005,
+            2204700,
+            1277163,
+            1317549
+          ],
+          "baseline_median_ns": 1262813,
+          "candidate_median_ns": 1277163,
+          "median_ratio": 1.0113635193809376,
+          "block_ratios": [
+            1.0164063479164807,
+            1.0107423546615413,
+            1.0204431130851106,
+            1.0055111036929907,
+            1.043344501521603
+          ],
+          "median_block_ratio": 1.0164063479164807,
+          "slower_blocks": 5,
+          "faster_blocks": 0,
+          "baseline_range_ns": [
+            1220747,
+            2160532
+          ],
+          "candidate_range_ns": [
+            1240005,
+            2204700
+          ]
+        }
+      ],
+      "slower_in_at_least_four_blocks": [
+        {
+          "variant": "both",
+          "suite": "rational",
+          "name": "radical_laurent_transport_first",
+          "baseline_ns": [
+            14239,
+            14069,
+            15559,
+            18049,
+            15149
+          ],
+          "candidate_ns": [
+            16329,
+            16479,
+            16549,
+            16819,
+            16499
+          ],
+          "baseline_median_ns": 15149,
+          "candidate_median_ns": 16499,
+          "median_ratio": 1.0891147930556473,
+          "block_ratios": [
+            1.1467799705035466,
+            1.1712985997583338,
+            1.0636287679156757,
+            0.9318521801761871,
+            1.0891147930556473
+          ],
+          "median_block_ratio": 1.0891147930556473,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            14069,
+            18049
+          ],
+          "candidate_range_ns": [
+            16329,
+            16819
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "rational",
+          "name": "radical_laurent_transport_warm",
+          "baseline_ns": [
+            18199,
+            13849,
+            15489,
+            14969,
+            13989
+          ],
+          "candidate_ns": [
+            16468,
+            26508,
+            16729,
+            16488,
+            16449
+          ],
+          "baseline_median_ns": 14969,
+          "candidate_median_ns": 16488,
+          "median_ratio": 1.1014763845280247,
+          "block_ratios": [
+            0.9048848837848233,
+            1.9140732182829086,
+            1.0800568145135256,
+            1.1014763845280247,
+            1.1758524555007506
+          ],
+          "median_block_ratio": 1.1014763845280247,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            13849,
+            18199
+          ],
+          "candidate_range_ns": [
+            16449,
+            26508
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "rational",
+          "name": "radical_laurent_transport_cloned",
+          "baseline_ns": [
+            13439,
+            13619,
+            16099,
+            14839,
+            13819
+          ],
+          "candidate_ns": [
+            16219,
+            16369,
+            16309,
+            14399,
+            16239
+          ],
+          "baseline_median_ns": 13819,
+          "candidate_median_ns": 16239,
+          "median_ratio": 1.1751212099283594,
+          "block_ratios": [
+            1.2068606295111244,
+            1.20192378295029,
+            1.013044288465122,
+            0.9703484062268347,
+            1.1751212099283594
+          ],
+          "median_block_ratio": 1.1751212099283594,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            13439,
+            16099
+          ],
+          "candidate_range_ns": [
+            14399,
+            16369
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "quadratic",
+          "name": "negated_scaled_surd_warm",
+          "baseline_ns": [
+            1783528,
+            1760960,
+            1733061,
+            1743361,
+            2734783
+          ],
+          "candidate_ns": [
+            1790328,
+            1953926,
+            1765499,
+            1776718,
+            2519058
+          ],
+          "baseline_median_ns": 1760960,
+          "candidate_median_ns": 1790328,
+          "median_ratio": 1.0166772669453026,
+          "block_ratios": [
+            1.0038126679255948,
+            1.1095800018171906,
+            1.0187171715248338,
+            1.0191337307648847,
+            0.921118055801868
+          ],
+          "median_block_ratio": 1.0187171715248338,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            1733061,
+            2734783
+          ],
+          "candidate_range_ns": [
+            1765499,
+            2519058
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "quadratic",
+          "name": "negated_scaled_surd_cloned",
+          "baseline_ns": [
+            3052141,
+            3056142,
+            2999925,
+            2967057,
+            4686520
+          ],
+          "candidate_ns": [
+            3052201,
+            3231609,
+            3155234,
+            3135365,
+            4414368
+          ],
+          "baseline_median_ns": 3052141,
+          "candidate_median_ns": 3155234,
+          "median_ratio": 1.033777273068315,
+          "block_ratios": [
+            1.0000196583316432,
+            1.0574145442194767,
+            1.0517709609406902,
+            1.0567255701525113,
+            0.9419287659073257
+          ],
+          "median_block_ratio": 1.0517709609406902,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            2967057,
+            4686520
+          ],
+          "candidate_range_ns": [
+            3052201,
+            4414368
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "quadratic",
+          "name": "multiradical_square_first",
+          "baseline_ns": [
+            3836788,
+            3765082,
+            3801500,
+            3756603,
+            10080581
+          ],
+          "candidate_ns": [
+            3871575,
+            3913582,
+            3909612,
+            3902903,
+            5922835
+          ],
+          "baseline_median_ns": 3801500,
+          "candidate_median_ns": 3909612,
+          "median_ratio": 1.0284393002762067,
+          "block_ratios": [
+            1.0090666984988486,
+            1.0394413720604225,
+            1.0284393002762067,
+            1.0389447594009802,
+            0.5875489716316946
+          ],
+          "median_block_ratio": 1.0284393002762067,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            3756603,
+            10080581
+          ],
+          "candidate_range_ns": [
+            3871575,
+            5922835
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "integer",
+          "name": "signed_word_boundary_warm",
+          "baseline_ns": [
+            1318949,
+            1296991,
+            2252017,
+            2247986,
+            1317620
+          ],
+          "candidate_ns": [
+            1396384,
+            1405363,
+            2336591,
+            1313540,
+            1354397
+          ],
+          "baseline_median_ns": 1318949,
+          "candidate_median_ns": 1396384,
+          "median_ratio": 1.0587096241022207,
+          "block_ratios": [
+            1.0587096241022207,
+            1.0835564780326155,
+            1.0375547786717418,
+            0.5843185856139673,
+            1.0279116892579043
+          ],
+          "median_block_ratio": 1.0375547786717418,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            1296991,
+            2252017
+          ],
+          "candidate_range_ns": [
+            1313540,
+            2336591
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "integer",
+          "name": "wide_integer_affine_construction",
+          "baseline_ns": [
+            3765972,
+            5053714,
+            6723770,
+            3770372,
+            3831668
+          ],
+          "candidate_ns": [
+            3803290,
+            3789440,
+            7279022,
+            3870146,
+            3900453
+          ],
+          "baseline_median_ns": 3831668,
+          "candidate_median_ns": 3870146,
+          "median_ratio": 1.0100421017687335,
+          "block_ratios": [
+            1.0099092611416123,
+            0.7498326972994515,
+            1.0825804570947548,
+            1.0264626408216484,
+            1.0179517118915313
+          ],
+          "median_block_ratio": 1.0179517118915313,
+          "slower_blocks": 4,
+          "faster_blocks": 1,
+          "baseline_range_ns": [
+            3765972,
+            6723770
+          ],
+          "candidate_range_ns": [
+            3789440,
+            7279022
+          ]
+        },
+        {
+          "variant": "both",
+          "suite": "integer",
+          "name": "wide_integer_affine_warm",
+          "baseline_ns": [
+            1220747,
+            1226826,
+            2160532,
+            1270163,
+            1262813
+          ],
+          "candidate_ns": [
+            1240775,
+            1240005,
+            2204700,
+            1277163,
+            1317549
+          ],
+          "baseline_median_ns": 1262813,
+          "candidate_median_ns": 1277163,
+          "median_ratio": 1.0113635193809376,
+          "block_ratios": [
+            1.0164063479164807,
+            1.0107423546615413,
+            1.0204431130851106,
+            1.0055111036929907,
+            1.043344501521603
+          ],
+          "median_block_ratio": 1.0164063479164807,
+          "slower_blocks": 5,
+          "faster_blocks": 0,
+          "baseline_range_ns": [
+            1220747,
+            2160532
+          ],
+          "candidate_range_ns": [
+            1240005,
+            2204700
+          ]
+        }
+      ],
+      "slower_median_block_ratio_rows": 19,
+      "allocation_rows_with_any_reduction": 18,
+      "memory_fields_increased_in_any_sample": 0,
+      "retained_requested_bytes_unchanged_in_every_sample": true,
+      "probe_binary_sizes": [
+        {
+          "variant": "both",
+          "suite": "rational",
+          "mode": "time",
+          "baseline_bytes": 6178136,
+          "candidate_bytes": 6179512,
+          "delta_bytes": 1376
+        },
+        {
+          "variant": "both",
+          "suite": "rational",
+          "mode": "memory",
+          "baseline_bytes": 6180040,
+          "candidate_bytes": 6181408,
+          "delta_bytes": 1368
+        },
+        {
+          "variant": "both",
+          "suite": "quadratic",
+          "mode": "time",
+          "baseline_bytes": 6153192,
+          "candidate_bytes": 6154568,
+          "delta_bytes": 1376
+        },
+        {
+          "variant": "both",
+          "suite": "quadratic",
+          "mode": "memory",
+          "baseline_bytes": 6156440,
+          "candidate_bytes": 6157808,
+          "delta_bytes": 1368
+        },
+        {
+          "variant": "both",
+          "suite": "integer",
+          "mode": "time",
+          "baseline_bytes": 6048976,
+          "candidate_bytes": 6050344,
+          "delta_bytes": 1368
+        },
+        {
+          "variant": "both",
+          "suite": "integer",
+          "mode": "memory",
+          "baseline_bytes": 6051832,
+          "candidate_bytes": 6053208,
+          "delta_bytes": 1376
+        }
+      ]
+    }
+  },
+  "reason": "Both preserve the scalar witnesses and have repeatable allocation savings without any measured memory increase. Right scaling saves 2000 allocations and 192000 requested bytes in each of six opaque query rows per 1000 inputs. Bidirectional scaling saves 264000 bytes in those rows and reduces requested bytes in twelve additional rows. These results support testing real consumers; they do not settle the timing tradeoffs or select a production variant.",
+  "timing_limits": "The all-five slower rows are right wide_integer_affine_cloned (median block ratio 1.00630) and both wide_integer_affine_warm (1.01641). Both also have radical-Laurent query rows slower in four blocks, with ratios up to 1.19825 for right and 1.17512 for both; their median paired total differences are 1350 to 2700 ns per 4096 inputs. Every additional adverse row and all ranges remain in the cost assessment. Timing variation is substantial; no statistical or application-speedup inference is made.",
+  "next_step": "Qualify right and both separately with strict consumer Clippy, full all-feature curve and DRC tests/docs, and the unchanged complete-board 120-second worker-CPU and copper-neck 60-second check-wall-time assertions. Keep gate failures. Then run fixed native endpoint/broad controls and replay complete unnormalized reports against the same baseline; bind every binary to its source, target, features and hash. No extension of the completed scalar samples.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/cost-target/release/libhyperreal.rlib",
+    "sha256": "bbacfdcda9f5f5438e3cd2a69665462f9bb62ce08b1729bc1a30aa196154c36a",
+    "bytes": 11698854,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/baseline/source/crates/hyperreal#0.13.1"
+  },
+  "right": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/cost-target/release/libhyperreal.rlib",
+    "sha256": "329de857165e1b0aa4b3b2780da39921ce03e000aeeed2367ebdc644576ecfd6",
+    "bytes": 11698830,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/right/source/crates/hyperreal#0.13.1"
+  },
+  "both": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/cost-target/release/libhyperreal.rlib",
+    "sha256": "fb4128da7843b668620f5d3fc27ab484e121b793064f38860ac06b5a4e30a5f6",
+    "bytes": 11700228,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "package_id": "path+file:///home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/both/source/crates/hyperreal#0.13.1"
+  }
+}

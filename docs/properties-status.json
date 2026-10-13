@@ -352,11 +352,13 @@
       "runtime_admitted": false
     },
     "isolated_coefficient_scaling": {
-      "status": "both-isolated-scaling-variants-pass-scalar-correctness-await-fixed-costs",
-      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/correctness-v1.json",
+      "status": "advance-both-isolated-variants-to-native-qualification-no-runtime-admission",
+      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/scalar-decision-v1.json",
       "result": "Right-scalar and bidirectional variants each pass 867 scalar library results, 28 doctests, four included new regressions and six included cache-frontier regressions. The four new tests also pass on the unchanged runtime baseline. Clippy, formatting and warning-denied docs pass.",
-      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes, with five preregistered three-variant blocks and dedicated cost targets. Keep every adverse row. Advance only supported variants to native and complete-report qualification.",
-      "runtime_admitted": false
+      "next_step": "Qualify right and both separately with strict consumer Clippy, full all-feature curve and DRC tests/docs, and the unchanged complete-board 120-second worker-CPU and copper-neck 60-second check-wall-time assertions. Keep gate failures. Then run fixed native endpoint/broad controls and replay complete unnormalized reports against the same baseline; bind every binary to its source, target, features and hash. No extension of the completed scalar samples.",
+      "runtime_admitted": false,
+      "cost_evidence": "docs/evidence/2026-10-13-coefficient-scaling/cost-assessment-v1.json",
+      "cost_summary": "All 90 fixed processes preserve witnesses and inventories. No allocation field increases in any sample; retained requested bytes match. Right saves allocations/bytes in six rows; both reduces bytes in eighteen. Each has one all-five slower timing row and further adverse four-block rows, retained in full."
     }
   },
   "status_meanings": {

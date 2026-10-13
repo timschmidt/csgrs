@@ -1,0 +1,92 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-rational-time",
+    "sha256": "737a3607ed9c4441ef5d0c3c6c9c08ae4eda48f0befa40bb14dd5473071bd169",
+    "bytes": 6178136
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-rational-memory",
+    "sha256": "22590737d23b646827f9512cc809c9eef69329be96b3efc3aa4493bcce701d4a",
+    "bytes": 6180040
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-quadratic-time",
+    "sha256": "5f64cc2d0719bd1c96b1803e5e8c33089a73c1a980ab45ec74f4e8a594c3c57f",
+    "bytes": 6153192
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-quadratic-memory",
+    "sha256": "95ceeda7dc011adefc29df9b824caab50b263cea90e498ce75e2cbd723d23ee5",
+    "bytes": 6156440
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-integer-time",
+    "sha256": "63c1d3881944c60194b7dd4f6eaf4e22623fbab37dda684562d281302c3f0ed1",
+    "bytes": 6048976
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/baseline-integer-memory",
+    "sha256": "a5c7e29e055ced3bbde7426aee215dac12d0eeb3884bcb6e7acfe7b30c61a4a4",
+    "bytes": 6051832
+  },
+  "right-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-rational-time",
+    "sha256": "b5fe3f563f7078c6d93ea84b66c35f84724d6d3ad1471618db44373514792fa5",
+    "bytes": 6178664
+  },
+  "right-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-rational-memory",
+    "sha256": "8a15f9597e7a10052c0978b66140bc98ee9dd06f0ec111c07f36a3f146a7c2b9",
+    "bytes": 6180568
+  },
+  "right-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-quadratic-time",
+    "sha256": "29ef9569d2cd08773ac82fefda5a4b9d1f054f96456d4f2ef5c8fce9b7003dba",
+    "bytes": 6153704
+  },
+  "right-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-quadratic-memory",
+    "sha256": "e9058022399805b43f5ae4aa202735acff985fde708e7d0815ab99fb9ca1ba31",
+    "bytes": 6156968
+  },
+  "right-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-integer-time",
+    "sha256": "d1f25a7e7aac01d325ea1c53ffe06c098b0a2a913b482cb8bb9610b0748cb960",
+    "bytes": 6049480
+  },
+  "right-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/right-integer-memory",
+    "sha256": "6b0169a8894d93d4d6798ba7c49e90168b0a37d386cd7d18305e81e31a898aef",
+    "bytes": 6052360
+  },
+  "both-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-rational-time",
+    "sha256": "8e93ffa83f3363bdf89830405d78f137a2c24d6ddc8689379b974c2847276364",
+    "bytes": 6179512
+  },
+  "both-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-rational-memory",
+    "sha256": "18b0c9be9fbdb0ba212a5290665d1150340a0c424917006cef4eba604a5c3070",
+    "bytes": 6181408
+  },
+  "both-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-quadratic-time",
+    "sha256": "1f0744b43b01da152fa44de7803919fdb3a30328777c5ceb92f8c64e04ce528b",
+    "bytes": 6154568
+  },
+  "both-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-quadratic-memory",
+    "sha256": "8ce06a724f076583b49beb0a141ba920c07df76a858bdfae6deaa71a0cb6bbd3",
+    "bytes": 6157808
+  },
+  "both-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-integer-time",
+    "sha256": "92dee20213d308d6e8ab0eff072ff777b688a588e9f94d115c6649ed02b59016",
+    "bytes": 6050344
+  },
+  "both-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/coefficient-scaling/cost-v1-binaries/both-integer-memory",
+    "sha256": "cff792ce8c2efd99494f0eec0f85a0d2b06cbaf778ac1a680e79368077736015",
+    "bytes": 6053208
+  }
+}
