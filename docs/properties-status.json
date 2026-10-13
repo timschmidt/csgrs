@@ -1481,20 +1481,34 @@
       "native_work": "No native validation, gate, cost control, complete-report replay or production CLI build was run after this scalar cost rejection."
     },
     "owned_radical_scratch": {
-      "status": "v2-qualified-fixed-scalar-costs-next",
+      "status": "reject-owned-radical-scratch-on-scalar-performance-and-memory-costs",
       "evidence": [
         "docs/evidence/2026-10-13-owned-radical-scratch/scope-v1.json",
         "docs/evidence/2026-10-13-owned-radical-scratch/preparation-v1/protocol.json",
         "docs/evidence/2026-10-13-owned-radical-scratch/qualification-failure-v1.json",
         "docs/evidence/2026-10-13-owned-radical-scratch/scope-v2.json",
         "docs/evidence/2026-10-13-owned-radical-scratch/preparation-v2/protocol.json",
-        "docs/evidence/2026-10-13-owned-radical-scratch/correctness-v2.json"
+        "docs/evidence/2026-10-13-owned-radical-scratch/correctness-v2.json",
+        "docs/evidence/2026-10-13-owned-radical-scratch/cost-assessment-v2.json",
+        "docs/evidence/2026-10-13-owned-radical-scratch/decision-v2.json"
       ],
       "scope": "Keep scratch arrays in ordinary owned Vecs, and introduce shared storage only for reads from an immutable retained payload. A write unwraps or copies a retained buffer into an owned Vec, without allocating a new shared header. Publishing an owned array still copies it into a retained Arc and can cost more than baseline.",
       "ownership": "The two-form scratch storage is private: Owned(Vec) or Retained(Arc<Vec>). Cloning owned scratch preserves the original deep Vec copy; cloning a retained read shares rational data. Closed storage exposes only immutable reads and conversion to a scratch view. Empty retained storage is None. Polynomial terms and opaque Computable owners keep their original Vec behavior.",
       "cost_risks": "Owned publication adds an Arc allocation. The measured scratch coefficient remains 56 bytes and the closed coefficient shrinks from 32 to 16 bytes. Retained reads can avoid copies, but borrowed-to-owned transitions, first-query costs, heap usage and binary size remain to be measured. The prior rejected version is not the new baseline and its samples are not extended.",
       "alias_control_change": "Only the pointer-inventory observation changes. It separately records whether the original scratch shares its closed payload and whether two returned views share that payload. Baseline expects 0/0; candidate expects 0/1. Every mathematical assertion, graph-release check and concurrent mutation control is preserved by exact token recovery.",
-      "next_step": "Execute the predeclared twelve preflights and 60 scalar measurements, then independently assess all timing, allocation and size rows. No native or runtime admission follows from scalar qualification; original limits and all 35 pending native entries remain unchanged.",
+      "next_step": {
+        "status": "source-review-pending",
+        "task": "Review how retained polynomial reads reconstruct the outer term Vec and radical arrays, and whether whole-polynomial immutable views can avoid those copies until arithmetic actually needs owned storage. Establish a concrete ownership and operation-order design before preparing any further candidate.",
+        "basis": "The rejected radical-only designs leave outer polynomial reconstruction intact. Prior instrumentation counted frequent recursive retained copies, but those counts are neither allocation measurements nor an attribution of the present slowdowns. A whole-polynomial view is an unmeasured hypothesis, not an accepted optimization.",
+        "constraints": [
+          "Start from the unchanged endpoint/P4 parent; do not combine rejected memo omission or storage candidates into a new baseline.",
+          "Keep closed payloads graph-free, opaque Computable owner counts and local memo behavior intact, and prevent any mutable alias to retained coefficients.",
+          "Preserve arithmetic/insertion order, eight-term/eight-radical bounds, original work/depth limits and the mandatory original retry after releasing its first memo.",
+          "Review all consuming and mutable operations, projection lifetimes, lock scope, empty states, publication and buffer release before implementation.",
+          "Measure layouts, all scalar phases, requested memory and sizes in a new fixed sample set; preserve both original native gates and full fixtures."
+        ],
+        "candidate_prepared": false
+      },
       "runtime_admitted": false,
       "preparation": "A 10,134-file shared-test baseline and 10,135-file candidate differ only in algebra.rs and the new private storage helper. Parent-token recovery and the unchanged mathematical alias controls are verified. All manifests, lockfiles, main runtime and 35 pending native entries are unchanged.",
       "qualification_v1": "Twenty-three commands passed; candidate all-feature Clippy failed on mem_replace_with_default. Candidate default Clippy and docs did not execute. Baseline 888/801 and candidate 890/803 all-feature/default scalar tests and both 28-doctest runs pass. Counts overlap. V1 source and failure stay frozen; no v1 costs ran.",
@@ -1561,7 +1575,67 @@
           "source_shares_closed": 0,
           "views_share_closed": 1
         }
-      }
+      },
+      "cost_summary": {
+        "timing_rows": 68,
+        "memory_rows": 68,
+        "all_five_slower_rows": 6,
+        "at_least_four_slower_rows": 24,
+        "all_five_faster_rows": 3,
+        "at_least_four_faster_rows": 17,
+        "ratio_of_medians_above_one_rows": 31,
+        "memory_fields": {
+          "allocation_calls": {
+            "reduced_rows": 4,
+            "increased_rows": 11,
+            "min_delta": -1000,
+            "max_delta": 1000,
+            "all_five_deltas_equal": true
+          },
+          "allocated_bytes": {
+            "reduced_rows": 13,
+            "increased_rows": 11,
+            "min_delta": -42672,
+            "max_delta": 24000,
+            "all_five_deltas_equal": true
+          },
+          "retained_bytes_delta": {
+            "reduced_rows": 7,
+            "increased_rows": 14,
+            "min_delta": -32000,
+            "max_delta": 24000,
+            "all_five_deltas_equal": true
+          },
+          "peak_bytes_delta": {
+            "reduced_rows": 8,
+            "increased_rows": 14,
+            "min_delta": -32000,
+            "max_delta": 24000,
+            "all_five_deltas_equal": true
+          }
+        },
+        "probe_binary_delta_bytes_range": [
+          768,
+          800
+        ]
+      },
+      "cost_decision": "Reject the measured owned-scratch version. Its tested mathematical values, P4 facts, alias isolation and graph ownership are preserved, but repeated scalar slowdowns and increased allocation/retention costs remain. The smaller closed coefficient and three all-five-faster rows do not establish an acceptable tradeoff under the governing ladder. Do not advance this source to native validation or copy it into main.",
+      "cost_limits": [
+        "The comparison uses a new closed sample set. It neither extends previous samples nor establishes native workload performance.",
+        "Ratios, directions and ranges are descriptive; they establish neither statistical significance nor an application speedup. Every adverse row is retained.",
+        "Requested Rust heap counters exclude native C heaps, allocator bookkeeping and stack frames. Private coefficient layouts do not establish total memory or eventual reclamation.",
+        "Native qualification/cost controls, full reports, production CLI size, original full-fixture limits and the complete workflow matrix remain open. Dependencies are unchanged; coefficient layouts and array ownership change and their costs remain part of this comparison.",
+        "Quadratic-reciprocal first queries have ratio of medians 1.333721 and median paired ratio 1.157056, with paired ratios from 1.039856 to 1.515189. They add 1,000 requested allocations and 24,000 allocated/retained/peak bytes per 1,000 inputs. Ratio of medians and median paired ratio are distinct summaries.",
+        "Conjugate-then-affine first and warm queries are slower in all five pairs: ratios of medians 1.045733/1.033518 and median paired ratios 1.052773/1.047584. The warm phase saves 285 allocation calls but still has adverse timing. Its cloned phase is slower in four pairs and adds 715 calls and 24,000 retained/peak bytes.",
+        "Signed-word construction/first and wide-integer construction have smaller all-five adverse directions; these are retained as descriptive observations, not significance claims or the sole basis for rejection.",
+        "Allocation calls decrease in four phases and increase in eleven. Allocated bytes decrease in thirteen and increase in eleven. Retained bytes decrease in seven and increase in fourteen; peak bytes decrease in eight and increase in fourteen. Every paired memory delta repeats five times. These phase-relative requested-heap counters are not eventual reclamation or total-memory measurements.",
+        "All six probe executables grow by 768 to 800 bytes. Production CLI size was not measured.",
+        "Every timing sample and range remains in the assessment, including substantial baseline and candidate variation. Rational pi-parameter transport cloned queries and quadratic multiradical-square/mixed-field-decline construction are faster in all five pairs; this does not establish an application speedup or resolve the adverse rows.",
+        "First-query phases use fresh graphs in processes that may already share constants; cloned-query phases do not include cloning. Timer-scale radical-Laurent query rows are not treated as persuasive performance gains.",
+        "No native qualification, endpoint/broad/abort controls, original fixture gates, complete-report replay or production CLI build ran for this rejected source. The uninstrumented parent still fails the 120-second board gate at 133.31248412 worker-CPU seconds and passes the separate 60-second neck check-body assertion. These are standalone historical gates, not matched speed comparisons.",
+        "The failed v1 qualification and corrected v2 qualification remain distinct. No v1 costs ran and no v1 pass was relabelled as a v2 execution."
+      ],
+      "native_executed": false
     }
   },
   "status_meanings": {
