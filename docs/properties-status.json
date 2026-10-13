@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Evaluate the preregistered right-scalar and bidirectional coefficient-scaling variants separately, using the frozen uninstrumented endpoint parent. Preserve original arithmetic fallbacks and ownership guarantees; complete scalar correctness and fixed three-suite cost controls before native qualification. Full requirements: docs/evidence/2026-10-13-coefficient-multiplication-shapes/decision-v1.json"
+      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes, with five preregistered three-variant blocks and dedicated cost targets. Keep every adverse row. Advance only supported variants to native and complete-report qualification."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -349,6 +349,13 @@
         "right": "When the right coefficient has no radical or opaque vectors, consume the owned left coefficient through the existing scale_in_place helper; preserve the original general multiplication body otherwise.",
         "both": "Include the right-scalar branch; additionally, when only the left coefficient is rational, clone the borrowed right coefficient once and scale its vectors through the existing helper."
       },
+      "runtime_admitted": false
+    },
+    "isolated_coefficient_scaling": {
+      "status": "both-isolated-scaling-variants-pass-scalar-correctness-await-fixed-costs",
+      "evidence": "docs/evidence/2026-10-13-coefficient-scaling/correctness-v1.json",
+      "result": "Right-scalar and bidirectional variants each pass 867 scalar library results, 28 doctests, four included new regressions and six included cache-frontier regressions. The four new tests also pass on the unchanged runtime baseline. Clippy, formatting and warning-denied docs pass.",
+      "next_step": "Run the unchanged rational/quadratic/integer probes in separate time and memory modes, with five preregistered three-variant blocks and dedicated cost targets. Keep every adverse row. Advance only supported variants to native and complete-report qualification.",
       "runtime_admitted": false
     }
   },
