@@ -645,7 +645,7 @@
         "scope": "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json",
         "task": "Keep this uninstrumented combined parent frozen. The four-source temporary-storage comparison is complete and rejects all three nonunion candidates. Next prepare a separate radical-only union-storage experiment with an explicit feature-only control, preserving all original proofs, owners, retries, budgets and native assertions.",
         "retained_projection_diagnostic_and_nonunion_storage_comparison_complete": true,
-        "union_storage_source_runner_or_measurements_prepared": false
+        "union_storage_source_runner_or_measurements_prepared": true
       },
       "native_runtime_admitted": false
     },
@@ -693,7 +693,7 @@
       "scope": "Private temporary radical and/or Laurent-term vectors use one inline slot. The uninstrumented endpoint/P4 parent, persistent certificates, opaque atom vectors, arithmetic, original retries, all recognition bounds and original native assertions are preserved.",
       "preparation": "Four 10,132-file sources and separate fresh targets. Each source changes only algebra.rs, one shared eight-test module, the hyperreal manifest and the root lockfile. All package versions/checksums match the parent; only the same direct no-feature SmallVec dependency is added.",
       "qualification": "Each variant passes eight new storage controls, six inherited cache-frontier tests, eleven admitted P4 tests, 882 all-feature scalar library tests, 795 default scalar library tests and 28 doctests. Formatting, strict default/all-feature/all-target Clippy and warning-denied scalar docs pass. Counts overlap; these are not unique or full-workflow totals.",
-      "next_step": "Prepare a distinct radical-only union-storage experiment with both an unchanged Vec baseline and a Vec feature-only control. Establish actual layouts and qualify before new fixed costs; union can affect other native dependency users. The completed 120-process nonunion sample set remains closed. No native qualification or gate was run for the rejected variants.",
+      "next_step": "The distinct radical-only union-storage experiment is prepared and undergoing scalar qualification with an unchanged Vec baseline and a Vec feature-only control. See radical_union_storage. The completed nonunion sources and 120-process sample set remain frozen and rejected.",
       "runtime_admitted": false,
       "layouts": {
         "baseline": {
@@ -952,6 +952,21 @@
         }
       },
       "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions."
+    },
+    "radical_union_storage": {
+      "status": "three-sources-frozen-scalar-qualification-running",
+      "evidence": [
+        "docs/evidence/2026-10-13-radical-union-storage/preparation-v1/protocol.json"
+      ],
+      "variants": [
+        "baseline",
+        "feature",
+        "radicals"
+      ],
+      "scope": "Compare unchanged Vec, Vec with the SmallVec union feature, and radical-only inline storage with union. Terms, persistent certificates and opaque atoms remain Vec. Use the uninstrumented endpoint/P4 parent and exactly the prior eight storage tests; preserve all arithmetic, limits, original retries, proof monotonicity and owner release.",
+      "preparation": "Three 10,132-file sources. All versions/checksums fixed. The feature-only control differs from baseline only in the manifest flag; the candidate differs from that control only in algebra.rs. Actual dependency features and private layouts will be bound by qualification.",
+      "next_step": "Complete scalar qualification and establish actual layouts. Then run the new closed five-block, three-suite timing/allocation/size comparison, evaluating all three contrasts. Only supported variants proceed to native qualification, costs, report identity and original gates.",
+      "runtime_admitted": false
     }
   },
   "status_meanings": {
