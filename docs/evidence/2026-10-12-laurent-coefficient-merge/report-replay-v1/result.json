@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "comparisons": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147892,
+      "candidate_bytes": 147892,
+      "baseline_sha256": "e6fc7c7bb418038aa2914e98a4b763f2503facba82e434275dc740070f7e48b2",
+      "candidate_sha256": "e6fc7c7bb418038aa2914e98a4b763f2503facba82e434275dc740070f7e48b2",
+      "violation_count": 12
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128807,
+      "candidate_bytes": 128807,
+      "baseline_sha256": "355d4955bb019930621ab343804b6bc48789bc0cbc4a62f1a61a6e3f0395a781",
+      "candidate_sha256": "355d4955bb019930621ab343804b6bc48789bc0cbc4a62f1a61a6e3f0395a781",
+      "violation_count": 197
+    }
+  ],
+  "all_reports_byte_identical": true,
+  "all_report_values_identical": true,
+  "inputs_and_sources_unchanged": true,
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "application_speedup_claimed": false
+}

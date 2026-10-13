@@ -1,0 +1,54 @@
+{
+  "decision": "complete-report-equality-verified-cost-rejection-unchanged",
+  "scope": "The frozen integer-leaf parent versus the rejected coefficient-merge version. Both include the same pending native geometry and persistent cache. This does not compare against uncached main or the older geometry implementation.",
+  "reports": [
+    {
+      "fixture": "cparti-fpga",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 147892,
+      "candidate_bytes": 147892,
+      "baseline_sha256": "e6fc7c7bb418038aa2914e98a4b763f2503facba82e434275dc740070f7e48b2",
+      "candidate_sha256": "e6fc7c7bb418038aa2914e98a4b763f2503facba82e434275dc740070f7e48b2",
+      "violation_count": 12
+    },
+    {
+      "fixture": "hvp109a",
+      "complete_bytes_identical": true,
+      "complete_json_values_identical": true,
+      "baseline_bytes": 128807,
+      "candidate_bytes": 128807,
+      "baseline_sha256": "355d4955bb019930621ab343804b6bc48789bc0cbc4a62f1a61a6e3f0395a781",
+      "candidate_sha256": "355d4955bb019930621ab343804b6bc48789bc0cbc4a62f1a61a6e3f0395a781",
+      "violation_count": 197
+    }
+  ],
+  "comparison": "Complete unnormalized JSON bytes and parsed values are identical for both full original boards. Four fresh CLI processes use the same absolute inputs and four check selections. All 108 extracted input files remain unchanged.",
+  "cli_exit_contract": "Exit 1 denotes active findings in a complete report; both the JSON and its finding counts were validated separately.",
+  "cost_qualification": "The version remains rejected after 165.086329211 worker CPU seconds / 120 and 63.677895054 copper-neck check wall seconds / 60, plus unresolved scalar construction timing. Report equality supplies no performance admission.",
+  "limits": "One replay per variant/board is not a matched application benchmark. Replay paths differ from the preceding experiment, so hashes from the two experiments are not directly comparable. No fixture, field, diagnostic, geometry, identifier, checksum or report byte is filtered from this comparison.",
+  "next_step": "Run the prepared separate frame-pointer profile of the frozen integer-leaf parent on the complete original smoke test. Attribute remaining work to callers and preserve original limits; do not inherit the rejected merge change. Continue the full properties and future-work scope.",
+  "prepared_profile_runner": "docs/evidence/2026-10-12-integer-leaf-profile/profile_v1.py",
+  "profile_executed_at_this_checkpoint": false,
+  "artifacts_sha256": {
+    "report-replay-v1/binaries.json": "c00e9beb2cd91bf7861c00fa5dc021778621a493cef60c37afedd7cce2a06119",
+    "report-replay-v1/build-baseline.stderr": "c663462ee6e8bd687c13f4f43386d516f3f0bb8fc1cb3522d98b83bf3664d8fd",
+    "report-replay-v1/build-baseline.stdout": "6110733c148cac7cbbd4b7004ef77aa3d8315c037030f3f658576c38cae864d8",
+    "report-replay-v1/build-candidate.stderr": "a055884b8a61e2163c85bfec625b2ad3fd52256a8e7a0ee9282ca027b59f4409",
+    "report-replay-v1/build-candidate.stdout": "149613bb512b76e7cd950797bcb8583123563821718617ef04441584dce91c68",
+    "report-replay-v1/commands.json": "0ee52b4e00ffa6c80c65531197c56dc02678096470307accf4739bac1ec80658",
+    "report-replay-v1/cparti-fpga-baseline.json.gz": "651fcd2486b8f07e9f3aa42c8d334af0b22d98d8463f2578feff722c674cf059",
+    "report-replay-v1/cparti-fpga-baseline.stderr": "0206f8a0ce9a5809a6446b61da69c4efd188a3ef83bd39bad5229795e49fb64c",
+    "report-replay-v1/cparti-fpga-candidate.json.gz": "651fcd2486b8f07e9f3aa42c8d334af0b22d98d8463f2578feff722c674cf059",
+    "report-replay-v1/cparti-fpga-candidate.stderr": "f638068c012ef5163d2120b1049cfd4a7eb1d3b5df418db8822f7e8b08fab872",
+    "report-replay-v1/hvp109a-baseline.json.gz": "0abfc7bb885cf44fd635094ca3743cf263ecf938ade637217e7d39791b8943ba",
+    "report-replay-v1/hvp109a-baseline.stderr": "16e50feab32443b3b85740293fde94d063e53f13a9d42048af00e78a9856a600",
+    "report-replay-v1/hvp109a-candidate.json.gz": "0abfc7bb885cf44fd635094ca3743cf263ecf938ade637217e7d39791b8943ba",
+    "report-replay-v1/hvp109a-candidate.stderr": "199f2531ca90ea4111536c9608f26ca690c07b7795f094221d4d7f5cf31a42cc",
+    "report-replay-v1/input-hashes.json.gz": "c2acbf92247c8c864f4177d0aae199de4106bf1a3b30ed774d47ed8f3dd86d02",
+    "report-replay-v1/protocol.json": "9b6bbc513d984cf24d9b9befae8d96df0a9abbea9364ebf06b4febac3175f195",
+    "report-replay-v1/result.json": "de5f91cbfad1192a930121c4018d8fc7523bfbc4cacd39a3d7de58cbb9caaab8"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

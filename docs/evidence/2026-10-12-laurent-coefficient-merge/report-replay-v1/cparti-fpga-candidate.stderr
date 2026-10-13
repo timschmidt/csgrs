@@ -1,0 +1,91 @@
+hyperdrc: starting run
+hyperdrc: starting load configuration
+hyperdrc: finished load configuration (0.000s)
+hyperdrc: starting resolve rule configuration
+hyperdrc: finished resolve rule configuration (0.000s)
+hyperdrc: starting resolve KiCad copper layers
+hyperdrc: finished resolve KiCad copper layers (0.000s)
+hyperdrc: starting validate input selection
+hyperdrc: finished validate input selection (0.000s)
+hyperdrc: starting extract package archives
+hyperdrc: finished extract package archives (0.000s)
+hyperdrc: starting run input conversions
+hyperdrc: finished run input conversions (0.000s)
+hyperdrc: starting load Gerber layers
+hyperdrc: finished load Gerber layers (0.000s)
+hyperdrc: starting infer Gerber layer roles
+hyperdrc: finished infer Gerber layer roles (0.000s)
+hyperdrc: starting load KiCad boards
+hyperdrc: finished load KiCad boards (5.639s)
+hyperdrc: starting discover package sidecars
+hyperdrc: finished discover package sidecars (0.000s)
+hyperdrc: starting resolve package inputs
+hyperdrc: finished resolve package inputs (0.000s)
+hyperdrc: starting load Excellon reports
+hyperdrc: finished load Excellon reports (0.000s)
+hyperdrc: starting collect Excellon drills
+hyperdrc: finished collect Excellon drills (0.000s)
+hyperdrc: starting summarize Excellon drill grids
+hyperdrc: finished summarize Excellon drill grids (0.000s)
+hyperdrc: starting load IPC-D-356 reports
+hyperdrc: finished load IPC-D-356 reports (0.000s)
+hyperdrc: starting collect IPC-D-356 points
+hyperdrc: finished collect IPC-D-356 points (0.000s)
+hyperdrc: starting load waivers
+hyperdrc: finished load waivers (0.000s)
+hyperdrc: starting apply IPC-D-356 net annotations
+hyperdrc: finished apply IPC-D-356 net annotations (0.007s)
+hyperdrc: starting validate layer selections
+hyperdrc: finished validate layer selections (0.000s)
+hyperdrc: starting resolve selected checks
+hyperdrc: finished resolve selected checks (0.000s)
+hyperdrc: starting check layer-sanity
+hyperdrc: finished check layer-sanity (7 finding(s), 79.288s)
+hyperdrc: starting check board-outline-sanity
+hyperdrc: finished check board-outline-sanity (0 finding(s), 0.000s)
+hyperdrc: starting check min-copper-neck
+hyperdrc: check min-copper-neck progress 1/5 after 0.001s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb:B.Cu
+hyperdrc: check min-copper-neck progress 2/5 after 12.742s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb:F.Cu
+hyperdrc: check min-copper-neck progress 3/5 after 41.224s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In1.Cu
+hyperdrc: check min-copper-neck progress 4/5 after 41.407s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb:In2.Cu
+hyperdrc: check min-copper-neck progress 5/5 after 43.145s: opening copper layer /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb:unknown
+hyperdrc: finished check min-copper-neck (5 finding(s), 43.316s)
+hyperdrc: starting check drill-spacing
+hyperdrc: finished check drill-spacing (0 finding(s), 0.007s)
+hyperdrc: starting apply waivers
+hyperdrc: finished apply waivers (0.001s)
+hyperdrc: starting summarize findings
+hyperdrc: finished summarize findings (0.000s)
+hyperdrc: starting build report model
+hyperdrc: finished build report model (0.000s)
+hyperdrc: starting build baseline model
+hyperdrc: finished build baseline model (0.000s)
+hyperdrc: starting write baseline diff
+hyperdrc: finished write baseline diff (0.000s)
+hyperdrc: starting emit report
+hyperdrc: finished emit report (0.000s)
+hyperdrc: finished run (12 active finding(s), 0 waived, 129.378s)
+Command exited with non-zero status 1
+	Command being timed: "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/bins/candidate --kicad-pcb /home/tim/Documents/GitHub/workspace/csgrs/target/laurent-coefficient-merge/report-replay-v1/inputs/cparti-fpga/CPArti FPGA dev board.kicad_pcb --check layer-sanity --check board-outline-sanity --check min-copper-neck --check drill-spacing --min-width 0.0762 --format json"
+	User time (seconds): 127.41
+	System time (seconds): 1.29
+	Percent of CPU this job got: 99%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 2:09.57
+	Average shared text size (kbytes): 0
+	Average unshared data size (kbytes): 0
+	Average stack size (kbytes): 0
+	Average total size (kbytes): 0
+	Maximum resident set size (kbytes): 1960632
+	Average resident set size (kbytes): 0
+	Major (requiring I/O) page faults: 0
+	Minor (reclaiming a frame) page faults: 514512
+	Voluntary context switches: 1
+	Involuntary context switches: 14846
+	Swaps: 0
+	File system inputs: 0
+	File system outputs: 320
+	Socket messages sent: 0
+	Socket messages received: 0
+	Signals delivered: 0
+	Page size (bytes): 4096
+	Exit status: 1
