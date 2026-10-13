@@ -3924,10 +3924,10 @@
       }
     },
     "drc_process_allocator": {
-      "status": "serial-qualification-running-conditional-cost-runners-ready",
-      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/preparation-v2/protocol.json",
-      "result": "Baseline formatting, both strict Clippy modes, two shared allocator controls, all 1646 DRC tests, warning-denied docs and both executable allocator-identity checks pass. Original gates and candidate qualification remain in progress. Conditional application runners are prepared but have not executed.",
-      "next_step": "Complete both variants and independently assess original gates. The fixed cost runner requires both candidate gates to pass before any application measurement.",
+      "status": "qualification-reader-corrected-await-candidate-gates",
+      "evidence": "docs/evidence/2026-10-13-drc-process-allocator/qualification-failure-v2.json",
+      "result": "Both variants pass formatting, default/all-feature strict Clippy, two allocator controls, all 1646 DRC tests and warning-denied docs. Baseline board fails at 132.223696162 worker CPU seconds / 120; baseline neck passes. V2 linkage reader stopped on an indirect GOT dispatch before candidate gates; its 27 completed commands and unchanged binaries are preserved. V3 verifies the exact ELF relocation and continues only unfinished work.",
+      "next_step": "Execute V3 continuation, independently assess both original candidate gates, then run conditional application costs V2 only if both candidate gates pass.",
       "source_review_complete": true,
       "prototype_prepared": true,
       "qualification_executed": true,
@@ -3936,12 +3936,12 @@
       "runtime_admitted": false,
       "plan_complete": false,
       "preparation_version": 2,
-      "qualification_version": 2,
+      "qualification_version": 3,
       "conditional_cost_runners": {
-        "runner": "docs/evidence/2026-10-13-drc-process-allocator/application_costs_v1.py",
-        "assessor": "docs/evidence/2026-10-13-drc-process-allocator/assess_application_v1.py",
+        "runner": "docs/evidence/2026-10-13-drc-process-allocator/application_costs_v2.py",
+        "assessor": "docs/evidence/2026-10-13-drc-process-allocator/assess_application_v2.py",
         "unchanged_design": "4 complete-report preflights, 20 full-board samples, 10 batches of 50 fresh help processes, no sample extension/filtering.",
-        "prior_reports": "Reuse the 108 frozen endpoint replay inputs at identical absolute paths and compare complete bytes against both current variants and earlier reports."
+        "version_change": "V1 remains unexecuted and frozen. V2 only updates the qualification-assessment reference to V3 and versioned output paths; sample design and measurement logic are unchanged."
       }
     }
   },
