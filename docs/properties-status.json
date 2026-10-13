@@ -30,7 +30,7 @@
         "docs/evidence/2026-10-12-existing-worktree/geometry-validation-closure/result.json"
       ],
       "runtime_admitted": false,
-      "next_step": "Fork the frozen metadata-first parent into a separate source and target. Expose only the tri-state result of the same lazy coordinate zero queries used by Point2 equality, without changing global PartialEq. In contains_endpoint, keep shared/either-endpoint success first and skip the existing policy retry only after an actual NonZero coordinate proof. Keep all Unknown retries, the later whole endpoint query, temporary drop boundaries and policy receipts. Qualify negative/unknown/shared/independently equal cases, cold/warm/cloned facts, active and cleared abort, bounded/shared budgets, preview/approximation consumption, historical capability witnesses, fixed costs and memory, full curve validation, complete reports and both original native limits. Correct the inherited two-pass normal-form budget documentation before admission."
+      "next_step": "Complete the running full curve suite, focused DRC tests, warning-denied scalar/curve docs and both unchanged native gates; then execute the prepared fixed paired cost, 231-witness, effective final-abort and full-report protocols. Preserve all failed gates and adverse timing rows. No runtime admission yet."
     },
     "plan_complete": false,
     "isolated_recursive_certificate_cache": {
@@ -211,6 +211,15 @@
       },
       "limits": "Only ordinary exact policy category 0 was observed in the full-board rows. Instrumented time is not a speedup estimate. Marginal endpoint counts are not joint facts.",
       "next_step": "Fork the frozen metadata-first parent into a separate source and target. Expose only the tri-state result of the same lazy coordinate zero queries used by Point2 equality, without changing global PartialEq. In contains_endpoint, keep shared/either-endpoint success first and skip the existing policy retry only after an actual NonZero coordinate proof. Keep all Unknown retries, the later whole endpoint query, temporary drop boundaries and policy receipts. Qualify negative/unknown/shared/independently equal cases, cold/warm/cloned facts, active and cleared abort, bounded/shared budgets, preview/approximation consumption, historical capability witnesses, fixed costs and memory, full curve validation, complete reports and both original native limits. Correct the inherited two-pass normal-form budget documentation before admission.",
+      "runtime_admitted": false
+    },
+    "isolated_endpoint_coordinate_reuse": {
+      "status": "isolated-endpoint-proof-preflight-passed-full-qualification-running",
+      "evidence": "docs/evidence/2026-10-12-endpoint-coordinate-reuse/preflight-assessment-v1.json",
+      "implementation": "Private coordinate_equality retains the same lazy x/y zero facts. contains_endpoint keeps both early positive checks, then reuses a known negative only while edge preview and approximate terminals are inactive. Unknown retries, all approximate/preview retries and the later whole endpoint call remain. No owners are retained and global Point2 PartialEq is unchanged.",
+      "qualification": "These are focused regressions, strict release all-feature all-target curve/DRC Clippy and formatting only. The full curve suite is still running. No native, full-report, cost or universal completeness claim is made by this checkpoint.",
+      "documentation": "Normal-form APIs now describe at most two 512-expansion recognition passes and distinguish that bound from integer operand sizes; no rejected eight-node quadratic prepass is described or inherited.",
+      "next_step": "Complete the running full curve suite, focused DRC tests, warning-denied scalar/curve docs and both unchanged native gates; then execute the prepared fixed paired cost, 231-witness, effective final-abort and full-report protocols. Preserve all failed gates and adverse timing rows. No runtime admission yet.",
       "runtime_admitted": false
     }
   },

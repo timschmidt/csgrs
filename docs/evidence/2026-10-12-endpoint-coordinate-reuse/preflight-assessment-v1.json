@@ -1,0 +1,87 @@
+{
+  "decision": "isolated-endpoint-proof-preflight-passed-full-qualification-running",
+  "runtime_delta": "Private coordinate_equality retains the same lazy x/y zero facts. contains_endpoint keeps both early positive checks, then reuses a known negative only while edge preview and approximate terminals are inactive. Unknown retries, all approximate/preview retries and the later whole endpoint call remain. No owners are retained and global Point2 PartialEq is unchanged.",
+  "documentation_delta": "Normal-form APIs now describe at most two 512-expansion recognition passes and distinguish that bound from integer operand sizes; no rejected eight-node quadratic prepass is described or inherited.",
+  "phases": [
+    {
+      "name": "format",
+      "command": [
+        "cargo",
+        "fmt",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "exit_code": 0,
+      "seconds": 11.625467324163765,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "endpoint-regressions",
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "--all-features",
+        "--lib",
+        "endpoint_proof_tests",
+        "--",
+        "--test-threads=1"
+      ],
+      "exit_code": 0,
+      "seconds": 119.20460327202454,
+      "sources_unchanged": true,
+      "stdout_sha256": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+      "stderr_sha256": "d239f7488d77bf94d8db6578a9ad37d716268e7832b907d4de80f6ee82686175"
+    },
+    {
+      "name": "strict-consumer-clippy",
+      "command": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--release",
+        "-p",
+        "hypercurve",
+        "-p",
+        "hyperdrc",
+        "--all-features",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "exit_code": 0,
+      "seconds": 40.44165132800117,
+      "sources_unchanged": true,
+      "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_sha256": "56654fa47a9f345a3a848e1a283f5fe9021ae0204990b626c0df0891ebbee73f"
+    }
+  ],
+  "regression_functions_passed": 5,
+  "coverage": [
+    "Coordinate equality distinguishes true, certified false and unknown; an unknown x does not query y. Warm and cloned unknown coordinates remain unknown.",
+    "Five representation families, eight endpoint/off-endpoint queries and seven policy contexts, each queried fresh and after preparation/repetition, agree with independently constructed controls executing the original endpoint sequence.",
+    "Unknown comparisons still reach approximate and preview endpoint decisions; the terminal case retains Approximate512Consumed.",
+    "Aborts are attached to final query coordinates; active/cleared/reenabled stages preserve shared equality, unknown facts and interval unavailability.",
+    "Certified negative facts remain usable under zero work budgets; nested reuse cannot hide an exhausted outer budget."
+  ],
+  "limitations": "These are focused regressions, strict release all-feature all-target curve/DRC Clippy and formatting only. The full curve suite is still running. No native, full-report, cost or universal completeness claim is made by this checkpoint.",
+  "artifacts_sha256": {
+    "validation-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/endpoint-regressions.stdout": "6e25be7e7078e25f8ea7109b9940045cc9637479a02b65f2724f11c6944ac44a",
+    "validation-v1/endpoint-regressions.stderr": "d239f7488d77bf94d8db6578a9ad37d716268e7832b907d4de80f6ee82686175",
+    "validation-v1/strict-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "validation-v1/strict-consumer-clippy.stderr": "56654fa47a9f345a3a848e1a283f5fe9021ae0204990b626c0df0891ebbee73f"
+  },
+  "next_step": "Complete the running full curve suite, focused DRC tests, warning-denied scalar/curve docs and both unchanged native gates; then execute the prepared fixed paired cost, 231-witness, effective final-abort and full-report protocols. Preserve all failed gates and adverse timing rows. No runtime admission yet.",
+  "main_runtime_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
