@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "finite-field-sphere-proof-screen-correctness-passed-costs-frozen",
+      "status": "finite-field-native-cost-screen-closed-broad-qualification-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5030,7 +5030,12 @@
       "sphere_cyclotomic_image_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-closure-v1.json",
       "sphere_cyclotomic_image_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-cost-scope-v1.json",
       "sphere_cyclotomic_image_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_cyclotomic_image_cost_v1.py",
-      "sphere_cyclotomic_image_cost_executed": false
+      "sphere_cyclotomic_image_cost_executed": true,
+      "sphere_cyclotomic_image_cost_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-cost-assessment-v1.json",
+      "sphere_cyclotomic_image_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-cost-closure-v1.json",
+      "sphere_cyclotomic_image_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-qualification-scope-v1.json",
+      "sphere_cyclotomic_image_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_cyclotomic_image_v1.py",
+      "sphere_cyclotomic_image_qualification_executed": false
     }
   },
   "status_meanings": {
