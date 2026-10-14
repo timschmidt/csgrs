@@ -1,0 +1,14 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all/release/libhyperreal.rlib",
+  "sha256": "a3f6780a35ac85fa572ac641129a41ca84b79f4a8bb29045a2d753a4babee96d",
+  "bytes": 11717320,
+  "features": [
+    "cached-f32-approx",
+    "cached-f64-approx",
+    "default",
+    "dispatch-trace",
+    "serde",
+    "simple"
+  ],
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+}

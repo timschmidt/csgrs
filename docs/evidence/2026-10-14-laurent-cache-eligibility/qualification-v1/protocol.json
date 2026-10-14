@@ -1,0 +1,16 @@
+{
+  "runner_sha256": "2c0635e1c6b8714c904574afbdcbabfed297039b39e5644a3fa0694352860346",
+  "review_sha256": "cbcd59b11388b55adfe00319207256d8ab67b87e53680727608de9cba6250e5a",
+  "preparation_sha256": "7792ed589eb5dd9449fabf29ab3954614c498f30f1e3ef4d08fe4288cb4fb1ad",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "expected_commands": 10,
+  "test_threads": 2,
+  "cost_samples": 0,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

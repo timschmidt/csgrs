@@ -1,0 +1,65 @@
+{
+  "status": "lookup-eligibility-qualified-costs-pending",
+  "assessor_sha256": "3101847f6c0de454cf714078b737ece06c124ccb5c0264ddf1b63eb01a5507e0",
+  "preparation_sha256": "7792ed589eb5dd9449fabf29ab3954614c498f30f1e3ef4d08fe4288cb4fb1ad",
+  "result_sha256": "4d246e988856dbf69ceda3cbf711f166225ebe2792792efc3a6e15ecddd7ebf4",
+  "commands_passed": 10,
+  "all_features_scalar_tests": 879,
+  "original_876_tests_preserved": true,
+  "baseline_all_features_controls": [
+    "computable::node::laurent_cache_eligibility_tests::leaf_and_opaque_queries_preserve_other_cache_payloads_and_answers",
+    "computable::node::laurent_cache_eligibility_tests::serde_resets_proof_storage_and_preserves_node_shape_and_value",
+    "computable::node::laurent_cache_eligibility_tests::zero_budget_proofs_survive_dropping_other_owners_for_all_publishing_kinds"
+  ],
+  "candidate_default_controls": [
+    "computable::node::laurent_cache_eligibility_tests::leaf_and_opaque_queries_preserve_other_cache_payloads_and_answers",
+    "computable::node::laurent_cache_eligibility_tests::zero_budget_proofs_survive_dropping_other_owners_for_all_publishing_kinds"
+  ],
+  "retained_test_groups": {
+    "P4": 11,
+    "persistent_cache": 6,
+    "borrowed_integer": 2
+  },
+  "strict_clippy_configurations": [
+    "baseline all features/all targets",
+    "candidate all features/all targets",
+    "candidate default features/all targets"
+  ],
+  "all_artifacts_and_original_source_guards_passed": true,
+  "source_variants": {
+    "baseline": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+      "files": 10135,
+      "source_hashes_sha256": "e5112a388086ff788e8e4cb6cc6363f327d40bab3f98e75cdb2e2b20fbb17017"
+    },
+    "candidate": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+      "files": 10135,
+      "source_hashes_sha256": "c9896e962891d94067f88ad9b3b27129ae7dd7be58480c1e30da6db8a604820c"
+    }
+  },
+  "library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all/release/libhyperreal.rlib",
+    "sha256": "a3f6780a35ac85fa572ac641129a41ca84b79f4a8bb29045a2d753a4babee96d",
+    "bytes": 11717320,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+  },
+  "cost_samples": 0,
+  "native_gates_run": false,
+  "limits": [
+    "Default features ran only the two new controls; no full default suite claim.",
+    "Correctness qualification does not admit the candidate or resolve earlier library/native cost failures.",
+    "No runtime worktree source was changed; both isolated snapshots remain frozen."
+  ],
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

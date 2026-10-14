@@ -1,0 +1,12 @@
+{
+  "all_features_passed": 879,
+  "parent_876_retained": true,
+  "new_controls": [
+    "computable::node::laurent_cache_eligibility_tests::leaf_and_opaque_queries_preserve_other_cache_payloads_and_answers",
+    "computable::node::laurent_cache_eligibility_tests::serde_resets_proof_storage_and_preserves_node_shape_and_value",
+    "computable::node::laurent_cache_eligibility_tests::zero_budget_proofs_survive_dropping_other_owners_for_all_publishing_kinds"
+  ],
+  "P4_tests": 11,
+  "persistent_cache_tests": 6,
+  "borrowed_integer_tests": 2
+}

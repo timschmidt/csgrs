@@ -1,0 +1,39 @@
+{
+  "baseline-all": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "6b2629cd154e88d42033f56f6795bc81424181987e1520c313a28fc9976a418f",
+    "bytes": 10353552,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source/crates/hyperreal/Cargo.toml"
+  },
+  "candidate-all": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "108023e1f9879d39576e3dd1de52c98bb65269a19b50d1fc305ed317b5a2529f",
+    "bytes": 10353816,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+  },
+  "candidate-default": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-default/release/deps/hyperreal-4234254b1d45f4c0",
+    "sha256": "9a358f2db2c3191128e5b088b40694e714aa68a3714eba21477757abc8f8dfd5",
+    "bytes": 8130728,
+    "features": [
+      "default"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+  }
+}

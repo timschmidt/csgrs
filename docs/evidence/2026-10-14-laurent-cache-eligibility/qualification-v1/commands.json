@@ -1,0 +1,240 @@
+[
+  {
+    "name": "baseline-clippy-all",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "6b0e10a8cc8c771e3c6353927660b3b674c7e0a7b6ffd7535af9d3e1b531f733"
+  },
+  {
+    "name": "baseline-build-tests-all",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "2efe9aaaa652b2737f85bff2f56a629990a5474a451f1f6065b1365580186b4a",
+    "stderr_sha256": "ebd80af59c9f50d1e2e33b0679d494355721e7a679f1f9d2cd0d0eca61209ed4"
+  },
+  {
+    "name": "baseline-controls-all",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "laurent_cache_eligibility_tests::",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "e8005d55c44a238181b9cf2fe3ce6aa91d1c054704e3575d8a2c0313014eb057",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-clippy-all",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "22f63f02996f5261bc2b52c5a98deeb06eb1d9e2ec6604f74657ab96e3bc27ce"
+  },
+  {
+    "name": "candidate-build-tests-all",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "efb2f481d490c3cfd7f1b8021d0a1089e717587828a4c442583924d48296a1d0",
+    "stderr_sha256": "730d8e2593d9b5c58e1d4c7d90f761d7ff7e43019104513b9c37eaef44765dc0"
+  },
+  {
+    "name": "candidate-scalar-all",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "96949509ee164f68e827728dc35d99f96878bc49d565cdb2152ab12a9bc2adcb",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-clippy-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "112073ec7843629baf0f936c4fa1dad173ccbf5e57b2c3a7b8e51eab8b76c58c"
+  },
+  {
+    "name": "candidate-build-tests-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "bb0a230694698c4322e9493a76a2abd210df213a91289cb0f2cb01b089f92eee",
+    "stderr_sha256": "6f497b872b680dceac2f1d32bc29df9941d03831da4cdabf15dd6ef1ab6cf3f5"
+  },
+  {
+    "name": "candidate-controls-default",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-default/release/deps/hyperreal-4234254b1d45f4c0",
+      "laurent_cache_eligibility_tests::",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "8fa2f8346f1ec4953ef0d75ce615c2abae3c5e828811a3d25ce79aca321da95f",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-build-library-all",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "0b15fa405e878b67c81038e780b1f03470e8ae04f4dedaf11c23261165cfa002",
+    "stderr_sha256": "4ce39d9353e31dc921b5e9e960946267664a789a628b5f6d8b4d79c610b87ecd"
+  }
+]
