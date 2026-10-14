@@ -1,0 +1,20 @@
+{
+  "objective": "Determine whether the closed resource trial's warm-row instability reproduces with the default allocator and whether the finite-field candidate is affected.",
+  "parent_failure_result_sha256": "370ae69d6cc9cbd6af37e6637ef19498a69a267772f96b7f6b5ee0ba033de44b",
+  "independent_changed_face_support_result_sha256": "3c4ded3ed2ca943bf73d17d6a5c00771cb33378a9094d55fbc96cacd9d4e4cf4",
+  "groups": {
+    "baseline": ["fifteen_degrees"],
+    "late": ["fifteen_degrees", "original_medium", "fifth_turn", "seventh_turn"],
+    "image": ["fifteen_degrees", "original_medium", "fifth_turn", "seventh_turn"]
+  },
+  "queries_per_process": 3,
+  "native_processes": 9,
+  "commands": 13,
+  "command_wall_stop_seconds": 600,
+  "query_behavior": "Construct each unchanged full-resolution original sphere once, then perform three STRICT hull queries while retaining all outputs. No query instrumentation, extra cache warmup, validation or serialization between calls. Default allocator.",
+  "comparison": "Require cold transcripts to match their original independently verified outputs. Record all cold/warm/replay row differences, complete original vertex use and closed oriented topology. Match outputs against prior exact support proofs by full transcript, leaving new rows explicitly unproved until checked separately.",
+  "not_a_cost_trial": true,
+  "resource_trial_resumption_extension_or_pooling": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
