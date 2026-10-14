@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "native-cyclotomic-four-spheres-certified-independent-support-check-frozen",
+      "status": "native-four-sphere-support-certified-broad-qualification-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4966,8 +4966,13 @@
       "sphere_cyclotomic_v1_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-closure-v1.json",
       "sphere_cyclotomic_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-assessment-v2.json",
       "sphere_native_support_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-native-support-scope-v1.json",
-      "sphere_native_support_executed": false,
-      "sphere_certificate_runtime_admitted": false
+      "sphere_native_support_executed": true,
+      "sphere_certificate_runtime_admitted": false,
+      "sphere_native_support_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-native-support-v1/result.json",
+      "sphere_native_support_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-native-support-closure-v1.json",
+      "sphere_cyclotomic_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-qualification-scope-v1.json",
+      "sphere_cyclotomic_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_cyclotomic_v1.py",
+      "sphere_cyclotomic_qualification_executed": false
     }
   },
   "status_meanings": {
