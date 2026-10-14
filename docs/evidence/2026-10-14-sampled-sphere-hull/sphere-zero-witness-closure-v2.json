@@ -1,0 +1,43 @@
+{
+  "complete": true,
+  "assessment_sha256": "f69d8fe49827d4615052a8b4fe4ed4eeafc1b9b671f2af05bf1aa23597877d25",
+  "commands": 130,
+  "command_exits": {
+    "zero": 129,
+    "timeout_124": 1
+  },
+  "original_medium": {
+    "outcome": "fixed_600_second_case_budget_exhausted",
+    "attempts": 108,
+    "independently_proven_maximal_planes": 107,
+    "final_command": "original_medium-107",
+    "exit_code": 124
+  },
+  "other_cases": [
+    {
+      "case": "fifteen_degrees",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 1,
+      "added_exact_groups": 0
+    },
+    {
+      "case": "fifth_turn",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 11,
+      "added_exact_groups": 10
+    },
+    {
+      "case": "seventh_turn",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 8,
+      "added_exact_groups": 7
+    }
+  ],
+  "interpretation": "Every added group has an independently rechecked nonzero anchor normal and maximal exact membership among the unchanged original input points. Enumeration plus full hull replay remains insufficient within this fixed protocol. No ordinary sphere API gains a certificate from this diagnostic.",
+  "protocol_closed": true,
+  "extend_or_pool": false,
+  "next_candidate": "Bounded native cyclotomic zero reduction of retained rational-angle trigonometric expressions, with checked integer arithmetic and explicit graph, field-order, depth and operation limits. Design and qualification remain pending.",
+  "runtime_admitted": false,
+  "sphere_certificate_pending": true,
+  "plan_complete": false
+}

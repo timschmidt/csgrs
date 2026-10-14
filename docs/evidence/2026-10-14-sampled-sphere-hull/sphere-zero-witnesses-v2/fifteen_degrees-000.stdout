@@ -1,0 +1,2 @@
+input case=fifteen_degrees mode=coordinate_symmetries positions=266 triangles=528 groups=15203
+result case=fifteen_degrees mode=coordinate_symmetries certified=true original_positions_preserved=true prior_certified_rows_check=passed

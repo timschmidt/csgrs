@@ -1,0 +1,1316 @@
+{
+  "complete": true,
+  "result_sha256": "1b896c4d106ac5fc7306f783de348142f612f5f101d8d811227e551495f00117",
+  "assessor_sha256": "c34dd38813d8da14e532dd8aabe8b22bd9378bcdb07660ea7d859900e2b18fda",
+  "commands": 130,
+  "nonzero_command_exits": [
+    {
+      "name": "original_medium-107",
+      "exit_code": 124
+    }
+  ],
+  "every_added_group_rechecked_exactly": true,
+  "every_consumed_group_file_matches_prior_proofs": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 1,
+      "added_exact_groups": 0,
+      "maximal_group_sizes": [],
+      "geometric_categories": {},
+      "proofs": []
+    },
+    {
+      "case": "original_medium",
+      "outcome": "query_stop_or_failure",
+      "attempts": 108,
+      "added_exact_groups": 107,
+      "maximal_group_sizes": [
+        5,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        4,
+        6,
+        6,
+        4,
+        6,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        4,
+        6,
+        4,
+        6,
+        4,
+        6,
+        4,
+        6,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        8,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        6,
+        4,
+        6,
+        4,
+        4,
+        6,
+        4
+      ],
+      "geometric_categories": {
+        "pole_equator_pythagorean_identity": 1,
+        "parallel_chords_between_two_latitudes": 89,
+        "other_exact_cyclotomic_zero": 17
+      },
+      "proofs": [
+        {
+          "indices": [
+            0,
+            1,
+            368,
+            256
+          ],
+          "category": "pole_equator_pythagorean_identity"
+        },
+        {
+          "indices": [
+            2,
+            364,
+            377,
+            19
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            2,
+            442,
+            427
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            368,
+            147,
+            248,
+            477
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            2,
+            377,
+            406,
+            451
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            248,
+            368,
+            433,
+            193
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            364,
+            377,
+            424,
+            407
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            2,
+            424,
+            439
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            368,
+            248,
+            274,
+            334
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            364,
+            274,
+            257
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            147,
+            111,
+            173,
+            83
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            248,
+            147,
+            173,
+            282
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            274,
+            248,
+            173,
+            139
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            406,
+            436,
+            467
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            248,
+            368,
+            283,
+            343
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            368,
+            433,
+            283,
+            338
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            147,
+            283,
+            87
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            40,
+            433,
+            415,
+            28
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            442,
+            40,
+            415,
+            7
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            283,
+            248,
+            321,
+            276
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            2,
+            16,
+            47,
+            31
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            248,
+            173,
+            184,
+            189
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            274,
+            248,
+            184,
+            186
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            316,
+            274,
+            184,
+            136
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            173,
+            248,
+            221,
+            201
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            2,
+            436,
+            466,
+            422
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            406,
+            422,
+            391
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            393,
+            377,
+            422,
+            408
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            377,
+            316,
+            361,
+            302
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            406,
+            377,
+            361,
+            392
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            147,
+            283,
+            58,
+            192
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            40,
+            58,
+            445
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            58,
+            433,
+            460,
+            25
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            415,
+            442,
+            460,
+            427
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            415,
+            460,
+            448
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            111,
+            129,
+            51,
+            39
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            2,
+            47,
+            469,
+            64
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            422,
+            2,
+            469,
+            439
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            442,
+            424,
+            469,
+            457
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            318,
+            377,
+            363,
+            302
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            415,
+            368,
+            398,
+            355
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            47,
+            16,
+            122,
+            151
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            78,
+            47,
+            122,
+            93
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            47,
+            5,
+            17,
+            65
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            469,
+            2,
+            17,
+            34
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            5,
+            469,
+            34,
+            3
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            184,
+            122,
+            212,
+            154
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            274,
+            184,
+            212,
+            216
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            111,
+            122,
+            156,
+            137
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            122,
+            184,
+            156,
+            94
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            129,
+            111,
+            156,
+            144
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            173,
+            156,
+            202,
+            157
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            184,
+            274,
+            202,
+            262
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            248,
+            277,
+            265,
+            262
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            283,
+            433,
+            209,
+            29
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            58,
+            209,
+            284
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            469,
+            424,
+            452,
+            437
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            422,
+            393,
+            407,
+            438
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            361,
+            377,
+            346,
+            332
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            40,
+            51,
+            85,
+            66
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            58,
+            40,
+            85,
+            73
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            111,
+            129,
+            85,
+            67
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            415,
+            433,
+            385,
+            373
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            58,
+            209,
+            359,
+            28
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            58,
+            359,
+            134
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            58,
+            433,
+            12,
+            477
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            460,
+            415,
+            429,
+            444
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            385,
+            415,
+            431,
+            371
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            424,
+            469,
+            456,
+            441
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            272,
+            316,
+            347,
+            301
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            318,
+            272,
+            347,
+            303
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            363,
+            318,
+            347,
+            332
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            318,
+            363,
+            349,
+            334
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            366,
+            321,
+            349,
+            334
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            321,
+            366,
+            337,
+            352
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            398,
+            368,
+            382,
+            384
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            47,
+            16,
+            91,
+            62
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            122,
+            47,
+            91,
+            76
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            212,
+            122,
+            91,
+            241
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            47,
+            91,
+            77,
+            31
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            91,
+            122,
+            77,
+            106
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            156,
+            111,
+            124,
+            139
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            16,
+            47,
+            32,
+            61
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            32,
+            47,
+            18,
+            63
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            469,
+            18,
+            4,
+            453
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            80,
+            51,
+            35,
+            66
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            316,
+            272,
+            241,
+            287
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            184,
+            124,
+            168,
+            138
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            184,
+            212,
+            229,
+            197
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            202,
+            184,
+            229,
+            217
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            274,
+            246,
+            229,
+            261
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            111,
+            156,
+            142,
+            127
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            160,
+            173,
+            204,
+            159
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            147,
+            209,
+            119,
+            177
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            359,
+            433,
+            119,
+            43
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            433,
+            58,
+            119,
+            374
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            423,
+            452,
+            468,
+            437
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            423,
+            468,
+            439,
+            454
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            347,
+            316,
+            331,
+            302
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            272,
+            318,
+            288,
+            332
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            305,
+            274,
+            288,
+            290
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            305,
+            321,
+            276,
+            290
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            321,
+            277,
+            276,
+            293
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            8,
+            51,
+            68,
+            21
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            40,
+            8,
+            68,
+            36
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            85,
+            40,
+            68,
+            39
+          ],
+          "category": "other_exact_cyclotomic_zero"
+        },
+        {
+          "indices": [
+            40,
+            85,
+            71,
+            56
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        }
+      ]
+    },
+    {
+      "case": "fifth_turn",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 11,
+      "added_exact_groups": 10,
+      "maximal_group_sizes": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "geometric_categories": {
+        "parallel_chords_between_two_latitudes": 10
+      },
+      "proofs": [
+        {
+          "indices": [
+            2,
+            51,
+            56,
+            9
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            40,
+            24,
+            16,
+            36
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            24,
+            5,
+            11,
+            54
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            20,
+            38,
+            28,
+            34
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            24,
+            11,
+            17,
+            6
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            48,
+            5,
+            12,
+            53
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            5,
+            12,
+            59,
+            54
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            19,
+            37,
+            32,
+            26
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            48,
+            35,
+            41,
+            30
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            35,
+            24,
+            29,
+            42
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        }
+      ]
+    },
+    {
+      "case": "seventh_turn",
+      "outcome": "certified_with_independently_proven_groups",
+      "attempts": 8,
+      "added_exact_groups": 7,
+      "maximal_group_sizes": [
+        4,
+        4,
+        4,
+        4,
+        4,
+        4,
+        4
+      ],
+      "geometric_categories": {
+        "parallel_chords_between_two_latitudes": 7
+      },
+      "proofs": [
+        {
+          "indices": [
+            2,
+            5,
+            22,
+            17
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            22,
+            2,
+            16,
+            12
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            16,
+            22,
+            26,
+            8
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            26,
+            2,
+            7,
+            23
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            7,
+            16,
+            24,
+            3
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            26,
+            2,
+            24,
+            8
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        },
+        {
+          "indices": [
+            16,
+            7,
+            11,
+            4
+          ],
+          "category": "parallel_chords_between_two_latitudes"
+        }
+      ]
+    }
+  ],
+  "scope": "External exact mathematical facts supplied to the existing hull API on unchanged original points. This does not implement native discovery or a retained construction carrier.",
+  "future_work": [
+    "Replace enumeration and repeated complete hull queries with a bounded native certificate design.",
+    "The collected groups remain fixed evidence; do not extend this closed trial or claim a budget stop is a mathematical impossibility.",
+    "Every admitted maximal plane group was independently checked against a nonzero anchor normal and all original points.",
+    "All source binding, transformed/remapped identity retention, public edit invalidation, scalar resource limits and cost gates still apply."
+  ],
+  "runtime_admitted": false,
+  "sphere_certificate_pending": true,
+  "plan_complete": false
+}

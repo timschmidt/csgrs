@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "bounded-zero-collection-closed-maximal-plane-protocol-prepared",
+      "status": "maximal-plane-trial-closed-native-cyclotomic-design-pending",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4956,8 +4956,10 @@
       "sphere_zero_collection_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-assessment-v1.json",
       "sphere_zero_collection_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v1.json",
       "sphere_maximal_plane_collection_prepared": true,
-      "sphere_maximal_plane_collection_executed": false,
-      "sphere_maximal_plane_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v2.py"
+      "sphere_maximal_plane_collection_executed": true,
+      "sphere_maximal_plane_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v2.py",
+      "sphere_maximal_plane_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-assessment-v2.json",
+      "sphere_maximal_plane_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v2.json"
     }
   },
   "status_meanings": {
