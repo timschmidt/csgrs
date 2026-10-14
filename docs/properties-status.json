@@ -4650,7 +4650,7 @@
       "next_source_audit_complete": true
     },
     "local_memo_leaf_coverage": {
-      "status": "diagnostic-prepared-formatted-reviewed-qualification-pending",
+      "status": "v1-control-failure-preserved-v2-protocol-prepared",
       "source_audit": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
       "question": "Which existing local memo stores and hits copy exact leaf forms, and what result shapes do they carry?",
       "diagnostic_prepared": true,
@@ -4660,9 +4660,9 @@
       "runtime_candidate": false,
       "runtime_admitted": false,
       "plan_complete": false,
-      "scope": "docs/evidence/2026-10-14-local-memo-leaf-coverage/scope-v1.json",
+      "scope": "docs/evidence/2026-10-14-local-memo-leaf-coverage/scope-v2.json",
       "protocol_prepared": true,
-      "qualification_executed": false,
+      "qualification_executed": true,
       "expected_scalar_tests": 884,
       "fixed_count_processes": 12,
       "expected_trace_windows": 272,
@@ -4670,7 +4670,15 @@
       "preparation": "docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v1/protocol.json",
       "source_review": "docs/evidence/2026-10-14-local-memo-leaf-coverage/source-review-v1.json",
       "source_files": 10138,
-      "changed_or_added_source_paths": 5
+      "changed_or_added_source_paths": 5,
+      "failed_run": "docs/evidence/2026-10-14-local-memo-leaf-coverage/failure-v1.json",
+      "v1_commands_attempted": 5,
+      "v1_commands_passed": 4,
+      "v1_scalar_tests_passed": 883,
+      "v1_scalar_tests_failed": 1,
+      "v1_count_processes": 0,
+      "v2_prepared": false,
+      "v2_qualification_executed": false
     }
   },
   "status_meanings": {
