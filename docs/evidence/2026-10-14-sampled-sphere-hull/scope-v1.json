@@ -1,0 +1,28 @@
+{
+  "objective": "Certify convex hulls of the original sampled-sphere geometry, including the original 32-by-16 workload, as required by properties.md and crates/hypermesh/FUTURE_WORK.md.",
+  "stage": "Fresh failure reproduction and construction-certificate audit before a runtime change.",
+  "source": "Snapshot current main and every existing in-scope native change. Inherit no rejected or unadmitted scalar runtime prototype.",
+  "cases": [
+    {"name": "fifteen_degrees", "radius": 8, "segments": 24, "stacks": 12},
+    {"name": "original_medium", "radius": 10, "segments": 32, "stacks": 16},
+    {"name": "fifth_turn", "radius": 8, "segments": 10, "stacks": 7},
+    {"name": "seventh_turn", "radius": 8, "segments": 7, "stacks": 5}
+  ],
+  "reproduction": [
+    "Build a fresh no-default-feature release library and a warning-denied external probe before querying any case.",
+    "Run each original exact sphere once in a fresh process under STRICT, retaining any typed error verbatim.",
+    "For successful hulls require Certified, every original coordinate unchanged, every sphere point retained, a closed manifold and 2V-4 triangles.",
+    "The fixed 180-second wall stop per process bounds diagnostic execution. It is not an acceptance threshold or either original DRC native limit.",
+    "Keep the original cases, all source hashes, binaries, logs and failures. No rationalization, display round trip, reduced substitute or sample replacement."
+  ],
+  "audit_requirements": [
+    "A source certificate must follow from exact construction, not inferred mesh adjacency or an unproved floating-point plane.",
+    "Retained facts must be bound to immutable input coordinates, and must not survive coordinate mutation or replacement without valid reconstruction.",
+    "Review all intermediate hull predicates, not only final adjacent latitude-band quads. Preserve typed Unknown whenever no certificate applies.",
+    "Review affine transforms, clones, winding reversal, deduplication and hull output remapping before claiming reusable provenance.",
+    "Keep all 39 properties, 14 targets, crate future work, 35 pending native paths, full scalar obligations and original native cost failures in scope."
+  ],
+  "runtime_candidate_prepared": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
