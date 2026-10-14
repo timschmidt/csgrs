@@ -1,0 +1,230 @@
+{
+  "scope": "Fixed phase hardware observations; no library rebuilds or native gate reruns.",
+  "inputs_sha256": {
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/common_v1.py": "1ae9e90fc0925c88966785ba20eb13cf368affc00eb1dc8f4905fb0bf9308886",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run_v1.py": "9b20d6b99ba923bf848e02f5247572eb5f9f98082dfe8cc363f62daa0371a675",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/assess_v1.py": "bad95505ca43c8c7b006e01ee5a7492b3954122abbc49d267bafc46f137c96b9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/counters_v1.c": "ef6f67719ba1b5922228737f8418c9c57d3aa27a09e17b5ba0b06cde6b4682e3",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/counters_v1.rs": "a91f88c6f8750ece522d68bddca3660268eea4e4cc5aed8b82f1c832607bba7d",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/controls_v1.rs": "40649fa94a4be07377ca0c12b6ac5e72accd79eaf4fa943df466ac4e15ea8bd9",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/wrapper_v1.rs": "e49cd992c80c3dbde45e5b2354593cd8cb5b8284f106f53833ba5a23f583b7f7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/scope-v1.json": "223e1b6058b80966bdc87d08fd521846e39fe41323fd7460bf376e9ecfaaf6ca",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/source-review-v1.json": "bfdeed2ea92b45c21e0d60ca7d9d82c16660d327aa1452f629ff6bf5d5515fed",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/failure-v1.json": "a50f5f2d681dccb3034bf6e0c0ee56e7ca6385cda15907254f22fa739de6fddb",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/common_v2.py": "34feb6c05bfcced5c1eb235704c3ab7869c77cf257e12306d81da44b4e12d457",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run_v2.py": "d598f75f9bc1e4623af04e50b8b3c369d75317957d244859d0b6f34cdf1f9935",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/assess_v2.py": "fece8012dfb9b8be906bff40d55c33caacaf1f42808ede38bbc418c84cf903f7",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/scope-v2.json": "ea077b9b453df0f53cf5913596359b6815320b2368697a66602aa6d500e87d6c",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/source-review-v2.json": "89269c5d24c0ccd5959fd04ea6639d4091be14e9329d433f4665296ec318d4cc",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/probe.rs": "596a1764611cbad87ff46b9841ca453151e391fe208360ff32373054bf248c66",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-cache-coverage/decision-v1.json": "2c348708a02727a1e34554af4858de5ab081804272f962cb2aaa530bfaf73098",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-cache-coverage/assessment-v1.json": "920cd9b70f81a8c7df833bb5ccabdfc11a92a3a3afbdc2c187ec8e66785f1c98",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-cache-coverage/performance-counter-capabilities-v1.json": "3855aede03a669731fe1df6c712e8fedb76173bf11219bfb60d1455690fc9bb4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-cache-coverage/next-diagnostic-v1.json": "d7aa028ab888df0bb488ed36a1a27a086b9d435e59be4e30b5d575ac30f8e991",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/protocol.json": "ef877edc88c7959ddf729ebbaaecd13fbf7e52fa37c8715c2a9edd18dd083378",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/result.json": "44b99e92d7202124832b884a53810f59b95cbbb495cd0fe5a99a80edfdc908a4",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/probe.rs": "c77341974439937ce77e999af47d2c6b62bc374641b32c0985390372fe9f9806",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/trace-1-full-cache.stdout.gz": "b63f75a9a41f60389a5b244489ecfcddca1534fb49c4ac071a213d7fd298f11d"
+  },
+  "system_reference_sha256": {
+    "/usr/include/linux/perf_event.h": "4c2e217b87afecaa002ec35dd748319b02fbf98ddc301c60238146fa2ab057b7",
+    "/usr/include/asm/unistd_64.h": "261fc370ad799ba94c342ce4a3f8a83232e5e76339ca3cea5e5090efcc22370a",
+    "/usr/include/asm-generic/ioctl.h": "c61365a9b4282a9ac583ce3d417e09e8dfce75458b64d45179640c82eafa7eed",
+    "/usr/share/man/man2/perf_event_open.2.gz": "6c5d8ba80bcfe7d3e74992f675361525ebdc3a569c5ecf06c8548d3bccb076fb"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "cc_version": "cc (GCC) 15.3.1 20260722 (Red Hat 15.3.1-1)\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+  "clippy_version": "clippy 0.1.98 (48a229ceae 2026-09-01)\n",
+  "kernel": "Linux 7.2.5-100.fc43.x86_64 x86_64 GNU/Linux\n",
+  "variants": {
+    "main": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target",
+      "files": 10128,
+      "source_hashes_sha256": "c689b8acb155a0f4b526935598cc4f04beb508a50bcd6d1a54807595fcc83553",
+      "delta_sha256": {},
+      "borrowed_unchanged": true
+    },
+    "full-cache": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target",
+      "files": 10133,
+      "source_hashes_sha256": "e335876ed2f16f18715ee360a8402af6e2bdce50a5f86a7b315d6d860fdc110d",
+      "delta_sha256": {
+        "Cargo.lock": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c",
+        "crates/hyperdrc/Cargo.toml": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b",
+        "crates/hyperdrc/src/process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66",
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/main.rs": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4",
+        "crates/hyperdrc/src/lib.rs": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c",
+        "crates/hypercurve/src/segment.rs": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+        "crates/hypercurve/src/point.rs": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+        "crates/hypercurve/src/bezier_region.rs": "f94f30baee3331690d8bb556b9d64ab45355dffb4c4d209683f0535d739fbfee",
+        "crates/hypercurve/src/segment/endpoint_proof_tests.rs": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1",
+        "crates/hypercurve/src/bezier_region/metadata_order_tests.rs": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f",
+        "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca",
+        "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+        "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+        "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs": "2497f82c7dfc85b71725e8c86f6c541c9f384678ba637b9a699aa56c03a534ee",
+        "crates/hyperreal/src/real/arithmetic/facts.rs": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805"
+      }
+    },
+    "no-persistent": {
+      "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+      "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target",
+      "files": 10132,
+      "source_hashes_sha256": "193513ad3fe818374f973f4d85f8b2b2a7788244eee37f54dcbe92613320575d",
+      "delta_sha256": {
+        "Cargo.lock": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c",
+        "crates/hyperdrc/Cargo.toml": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b",
+        "crates/hyperdrc/src/process_allocator.rs": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66",
+        "crates/hyperdrc/src/allocator_contract_tests.rs": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec",
+        "crates/hyperdrc/src/main.rs": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4",
+        "crates/hyperdrc/src/lib.rs": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c",
+        "crates/hypercurve/src/segment.rs": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3",
+        "crates/hypercurve/src/point.rs": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786",
+        "crates/hypercurve/src/bezier_region.rs": "f94f30baee3331690d8bb556b9d64ab45355dffb4c4d209683f0535d739fbfee",
+        "crates/hypercurve/src/segment/endpoint_proof_tests.rs": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1",
+        "crates/hypercurve/src/bezier_region/metadata_order_tests.rs": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f",
+        "crates/hyperreal/src/computable/node/structural_analysis.rs": "81739c160a5af6263a5adf10671f37bdaf594aac0b88f3af97945602798521c9"
+      },
+      "borrowed_unchanged": false
+    }
+  },
+  "libraries": {
+    "main": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+        "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+        "bytes": 11697454,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "full-cache": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+        "sha256": "2e4eabb67f81045828dd3303a94de14d6500c4e266a61a902934ab7b95a3da85",
+        "bytes": 11700770,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "09d2f92170c0b940c26293f5ad803a13da7fb8a64ba6f9bc6dbe384909c88283",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "no-persistent": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/libhyperreal.rlib",
+        "sha256": "5a22638583a1d3d8581a2f0aed70e67803e4c99b6cad846fba80feb907d210a1",
+        "bytes": 11663074,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "8b109917ed137dfab0ce1dfec96b8b3b15e977f6179484317e20c3059f0bde31",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    }
+  },
+  "orders": [
+    [
+      "main",
+      "full-cache",
+      "no-persistent"
+    ],
+    [
+      "full-cache",
+      "no-persistent",
+      "main"
+    ],
+    [
+      "no-persistent",
+      "main",
+      "full-cache"
+    ],
+    [
+      "main",
+      "no-persistent",
+      "full-cache"
+    ],
+    [
+      "no-persistent",
+      "full-cache",
+      "main"
+    ],
+    [
+      "full-cache",
+      "main",
+      "no-persistent"
+    ]
+  ],
+  "inputs_each_process": 4096,
+  "processes": 18,
+  "empty_windows_each_process": 32,
+  "work_windows_each_process": 32,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "frequency_snapshot_before_build": {
+    "scaling_driver": "amd-pstate-epp",
+    "scaling_governor": "powersave",
+    "scaling_cur_freq": "3417444",
+    "scaling_min_freq": "1755355",
+    "scaling_max_freq": "4552952"
+  },
+  "all_library_sources_and_libraries_reused_unchanged": true,
+  "fixture_expected_and_witness_suffix_byte_identical": true,
+  "diagnostic_only": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

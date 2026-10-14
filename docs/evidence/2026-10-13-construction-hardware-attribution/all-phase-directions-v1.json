@@ -1,0 +1,494 @@
+[
+  {
+    "baseline": "main",
+    "candidate": "full-cache",
+    "metrics": {
+      "user_instructions": {
+        "higher_all_six": [
+          "multiradical_square_construction",
+          "mixed_field_decline_construction",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned"
+        ],
+        "lower_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_warm",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": []
+      },
+      "user_cycles": {
+        "higher_all_six": [
+          "negated_scaled_surd_construction",
+          "mixed_field_decline_construction"
+        ],
+        "lower_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "opaque_decline_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_warm",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_first"
+        ]
+      },
+      "thread_cpu_ns": {
+        "higher_all_six": [
+          "negated_scaled_surd_construction",
+          "mixed_field_decline_construction",
+          "opaque_cancellation_cloned"
+        ],
+        "lower_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "opaque_decline_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_warm",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_cloned",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "conjugate_then_affine_first"
+        ]
+      },
+      "wall_ns": {
+        "higher_all_six": [
+          "negated_scaled_surd_construction",
+          "mixed_field_decline_construction",
+          "opaque_cancellation_cloned"
+        ],
+        "lower_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "opaque_decline_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_warm",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_cloned",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "conjugate_then_affine_first"
+        ]
+      }
+    }
+  },
+  {
+    "baseline": "main",
+    "candidate": "no-persistent",
+    "metrics": {
+      "user_instructions": {
+        "higher_all_six": [
+          "multiradical_square_construction",
+          "mixed_field_decline_construction",
+          "opaque_cancellation_construction"
+        ],
+        "lower_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_warm",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": []
+      },
+      "user_cycles": {
+        "higher_all_six": [
+          "opaque_cancellation_warm"
+        ],
+        "lower_all_six": [
+          "affine_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_construction",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_warm"
+        ]
+      },
+      "thread_cpu_ns": {
+        "higher_all_six": [
+          "opaque_cancellation_warm"
+        ],
+        "lower_all_six": [
+          "affine_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_construction",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_warm"
+        ]
+      },
+      "wall_ns": {
+        "higher_all_six": [
+          "opaque_cancellation_warm"
+        ],
+        "lower_all_six": [
+          "affine_surd_first",
+          "negated_scaled_surd_warm",
+          "multiradical_square_first",
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "pi_transport_construction",
+          "mixed_field_decline_construction",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_warm"
+        ]
+      }
+    }
+  },
+  {
+    "baseline": "no-persistent",
+    "candidate": "full-cache",
+    "metrics": {
+      "user_instructions": {
+        "higher_all_six": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "multiradical_square_first",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_construction",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ],
+        "lower_all_six": [
+          "multiradical_square_warm",
+          "multiradical_square_cloned",
+          "conjugate_then_affine_warm"
+        ],
+        "mixed_or_equal": []
+      },
+      "user_cycles": {
+        "higher_all_six": [],
+        "lower_all_six": [
+          "multiradical_square_warm",
+          "conjugate_then_affine_warm"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "multiradical_square_first",
+          "multiradical_square_cloned",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_construction",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ]
+      },
+      "thread_cpu_ns": {
+        "higher_all_six": [],
+        "lower_all_six": [
+          "multiradical_square_warm",
+          "conjugate_then_affine_warm"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "multiradical_square_first",
+          "multiradical_square_cloned",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_construction",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ]
+      },
+      "wall_ns": {
+        "higher_all_six": [],
+        "lower_all_six": [
+          "multiradical_square_warm",
+          "conjugate_then_affine_warm"
+        ],
+        "mixed_or_equal": [
+          "affine_surd_construction",
+          "affine_surd_first",
+          "affine_surd_warm",
+          "affine_surd_cloned",
+          "negated_scaled_surd_construction",
+          "negated_scaled_surd_first",
+          "negated_scaled_surd_warm",
+          "negated_scaled_surd_cloned",
+          "multiradical_square_construction",
+          "multiradical_square_first",
+          "multiradical_square_cloned",
+          "pi_transport_construction",
+          "pi_transport_first",
+          "pi_transport_warm",
+          "pi_transport_cloned",
+          "mixed_field_decline_construction",
+          "mixed_field_decline_first",
+          "mixed_field_decline_warm",
+          "mixed_field_decline_cloned",
+          "opaque_decline_construction",
+          "opaque_decline_first",
+          "opaque_decline_warm",
+          "opaque_decline_cloned",
+          "opaque_cancellation_construction",
+          "opaque_cancellation_first",
+          "opaque_cancellation_warm",
+          "opaque_cancellation_cloned",
+          "conjugate_then_affine_construction",
+          "conjugate_then_affine_first",
+          "conjugate_then_affine_cloned"
+        ]
+      }
+    }
+  }
+]

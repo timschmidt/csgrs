@@ -1,0 +1,26 @@
+{
+  "status": "hardware-diagnostic-complete",
+  "assessor_sha256": "fece8012dfb9b8be906bff40d55c33caacaf1f42808ede38bbc418c84cf903f7",
+  "result_sha256": "c236c3c1a5c6ab6441690216dbb755a3f5bc5fc55fafdc45f8e8ed8f332a966b",
+  "comparisons_sha256": "48f61c65a008da62c667abf75723e6e9add67bf269bbe9069d30f82818f0fb15",
+  "empty_window_accounting_sha256": "6b0dd796fd273763341a0a24d97c00e0dd209e96201302854f4c5eba91ad9efc",
+  "fixed_processes": 18,
+  "work_windows": 576,
+  "empty_windows": 576,
+  "unusable_windows": [],
+  "comparison_rows": 96,
+  "full_six_pair_comparison_rows": 96,
+  "all_witnesses_and_representation_inventories_match": true,
+  "counter_controls_passed": true,
+  "all_prior_sources_and_libraries_unchanged": true,
+  "limits": [
+    "A distinct instrumented driver measures the original bodies using unchanged libraries. It does not reproduce the machine code of either earlier timing-only driver.",
+    "Hardware counts include surrounding clock/measurement instructions; separately recorded empty windows are retained without subtraction.",
+    "User-only cycles/instructions and thread CPU/wall cover different boundaries. Their ratios are not calibrated CPU frequency.",
+    "Raw scheduling times are retained. No scaled estimates, discarded observations, replacement runs or pooled historical timings are used.",
+    "These descriptive comparisons cannot erase earlier adverse costs, establish a universal runtime claim or admit a runtime candidate."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

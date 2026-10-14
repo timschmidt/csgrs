@@ -1,0 +1,70 @@
+{
+  "both_descriptors_closed": true,
+  "busy": {
+    "after": {
+      "enabled_ns": 249050,
+      "running_ns": 249050,
+      "user_cycles": 775291,
+      "user_instructions": 700433
+    },
+    "before": {
+      "enabled_ns": 16919,
+      "running_ns": 16919,
+      "user_cycles": 0,
+      "user_instructions": 0
+    },
+    "errors": [],
+    "thread_cpu_ns": 223641,
+    "usable": true,
+    "wall_ns": 222455
+  },
+  "control": "counter-api",
+  "empty": {
+    "after": {
+      "enabled_ns": 16919,
+      "running_ns": 16919,
+      "user_cycles": 3388,
+      "user_instructions": 426
+    },
+    "before": {
+      "enabled_ns": 0,
+      "running_ns": 0,
+      "user_cycles": 0,
+      "user_instructions": 0
+    },
+    "errors": [],
+    "thread_cpu_ns": 5530,
+    "usable": true,
+    "wall_ns": 120
+  },
+  "normal_and_unwind_disable_verified": true,
+  "passed": true,
+  "replay": {
+    "after": {
+      "enabled_ns": 293886,
+      "running_ns": 293886,
+      "user_cycles": 1012,
+      "user_instructions": 425
+    },
+    "before": {
+      "enabled_ns": 285357,
+      "running_ns": 285357,
+      "user_cycles": 0,
+      "user_instructions": 0
+    },
+    "errors": [],
+    "thread_cpu_ns": 940,
+    "usable": true,
+    "wall_ns": 30
+  },
+  "unavailable": {
+    "after": null,
+    "before": null,
+    "errors": [
+      "intentional unavailable control"
+    ],
+    "thread_cpu_ns": 860,
+    "usable": false,
+    "wall_ns": 30
+  }
+}

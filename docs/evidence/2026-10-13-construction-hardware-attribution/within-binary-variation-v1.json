@@ -1,0 +1,5570 @@
+[
+  {
+    "variant": "main",
+    "phase": "affine_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          22829172,
+          22829171,
+          22829171,
+          22829172,
+          22829170,
+          22829172
+        ],
+        "minimum": 22829170,
+        "maximum": 22829172,
+        "max_over_min": 1.0000000876072148
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8830128,
+          9114589,
+          14868257,
+          9450020,
+          8967849,
+          9312726
+        ],
+        "minimum": 8830128,
+        "maximum": 14868257,
+        "max_over_min": 1.6838099062663645
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3619749,
+          3853119,
+          4782142,
+          3770816,
+          3688734,
+          3874757
+        ],
+        "minimum": 3619749,
+        "maximum": 4782142,
+        "max_over_min": 1.321125304544597
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3643491,
+          3873985,
+          4820790,
+          3804870,
+          3712096,
+          3902163
+        ],
+        "minimum": 3643491,
+        "maximum": 4820790,
+        "max_over_min": 1.3231238940894872
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "affine_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          20949625,
+          20949625,
+          20949626,
+          20949622,
+          20949626,
+          20949625
+        ],
+        "minimum": 20949622,
+        "maximum": 20949626,
+        "max_over_min": 1.0000001909342326
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8111320,
+          8096962,
+          13760699,
+          8076613,
+          8131448,
+          8227781
+        ],
+        "minimum": 8076613,
+        "maximum": 13760699,
+        "max_over_min": 1.7037709990561638
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3427416,
+          3007970,
+          4522893,
+          3411366,
+          3455572,
+          3447012
+        ],
+        "minimum": 3007970,
+        "maximum": 4522893,
+        "max_over_min": 1.5036363394581729
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3451674,
+          3029763,
+          4541709,
+          3435285,
+          3483221,
+          3473442
+        ],
+        "minimum": 3029763,
+        "maximum": 4541709,
+        "max_over_min": 1.4990311123345292
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "affine_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          20882900,
+          20882900,
+          20882901,
+          20882935,
+          20882904,
+          20882899
+        ],
+        "minimum": 20882899,
+        "maximum": 20882935,
+        "max_over_min": 1.0000017238985832
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          12461369,
+          7735040,
+          10591480,
+          12195888,
+          12914495,
+          8048068
+        ],
+        "minimum": 7735040,
+        "maximum": 12914495,
+        "max_over_min": 1.6696093362154558
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          4070562,
+          3303805,
+          4420152,
+          3980128,
+          4234279,
+          3539497
+        ],
+        "minimum": 3303805,
+        "maximum": 4420152,
+        "max_over_min": 1.3378973637971974
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          4097919,
+          3337981,
+          4444936,
+          4010435,
+          4265418,
+          3569485
+        ],
+        "minimum": 3337981,
+        "maximum": 4444936,
+        "max_over_min": 1.3316241164943718
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "affine_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          27004973,
+          27004969,
+          27004977,
+          27004972,
+          27004970,
+          27004970
+        ],
+        "minimum": 27004969,
+        "maximum": 27004977,
+        "max_over_min": 1.0000002962417769
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10925562,
+          12089688,
+          18513158,
+          12362828,
+          10991979,
+          11489500
+        ],
+        "minimum": 10925562,
+        "maximum": 18513158,
+        "max_over_min": 1.6944810710881508
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3455993,
+          3754417,
+          5487584,
+          3750026,
+          3355150,
+          3621459
+        ],
+        "minimum": 3355150,
+        "maximum": 5487584,
+        "max_over_min": 1.6355703917857622
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3469672,
+          3767642,
+          5520562,
+          3773161,
+          3371159,
+          3631471
+        ],
+        "minimum": 3371159,
+        "maximum": 5520562,
+        "max_over_min": 1.6375857679806856
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "affine_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16097513,
+          16097513,
+          16097517,
+          16097514,
+          16097513,
+          16097515
+        ],
+        "minimum": 16097513,
+        "maximum": 16097517,
+        "max_over_min": 1.000000248485589
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9704409,
+          8458677,
+          12597901,
+          8447824,
+          7469524,
+          8577928
+        ],
+        "minimum": 7469524,
+        "maximum": 12597901,
+        "max_over_min": 1.6865734684030735
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2640962,
+          2210305,
+          3309184,
+          2283709,
+          1991544,
+          2370054
+        ],
+        "minimum": 1991544,
+        "maximum": 3309184,
+        "max_over_min": 1.661617318020591
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2654868,
+          2218038,
+          3327512,
+          2291663,
+          2000243,
+          2380627
+        ],
+        "minimum": 2000243,
+        "maximum": 3327512,
+        "max_over_min": 1.6635538782037982
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "affine_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          15802021,
+          15802002,
+          15802003,
+          15802004,
+          15802004,
+          15802003
+        ],
+        "minimum": 15802002,
+        "maximum": 15802021,
+        "max_over_min": 1.0000012023792935
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9128517,
+          6618402,
+          9145314,
+          8911611,
+          10266329,
+          6373509
+        ],
+        "minimum": 6373509,
+        "maximum": 10266329,
+        "max_over_min": 1.6107812823359942
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2393301,
+          2028471,
+          2433047,
+          2344346,
+          2695686,
+          1815849
+        ],
+        "minimum": 1815849,
+        "maximum": 2695686,
+        "max_over_min": 1.484532028819577
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2403196,
+          2034140,
+          2443683,
+          2354909,
+          2714014,
+          1822405
+        ],
+        "minimum": 1822405,
+        "maximum": 2714014,
+        "max_over_min": 1.4892485479352833
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "affine_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          26620080,
+          26620091,
+          26620082,
+          26620080,
+          26620080,
+          26620086
+        ],
+        "minimum": 26620080,
+        "maximum": 26620091,
+        "max_over_min": 1.0000004132218987
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9236769,
+          9863782,
+          16880801,
+          9670124,
+          9351821,
+          9741741
+        ],
+        "minimum": 9236769,
+        "maximum": 16880801,
+        "max_over_min": 1.8275655697354778
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2153741,
+          2315046,
+          3985808,
+          2274260,
+          2185079,
+          2274500
+        ],
+        "minimum": 2153741,
+        "maximum": 3985808,
+        "max_over_min": 1.850644065372763
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2164182,
+          2323051,
+          3999796,
+          2288413,
+          2193889,
+          2280194
+        ],
+        "minimum": 2164182,
+        "maximum": 3999796,
+        "max_over_min": 1.8481791272637884
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "affine_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16032169,
+          16032169,
+          16032220,
+          16032167,
+          16032181,
+          16032168
+        ],
+        "minimum": 16032167,
+        "maximum": 16032220,
+        "max_over_min": 1.0000033058537876
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7796202,
+          7843900,
+          10681724,
+          7692640,
+          6415533,
+          8257603
+        ],
+        "minimum": 6415533,
+        "maximum": 10681724,
+        "max_over_min": 1.6649784203432514
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1815919,
+          1858967,
+          2545859,
+          1800721,
+          1496796,
+          1925640
+        ],
+        "minimum": 1496796,
+        "maximum": 2545859,
+        "max_over_min": 1.70087239677284
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1823085,
+          1867172,
+          2568964,
+          1803916,
+          1503247,
+          1930668
+        ],
+        "minimum": 1503247,
+        "maximum": 2568964,
+        "max_over_min": 1.7089433739099429
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "affine_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          15736658,
+          15736680,
+          15736670,
+          15736710,
+          15736659,
+          15736671
+        ],
+        "minimum": 15736658,
+        "maximum": 15736710,
+        "max_over_min": 1.000003304386484
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8826307,
+          6055279,
+          6394616,
+          8563031,
+          9641536,
+          5886980
+        ],
+        "minimum": 5886980,
+        "maximum": 9641536,
+        "max_over_min": 1.6377728478778593
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2079207,
+          1411193,
+          1497776,
+          2017372,
+          2282481,
+          1370887
+        ],
+        "minimum": 1370887,
+        "maximum": 2282481,
+        "max_over_min": 1.6649665508535714
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2085067,
+          1416173,
+          1507946,
+          2026281,
+          2291813,
+          1375676
+        ],
+        "minimum": 1375676,
+        "maximum": 2291813,
+        "max_over_min": 1.6659540473192815
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "affine_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          28946752,
+          28946751,
+          28946752,
+          28946752,
+          28946768,
+          28946751
+        ],
+        "minimum": 28946751,
+        "maximum": 28946768,
+        "max_over_min": 1.0000005872852535
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10917196,
+          10850992,
+          17278908,
+          11233339,
+          10635670,
+          12072367
+        ],
+        "minimum": 10635670,
+        "maximum": 17278908,
+        "max_over_min": 1.624618665302703
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2654870,
+          2638260,
+          4205640,
+          2734473,
+          2587045,
+          2927576
+        ],
+        "minimum": 2587045,
+        "maximum": 4205640,
+        "max_over_min": 1.6256539797336342
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2664668,
+          2651119,
+          4223571,
+          2756661,
+          2594672,
+          2936649
+        ],
+        "minimum": 2594672,
+        "maximum": 4223571,
+        "max_over_min": 1.6277860939648634
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "affine_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          22815667,
+          22815666,
+          22815702,
+          22815665,
+          22815667,
+          22815668
+        ],
+        "minimum": 22815665,
+        "maximum": 22815702,
+        "max_over_min": 1.000001621692815
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10044857,
+          10098315,
+          15149841,
+          9952747,
+          8814824,
+          11609833
+        ],
+        "minimum": 8814824,
+        "maximum": 15149841,
+        "max_over_min": 1.7186776502854737
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2806945,
+          2845354,
+          4261166,
+          2780799,
+          2498892,
+          3206513
+        ],
+        "minimum": 2498892,
+        "maximum": 4261166,
+        "max_over_min": 1.7052221544588562
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2816928,
+          2856755,
+          4279177,
+          2790169,
+          2508028,
+          3219970
+        ],
+        "minimum": 2508028,
+        "maximum": 4279177,
+        "max_over_min": 1.7061918766457154
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "affine_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          18054279,
+          18054279,
+          18054282,
+          18054335,
+          18054280,
+          18054279
+        ],
+        "minimum": 18054279,
+        "maximum": 18054335,
+        "max_over_min": 1.0000031017577606
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9633545,
+          7508878,
+          8524755,
+          10299838,
+          11077809,
+          7268325
+        ],
+        "minimum": 7268325,
+        "maximum": 11077809,
+        "max_over_min": 1.5241213071787516
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2383263,
+          1847346,
+          2112954,
+          2531609,
+          2737392,
+          1794491
+        ],
+        "minimum": 1794491,
+        "maximum": 2737392,
+        "max_over_min": 1.5254420334234053
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2395876,
+          1853383,
+          2124265,
+          2539376,
+          2747862,
+          1800077
+        ],
+        "minimum": 1800077,
+        "maximum": 2747862,
+        "max_over_min": 1.5265246986656682
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "negated_scaled_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          35872759,
+          35872890,
+          35872760,
+          35872759,
+          35872815,
+          35872795
+        ],
+        "minimum": 35872759,
+        "maximum": 35872890,
+        "max_over_min": 1.0000036517960607
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          13286601,
+          13570420,
+          22375727,
+          13714097,
+          13890790,
+          13496372
+        ],
+        "minimum": 13286601,
+        "maximum": 22375727,
+        "max_over_min": 1.6840821064770441
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3125369,
+          3200275,
+          5297689,
+          3238490,
+          3271839,
+          3182874
+        ],
+        "minimum": 3125369,
+        "maximum": 5297689,
+        "max_over_min": 1.6950603272765552
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3137685,
+          3214200,
+          5316836,
+          3255817,
+          3281945,
+          3191432
+        ],
+        "minimum": 3137685,
+        "maximum": 5316836,
+        "max_over_min": 1.6945091683836968
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "negated_scaled_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          35600553,
+          35600496,
+          35600551,
+          35600538,
+          35600484,
+          35600486
+        ],
+        "minimum": 35600484,
+        "maximum": 35600553,
+        "max_over_min": 1.0000019381758967
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          15487748,
+          14020871,
+          22953444,
+          14019624,
+          13984850,
+          14388754
+        ],
+        "minimum": 13984850,
+        "maximum": 22953444,
+        "max_over_min": 1.641307843845304
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3844671,
+          3500688,
+          5675237,
+          3477390,
+          3462491,
+          3545965
+        ],
+        "minimum": 3462491,
+        "maximum": 5675237,
+        "max_over_min": 1.6390618777059638
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3862126,
+          3515319,
+          5704960,
+          3489901,
+          3477942,
+          3558656
+        ],
+        "minimum": 3477942,
+        "maximum": 5704960,
+        "max_over_min": 1.6403263769206042
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "negated_scaled_surd_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          34147645,
+          34147643,
+          34147669,
+          34147721,
+          34147645,
+          34147645
+        ],
+        "minimum": 34147643,
+        "maximum": 34147721,
+        "max_over_min": 1.000002284198649
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          20860752,
+          13303774,
+          13653170,
+          20808571,
+          20696594,
+          13313827
+        ],
+        "minimum": 13303774,
+        "maximum": 20860752,
+        "max_over_min": 1.5680326499833808
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5598555,
+          3650206,
+          3779187,
+          5559988,
+          5581506,
+          3658025
+        ],
+        "minimum": 3650206,
+        "maximum": 5598555,
+        "max_over_min": 1.5337641218057283
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5623835,
+          3662229,
+          3793191,
+          5580038,
+          5605736,
+          3669109
+        ],
+        "minimum": 3662229,
+        "maximum": 5623835,
+        "max_over_min": 1.5356317150019838
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "negated_scaled_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          30065495,
+          30065494,
+          30065497,
+          30065496,
+          30065495,
+          30065495
+        ],
+        "minimum": 30065494,
+        "maximum": 30065497,
+        "max_over_min": 1.0000000997821623
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          11938864,
+          12728243,
+          19596884,
+          11943759,
+          12042144,
+          12158387
+        ],
+        "minimum": 11938864,
+        "maximum": 19596884,
+        "max_over_min": 1.6414362371495312
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3270738,
+          3497809,
+          5223165,
+          3288796,
+          3285077,
+          3343731
+        ],
+        "minimum": 3270738,
+        "maximum": 5223165,
+        "max_over_min": 1.5969377553322828
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3282716,
+          3511089,
+          5241432,
+          3322103,
+          3293665,
+          3353810
+        ],
+        "minimum": 3282716,
+        "maximum": 5241432,
+        "max_over_min": 1.5966754358281374
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "negated_scaled_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          20464379,
+          20464380,
+          20464412,
+          20464380,
+          20464380,
+          20464380
+        ],
+        "minimum": 20464379,
+        "maximum": 20464412,
+        "max_over_min": 1.0000016125580942
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8501776,
+          8312409,
+          13205073,
+          8467023,
+          8222615,
+          8684541
+        ],
+        "minimum": 8222615,
+        "maximum": 13205073,
+        "max_over_min": 1.605945675432937
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2225994,
+          2199987,
+          3438934,
+          2221825,
+          2160711,
+          2262492
+        ],
+        "minimum": 2160711,
+        "maximum": 3438934,
+        "max_over_min": 1.591575180577134
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2234027,
+          2207159,
+          3450914,
+          2229497,
+          2167771,
+          2268965
+        ],
+        "minimum": 2167771,
+        "maximum": 3450914,
+        "max_over_min": 1.5919181500259945
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "negated_scaled_surd_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          20168393,
+          20168391,
+          20168392,
+          20168394,
+          20168393,
+          20168392
+        ],
+        "minimum": 20168391,
+        "maximum": 20168394,
+        "max_over_min": 1.000000148747612
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          12632599,
+          8796149,
+          8559501,
+          12254049,
+          12970641,
+          8307020
+        ],
+        "minimum": 8307020,
+        "maximum": 12970641,
+        "max_over_min": 1.5614072194360915
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3275377,
+          2291778,
+          2252852,
+          3185684,
+          3357040,
+          2162789
+        ],
+        "minimum": 2162789,
+        "maximum": 3357040,
+        "max_over_min": 1.5521810033248735
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3287134,
+          2298023,
+          2258726,
+          3202811,
+          3368690,
+          2167561
+        ],
+        "minimum": 2167561,
+        "maximum": 3368690,
+        "max_over_min": 1.5541384994470744
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "negated_scaled_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          29851228,
+          29851228,
+          29851204,
+          29851203,
+          29851235,
+          29851204
+        ],
+        "minimum": 29851203,
+        "maximum": 29851235,
+        "max_over_min": 1.000001071983598
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          11418258,
+          12804469,
+          19039990,
+          13676857,
+          12161180,
+          12074881
+        ],
+        "minimum": 11418258,
+        "maximum": 19039990,
+        "max_over_min": 1.6675039222270158
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2682477,
+          3015860,
+          4489827,
+          3221491,
+          2864591,
+          2837824
+        ],
+        "minimum": 2682477,
+        "maximum": 4489827,
+        "max_over_min": 1.6737616016838168
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2693555,
+          3028523,
+          4506161,
+          3235418,
+          2874004,
+          2846715
+        ],
+        "minimum": 2693555,
+        "maximum": 4506161,
+        "max_over_min": 1.672941892777389
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "negated_scaled_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          18359621,
+          18359622,
+          18359659,
+          18359603,
+          18359603,
+          18359614
+        ],
+        "minimum": 18359603,
+        "maximum": 18359659,
+        "max_over_min": 1.0000030501748867
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7330826,
+          7183482,
+          7430106,
+          7433402,
+          7370383,
+          7549513
+        ],
+        "minimum": 7183482,
+        "maximum": 7549513,
+        "max_over_min": 1.050954537089395
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1727486,
+          1691479,
+          1757854,
+          1757405,
+          1736177,
+          1772074
+        ],
+        "minimum": 1691479,
+        "maximum": 1772074,
+        "max_over_min": 1.0476476503698835
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1730562,
+          1693454,
+          1760790,
+          1764879,
+          1742800,
+          1778478
+        ],
+        "minimum": 1693454,
+        "maximum": 1778478,
+        "max_over_min": 1.050207445847363
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "negated_scaled_surd_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          18062956,
+          18062904,
+          18062904,
+          18063013,
+          18062905,
+          18062906
+        ],
+        "minimum": 18062904,
+        "maximum": 18063013,
+        "max_over_min": 1.0000060344671045
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10923109,
+          7534912,
+          7710188,
+          10616938,
+          10862065,
+          7361341
+        ],
+        "minimum": 7361341,
+        "maximum": 10923109,
+        "max_over_min": 1.4838477119861722
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2572628,
+          1766903,
+          1827038,
+          2502183,
+          2565136,
+          1728795
+        ],
+        "minimum": 1728795,
+        "maximum": 2572628,
+        "max_over_min": 1.4881047203398898
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2579933,
+          1774068,
+          1832435,
+          2515238,
+          2578864,
+          1734251
+        ],
+        "minimum": 1734251,
+        "maximum": 2579933,
+        "max_over_min": 1.4876352961595525
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "negated_scaled_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          32177699,
+          32177731,
+          32177701,
+          32177699,
+          32177730,
+          32177699
+        ],
+        "minimum": 32177699,
+        "maximum": 32177731,
+        "max_over_min": 1.0000009944775727
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          12997867,
+          12928660,
+          20800665,
+          14701154,
+          13010039,
+          12936541
+        ],
+        "minimum": 12928660,
+        "maximum": 20800665,
+        "max_over_min": 1.608880193306963
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3152568,
+          3159137,
+          5008733,
+          3546355,
+          3151917,
+          3135890
+        ],
+        "minimum": 3135890,
+        "maximum": 5008733,
+        "max_over_min": 1.5972285379908095
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3162323,
+          3169363,
+          5028025,
+          3558176,
+          3161033,
+          3148144
+        ],
+        "minimum": 3148144,
+        "maximum": 5028025,
+        "max_over_min": 1.597139457407285
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "negated_scaled_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          25613971,
+          25613970,
+          25613970,
+          25613971,
+          25613970,
+          25613969
+        ],
+        "minimum": 25613969,
+        "maximum": 25613971,
+        "max_over_min": 1.0000000780823932
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          11724963,
+          15845550,
+          10180598,
+          10374652,
+          10020726,
+          10348692
+        ],
+        "minimum": 10020726,
+        "maximum": 15845550,
+        "max_over_min": 1.5812776439551386
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3433684,
+          4555460,
+          3005849,
+          3054865,
+          2951795,
+          3058795
+        ],
+        "minimum": 2951795,
+        "maximum": 4555460,
+        "max_over_min": 1.543284679322243
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3446024,
+          4578356,
+          3016413,
+          3069300,
+          2961428,
+          3066640
+        ],
+        "minimum": 2961428,
+        "maximum": 4578356,
+        "max_over_min": 1.545996053255389
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "negated_scaled_surd_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          20379984,
+          20380035,
+          20379982,
+          20380041,
+          20379983,
+          20379983
+        ],
+        "minimum": 20379982,
+        "maximum": 20380041,
+        "max_over_min": 1.00000289499765
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          12592058,
+          8859286,
+          8589311,
+          11906291,
+          13707864,
+          8460275
+        ],
+        "minimum": 8460275,
+        "maximum": 13707864,
+        "max_over_min": 1.620262225518674
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3073813,
+          2178239,
+          2114524,
+          2910398,
+          3354551,
+          2070118
+        ],
+        "minimum": 2070118,
+        "maximum": 3354551,
+        "max_over_min": 1.6204636643901458
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3087879,
+          2192870,
+          2121165,
+          2917240,
+          3365989,
+          2078307
+        ],
+        "minimum": 2078307,
+        "maximum": 3365989,
+        "max_over_min": 1.6195821887719186
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "multiradical_square_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          28585518,
+          28585504,
+          28585493,
+          28585518,
+          28585491,
+          28585533
+        ],
+        "minimum": 28585491,
+        "maximum": 28585533,
+        "max_over_min": 1.000001469276844
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8518528,
+          9562726,
+          17266371,
+          9794714,
+          8530263,
+          9117048
+        ],
+        "minimum": 8518528,
+        "maximum": 17266371,
+        "max_over_min": 2.0269195569938843
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2006223,
+          2251982,
+          4066581,
+          2307048,
+          2008934,
+          2156201
+        ],
+        "minimum": 2006223,
+        "maximum": 4066581,
+        "max_over_min": 2.026983540713071
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2012393,
+          2258436,
+          4079421,
+          2316622,
+          2014522,
+          2179951
+        ],
+        "minimum": 2012393,
+        "maximum": 4079421,
+        "max_over_min": 2.027149269551226
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "multiradical_square_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          28940597,
+          28940617,
+          28940596,
+          28940597,
+          28940596,
+          28940618
+        ],
+        "minimum": 28940596,
+        "maximum": 28940618,
+        "max_over_min": 1.0000007601778484
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9194761,
+          9399366,
+          9239549,
+          9372539,
+          10179178,
+          9621138
+        ],
+        "minimum": 9194761,
+        "maximum": 10179178,
+        "max_over_min": 1.1070628154445776
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2178749,
+          2213365,
+          2188749,
+          2208756,
+          2396910,
+          2256562
+        ],
+        "minimum": 2178749,
+        "maximum": 2396910,
+        "max_over_min": 1.1001313138870057
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2188041,
+          2217638,
+          2194410,
+          2216958,
+          2402535,
+          2263515
+        ],
+        "minimum": 2188041,
+        "maximum": 2402535,
+        "max_over_min": 1.0980301557420542
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "multiradical_square_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          28924566,
+          28924541,
+          28924545,
+          28924596,
+          28924544,
+          28924577
+        ],
+        "minimum": 28924541,
+        "maximum": 28924596,
+        "max_over_min": 1.0000019014994914
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          14961447,
+          8969112,
+          9144197,
+          14617336,
+          14868952,
+          9530666
+        ],
+        "minimum": 8969112,
+        "maximum": 14961447,
+        "max_over_min": 1.668107946472293
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3518998,
+          2112924,
+          2153661,
+          3442703,
+          3519808,
+          2244464
+        ],
+        "minimum": 2112924,
+        "maximum": 3519808,
+        "max_over_min": 1.6658469495353359
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3533928,
+          2120105,
+          2160012,
+          3455774,
+          3534198,
+          2250166
+        ],
+        "minimum": 2120105,
+        "maximum": 3534198,
+        "max_over_min": 1.6669919650206004
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "multiradical_square_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          57456297,
+          57456298,
+          57456301,
+          57456298,
+          57456297,
+          57456297
+        ],
+        "minimum": 57456297,
+        "maximum": 57456301,
+        "max_over_min": 1.0000000696181308
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          21472551,
+          22121668,
+          35919649,
+          21278108,
+          21053537,
+          22086964
+        ],
+        "minimum": 21053537,
+        "maximum": 35919649,
+        "max_over_min": 1.7061099519762404
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5055819,
+          5209357,
+          8459186,
+          5011043,
+          4956828,
+          5201657
+        ],
+        "minimum": 4956828,
+        "maximum": 8459186,
+        "max_over_min": 1.7065724289807918
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5073712,
+          5229752,
+          8493179,
+          5035435,
+          4967840,
+          5223003
+        ],
+        "minimum": 4967840,
+        "maximum": 8493179,
+        "max_over_min": 1.709632154014622
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "multiradical_square_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          45878478,
+          45878466,
+          45878470,
+          45878474,
+          45878471,
+          45878468
+        ],
+        "minimum": 45878466,
+        "maximum": 45878478,
+        "max_over_min": 1.0000002615606198
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          16710227,
+          16028640,
+          26094456,
+          16023388,
+          15948555,
+          16519597
+        ],
+        "minimum": 15948555,
+        "maximum": 26094456,
+        "max_over_min": 1.6361642794598006
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3954030,
+          3774306,
+          6183325,
+          3772545,
+          3755978,
+          3891087
+        ],
+        "minimum": 3755978,
+        "maximum": 6183325,
+        "max_over_min": 1.646262305050775
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3968648,
+          3784381,
+          6207835,
+          3782941,
+          3770342,
+          3905213
+        ],
+        "minimum": 3770342,
+        "maximum": 6207835,
+        "max_over_min": 1.6464912201598687
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "multiradical_square_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          38152954,
+          38152937,
+          38152936,
+          38153138,
+          38152940,
+          38152936
+        ],
+        "minimum": 38152936,
+        "maximum": 38153138,
+        "max_over_min": 1.0000052944811377
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          20548750,
+          14465731,
+          13194361,
+          20574378,
+          19799484,
+          13119214
+        ],
+        "minimum": 13119214,
+        "maximum": 20574378,
+        "max_over_min": 1.5682630072197923
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          4839868,
+          3407816,
+          3107881,
+          4845346,
+          4665532,
+          3089302
+        ],
+        "minimum": 3089302,
+        "maximum": 4845346,
+        "max_over_min": 1.568427431180247
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          4868137,
+          3425766,
+          3118687,
+          4862767,
+          4687399,
+          3097188
+        ],
+        "minimum": 3097188,
+        "maximum": 4868137,
+        "max_over_min": 1.5717925421382235
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "multiradical_square_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          57518272,
+          57518248,
+          57518251,
+          57518248,
+          57518248,
+          57518248
+        ],
+        "minimum": 57518248,
+        "maximum": 57518272,
+        "max_over_min": 1.0000004172588846
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          21645502,
+          21372173,
+          36973255,
+          21567511,
+          21613921,
+          21620685
+        ],
+        "minimum": 21372173,
+        "maximum": 36973255,
+        "max_over_min": 1.7299717253832823
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5097227,
+          5032321,
+          8707935,
+          5078538,
+          5089305,
+          5090846
+        ],
+        "minimum": 5032321,
+        "maximum": 8707935,
+        "max_over_min": 1.7304013396601687
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5115049,
+          5047214,
+          8737982,
+          5100231,
+          5102641,
+          5105651
+        ],
+        "minimum": 5047214,
+        "maximum": 8737982,
+        "max_over_min": 1.7312485660405919
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "multiradical_square_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          22074088,
+          22073995,
+          22073996,
+          22074183,
+          22074047,
+          22074188
+        ],
+        "minimum": 22073995,
+        "maximum": 22074188,
+        "max_over_min": 1.000008743319911
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8365678,
+          7569739,
+          11742890,
+          6891798,
+          7004238,
+          6868336
+        ],
+        "minimum": 6868336,
+        "maximum": 11742890,
+        "max_over_min": 1.709713968565312
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1982776,
+          1783092,
+          2778247,
+          1622824,
+          1646214,
+          1617525
+        ],
+        "minimum": 1617525,
+        "maximum": 2778247,
+        "max_over_min": 1.7175913818951793
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1989324,
+          1788928,
+          2792119,
+          1626169,
+          1652217,
+          1619529
+        ],
+        "minimum": 1619529,
+        "maximum": 2792119,
+        "max_over_min": 1.7240314931069465
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "multiradical_square_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          37971810,
+          37971767,
+          37971783,
+          37971990,
+          37971801,
+          37971814
+        ],
+        "minimum": 37971767,
+        "maximum": 37971990,
+        "max_over_min": 1.0000058727843768
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          20369897,
+          13355612,
+          13187264,
+          21246085,
+          20703447,
+          13214199
+        ],
+        "minimum": 13187264,
+        "maximum": 21246085,
+        "max_over_min": 1.6111063674769839
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          4791350,
+          3145009,
+          3106162,
+          5003783,
+          4876413,
+          3117860
+        ],
+        "minimum": 3106162,
+        "maximum": 5003783,
+        "max_over_min": 1.6109214522616657
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          4805381,
+          3156554,
+          3115736,
+          5021986,
+          4900615,
+          3135075
+        ],
+        "minimum": 3115736,
+        "maximum": 5021986,
+        "max_over_min": 1.6118137095055551
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "multiradical_square_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          59407051,
+          59407105,
+          59407055,
+          59407082,
+          59407051,
+          59407052
+        ],
+        "minimum": 59407051,
+        "maximum": 59407105,
+        "max_over_min": 1.0000009089830095
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          21958544,
+          23664457,
+          38134341,
+          28563218,
+          21614927,
+          23597333
+        ],
+        "minimum": 21614927,
+        "maximum": 38134341,
+        "max_over_min": 1.7642595323130168
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5170259,
+          5571026,
+          8986432,
+          6727720,
+          5074779,
+          5557277
+        ],
+        "minimum": 5074779,
+        "maximum": 8986432,
+        "max_over_min": 1.7708026300258592
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5186065,
+          5602946,
+          9020543,
+          6776026,
+          5088112,
+          5583957
+        ],
+        "minimum": 5088112,
+        "maximum": 9020543,
+        "max_over_min": 1.7728664384746247
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "multiradical_square_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          28626651,
+          28626674,
+          28626683,
+          28626852,
+          28626683,
+          28626727
+        ],
+        "minimum": 28626651,
+        "maximum": 28626852,
+        "max_over_min": 1.0000070214290873
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9108784,
+          14241379,
+          15557704,
+          9074816,
+          8992474,
+          9073735
+        ],
+        "minimum": 8992474,
+        "maximum": 15557704,
+        "max_over_min": 1.7300805095460938
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2145302,
+          3354110,
+          3671513,
+          2137692,
+          2111245,
+          2135472
+        ],
+        "minimum": 2111245,
+        "maximum": 3671513,
+        "max_over_min": 1.7390274458909316
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2150753,
+          3364899,
+          3694857,
+          2148612,
+          2117195,
+          2143983
+        ],
+        "minimum": 2117195,
+        "maximum": 3694857,
+        "max_over_min": 1.745166127824787
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "multiradical_square_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          39834443,
+          39834440,
+          39834462,
+          39834510,
+          39834522,
+          39834455
+        ],
+        "minimum": 39834440,
+        "maximum": 39834522,
+        "max_over_min": 1.0000020585202152
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          21476639,
+          13914640,
+          13888310,
+          22232673,
+          20942206,
+          14617870
+        ],
+        "minimum": 13888310,
+        "maximum": 22232673,
+        "max_over_min": 1.600819178143345
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5053291,
+          3276338,
+          3270127,
+          5235925,
+          4932508,
+          3442043
+        ],
+        "minimum": 3270127,
+        "maximum": 5235925,
+        "max_over_min": 1.6011381209353643
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5074323,
+          3285765,
+          3278345,
+          5261869,
+          4951141,
+          3451634
+        ],
+        "minimum": 3278345,
+        "maximum": 5261869,
+        "max_over_min": 1.6050382128787544
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "pi_transport_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          27599664,
+          27599665,
+          27599703,
+          27599665,
+          27599665,
+          27599677
+        ],
+        "minimum": 27599664,
+        "maximum": 27599703,
+        "max_over_min": 1.0000014130606807
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10343797,
+          10815674,
+          17871025,
+          10520054,
+          11446030,
+          10562354
+        ],
+        "minimum": 10343797,
+        "maximum": 17871025,
+        "max_over_min": 1.727704536351593
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2429788,
+          2544868,
+          4208510,
+          2477903,
+          2695766,
+          2487773
+        ],
+        "minimum": 2429788,
+        "maximum": 4208510,
+        "max_over_min": 1.7320482280758651
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2434793,
+          2555895,
+          4221121,
+          2490239,
+          2704345,
+          2497589
+        ],
+        "minimum": 2434793,
+        "maximum": 4221121,
+        "max_over_min": 1.7336672973842129
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "pi_transport_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          26806848,
+          26806815,
+          26806800,
+          26806799,
+          26806798,
+          26806819
+        ],
+        "minimum": 26806798,
+        "maximum": 26806848,
+        "max_over_min": 1.0000018651985216
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10833045,
+          12806232,
+          16744150,
+          10104984,
+          10244485,
+          12931921
+        ],
+        "minimum": 10104984,
+        "maximum": 16744150,
+        "max_over_min": 1.6570189522318888
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2550988,
+          3016019,
+          3952051,
+          2380002,
+          2398111,
+          3042737
+        ],
+        "minimum": 2380002,
+        "maximum": 3952051,
+        "max_over_min": 1.6605242348535842
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2559274,
+          3025222,
+          3966738,
+          2388837,
+          2404565,
+          3055321
+        ],
+        "minimum": 2388837,
+        "maximum": 3966738,
+        "max_over_min": 1.660531045023164
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "pi_transport_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          26755492,
+          26755474,
+          26755475,
+          26755578,
+          26755530,
+          26755491
+        ],
+        "minimum": 26755474,
+        "maximum": 26755578,
+        "max_over_min": 1.0000038870550378
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          16008126,
+          10266677,
+          10558338,
+          16397043,
+          17605221,
+          10656743
+        ],
+        "minimum": 10266677,
+        "maximum": 17605221,
+        "max_over_min": 1.7147925273192095
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3770316,
+          2417539,
+          2492572,
+          3862118,
+          4146616,
+          2509411
+        ],
+        "minimum": 2417539,
+        "maximum": 4146616,
+        "max_over_min": 1.7152219674636067
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3782041,
+          2423124,
+          2497349,
+          3879035,
+          4164735,
+          2517137
+        ],
+        "minimum": 2423124,
+        "maximum": 4164735,
+        "max_over_min": 1.7187461310275496
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "pi_transport_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          21260720,
+          21260723,
+          21260721,
+          21260720,
+          21260728,
+          21260720
+        ],
+        "minimum": 21260720,
+        "maximum": 21260728,
+        "max_over_min": 1.0000003762807657
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7119404,
+          8609136,
+          12198167,
+          7700869,
+          7037936,
+          7463571
+        ],
+        "minimum": 7037936,
+        "maximum": 12198167,
+        "max_over_min": 1.7332023195436843
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1677180,
+          2025101,
+          2873211,
+          1814370,
+          1658051,
+          1758304
+        ],
+        "minimum": 1658051,
+        "maximum": 2873211,
+        "max_over_min": 1.732884573514325
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1687105,
+          2034081,
+          2883593,
+          1822375,
+          1667936,
+          1764979
+        ],
+        "minimum": 1667936,
+        "maximum": 2883593,
+        "max_over_min": 1.728839116129156
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "pi_transport_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          11268460,
+          11268464,
+          11268461,
+          11268461,
+          11268460,
+          11268479
+        ],
+        "minimum": 11268460,
+        "maximum": 11268479,
+        "max_over_min": 1.0000016861221497
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4278350,
+          5144740,
+          5846793,
+          4291846,
+          4273798,
+          4421069
+        ],
+        "minimum": 4273798,
+        "maximum": 5846793,
+        "max_over_min": 1.3680555328071191
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1007977,
+          1212708,
+          1386616,
+          1011066,
+          1000906,
+          1041533
+        ],
+        "minimum": 1000906,
+        "maximum": 1386616,
+        "max_over_min": 1.3853608630580694
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1010631,
+          1218636,
+          1394815,
+          1013251,
+          1003222,
+          1044598
+        ],
+        "minimum": 1003222,
+        "maximum": 1394815,
+        "max_over_min": 1.390335339536015
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "pi_transport_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          11025365,
+          11025364,
+          11025377,
+          11025391,
+          11025365,
+          11025378
+        ],
+        "minimum": 11025364,
+        "maximum": 11025391,
+        "max_over_min": 1.0000024488987393
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          5132965,
+          4169738,
+          5408898,
+          6260040,
+          5800303,
+          4137281
+        ],
+        "minimum": 4137281,
+        "maximum": 6260040,
+        "max_over_min": 1.513080692367765
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1209969,
+          982368,
+          1281414,
+          1475597,
+          1366716,
+          974798
+        ],
+        "minimum": 974798,
+        "maximum": 1475597,
+        "max_over_min": 1.513746437723508
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1216447,
+          985023,
+          1289382,
+          1483078,
+          1370246,
+          978243
+        ],
+        "minimum": 978243,
+        "maximum": 1483078,
+        "max_over_min": 1.5160629823060323
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "pi_transport_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          21254286,
+          21254278,
+          21254262,
+          21254261,
+          21254261,
+          21254264
+        ],
+        "minimum": 21254261,
+        "maximum": 21254286,
+        "max_over_min": 1.0000011762347325
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7212231,
+          7275205,
+          12809333,
+          7510160,
+          7255584,
+          7894741
+        ],
+        "minimum": 7212231,
+        "maximum": 12809333,
+        "max_over_min": 1.7760569510322117
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1698689,
+          1713708,
+          3016639,
+          1769583,
+          1706077,
+          1859635
+        ],
+        "minimum": 1698689,
+        "maximum": 3016639,
+        "max_over_min": 1.7758630331979544
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1703853,
+          1719262,
+          3026863,
+          1777738,
+          1711452,
+          1865522
+        ],
+        "minimum": 1703853,
+        "maximum": 3026863,
+        "max_over_min": 1.776481304431779
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "pi_transport_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          11264756,
+          11264756,
+          11264756,
+          11264756,
+          11264756,
+          11264757
+        ],
+        "minimum": 11264756,
+        "maximum": 11264757,
+        "max_over_min": 1.000000088772451
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4458980,
+          5701761,
+          5844511,
+          4249038,
+          4272168,
+          4445503
+        ],
+        "minimum": 4249038,
+        "maximum": 5844511,
+        "max_over_min": 1.375490405122289
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1050592,
+          1343209,
+          1393564,
+          1001047,
+          1000616,
+          1047333
+        ],
+        "minimum": 1000616,
+        "maximum": 1393564,
+        "max_over_min": 1.3927060930466832
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1052868,
+          1346128,
+          1402704,
+          1003472,
+          1002981,
+          1049668
+        ],
+        "minimum": 1002981,
+        "maximum": 1402704,
+        "max_over_min": 1.3985349672625902
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "pi_transport_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          11021202,
+          11021201,
+          11021201,
+          11021290,
+          11021249,
+          11021201
+        ],
+        "minimum": 11021201,
+        "maximum": 11021290,
+        "max_over_min": 1.0000080753449647
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          5903114,
+          4198766,
+          6667717,
+          6152568,
+          5884626,
+          4405501
+        ],
+        "minimum": 4198766,
+        "maximum": 6667717,
+        "max_over_min": 1.5880182415500173
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1391483,
+          989238,
+          1571100,
+          1449549,
+          1387084,
+          1037883
+        ],
+        "minimum": 989238,
+        "maximum": 1571100,
+        "max_over_min": 1.588192123634555
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1397454,
+          991672,
+          1573902,
+          1452791,
+          1394294,
+          1039919
+        ],
+        "minimum": 991672,
+        "maximum": 1573902,
+        "max_over_min": 1.587119531457982
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "pi_transport_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          23546646,
+          23546674,
+          23546654,
+          23546644,
+          23546644,
+          23546644
+        ],
+        "minimum": 23546644,
+        "maximum": 23546674,
+        "max_over_min": 1.0000012740669115
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8306938,
+          9414769,
+          14035936,
+          8440620,
+          8578291,
+          8441946
+        ],
+        "minimum": 8306938,
+        "maximum": 14035936,
+        "max_over_min": 1.6896642300688893
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1952357,
+          2217496,
+          3307014,
+          1991175,
+          2008873,
+          1988314
+        ],
+        "minimum": 1952357,
+        "maximum": 3307014,
+        "max_over_min": 1.6938572197605253
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1961375,
+          2225058,
+          3323472,
+          2004643,
+          2014682,
+          1994114
+        ],
+        "minimum": 1961375,
+        "maximum": 3323472,
+        "max_over_min": 1.6944602638455166
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "pi_transport_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          17815631,
+          17815631,
+          17815641,
+          17815716,
+          17815640,
+          17815630
+        ],
+        "minimum": 17815630,
+        "maximum": 17815716,
+        "max_over_min": 1.0000048272219393
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7070513,
+          8874778,
+          9400697,
+          7672264,
+          6167743,
+          6369302
+        ],
+        "minimum": 6167743,
+        "maximum": 9400697,
+        "max_over_min": 1.5241713216649915
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1665881,
+          2090646,
+          2249682,
+          1807669,
+          1444670,
+          1500175
+        ],
+        "minimum": 1444670,
+        "maximum": 2249682,
+        "max_over_min": 1.5572289865505617
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1672066,
+          2095917,
+          2256456,
+          1814656,
+          1450731,
+          1503367
+        ],
+        "minimum": 1450731,
+        "maximum": 2256456,
+        "max_over_min": 1.555392419407871
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "pi_transport_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          13305427,
+          13305429,
+          13305428,
+          13305448,
+          13305520,
+          13305428
+        ],
+        "minimum": 13305427,
+        "maximum": 13305520,
+        "max_over_min": 1.000006989629119
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7169884,
+          5533004,
+          5710712,
+          7421693,
+          7258041,
+          5342391
+        ],
+        "minimum": 5342391,
+        "maximum": 7421693,
+        "max_over_min": 1.389208127971165
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1682890,
+          1304411,
+          1349518,
+          1748724,
+          1710148,
+          1258996
+        ],
+        "minimum": 1258996,
+        "maximum": 1748724,
+        "max_over_min": 1.388982967380357
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1685245,
+          1313370,
+          1359087,
+          1756300,
+          1716992,
+          1267243
+        ],
+        "minimum": 1267243,
+        "maximum": 1756300,
+        "max_over_min": 1.3859220370520886
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "mixed_field_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          25395766,
+          25395759,
+          25395796,
+          25395840,
+          25395786,
+          25395811
+        ],
+        "minimum": 25395759,
+        "maximum": 25395840,
+        "max_over_min": 1.0000031895089254
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          7384711,
+          8236638,
+          9087478,
+          7375413,
+          7160275,
+          7602348
+        ],
+        "minimum": 7160275,
+        "maximum": 9087478,
+        "max_over_min": 1.269152092622141
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1736206,
+          1940259,
+          2141291,
+          1738254,
+          1676860,
+          1786100
+        ],
+        "minimum": 1676860,
+        "maximum": 2141291,
+        "max_over_min": 1.2769646839927007
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1738271,
+          1947166,
+          2150762,
+          1750420,
+          1682385,
+          1792727
+        ],
+        "minimum": 1682385,
+        "maximum": 2150762,
+        "max_over_min": 1.2784006039045759
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "mixed_field_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          25571245,
+          25571224,
+          25571225,
+          25571232,
+          25571251,
+          25571231
+        ],
+        "minimum": 25571224,
+        "maximum": 25571251,
+        "max_over_min": 1.0000010558743688
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8538648,
+          8856354,
+          12201265,
+          7866597,
+          7986391,
+          7921150
+        ],
+        "minimum": 7866597,
+        "maximum": 12201265,
+        "max_over_min": 1.5510219984575286
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2011873,
+          2086116,
+          2919518,
+          1853326,
+          1869265,
+          1866015
+        ],
+        "minimum": 1853326,
+        "maximum": 2919518,
+        "max_over_min": 1.5752857295478506
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2024221,
+          2093357,
+          2930269,
+          1860113,
+          1871512,
+          1877992
+        ],
+        "minimum": 1860113,
+        "maximum": 2930269,
+        "max_over_min": 1.5753177360730235
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "mixed_field_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          25567197,
+          25567253,
+          25567197,
+          25567275,
+          25567223,
+          25567197
+        ],
+        "minimum": 25567197,
+        "maximum": 25567275,
+        "max_over_min": 1.0000030507841748
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          12155110,
+          13932270,
+          7479605,
+          12305044,
+          13354972,
+          7457613
+        ],
+        "minimum": 7457613,
+        "maximum": 13932270,
+        "max_over_min": 1.8681942868314567
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2856551,
+          3281397,
+          1762393,
+          2898357,
+          3146008,
+          1755574
+        ],
+        "minimum": 1755574,
+        "maximum": 3281397,
+        "max_over_min": 1.8691305521726798
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2862804,
+          3293295,
+          1768099,
+          2910701,
+          3158514,
+          1762080
+        ],
+        "minimum": 1762080,
+        "maximum": 3293295,
+        "max_over_min": 1.868981544538273
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "mixed_field_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          31629454,
+          31629453,
+          31629494,
+          31629454,
+          31629454,
+          31629453
+        ],
+        "minimum": 31629453,
+        "maximum": 31629494,
+        "max_over_min": 1.000001296260166
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10282742,
+          10400098,
+          15855027,
+          11509077,
+          10401163,
+          10190570
+        ],
+        "minimum": 10190570,
+        "maximum": 15855027,
+        "max_over_min": 1.5558528129437312
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2407739,
+          2448996,
+          3734630,
+          2711145,
+          2448296,
+          2397241
+        ],
+        "minimum": 2397241,
+        "maximum": 3734630,
+        "max_over_min": 1.5578867539809307
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2416655,
+          2455252,
+          3757733,
+          2726103,
+          2445822,
+          2403135
+        ],
+        "minimum": 2403135,
+        "maximum": 3757733,
+        "max_over_min": 1.5636795269512533
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "mixed_field_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16668296,
+          16668294,
+          16668372,
+          16668413,
+          16668294,
+          16668299
+        ],
+        "minimum": 16668294,
+        "maximum": 16668413,
+        "max_over_min": 1.0000071393029184
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          5972699,
+          5737370,
+          5736026,
+          5697916,
+          5709168,
+          5930502
+        ],
+        "minimum": 5697916,
+        "maximum": 5972699,
+        "max_over_min": 1.0482251756607153
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1408173,
+          1351187,
+          1364436,
+          1341909,
+          1337328,
+          1396794
+        ],
+        "minimum": 1337328,
+        "maximum": 1408173,
+        "max_over_min": 1.0529750367897779
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1414643,
+          1355127,
+          1370596,
+          1349168,
+          1342708,
+          1402044
+        ],
+        "minimum": 1342708,
+        "maximum": 1414643,
+        "max_over_min": 1.0535745672178911
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "mixed_field_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16385674,
+          16385674,
+          16385696,
+          16385784,
+          16385724,
+          16385710
+        ],
+        "minimum": 16385674,
+        "maximum": 16385784,
+        "max_over_min": 1.0000067131812826
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8408920,
+          5530096,
+          5618050,
+          8743240,
+          9112169,
+          5538143
+        ],
+        "minimum": 5530096,
+        "maximum": 9112169,
+        "max_over_min": 1.6477415581935648
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1980116,
+          1302651,
+          1323281,
+          2062429,
+          2146641,
+          1300031
+        ],
+        "minimum": 1300031,
+        "maximum": 2146641,
+        "max_over_min": 1.651222932376228
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1982725,
+          1310000,
+          1326339,
+          2065038,
+          2153312,
+          1302571
+        ],
+        "minimum": 1302571,
+        "maximum": 2153312,
+        "max_over_min": 1.6531244745967781
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "mixed_field_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          31908029,
+          31908032,
+          31908038,
+          31908027,
+          31908028,
+          31908028
+        ],
+        "minimum": 31908027,
+        "maximum": 31908038,
+        "max_over_min": 1.000000344740839
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          10291614,
+          11572591,
+          14224252,
+          10560749,
+          12364186,
+          10378201
+        ],
+        "minimum": 10291614,
+        "maximum": 14224252,
+        "max_over_min": 1.3821206275322802
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2410539,
+          2736742,
+          3356141,
+          2501632,
+          2900949,
+          2430077
+        ],
+        "minimum": 2410539,
+        "maximum": 3356141,
+        "max_over_min": 1.392278241505323
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2418115,
+          2763881,
+          3366669,
+          2511418,
+          2911520,
+          2438443
+        ],
+        "minimum": 2418115,
+        "maximum": 3366669,
+        "max_over_min": 1.3922700119721354
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "mixed_field_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16947539,
+          16947531,
+          16947645,
+          16947532,
+          16947530,
+          16947531
+        ],
+        "minimum": 16947530,
+        "maximum": 16947645,
+        "max_over_min": 1.0000067856495902
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          5882243,
+          5782469,
+          5806546,
+          5786523,
+          5878511,
+          7329540
+        ],
+        "minimum": 5782469,
+        "maximum": 7329540,
+        "max_over_min": 1.2675450573102942
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1386365,
+          1362447,
+          1381505,
+          1364357,
+          1376336,
+          1721717
+        ],
+        "minimum": 1362447,
+        "maximum": 1721717,
+        "max_over_min": 1.2636946611501219
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1392165,
+          1369526,
+          1383956,
+          1372676,
+          1380235,
+          1727242
+        ],
+        "minimum": 1369526,
+        "maximum": 1727242,
+        "max_over_min": 1.2611969396710978
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "mixed_field_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          16365668,
+          16365640,
+          16365713,
+          16365814,
+          16365635,
+          16365634
+        ],
+        "minimum": 16365634,
+        "maximum": 16365814,
+        "max_over_min": 1.0000109986573082
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8371204,
+          5534087,
+          5485040,
+          8863995,
+          9219869,
+          5396429
+        ],
+        "minimum": 5396429,
+        "maximum": 9219869,
+        "max_over_min": 1.7085129814549584
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1972176,
+          1303461,
+          1292902,
+          2088215,
+          2172159,
+          1271105
+        ],
+        "minimum": 1271105,
+        "maximum": 2172159,
+        "max_over_min": 1.708874561896932
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1978664,
+          1305880,
+          1298891,
+          2095586,
+          2179731,
+          1277493
+        ],
+        "minimum": 1277493,
+        "maximum": 2179731,
+        "max_over_min": 1.7062567074731525
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "mixed_field_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          34568214,
+          34568205,
+          34568205,
+          34568205,
+          34568205,
+          34568211
+        ],
+        "minimum": 34568205,
+        "maximum": 34568214,
+        "max_over_min": 1.000000260354855
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          16090736,
+          11833688,
+          11652135,
+          11848107,
+          11559775,
+          12570610
+        ],
+        "minimum": 11559775,
+        "maximum": 16090736,
+        "max_over_min": 1.391959272563696
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3770236,
+          2781077,
+          2749540,
+          2819975,
+          2722123,
+          2944115
+        ],
+        "minimum": 2722123,
+        "maximum": 3770236,
+        "max_over_min": 1.385035136178637
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3782881,
+          2792539,
+          2759461,
+          3022233,
+          2729803,
+          2954498
+        ],
+        "minimum": 2729803,
+        "maximum": 3782881,
+        "max_over_min": 1.3857706948083799
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "mixed_field_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          25943637,
+          25943630,
+          25943768,
+          25943748,
+          25943627,
+          25943628
+        ],
+        "minimum": 25943627,
+        "maximum": 25943768,
+        "max_over_min": 1.0000054348607463
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          8939978,
+          8821967,
+          12069561,
+          8913475,
+          8895534,
+          9110426
+        ],
+        "minimum": 8821967,
+        "maximum": 12069561,
+        "max_over_min": 1.368125838602661
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2106204,
+          2077667,
+          2860122,
+          2099634,
+          2082626,
+          2145941
+        ],
+        "minimum": 2077667,
+        "maximum": 2860122,
+        "max_over_min": 1.3766026990850795
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2112515,
+          2084847,
+          2870223,
+          2105335,
+          2088877,
+          2152792
+        ],
+        "minimum": 2084847,
+        "maximum": 2870223,
+        "max_over_min": 1.3767067799219799
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "mixed_field_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          18751570,
+          18751570,
+          18751570,
+          18751678,
+          18751571,
+          18751570
+        ],
+        "minimum": 18751570,
+        "maximum": 18751678,
+        "max_over_min": 1.0000057595177363
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          9765085,
+          6749713,
+          6738016,
+          10319261,
+          10715676,
+          6701318
+        ],
+        "minimum": 6701318,
+        "maximum": 10715676,
+        "max_over_min": 1.599040069431118
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          2300189,
+          1590117,
+          1587318,
+          2431549,
+          2525040,
+          1574820
+        ],
+        "minimum": 1574820,
+        "maximum": 2525040,
+        "max_over_min": 1.6033832437992914
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          2306762,
+          1597841,
+          1594201,
+          2443172,
+          2538736,
+          1581602
+        ],
+        "minimum": 1581602,
+        "maximum": 2538736,
+        "max_over_min": 1.6051674188575886
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          39624885,
+          39624885,
+          39624916,
+          39624920,
+          39624931,
+          39624886
+        ],
+        "minimum": 39624885,
+        "maximum": 39624931,
+        "max_over_min": 1.00000116088665
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          14756726,
+          15530800,
+          14708542,
+          15334154,
+          14631954,
+          15095832
+        ],
+        "minimum": 14631954,
+        "maximum": 15530800,
+        "max_over_min": 1.0614303462134995
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3454703,
+          3656754,
+          3464381,
+          3634867,
+          3445343,
+          3549074
+        ],
+        "minimum": 3445343,
+        "maximum": 3656754,
+        "max_over_min": 1.0613613796942714
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3464993,
+          3665869,
+          3473892,
+          3661989,
+          3457733,
+          3563196
+        ],
+        "minimum": 3457733,
+        "maximum": 3665869,
+        "max_over_min": 1.0601943527739128
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          37595685,
+          37595683,
+          37595706,
+          37595683,
+          37595684,
+          37595685
+        ],
+        "minimum": 37595683,
+        "maximum": 37595706,
+        "max_over_min": 1.0000006117723677
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          15094863,
+          14307203,
+          16406473,
+          14250814,
+          14525073,
+          14743134
+        ],
+        "minimum": 14250814,
+        "maximum": 16406473,
+        "max_over_min": 1.1512656750695083
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3563653,
+          3368689,
+          3915384,
+          3351121,
+          3402647,
+          3472871
+        ],
+        "minimum": 3351121,
+        "maximum": 3915384,
+        "max_over_min": 1.168380371821847
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3573616,
+          3377029,
+          3930410,
+          3359410,
+          3413846,
+          3485901
+        ],
+        "minimum": 3359410,
+        "maximum": 3930410,
+        "max_over_min": 1.1699703221696667
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_decline_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          37212898,
+          37212897,
+          37212914,
+          37213223,
+          37212899,
+          37212922
+        ],
+        "minimum": 37212897,
+        "maximum": 37213223,
+        "max_over_min": 1.0000087604036847
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          21430253,
+          13929447,
+          15454888,
+          21487590,
+          21334631,
+          13931472
+        ],
+        "minimum": 13929447,
+        "maximum": 21487590,
+        "max_over_min": 1.5426017989084564
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5047230,
+          3274687,
+          3640658,
+          5061708,
+          5024531,
+          3269008
+        ],
+        "minimum": 3269008,
+        "maximum": 5061708,
+        "max_over_min": 1.5483926622388198
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5067913,
+          3288224,
+          3652670,
+          5087991,
+          5047854,
+          3277995
+        ],
+        "minimum": 3277995,
+        "maximum": 5087991,
+        "max_over_min": 1.5521655768236375
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          8632514,
+          8632514,
+          8632534,
+          8632598,
+          8632515,
+          8632515
+        ],
+        "minimum": 8632514,
+        "maximum": 8632598,
+        "max_over_min": 1.0000097306532025
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          3393917,
+          3472100,
+          3275117,
+          3291221,
+          3253226,
+          3291645
+        ],
+        "minimum": 3253226,
+        "maximum": 3472100,
+        "max_over_min": 1.0672790639199368
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          795253,
+          818602,
+          772196,
+          780296,
+          766766,
+          771185
+        ],
+        "minimum": 766766,
+        "maximum": 818602,
+        "max_over_min": 1.0676034148619005
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          797785,
+          822024,
+          775357,
+          783486,
+          769147,
+          773837
+        ],
+        "minimum": 769147,
+        "maximum": 822024,
+        "max_over_min": 1.068747586612182
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          7896412,
+          7896412,
+          7896412,
+          7896412,
+          7896444,
+          7896412
+        ],
+        "minimum": 7896412,
+        "maximum": 7896444,
+        "max_over_min": 1.0000040524734526
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          3155940,
+          3120373,
+          3822132,
+          3123325,
+          3118360,
+          3127557
+        ],
+        "minimum": 3118360,
+        "maximum": 3822132,
+        "max_over_min": 1.225686578842725
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          748378,
+          735519,
+          911265,
+          736410,
+          734238,
+          736489
+        ],
+        "minimum": 734238,
+        "maximum": 911265,
+        "max_over_min": 1.2411030210912537
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          751129,
+          737959,
+          913917,
+          740009,
+          736719,
+          735600
+        ],
+        "minimum": 735600,
+        "maximum": 913917,
+        "max_over_min": 1.242410277324633
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          7790586,
+          7790551,
+          7790583,
+          7790687,
+          7790553,
+          7790595
+        ],
+        "minimum": 7790551,
+        "maximum": 7790687,
+        "max_over_min": 1.0000174570450793
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4021126,
+          2967222,
+          3453000,
+          4339502,
+          3968640,
+          2943361
+        ],
+        "minimum": 2943361,
+        "maximum": 4339502,
+        "max_over_min": 1.4743356319527234
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          948082,
+          698801,
+          814203,
+          1022856,
+          936153,
+          693911
+        ],
+        "minimum": 693911,
+        "maximum": 1022856,
+        "max_over_min": 1.4740449423629256
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          951705,
+          697853,
+          817504,
+          1025910,
+          941926,
+          697613
+        ],
+        "minimum": 697613,
+        "maximum": 1025910,
+        "max_over_min": 1.4706004618606592
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          8629461,
+          8629461,
+          8629462,
+          8629461,
+          8629461,
+          8629495
+        ],
+        "minimum": 8629461,
+        "maximum": 8629495,
+        "max_over_min": 1.0000039399911536
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          3367424,
+          3362312,
+          3262720,
+          3295646,
+          3269398,
+          3296780
+        ],
+        "minimum": 3262720,
+        "maximum": 3367424,
+        "max_over_min": 1.0320910160847392
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          789084,
+          792773,
+          769425,
+          781316,
+          770877,
+          776796
+        ],
+        "minimum": 769425,
+        "maximum": 792773,
+        "max_over_min": 1.0303447379536668
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          791986,
+          796466,
+          772427,
+          784797,
+          775387,
+          779586
+        ],
+        "minimum": 772427,
+        "maximum": 796466,
+        "max_over_min": 1.0311213875227043
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          7892711,
+          7892711,
+          7892711,
+          7892743,
+          7892710,
+          7892712
+        ],
+        "minimum": 7892710,
+        "maximum": 7892743,
+        "max_over_min": 1.0000041810734208
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          3071127,
+          3135087,
+          3195616,
+          3380704,
+          3069603,
+          3107711
+        ],
+        "minimum": 3069603,
+        "maximum": 3380704,
+        "max_over_min": 1.1013489366540234
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          728291,
+          739048,
+          757847,
+          796804,
+          718690,
+          731829
+        ],
+        "minimum": 718690,
+        "maximum": 796804,
+        "max_over_min": 1.1086894210299294
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          731060,
+          741819,
+          761308,
+          798946,
+          717801,
+          730980
+        ],
+        "minimum": 717801,
+        "maximum": 798946,
+        "max_over_min": 1.1130466522058342
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_decline_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          7790428,
+          7790429,
+          7790428,
+          7790474,
+          7790428,
+          7790512
+        ],
+        "minimum": 7790428,
+        "maximum": 7790512,
+        "max_over_min": 1.0000107824627864
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4007252,
+          2963459,
+          2938976,
+          4233436,
+          3930736,
+          2928246
+        ],
+        "minimum": 2928246,
+        "maximum": 4233436,
+        "max_over_min": 1.4457241638851381
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          944642,
+          695143,
+          692142,
+          997887,
+          926784,
+          690252
+        ],
+        "minimum": 690252,
+        "maximum": 997887,
+        "max_over_min": 1.445685054154135
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          947425,
+          697863,
+          691263,
+          1000922,
+          929517,
+          692503
+        ],
+        "minimum": 691263,
+        "maximum": 1000922,
+        "max_over_min": 1.4479611956664828
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          10984410,
+          10984450,
+          10984421,
+          10984452,
+          10984410,
+          10984429
+        ],
+        "minimum": 10984410,
+        "maximum": 10984452,
+        "max_over_min": 1.0000038236009035
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4204562,
+          4149836,
+          4148697,
+          4322258,
+          4187651,
+          4236262
+        ],
+        "minimum": 4148697,
+        "maximum": 4322258,
+        "max_over_min": 1.0418350629125241
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          987159,
+          977808,
+          977489,
+          1024694,
+          986587,
+          993047
+        ],
+        "minimum": 977489,
+        "maximum": 1024694,
+        "max_over_min": 1.0482921035428532
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          989662,
+          980843,
+          986273,
+          1029339,
+          988883,
+          995651
+        ],
+        "minimum": 980843,
+        "maximum": 1029339,
+        "max_over_min": 1.049443183057839
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          10328133,
+          10328133,
+          10328133,
+          10328176,
+          10328132,
+          10328133
+        ],
+        "minimum": 10328132,
+        "maximum": 10328176,
+        "max_over_min": 1.000004260208913
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          3921453,
+          4000775,
+          3919492,
+          3997840,
+          3848463,
+          4011535
+        ],
+        "minimum": 3848463,
+        "maximum": 4011535,
+        "max_over_min": 1.0423732799301955
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          929482,
+          942652,
+          934542,
+          942021,
+          906195,
+          945171
+        ],
+        "minimum": 906195,
+        "maximum": 945171,
+        "max_over_min": 1.043010610299108
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          931706,
+          945356,
+          937736,
+          945386,
+          905238,
+          947335
+        ],
+        "minimum": 905238,
+        "maximum": 947335,
+        "max_over_min": 1.0465037923728346
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_decline_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          10145473,
+          10145491,
+          10145473,
+          10145553,
+          10145485,
+          10145473
+        ],
+        "minimum": 10145473,
+        "maximum": 10145553,
+        "max_over_min": 1.0000078852903163
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          5236341,
+          4038341,
+          3983644,
+          5711382,
+          5160134,
+          4010239
+        ],
+        "minimum": 3983644,
+        "maximum": 5711382,
+        "max_over_min": 1.4337079317328556
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          1233647,
+          950690,
+          938582,
+          1345477,
+          1216068,
+          940291
+        ],
+        "minimum": 938582,
+        "maximum": 1345477,
+        "max_over_min": 1.433520992305414
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          1236355,
+          953005,
+          940425,
+          1348038,
+          1219546,
+          943876
+        ],
+        "minimum": 940425,
+        "maximum": 1348038,
+        "max_over_min": 1.4334348831645267
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_cancellation_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          109363726,
+          109363727,
+          109363727,
+          109363751,
+          109363855,
+          109363737
+        ],
+        "minimum": 109363726,
+        "maximum": 109363855,
+        "max_over_min": 1.0000011795501553
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          46792640,
+          43902409,
+          43934844,
+          43964742,
+          45967203,
+          46844266
+        ],
+        "minimum": 43902409,
+        "maximum": 46844266,
+        "max_over_min": 1.067009010826718
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          11474305,
+          10842627,
+          10797501,
+          10874546,
+          11351735,
+          11499673
+        ],
+        "minimum": 10797501,
+        "maximum": 11499673,
+        "max_over_min": 1.0650309733705976
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          11518841,
+          10880395,
+          10838848,
+          10928872,
+          11409358,
+          11546660
+        ],
+        "minimum": 10838848,
+        "maximum": 11546660,
+        "max_over_min": 1.065303249939477
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_cancellation_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          113433678,
+          113433687,
+          113433728,
+          113433678,
+          113433679,
+          113433713
+        ],
+        "minimum": 113433678,
+        "maximum": 113433728,
+        "max_over_min": 1.000000440786201
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          46044148,
+          51354184,
+          47099860,
+          44976761,
+          46677124,
+          47549411
+        ],
+        "minimum": 44976761,
+        "maximum": 51354184,
+        "max_over_min": 1.1417937365476363
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          11121325,
+          12291456,
+          11508823,
+          10828169,
+          11230785,
+          11428758
+        ],
+        "minimum": 10828169,
+        "maximum": 12291456,
+        "max_over_min": 1.1351370670332168
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          11167936,
+          12340815,
+          11548279,
+          10868516,
+          11297096,
+          11464445
+        ],
+        "minimum": 10868516,
+        "maximum": 12340815,
+        "max_over_min": 1.1354645841253765
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_cancellation_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          112998579,
+          112998554,
+          112998556,
+          112999906,
+          112998587,
+          112998556
+        ],
+        "minimum": 112998554,
+        "maximum": 112999906,
+        "max_over_min": 1.0000119647548764
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          71877156,
+          46263217,
+          44563932,
+          75187124,
+          71165139,
+          44842611
+        ],
+        "minimum": 44563932,
+        "maximum": 75187124,
+        "max_over_min": 1.6871743723152617
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          17916460,
+          11676788,
+          11266803,
+          18872160,
+          17815517,
+          11368544
+        ],
+        "minimum": 11266803,
+        "maximum": 18872160,
+        "max_over_min": 1.67502351820654
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          17990808,
+          11716568,
+          11306436,
+          18948372,
+          17893345,
+          11410569
+        ],
+        "minimum": 11306436,
+        "maximum": 18948372,
+        "max_over_min": 1.6758925624308136
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_cancellation_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          64511701,
+          64511701,
+          64511764,
+          64511702,
+          64511704,
+          64511702
+        ],
+        "minimum": 64511701,
+        "maximum": 64511764,
+        "max_over_min": 1.0000009765670261
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          25141744,
+          30233864,
+          34777191,
+          28817256,
+          31062484,
+          27313496
+        ],
+        "minimum": 25141744,
+        "maximum": 34777191,
+        "max_over_min": 1.3832449729819856
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6229090,
+          7600567,
+          8547040,
+          7121876,
+          7629114,
+          6756067
+        ],
+        "minimum": 6229090,
+        "maximum": 8547040,
+        "max_over_min": 1.3721169544829181
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6256461,
+          7628298,
+          8581913,
+          7178568,
+          7673965,
+          6780956
+        ],
+        "minimum": 6256461,
+        "maximum": 8581913,
+        "max_over_min": 1.3716880837265668
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_cancellation_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          65456413,
+          65456414,
+          65456416,
+          65456416,
+          65456414,
+          65456414
+        ],
+        "minimum": 65456413,
+        "maximum": 65456416,
+        "max_over_min": 1.0000000458320257
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          26235850,
+          25223155,
+          37288334,
+          25824621,
+          25212000,
+          28727853
+        ],
+        "minimum": 25212000,
+        "maximum": 37288334,
+        "max_over_min": 1.478991511978423
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6285967,
+          5977922,
+          9011031,
+          6131858,
+          5987982,
+          6826533
+        ],
+        "minimum": 5977922,
+        "maximum": 9011031,
+        "max_over_min": 1.5073851749822096
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6307379,
+          6000889,
+          9049271,
+          6158488,
+          6012378,
+          6850711
+        ],
+        "minimum": 6000889,
+        "maximum": 9049271,
+        "max_over_min": 1.507988399718775
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_cancellation_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          62855690,
+          62855687,
+          62855686,
+          62856277,
+          62855703,
+          62855687
+        ],
+        "minimum": 62855686,
+        "maximum": 62856277,
+        "max_over_min": 1.0000094024906514
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          40895782,
+          27025815,
+          27048598,
+          42990355,
+          41104777,
+          27454175
+        ],
+        "minimum": 27025815,
+        "maximum": 42990355,
+        "max_over_min": 1.5907144705904337
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          9712213,
+          6417405,
+          6427654,
+          10206320,
+          9770007,
+          6555096
+        ],
+        "minimum": 6417405,
+        "maximum": 10206320,
+        "max_over_min": 1.590412323984539
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          9756012,
+          6440769,
+          6446669,
+          10252918,
+          9820208,
+          6581999
+        ],
+        "minimum": 6440769,
+        "maximum": 10252918,
+        "max_over_min": 1.5918779263780458
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_cancellation_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          62495810,
+          62495811,
+          62495809,
+          62495831,
+          62495809,
+          62495879
+        ],
+        "minimum": 62495809,
+        "maximum": 62495879,
+        "max_over_min": 1.0000011200751078
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          27133890,
+          25850526,
+          23108898,
+          27174186,
+          26182213,
+          24140153
+        ],
+        "minimum": 23108898,
+        "maximum": 27174186,
+        "max_over_min": 1.1759187305253587
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6376729,
+          6088563,
+          5441648,
+          6433256,
+          6159987,
+          5688786
+        ],
+        "minimum": 5441648,
+        "maximum": 6433256,
+        "max_over_min": 1.1822256786914553
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6398662,
+          6119651,
+          5460856,
+          6477806,
+          6182637,
+          5710520
+        ],
+        "minimum": 5460856,
+        "maximum": 6477806,
+        "max_over_min": 1.1862253829802507
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_cancellation_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          63435401,
+          63435398,
+          63435400,
+          63435399,
+          63435399,
+          63435399
+        ],
+        "minimum": 63435398,
+        "maximum": 63435401,
+        "max_over_min": 1.0000000472922075
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          26279485,
+          23556161,
+          27361462,
+          26633279,
+          23541895,
+          24072713
+        ],
+        "minimum": 23541895,
+        "maximum": 27361462,
+        "max_over_min": 1.1622455201673443
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6242451,
+          5525171,
+          6530537,
+          6271739,
+          5523969,
+          5668118
+        ],
+        "minimum": 5523969,
+        "maximum": 6530537,
+        "max_over_min": 1.182218256474647
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6268171,
+          5540681,
+          6560271,
+          6294369,
+          5543120,
+          5683711
+        ],
+        "minimum": 5540681,
+        "maximum": 6560271,
+        "max_over_min": 1.184018895872186
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_cancellation_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          62181695,
+          62181691,
+          62181690,
+          62182095,
+          62181717,
+          62181689
+        ],
+        "minimum": 62181689,
+        "maximum": 62182095,
+        "max_over_min": 1.0000065292533304
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          40291644,
+          28280507,
+          26641470,
+          41861100,
+          41377811,
+          24971253
+        ],
+        "minimum": 24971253,
+        "maximum": 41861100,
+        "max_over_min": 1.6763716262055413
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          9489199,
+          6660455,
+          6322253,
+          9863528,
+          9751048,
+          5880181
+        ],
+        "minimum": 5880181,
+        "maximum": 9863528,
+        "max_over_min": 1.6774191134592626
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          9526758,
+          6685662,
+          6339066,
+          9947558,
+          9797529,
+          5899827
+        ],
+        "minimum": 5899827,
+        "maximum": 9947558,
+        "max_over_min": 1.686076218845061
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "opaque_cancellation_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          64465334,
+          64465334,
+          64465334,
+          64465335,
+          64465347,
+          64465334
+        ],
+        "minimum": 64465334,
+        "maximum": 64465347,
+        "max_over_min": 1.0000002016587706
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          23998836,
+          26339659,
+          24153917,
+          26913332,
+          27053409,
+          26160079
+        ],
+        "minimum": 23998836,
+        "maximum": 27053409,
+        "max_over_min": 1.127280048082332
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5711584,
+          6287506,
+          5773969,
+          6462971,
+          6462301,
+          6255040
+        ],
+        "minimum": 5711584,
+        "maximum": 6462971,
+        "max_over_min": 1.1315549241681466
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5732377,
+          6316578,
+          5791543,
+          6517334,
+          6489386,
+          6280950
+        ],
+        "minimum": 5732377,
+        "maximum": 6517334,
+        "max_over_min": 1.1369339455517318
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "opaque_cancellation_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          68685089,
+          68685092,
+          68685090,
+          68685089,
+          68685088,
+          68685127
+        ],
+        "minimum": 68685088,
+        "maximum": 68685127,
+        "max_over_min": 1.000000567808838
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          27895527,
+          27810260,
+          29190847,
+          27362946,
+          26356478,
+          28478760
+        ],
+        "minimum": 26356478,
+        "maximum": 29190847,
+        "max_over_min": 1.1075397479132074
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6872899,
+          6870157,
+          7258977,
+          6754458,
+          6504088,
+          7032576
+        ],
+        "minimum": 6504088,
+        "maximum": 7258977,
+        "max_over_min": 1.1160637740448776
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6900568,
+          6905917,
+          7286731,
+          6780496,
+          6523794,
+          7052937
+        ],
+        "minimum": 6523794,
+        "maximum": 7286731,
+        "max_over_min": 1.116946825727483
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "opaque_cancellation_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          63622982,
+          63622980,
+          63622980,
+          63622997,
+          63622997,
+          63622978
+        ],
+        "minimum": 63622978,
+        "maximum": 63622997,
+        "max_over_min": 1.000000298634245
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          40861635,
+          27281528,
+          27323147,
+          42000506,
+          43579850,
+          25249155
+        ],
+        "minimum": 25249155,
+        "maximum": 43579850,
+        "max_over_min": 1.7259924143996106
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          9623199,
+          6424175,
+          6446485,
+          9890486,
+          10243496,
+          5944856
+        ],
+        "minimum": 5944856,
+        "maximum": 10243496,
+        "max_over_min": 1.72308563908024
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          9657949,
+          6445088,
+          6474517,
+          9929940,
+          10291046,
+          5960122
+        ],
+        "minimum": 5960122,
+        "maximum": 10291046,
+        "max_over_min": 1.7266502262873142
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "conjugate_then_affine_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          37719493,
+          37719497,
+          37719446,
+          37719464,
+          37719548,
+          37719540
+        ],
+        "minimum": 37719446,
+        "maximum": 37719548,
+        "max_over_min": 1.0000027041754538
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          13810047,
+          13674450,
+          13463640,
+          14175444,
+          13607405,
+          13579871
+        ],
+        "minimum": 13463640,
+        "maximum": 14175444,
+        "max_over_min": 1.0528686150253572
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3252100,
+          3219962,
+          3164587,
+          3378818,
+          3205502,
+          3197545
+        ],
+        "minimum": 3164587,
+        "maximum": 3378818,
+        "max_over_min": 1.0676963534262134
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3263526,
+          3231519,
+          3172212,
+          3395138,
+          3223169,
+          3205610
+        ],
+        "minimum": 3172212,
+        "maximum": 3395138,
+        "max_over_min": 1.0702746222509718
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "conjugate_then_affine_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          36046318,
+          36046295,
+          36046278,
+          36046279,
+          36046330,
+          36046305
+        ],
+        "minimum": 36046278,
+        "maximum": 36046330,
+        "max_over_min": 1.000001442589995
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          13017296,
+          12938039,
+          13245869,
+          13109000,
+          12953595,
+          13219032
+        ],
+        "minimum": 12938039,
+        "maximum": 13245869,
+        "max_over_min": 1.0237926319436816
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3065725,
+          3046656,
+          3156377,
+          3094502,
+          3050376,
+          3113022
+        ],
+        "minimum": 3046656,
+        "maximum": 3156377,
+        "max_over_min": 1.0360135834173598
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3075519,
+          3055260,
+          3165314,
+          3106917,
+          3060491,
+          3120897
+        ],
+        "minimum": 3055260,
+        "maximum": 3165314,
+        "max_over_min": 1.0360211569555455
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "conjugate_then_affine_construction",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          35880510,
+          35880607,
+          35880498,
+          35880536,
+          35880500,
+          35880500
+        ],
+        "minimum": 35880498,
+        "maximum": 35880607,
+        "max_over_min": 1.0000030378619607
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          22237321,
+          13038240,
+          12538240,
+          21922549,
+          21690831,
+          12613440
+        ],
+        "minimum": 12538240,
+        "maximum": 22237321,
+        "max_over_min": 1.7735600052319942
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5243443,
+          3071103,
+          2973412,
+          5151291,
+          5100275,
+          2971983
+        ],
+        "minimum": 2971983,
+        "maximum": 5243443,
+        "max_over_min": 1.7642910474252376
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5264350,
+          3082599,
+          2983766,
+          5170796,
+          5122169,
+          2984116
+        ],
+        "minimum": 2983766,
+        "maximum": 5264350,
+        "max_over_min": 1.7643307149421235
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "conjugate_then_affine_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          61920697,
+          61920697,
+          61920696,
+          61920696,
+          61920900,
+          61920728
+        ],
+        "minimum": 61920696,
+        "maximum": 61920900,
+        "max_over_min": 1.0000032945366117
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          26761976,
+          24391831,
+          23544661,
+          24011831,
+          24545608,
+          24615545
+        ],
+        "minimum": 23544661,
+        "maximum": 26761976,
+        "max_over_min": 1.1366473273919722
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6488310,
+          5914588,
+          5717145,
+          5877592,
+          5979192,
+          5994331
+        ],
+        "minimum": 5717145,
+        "maximum": 6488310,
+        "max_over_min": 1.1348863812269936
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6511594,
+          5938653,
+          5737537,
+          5914605,
+          6002449,
+          6016049
+        ],
+        "minimum": 5737537,
+        "maximum": 6511594,
+        "max_over_min": 1.1349110254103807
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "conjugate_then_affine_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          45893769,
+          45893768,
+          45893791,
+          45893768,
+          45893799,
+          45893799
+        ],
+        "minimum": 45893768,
+        "maximum": 45893799,
+        "max_over_min": 1.0000006754729749
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          17473466,
+          16954865,
+          27312450,
+          16823105,
+          16798372,
+          18457434
+        ],
+        "minimum": 16798372,
+        "maximum": 27312450,
+        "max_over_min": 1.6258986287480715
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          4115477,
+          3992578,
+          6516008,
+          3958781,
+          3955511,
+          4346768
+        ],
+        "minimum": 3955511,
+        "maximum": 6516008,
+        "max_over_min": 1.6473239487894231
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          4129568,
+          4010565,
+          6545461,
+          3971028,
+          3968378,
+          4358571
+        ],
+        "minimum": 3968378,
+        "maximum": 6545461,
+        "max_over_min": 1.6494046182092532
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "conjugate_then_affine_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          41557168,
+          41557166,
+          41557172,
+          41557170,
+          41557165,
+          41557164
+        ],
+        "minimum": 41557164,
+        "maximum": 41557172,
+        "max_over_min": 1.0000001925059179
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          25412666,
+          15159841,
+          20240393,
+          24888635,
+          24500017,
+          15627047
+        ],
+        "minimum": 15159841,
+        "maximum": 25412666,
+        "max_over_min": 1.6763148109534922
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5985092,
+          3570313,
+          4810111,
+          5861401,
+          5765011,
+          3680354
+        ],
+        "minimum": 3570313,
+        "maximum": 5985092,
+        "max_over_min": 1.6763493844937405
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6010558,
+          3580635,
+          4829959,
+          5884817,
+          5788784,
+          3693227
+        ],
+        "minimum": 3580635,
+        "maximum": 6010558,
+        "max_over_min": 1.6786290699833968
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "conjugate_then_affine_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          61850246,
+          61850228,
+          61850202,
+          61850198,
+          61850210,
+          61850204
+        ],
+        "minimum": 61850198,
+        "maximum": 61850246,
+        "max_over_min": 1.0000007760686553
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          23306992,
+          23633230,
+          31087032,
+          26028150,
+          23651276,
+          23742730
+        ],
+        "minimum": 23306992,
+        "maximum": 31087032,
+        "max_over_min": 1.333807125346763
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5488213,
+          5565088,
+          7315222,
+          6143579,
+          5577856,
+          5591314
+        ],
+        "minimum": 5488213,
+        "maximum": 7315222,
+        "max_over_min": 1.3328968828287096
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5508153,
+          5585438,
+          7345127,
+          6178437,
+          5608556,
+          5612216
+        ],
+        "minimum": 5508153,
+        "maximum": 7345127,
+        "max_over_min": 1.3335009031157994
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "conjugate_then_affine_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          37898425,
+          37898390,
+          37898365,
+          37898348,
+          37898374,
+          37898530
+        ],
+        "minimum": 37898348,
+        "maximum": 37898530,
+        "max_over_min": 1.0000048023201433
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          14412278,
+          13860349,
+          14116919,
+          13927937,
+          13897478,
+          14419812
+        ],
+        "minimum": 13860349,
+        "maximum": 14419812,
+        "max_over_min": 1.040364279427596
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3393898,
+          3251230,
+          3344621,
+          3273787,
+          3270808,
+          3398047
+        ],
+        "minimum": 3251230,
+        "maximum": 3398047,
+        "max_over_min": 1.0451573712102804
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3403457,
+          3261197,
+          3356490,
+          3286365,
+          3282835,
+          3409047
+        ],
+        "minimum": 3261197,
+        "maximum": 3409047,
+        "max_over_min": 1.0453361143163078
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "conjugate_then_affine_warm",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          41548647,
+          41548666,
+          41548629,
+          41549217,
+          41548656,
+          41548642
+        ],
+        "minimum": 41548629,
+        "maximum": 41549217,
+        "max_over_min": 1.0000141520915167
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          25151137,
+          15465635,
+          15308534,
+          26080685,
+          23698265,
+          15805202
+        ],
+        "minimum": 15308534,
+        "maximum": 26080685,
+        "max_over_min": 1.7036696655603991
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          5923066,
+          3642796,
+          3610989,
+          6128710,
+          5581705,
+          3715881
+        ],
+        "minimum": 3610989,
+        "maximum": 6128710,
+        "max_over_min": 1.6972386235460701
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          5950163,
+          3655010,
+          3629542,
+          6161138,
+          5607926,
+          3729275
+        ],
+        "minimum": 3629542,
+        "maximum": 6161138,
+        "max_over_min": 1.697497370191611
+      }
+    }
+  },
+  {
+    "variant": "main",
+    "phase": "conjugate_then_affine_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          63806440,
+          63806360,
+          63806342,
+          63806391,
+          63806344,
+          63806330
+        ],
+        "minimum": 63806330,
+        "maximum": 63806440,
+        "max_over_min": 1.0000017239668855
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          33583659,
+          26739774,
+          25665541,
+          26349518,
+          25823180,
+          25542571
+        ],
+        "minimum": 25542571,
+        "maximum": 33583659,
+        "max_over_min": 1.314811222409835
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          7981655,
+          6386749,
+          6130050,
+          6342241,
+          6171836,
+          6099162
+        ],
+        "minimum": 6099162,
+        "maximum": 7981655,
+        "max_over_min": 1.3086478109615713
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          8014091,
+          6413961,
+          6155328,
+          6378014,
+          6203015,
+          6124281
+        ],
+        "minimum": 6124281,
+        "maximum": 8014091,
+        "max_over_min": 1.3085766312812883
+      }
+    }
+  },
+  {
+    "variant": "full-cache",
+    "phase": "conjugate_then_affine_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          44242081,
+          44242052,
+          44242103,
+          44242074,
+          44242163,
+          44242099
+        ],
+        "minimum": 44242052,
+        "maximum": 44242163,
+        "max_over_min": 1.000002508925219
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          16492196,
+          16059331,
+          16110579,
+          15910378,
+          16063796,
+          16124299
+        ],
+        "minimum": 15910378,
+        "maximum": 16492196,
+        "max_over_min": 1.036568458650071
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          3883816,
+          3781865,
+          3839560,
+          3746639,
+          3766727,
+          3793704
+        ],
+        "minimum": 3746639,
+        "maximum": 3883816,
+        "max_over_min": 1.03661334865729
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          3901723,
+          3795940,
+          3852206,
+          3767142,
+          3779381,
+          3805909
+        ],
+        "minimum": 3767142,
+        "maximum": 3901723,
+        "max_over_min": 1.0357249607261951
+      }
+    }
+  },
+  {
+    "variant": "no-persistent",
+    "phase": "conjugate_then_affine_cloned",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          43472105,
+          43472101,
+          43472201,
+          43472111,
+          43472154,
+          43472101
+        ],
+        "minimum": 43472101,
+        "maximum": 43472201,
+        "max_over_min": 1.0000023003259033
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          25833864,
+          15849356,
+          16089502,
+          25573352,
+          24131219,
+          16197341
+        ],
+        "minimum": 15849356,
+        "maximum": 25833864,
+        "max_over_min": 1.629963009222583
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          6105773,
+          3732580,
+          3806023,
+          6022669,
+          5683908,
+          3806763
+        ],
+        "minimum": 3732580,
+        "maximum": 6105773,
+        "max_over_min": 1.6358049927931886
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          6150319,
+          3748283,
+          3819058,
+          6046377,
+          5716749,
+          3819879
+        ],
+        "minimum": 3748283,
+        "maximum": 6150319,
+        "max_over_min": 1.6408363509372157
+      }
+    }
+  }
+]

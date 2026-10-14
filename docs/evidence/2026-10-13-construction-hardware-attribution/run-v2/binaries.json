@@ -1,0 +1,22 @@
+{
+  "controls": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/controls",
+    "sha256": "90914400a31716593d79cc19bc2423da6d196fb1e474e5163b6092da2aec8646",
+    "bytes": 4626296
+  },
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+    "sha256": "5b3a5aeef63cf304d8dcca1afc2a78627c3145582f22fb93d09361368f4399e2",
+    "bytes": 6264376
+  },
+  "full-cache": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+    "sha256": "11729e4e8ef36e7f16604429a009766591740c65335b1952b44449945c584c07",
+    "bytes": 6261192
+  },
+  "no-persistent": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+    "sha256": "69006d08fe11a0e00caede74c8b5e723c538e06c31eb6c1af7e5b1a86f7ec0d8",
+    "bytes": 6247832
+  }
+}

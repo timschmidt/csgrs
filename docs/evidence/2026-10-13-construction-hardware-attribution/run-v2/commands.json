@@ -1,0 +1,833 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--config",
+      "skip_children=true",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/counters_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/controls_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/wrapper_v1.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250151",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3420056",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "compile-c",
+    "command": [
+      "cc",
+      "-std=c11",
+      "-O2",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-MD",
+      "-MF",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/counters.d",
+      "-c",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/counters_v1.c",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/counters.o"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3510218",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3518513",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-controls",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--cfg",
+      "feature=\"pmu-controls\"",
+      "--emit=metadata",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/controls_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/controls.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3945381",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3955979",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-probe",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--emit=metadata",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/probe.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/probe.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3429243",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3459154",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "build-controls",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--cfg",
+      "feature=\"pmu-controls\"",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/controls_v1.rs",
+      "-C",
+      "link-arg=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/counters.o",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/controls"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3440846",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3436503",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-C",
+      "link-arg=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/counters.o",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4298236",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3422596",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-full-cache",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-C",
+      "link-arg=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/counters.o",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3417527",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4260751",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-no-persistent",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-hardware-attribution/run-v2/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-C",
+      "link-arg=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/counters.o",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3477991",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4300095",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "counter-controls",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/controls"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3500221",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3487836",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "db696f2e399b524239041c00acb3c2e9c775d31e7d1fa75021e56834a5678b44",
+    "stderr_sha256": "bf946c2a5503aab4b679255d35fd6f403f02ced419885877f2ece8a4482c8759"
+  },
+  {
+    "name": "sample-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3458624",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4261720",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "abc398d9d2f26932281b695470b65fe30f66cfe00a5f23f70a3dc9436c3bd7ff",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-1-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3459811",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250060",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "8d6a4721790851195057d0c57c4d5ec857ad6cc540ce0afc9fec92247cfe0e30",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-1-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4270178",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250052",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "f4dde7ed0a86c91b5b7cc3b5155b50f9e8e4c488d8c8b20f2bd7917419e0665b",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-2-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4275061",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250105",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "6c2dcc602e70efa64e65d3a31aeac5b8a14e0fbd99fcc10e8fdd75a5eed53734",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-2-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3459086",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250111",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "eb9caeb10ed1152e718551b4c749c39510e6debb81533208688edeab09726bec",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4275103",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250060",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "2ab07ccfd0f95533ed1cb96d3d95880bc5056d036044f26560c7905eb9b011db",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-3-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4300067",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250101",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "ad7f39edc7561b76aa103965d11882963026e2ab763381c9901754e4dbf59ec4",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-3-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4198359",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250100",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "b80dfbdcf9982b78c4e48d8082bdbf5eab2e4399df566e83dff0ebcef0acefad",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-3-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4199601",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4200087",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "4041b1af1ebb96dc853d8a8167e62fcc66d447f8fbbb8abadea6c70b8dda5934",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-4-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3454208",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4200093",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "46f9ffb361487c501af8ddc58fb472eb8391ef869a303e9d7d1a3b90f7b9ae46",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-4-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4223178",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4249950",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "c03a588c2103dd4b4eba5fa41ccee9d8e5103e237c3818239a2135ee01dcbf7f",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-4-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3440529",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250032",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "84acbf52d0a2e900e1f9072304594ca26a21474e2694d28d02dd599ce2d4feb0",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-5-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4300274",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250100",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "f577d9ea6302af23cbc90bfff674a4055e6d515d25f96ea44c5f430da2c7bd54",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-5-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4248985",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250074",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "30865e1514b7541c22a96b9ea5b4cf1f77ee6e519caee1a7268cf84199c2a5d6",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-5-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3451359",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250100",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "d6d6fe907be2e12dc08b083dbeb3e47588fa7b890ad7d116adfe3b388acfbe08",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-6-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3479282",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250118",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "b68032b658c9704b23799da9fe289592b57d2266f36b6d65f788f2e43ef907e3",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-6-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3459024",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250064",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "4966ce77f6ff5db8dafabdbf4a2d61319d2c08310cac419368a0578a8d2c21d3",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "sample-6-no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-hardware-attribution-v2/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "cpu0_snapshot_before": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "3439260",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "cpu0_snapshot_after": {
+      "scaling_driver": "amd-pstate-epp",
+      "scaling_governor": "powersave",
+      "scaling_cur_freq": "4250018",
+      "scaling_min_freq": "1755355",
+      "scaling_max_freq": "4552952"
+    },
+    "stdout_sha256": "1e52183ff9cffec4ebe18e7fc8198aef623206816d95b613daff2400f8161378",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]

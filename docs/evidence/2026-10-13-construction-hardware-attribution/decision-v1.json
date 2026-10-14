@@ -1,0 +1,305 @@
+{
+  "status": "small-instruction-differences-and-large-within-binary-cycle-variation-cause-unresolved",
+  "interpreter_sha256": "635503864b7abf19fedef567a0721fc1d866ec4f86714561e1807975cf84960f",
+  "input_sha256": {
+    "assessment-v2.json": "ff236c9f1b4775fcb3bbdf432adc1c6ea246a9ffe3a472ed5bb525f5e575a40c",
+    "comparisons-v2.json": "48f61c65a008da62c667abf75723e6e9add67bf269bbe9069d30f82818f0fb15",
+    "empty-window-accounting-v2.json": "6b0dd796fd273763341a0a24d97c00e0dd209e96201302854f4c5eba91ad9efc",
+    "run-v2/samples.json": "d78a09602a638811ebc3b0d9173eb79de5db9eb9a6a01d022616d4ce6960a7d5",
+    "run-v2/result.json": "c236c3c1a5c6ab6441690216dbb755a3f5bc5fc55fafdc45f8e8ed8f332a966b"
+  },
+  "derived_sha256": {
+    "complete-phase-matrix-v1.json": "1aaec564ebb84337105278fd3773cb0e4f33ec8137e0eb5776abc6eb431aa557",
+    "within-binary-variation-v1.json": "d01beda570e97ae58c5a5947561a1b7f487a0a517db39cad76e62d31695e4ff6",
+    "all-phase-directions-v1.json": "16f8d5ff660c5e3eb1a133d9fbffee00d61e2581e02561dfc1555d5a09f7869f"
+  },
+  "fixed_processes": 18,
+  "work_windows": 576,
+  "empty_windows": 576,
+  "unusable_windows": 0,
+  "complete_contrast_phase_rows": 96,
+  "all_witnesses_and_representation_inventories_match": true,
+  "focus_current_observations": [
+    {
+      "baseline": "main",
+      "candidate": "full-cache",
+      "phase": "negated_scaled_surd_construction",
+      "metrics": {
+        "user_instructions": {
+          "ratio_of_medians": 0.9924103869570735,
+          "paired_ratios": [
+            0.9924119023016881,
+            0.9924066892854186,
+            0.9924118188843011,
+            0.9924114841571009,
+            0.9924084296144587,
+            0.9924090386600766
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 6
+        },
+        "user_cycles": {
+          "ratio_of_medians": 1.0412361340316194,
+          "paired_ratios": [
+            1.16566667426831,
+            1.033193593123868,
+            1.0258189152915569,
+            1.022278316975591,
+            1.0067713931317082,
+            1.0661201395456497
+          ],
+          "candidate_higher_pairs": 6,
+          "candidate_lower_pairs": 0
+        },
+        "thread_cpu_ns": {
+          "ratio_of_medians": 1.0944106517321257,
+          "paired_ratios": [
+            1.2301494639512967,
+            1.0938709954613275,
+            1.0712665466017353,
+            1.0737689478738548,
+            1.058270593388,
+            1.1140764604568072
+          ],
+          "candidate_higher_pairs": 6,
+          "candidate_lower_pairs": 0
+        },
+        "wall_ns": {
+          "ratio_of_medians": 1.093347204497299,
+          "paired_ratios": [
+            1.2308839160081397,
+            1.0936839649057308,
+            1.0729990543247903,
+            1.0718971612962276,
+            1.059719769831609,
+            1.1150655881121703
+          ],
+          "candidate_higher_pairs": 6,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "baseline": "main",
+      "candidate": "full-cache",
+      "phase": "multiradical_square_construction",
+      "metrics": {
+        "user_instructions": {
+          "ratio_of_medians": 1.0124218874380102,
+          "paired_ratios": [
+            1.012421639516905,
+            1.0124228350145583,
+            1.0124224899672012,
+            1.012421639516905,
+            1.0124225608019117,
+            1.0124218428951457
+          ],
+          "candidate_higher_pairs": 6,
+          "candidate_lower_pairs": 0
+        },
+        "user_cycles": {
+          "ratio_of_medians": 1.0049321260524886,
+          "paired_ratios": [
+            1.0793837855554387,
+            0.982917005046469,
+            0.5351181785680384,
+            0.9568976694980579,
+            1.1933017774481278,
+            1.055290923114587
+          ],
+          "candidate_higher_pairs": 3,
+          "candidate_lower_pairs": 3
+        },
+        "thread_cpu_ns": {
+          "ratio_of_medians": 1.0031618469559906,
+          "paired_ratios": [
+            1.0859954252343833,
+            0.9828519943765093,
+            0.5382283053011855,
+            0.9573949046573803,
+            1.1931253092436087,
+            1.0465452896089
+          ],
+          "candidate_higher_pairs": 3,
+          "candidate_lower_pairs": 3
+        },
+        "wall_ns": {
+          "ratio_of_medians": 0.9991458608724295,
+          "paired_ratios": [
+            1.087283149961265,
+            0.9819352861892034,
+            0.537921925685042,
+            0.9569787388706488,
+            1.1926079735043846,
+            1.0383329717044099
+          ],
+          "candidate_higher_pairs": 3,
+          "candidate_lower_pairs": 3
+        }
+      }
+    }
+  ],
+  "historical_timing_assessment": "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json",
+  "historical_timing_assessment_sha256": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+  "historical_timing_rows_preserved_without_pooling": [
+    {
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        3146355,
+        3125827,
+        3288975,
+        3198321,
+        3169953
+      ],
+      "candidate_ns": [
+        3465493,
+        5250221,
+        6076334,
+        3432336,
+        5849630
+      ],
+      "baseline_median_ns": 3169953,
+      "candidate_median_ns": 5250221,
+      "ratio_of_medians": 1.6562456919708273,
+      "paired_ratios": [
+        1.1014310209750648,
+        1.6796262237161557,
+        1.8474856148192067,
+        1.0731680778758605,
+        1.8453365081438116
+      ],
+      "median_paired_ratio": 1.6796262237161557,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "quadratic",
+      "name": "multiradical_square_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        2235067,
+        2146494,
+        2175262,
+        2166142,
+        2082187
+      ],
+      "candidate_ns": [
+        2310132,
+        3565886,
+        4092210,
+        2177521,
+        4133837
+      ],
+      "baseline_median_ns": 2166142,
+      "candidate_median_ns": 3565886,
+      "ratio_of_medians": 1.6461921702270672,
+      "paired_ratios": [
+        1.0335851229515716,
+        1.6612606417721176,
+        1.8812492472171167,
+        1.0052531182166267,
+        1.9853341702738514
+      ],
+      "median_paired_ratio": 1.6612606417721176,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    }
+  ],
+  "maximum_empty_over_work_ratios": {
+    "user_instructions": {
+      "variant": "no-persistent",
+      "phase": "opaque_decline_warm",
+      "empty_over_work_ratio_of_medians": 5.455412369165573e-05
+    },
+    "user_cycles": {
+      "variant": "full-cache",
+      "phase": "affine_surd_construction",
+      "empty_over_work_ratio_of_medians": 0.0005748404459141447
+    },
+    "thread_cpu_ns": {
+      "variant": "full-cache",
+      "phase": "affine_surd_construction",
+      "empty_over_work_ratio_of_medians": 0.0013772782259120321
+    },
+    "wall_ns": {
+      "variant": "main",
+      "phase": "opaque_decline_first",
+      "empty_over_work_ratio_of_medians": 3.8490085274783924e-05
+    }
+  },
+  "largest_within_variant_phase_instruction_range": {
+    "variant": "no-persistent",
+    "phase": "opaque_decline_first",
+    "metrics": {
+      "user_instructions": {
+        "six_work_observations": [
+          7790586,
+          7790551,
+          7790583,
+          7790687,
+          7790553,
+          7790595
+        ],
+        "minimum": 7790551,
+        "maximum": 7790687,
+        "max_over_min": 1.0000174570450793
+      },
+      "user_cycles": {
+        "six_work_observations": [
+          4021126,
+          2967222,
+          3453000,
+          4339502,
+          3968640,
+          2943361
+        ],
+        "minimum": 2943361,
+        "maximum": 4339502,
+        "max_over_min": 1.4743356319527234
+      },
+      "thread_cpu_ns": {
+        "six_work_observations": [
+          948082,
+          698801,
+          814203,
+          1022856,
+          936153,
+          693911
+        ],
+        "minimum": 693911,
+        "maximum": 1022856,
+        "max_over_min": 1.4740449423629256
+      },
+      "wall_ns": {
+        "six_work_observations": [
+          951705,
+          697853,
+          817504,
+          1025910,
+          941926,
+          697613
+        ],
+        "minimum": 697613,
+        "maximum": 1025910,
+        "max_over_min": 1.4706004618606592
+      }
+    }
+  },
+  "interpretation": [
+    "In this instrumented driver, the two historically expensive full-cache construction phases have only small changes in instruction totals: negated-scaled is lower in all six pairs; multiradical-square is higher in all six. Neither has approximately 65 percent more retired instructions.",
+    "Negated-scaled construction still has higher cycles, CPU and wall in every pair. Multiradical-square cycles/CPU/wall split three higher and three lower. All adverse rows across all phases and contrasts are retained.",
+    "Each variant/phase repeats its instruction total closely, while many show substantially larger cycle and elapsed variation with the same binary. This demonstrates observed variability, not its cause or statistical significance.",
+    "The earlier timing-only driver and this hardware driver have different wrappers and machine code. These data cannot invalidate, replace, average away or explain the two closed approximately 1.65x median timing regressions.",
+    "Current snapshots and user-only cycles do not establish prior frequency, contention, code layout, cache state or host conditions. The causal attribution of historical costs remains open.",
+    "The original cache-free 136.717191044-second worker-CPU board failure against 120 seconds remains a failure. No new native gate was run and no runtime candidate is admitted."
+  ],
+  "closed_measurements": true,
+  "no_further_samples_in_this_trial": true,
+  "cause_of_prior_elapsed_costs_established": false,
+  "next_step": "Review the independently repeatable signed-word allocation increase at its integer conversion source; confirm the proposed mechanism before any new isolated runtime prototype. This does not resolve the construction or native admission blockers.",
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
