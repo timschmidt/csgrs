@@ -1,0 +1,75 @@
+{
+  "previous_turn_classification": "progress: direct full-combination comparison preserved witnesses and exposed unresolved material consumer regressions; committed in 47d8db439.",
+  "objective": "Execute the complete properties.md plan; this bounded target-11 combination does not redefine completion.",
+  "hypothesis": "Integer-leaf reuse, metadata ordering, endpoint proof reuse and the process allocator may retain useful gains without persistent Laurent storage or its extra normalization/cache paths. Attribution of prior regressions is not established.",
+  "baseline": "Reuse the unchanged current-main production and metadata snapshots, libraries and 11 binaries from the prior direct comparison. Verify their complete source/artifact identities. Every sample is newly executed.",
+  "candidate": "New production copy of main with precisely 12 changed/added paths: five curve paths, six allocator/build paths and only the signed-word Int-leaf conversion in structural_analysis.rs. Preserve the admitted P4 repair and all 35 native changes. No persistent Laurent certificates, extra memo/retry/cache logic or private cache tests.",
+  "source_invariants": {
+    "copied_paths": [
+      "Cargo.lock",
+      "crates/hypercurve/src/bezier_region.rs",
+      "crates/hypercurve/src/bezier_region/metadata_order_tests.rs",
+      "crates/hypercurve/src/point.rs",
+      "crates/hypercurve/src/segment.rs",
+      "crates/hypercurve/src/segment/endpoint_proof_tests.rs",
+      "crates/hyperdrc/Cargo.toml",
+      "crates/hyperdrc/src/allocator_contract_tests.rs",
+      "crates/hyperdrc/src/lib.rs",
+      "crates/hyperdrc/src/main.rs",
+      "crates/hyperdrc/src/process_allocator.rs"
+    ],
+    "leaf_path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+    "before": "            Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),",
+    "after": "            // Reuse Rational's existing bounded canonical small-integer table.\n            // Wider integers retain the exact arbitrary-precision conversion.\n            Approximation::Int(n) => Some(num::ToPrimitive::to_i64(n).map_or_else(\n                || Rational::from_bigint(n.clone()),\n                Rational::new,\n            )),",
+    "original_kernel_paths": [
+      "crates/hyperreal/src/computable/node/algebra.rs",
+      "crates/hyperreal/src/computable/node/representation.rs",
+      "crates/hyperreal/src/real/arithmetic/facts.rs",
+      "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs"
+    ],
+    "absent_file": "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs"
+  },
+  "baseline_proof": "docs/evidence/2026-10-13-combined-native-admission/preparation-v1/protocol.json",
+  "qualification": "New candidate scalar all-target/all-feature Clippy and 868 library tests (including 11 admitted P4 regressions); candidate metadata Clippy and five endpoint regressions; three shared metadata tests in both variants. The wider stack and original gates remain required before admission.",
+  "sampling": {
+    "fixed_pairs_per_suite_mode": 5,
+    "pair_orders": [
+      "BC",
+      "CB",
+      "BC",
+      "CB",
+      "BC"
+    ],
+    "scalar_suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "scalar_time_inputs": 4096,
+    "scalar_memory_inputs": 1000,
+    "arc_time_inputs": 8192,
+    "arc_memory_inputs": 1000,
+    "metadata_time_inputs": 1024,
+    "metadata_memory_inputs": 128,
+    "broad_witness_rows": 231,
+    "broad_fixed_processes": 10,
+    "effective_abort_pairs": 3,
+    "abort_rows_per_process": 210,
+    "public_preflight_inputs": 42,
+    "metadata_preflight_inputs": 2,
+    "public_and_metadata_preflight_processes": 20,
+    "fixed_cost_processes": 110,
+    "abort_processes": 6,
+    "sample_extension_or_filtering": false
+  },
+  "probe_inputs": "Use the exact frozen prior probes at the same paths used to compile the baseline. No old measurement is reused, pooled, filtered or extended.",
+  "library_allocator": "Independent consumers use System. Process-owned MiMalloc does not apply to these library probes.",
+  "conditional_application": "If library evidence supports further admission, freeze a distinct current-main comparison for full stack checks, the original 120-worker-CPU and 60-check-body-wall gates, full report bytes, board/startup/RSS costs and CLI size. All old failures and adverse rows remain valid.",
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "derived_runners_sha256": {
+    "docs/evidence/2026-10-13-combined-native-admission/common_v1.py": "9408950643f472129cb28288e687957a07a30676e2bfeb45fd6f0be1550c4af1",
+    "docs/evidence/2026-10-13-combined-native-admission/measure_libraries_v1.py": "b9ffd47902a587b8a78eaf59d500a7c6eecf4a9e83962a21a9d2413fb7e9e7df",
+    "docs/evidence/2026-10-13-combined-native-admission/assess_libraries_v1.py": "19312b596f876bf3cf52e7d172b43aae194c59f7ab491ade0cf137934816b437"
+  }
+}

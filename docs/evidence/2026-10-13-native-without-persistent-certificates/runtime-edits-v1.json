@@ -1,0 +1,25 @@
+{
+  "copied_paths": [
+    "Cargo.lock",
+    "crates/hypercurve/src/bezier_region.rs",
+    "crates/hypercurve/src/bezier_region/metadata_order_tests.rs",
+    "crates/hypercurve/src/point.rs",
+    "crates/hypercurve/src/segment.rs",
+    "crates/hypercurve/src/segment/endpoint_proof_tests.rs",
+    "crates/hyperdrc/Cargo.toml",
+    "crates/hyperdrc/src/allocator_contract_tests.rs",
+    "crates/hyperdrc/src/lib.rs",
+    "crates/hyperdrc/src/main.rs",
+    "crates/hyperdrc/src/process_allocator.rs"
+  ],
+  "leaf_path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+  "before": "            Approximation::Int(n) => Some(Rational::from_bigint(n.clone())),",
+  "after": "            // Reuse Rational's existing bounded canonical small-integer table.\n            // Wider integers retain the exact arbitrary-precision conversion.\n            Approximation::Int(n) => Some(num::ToPrimitive::to_i64(n).map_or_else(\n                || Rational::from_bigint(n.clone()),\n                Rational::new,\n            )),",
+  "original_kernel_paths": [
+    "crates/hyperreal/src/computable/node/algebra.rs",
+    "crates/hyperreal/src/computable/node/representation.rs",
+    "crates/hyperreal/src/real/arithmetic/facts.rs",
+    "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs"
+  ],
+  "absent_file": "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs"
+}
