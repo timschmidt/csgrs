@@ -1,0 +1,46 @@
+{
+  "library-tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "7e48e8fc0e1faeb45248e01a78738ef00212d823995b6ca64d7069eb2be2f030",
+    "bytes": 10439744,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source/crates/hyperreal/Cargo.toml"
+  },
+  "rational-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-borrowed",
+    "sha256": "f42bdf4688d67689063bedebcfdc7b1ae35375bbc417c9d0e003c7149c72d340",
+    "bytes": 6277496
+  },
+  "rational-diagnostic": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-diagnostic",
+    "sha256": "1d2016d188f73a42143b06437eb971322a33d1ee4d48ca0fbada39bbdb5915c8",
+    "bytes": 6568224
+  },
+  "quadratic-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-borrowed",
+    "sha256": "b3586a13493c10a293a6165d2de5a2689cdb66f69521c0a0d904a08da817f381",
+    "bytes": 6258504
+  },
+  "quadratic-diagnostic": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-diagnostic",
+    "sha256": "cb1e1d3e4493cb6906242af2b0f2092933b75838c44afef773f1039d581eae6a",
+    "bytes": 6542360
+  },
+  "integer-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-borrowed",
+    "sha256": "86e000c4f23edb63af9ff3057b781bc6668e3e6f90c6555ba9af39c5638e5b5b",
+    "bytes": 6148464
+  },
+  "integer-diagnostic": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-diagnostic",
+    "sha256": "72a057afdc05b265f23914888ab46158b89f5fc34dbd6bc565a04549a594c52b",
+    "bytes": 6434824
+  }
+}

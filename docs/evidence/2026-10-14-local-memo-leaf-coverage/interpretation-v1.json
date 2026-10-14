@@ -1,0 +1,2755 @@
+{
+  "status": "exact-leaf-memo-copies-observed-cost-and-replacement-open",
+  "interpreter_sha256": "faceee46bcc82d5cf97244d0a53270386784459aef297d7bcf28b0560327d36e",
+  "assessment_sha256": "20f214ff6c3742834519ea14db191771d79d4505aa97acd1b558b83e51bcedb8",
+  "failure_v1_sha256": "5dd45edbeb40a9095f0989e85a37acf403bc84de4020b373a2f05ca5c612381e",
+  "preparation_sha256": "5f4c0360563c37c43310005aafd78db6d54101c080e8b5c16833a77f1a03040e",
+  "commands_passed": 29,
+  "scalar_tests_passed": 884,
+  "fixed_count_processes": 12,
+  "distinct_phases": 68,
+  "all_public_counts_witnesses_and_parent_cache_events_preserved": true,
+  "both_reversed_passes_match_exactly": true,
+  "all_observed_exact_leaf_payloads_match_existing_leaf_constructors": true,
+  "observed_exact_leaf_kinds": [
+    "Pi"
+  ],
+  "observed_memo_kinds": [
+    "Pi",
+    "OtherNode"
+  ],
+  "unobserved_memo_kinds": [
+    "Int",
+    "One",
+    "Ratio",
+    "InvPi",
+    "Tau",
+    "Sqrt2",
+    "Sqrt3",
+    "OtherConstant"
+  ],
+  "per_suite_summary": {
+    "rational": {
+      "phases": 24,
+      "phases_with_exact_leaf_stores": 6,
+      "phases_with_exact_leaf_hits": 6,
+      "counts_per_diagnostic_process": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 24576,
+            "other_constant_events": 0,
+            "other_node_events": 49152,
+            "exact_leaf_terms": 24576,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 73728,
+            "other_constant_events": 0,
+            "other_node_events": 12288,
+            "exact_leaf_terms": 73728,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    "quadratic": {
+      "phases": 32,
+      "phases_with_exact_leaf_stores": 3,
+      "phases_with_exact_leaf_hits": 3,
+      "counts_per_diagnostic_process": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 52663,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 36864,
+            "other_constant_events": 0,
+            "other_node_events": 12288,
+            "exact_leaf_terms": 36864,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    "integer": {
+      "phases": 12,
+      "phases_with_exact_leaf_stores": 0,
+      "phases_with_exact_leaf_hits": 0,
+      "counts_per_diagnostic_process": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 12288,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    }
+  },
+  "all_phase_inventory": [
+    {
+      "suite": "rational",
+      "phase": "multiradical_square_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "multiradical_square_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "multiradical_square_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "multiradical_square_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "quadratic_reciprocal_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "quadratic_reciprocal_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "quadratic_reciprocal_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "quadratic_reciprocal_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "radical_laurent_transport_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "radical_laurent_transport_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "radical_laurent_transport_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "radical_laurent_transport_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 8192,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "conjugate_product_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "conjugate_product_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "conjugate_product_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "conjugate_product_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "affine_surd_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "affine_surd_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "affine_surd_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "affine_surd_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "negated_scaled_surd_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "negated_scaled_surd_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "negated_scaled_surd_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "negated_scaled_surd_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "multiradical_square_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "multiradical_square_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "multiradical_square_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "multiradical_square_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "pi_transport_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "pi_transport_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "pi_transport_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "pi_transport_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "mixed_field_decline_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "mixed_field_decline_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "mixed_field_decline_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "mixed_field_decline_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_decline_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_decline_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_decline_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_decline_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 4096,
+            "other_constant_events": 0,
+            "other_node_events": 8192,
+            "exact_leaf_terms": 4096,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 12288,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 12288,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "conjugate_then_affine_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "conjugate_then_affine_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 3511,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "conjugate_then_affine_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "conjugate_then_affine_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "canonical_integer_boundary_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "canonical_integer_boundary_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "canonical_integer_boundary_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "canonical_integer_boundary_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "signed_word_boundary_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "signed_word_boundary_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "signed_word_boundary_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "signed_word_boundary_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "wide_integer_affine_construction",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "wide_integer_affine_first",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "wide_integer_affine_warm",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "phase": "wide_integer_affine_cloned",
+      "counts": {
+        "retained": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 4096,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        },
+        "original": {
+          "memo_store": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          },
+          "memo_hit": {
+            "exact_leaf_events": 0,
+            "other_constant_events": 0,
+            "other_node_events": 0,
+            "exact_leaf_terms": 0,
+            "exact_leaf_radicals": 0
+          }
+        }
+      }
+    }
+  ],
+  "interpretation": [
+    "These are counts immediately before the existing local memo store/hit clones. They identify the copied payload kinds and vector lengths.",
+    "Each suite summary sums its distinct phases from one diagnostic process. The reversed repeat is checked for equality, not added to the summary or pooled with prior runs.",
+    "The first eight buckets are exact immutable leaves that cannot publish persistent Laurent certificates. Other constants and other nodes are reported separately.",
+    "The independent controls exercise all constant kinds, both retained/original modes, six shapes, zero-budget replay, original-pass retry and graph reclamation. Workload zeros remain zeros.",
+    "The failed V1 assertion confused a process-wide constant approximation cache with the fresh node cache. V2 changes only that assertion; all old files and binaries remain retained."
+  ],
+  "next_step": "Audit a compact memo representation restricted to the observed exact-leaf kinds: Pi. Preserve cache-before-memo-before-budget order, first-visit charging, zero-budget replay and nonleaf ownership; qualify any implementation and measure its complete costs separately.",
+  "limits": [
+    "Event counts and vector lengths are not timing shares, allocation counts, byte savings or evidence of a speedup.",
+    "No causal claim is made about previous scalar or native regressions, and no native limit changes.",
+    "The fixed samples are closed. No extension, filtering, replacement or pooling is authorized by this interpretation.",
+    "This diagnostic does not admit a runtime change or discharge the broader 39 properties, 14 targets and crate future work."
+  ],
+  "new_timing_or_allocation_samples": 0,
+  "new_native_gates_run": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

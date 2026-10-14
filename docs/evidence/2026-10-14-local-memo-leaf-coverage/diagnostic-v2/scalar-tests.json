@@ -1,0 +1,14 @@
+{
+  "passed": 884,
+  "prior_881_test_names_retained": true,
+  "counter_controls": [
+    "computable::node::memo_leaf_trace_tests::diagnostic_memo_buckets_and_payload_metadata_are_independent_of_owners",
+    "computable::node::memo_leaf_trace_tests::diagnostic_memo_sites_preserve_leaf_replay_and_graph_lifetimes",
+    "computable::node::persistent_laurent_cache_tests::diagnostic_memo_counts_cover_the_original_retry"
+  ],
+  "P4": 11,
+  "persistent_cache": 9,
+  "eligibility": 3,
+  "borrowed_integer": 2,
+  "memo_controls": 2
+}

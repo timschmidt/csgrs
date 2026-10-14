@@ -4650,11 +4650,11 @@
       "next_source_audit_complete": true
     },
     "local_memo_leaf_coverage": {
-      "status": "v2-diagnostic-prepared-formatted-reviewed-qualification-pending",
+      "status": "exact-leaf-memo-copies-observed-cost-and-replacement-open",
       "source_audit": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
       "question": "Which existing local memo stores and hits copy exact leaf forms, and what result shapes do they carry?",
       "diagnostic_prepared": true,
-      "diagnostic_executed": false,
+      "diagnostic_executed": true,
       "prior_closed_certificate_memo_rejection_preserved": true,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": false,
@@ -4678,7 +4678,45 @@
       "v1_scalar_tests_failed": 1,
       "v1_count_processes": 0,
       "v2_prepared": true,
-      "v2_qualification_executed": false
+      "v2_qualification_executed": true,
+      "evidence": "docs/evidence/2026-10-14-local-memo-leaf-coverage/interpretation-v1.json",
+      "assessment": "docs/evidence/2026-10-14-local-memo-leaf-coverage/assessment-v2.json",
+      "closure": "docs/evidence/2026-10-14-local-memo-leaf-coverage/closure-v1.json",
+      "commands_passed": 29,
+      "scalar_tests_passed": 884,
+      "all_prior_881_tests_passed": true,
+      "P4_tests_passed": 11,
+      "strict_library_and_six_driver_clippy_passed": true,
+      "fixed_count_processes_completed": 12,
+      "trace_windows_verified": 272,
+      "diagnostic_windows_verified": 136,
+      "distinct_phases": 68,
+      "all_reversed_counts_and_parent_events_match": true,
+      "all_public_counts_witnesses_and_representations_preserved": true,
+      "all_memo_event_and_shape_partitions_match": true,
+      "observed_exact_leaf_kinds": [
+        "Pi"
+      ],
+      "per_suite_counts": {
+        "rational": {
+          "pi_stores": 24576,
+          "pi_hits": 73728,
+          "phases_with_pi_copies": 6
+        },
+        "quadratic": {
+          "pi_stores": 12288,
+          "pi_hits": 36864,
+          "phases_with_pi_copies": 3
+        },
+        "integer": {
+          "pi_stores": 0,
+          "pi_hits": 0,
+          "phases_with_pi_copies": 0
+        }
+      },
+      "new_timing_or_allocation_samples": 0,
+      "new_native_gates_run": false,
+      "next_step": "Pi-specific local memo source audit before any distinct runtime prototype."
     }
   },
   "status_meanings": {

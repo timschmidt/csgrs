@@ -1,0 +1,552 @@
+[
+  {
+    "name": "format-inputs",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source/crates/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/trace_header_v2.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_leaf_trace_v2.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_observer_v2.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_leaf_tests_v2.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/fallback_control_v2.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-library",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "c65c4cd28a234c43f0634d98e3ad4c5b2b88a17e2150c81e241a2177d185bb41"
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "d85d37d26e5957eb3b1d806a1b2a60650d3fdcba5b534d27ab2c2ea46d61e94c",
+    "stderr_sha256": "140a40005e2d11ae3304475a2079f159af90444e8fda758e67db434e6a61d7e9"
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "6e03ab6708a3ee18b25ee9f2d29d26c4e2cfe726ce74765d586e3cd5b5a3ab3b",
+    "stderr_sha256": "da591a9d42a605379ea7e1c632256e00c57f47306041c0c16d5e2bc245a679db"
+  },
+  {
+    "name": "scalar-library",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "b80a773e3149fcbc3344e34a69c7a6586dc4cfb8d47c0bee7d2cb462c360f9b1",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/rational-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-diagnostic",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/rational-diagnostic.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-diagnostic",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-diagnostic"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/quadratic-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-diagnostic",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/quadratic-diagnostic.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-diagnostic",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-diagnostic"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/integer-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-diagnostic",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/integer-diagnostic.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-diagnostic",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-diagnostic"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "daad74d91a6970625d84de0ce8c68852f12fa9a5cb7debf44ae0899a69ee3587",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "78129da44e6746414832534372006f77ff35046abf8af2f014d7d243601674b8",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "78129da44e6746414832534372006f77ff35046abf8af2f014d7d243601674b8",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-rational-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "daad74d91a6970625d84de0ce8c68852f12fa9a5cb7debf44ae0899a69ee3587",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "26ea811b1d2d4a604458665944027313e89119f3d1088eae110830b7c7551bf8",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "7cf7d3120f8fa0487aaa84952ad688f7b3dc640d4b42d6d1a686ebf898ac7f54",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "7cf7d3120f8fa0487aaa84952ad688f7b3dc640d4b42d6d1a686ebf898ac7f54",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-quadratic-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "26ea811b1d2d4a604458665944027313e89119f3d1088eae110830b7c7551bf8",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "b4bd6e116b935bb4ea7b59eaaed8bc12132f39dc967fe6a25177aa5880475a80",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "209dcd37f04e1047a956ac6636d88cff51cc0561798f8073e249e2d55b474582",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-diagnostic",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-diagnostic",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "209dcd37f04e1047a956ac6636d88cff51cc0561798f8073e249e2d55b474582",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v2/binaries/probe-integer-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "b4bd6e116b935bb4ea7b59eaaed8bc12132f39dc967fe6a25177aa5880475a80",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]
