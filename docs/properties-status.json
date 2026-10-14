@@ -4721,7 +4721,7 @@
       "runtime_candidate_prepared": false
     },
     "pi_local_memo": {
-      "status": "prototype-prepared-formatted-reviewed-qualification-pending",
+      "status": "pi-local-memo-qualified-scalar-cost-protocol-prepared",
       "source_audit": "docs/evidence/2026-10-14-local-memo-leaf-coverage/pi-memo-source-audit-v1.json",
       "scope": "docs/evidence/2026-10-14-pi-local-memo/scope-v2.json",
       "parent_source_files": 10135,
@@ -4729,7 +4729,7 @@
       "changed_or_added_paths": 2,
       "expected_all_feature_tests": 882,
       "prototype_prepared": true,
-      "qualification_executed": false,
+      "qualification_executed": true,
       "cost_samples_executed": 0,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": true,
@@ -4742,7 +4742,24 @@
       "preparation": "docs/evidence/2026-10-14-pi-local-memo/preparation-v2/protocol.json",
       "source_review": "docs/evidence/2026-10-14-pi-local-memo/source-review-v2.json",
       "source_files": 10136,
-      "expected_default_feature_tests": 794
+      "expected_default_feature_tests": 794,
+      "qualification_assessment": "docs/evidence/2026-10-14-pi-local-memo/qualification-assessment-v2.json",
+      "qualification_closure": "docs/evidence/2026-10-14-pi-local-memo/qualification-closure-v2.json",
+      "qualification_commands_passed": 8,
+      "all_features_tests_passed": 882,
+      "default_features_tests_passed": 794,
+      "all_parent_test_names_preserved": true,
+      "P4_tests_each_feature_set": 11,
+      "persistent_cache_tests_each_feature_set": 6,
+      "new_controls_each_feature_set": 3,
+      "strict_clippy_configurations": 2,
+      "memo_value_layout_bytes": 24,
+      "keyed_entry_layout_bytes": 32,
+      "layout_deltas_bytes": 0,
+      "scalar_cost_scope": "docs/evidence/2026-10-14-pi-local-memo/scalar-cost-scope-v1.json",
+      "fixed_scalar_cost_processes": 108,
+      "scalar_preflight_processes": 18,
+      "costs_prepared": false
     }
   },
   "status_meanings": {
