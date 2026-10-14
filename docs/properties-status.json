@@ -4505,7 +4505,7 @@
       "plan_complete": false
     },
     "laurent_cache_eligibility": {
-      "status": "lookup-eligibility-qualified-scalar-cost-protocol-frozen",
+      "status": "qualified-scalar-cost-trial-prepared-and-reviewed",
       "evidence": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-v1.json",
       "scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scope-v1.json",
       "immutable_node_kinds": 60,
@@ -4532,7 +4532,9 @@
       "persistent_cache_tests_passed": 6,
       "borrowed_integer_tests_passed": 2,
       "scalar_cost_scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-scope-v1.json",
-      "scalar_costs_prepared": false
+      "scalar_costs_prepared": true,
+      "scalar_cost_preparation": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-preparation-v1/protocol.json",
+      "scalar_cost_source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-source-review-v1.json"
     }
   },
   "status_meanings": {
