@@ -1,0 +1,92 @@
+{
+  "status": "prospective-pi-only-local-memo-prototype",
+  "source_audit": "docs/evidence/2026-10-14-local-memo-leaf-coverage/pi-memo-source-audit-v1.json",
+  "parent": "Unchanged borrowed-integer runtime with three eligibility controls; no diagnostic observers or rejected entry guard.",
+  "parent_source_files": 10135,
+  "candidate_source_files": 10136,
+  "changed_or_added_paths": 2,
+  "runtime_paths_changed": 1,
+  "new_tests": 3,
+  "existing_all_feature_tests_retained": 879,
+  "expected_all_feature_tests": 882,
+  "expected_default_tests": "Every test listed by the preserved prior default binary, plus all three new controls. The exact frozen inventory is recorded during preparation.",
+  "qualification_commands": 8,
+  "qualification": [
+    "Full source formatting and separate formatting of the new test input.",
+    "Release strict Clippy with -D warnings for all targets, separately under all and default features.",
+    "Full scalar unit suites under both feature selections, retaining every prior test name.",
+    "Independent expected values for cold/zero-budget/shared/sole-owner Pi, every other constant kind, exact rational leaves, a composite whose value is Pi, and opaque-owner/fallback replay.",
+    "Report both old and candidate memo-value/keyed-entry layouts and all related scalar/node/persistent layouts, without assuming equality."
+  ],
+  "semantics": [
+    "Only immutable Constant(Pi) can produce the compact memo tag.",
+    "All completed recognition branches already yield a polynomial; failed expansion retains the same opaque fallback. Budget failures remain early returns.",
+    "Retained reads, sharing checks, memo lookup, budget charging, entry order/capacity, publication order and dropping the first memo before retry remain in their original order.",
+    "Non-Pi entries retain the original polynomial clone and opaque owners.",
+    "No public type, global cache, persistent eligibility, polynomial/coefficient storage, integer reconstruction, precision budget or native deadline changes."
+  ],
+  "prospective_scalar_costs": {
+    "groups": [
+      "main",
+      "borrowed",
+      "candidate"
+    ],
+    "suites": {
+      "rational": 24,
+      "quadratic": 32,
+      "integer": 12
+    },
+    "timing_inputs": 4096,
+    "allocation_inputs": 1000,
+    "preflight_inputs": 42,
+    "balanced_orders": [
+      [
+        "main",
+        "borrowed",
+        "candidate"
+      ],
+      [
+        "borrowed",
+        "candidate",
+        "main"
+      ],
+      [
+        "candidate",
+        "main",
+        "borrowed"
+      ],
+      [
+        "main",
+        "candidate",
+        "borrowed"
+      ],
+      [
+        "candidate",
+        "borrowed",
+        "main"
+      ],
+      [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    ],
+    "fixed_cost_processes": 108,
+    "preflight_processes": 18,
+    "all_68_phases_included": true,
+    "original_probe_bytes_and_control_binaries_reused": true,
+    "prior_samples_reused": false,
+    "cost_runner_and_assessor_freeze_required_before_execution": true
+  },
+  "gates": [
+    "Complete qualification before costs; finish every build before samples; serialize commands.",
+    "Measure the full fixed scalar cost set including all zero-event and adverse phases, with exact witnesses, representations, every allocation field and binary sizes.",
+    "Keep every executed input, source, binary, failed run and fixed sample immutable. Corrections require new versions. No filtering, extension, replacement or pooling.",
+    "Broader library/consumer/CLI results and original native gates remain separate admission requirements after scalar viability.",
+    "Only current_work may change in the status ledger; keep all 1134 main runtime paths and 35 pending native paths unchanged.",
+    "All 39 properties, 14 targets and crate future work remain in scope."
+  ],
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
