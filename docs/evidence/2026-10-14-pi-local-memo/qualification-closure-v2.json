@@ -1,0 +1,20 @@
+{
+  "status": "pi-local-memo-qualification-closed-costs-pending",
+  "runner_exit_code": 0,
+  "assessor_exit_code": 0,
+  "result_sha256": "a5385cbd00a2de5f4a68bf4f092a6ce97d525d2369edafc719eb8582280fffc5",
+  "assessment_sha256": "d62ca3da61ee94bc7d159cc38f415265555f678bd386c8bee4dd6e5c176c9a3e",
+  "preparation_sha256": "bafdd4e85a64b752505bab0c2cd1743e5ee68872ccf2066590f0d239c35ee867",
+  "failed_setup_sha256": "ba5bd7f750f202af8d07d7da45be024a02e0e7a919af8728213b4f4385f4a1b6",
+  "commands_passed": 8,
+  "all_features_tests": 882,
+  "default_features_tests": 794,
+  "all_prior_test_names_retained": true,
+  "old_and_candidate_memo_value_bytes": 24,
+  "old_and_candidate_keyed_entry_bytes": 32,
+  "source_unchanged_since_review": true,
+  "cost_samples": 0,
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

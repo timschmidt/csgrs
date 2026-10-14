@@ -1,0 +1,23 @@
+{
+  "runner_sha256": "9494702164558560b270c4a7d457825228fb10401d18ec335330e6e759a980b0",
+  "assessor_sha256": "0af322374c0c44df1d701f10ed258e751d8ec41e8e2e21525e8c39bec134ec19",
+  "review_sha256": "e7eaa617f68243c0b25ea542486ea83584e539cff2eda3fcf1cc387b220c4733",
+  "preparation_sha256": "bafdd4e85a64b752505bab0c2cd1743e5ee68872ccf2066590f0d239c35ee867",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "expected_commands": 8,
+  "test_threads": 2,
+  "expected_all_tests": 882,
+  "expected_default_tests": 794,
+  "full_suites": [
+    "all",
+    "default"
+  ],
+  "cost_samples": 0,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,83 @@
+{
+  "status": "prospective-closed-scalar-cost-trial",
+  "qualification_assessment_sha256": "d62ca3da61ee94bc7d159cc38f415265555f678bd386c8bee4dd6e5c176c9a3e",
+  "groups": [
+    "main: original combined-trial baseline",
+    "borrowed: prior full-cache combination with borrowed-integer repair, not admitted",
+    "candidate: same borrowed combination plus qualified Pi-only local memo representation"
+  ],
+  "suites": {
+    "rational": 24,
+    "quadratic": 32,
+    "integer": 12
+  },
+  "timing_inputs": 4096,
+  "allocation_inputs": 1000,
+  "preflight_inputs": 42,
+  "fixed_balanced_orders": [
+    [
+      "main",
+      "borrowed",
+      "candidate"
+    ],
+    [
+      "borrowed",
+      "candidate",
+      "main"
+    ],
+    [
+      "candidate",
+      "main",
+      "borrowed"
+    ],
+    [
+      "main",
+      "candidate",
+      "borrowed"
+    ],
+    [
+      "candidate",
+      "borrowed",
+      "main"
+    ],
+    [
+      "borrowed",
+      "main",
+      "candidate"
+    ]
+  ],
+  "fixed_cost_processes": 108,
+  "preflight_processes": 18,
+  "expected_commands": 133,
+  "complete_timing_comparisons": 204,
+  "complete_allocation_comparisons": 204,
+  "binary_size_comparisons": 18,
+  "new_runtime_sources": 0,
+  "new_probe_source_edits": 0,
+  "new_production_library_builds": 1,
+  "build_package_selection": [
+    "hyperreal",
+    "hypersolve",
+    "hypercurve",
+    "hyperdrc"
+  ],
+  "qualified_tests_reused": 882,
+  "qualified_and_cost_scalar_source_and_features_must_match": true,
+  "qualified_and_cost_rlib_byte_identity_not_assumed": true,
+  "controls": [
+    "Verify each original probe and parser hash. Keep all three families and all 68 construction/first/warm/cloned phases.",
+    "Run all builds before all samples, pin every sample to CPU 0, preserve wall duration/RSS and frequency snapshots.",
+    "Match every exact witness and representation inventory across groups and retain every raw output.",
+    "Verify all four per-group allocation fields repeat; compare old-group allocations with the closed prior trial without pooling timings.",
+    "Use ordinary System timing probes and original CountedSystem memory probes. Counts are requested bytes, not whole-application memory.",
+    "Review every adverse timing, allocation and binary-size row. No sample filtering, replacements, extensions or retrospective stopping.",
+    "Preserve all earlier failures and cost comparisons. Nine diagnostic phases contain Pi memo copies; every other phase is still measured, and event counts do not establish a timing share."
+  ],
+  "admission": "Correctness and scalar costs alone cannot admit the combined runtime. Arc, metadata, broad operations, original native gates and CLI output equivalence remain. Existing 120s worker-CPU full-board and 60s copper-neck body-wall limits do not change.",
+  "full_goal_scope_preserved": true,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "qualified_default_tests": 794,
+  "memo_value_layout_bytes": 24,
+  "keyed_entry_layout_bytes": 32
+}

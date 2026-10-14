@@ -1,0 +1,69 @@
+{
+  "complete": true,
+  "commands": 8,
+  "all_features_scalar_tests": 882,
+  "default_features_scalar_tests": 794,
+  "all_parent_test_names_preserved_in_both_suites": true,
+  "strict_clippy": [
+    "all features/all targets",
+    "default features/all targets"
+  ],
+  "layouts": {
+    "all": {
+      "rational": 8,
+      "coefficient": 56,
+      "polynomial": 24,
+      "old_memo_value": 24,
+      "candidate_memo_value": 24,
+      "old_keyed_entry": 32,
+      "candidate_keyed_entry": 32,
+      "closed_coefficient": 32,
+      "closed_polynomial": 24,
+      "computable": 16,
+      "node": 56
+    },
+    "default": {
+      "rational": 8,
+      "coefficient": 56,
+      "polynomial": 24,
+      "old_memo_value": 24,
+      "candidate_memo_value": 24,
+      "old_keyed_entry": 32,
+      "candidate_keyed_entry": 32,
+      "closed_coefficient": 32,
+      "closed_polynomial": 24,
+      "computable": 16,
+      "node": 56
+    }
+  },
+  "all_original_sources_artifacts_and_main_runtime_unchanged": true,
+  "artifact_sha256": {
+    "binaries.json": "1177657dabf0ab6081bee050fca5340eac639c6d24565283b6cd3978f47c9306",
+    "candidate-build-library-all.stderr.gz": "f1c0d9848b3deb5fc3d55cf2a898097a72f57aa8b8114c74cfdc7c3ad00d2258",
+    "candidate-build-library-all.stdout.gz": "6740819f969052a6e5d8d8e92279a30bfa2b9202cb19b065450055fb17b95fc5",
+    "candidate-build-tests-all.stderr.gz": "f08884214d40431119bf02bf1085d5a1f3a7134d24e55ca00ecc856bb5eba096",
+    "candidate-build-tests-all.stdout.gz": "b49d02272fd1b9fa10d723b2f5fb48f979704f2fdb5f87ab2fac384f64c63198",
+    "candidate-build-tests-default.stderr.gz": "72190944d8ab2a5e8a4e60148a658be2ba57ad5bd4116281f83af8580b88c7a3",
+    "candidate-build-tests-default.stdout.gz": "dd258b9ad52a91e4027bdb6810dcdb75e37804d1e83066f3f4d9658ad6b122a4",
+    "candidate-clippy-all.stderr.gz": "32408610ad1d3a2c00b87fdee1a58167451dbaf07118231be86c2152d5a8f335",
+    "candidate-clippy-all.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "candidate-clippy-default.stderr.gz": "93912d0d2546ec8d41aed083da56d1d9d3c52ee9042b3a6e96ef954cadcac594",
+    "candidate-clippy-default.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "candidate-scalar-all.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "candidate-scalar-all.stdout.gz": "865f785b5c93197f776da64a3795a0523c9343d265627ccca665ac84e7d8d226",
+    "candidate-scalar-default.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "candidate-scalar-default.stdout.gz": "143d7706c788ca5d4d6711a75aab1397fab12fec8d7ece5c1fb8bf12cbdf7ea9",
+    "commands.json": "926449b52c35ac3a6c4b3541d251f26434b9cd2a47336c128d1394c97429d05f",
+    "format-inputs.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "format-inputs.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "layouts.json": "efa34dd3ac920c6580f42bc4c60c5c7e7247b21d690fbd3f23d4aaf17d369ef6",
+    "library.json": "89450173b938c957980c72adae2486dd92436508b7d7d5f5332061bbab4fb70d",
+    "protocol.json": "6fdfd9fee9d8e3877c76c2c5b85526f160ef8a56c037c1e918299751a16d8cf2",
+    "scalar-tests.json": "9e3bcec07c28bcc9a50395d32553474d3908d28ace966e491abe0354d963bee4"
+  },
+  "cost_samples": 0,
+  "native_gates_run": false,
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

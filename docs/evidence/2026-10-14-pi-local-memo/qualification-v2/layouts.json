@@ -1,0 +1,28 @@
+{
+  "all": {
+    "rational": 8,
+    "coefficient": 56,
+    "polynomial": 24,
+    "old_memo_value": 24,
+    "candidate_memo_value": 24,
+    "old_keyed_entry": 32,
+    "candidate_keyed_entry": 32,
+    "closed_coefficient": 32,
+    "closed_polynomial": 24,
+    "computable": 16,
+    "node": 56
+  },
+  "default": {
+    "rational": 8,
+    "coefficient": 56,
+    "polynomial": 24,
+    "old_memo_value": 24,
+    "candidate_memo_value": 24,
+    "old_keyed_entry": 32,
+    "candidate_keyed_entry": 32,
+    "closed_coefficient": 32,
+    "closed_polynomial": 24,
+    "computable": 16,
+    "node": 56
+  }
+}

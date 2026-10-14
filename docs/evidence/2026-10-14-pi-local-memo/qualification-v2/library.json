@@ -1,0 +1,14 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all/release/libhyperreal.rlib",
+  "sha256": "754ed6c19582b09483a063a8d4ea35bbd7d7dbe1438058b43e1a9c2cb03df424",
+  "bytes": 11714684,
+  "features": [
+    "cached-f32-approx",
+    "cached-f64-approx",
+    "default",
+    "dispatch-trace",
+    "serde",
+    "simple"
+  ],
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperreal/Cargo.toml"
+}

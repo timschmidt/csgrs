@@ -1,0 +1,34 @@
+{
+  "all": {
+    "passed": 882,
+    "all_parent_test_names_retained": true,
+    "new_tests": [
+      "computable::node::pi_memo_tests::opaque_replay_keeps_owners_and_exhausted_expansion_fallback",
+      "computable::node::pi_memo_tests::other_leaves_and_pi_valued_composites_keep_polynomial_replay",
+      "computable::node::pi_memo_tests::pi_replay_preserves_budgets_and_sharing_in_both_passes"
+    ],
+    "groups": {
+      "quadratic_tower_sign_retention_tests::": 11,
+      "persistent_laurent_cache_tests::": 6,
+      "borrowed_integer_tests::": 2,
+      "pi_memo_tests::": 3,
+      "laurent_cache_eligibility_tests::": 3
+    }
+  },
+  "default": {
+    "passed": 794,
+    "all_parent_test_names_retained": true,
+    "new_tests": [
+      "computable::node::pi_memo_tests::opaque_replay_keeps_owners_and_exhausted_expansion_fallback",
+      "computable::node::pi_memo_tests::other_leaves_and_pi_valued_composites_keep_polynomial_replay",
+      "computable::node::pi_memo_tests::pi_replay_preserves_budgets_and_sharing_in_both_passes"
+    ],
+    "groups": {
+      "quadratic_tower_sign_retention_tests::": 11,
+      "persistent_laurent_cache_tests::": 6,
+      "borrowed_integer_tests::": 2,
+      "pi_memo_tests::": 3,
+      "laurent_cache_eligibility_tests::": 2
+    }
+  }
+}

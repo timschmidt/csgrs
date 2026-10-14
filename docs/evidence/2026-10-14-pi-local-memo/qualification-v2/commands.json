@@ -1,0 +1,192 @@
+[
+  {
+    "name": "format-inputs",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-pi-local-memo/pi_memo_tests_v2.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-clippy-all",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "32408610ad1d3a2c00b87fdee1a58167451dbaf07118231be86c2152d5a8f335"
+  },
+  {
+    "name": "candidate-build-tests-all",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "b49d02272fd1b9fa10d723b2f5fb48f979704f2fdb5f87ab2fac384f64c63198",
+    "stderr_sha256": "f08884214d40431119bf02bf1085d5a1f3a7134d24e55ca00ecc856bb5eba096"
+  },
+  {
+    "name": "candidate-scalar-all",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "865f785b5c93197f776da64a3795a0523c9343d265627ccca665ac84e7d8d226",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-clippy-default",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "93912d0d2546ec8d41aed083da56d1d9d3c52ee9042b3a6e96ef954cadcac594"
+  },
+  {
+    "name": "candidate-build-tests-default",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "dd258b9ad52a91e4027bdb6810dcdb75e37804d1e83066f3f4d9658ad6b122a4",
+    "stderr_sha256": "72190944d8ab2a5e8a4e60148a658be2ba57ad5bd4116281f83af8580b88c7a3"
+  },
+  {
+    "name": "candidate-scalar-default",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-default/release/deps/hyperreal-4234254b1d45f4c0",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-default"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "143d7706c788ca5d4d6711a75aab1397fab12fec8d7ece5c1fb8bf12cbdf7ea9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "candidate-build-library-all",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source",
+    "environment": {
+      "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+      "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+      "CARGO_NET_OFFLINE": "true",
+      "CARGO_TERM_COLOR": "never",
+      "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all"
+    },
+    "exit_code": 0,
+    "stdout_sha256": "6740819f969052a6e5d8d8e92279a30bfa2b9202cb19b065450055fb17b95fc5",
+    "stderr_sha256": "f1c0d9848b3deb5fc3d55cf2a898097a72f57aa8b8114c74cfdc7c3ad00d2258"
+  }
+]

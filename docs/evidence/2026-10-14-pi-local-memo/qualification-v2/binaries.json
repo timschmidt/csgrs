@@ -1,0 +1,25 @@
+{
+  "all": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-all/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "3b35f7045b20642f094e0604f75753dd3a6dcc5584874c23c270b969855821c7",
+    "bytes": 10391504,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperreal/Cargo.toml"
+  },
+  "default": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/target-default/release/deps/hyperreal-4234254b1d45f4c0",
+    "sha256": "c8d5b26b2fa9b7beafb121235e0cb3789cd9d4c8efd98957870b686e9bc5a9c0",
+    "bytes": 8200392,
+    "features": [
+      "default"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperreal/Cargo.toml"
+  }
+}
