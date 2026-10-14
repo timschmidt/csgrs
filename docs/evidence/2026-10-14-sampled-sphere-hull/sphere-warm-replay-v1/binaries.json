@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/baseline",
+    "sha256": "7cfdc828b4a0907fbe996c54800a313697c2290fd99bfcba414da4d53d9883c8",
+    "bytes": 8704792
+  },
+  "late": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late",
+    "sha256": "c27f5328155ce3b5fd79c805d3c16f74fe0db257ccafdf8e9b6034168a865359",
+    "bytes": 8740296
+  },
+  "image": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+    "sha256": "575b036d96bd8deae1feb63da49ab4cab3abd230b9fb357661b340e5e97bd02b",
+    "bytes": 8761416
+  }
+}

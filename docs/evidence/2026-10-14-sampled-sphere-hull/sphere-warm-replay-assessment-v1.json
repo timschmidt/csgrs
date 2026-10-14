@@ -1,0 +1,31 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "commands_all_zero": 13,
+  "native_processes": 9,
+  "hull_queries": 27,
+  "result_sha256": "a6793ed7369cccce5d9bb914a3fa911d4315cbd49c67c7be2daab20ca3494344",
+  "assessor_sha256": "9dcffb7bdecda8440c58e90dcc4a08bb277e4ead5d63df71e20cf689c7dab81c",
+  "all_frozen_sources_inputs_binaries_and_libraries_rechecked": true,
+  "all_phase_outputs_match_prior_independent_exact_support_proofs": true,
+  "changed_cases": [
+    {
+      "group": "late",
+      "case": "original_medium",
+      "changed_triangles": 118,
+      "changed_supporting_planes": 59
+    },
+    {
+      "group": "image",
+      "case": "original_medium",
+      "changed_triangles": 118,
+      "changed_supporting_planes": 59
+    }
+  ],
+  "other_seven_processes_have_identical_cold_warm_replay_outputs": true,
+  "interpretation": "The same 32x16 triangulation instability occurs with the default allocator in both certificate candidates. Allocation instrumentation and the finite-field filter are not necessary for this counterexample. The exact geometric set is preserved; its serialized rows differ.",
+  "not_a_cost_trial": true,
+  "resource_trial_resumed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

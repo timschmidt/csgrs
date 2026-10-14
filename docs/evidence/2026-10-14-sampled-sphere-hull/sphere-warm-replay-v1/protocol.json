@@ -1,0 +1,211 @@
+{
+  "inputs_sha256": {
+    "probe_sphere_warm_replay_v1.py": "5bd58ee8ee022d8d8fa545ba33b5c77df9e9cca930c0f29382aadef4e6db5009",
+    "sphere_warm_replay_probe_v1.rs": "a65035ede9c8ef6a41013cc45135e56ab1fd7e3acfce8e2e862c18c3392e3ae5",
+    "sphere-warm-replay-scope-v1.json": "1201ea55d07d1bb643684d6212424b2b4c5bc51c680d35e745dbde866d3b5003",
+    "sphere-resource-failure-closure-v1.json": "d379ebad94cb7fd02027cbfed201a2f992a4f51b780683a9d4d4fb227f88d52f",
+    "sphere-warm-row-counterexample-v1/result.json": "370ae69d6cc9cbd6af37e6637ef19498a69a267772f96b7f6b5ee0ba033de44b",
+    "sphere-warm-support-v1/result.json": "3c4ded3ed2ca943bf73d17d6a5c00771cb33378a9094d55fbc96cacd9d4e4cf4",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+    "sphere-cyclotomic-v2/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-v2/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-v2/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-row-counterexample-v1/changed-faces.json": "4bf6137698ae0b4e2d707466924cbcfc4a732540c773d9a998950dfefe43a0d7",
+    "sphere-warm-row-counterexample-v1/cold.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-warm-row-counterexample-v1/replay.stdout": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-row-counterexample-v1/warm.stdout": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-support-v1/changed-face-support.json": "0bf6058d9886a8c043cedec322c218f740f9bd72cf43ff7e0c1da07f7d83f029",
+    "sphere-warm-support-v1/changed-planes.json": "b95cc833c36fdc82bd7020b7791a7d933225e24fc96e0d23c1af56c6d044bbaa",
+    "sphere-warm-support-v1/protocol.json": "60cd5d2a00250d396e91bd3b1fba9f2810afd3e3d688b74289fbee7a1891dd80",
+    "sphere-native-support-v1/fifteen_degrees.json": "5b49bf6c706d0d4a4ba6cbbedc705a5e808c0c07c313f30b1f58e4a44fde637b",
+    "sphere-native-support-v1/fifth_turn.json": "df1cb0e08514ca52e850b33cd99b48ea09b9a40eadd3125f1d98a9d112180898",
+    "sphere-native-support-v1/original_medium.json": "d5a83951a87b31aef1236119334b615cbec64684e02438194c362ef837c76115",
+    "sphere-native-support-v1/protocol.json": "81ac8ceb2862f66fa4f4e64c28abc226fab787ff3908db86ba95812e85d8552c",
+    "sphere-native-support-v1/seventh_turn.json": "d7c6da2f67699bfaab4d5689db557d613e00ee92fa97ece8551e49fccef99197",
+    "mesh-identity-preparation-v1/source-hashes.json.gz": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "mesh-identity-qualification-v1/result.json": "cd2edefcb9e8f56efec1cf3abab0cb9a2fe268a0803bff966ad8913ae5230665",
+    "mesh-identity-qualification-v1/all-features-clippy.stderr": "11f44b9d7b95f58fdca1e1b6ccba0de457a8d4f5f679e6c1e441c25e00c58387",
+    "mesh-identity-qualification-v1/all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/all-features-tests.stderr": "ef33d894def04e206dd2c87530bcba04a775a897accfac60e65669c8d1b92587",
+    "mesh-identity-qualification-v1/all-features-tests.stdout": "b6cb20c832ffe1ee716bccce00961b648873e1e6c7a422acc0f4bcfaa24f5d22",
+    "mesh-identity-qualification-v1/binaries.json": "dd77b8396ca0fe7f1887da783609bf9acfe882dc436f9da5492506215f69127c",
+    "mesh-identity-qualification-v1/build-consumer-library.stderr": "7a4cd5c7aeca3753c52d95ae2258fb0e59567ee1f67984350f72eb745e011870",
+    "mesh-identity-qualification-v1/build-consumer-library.stdout": "210c5b6baf821da83a6be845627bb5d8cf18709cc01c9ff050af6de1d9ae9a18",
+    "mesh-identity-qualification-v1/commands.json": "7837221bd576bf6cadfe21921fa20a40acbf24010decec79d86326ba14ae264e",
+    "mesh-identity-qualification-v1/default-clippy.stderr": "6342be64337a3eea33ad3149b5c8ed299670b4787ca7346be1525efff0a8f9ab",
+    "mesh-identity-qualification-v1/default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/default-tests.stderr": "fe4b34c9ce81ad7f020f5da65fc9488d4e6afe7e4b69f84d76b3096580db202d",
+    "mesh-identity-qualification-v1/default-tests.stdout": "3727bad52e7a5f45f1e01c514f9747b06802e5b3bd8e658117daa16bb68afba8",
+    "mesh-identity-qualification-v1/docs.stderr": "ef3c636515ec10976b950c01a0c76c428951f03f4c587cf82d5ebe4e4e5ebaa4",
+    "mesh-identity-qualification-v1/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/doctests.stderr": "f7d8f7f49070985174602cbb0e35ff2279290eac022e85a3c7821d02b5740c33",
+    "mesh-identity-qualification-v1/doctests.stdout": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+    "mesh-identity-qualification-v1/fifteen_degrees.stderr": "213719b4a74798c7c812a9c90b5a2f585e4c3d5d2cf9c956d78fa43376b788ad",
+    "mesh-identity-qualification-v1/fifteen_degrees.stdout": "18afefa640262fe6aedf4ebf6ed7aa7d51340a02e1dd6135de41455b800e9205",
+    "mesh-identity-qualification-v1/fifth_turn.stderr": "eb278a063767018bc2abca901c127c593f59d833ab7f0d04bfc5c13e5526c726",
+    "mesh-identity-qualification-v1/fifth_turn.stdout": "226de282139beb716a1fa67c03b6eb9a8d1d497e2535438f63e1634c330ba440",
+    "mesh-identity-qualification-v1/grammar-consumers.stderr": "7845cad1ecba59d1eb3c81a3ca5283ea7454daf324209df309bbfda6eb14000a",
+    "mesh-identity-qualification-v1/grammar-consumers.stdout": "5e0ef36388e7753cf85e133a9d0197032229e498b5383950f6b9eb1d553928a6",
+    "mesh-identity-qualification-v1/libraries.json": "dbec4c0ec75913b7c65761e1e90ab32ba8d0416d01b8afd5ab8e1f0b15855de7",
+    "mesh-identity-qualification-v1/link-mesh-identity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/link-mesh-identity.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/link-sphere-hull.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/link-sphere-hull.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/link-view-identity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/link-view-identity.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/mesh-identity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/mesh-identity.stdout": "93ad53e12b6da5e4928c679af9947b72b87fcb3eaed3dca9cbb4f9b7e5d14faa",
+    "mesh-identity-qualification-v1/original_medium.stderr": "15f4653089a54bae073362fd9ec44b62bfddf1d7dc82ff842ff195cf12aa6827",
+    "mesh-identity-qualification-v1/original_medium.stdout": "9d86bb1abd9731068a2ea02af7cc68d14ac4e89a3dba60a71c7b84a717a62ffc",
+    "mesh-identity-qualification-v1/seventh_turn.stderr": "47abe7c3b18364c975feb551d83a1f9d254795782d9707023f1660dd429571c3",
+    "mesh-identity-qualification-v1/seventh_turn.stdout": "33561840b10754879c3890d40280501d076165c09afd6e8962a1737975f5b5c3",
+    "mesh-identity-qualification-v1/source-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/source-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/view-identity.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "mesh-identity-qualification-v1/view-identity.stdout": "7fa465fe397d4a99db1d93e8d8707a5a550d7af988a593a3fa5805e6d58b4583",
+    "sphere-cyclotomic-v2/source-hashes.json.gz": "e07e587012041626bebd796701af862e4d8a1125b11be1c12f088c1ff2138c27",
+    "sphere-cyclotomic-v2/result.json": "8f97b7add2dded81d4ab25e1297214a2b0b98d7dc069752e94a78a2ea3375f05",
+    "sphere-cyclotomic-v2/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/apply.stdout": "826277ac3303b015796f18b9274e113b6aab52366ceacc5fb8d8dc986dcafe1d",
+    "sphere-cyclotomic-v2/baseline-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/baseline-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/binaries.json": "92b9a13fb1bd43a310e34ba2cb0dd73713a3e016b18fcda0f85ed2757b06838a",
+    "sphere-cyclotomic-v2/build-native-consumer.stderr": "3952465e3893e77a387c801f8bf3dfa7aa432995e81f0a65efb2a49fe3cd2314",
+    "sphere-cyclotomic-v2/build-native-consumer.stdout": "1c89e2d0134d1bb54477442101e186b7971b842fd371f2a8c82e1e94bec810c6",
+    "sphere-cyclotomic-v2/candidate-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/candidate-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/candidate-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/candidate-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/commands.json": "3425e0a7870c64f9045a581508d2544359d39ceb21af0956cc626479302a6572",
+    "sphere-cyclotomic-v2/libraries.json": "e9b803f6598149c986d9bea6d2330cc79bad0a0f33bfccd464e005bd3286ad75",
+    "sphere-cyclotomic-v2/link-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/link-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/link-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/link-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/protocol.json": "b876fd591ddea3fb4e6540849a6748786d7d668fd0a198994fcd78bfea219dea",
+    "sphere-cyclotomic-v2/scalar-clippy.stderr": "e5b5e01e7aa91ceacd6022cdf4e82a924728543cd53a06d1ca376131369327db",
+    "sphere-cyclotomic-v2/scalar-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/source-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/source-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-v2/targeted-scalar-tests.stderr": "226349827275bddd079c4d24f439662e0c50541df6092755e4b9945c1494abe9",
+    "sphere-cyclotomic-v2/targeted-scalar-tests.stdout": "c426bc02fbffddc6fa9d9c08f861c24c2ba06d379a127d2480562cda96075a87",
+    "sphere-cyclotomic-image-v1/source-hashes.json.gz": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce",
+    "sphere-cyclotomic-image-v1/result.json": "f252dcef2a8e7f4f5244472592a2aff1eb9fa4b8c3e7566901b72c6c8854c398",
+    "sphere-cyclotomic-image-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/apply.stdout": "6dbe3bda4c917ed6da22179f796a7019f31a3ff7ad09b929b9513c51c624718e",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/binaries.json": "6364653e0d1c83897f1ca6d589ea745f64280075330fc57e4e61266eac8437b2",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stderr": "ff8c3c24b987122df531eced9be67cd262722fdf509c753ed8b79c6c7c599717",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stdout": "6f2d9bef8e06c30f6d78e6efd8f7e37615e64340c5b78b6b4dd56c87781b4420",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-cyclotomic-image-v1/commands.json": "13c7d5eb5e2ba657501631cf700cc38edc8a7ad27f309ff66425b960c354fee4",
+    "sphere-cyclotomic-image-v1/libraries.json": "3718a28da8e63aebed777b167493337a0390f25c4fca168423cb87cb65f01e8b",
+    "sphere-cyclotomic-image-v1/link-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/protocol.json": "dc52bef136539c9fb15809b4c23493caa0901d1c77fc199b6363e5128cb42bab",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stderr": "76051fdf881afa2ec79e3a87ca771576d74c919aa26de2c52ca820dcd0531586",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stderr": "01bfea4266c22bf46d6aae565c42d68e9ad90870cfca81b73ee9740c493adde5",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stdout": "03a9f0d96ff27f71a47158b396c372035e413d83b0dc5ef34bc23e2e17f9da59"
+  },
+  "libraries": {
+    "baseline": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+        "sha256": "ed39e41dbab80903de387c18e363201411f20dce839530a9fcbb3cc66698408d",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "0b76b6f09db87fb5d40b56d1565c1f3cffc0405a078686340ccaa4da85825e6d",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "late": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/libcsgrs.rlib",
+        "sha256": "12001c5230ae5c4c3235e785a07d4f602a08622a43ba83756eac203a210d1132",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "8ce9cfdd553fb579d3633c077436307970200ee2b91ad5ce9e6028a4f109b570",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "image": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+        "sha256": "18be766f9d8a401581858c281669fabf3c484db581e2cc3714cb2ad8ca0498be",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "68f737e20835171cd4e414b0f569bc1c41ad953dee3bbe2840d5a1dd0033f870",
+        "features": [
+          "default"
+        ]
+      }
+    }
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source",
+    "late": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/source",
+    "image": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/source"
+  },
+  "source_files": {
+    "baseline": 10129,
+    "late": 10132,
+    "image": 10135
+  },
+  "root_source_files": 10129,
+  "case_sets": {
+    "baseline": [
+      "fifteen_degrees"
+    ],
+    "late": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "image": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ]
+  },
+  "fixed_processes": 9,
+  "queries_per_process": 3,
+  "pinned_cpu": 0,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "not_a_cost_trial": true,
+  "interpretation": "Output-only diagnostic with default allocator; process wall records identify executions, not performance. No allocation, timing or speedup comparison.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,218 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.015333801973611116,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.20900516817346215,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-late",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.21490694861859083,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-image",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.2258223299868405,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/baseline",
+      "fifteen_degrees"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 17.426812699995935,
+    "stdout_sha256": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 17.867597174830735,
+    "stdout_sha256": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 43.5841333786957,
+    "stdout_sha256": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 1.2866148217581213,
+    "stdout_sha256": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/late",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.3872330882586539,
+    "stdout_sha256": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 18.979595952201635,
+    "stdout_sha256": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 46.462312628980726,
+    "stdout_sha256": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 1.5015022619627416,
+    "stdout_sha256": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.39884704211726785,
+    "stdout_sha256": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

@@ -1,0 +1,191 @@
+[
+  {
+    "group": "baseline",
+    "case": "fifteen_degrees",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "warm": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "replay": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df"
+    }
+  },
+  {
+    "group": "late",
+    "case": "fifteen_degrees",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "warm": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "replay": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df"
+    }
+  },
+  {
+    "group": "late",
+    "case": "original_medium",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": false,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 118,
+    "oriented_faces_added_to_warm": 118,
+    "first_vertex_order_difference": 19,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-32-warm",
+      "replay": "prior-32-warm"
+    },
+    "witnesses_sha256": {
+      "cold": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+      "warm": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+      "replay": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2"
+    }
+  },
+  {
+    "group": "late",
+    "case": "fifth_turn",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+      "warm": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+      "replay": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4"
+    }
+  },
+  {
+    "group": "late",
+    "case": "seventh_turn",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+      "warm": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+      "replay": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+    }
+  },
+  {
+    "group": "image",
+    "case": "fifteen_degrees",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "warm": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "replay": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df"
+    }
+  },
+  {
+    "group": "image",
+    "case": "original_medium",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": false,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 118,
+    "oriented_faces_added_to_warm": 118,
+    "first_vertex_order_difference": 19,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-32-warm",
+      "replay": "prior-32-warm"
+    },
+    "witnesses_sha256": {
+      "cold": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+      "warm": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+      "replay": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2"
+    }
+  },
+  {
+    "group": "image",
+    "case": "fifth_turn",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+      "warm": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+      "replay": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4"
+    }
+  },
+  {
+    "group": "image",
+    "case": "seventh_turn",
+    "all_three_certified_with_complete_vertices_and_closed_oriented_topology": true,
+    "cold_matches_prior_exact_output": true,
+    "cold_equals_warm": true,
+    "warm_equals_replay": true,
+    "oriented_faces_removed_from_cold": 0,
+    "oriented_faces_added_to_warm": 0,
+    "first_vertex_order_difference": null,
+    "phase_exact_support_proof_match": {
+      "cold": "prior-cold",
+      "warm": "prior-cold",
+      "replay": "prior-cold"
+    },
+    "witnesses_sha256": {
+      "cold": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+      "warm": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+      "replay": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+    }
+  }
+]
