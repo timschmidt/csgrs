@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-resources-v1/stable  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 45240      4312
+.rela.plt                    48     49552
+.gcc_except_table       1435164     49600
+.rodata                   79136   1484768
+.eh_frame_hdr             17540   1563904
+.eh_frame                127036   1581448
+.text                   1665135   1712592
+.init                        27   3377728
+.fini                        13   3377756
+.plt                         48   3377776
+.tdata                      576   3381920
+.tbss                       896   3382496
+.data.rel.ro              26784   3382496
+.fini_array                   8   3409280
+.init_array                  16   3409288
+.dynamic                    480   3409304
+.got                       4720   3409784
+.got.plt                     40   3414504
+.relro_padding             1520   3414544
+.tm_clone_table               0   3418640
+.data                    197480   3418640
+.bss                        240   3616120
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7706550
+
+

@@ -1,0 +1,240 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "result_sha256": "a0ab26c3ed024c65a8a7c6b6929b71d2fc7226c3c4e6491eaf6e0351ca1c0c98",
+  "assessment_sha256": "9edf6a71a0bc03586df1e8b8bfb72a3f61a88727cd2616eeeecd66fcb4870a3d",
+  "commands_all_zero": 34,
+  "sample_processes": 27,
+  "exact_output_transcripts_rechecked": 81,
+  "all_group_phase_witnesses_match": true,
+  "all_source_inputs_and_binaries_rechecked": true,
+  "all_three_observations_identical_for_every_resource_counter": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "phase_medians": {
+        "image": {
+          "cold_hull": {
+            "allocation_calls": 79214795,
+            "allocated_bytes": 5156165122,
+            "retained_bytes_delta": 602896,
+            "peak_bytes_delta": 854450
+          },
+          "warm_hull": {
+            "allocation_calls": 79206061,
+            "allocated_bytes": 5155770970,
+            "retained_bytes_delta": 137672,
+            "peak_bytes_delta": 601368
+          },
+          "replay_hull": {
+            "allocation_calls": 79205545,
+            "allocated_bytes": 5155725682,
+            "retained_bytes_delta": 98480,
+            "peak_bytes_delta": 601368
+          }
+        },
+        "stable": {
+          "cold_hull": {
+            "allocation_calls": 95216931,
+            "allocated_bytes": 6133302754,
+            "retained_bytes_delta": 637032,
+            "peak_bytes_delta": 1188170
+          },
+          "warm_hull": {
+            "allocation_calls": 95207568,
+            "allocated_bytes": 6132894978,
+            "retained_bytes_delta": 162096,
+            "peak_bytes_delta": 713506
+          },
+          "replay_hull": {
+            "allocation_calls": 95206881,
+            "allocated_bytes": 6132838962,
+            "retained_bytes_delta": 108608,
+            "peak_bytes_delta": 660194
+          }
+        }
+      },
+      "lifecycle_retained_requested_bytes": {
+        "image": 677840,
+        "stable": 746376
+      },
+      "lifecycle_retained_delta_stable_minus_image": 68536,
+      "cold_allocated_bytes_ratio_stable_over_image": 1.1895085996821186
+    },
+    {
+      "case": "original_medium",
+      "phase_medians": {
+        "image": {
+          "cold_hull": {
+            "allocation_calls": 299857226,
+            "allocated_bytes": 18176373122,
+            "retained_bytes_delta": 288976,
+            "peak_bytes_delta": 1247728
+          },
+          "warm_hull": {
+            "allocation_calls": 299319500,
+            "allocated_bytes": 18184559226,
+            "retained_bytes_delta": 92752,
+            "peak_bytes_delta": 1168952
+          },
+          "replay_hull": {
+            "allocation_calls": 299318889,
+            "allocated_bytes": 18184436306,
+            "retained_bytes_delta": 92584,
+            "peak_bytes_delta": 1168952
+          }
+        },
+        "stable": {
+          "cold_hull": {
+            "allocation_calls": 346237307,
+            "allocated_bytes": 21130355202,
+            "retained_bytes_delta": 286616,
+            "peak_bytes_delta": 1779778
+          },
+          "warm_hull": {
+            "allocation_calls": 346070075,
+            "allocated_bytes": 21175357978,
+            "retained_bytes_delta": 92584,
+            "peak_bytes_delta": 1585746
+          },
+          "replay_hull": {
+            "allocation_calls": 346070075,
+            "allocated_bytes": 21175357978,
+            "retained_bytes_delta": 92584,
+            "peak_bytes_delta": 1585746
+          }
+        }
+      },
+      "lifecycle_retained_requested_bytes": {
+        "image": 69608,
+        "stable": 66760
+      },
+      "lifecycle_retained_delta_stable_minus_image": -2848,
+      "cold_allocated_bytes_ratio_stable_over_image": 1.162517684918374
+    },
+    {
+      "case": "fifth_turn",
+      "phase_medians": {
+        "image": {
+          "cold_hull": {
+            "allocation_calls": 6200112,
+            "allocated_bytes": 506485974,
+            "retained_bytes_delta": 62280,
+            "peak_bytes_delta": 242774
+          },
+          "warm_hull": {
+            "allocation_calls": 6155391,
+            "allocated_bytes": 504555710,
+            "retained_bytes_delta": 11944,
+            "peak_bytes_delta": 192910
+          },
+          "replay_hull": {
+            "allocation_calls": 6155391,
+            "allocated_bytes": 504555710,
+            "retained_bytes_delta": 11944,
+            "peak_bytes_delta": 192910
+          }
+        },
+        "stable": {
+          "cold_hull": {
+            "allocation_calls": 7017780,
+            "allocated_bytes": 560921566,
+            "retained_bytes_delta": 62448,
+            "peak_bytes_delta": 258078
+          },
+          "warm_hull": {
+            "allocation_calls": 6973148,
+            "allocated_bytes": 558775766,
+            "retained_bytes_delta": 11944,
+            "peak_bytes_delta": 208046
+          },
+          "replay_hull": {
+            "allocation_calls": 6973148,
+            "allocated_bytes": 558775766,
+            "retained_bytes_delta": 11944,
+            "peak_bytes_delta": 208046
+          }
+        }
+      },
+      "lifecycle_retained_requested_bytes": {
+        "image": 30744,
+        "stable": 30912
+      },
+      "lifecycle_retained_delta_stable_minus_image": 168,
+      "cold_allocated_bytes_ratio_stable_over_image": 1.1074769979711225
+    },
+    {
+      "case": "seventh_turn",
+      "phase_medians": {
+        "image": {
+          "cold_hull": {
+            "allocation_calls": 1687807,
+            "allocated_bytes": 149521030,
+            "retained_bytes_delta": 40912,
+            "peak_bytes_delta": 189262
+          },
+          "warm_hull": {
+            "allocation_calls": 1657489,
+            "allocated_bytes": 148080238,
+            "retained_bytes_delta": 5800,
+            "peak_bytes_delta": 157918
+          },
+          "replay_hull": {
+            "allocation_calls": 1657489,
+            "allocated_bytes": 148080238,
+            "retained_bytes_delta": 5800,
+            "peak_bytes_delta": 157918
+          }
+        },
+        "stable": {
+          "cold_hull": {
+            "allocation_calls": 1840623,
+            "allocated_bytes": 161118014,
+            "retained_bytes_delta": 40944,
+            "peak_bytes_delta": 198838
+          },
+          "warm_hull": {
+            "allocation_calls": 1809365,
+            "allocated_bytes": 159432750,
+            "retained_bytes_delta": 5800,
+            "peak_bytes_delta": 163694
+          },
+          "replay_hull": {
+            "allocation_calls": 1809365,
+            "allocated_bytes": 159432750,
+            "retained_bytes_delta": 5800,
+            "peak_bytes_delta": 163694
+          }
+        }
+      },
+      "lifecycle_retained_requested_bytes": {
+        "image": 25000,
+        "stable": 25032
+      },
+      "lifecycle_retained_delta_stable_minus_image": 32,
+      "cold_allocated_bytes_ratio_stable_over_image": 1.0775608889264607
+    }
+  ],
+  "instrumented_binary_raw_bytes": {
+    "baseline": 8712560,
+    "image": 8769184,
+    "stable": 8769672
+  },
+  "instrumented_binary_text_bytes": {
+    "baseline": 1622287,
+    "image": 1664767,
+    "stable": 1665135
+  },
+  "interpretation": "Every stable-selection cold, warm and replay hull phase requests more allocations and bytes than its finite-image parent. The repair changes exact triangulation rows, and its measured resource increases are retained as explicit correctness costs. Allocation traffic is cumulative requested bytes, not simultaneous memory usage. Process-lifecycle retention after input disposal and grammar-cache clearing is reported without attributing it to a particular cache or inferring a leak.",
+  "trial_closed": true,
+  "old_trial_resumed_or_pooled": false,
+  "scalar_costs_still_unexecuted": true,
+  "remaining": [
+    "Create a new scalar cost protocol whose prerequisites match this completed resource trial; leave the frozen old protocol unchanged.",
+    "Public scalar cost, retained-fact and representation comparisons.",
+    "Additional adversarial/formal obligations for the scalar certificate and deterministic hull selection."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
