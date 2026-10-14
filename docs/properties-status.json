@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "deterministic-selection-feasibility-and-exact-support-passed",
+      "status": "stable-selection-qualified-dyadic-cache-audit-pending",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5121,7 +5121,47 @@
       ],
       "sphere_stable_selection_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-qualification-scope-v1.json",
       "sphere_stable_selection_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_stable_selection_v1.py",
-      "sphere_stable_selection_qualification_executed": false
+      "sphere_stable_selection_qualification_executed": true,
+      "sphere_stable_selection_qualification_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-qualification-v1/result.json",
+      "sphere_stable_selection_qualification_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-qualification-closure-v1.json",
+      "sphere_stable_selection_qualification_counts": {
+        "default-tests": {
+          "passed": 234,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 7
+        },
+        "all-features-tests": {
+          "passed": 235,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 7
+        },
+        "doctests": {
+          "passed": 0,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 1
+        },
+        "native-consumer-tests": {
+          "passed": 19,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        }
+      },
+      "sphere_stable_selection_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-cost-scope-v1.json",
+      "sphere_stable_selection_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_stable_selection_v1.py",
+      "sphere_stable_selection_cost_executed": false,
+      "sphere_stable_selection_dyadic_cache_audit_open": true
     }
   },
   "status_meanings": {
