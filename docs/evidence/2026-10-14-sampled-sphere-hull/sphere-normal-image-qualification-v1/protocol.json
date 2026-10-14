@@ -1,0 +1,29 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source",
+  "source_mapping_sha256": "9fb43297218853fc5bc75cda4f4fa9998cd5c9456055c63539b14ec369794a5f",
+  "source_files": 10136,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-qualification-v1"
+  },
+  "packages": [
+    "hyperreal",
+    "hyperlimit",
+    "hypermesh",
+    "hypercurve"
+  ],
+  "inputs_sha256": {
+    "qualify_sphere_normal_image_v1.py": "8bf5c19bd49567cb0c93ef78c9dd7850f16996829a6ae09d07b023beb70f1d3e",
+    "sphere-normal-image-qualification-scope-v1.json": "6c3da76803efcec8a46bb0e235ce26de7e545247c6737aa64fa7f33be5e754b3",
+    "sphere-normal-image-feasibility-closure-v1.json": "1396641532ad19aff0b7e788392d7536c20fdeeae51c8a31e2936b3a8488f638",
+    "sphere-stable-support-v1/result.json": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+    "normal-image-scalar-cost-assessment-v1.json": "32ff5d075936d2492567138e073de4ddcb6c616794a7294042b164fb6d269fce",
+    "normal-image-scalar-cost-closure-v1.json": "909eda8e92bd2ccdc3eac41e660638889cea9c894068afed905e3e3cee491d80"
+  },
+  "command_wall_limit_seconds": 1800,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

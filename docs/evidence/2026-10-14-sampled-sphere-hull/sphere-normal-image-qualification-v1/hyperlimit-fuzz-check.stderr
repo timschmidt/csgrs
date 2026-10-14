@@ -1,0 +1,21 @@
+   Compiling num-traits v0.2.19
+   Compiling shlex v1.3.0
+    Checking either v1.15.0
+   Compiling jobserver v0.1.34
+   Compiling syn v2.0.117
+    Checking rayon v1.12.0
+   Compiling cc v1.2.62
+    Checking num-integer v0.1.46
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking num-iter v0.1.45
+   Compiling libfuzzer-sys v0.4.12
+   Compiling derive_arbitrary v1.4.2
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperreal)
+    Checking arbitrary v1.4.2
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlimit)
+    Checking hyperlimit-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlimit/fuzz)
+    Finished `release` profile [optimized] target(s) in 5.39s

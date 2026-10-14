@@ -1,0 +1,74 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling getrandom v0.4.2
+    Checking num-integer v0.1.46
+    Checking hashbrown v0.17.1
+    Checking smallvec v1.15.1
+   Compiling thiserror v2.0.21
+    Checking bytemuck v1.25.0
+   Compiling matrixmultiply v0.3.11
+   Compiling anyhow v1.0.104
+    Checking ppv-lite86 v0.2.21
+    Checking cpufeatures v0.3.0
+    Checking rawpointer v0.2.1
+   Compiling paste v1.0.15
+   Compiling nalgebra-macros v0.3.0
+    Checking typenum v1.20.1
+    Checking arrayvec v0.7.6
+    Checking chacha20 v0.10.2
+    Checking rstar v0.12.2
+    Checking safe_arch v1.2.0
+    Checking spade v2.15.1
+    Checking num-iter v0.1.45
+    Checking polycool v0.4.0
+    Checking rand_xoshiro v0.7.0
+    Checking i_float v3.0.0
+    Checking web-time v1.1.0
+    Checking tempfile v3.27.0
+    Checking rand_chacha v0.9.0
+    Checking rand v0.10.3
+    Checking kurbo v0.13.1
+    Checking ordered-float v5.5.0
+    Checking static_aabb2d_index v2.1.0
+    Checking itertools v0.15.0
+    Checking i_shape v3.0.0
+    Checking siphasher v1.0.3
+    Checking rand v0.9.4
+    Checking i_tree v0.19.0
+    Checking i_key_sort v0.11.0
+    Checking rusty-fork v0.3.1
+    Checking wide v1.7.1
+    Checking svg v0.18.0
+    Checking cavalier_contours v0.7.0
+    Checking indexmap v2.14.0
+    Checking i_overlay v7.0.3
+    Checking proptest v1.11.0
+    Checking geo-types v0.7.20
+    Checking svgtypes v0.16.1
+    Checking geo v0.33.1
+    Checking serde_json v1.0.149
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.6
+    Checking ciborium v0.2.2
+    Checking toml_datetime v0.6.11
+    Checking serde_spanned v0.6.9
+    Checking toml_edit v0.22.27
+    Checking tinytemplate v1.2.1
+    Checking argmin-math v0.5.1
+    Checking argmin v0.11.0
+    Checking criterion v0.5.1
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperreal)
+    Checking toml v0.8.23
+    Checking simba v0.10.2
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlimit)
+    Checking nalgebra v0.35.0
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypermesh)
+    Checking gauss-quad v0.3.2
+    Checking curvo v0.1.92
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypercurve)
+    Finished `release` profile [optimized] target(s) in 36.54s

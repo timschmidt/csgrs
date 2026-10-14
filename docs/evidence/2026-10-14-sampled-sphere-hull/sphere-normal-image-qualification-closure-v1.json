@@ -1,0 +1,55 @@
+{
+  "complete": true,
+  "commands_all_zero": 12,
+  "result_sha256": "1f79384de0fdf831d90dc88c2fb619a4d39b7c87bf08c8ca0ac2944e0c7e3aeb",
+  "assessor_sha256": "f57ef2c7a97538320945d09708dcaadab91470b492ac760341f548de35bc9bd7",
+  "driver_stdout_sha256": "45aa669b7b9aecf43be86efd3f12d0b00178b9595288b840f141d98199bd1d41",
+  "driver_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "test_counts": {
+    "default-tests": {
+      "passed": 3928,
+      "failed": 0,
+      "ignored": 35,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 95
+    },
+    "all-features-tests": {
+      "passed": 4080,
+      "failed": 0,
+      "ignored": 40,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 96
+    },
+    "doctests": {
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    },
+    "grammar-native-consumers": {
+      "passed": 19,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    }
+  },
+  "source_files_rechecked": 10136,
+  "root_source_files_rechecked": 10129,
+  "all_frozen_sources_inputs_artifacts_libraries_and_binaries_rechecked": true,
+  "strict_lint_docs_and_fuzz_binary_compilation_passed": true,
+  "both_new_normal_form_tests_passed_at_both_feature_settings": true,
+  "fuzz_campaign_executed": false,
+  "new_formal_proof_executed": false,
+  "native_cost_protocol": "measure_normal_image_native_cost_v1.py",
+  "native_resource_protocol": "measure_normal_image_resources_v1.py",
+  "native_cost_or_resource_trial_executed": false,
+  "limits": "Selected four-package Rust qualification, native consumer tests, and fuzz-target compilation. Ignored tests remain ignored. No executed fuzz campaign, ASan, new formal proof, complete workspace CI, push readiness or runtime admission is claimed.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

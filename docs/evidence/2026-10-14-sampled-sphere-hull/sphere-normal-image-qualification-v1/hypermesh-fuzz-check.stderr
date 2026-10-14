@@ -1,0 +1,13 @@
+    Checking arbitrary v1.4.2
+    Checking num-complex v0.4.6
+    Checking num-bigint v0.4.8
+    Checking libfuzzer-sys v0.4.13
+    Checking num-rational v0.4.2
+    Checking num v0.4.3
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperreal)
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlattice)
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypertri)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypermesh)
+    Checking hypermesh-fuzz v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypermesh/fuzz)
+    Finished `release` profile [optimized] target(s) in 6.04s

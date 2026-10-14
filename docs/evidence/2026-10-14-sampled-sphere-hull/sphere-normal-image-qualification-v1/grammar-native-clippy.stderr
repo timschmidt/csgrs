@@ -1,0 +1,51 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling bitflags v2.11.1
+   Compiling zmij v1.0.21
+   Compiling libc v0.2.186
+   Compiling camino v1.2.4
+   Compiling memchr v2.8.0
+   Compiling version_check v0.9.5
+   Compiling serde_json v1.0.149
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling itoa v1.0.18
+   Compiling linux-raw-sys v0.12.1
+   Compiling pulldown-cmark v0.9.6
+   Compiling cfg-if v1.0.4
+    Checking hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperreal)
+   Compiling fastrand v2.4.1
+   Compiling unicase v2.9.0
+   Compiling once_cell v1.21.4
+   Compiling same-file v1.0.6
+   Compiling bytecount v0.6.9
+   Compiling glob v0.3.3
+   Compiling peg-runtime v0.6.3
+   Compiling walkdir v2.5.0
+   Compiling base64 v0.22.1
+    Checking foldhash v0.1.5
+   Compiling error-chain v0.12.4
+    Checking linked-hash-map v0.5.6
+    Checking tempfile v3.27.0
+    Checking byteorder v1.5.0
+    Checking hashbrown v0.15.5
+   Compiling peg-macros v0.6.3
+   Compiling doc-image-embed v0.2.1
+    Checking rusty-fork v0.3.1
+    Checking proptest v1.11.0
+    Checking quick-xml v0.39.4
+    Checking peg v0.6.3
+   Compiling semver v1.0.28
+   Compiling cargo-platform v0.1.9
+   Compiling cargo_metadata v0.14.2
+    Checking hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlattice)
+   Compiling skeptic v0.13.7
+   Compiling ply-rs v0.1.3
+    Checking hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperlimit)
+    Checking hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypertri)
+    Checking hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypersolve)
+    Checking hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypermesh)
+    Checking hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hyperphysics)
+    Checking hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source/crates/hypercurve)
+    Checking csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source)
+    Finished `release` profile [optimized] target(s) in 20.69s

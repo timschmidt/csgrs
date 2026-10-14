@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-broader-qualification-ready",
+      "status": "normal-form-image-filter-qualified-native-cost-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5224,7 +5224,56 @@
       "sphere_normal_image_scalar_observed_overheads_retained": true,
       "sphere_normal_image_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-scope-v1.json",
       "sphere_normal_image_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_normal_image_v1.py",
-      "sphere_normal_image_qualification_executed": false
+      "sphere_normal_image_qualification_executed": true,
+      "sphere_normal_image_qualification_complete": true,
+      "sphere_normal_image_qualification_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-v1/result.json",
+      "sphere_normal_image_qualification_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-qualification-closure-v1.json",
+      "sphere_normal_image_qualification_assessor": "docs/evidence/2026-10-14-sampled-sphere-hull/assess_sphere_normal_image_qualification_v1.py",
+      "sphere_normal_image_qualification_counts": {
+        "default-tests": {
+          "passed": 3928,
+          "failed": 0,
+          "ignored": 35,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 95
+        },
+        "all-features-tests": {
+          "passed": 4080,
+          "failed": 0,
+          "ignored": 40,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 96
+        },
+        "doctests": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        },
+        "grammar-native-consumers": {
+          "passed": 19,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        }
+      },
+      "sphere_normal_image_qualification_driver_terminal_exit_code": 0,
+      "sphere_normal_image_qualification_assessor_terminal_exit_code": 0,
+      "sphere_normal_image_native_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-scope-v1.json",
+      "sphere_normal_image_native_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_native_cost_v1.py",
+      "sphere_normal_image_native_cost_executed": false,
+      "sphere_normal_image_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-scope-v1.json",
+      "sphere_normal_image_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_resources_v1.py",
+      "sphere_normal_image_resources_executed": false,
+      "sphere_normal_image_asan_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v1.json",
+      "sphere_normal_image_asan_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v1.py",
+      "sphere_normal_image_asan_executed": false
     }
   },
   "status_meanings": {
