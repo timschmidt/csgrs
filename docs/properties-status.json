@@ -3924,7 +3924,7 @@
       }
     },
     "drc_process_allocator": {
-      "status": "retain-isolated-drc-allocator-with-startup-tradeoff-await-combined-admission-review",
+      "status": "allocator-evidence-retained-complete-combination-not-admitted",
       "evidence": "docs/evidence/2026-10-13-drc-process-allocator/decision-v1.json",
       "result": "Both original candidate gates pass. All 24 complete reports preserve exact bytes, JSON values and earlier endpoint/metadata reports. Five fixed blocks: both boards have lower wall time, total CPU and peak RSS in every pair; median CPU ratios are 0.7925801012 and 0.8472712996. Help startup wall/CPU are higher in all five pairs (median wall ratio 1.2158747947, 2.4075 to 2.9272 ms). CLI size grows 158256 bytes; test binary grows 21608. Keep isolated pending combined admission review; all samples and preparation/reader failures are preserved.",
       "next_step": {
@@ -4228,16 +4228,18 @@
           "candidate_higher_blocks": 5,
           "candidate_lower_blocks": 0
         }
-      ]
+      ],
+      "combined_admission_review": "docs/evidence/2026-10-13-combined-native-admission/decision-v1.json",
+      "next_step_completed_by": "docs/evidence/2026-10-13-combined-native-admission/decision-v1.json"
     },
     "combined_native_admission": {
-      "status": "combined-current-main-comparison-frozen-library-measurements-next",
-      "evidence": "docs/evidence/2026-10-13-combined-native-admission/review-v1.json",
+      "status": "do-not-admit-complete-combination-unresolved-material-library-regressions",
+      "evidence": "docs/evidence/2026-10-13-combined-native-admission/decision-v1.json",
       "source_review_complete": true,
       "runtime_admitted": false,
-      "new_measurements_executed": false,
+      "new_measurements_executed": true,
       "main_and_35_pending_native_paths_unchanged": true,
-      "next_step": "Execute the frozen independent-library comparison, then interpret every cost and witness row before deciding further application admission work.",
+      "next_step": "docs/evidence/2026-10-13-combined-native-admission/next-combination-v1.json",
       "plan_complete": false,
       "preparation": "docs/evidence/2026-10-13-combined-native-admission/preparation-v1/protocol.json",
       "preparation_sha256": "2701bf2b3474c6ebf953b146c63e4c6abf880e21d920a790fffeb0082c6f836f",
@@ -4249,7 +4251,27 @@
         "candidate-metadata": 10134
       },
       "review_count_correction": "docs/evidence/2026-10-13-combined-native-admission/review-correction-v1.json",
-      "fixed_design": "docs/evidence/2026-10-13-combined-native-admission/scope-v1.json"
+      "fixed_design": "docs/evidence/2026-10-13-combined-native-admission/scope-v1.json",
+      "library_assessment": "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json",
+      "fixed_sample": {
+        "cost_processes": 110,
+        "abort_processes": 6,
+        "preflight_processes": 20,
+        "timing_rows": 365,
+        "allocation_rows": 134,
+        "pairs_per_cost_class": 5,
+        "extension_or_filtering": false
+      },
+      "all_measured_witnesses_preserved": true,
+      "timing_all_five_directions": {
+        "higher": 34,
+        "lower": 60,
+        "higher_at_least_four": 99
+      },
+      "memory_rows_with_increases": 30,
+      "result": "Exact witnesses and receipts match. The closed 365-row timing comparison has 34 rows higher in all five pairs, including two quadratic construction cases with median ratios about 1.65 and 29 broad rows. Thirty allocation rows have increased fields. Do not admit the complete combination; preserve its query/allocator gains and all adverse observations.",
+      "next_prototype_prepared": false,
+      "next_measurements_executed": false
     }
   },
   "status_meanings": {
