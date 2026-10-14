@@ -4274,8 +4274,8 @@
       "next_measurements_executed": false
     },
     "native_without_persistent_certificates": {
-      "status": "source-reviewed-and-frozen-library-qualification-and-costs-next",
-      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/source-review-v1.json",
+      "status": "retain-isolated-with-consumer-tradeoffs-check-native-viability",
+      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-interpretation-v1.json",
       "scope": "docs/evidence/2026-10-13-native-without-persistent-certificates/scope-v1.json",
       "preparation": "docs/evidence/2026-10-13-native-without-persistent-certificates/preparation-v1/protocol.json",
       "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
@@ -4284,10 +4284,25 @@
       "baseline_measurements_reused": false,
       "source_review_complete": true,
       "prototype_prepared": true,
-      "measurements_executed": false,
+      "measurements_executed": true,
       "all_main_and_35_pending_native_paths_unchanged": true,
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "library_assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-assessment-v1.json",
+      "timing_higher_all_five": 20,
+      "timing_lower_all_five": 90,
+      "allocation_rows_with_increases": 14,
+      "all_measured_witnesses_preserved": true,
+      "native_viability_executed": false,
+      "next_step": {
+        "action": "Run the original two native assertions once on this unchanged candidate, after building its DRC test binary and checking the existing allocator contract tests.",
+        "purpose": "Determine whether removing persistent storage can meet the existing application limits before further tuning consumer paths. This is a new candidate viability check, not an admission or paired speedup claim.",
+        "limits_unchanged": {
+          "full_board": "120 seconds worker CPU",
+          "copper_neck": "60 seconds check-body wall"
+        },
+        "preserve": "The full library sample and all earlier results remain closed and unchanged. Native success cannot erase consumer costs. Complete stack qualification, exact full reports and application cost evidence remain required for admission."
+      }
     }
   },
   "status_meanings": {
