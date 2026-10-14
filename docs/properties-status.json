@@ -4827,6 +4827,18 @@
       "decision": "Reject this implementation for runtime admission. The nine allocation-saving phases exactly match prior Pi memo coverage, but parent-relative timing controls remain mixed and combined costs retain five all-six slowdowns and 20 memory-increase phases versus main. Preserve every sample and the qualification; do not advance broader or native gates for this source.",
       "broader_library_costs_opened": false,
       "new_native_gates_run": false
+    },
+    "sampled_sphere_hull": {
+      "status": "original-geometry-failure-reproduction-prepared",
+      "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
+      "future_work": "crates/hypermesh/FUTURE_WORK.md",
+      "cases": 4,
+      "original_32_by_16_geometry_required": true,
+      "baseline_executed": false,
+      "runtime_candidate_prepared": false,
+      "runtime_admitted": false,
+      "plan_complete": false,
+      "other_native_and_scalar_admission_obligations_remain_open": true
     }
   },
   "status_meanings": {
