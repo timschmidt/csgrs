@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "sphere-construction-identities-insufficient-orientation-trace-next",
+      "status": "three-unresolved-sphere-orientations-traced-exact-oracle-prepared",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4944,7 +4944,10 @@
       "sphere_grid_coverage_executed": true,
       "sphere_grid_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-grid-facts-assessment-v1.json",
       "sphere_orientation_trace_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-trace-scope-v1.json",
-      "sphere_orientation_trace_executed": false
+      "sphere_orientation_trace_executed": true,
+      "sphere_orientation_trace_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-trace-v1/result.json",
+      "sphere_exact_oracle_prepared": true,
+      "sphere_exact_oracle_executed": false
     }
   },
   "status_meanings": {
