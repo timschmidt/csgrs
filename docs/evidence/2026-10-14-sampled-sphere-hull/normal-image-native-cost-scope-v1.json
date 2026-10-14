@@ -1,0 +1,53 @@
+{
+  "objective": "Measure native process wall, child CPU and binary size for the normal-form image-filter optimization against its unchanged deterministic-selection parent.",
+  "groups": [
+    "parent",
+    "candidate"
+  ],
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "orders": [
+    [
+      "parent",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "parent"
+    ],
+    [
+      "parent",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "parent"
+    ],
+    [
+      "parent",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "parent"
+    ]
+  ],
+  "commands": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "hull_queries_per_process": 3,
+  "native_wall_stop_seconds": 600,
+  "measurement": "Fresh default-allocator processes construct the full original exact sphere, make three STRICT hull queries retaining all outputs, then validate and serialize. Record total process wall and child user/system CPU; do not infer per-query or check-body timing.",
+  "output_contract": "Both groups must produce the same full three-query transcript, vertex order, triangle rows, certainty, byte size and checksum for each original case. References are bound to the independent exact support proof by byte identity. No reduced or display-projected inputs.",
+  "reproducible_cost_increase_flag": "For each case, all six paired candidate/parent process-wall ratios exceed 1.10 and their median exceeds 1.15. Publish every pair, absolute medians and CPU ratios regardless of the flag. No flag does not establish absence of regression.",
+  "prerequisite": "The frozen twelve-command broader normal-image qualification must complete successfully before this trial starts.",
+  "sample_extension_filtering_or_pooling_allowed": false,
+  "old_trials_resumed_or_reused_as_samples": false,
+  "limitations": "Whole-process costs for these four original finite point sets only. No allocation, retention, RSS, per-query timing, universal speedup or runtime-admission claim.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
