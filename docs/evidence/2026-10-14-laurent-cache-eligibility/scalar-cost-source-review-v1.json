@@ -1,0 +1,21 @@
+{
+  "status": "original-probes-and-qualified-source-verified-before-cost-build",
+  "preparation_sha256": "56ec88949ec00c54ce86ebc5d6bc4e21148affc23b1aada71a8fc2b0063f758f",
+  "all_probes_unchanged": true,
+  "qualified_source_unchanged": true,
+  "new_runtime_sources": 0,
+  "reused_binaries": 12,
+  "fresh_candidate_target": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target",
+  "production_library_build": "Same original four-package all-feature/lib release command; all five recorded library feature sets must match each existing group.",
+  "qualification": "879 scalar tests and three strict Clippy configurations remain guarded; fresh production rlib bytes will be compared and reported, not assumed identical.",
+  "source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-review-v1.json",
+  "cost_runner_review": [
+    "Six balanced permutations; all three suites, both modes and all 68 phases preserved.",
+    "One candidate production build and six links finish before all 18 preflights and 108 fixed cost processes.",
+    "Original probes and parser are byte-identical; there are no new fixtures, weakened lint flags, allocator edits or changed work windows.",
+    "The assessor checks all 133 command exits, logs, binaries, complete schedule, raw parsed rows, witnesses, allocation repetition, historical old-group allocations and all three full contrasts.",
+    "All prior samples stay closed. No new native gate is included; scalar results alone cannot admit the runtime."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
