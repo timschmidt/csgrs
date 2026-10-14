@@ -1,0 +1,92 @@
+{
+  "purpose": "Evaluate the qualified borrowed-integer leaf repair across the complete existing independent library cost matrix, against both unchanged main and the unchanged previous full-cache combination.",
+  "groups": [
+    "main",
+    "full-cache",
+    "candidate"
+  ],
+  "runtime_source": "Reuse the frozen 10134-file qualified candidate without edits. Build its production libraries in a fresh target. Create only a separate 10135-file metadata copy by appending the original cfg(test) module declaration and copying the identical original 296-line harness.",
+  "prior_artifacts": "Reuse 22 original binaries and two groups of five libraries, each guarded by actual file hashes and source maps. Preserve every qualification target, binary, result and previous sample.",
+  "driver_identity": "Use all 18 original probe source files unchanged at their original paths; the parser is copied verbatim from the closed cache-free runner. No fixtures, mathematical expected values, representation inventories, output assertions, counts or timing windows change.",
+  "qualification": [
+    "Retain the qualified 876 scalar tests and all-feature/all-target scalar Clippy evidence for the identical source; record whether the new scalar library bytes match the qualification library.",
+    "Strict all-feature hypercurve library/test Clippy for the new metadata build.",
+    "Three original metadata regression tests in each group, plus all five endpoint regression tests in the candidate.",
+    "All 30 preflights and all nine 210-receipt abort-control processes precede costs."
+  ],
+  "fixed_orders": [
+    [
+      "main",
+      "full-cache",
+      "candidate"
+    ],
+    [
+      "full-cache",
+      "candidate",
+      "main"
+    ],
+    [
+      "candidate",
+      "main",
+      "full-cache"
+    ],
+    [
+      "main",
+      "candidate",
+      "full-cache"
+    ],
+    [
+      "candidate",
+      "full-cache",
+      "main"
+    ],
+    [
+      "full-cache",
+      "main",
+      "candidate"
+    ]
+  ],
+  "schedule": "For each original suite/mode: six fresh rounds, one process per group in the declared order. The six orders cover every permutation; each group occupies each position twice. CPU 0, no concurrent builds or other agent measurements.",
+  "inputs": {
+    "rational": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "quadratic": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "integer": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "arc": {
+      "time": 8192,
+      "memory": 1000
+    },
+    "metadata": {
+      "time": 1024,
+      "memory": 128
+    },
+    "broad": {
+      "time": "all 231 original operations"
+    }
+  },
+  "counts": {
+    "commands": 254,
+    "cost_processes": 198,
+    "preflight_processes": 30,
+    "abort_control_processes": 9,
+    "time_rows_per_contrast": 365,
+    "allocation_rows_per_contrast": 134,
+    "contrasts": 3,
+    "comparable_binaries_per_contrast": 11
+  },
+  "allocator_policy": "Public time probes use System without counting; memory probes record requested Rust allocations over System. Private metadata probes retain their original TLS wrapper even in time mode. No CLI allocator is imposed on reusable-library consumers.",
+  "assessment": "Reparse all 237 process outputs from the original logs, verify declared order/commands/counts/witnesses, all historical 231 broad witnesses and all 210 abort receipts in every control. Report all 1095 timing comparisons, 402 allocation comparisons and 33 binary-size comparisons. Keep all six paired values; report memory repeatability and every adverse row.",
+  "sampling_policy": "No filtering, replacement, extension, adaptive thresholds or pooling with historical data. Ratios and paired directions are descriptive, not statistical significance. Allocation-phase durations remain raw and are not timing results.",
+  "environment": "Retain compiler/RUSTFLAGS/CPU information and per-command CPU0 governor/frequency snapshots. No host setting changes, calibrated frequency estimate or claim about historical host conditions.",
+  "remaining_gates": "This library trial cannot establish whole-application costs or satisfy the original native 120-second worker-CPU board and 60-second check-body wall neck gates. Earlier regressions and failures remain. All other properties.md work remains in scope.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
