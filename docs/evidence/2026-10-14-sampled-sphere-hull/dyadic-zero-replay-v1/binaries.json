@@ -1,0 +1,12 @@
+{
+  "image": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/dyadic-zero-replay-v1/image",
+    "sha256": "1c69c67d4814d57fad06f9b3543b292207aa03d9619af584fe7534bb9a3a85c9",
+    "bytes": 6860432
+  },
+  "stable": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/dyadic-zero-replay-v1/stable",
+    "sha256": "bb2c59022114618ce6ea261c8e1e890e8d53f50fba27b3272c0e0da5a6be73ef",
+    "bytes": 6860920
+  }
+}

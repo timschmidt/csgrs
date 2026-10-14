@@ -1,0 +1,12 @@
+[
+  {
+    "group": "image",
+    "counterexample": false,
+    "masks_checked": 4096
+  },
+  {
+    "group": "stable",
+    "counterexample": false,
+    "masks_checked": 4096
+  }
+]

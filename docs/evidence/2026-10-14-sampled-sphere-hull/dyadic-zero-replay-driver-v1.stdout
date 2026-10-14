@@ -1,0 +1,13 @@
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "link-image"}
+{"finished": "link-image", "exit_code": 0}
+{"start": "link-stable"}
+{"finished": "link-stable", "exit_code": 0}
+{"start": "image"}
+{"finished": "image", "exit_code": 0}
+{"group": "image", "counterexample": false, "masks_checked": 4096}
+{"start": "stable"}
+{"finished": "stable", "exit_code": 0}
+{"group": "stable", "counterexample": false, "masks_checked": 4096}
+{"complete": true, "result_sha256": "3e1886a45f98c40523523e03a8bee76b7fd4cf5f9c872ad8bf9d464ac7239ad6"}
