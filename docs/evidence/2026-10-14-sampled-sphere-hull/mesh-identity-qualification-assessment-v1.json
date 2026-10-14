@@ -1,0 +1,42 @@
+{
+  "qualification_result_sha256": "cd2edefcb9e8f56efec1cf3abab0cb9a2fe268a0803bff966ad8913ae5230665",
+  "qualification_driver_terminal_exit_code": 0,
+  "all_commands_passed": 18,
+  "test_counts": {
+    "default-tests": {
+      "passed": 234,
+      "ignored": 7,
+      "test_executables": 7
+    },
+    "all-features-tests": {
+      "passed": 235,
+      "ignored": 7,
+      "test_executables": 7
+    },
+    "grammar-consumers": {
+      "passed": 18,
+      "ignored": 0,
+      "test_executables": 3
+    },
+    "doctests": {
+      "passed": 0,
+      "ignored": 0,
+      "test_executables": 1
+    }
+  },
+  "new_unit_tests_per_configuration": 12,
+  "owned_mutation_controls_fixed": 9,
+  "borrowed_view_controls_fixed": 4,
+  "original_sphere_cases_preserved": 4,
+  "candidate_layout_bytes": {
+    "mesh": 40,
+    "facts": 88,
+    "weak_positions": 16,
+    "weak_triangles": 16
+  },
+  "baseline_layout_not_directly_measured": true,
+  "original_sphere_typed_failures_still_open": 3,
+  "costs_pending": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,2 @@
+input case=original_medium radius=10 segments=32 stacks=16 positions=482 triangles=960
+result case=original_medium certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

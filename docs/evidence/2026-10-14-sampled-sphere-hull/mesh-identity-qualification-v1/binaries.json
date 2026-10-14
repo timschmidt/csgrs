@@ -1,0 +1,17 @@
+{
+  "mesh-identity": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/mesh-identity",
+    "sha256": "e69663e5e74a14c56a2d771a8e708ae48955bc58445a712cc699c1451c12ae7a",
+    "bytes": 8398280
+  },
+  "view-identity": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/view-identity",
+    "sha256": "a6c97acc864919658154eda87c69caca9609a51b594f1e48017f7855081bfd99",
+    "bytes": 8342440
+  },
+  "sphere-hull": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/sphere-hull",
+    "sha256": "e05da8c2c79744e2b22dacec18d60fbb2b4839fc0b0a2e94c43d2841a7139e12",
+    "bytes": 8701624
+  }
+}

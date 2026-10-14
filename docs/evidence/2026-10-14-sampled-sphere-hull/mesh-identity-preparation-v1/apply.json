@@ -1,0 +1,13 @@
+{
+  "command": [
+    "patch",
+    "--batch",
+    "--forward",
+    "-p1",
+    "-i",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh-fact-identity-runtime-v1.patch"
+  ],
+  "exit_code": 0,
+  "stdout_sha256": "fcfe6276e69213c87ca7cebe8cec3dcb6e3f69e3b28a859c0f88a55a1dd16d97",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

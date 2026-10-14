@@ -1,0 +1,13 @@
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source/crates/hyperreal)
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source/crates/hypermesh)
+    Finished `release` profile [optimized] target(s) in 18.27s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/hypermesh-3f582b4ca1636641)
+     Running tests/boolean.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/boolean-5f62d1118823ec97)
+     Running tests/competitive.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/competitive-6172fbc55a698b35)
+     Running tests/corpus_manifest.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/corpus_manifest-70e8b02b4630cdcf)
+     Running tests/intersection_corpus.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/intersection_corpus-fd36003a26964264)
+     Running tests/predicate_policy.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/predicate_policy-da601e01ee57d6f5)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/readme-6edeb87a0e9ac66f)
