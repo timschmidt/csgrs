@@ -1,0 +1,60 @@
+{
+  "inputs_sha256": {
+    "probe_mesh_view_identity_v1.py": "f37554450a356ba5a84caebacb21f633731f9b6965cbd9fce85e17cb9bba4e60",
+    "mesh_view_identity_probe_v1.rs": "ea8905a942d71245fe08dcc34c8a4d75befdd32d88d4a62569c25a122e22ecca"
+  },
+  "baseline_result_sha256": "de7bd3f9c3566b7c1656458712ac7ebafbdf253977e32195ce3757e4ddc48ac8",
+  "source_hashes_sha256": "486ab0865f54f18a1f9fe4d7e393c49dac875315bf46a73bb48d12cbaaefe939",
+  "libraries": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/libcsgrs.rlib",
+      "sha256": "ca0f76f526790a3d87521c2dc1df0491844544cedf49fc4523c858d925373ecc",
+      "features": []
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "cc2caf036bd8737f8184e3856d32418b38159c7001924889d8feca0d557bce85",
+      "features": [
+        "default"
+      ]
+    }
+  },
+  "commands": [
+    [
+      "format",
+      [
+        "rustfmt",
+        "--edition",
+        "2024",
+        "--check",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_view_identity_probe_v1.rs"
+      ]
+    ],
+    [
+      "link",
+      [
+        "rustc",
+        "--edition=2024",
+        "-O",
+        "-D",
+        "warnings",
+        "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_view_identity_probe_v1.rs",
+        "--extern",
+        "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/libcsgrs.rlib",
+        "--extern",
+        "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "-L",
+        "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps",
+        "-o",
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-view-identity-v1"
+      ]
+    ],
+    [
+      "observe",
+      [
+        "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-view-identity-v1"
+      ]
+    ]
+  ],
+  "scope": "Four exact-rational public borrowed-view mutation controls; observations, not timing evidence."
+}

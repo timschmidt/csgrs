@@ -4829,13 +4829,13 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "mesh-fact-identity-counterexamples-reproduced-borrowed-view-audit-prepared",
+      "status": "thirteen-mesh-cache-counterexamples-reproduced-repair-prepared",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
       "original_32_by_16_geometry_required": true,
       "baseline_executed": true,
-      "runtime_candidate_prepared": false,
+      "runtime_candidate_prepared": true,
       "runtime_admitted": false,
       "plan_complete": false,
       "other_native_and_scalar_admission_obligations_remain_open": true,
@@ -4904,7 +4904,12 @@
       "cache_identity_counterexamples": 9,
       "cache_identity_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/mesh-fact-identity-assessment-v1.json",
       "borrowed_view_controls_prepared": true,
-      "borrowed_view_controls_executed": false
+      "borrowed_view_controls_executed": true,
+      "borrowed_view_counterexamples": 4,
+      "borrowed_view_result": "docs/evidence/2026-10-14-sampled-sphere-hull/mesh-view-identity-v1/result.json",
+      "mesh_identity_audit": "docs/evidence/2026-10-14-sampled-sphere-hull/mesh-fact-identity-audit-v1.json",
+      "mesh_identity_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/mesh-fact-identity-scope-v1.json",
+      "mesh_identity_qualification_executed": false
     }
   },
   "status_meanings": {

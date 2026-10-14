@@ -1,0 +1,42 @@
+{
+  "complete": true,
+  "commands_passed": 3,
+  "controls": [
+    {
+      "control": "borrowed_view_shortened_triangles",
+      "correct": "false"
+    },
+    {
+      "control": "borrowed_view_replaced_positions",
+      "correct": "false"
+    },
+    {
+      "control": "borrowed_view_reindexed_triangles",
+      "correct": "false"
+    },
+    {
+      "control": "edited_borrowed_view_cannot_publish_original_planes",
+      "correct": "false"
+    }
+  ],
+  "controls_satisfying_contract": 0,
+  "baseline_source_unchanged": true,
+  "main_runtime_unchanged": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-view-identity-v1",
+    "sha256": "b89c9ec5ac9b429ee54691629eb0bfccf6a298ca6c91039dbb67b04eaeb105bc",
+    "bytes": 8340528
+  },
+  "artifacts_sha256": {
+    "commands.json": "941ea9ce272442070552acfd948c61911ceb67d8140b72ce8c076e51db255724",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "link.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "link.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observe.stdout": "7807033b08701dbb6a19d1c568ec55ea320db20ed66bb3c80608b0f1937c86f6",
+    "protocol.json": "0799e119d3c131dbb62fd3824b8ba82680db2ab63b42c00d44385f9344cfad40"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

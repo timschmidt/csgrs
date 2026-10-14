@@ -1,0 +1,34 @@
+{
+  "counterexample_result_sha256": "a1a0d9e1a3206a4e858ec05246d61c8bfce7617c159562bc10a4a5ee613ed127",
+  "borrowed_view_result_sha256": "fd2bf7e970bb1d752899ae328b2af3402a3193ca8778e5bab957b14a0320736c",
+  "expected_source_delta_sha256": {
+    "crates/hypermesh/src/mesh.rs": "eb612d8dc55e2c6e37312952f8973ffde9a0cf77b34d46afaa349b6a5f816281",
+    "crates/hypermesh/src/mesh/fact_identity_tests.rs": "7287ff9e14d53111778af4b2878d3796646cca0f22919dce439f611b07fb0aac"
+  },
+  "new_unit_tests": [
+    "bounds_follow_replaced_and_copy_on_write_positions",
+    "edited_clones_neither_read_nor_publish_original_bounds",
+    "cached_empty_bounds_do_not_hide_replacement_geometry",
+    "edited_topology_is_revalidated_through_derived_meshes",
+    "copy_on_write_triangle_edits_recheck_winding_balance",
+    "source_planes_follow_replaced_positions_and_reindexed_triangles",
+    "borrowed_view_slices_neither_reuse_nor_publish_original_geometry_facts",
+    "borrowed_view_prefix_length_is_part_of_cache_identity",
+    "borrowed_view_can_use_a_larger_position_buffer_than_its_origin",
+    "changed_vertices_invalidate_box_facts_without_polluting_original",
+    "wide_plane_schedule_is_recomputed_for_changed_coordinates",
+    "cache_guards_preserve_unchanged_facts_without_owning_source_buffers"
+  ],
+  "qualification_commands": 18,
+  "requirements": [
+    "All twelve new controls plus full default/all-feature hypermesh lib/integration suites.",
+    "Default/all-feature strict Clippy; fmt, docs and doctests.",
+    "Root native_queries, geometry_context and solid_cache consumers.",
+    "All nine owned and four borrowed public mutation controls become correct.",
+    "Four original sphere outcomes stay byte-identical; three typed failures remain open.",
+    "Full baseline/candidate/root source and frozen input hash guards."
+  ],
+  "admission": "Proportionate fixed cost, allocation and binary evidence plus explicit assessment after qualification; no automatic admission.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

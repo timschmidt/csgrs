@@ -1,0 +1,4 @@
+control=borrowed_view_shortened_triangles correct=false
+control=borrowed_view_replaced_positions correct=false
+control=borrowed_view_reindexed_triangles correct=false
+control=edited_borrowed_view_cannot_publish_original_planes correct=false

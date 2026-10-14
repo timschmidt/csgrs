@@ -1,0 +1,79 @@
+{
+  "purpose": "Bind mesh facts and retained source storage to actual owned buffers and public borrowed view slices.",
+  "properties": [
+    "P1",
+    "P3",
+    "P4",
+    "P21",
+    "P22",
+    "P35",
+    "P36"
+  ],
+  "counterexample_results": {
+    "mesh-fact-identity-v1/result.json": "a1a0d9e1a3206a4e858ec05246d61c8bfce7617c159562bc10a4a5ee613ed127",
+    "mesh-view-identity-v1/result.json": "fd2bf7e970bb1d752899ae328b2af3402a3193ca8778e5bab957b14a0320736c"
+  },
+  "counterexamples": {
+    "owned": 9,
+    "borrowed": 4,
+    "all_fail_on_unchanged_main": true,
+    "fresh_geometry_oracles": "All pass; exact rational cube controls."
+  },
+  "cache_audit": [
+    {
+      "fact": "exact_bounds",
+      "guard": "position pointer and slice length",
+      "reads_and_publications": "exact_bounds_decision and reuse in axis_aligned_box_bounds_decision"
+    },
+    {
+      "fact": "valid_pwn",
+      "guard": "both buffers and borrowed slices",
+      "reads_and_publications": "with_valid_pwn_certainty; axis_aligned_box_bounds_decision; build_polygon_soup_internal"
+    },
+    {
+      "fact": "axis_aligned_box",
+      "guard": "both buffers",
+      "reads_and_publications": "axis_aligned_box_bounds_decision"
+    },
+    {
+      "fact": "source_polygon_planes",
+      "guard": "both buffers and borrowed slices",
+      "reads_and_publications": "build_polygon_soup_internal"
+    },
+    {
+      "fact": "wide_dyadic_plane_schedule",
+      "guard": "position buffer and borrowed position slice",
+      "reads_and_publications": "build_polygon_soup_internal; otherwise recompute"
+    }
+  ],
+  "derived_transfers": [
+    "try_transformed_decision",
+    "reversed_winding",
+    "try_rotated_xyz_degrees_decision",
+    "subdivide_triangles"
+  ],
+  "derived_rule": "Read matched current source validity and publish into newly constructed destinations.",
+  "borrowed_view_rule": "position_owner compares complete pointer and length before sharing native source positions. geometry_facts also checks triangle slice identity. Changed views cannot read or publish original facts. Native presence only chooses fresh compact plane construction, not its mathematical source.",
+  "compatibility_and_memory": [
+    "Two Weak slice identities prevent allocation-address reuse while facts survive. Arc::make_mut detaches; Arc::get_mut can return None even with one strong owner, as disclosed in public docs.",
+    "Weak does not retain the source slice value, but keeps its backing allocation until the last weak reference drops. Cached bounds/planes may independently retain scalar values.",
+    "Edited meshes bypass old facts until rebuilt. Unchanged clones retain certificates. Topology-only edits preserve position facts.",
+    "The former 80-byte fact header budget is increased only by two Weak field sizes. Actual layout, allocation and binary costs remain to measure. This is a correctness repair, not a performance claim."
+  ],
+  "rust_contract_sources": [
+    "https://doc.rust-lang.org/std/sync/struct.Arc.html#method.make_mut",
+    "https://doc.rust-lang.org/std/sync/struct.Arc.html#method.get_mut",
+    "https://doc.rust-lang.org/std/sync/struct.Weak.html"
+  ],
+  "local_rustc": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "draft_preparation_note": "A pre-freeze source/template hash assertion exposed differing rustfmt configuration for the standalone test template. The template now exactly matches the crate-formatted draft. No candidate build or qualification ran before this correction.",
+  "scope_limits": [
+    "Safe public edits; unsafe writes that violate ownership rules are excluded.",
+    "No sphere certification or native DRC gate improvement.",
+    "Process durations of correctness checks are not matched performance evidence."
+  ],
+  "qualification_executed": false,
+  "costs_pending": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

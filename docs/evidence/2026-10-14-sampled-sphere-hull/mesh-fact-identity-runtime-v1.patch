@@ -1,0 +1,384 @@
+--- a/crates/hypermesh/src/mesh.rs
++++ b/crates/hypermesh/src/mesh.rs
+@@ -3,7 +3,7 @@
+ use std::collections::{BTreeSet, HashMap};
+ use std::num::NonZeroU32;
+ use std::sync::{
+-    Arc, OnceLock,
++    Arc, OnceLock, Weak,
+     atomic::{AtomicU8, Ordering},
+ };
+ 
+@@ -46,8 +46,12 @@
+     }
+ }
+ 
+-#[derive(Debug, Default)]
++#[derive(Debug)]
+ pub(crate) struct TriangleMeshFacts {
++    // Weak owners keep allocation identity stable and make Arc::make_mut
++    // detach before editing. They do not retain the source coordinate values.
++    source_positions: Weak<[Point3]>,
++    source_triangles: Weak<[Triangle]>,
+     exact_bounds: OnceLock<Option<Arc<ExactAabb>>>,
+     valid_pwn: CertaintyFact,
+     axis_aligned_box: OnceLock<Option<Arc<ExactAabb>>>,
+@@ -56,6 +60,26 @@
+ }
+ 
+ impl TriangleMeshFacts {
++    fn new(positions: &Arc<[Point3]>, triangles: &Arc<[Triangle]>) -> Self {
++        Self {
++            source_positions: Arc::downgrade(positions),
++            source_triangles: Arc::downgrade(triangles),
++            exact_bounds: OnceLock::new(),
++            valid_pwn: CertaintyFact::default(),
++            axis_aligned_box: OnceLock::new(),
++            source_polygon_planes: OnceLock::new(),
++            wide_dyadic_plane_schedule: AtomicU8::new(0),
++        }
++    }
++
++    fn matches_positions(&self, positions: &Arc<[Point3]>) -> bool {
++        std::ptr::eq(self.source_positions.as_ptr(), Arc::as_ptr(positions))
++    }
++
++    fn matches_triangles(&self, triangles: &Arc<[Triangle]>) -> bool {
++        std::ptr::eq(self.source_triangles.as_ptr(), Arc::as_ptr(triangles))
++    }
++
+     fn normalizes_wide_dyadic_planes(&self, positions: &[Point3]) -> bool {
+         match self.wide_dyadic_plane_schedule.load(Ordering::Relaxed) {
+             1 => false,
+@@ -77,12 +101,16 @@
+ /// This is the reusable geometry carrier accepted by Hypermesh operations and
+ /// produced from [`crate::BooleanMeshBatch`] results. Reusable exact construction
+ /// planes may be retained privately alongside geometry so iterated operations
+-/// do not need to expand them again from derived coordinates.
++/// do not need to expand them again from derived coordinates. Facts are bound
++/// to the source buffers: replacing them or editing through `Arc::make_mut`
++/// bypasses facts for the previous geometry. Construct a new mesh to cache
++/// facts for edited buffers. While retained identities hold weak references,
++/// `Arc::get_mut` can return `None` even without another strong owner.
+ #[derive(Clone, Debug)]
+ pub struct TriangleMesh {
+-    /// Vertex positions.
++    /// Vertex positions. Use `Arc::make_mut` for edits; retained identities hold weak references.
+     pub positions: Arc<[Point3]>,
+-    /// Triangle indices.
++    /// Triangle indices. Use `Arc::make_mut` for edits; retained identities hold weak references.
+     pub triangles: Arc<[Triangle]>,
+     pub(crate) facts: Arc<TriangleMeshFacts>,
+ }
+@@ -96,26 +124,37 @@
+ impl TriangleMesh {
+     /// Creates an owned triangle mesh.
+     pub fn new(positions: Vec<Point3>, triangles: Vec<Triangle>) -> Self {
+-        Self {
+-            positions: positions.into(),
+-            triangles: triangles.into(),
+-            facts: Arc::new(TriangleMeshFacts::default()),
+-        }
++        Self::from_shared_positions(positions.into(), triangles)
+     }
+ 
+     pub(crate) fn from_shared_positions(
+         positions: Arc<[Point3]>,
+         triangles: Vec<Triangle>,
+     ) -> Self {
++        let triangles = Arc::<[Triangle]>::from(triangles);
++        let facts = Arc::new(TriangleMeshFacts::new(&positions, &triangles));
+         Self {
+             positions,
+-            triangles: triangles.into(),
+-            facts: Arc::new(TriangleMeshFacts::default()),
+-        }
++            triangles,
++            facts,
++        }
++    }
++
++    fn position_facts(&self) -> Option<&TriangleMeshFacts> {
++        self.facts
++            .matches_positions(&self.positions)
++            .then_some(self.facts.as_ref())
++    }
++
++    fn geometry_facts(&self) -> Option<&TriangleMeshFacts> {
++        self.position_facts()
++            .filter(|facts| facts.matches_triangles(&self.triangles))
+     }
+ 
+     pub(crate) fn with_valid_pwn_certainty(self, certainty: MeshCertainty) -> Self {
+-        self.facts.valid_pwn.record(certainty);
++        if let Some(facts) = self.geometry_facts() {
++            facts.valid_pwn.record(certainty);
++        }
+         self
+     }
+ 
+@@ -322,7 +361,8 @@
+         &self,
+         decisions: &DecisionContext,
+     ) -> HypermeshResult<Option<ExactAabb>> {
+-        if let Some(bounds) = self.facts.exact_bounds.get() {
++        let facts = self.position_facts();
++        if let Some(bounds) = facts.and_then(|facts| facts.exact_bounds.get()) {
+             return Ok(bounds.as_deref().cloned());
+         }
+ 
+@@ -330,14 +370,11 @@
+         let bounds = self.compute_exact_bounds_decision(&local);
+         decisions.absorb(local.certainty());
+         let bounds = bounds?;
+-        if local.certainty() == crate::MeshCertainty::Certified {
+-            let _ = self.facts.exact_bounds.set(bounds.clone().map(Arc::new));
+-            return Ok(self
+-                .facts
+-                .exact_bounds
+-                .get()
+-                .and_then(Option::as_deref)
+-                .cloned());
++        if local.certainty() == crate::MeshCertainty::Certified
++            && let Some(facts) = facts
++        {
++            let _ = facts.exact_bounds.set(bounds.clone().map(Arc::new));
++            return Ok(facts.exact_bounds.get().and_then(Option::as_deref).cloned());
+         }
+         Ok(bounds)
+     }
+@@ -422,7 +459,8 @@
+         &self,
+         decisions: &DecisionContext,
+     ) -> HypermeshResult<Option<ExactAabb>> {
+-        if let Some(bounds) = self.facts.axis_aligned_box.get() {
++        let facts = self.geometry_facts();
++        if let Some(bounds) = facts.and_then(|facts| facts.axis_aligned_box.get()) {
+             return Ok(bounds.as_deref().cloned());
+         }
+ 
+@@ -430,25 +468,26 @@
+         let bounds = self.compute_axis_aligned_box_bounds_decision(&local);
+         decisions.absorb(local.certainty());
+         let bounds = bounds?;
+-        if bounds.is_some() {
+-            self.facts.valid_pwn.record(local.certainty());
+-        }
+-        if local.certainty() == crate::MeshCertainty::Certified {
+-            let cached = bounds.as_ref().map(|bounds| {
+-                self.facts
+-                    .exact_bounds
++        if let Some(facts) = facts {
++            if bounds.is_some() {
++                facts.valid_pwn.record(local.certainty());
++            }
++            if local.certainty() == crate::MeshCertainty::Certified {
++                let cached = bounds.as_ref().map(|bounds| {
++                    facts
++                        .exact_bounds
++                        .get()
++                        .and_then(Option::as_ref)
++                        .cloned()
++                        .unwrap_or_else(|| Arc::new(bounds.clone()))
++                });
++                let _ = facts.axis_aligned_box.set(cached);
++                return Ok(facts
++                    .axis_aligned_box
+                     .get()
+-                    .and_then(Option::as_ref)
+-                    .cloned()
+-                    .unwrap_or_else(|| Arc::new(bounds.clone()))
+-            });
+-            let _ = self.facts.axis_aligned_box.set(cached);
+-            return Ok(self
+-                .facts
+-                .axis_aligned_box
+-                .get()
+-                .and_then(Option::as_deref)
+-                .cloned());
++                    .and_then(Option::as_deref)
++                    .cloned());
++            }
+         }
+         Ok(bounds)
+     }
+@@ -591,7 +630,11 @@
+                 | hyperlattice::Matrix4TransformKind::AffineTranslation
+         ) || matrix_facts.is_affine
+             && matrix_facts.transform_kind == hyperlattice::Matrix4TransformKind::SignedPermutation;
+-        if preserves_valid_pwn && let Some(certainty) = self.facts.valid_pwn.certainty() {
++        if preserves_valid_pwn
++            && let Some(certainty) = self
++                .geometry_facts()
++                .and_then(|facts| facts.valid_pwn.certainty())
++        {
+             transformed.facts.valid_pwn.record(certainty);
+         }
+         Ok(transformed)
+@@ -602,20 +645,20 @@
+     /// The returned mesh owns its derived index buffer; callers that need it
+     /// repeatedly retain the returned value explicitly.
+     pub fn reversed_winding(&self) -> Self {
+-        let facts = Arc::new(TriangleMeshFacts::default());
+-        if let Some(certainty) = self.facts.valid_pwn.certainty() {
+-            facts.valid_pwn.record(certainty);
+-        }
+-        Self {
+-            positions: Arc::clone(&self.positions),
+-            triangles: self
+-                .triangles
++        let mesh = Self::from_shared_positions(
++            Arc::clone(&self.positions),
++            self.triangles
+                 .iter()
+                 .map(|triangle| Triangle::new(triangle.v2, triangle.v1, triangle.v0))
+-                .collect::<Vec<_>>()
+-                .into(),
+-            facts,
+-        }
++                .collect(),
++        );
++        if let Some(certainty) = self
++            .geometry_facts()
++            .and_then(|facts| facts.valid_pwn.certainty())
++        {
++            mesh.facts.valid_pwn.record(certainty);
++        }
++        mesh
+     }
+ 
+     /// Applies an exact `Rz * Ry * Rx` Euler rotation in degrees.
+@@ -668,7 +711,10 @@
+             one,
+         ]);
+         let transformed = self.try_transformed_decision(decisions, &matrix)?;
+-        if let Some(certainty) = self.facts.valid_pwn.certainty() {
++        if let Some(certainty) = self
++            .geometry_facts()
++            .and_then(|facts| facts.valid_pwn.certainty())
++        {
+             transformed.facts.valid_pwn.record(certainty);
+         }
+         Ok(transformed)
+@@ -741,7 +787,10 @@
+             triangles = refined;
+         }
+         let mesh = Self::new(positions, triangles);
+-        if let Some(certainty) = self.facts.valid_pwn.certainty() {
++        if let Some(certainty) = self
++            .geometry_facts()
++            .and_then(|facts| facts.valid_pwn.certainty())
++        {
+             mesh.facts.valid_pwn.record(certainty);
+         }
+         Ok(mesh)
+@@ -1092,6 +1141,17 @@
+             native: None,
+         }
+     }
++
++    fn position_owner(self) -> Option<&'a TriangleMesh> {
++        self.native
++            .filter(|native| std::ptr::eq(self.positions, native.positions.as_ref()))
++    }
++
++    fn geometry_facts(self) -> Option<&'a TriangleMeshFacts> {
++        self.position_owner()
++            .filter(|native| std::ptr::eq(self.triangles, native.triangles.as_ref()))
++            .and_then(TriangleMesh::geometry_facts)
++    }
+ }
+ 
+ /// Working polygon soup.
+@@ -1199,13 +1259,16 @@
+             isize::try_from(mesh_index).map_err(|_| HypermeshError::CapacityOverflow {
+                 operation: "source polygon mesh index",
+             })?;
+-        let edge_balance_is_certified = mesh
+-            .native
+-            .is_some_and(|native| native.facts.valid_pwn.consume(decisions));
+-        let normalize_wide_dyadic = mesh.native.map_or_else(
+-            || points_require_wide_dyadic_plane_normalization(mesh.positions),
+-            |native| native.facts.normalizes_wide_dyadic_planes(mesh.positions),
+-        );
++        let position_owner = mesh.position_owner();
++        let geometry_facts = mesh.geometry_facts();
++        let edge_balance_is_certified =
++            geometry_facts.is_some_and(|facts| facts.valid_pwn.consume(decisions));
++        let normalize_wide_dyadic = position_owner
++            .and_then(TriangleMesh::position_facts)
++            .map_or_else(
++                || points_require_wide_dyadic_plane_normalization(mesh.positions),
++                |facts| facts.normalizes_wide_dyadic_planes(mesh.positions),
++            );
+         let source_usage =
+             validate_source_triangles(decisions, *mesh, mesh_index, !edge_balance_is_certified)?;
+         source_vertex_count = source_vertex_count
+@@ -1214,16 +1277,15 @@
+                 operation: "source vertex identity count",
+             })?;
+         let source_positions = RetainedSourcePositions::shared_with_predicate_queries(
+-            mesh.native.map_or_else(
++            position_owner.map_or_else(
+                 || Arc::<[Point3]>::from(mesh.positions),
+                 |native| Arc::clone(&native.positions),
+             ),
+             &source_usage.referenced,
+         )?;
+         drop(source_usage);
+-        let retained_compact = mesh
+-            .native
+-            .and_then(|native| native.facts.source_polygon_planes.get())
++        let retained_compact = geometry_facts
++            .and_then(|facts| facts.source_polygon_planes.get())
+             .cloned();
+         let compact = if retained_compact.is_some() {
+             retained_compact
+@@ -1233,11 +1295,8 @@
+                     .map(Arc::new);
+             if let Some(compact) = &compact
+                 && decisions.certainty() == MeshCertainty::Certified
++                && let Some(facts) = geometry_facts
+             {
+-                let facts = &mesh
+-                    .native
+-                    .expect("native source cache owner is present")
+-                    .facts;
+                 let _ = facts.source_polygon_planes.set(Arc::clone(compact));
+             }
+             compact
+@@ -1284,8 +1343,8 @@
+                     unbalanced_edges: edge_balance.unbalanced_edges,
+                 });
+             }
+-            if let Some(native) = mesh.native {
+-                native.facts.valid_pwn.record(local.certainty());
++            if let Some(facts) = geometry_facts {
++                facts.valid_pwn.record(local.certainty());
+             }
+         }
+     }
+@@ -1509,6 +1568,9 @@
+ }
+ 
+ #[cfg(test)]
++mod fact_identity_tests;
++
++#[cfg(test)]
+ mod tests {
+     use super::*;
+ 
+@@ -1919,8 +1981,12 @@
+ 
+     #[test]
+     fn mesh_fact_header_stays_compact() {
++        // Source identities are required for correctness with public buffer
++        // edits. Keep the previous 80-byte budget for the remaining facts.
++        let identities =
++            std::mem::size_of::<Weak<[Point3]>>() + std::mem::size_of::<Weak<[Triangle]>>();
+         assert!(
+-            std::mem::size_of::<TriangleMeshFacts>() <= 80,
++            std::mem::size_of::<TriangleMeshFacts>() <= 80 + identities,
+             "cold mesh facts occupy {} bytes",
+             std::mem::size_of::<TriangleMeshFacts>(),
+         );
