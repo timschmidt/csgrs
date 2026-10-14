@@ -1,0 +1,90 @@
+{
+  "purpose": "Measure the complete candidate change on common, unsupported, eligible-nonzero and newly provable scalar queries, separately from full native hull costs.",
+  "prerequisites": [
+    "Unchanged finite-field broad qualification: eleven commands and assessor complete",
+    "Frozen native resource trial: thirty-four commands and assessor complete"
+  ],
+  "groups": [
+    "baseline admitted mesh-identity source",
+    "late normal-form cyclotomic V2",
+    "finite-image early affine V1"
+  ],
+  "source_change": "None. Link the same probe against each previously frozen native-build hyperreal library; all have cached-f64-approx/default features.",
+  "apis": [
+    "Real::exact_rational_normal_form",
+    "Real::certified_affine_det3_sign"
+  ],
+  "time_repetitions": {
+    "normal_rational": 262144,
+    "normal_pi_plus_e": 16384,
+    "normal_sqrt5": 16384,
+    "normal_trig_nonzero": 4096,
+    "normal_unsupported_order": 4096,
+    "normal_pythagorean_zero": 1024,
+    "normal_double_angle_zero": 1024,
+    "affine_dyadic": 262144,
+    "affine_nondyadic_rational": 262144,
+    "affine_unsupported_pi": 16384,
+    "affine_unsupported_sqrt5": 16384,
+    "affine_trig_nonzero": 4096,
+    "affine_unsupported_order": 4096,
+    "affine_original_zero": 1024
+  },
+  "allocation_repetitions": 128,
+  "phases": "One first explicit query, then a fixed number of queries on the same prepared retained value. Constructors and shared constants may already have warmed caches; first query is not claimed to mean a wholly cold internal state.",
+  "orders": [
+    [
+      "baseline",
+      "late",
+      "image"
+    ],
+    [
+      "late",
+      "image",
+      "baseline"
+    ],
+    [
+      "image",
+      "baseline",
+      "late"
+    ],
+    [
+      "image",
+      "late",
+      "baseline"
+    ],
+    [
+      "late",
+      "baseline",
+      "image"
+    ],
+    [
+      "baseline",
+      "image",
+      "late"
+    ]
+  ],
+  "modes": [
+    "time without allocator instrumentation",
+    "requested global allocator traffic and retained/peak byte deltas"
+  ],
+  "preflight_processes": 6,
+  "fixed_sample_processes": 36,
+  "commands": 52,
+  "command_timeout_seconds": 300,
+  "mathematical_controls": "Exact rational 1/3 and positive unit-tetrahedron orientation must remain certified. Pythagorean/double-angle zero identities must be certified by both cyclotomic candidates. The original 32x16 zero quadruple [0,1,368,256] must be certified by the early image candidate. Every definite fact is checked against its exact rational or sign oracle; replay may strengthen an Unknown and may never weaken a known fact. Unsupported and eligible nonzero queries must not manufacture a rational or zero certificate.",
+  "input_identity": "Fixed Rust construction recipes; no float projection. Coarse structural kind metadata is emitted after query measurements and compared across groups; it is explicitly not claimed to be a dispatch trace.",
+  "timing_scope": "Query-body wall time includes black-box barriers, exact-result assertions and monotonicity checks. First-query singleton timers and allocator-instrumented timers do not support performance claims.",
+  "screen_rule": "Only repeated-query phases with equal per-iteration certification counts are eligible. Flag image/reference overhead when all six paired ratios exceed 1.10, the median exceeds 1.15, and both median phase times are at least 2000000 ns. Otherwise inconclusive. Different certification capability is reported separately, not treated as an optimization comparison.",
+  "retention_scope": "Requested heap allocator traffic and live-byte deltas; not stack usage, usable allocator sizes, RSS or a universal memory bound.",
+  "frozen_sample_policy": "No extension, filtering, replacement or pooling with other experiments. Preserve the original first failure if one occurs.",
+  "pending_after_trial": [
+    "independent directed adversarial/representation campaign",
+    "production formal proof obligations",
+    "final public resource documentation and admission record"
+  ],
+  "probe_sha256": "6138756057d91da98cd47d90aadc8d543a8ce202eca471b66016c5fcf0812c1e",
+  "runtime_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
