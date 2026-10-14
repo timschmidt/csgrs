@@ -1,0 +1,60 @@
+{
+  "purpose": "Attribute hardware work in the existing scalar construction-cost investigation, preserving all earlier adverse costs and the rejected cache-free native gate.",
+  "trigger": "Two full-cache construction phases had approximately 1.65x elapsed cost despite equal public arithmetic counts and no direct cache activity in the later scoped diagnostic.",
+  "libraries": "Reuse the unchanged main, full-cache and no-persistent release libraries already linked by the original construction-trace-v1 protocol. No library rebuild, runtime source edit or native gate rerun.",
+  "source_change": "Only a standalone observation wrapper and its C/Rust per-thread hardware counter backend. The complete original inputs/expected/witness/main suffix is copied byte-for-byte.",
+  "fixed_fixture": "4096 inputs, eight existing quadratic families, construction/first/warm/cloned phases in their original order; 32 work windows and 32 separate empty windows per process.",
+  "qualification": [
+    "Rust formatting",
+    "C -Wall -Wextra -Werror",
+    "Standalone control and probe Clippy -D warnings",
+    "Control: two descriptors owned and closed, busy loop retires more instructions and cycles, disabled state stays disabled after normal return and unwind, unavailable counters preserve the body result"
+  ],
+  "fixed_orders": [
+    [
+      "main",
+      "full-cache",
+      "no-persistent"
+    ],
+    [
+      "full-cache",
+      "no-persistent",
+      "main"
+    ],
+    [
+      "no-persistent",
+      "main",
+      "full-cache"
+    ],
+    [
+      "main",
+      "no-persistent",
+      "full-cache"
+    ],
+    [
+      "no-persistent",
+      "full-cache",
+      "main"
+    ],
+    [
+      "full-cache",
+      "main",
+      "no-persistent"
+    ]
+  ],
+  "sample_policy": "Exactly 18 fresh processes, six per variant; each variant occupies each position twice. All builds and controls finish before sampling. No replacement, extension, filtering or pooling with prior samples.",
+  "counter_policy": "Current-thread cycles:u and instructions:u, one pinned group, no inheritance. Reset counts while disabled, retain cumulative enabled/running times before and after each window, require positive equal deltas for full scheduling coverage. Preserve all errors/raw values; no scaled counts.",
+  "time_policy": "Thread CPU and wall are recorded separately. Hardware spans the timer calls. Empty windows are kept without subtraction. Cycles/CPU is not a calibrated frequency; reference cycles are unavailable.",
+  "controls_failure": "Stop and retain the failure before samples if the control fails. Never edit an executed runner, driver or result.",
+  "analysis": "Retain all 576 work and 576 empty windows. Produce six-pair comparisons only where every work and empty window in all six pairs is usable. Report every construction row and complete 32-phase matrix, including adverse and unavailable observations.",
+  "identity": "All 32 exact witness/representation inventory rows must match the earlier unchanged trace in every process. Guard main source, all 35 pending native paths, previous source trees, artifacts, libraries and binaries.",
+  "limits": [
+    "A different observation wrapper changes standalone machine code and measurement overhead. New timings cannot replace either prior timing-only trial.",
+    "Earlier-phase cache state, compiler decisions, layout, environment and interactions remain possible causes unless this diagnostic directly resolves them.",
+    "Current governor snapshots do not establish historical host settings; this protocol does not modify any host policy.",
+    "Descriptive six-pair comparisons are not statistical significance or evidence for admitting a runtime candidate."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

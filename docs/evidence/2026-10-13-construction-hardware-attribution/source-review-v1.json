@@ -1,0 +1,39 @@
+{
+  "all_seven_implementation_and_runner_files_read": true,
+  "source_sha256": {
+    "counters_v1.c": "ef6f67719ba1b5922228737f8418c9c57d3aa27a09e17b5ba0b06cde6b4682e3",
+    "counters_v1.rs": "a91f88c6f8750ece522d68bddca3660268eea4e4cc5aed8b82f1c832607bba7d",
+    "controls_v1.rs": "40649fa94a4be07377ca0c12b6ac5e72accd79eaf4fa943df466ac4e15ea8bd9",
+    "wrapper_v1.rs": "e49cd992c80c3dbde45e5b2354593cd8cb5b8284f106f53833ba5a23f583b7f7",
+    "common_v1.py": "1ae9e90fc0925c88966785ba20eb13cf368affc00eb1dc8f4905fb0bf9308886",
+    "run_v1.py": "9b20d6b99ba923bf848e02f5247572eb5f9f98082dfe8cc363f62daa0371a675",
+    "assess_v1.py": "bad95505ca43c8c7b006e01ee5a7492b3954122abbc49d267bafc46f137c96b9"
+  },
+  "installed_references": {
+    "/usr/include/linux/perf_event.h": "4c2e217b87afecaa002ec35dd748319b02fbf98ddc301c60238146fa2ab057b7",
+    "/usr/include/asm/unistd_64.h": "261fc370ad799ba94c342ce4a3f8a83232e5e76339ca3cea5e5090efcc22370a",
+    "/usr/include/asm-generic/ioctl.h": "c61365a9b4282a9ac583ce3d417e09e8dfce75458b64d45179640c82eafa7eed",
+    "/usr/share/man/man2/perf_event_open.2.gz": "6c5d8ba80bcfe7d3e74992f675361525ebdc3a569c5ecf06c8548d3bccb076fb"
+  },
+  "reviewed_api": [
+    "Hardware type/config, version-0 attr extent and zero initialization, disabled leader and initially group-dependent member, pinned leader, no inheritance, exclude kernel/hypervisor, pid=0/cpu=-1 current-thread ownership and CLOEXEC.",
+    "Installed ioctl definitions and group flags; ID retrieval and the group read format nr/enabled/running/(value,id), reset changes counts but not cumulative scheduling times, pinned scheduling failure may yield EOF.",
+    "CLOEXEC ownership, partial-open cleanup and errno preservation. C uses installed syscall/ioctl symbols rather than handwritten numeric layouts."
+  ],
+  "findings": [
+    "C read retries EINTR, checks exact byte count and exactly two unique matching IDs before copying output; EOF, short read and invalid identifiers fail rather than becoming a zero sample.",
+    "Rust repr(C) contains the same four ordered u64 fields and checks sizeof. FFI buffers are live and correctly sized. Two successful descriptors transfer to OwnedFd exactly once; failed opens close partial state.",
+    "PhantomData<Rc<()>> prevents moving or sharing the thread-owned group. The observed closures do not recursively enter the counter backend.",
+    "RAII disables the group on normal completion and unwind. A failed stop remains an observation error even if drop cleanup succeeds. Controls read the disabled state around an outside burn loop before any new reset/enable.",
+    "The body still executes when counter setup/read fails; snapshots, clock results and errors remain visible. Group failure is retained for that process.",
+    "A successful window allocates no error strings or observation vectors while counting. JSON conversion occurs after the group is disabled. Hardware includes clock/measurement instructions and generic wrapper code; separate empty windows expose only part of that overhead.",
+    "Before/after cumulative scheduling deltas and zero reset counts are checked independently by Rust and Python. No count scaling or empty-window subtraction is performed.",
+    "The runner freezes the same source path for three separately linked binaries, all original library hashes, compiler/RUSTFLAGS, reference headers and actual C header dependencies. All builds precede the fixed 18-process schedule.",
+    "The assessor verifies logs, actual binaries/object/headers, the unchanged fixture suffix, all witnesses, all 1152 raw windows, balanced order and complete six-pair eligibility. Invalid windows remain in raw evidence and disqualify the corresponding aggregate."
+  ],
+  "compile_or_runtime_checks_already_passed": false,
+  "review_is_not_measurement_or_runtime_admission": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
