@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-qualified-native-cost-ready",
+      "status": "normal-form-image-filter-native-cost-closed-resources-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5267,13 +5267,25 @@
       "sphere_normal_image_qualification_assessor_terminal_exit_code": 0,
       "sphere_normal_image_native_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-scope-v1.json",
       "sphere_normal_image_native_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_native_cost_v1.py",
-      "sphere_normal_image_native_cost_executed": false,
+      "sphere_normal_image_native_cost_executed": true,
       "sphere_normal_image_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-scope-v1.json",
       "sphere_normal_image_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_resources_v1.py",
       "sphere_normal_image_resources_executed": false,
       "sphere_normal_image_asan_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v1.json",
       "sphere_normal_image_asan_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v1.py",
-      "sphere_normal_image_asan_executed": false
+      "sphere_normal_image_asan_executed": false,
+      "sphere_normal_image_native_cost_complete": true,
+      "sphere_normal_image_native_cost_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-assessment-v1.json",
+      "sphere_normal_image_native_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-closure-v1.json",
+      "sphere_normal_image_native_cost_median_ratios": {
+        "fifteen_degrees": 1.008514908134725,
+        "original_medium": 1.003971844013428,
+        "fifth_turn": 1.0342763448944066,
+        "seventh_turn": 1.0590010528152172
+      },
+      "sphere_normal_image_native_cost_flagged_cases": [],
+      "sphere_normal_image_native_cost_all_observed_increases_retained": true,
+      "sphere_normal_image_native_speedup_claimed": false
     }
   },
   "status_meanings": {
