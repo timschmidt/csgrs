@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "stable-selection-qualified-dyadic-cache-audit-pending",
+      "status": "stable-selection-qualified-cost-trial-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5161,10 +5161,13 @@
       "sphere_stable_selection_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-cost-scope-v1.json",
       "sphere_stable_selection_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_stable_selection_v1.py",
       "sphere_stable_selection_cost_executed": false,
-      "sphere_stable_selection_dyadic_cache_audit_open": true,
+      "sphere_stable_selection_dyadic_cache_audit_open": false,
       "dyadic_zero_replay_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/dyadic-zero-replay-scope-v1.json",
       "dyadic_zero_replay_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_dyadic_zero_replay_v1.py",
-      "dyadic_zero_replay_executed": false
+      "dyadic_zero_replay_executed": true,
+      "dyadic_zero_replay_result": "docs/evidence/2026-10-14-sampled-sphere-hull/dyadic-zero-replay-v1/result.json",
+      "dyadic_zero_replay_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/dyadic-zero-replay-closure-v1.json",
+      "dyadic_zero_replay_mismatches": 0
     }
   },
   "status_meanings": {
