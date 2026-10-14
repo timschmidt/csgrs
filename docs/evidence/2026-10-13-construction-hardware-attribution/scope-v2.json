@@ -1,0 +1,11 @@
+{
+  "inherits_scope": "scope-v1.json",
+  "inherits_scope_sha256": "223e1b6058b80966bdc87d08fd521846e39fe41323fd7460bf376e9ecfaaf6ca",
+  "failure": "failure-v1.json",
+  "only_change": "Repair a prior-library manifest lookup before any build or sample ran; preserve v1 sources/failure, use new v2 runner/common/assessor and output/target directories.",
+  "all_counter_backend_control_and_wrapper_sources_unchanged": true,
+  "qualification_schedule_fixture_eligibility_and_limits_unchanged": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

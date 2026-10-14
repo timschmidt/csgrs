@@ -1,0 +1,21 @@
+{
+  "command": [
+    "python3",
+    "docs/evidence/2026-10-13-construction-hardware-attribution/run_v1.py"
+  ],
+  "runner_sha256": "9b20d6b99ba923bf848e02f5247572eb5f9f98082dfe8cc363f62daa0371a675",
+  "common_sha256": "1ae9e90fc0925c88966785ba20eb13cf368affc00eb1dc8f4905fb0bf9308886",
+  "exit_code": 1,
+  "session_id": 31890,
+  "tool_output_chunk_id": "f9936e",
+  "failure": "FileNotFoundError in common_v1.py verify_prior: the original construction-trace-v1 stores its library records in protocol.json, not libraries.json.",
+  "missing_path": "docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/libraries.json",
+  "failed_before_output_directory_creation": true,
+  "failed_before_work_directory_creation": true,
+  "builds_started": 0,
+  "control_runs": 0,
+  "samples_collected": 0,
+  "old_runners_and_sources_preserved": true,
+  "sample_plan_changed": false,
+  "correction": "New common_v2 reads the explicit actual manifest for each prior diagnostic. New run_v2/assess_v2 use distinct output paths; counter code, controls and wrapper remain unchanged."
+}

@@ -1,0 +1,21 @@
+{
+  "prior_review": "source-review-v1.json",
+  "prior_review_sha256": "bfdeed2ea92b45c21e0d60ca7d9d82c16660d327aa1452f629ff6bf5d5515fed",
+  "complete_three_file_delta_review": "common_v2 selects coverage libraries.json and old construction protocol.json libraries explicitly and still verifies all binary/library hashes. run_v2 and assess_v2 change imports, frozen-input inventory and output directories only.",
+  "source_sha256": {
+    "common_v2.py": "34feb6c05bfcced5c1eb235704c3ab7869c77cf257e12306d81da44b4e12d457",
+    "run_v2.py": "d598f75f9bc1e4623af04e50b8b3c369d75317957d244859d0b6f34cdf1f9935",
+    "assess_v2.py": "fece8012dfb9b8be906bff40d55c33caacaf1f42808ede38bbc418c84cf903f7"
+  },
+  "counter_sources_unchanged": {
+    "counters_v1.c": "ef6f67719ba1b5922228737f8418c9c57d3aa27a09e17b5ba0b06cde6b4682e3",
+    "counters_v1.rs": "a91f88c6f8750ece522d68bddca3660268eea4e4cc5aed8b82f1c832607bba7d",
+    "controls_v1.rs": "40649fa94a4be07377ca0c12b6ac5e72accd79eaf4fa943df466ac4e15ea8bd9",
+    "wrapper_v1.rs": "e49cd992c80c3dbde45e5b2354593cd8cb5b8284f106f53833ba5a23f583b7f7"
+  },
+  "builds_or_samples_started_in_v1": false,
+  "replacements_or_extensions": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
