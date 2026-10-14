@@ -4231,14 +4231,25 @@
       ]
     },
     "combined_native_admission": {
-      "status": "combined-source-review-complete-direct-current-main-cost-comparison-required",
+      "status": "combined-current-main-comparison-frozen-library-measurements-next",
       "evidence": "docs/evidence/2026-10-13-combined-native-admission/review-v1.json",
       "source_review_complete": true,
       "runtime_admitted": false,
       "new_measurements_executed": false,
       "main_and_35_pending_native_paths_unchanged": true,
-      "next_step": "Freeze the distinct current-main versus complete-candidate comparison, retaining library consumers, original gates, full reports and all earlier adverse results.",
-      "plan_complete": false
+      "next_step": "Execute the frozen independent-library comparison, then interpret every cost and witness row before deciding further application admission work.",
+      "plan_complete": false,
+      "preparation": "docs/evidence/2026-10-13-combined-native-admission/preparation-v1/protocol.json",
+      "preparation_sha256": "2701bf2b3474c6ebf953b146c63e4c6abf880e21d920a790fffeb0082c6f836f",
+      "preparation_executed": true,
+      "source_files": {
+        "baseline": 10128,
+        "candidate": 10133,
+        "baseline-metadata": 10129,
+        "candidate-metadata": 10134
+      },
+      "review_count_correction": "docs/evidence/2026-10-13-combined-native-admission/review-correction-v1.json",
+      "fixed_design": "docs/evidence/2026-10-13-combined-native-admission/scope-v1.json"
     }
   },
   "status_meanings": {
