@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-feasibility-passed-costs-open",
+      "status": "normal-form-image-filter-scalar-cost-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5212,7 +5212,10 @@
       "sphere_normal_image_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-v1/result.json",
       "sphere_normal_image_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-feasibility-closure-v1.json",
       "sphere_normal_image_targeted_tests_passed": 14,
-      "sphere_normal_image_all_twelve_native_outputs_preserved": true
+      "sphere_normal_image_all_twelve_native_outputs_preserved": true,
+      "sphere_normal_image_scalar_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-scalar-cost-scope-v1.json",
+      "sphere_normal_image_scalar_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_scalar_cost_v1.py",
+      "sphere_normal_image_scalar_cost_executed": false
     }
   },
   "status_meanings": {
