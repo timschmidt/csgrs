@@ -1,0 +1,2 @@
+input case=fifth_turn mode=coordinate_symmetries positions=62 triangles=120 groups=696
+result case=fifth_turn mode=coordinate_symmetries certified=true original_positions_preserved=true prior_certified_rows_check=not_applicable

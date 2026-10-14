@@ -1,0 +1,2 @@
+input case=seventh_turn mode=coordinate_symmetries positions=30 triangles=56 groups=144
+result case=seventh_turn mode=coordinate_symmetries certified=true original_positions_preserved=true prior_certified_rows_check=not_applicable

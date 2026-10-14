@@ -1,0 +1,2 @@
+input case=original_medium mode=coordinate_symmetries positions=482 triangles=960 groups=52141
+result case=original_medium mode=coordinate_symmetries certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

@@ -1,0 +1,23 @@
+{
+  "oracle_source_sha256": "60c4934f738eecc9daedae41a67a7fc611c775ee012b5103f4ab2ac49b999424",
+  "construction": "Use zeta=exp(2*pi*i/L), L=lcm(segments,2*stacks,4); original coordinates scaled by 4/radius are integer polynomials in zeta. Monic division by Phi_L uses integer coefficients only.",
+  "zero_rule": "A zero polynomial remainder certifies the exact determinant is zero.",
+  "nonzero_anchor_rule": "Phi_L is the minimal polynomial of a primitive L-th root in characteristic zero. Therefore a nonzero reduced normal component certifies a nondegenerate anchor plane; only then may all original points with zero determinant be grouped.",
+  "normative_mathematical_sources": [
+    {
+      "url": "https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Polynomial/Cyclotomic/Basic.html",
+      "role": "Cyclotomic product and monic polynomial identities supporting recursive construction."
+    },
+    {
+      "url": "https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Polynomial/Cyclotomic/Roots.html",
+      "role": "Cyclotomic polynomial equals the minimal polynomial of a primitive root; irreducibility over the rationals."
+    }
+  ],
+  "verification_limits": [
+    "These primary theorem references justify the mathematics; they do not mean the local Python oracle has been formally verified in Lean.",
+    "Integer arithmetic and exact remainders are used throughout. No floating threshold participates in admission of a group.",
+    "Only the fixed original fixtures are covered by this diagnostic. General scalar eligibility, cost bounds and native proof retention remain future work."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,3164 @@
+{
+  "case": "original_medium",
+  "outcome": "query_stop_or_failure",
+  "added_groups": [
+    [
+      0,
+      1,
+      256,
+      368
+    ],
+    [
+      0,
+      1,
+      368,
+      383
+    ],
+    [
+      2,
+      19,
+      364,
+      377
+    ],
+    [
+      2,
+      377,
+      427,
+      442
+    ],
+    [
+      147,
+      248,
+      368,
+      477
+    ],
+    [
+      2,
+      377,
+      406,
+      451
+    ],
+    [
+      193,
+      248,
+      368,
+      433
+    ],
+    [
+      364,
+      377,
+      407,
+      424
+    ],
+    [
+      2,
+      377,
+      424,
+      439
+    ],
+    [
+      248,
+      274,
+      334,
+      368
+    ],
+    [
+      257,
+      274,
+      364,
+      377
+    ],
+    [
+      83,
+      111,
+      147,
+      173
+    ],
+    [
+      111,
+      117,
+      147,
+      173
+    ],
+    [
+      111,
+      141,
+      147,
+      173
+    ],
+    [
+      147,
+      173,
+      248,
+      282
+    ],
+    [
+      139,
+      173,
+      248,
+      274
+    ],
+    [
+      377,
+      406,
+      436,
+      467
+    ],
+    [
+      248,
+      283,
+      343,
+      368
+    ],
+    [
+      283,
+      338,
+      368,
+      433
+    ],
+    [
+      87,
+      147,
+      283,
+      433
+    ],
+    [
+      28,
+      40,
+      415,
+      433
+    ],
+    [
+      7,
+      40,
+      415,
+      442
+    ],
+    [
+      248,
+      276,
+      283,
+      321
+    ],
+    [
+      248,
+      283,
+      321,
+      328
+    ],
+    [
+      248,
+      283,
+      321,
+      353
+    ],
+    [
+      2,
+      16,
+      31,
+      47
+    ],
+    [
+      173,
+      184,
+      189,
+      248
+    ],
+    [
+      173,
+      184,
+      229,
+      248
+    ],
+    [
+      173,
+      184,
+      234,
+      248
+    ],
+    [
+      184,
+      186,
+      248,
+      274
+    ],
+    [
+      184,
+      218,
+      248,
+      274
+    ],
+    [
+      184,
+      248,
+      274,
+      276
+    ],
+    [
+      136,
+      184,
+      274,
+      316
+    ],
+    [
+      173,
+      201,
+      221,
+      248
+    ],
+    [
+      173,
+      206,
+      221,
+      248
+    ],
+    [
+      173,
+      216,
+      221,
+      248
+    ],
+    [
+      2,
+      422,
+      436,
+      466
+    ],
+    [
+      377,
+      391,
+      406,
+      422
+    ],
+    [
+      377,
+      393,
+      408,
+      422
+    ],
+    [
+      302,
+      316,
+      361,
+      377
+    ],
+    [
+      361,
+      377,
+      392,
+      406
+    ],
+    [
+      58,
+      147,
+      192,
+      283
+    ],
+    [
+      40,
+      58,
+      433,
+      445
+    ],
+    [
+      25,
+      58,
+      433,
+      460
+    ],
+    [
+      415,
+      427,
+      442,
+      460
+    ],
+    [
+      415,
+      433,
+      448,
+      460
+    ],
+    [
+      39,
+      51,
+      111,
+      129
+    ],
+    [
+      2,
+      47,
+      64,
+      469
+    ],
+    [
+      2,
+      422,
+      439,
+      469
+    ],
+    [
+      424,
+      442,
+      457,
+      469
+    ],
+    [
+      302,
+      318,
+      363,
+      377
+    ],
+    [
+      355,
+      368,
+      398,
+      415
+    ],
+    [
+      16,
+      47,
+      122,
+      151
+    ],
+    [
+      47,
+      78,
+      93,
+      122
+    ],
+    [
+      5,
+      17,
+      47,
+      65
+    ],
+    [
+      2,
+      17,
+      34,
+      469
+    ],
+    [
+      3,
+      5,
+      34,
+      469
+    ],
+    [
+      5,
+      18,
+      34,
+      469
+    ],
+    [
+      5,
+      20,
+      34,
+      469
+    ],
+    [
+      122,
+      154,
+      184,
+      212
+    ],
+    [
+      184,
+      212,
+      216,
+      274
+    ],
+    [
+      184,
+      212,
+      242,
+      274
+    ],
+    [
+      184,
+      212,
+      246,
+      274
+    ],
+    [
+      111,
+      122,
+      137,
+      156
+    ],
+    [
+      94,
+      122,
+      156,
+      184
+    ],
+    [
+      122,
+      126,
+      156,
+      184
+    ],
+    [
+      122,
+      152,
+      156,
+      184
+    ],
+    [
+      111,
+      129,
+      144,
+      156
+    ],
+    [
+      156,
+      157,
+      173,
+      202
+    ],
+    [
+      156,
+      173,
+      188,
+      202
+    ],
+    [
+      156,
+      173,
+      201,
+      202
+    ],
+    [
+      184,
+      202,
+      262,
+      274
+    ],
+    [
+      248,
+      262,
+      265,
+      277
+    ],
+    [
+      248,
+      265,
+      277,
+      280
+    ],
+    [
+      248,
+      265,
+      277,
+      293
+    ],
+    [
+      29,
+      209,
+      283,
+      433
+    ],
+    [
+      58,
+      209,
+      284,
+      433
+    ],
+    [
+      424,
+      437,
+      452,
+      469
+    ],
+    [
+      393,
+      407,
+      422,
+      438
+    ],
+    [
+      332,
+      346,
+      361,
+      377
+    ],
+    [
+      40,
+      51,
+      66,
+      85
+    ],
+    [
+      40,
+      58,
+      73,
+      85
+    ],
+    [
+      67,
+      85,
+      111,
+      129
+    ],
+    [
+      69,
+      85,
+      111,
+      129
+    ],
+    [
+      81,
+      85,
+      111,
+      129
+    ],
+    [
+      85,
+      111,
+      115,
+      129
+    ],
+    [
+      85,
+      111,
+      127,
+      129
+    ],
+    [
+      373,
+      385,
+      415,
+      433
+    ],
+    [
+      28,
+      58,
+      209,
+      359
+    ],
+    [
+      58,
+      134,
+      359,
+      433
+    ],
+    [
+      12,
+      58,
+      433,
+      477
+    ],
+    [
+      415,
+      429,
+      444,
+      460
+    ],
+    [
+      371,
+      385,
+      415,
+      431
+    ],
+    [
+      424,
+      441,
+      456,
+      469
+    ],
+    [
+      272,
+      301,
+      316,
+      347
+    ],
+    [
+      272,
+      303,
+      318,
+      347
+    ],
+    [
+      318,
+      332,
+      347,
+      363
+    ],
+    [
+      318,
+      334,
+      349,
+      363
+    ],
+    [
+      321,
+      334,
+      349,
+      366
+    ],
+    [
+      321,
+      337,
+      352,
+      366
+    ],
+    [
+      368,
+      382,
+      384,
+      398
+    ],
+    [
+      184,
+      216,
+      246,
+      274
+    ],
+    [
+      184,
+      242,
+      246,
+      274
+    ],
+    [
+      16,
+      47,
+      62,
+      91
+    ],
+    [
+      47,
+      76,
+      91,
+      122
+    ],
+    [
+      91,
+      122,
+      212,
+      241
+    ],
+    [
+      31,
+      47,
+      77,
+      91
+    ],
+    [
+      77,
+      91,
+      106,
+      122
+    ],
+    [
+      111,
+      124,
+      139,
+      156
+    ],
+    [
+      16,
+      32,
+      47,
+      61
+    ],
+    [
+      18,
+      32,
+      47,
+      63
+    ],
+    [
+      3,
+      18,
+      34,
+      469
+    ],
+    [
+      18,
+      20,
+      34,
+      469
+    ],
+    [
+      4,
+      18,
+      453,
+      469
+    ],
+    [
+      35,
+      51,
+      66,
+      80
+    ],
+    [
+      241,
+      272,
+      287,
+      316
+    ],
+    [
+      124,
+      138,
+      168,
+      184
+    ],
+    [
+      184,
+      197,
+      212,
+      229
+    ],
+    [
+      184,
+      202,
+      217,
+      229
+    ],
+    [
+      229,
+      246,
+      261,
+      274
+    ],
+    [
+      111,
+      127,
+      142,
+      156
+    ],
+    [
+      159,
+      160,
+      173,
+      204
+    ],
+    [
+      160,
+      173,
+      188,
+      204
+    ],
+    [
+      160,
+      173,
+      204,
+      205
+    ],
+    [
+      159,
+      160,
+      173,
+      188
+    ],
+    [
+      159,
+      160,
+      173,
+      205
+    ]
+  ],
+  "records": [
+    {
+      "attempt": 0,
+      "indices": [
+        0,
+        1,
+        368,
+        256
+      ],
+      "group": [
+        0,
+        1,
+        256,
+        368
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "new_group_added": true
+    },
+    {
+      "attempt": 1,
+      "indices": [
+        0,
+        1,
+        368,
+        383
+      ],
+      "group": [
+        0,
+        1,
+        368,
+        383
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2bc590e7c1a6ffceab3990154f9f334736b7145817f5b63b55e2e82c83718ef5",
+      "new_group_added": true
+    },
+    {
+      "attempt": 2,
+      "indices": [
+        2,
+        364,
+        377,
+        19
+      ],
+      "group": [
+        2,
+        19,
+        364,
+        377
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "f574b753ff0e6dbe984c6ee2b57253bc6d39f3a5ab13721d052cf12d53579d65",
+      "new_group_added": true
+    },
+    {
+      "attempt": 3,
+      "indices": [
+        377,
+        2,
+        442,
+        427
+      ],
+      "group": [
+        2,
+        377,
+        427,
+        442
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2b59103719c2cace05074f354b60bc55521cdaf29889944ad2e6a8430a1fd617",
+      "new_group_added": true
+    },
+    {
+      "attempt": 4,
+      "indices": [
+        368,
+        147,
+        248,
+        477
+      ],
+      "group": [
+        147,
+        248,
+        368,
+        477
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2eac260196585084585a91b453bb23f3fc42cf02aabb102155cbc32655d1ed43",
+      "new_group_added": true
+    },
+    {
+      "attempt": 5,
+      "indices": [
+        2,
+        377,
+        406,
+        451
+      ],
+      "group": [
+        2,
+        377,
+        406,
+        451
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e61008e9764c38817a86af263b76462034d224f0f1176b44adb39ae4399291f4",
+      "new_group_added": true
+    },
+    {
+      "attempt": 6,
+      "indices": [
+        248,
+        368,
+        433,
+        193
+      ],
+      "group": [
+        193,
+        248,
+        368,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "567b20c995c60f809915460298b705fb156c1933043023edf91bc02f3fa0b42f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 7,
+      "indices": [
+        364,
+        377,
+        424,
+        407
+      ],
+      "group": [
+        364,
+        377,
+        407,
+        424
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "407e7dc026d08a93f75cf18a78bdf29211d5c61b21828a2302351a784a981fa6",
+      "new_group_added": true
+    },
+    {
+      "attempt": 8,
+      "indices": [
+        377,
+        2,
+        424,
+        439
+      ],
+      "group": [
+        2,
+        377,
+        424,
+        439
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "6abf349b3b85540c4ead6940bb05fb15ba04e9e9d5d4d24be6737f4f8d961776",
+      "new_group_added": true
+    },
+    {
+      "attempt": 9,
+      "indices": [
+        368,
+        248,
+        274,
+        334
+      ],
+      "group": [
+        248,
+        274,
+        334,
+        368
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a0939ae728cdc2f493409dd2a7935fca73a5ccd6e6bb88a15251dccbdb7d5914",
+      "new_group_added": true
+    },
+    {
+      "attempt": 10,
+      "indices": [
+        377,
+        364,
+        274,
+        257
+      ],
+      "group": [
+        257,
+        274,
+        364,
+        377
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "93e43cb383147f34847aedcda2c78c2a300af50d0fa54a6f728fa7a0663b7de2",
+      "new_group_added": true
+    },
+    {
+      "attempt": 11,
+      "indices": [
+        147,
+        111,
+        173,
+        83
+      ],
+      "group": [
+        83,
+        111,
+        147,
+        173
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "017c2402d4a8d43e12cece4ac45ed13c84e5a9ac7bcdc01874e676e4f2148871",
+      "new_group_added": true
+    },
+    {
+      "attempt": 12,
+      "indices": [
+        147,
+        111,
+        173,
+        117
+      ],
+      "group": [
+        111,
+        117,
+        147,
+        173
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "db0fea1824aabb02388b6eb75438fe289d6820701e70fbe3e54fff05446edaf1",
+      "new_group_added": true
+    },
+    {
+      "attempt": 13,
+      "indices": [
+        147,
+        111,
+        173,
+        141
+      ],
+      "group": [
+        111,
+        141,
+        147,
+        173
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a36452722c30fd1c9d5f26aadae089ed1d37839e56427a7680185297933721f6",
+      "new_group_added": true
+    },
+    {
+      "attempt": 14,
+      "indices": [
+        248,
+        147,
+        173,
+        282
+      ],
+      "group": [
+        147,
+        173,
+        248,
+        282
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "5d510b22b0e4e7f9795cd96bd79dc1489a9bafa7b3fd42fe181f396588304b78",
+      "new_group_added": true
+    },
+    {
+      "attempt": 15,
+      "indices": [
+        274,
+        248,
+        173,
+        139
+      ],
+      "group": [
+        139,
+        173,
+        248,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ff89c3c4d915947a47419438752cf7bc6fd3e4a5c3d66eda174fb1dcc465997f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 16,
+      "indices": [
+        377,
+        406,
+        436,
+        467
+      ],
+      "group": [
+        377,
+        406,
+        436,
+        467
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "f2e4c94dd1c10590b8c6a797f43870999a2349e8bf7227699698afa7eac09e6a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 17,
+      "indices": [
+        248,
+        368,
+        283,
+        343
+      ],
+      "group": [
+        248,
+        283,
+        343,
+        368
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "f21f6711afb22805d1bd5decb03d41deac6cba77e2c2c6617b4c549540972ed6",
+      "new_group_added": true
+    },
+    {
+      "attempt": 18,
+      "indices": [
+        368,
+        433,
+        283,
+        338
+      ],
+      "group": [
+        283,
+        338,
+        368,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "12976c39f113a4f8d6035ea99427f418419b51014288cc3f7a3c33a6239849f0",
+      "new_group_added": true
+    },
+    {
+      "attempt": 19,
+      "indices": [
+        433,
+        147,
+        283,
+        87
+      ],
+      "group": [
+        87,
+        147,
+        283,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "0ebf47fe021a0d1927fd6824930c47155ef7e5813c801a36f5bf5222a2e66211",
+      "new_group_added": true
+    },
+    {
+      "attempt": 20,
+      "indices": [
+        40,
+        433,
+        415,
+        28
+      ],
+      "group": [
+        28,
+        40,
+        415,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "862894b4795fa213e7de93b082cc14f1738208e3cf8e16c578c330ea72d98133",
+      "new_group_added": true
+    },
+    {
+      "attempt": 21,
+      "indices": [
+        442,
+        40,
+        415,
+        7
+      ],
+      "group": [
+        7,
+        40,
+        415,
+        442
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "b3b28728f18b6f897ddc8a04c83498502ca30eefedc3a5208177810e0d4794aa",
+      "new_group_added": true
+    },
+    {
+      "attempt": 22,
+      "indices": [
+        283,
+        248,
+        321,
+        276
+      ],
+      "group": [
+        248,
+        276,
+        283,
+        321
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "545b13b37df8c1868525370b55d76d95704d1239cb85dd414ef58198ad1d3e5a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 23,
+      "indices": [
+        283,
+        248,
+        321,
+        328
+      ],
+      "group": [
+        248,
+        283,
+        321,
+        328
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "b31feb44def5495581aec419b8dd412a77b876068d302d6f36551b8d3ba7b485",
+      "new_group_added": true
+    },
+    {
+      "attempt": 24,
+      "indices": [
+        283,
+        248,
+        321,
+        353
+      ],
+      "group": [
+        248,
+        283,
+        321,
+        353
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "646edc1cedef1aeccecb9377f2232b006fb3b26dece42440be0be17066712c78",
+      "new_group_added": true
+    },
+    {
+      "attempt": 25,
+      "indices": [
+        2,
+        16,
+        47,
+        31
+      ],
+      "group": [
+        2,
+        16,
+        31,
+        47
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e5b0727814fdabef634ed8d3b3e6d48c5d1f17ebb619639b4d552ad33828f78b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 26,
+      "indices": [
+        248,
+        173,
+        184,
+        189
+      ],
+      "group": [
+        173,
+        184,
+        189,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "74c95fca68924d88671d513f165be8df6dea24f146054febb1a31ffbc2e68df2",
+      "new_group_added": true
+    },
+    {
+      "attempt": 27,
+      "indices": [
+        248,
+        173,
+        184,
+        229
+      ],
+      "group": [
+        173,
+        184,
+        229,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "125beb64f8d03c24b1dd19297486fbd0b0d0ae960390f5e5d5a8d8f2c7547286",
+      "new_group_added": true
+    },
+    {
+      "attempt": 28,
+      "indices": [
+        248,
+        173,
+        184,
+        234
+      ],
+      "group": [
+        173,
+        184,
+        234,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ecf39dba7390ae403a1eb1dbba0b660f78843cf381dc42c6b20afa634de7cd59",
+      "new_group_added": true
+    },
+    {
+      "attempt": 29,
+      "indices": [
+        274,
+        248,
+        184,
+        186
+      ],
+      "group": [
+        184,
+        186,
+        248,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "9b8d66bc46cf958332cc185d61bd9b7f2a0996812c254dee8e33bf1bdd68d65f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 30,
+      "indices": [
+        274,
+        248,
+        184,
+        218
+      ],
+      "group": [
+        184,
+        218,
+        248,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "055a92e811ab433655870f33f944539d18665834df480668e840da30b1d9415a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 31,
+      "indices": [
+        274,
+        248,
+        184,
+        276
+      ],
+      "group": [
+        184,
+        248,
+        274,
+        276
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e7a68fbf3a35fb1f329eef4c6ca6187e7327536b8452080fcc2c91c15d5e9db8",
+      "new_group_added": true
+    },
+    {
+      "attempt": 32,
+      "indices": [
+        316,
+        274,
+        184,
+        136
+      ],
+      "group": [
+        136,
+        184,
+        274,
+        316
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "eca1dc14764654aa9aac1b7b4ac751737cfcc37b7cf14031ee0d551e76fdf78f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 33,
+      "indices": [
+        173,
+        248,
+        221,
+        201
+      ],
+      "group": [
+        173,
+        201,
+        221,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "af39d4fc47d8259838d6ad7ff8ff546fcb966066f2fee161b640fa82f544cbe4",
+      "new_group_added": true
+    },
+    {
+      "attempt": 34,
+      "indices": [
+        173,
+        248,
+        221,
+        206
+      ],
+      "group": [
+        173,
+        206,
+        221,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4c72e07729957d2f8f993a632801e98760db07cd355e5d07cd65ebae5cb46d5d",
+      "new_group_added": true
+    },
+    {
+      "attempt": 35,
+      "indices": [
+        173,
+        248,
+        221,
+        216
+      ],
+      "group": [
+        173,
+        216,
+        221,
+        248
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "051ba9d43104d9e6ac5a678ba9ccec9c4afccf9ce5953531bee6989e49220aff",
+      "new_group_added": true
+    },
+    {
+      "attempt": 36,
+      "indices": [
+        2,
+        436,
+        466,
+        422
+      ],
+      "group": [
+        2,
+        422,
+        436,
+        466
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "c0a797fb6a53054ebf2442d5f9f9a01e8c2e7c46654161a9845e57c8e09643cd",
+      "new_group_added": true
+    },
+    {
+      "attempt": 37,
+      "indices": [
+        377,
+        406,
+        422,
+        391
+      ],
+      "group": [
+        377,
+        391,
+        406,
+        422
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "0cccd2d5ef9fab47d0bd567453927dfc593fb38199e84ff5e4398c322764269e",
+      "new_group_added": true
+    },
+    {
+      "attempt": 38,
+      "indices": [
+        393,
+        377,
+        422,
+        408
+      ],
+      "group": [
+        377,
+        393,
+        408,
+        422
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ead5358fc9be81485ae63265b9b7ce0f36231c7bdf95f53dafc80ee16709d719",
+      "new_group_added": true
+    },
+    {
+      "attempt": 39,
+      "indices": [
+        377,
+        316,
+        361,
+        302
+      ],
+      "group": [
+        302,
+        316,
+        361,
+        377
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "57ab286aadb9a949ddf4019e087db165d4e638f81c85f0a3d78a437bb3350257",
+      "new_group_added": true
+    },
+    {
+      "attempt": 40,
+      "indices": [
+        406,
+        377,
+        361,
+        392
+      ],
+      "group": [
+        361,
+        377,
+        392,
+        406
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "eb2854391d502cebeb5e2b3a170425eb0ba90f2934ddfca9f7b9fef1e4dd0c45",
+      "new_group_added": true
+    },
+    {
+      "attempt": 41,
+      "indices": [
+        147,
+        283,
+        58,
+        192
+      ],
+      "group": [
+        58,
+        147,
+        192,
+        283
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2f62d22bb3aa53d7377ef4f910b8e23e9d73cd567dfff0da564d0b1b6ebd402e",
+      "new_group_added": true
+    },
+    {
+      "attempt": 42,
+      "indices": [
+        433,
+        40,
+        58,
+        445
+      ],
+      "group": [
+        40,
+        58,
+        433,
+        445
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4e0bdd78ce7a1ed8755d4bb6801f5c192947e94cc0b314a853d33c809f775538",
+      "new_group_added": true
+    },
+    {
+      "attempt": 43,
+      "indices": [
+        58,
+        433,
+        460,
+        25
+      ],
+      "group": [
+        25,
+        58,
+        433,
+        460
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "c1ec1ff61182f420a6fe885fa3204060efaff7fee6e7350e4f75381485e08bde",
+      "new_group_added": true
+    },
+    {
+      "attempt": 44,
+      "indices": [
+        415,
+        442,
+        460,
+        427
+      ],
+      "group": [
+        415,
+        427,
+        442,
+        460
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "acaa08bce3f98f7a857ab0baa39f141c7e81867dccc871aacda6a8342e3364ef",
+      "new_group_added": true
+    },
+    {
+      "attempt": 45,
+      "indices": [
+        433,
+        415,
+        460,
+        448
+      ],
+      "group": [
+        415,
+        433,
+        448,
+        460
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "57d344cc051d521ad4cc7add76a78ea925e1e812223fb2fb84a74b797200ba6b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 46,
+      "indices": [
+        111,
+        129,
+        51,
+        39
+      ],
+      "group": [
+        39,
+        51,
+        111,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "3c43768f93dd2c39581ec72550c9657338a4a663c8dd998edbfc6055558160c9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 47,
+      "indices": [
+        2,
+        47,
+        469,
+        64
+      ],
+      "group": [
+        2,
+        47,
+        64,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "6b9a93c5895db312e47043e7ada8b9561a68ed65fcbe5dec3522600d3389b1b5",
+      "new_group_added": true
+    },
+    {
+      "attempt": 48,
+      "indices": [
+        422,
+        2,
+        469,
+        439
+      ],
+      "group": [
+        2,
+        422,
+        439,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "b6c0af5f4d7e9cb2c3a8053006fc9b3eccf8aa5d7b7199d5c44045a47dff371c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 49,
+      "indices": [
+        442,
+        424,
+        469,
+        457
+      ],
+      "group": [
+        424,
+        442,
+        457,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "9f02b59e94a8ffd1b3e3b740fc170cf33ca7560d99c803cb6b3da048e90b4f77",
+      "new_group_added": true
+    },
+    {
+      "attempt": 50,
+      "indices": [
+        318,
+        377,
+        363,
+        302
+      ],
+      "group": [
+        302,
+        318,
+        363,
+        377
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a290b51ed4c5cb90b24a98f107c68f5774df166a1ceb963c1d977b0a78139d69",
+      "new_group_added": true
+    },
+    {
+      "attempt": 51,
+      "indices": [
+        415,
+        368,
+        398,
+        355
+      ],
+      "group": [
+        355,
+        368,
+        398,
+        415
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "c2786bc5951cd96df8a5255afec305376801a40cf9cd0af449f342e6123871a0",
+      "new_group_added": true
+    },
+    {
+      "attempt": 52,
+      "indices": [
+        47,
+        16,
+        122,
+        151
+      ],
+      "group": [
+        16,
+        47,
+        122,
+        151
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "0d2f8e0d03eefe1d961dd502704f347ccebe22c0e06e37a4635c7d7b23515838",
+      "new_group_added": true
+    },
+    {
+      "attempt": 53,
+      "indices": [
+        78,
+        47,
+        122,
+        93
+      ],
+      "group": [
+        47,
+        78,
+        93,
+        122
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "95f0c6a54191dd9c45fa277e7af96b3902a2fec7176bcc53943489f39b20f7fb",
+      "new_group_added": true
+    },
+    {
+      "attempt": 54,
+      "indices": [
+        47,
+        5,
+        17,
+        65
+      ],
+      "group": [
+        5,
+        17,
+        47,
+        65
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "9771fa00f51732cf516bd2f4bced13992e5397d8898cabf504621be6b9d1ef9c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 55,
+      "indices": [
+        469,
+        2,
+        17,
+        34
+      ],
+      "group": [
+        2,
+        17,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ca878548d5a660c1b2e5ea0727fa5e2b629a6e432ac4dcdfa9985f25a17e1cc0",
+      "new_group_added": true
+    },
+    {
+      "attempt": 56,
+      "indices": [
+        5,
+        469,
+        34,
+        3
+      ],
+      "group": [
+        3,
+        5,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a357a5996610095670ed45c6e7c465b841b4208c07f9ebd4d94cc8b378027cc1",
+      "new_group_added": true
+    },
+    {
+      "attempt": 57,
+      "indices": [
+        5,
+        469,
+        34,
+        18
+      ],
+      "group": [
+        5,
+        18,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "8083014c5076b0b5667cf5435e289d1f3e9751f96b1261923c90cde2f94d894a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 58,
+      "indices": [
+        5,
+        469,
+        34,
+        20
+      ],
+      "group": [
+        5,
+        20,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "514a6186abe253bce209a9e481f3006a77d8dcbd1e098721a506938e48ce3636",
+      "new_group_added": true
+    },
+    {
+      "attempt": 59,
+      "indices": [
+        184,
+        122,
+        212,
+        154
+      ],
+      "group": [
+        122,
+        154,
+        184,
+        212
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a185ebe506450f58109633a5ccce93cb4b1aaf8806b9d8dd9c6376328b82ee0f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 60,
+      "indices": [
+        274,
+        184,
+        212,
+        216
+      ],
+      "group": [
+        184,
+        212,
+        216,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "bb6236cca74bbcfc376d352c7c373d9d98d3c16282e4f4e3f68406e1f47ac33c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 61,
+      "indices": [
+        274,
+        184,
+        212,
+        242
+      ],
+      "group": [
+        184,
+        212,
+        242,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "5f9b8a7610f558b6a49055073da1815a045245a65570e5411d71cde988537393",
+      "new_group_added": true
+    },
+    {
+      "attempt": 62,
+      "indices": [
+        274,
+        184,
+        212,
+        246
+      ],
+      "group": [
+        184,
+        212,
+        246,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "46da163ca7e7ef90cb849232b6887a66398185f8e4000036e4b9b89f4c692f2c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 63,
+      "indices": [
+        111,
+        122,
+        156,
+        137
+      ],
+      "group": [
+        111,
+        122,
+        137,
+        156
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "f39f9ae0c012c12bb716868ce7b72c353343667a7dc49d95b8d3b00959087e22",
+      "new_group_added": true
+    },
+    {
+      "attempt": 64,
+      "indices": [
+        122,
+        184,
+        156,
+        94
+      ],
+      "group": [
+        94,
+        122,
+        156,
+        184
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "517af13b538bad79b490b5eacf88da4213a34f1c36da071be33002cdf5694255",
+      "new_group_added": true
+    },
+    {
+      "attempt": 65,
+      "indices": [
+        122,
+        184,
+        156,
+        126
+      ],
+      "group": [
+        122,
+        126,
+        156,
+        184
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "dcfc2151dea7e10bc17bd360d2c423f132c59f06a8b7f7817d25d6e5543539d2",
+      "new_group_added": true
+    },
+    {
+      "attempt": 66,
+      "indices": [
+        122,
+        184,
+        156,
+        152
+      ],
+      "group": [
+        122,
+        152,
+        156,
+        184
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "3c4453c20fb277203daf0d4c839242e778d24dc1ec8ae0994dcab69a44ac272a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 67,
+      "indices": [
+        129,
+        111,
+        156,
+        144
+      ],
+      "group": [
+        111,
+        129,
+        144,
+        156
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "81d4df6a6d40833dcdda79666122c5bc576ac0499d8b3ee24005c80d34e4df34",
+      "new_group_added": true
+    },
+    {
+      "attempt": 68,
+      "indices": [
+        173,
+        156,
+        202,
+        157
+      ],
+      "group": [
+        156,
+        157,
+        173,
+        202
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "0bd22d6847390640717655e3c088994933bbdd7f576ab82474a64621af238905",
+      "new_group_added": true
+    },
+    {
+      "attempt": 69,
+      "indices": [
+        173,
+        156,
+        202,
+        188
+      ],
+      "group": [
+        156,
+        173,
+        188,
+        202
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "60fb6fa3692573264b0ceec7b9fad44fdf74ff722282566c50e461879e759224",
+      "new_group_added": true
+    },
+    {
+      "attempt": 70,
+      "indices": [
+        173,
+        156,
+        202,
+        201
+      ],
+      "group": [
+        156,
+        173,
+        201,
+        202
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "95387d7752cd6e2ceca507b0f98ed42b2d031a983e297e7b768bdadea3075c96",
+      "new_group_added": true
+    },
+    {
+      "attempt": 71,
+      "indices": [
+        184,
+        274,
+        202,
+        262
+      ],
+      "group": [
+        184,
+        202,
+        262,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "64a297f2b6fb6dc21a222b17c6b8491680a6c50ff766f167c4b218e206f072a3",
+      "new_group_added": true
+    },
+    {
+      "attempt": 72,
+      "indices": [
+        248,
+        277,
+        265,
+        262
+      ],
+      "group": [
+        248,
+        262,
+        265,
+        277
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "3601b9c699cf28e8ba345189398d8e23547c516e0a77842995702670ca9e78a7",
+      "new_group_added": true
+    },
+    {
+      "attempt": 73,
+      "indices": [
+        248,
+        277,
+        265,
+        280
+      ],
+      "group": [
+        248,
+        265,
+        277,
+        280
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4ef61376323dc7c44df29d41da0351935f74e1f77632f46debef6dd062f58ec6",
+      "new_group_added": true
+    },
+    {
+      "attempt": 74,
+      "indices": [
+        248,
+        277,
+        265,
+        293
+      ],
+      "group": [
+        248,
+        265,
+        277,
+        293
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "50c71bf2884db3c0a62d4b6cd26928f0ea1b56d8f010f75b41047c342e0dfc47",
+      "new_group_added": true
+    },
+    {
+      "attempt": 75,
+      "indices": [
+        283,
+        433,
+        209,
+        29
+      ],
+      "group": [
+        29,
+        209,
+        283,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "5e194af5fd134780b5b9a477fa98f8649340b7fd6d3527380d2093fdb43f0732",
+      "new_group_added": true
+    },
+    {
+      "attempt": 76,
+      "indices": [
+        433,
+        58,
+        209,
+        284
+      ],
+      "group": [
+        58,
+        209,
+        284,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "184f9653e050767dab265165768378ba2996ea199169433bfa9d4ffa31304913",
+      "new_group_added": true
+    },
+    {
+      "attempt": 77,
+      "indices": [
+        469,
+        424,
+        452,
+        437
+      ],
+      "group": [
+        424,
+        437,
+        452,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "b98bc3e24d3098eb5d6baac25d4ac409eb675a1b9e4d7f0c38cc5c0ebedec044",
+      "new_group_added": true
+    },
+    {
+      "attempt": 78,
+      "indices": [
+        422,
+        393,
+        407,
+        438
+      ],
+      "group": [
+        393,
+        407,
+        422,
+        438
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "627114ca4214c30ee14b0a8df844a4fdfdfe33d238f5872f499dcb653f6b522f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 79,
+      "indices": [
+        361,
+        377,
+        346,
+        332
+      ],
+      "group": [
+        332,
+        346,
+        361,
+        377
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4c5df48d314654b000afc38afa3280a20853bbc970ade0bdd04bd0155c5f2b55",
+      "new_group_added": true
+    },
+    {
+      "attempt": 80,
+      "indices": [
+        40,
+        51,
+        85,
+        66
+      ],
+      "group": [
+        40,
+        51,
+        66,
+        85
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4c8fefb307245378c1c386d0048c4b53907e6d1cefadccd198f7fbd49f80e069",
+      "new_group_added": true
+    },
+    {
+      "attempt": 81,
+      "indices": [
+        58,
+        40,
+        85,
+        73
+      ],
+      "group": [
+        40,
+        58,
+        73,
+        85
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "da139f79b6d4ec58531ce0dacec84a129749a2dd92d877b652af59ee5010e0b5",
+      "new_group_added": true
+    },
+    {
+      "attempt": 82,
+      "indices": [
+        111,
+        129,
+        85,
+        67
+      ],
+      "group": [
+        67,
+        85,
+        111,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "b5063bddf9b6ada6caac3645e3366ef8c8ffafec35a9e8a7e5076bf995374467",
+      "new_group_added": true
+    },
+    {
+      "attempt": 83,
+      "indices": [
+        111,
+        129,
+        85,
+        69
+      ],
+      "group": [
+        69,
+        85,
+        111,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e7c545a27dad7dd0a8608101dbe7f621edac0b1c7a44d9aa954b0b3996660356",
+      "new_group_added": true
+    },
+    {
+      "attempt": 84,
+      "indices": [
+        111,
+        129,
+        85,
+        81
+      ],
+      "group": [
+        81,
+        85,
+        111,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "280de261125d29836761e0fb7302a80005788dd0b902a83f7b6eceaa8b86e16c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 85,
+      "indices": [
+        111,
+        129,
+        85,
+        115
+      ],
+      "group": [
+        85,
+        111,
+        115,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "6d06f3a13c5df76b7abf63c2fb4c89e92d9dee335fa371a25ae35326587b2168",
+      "new_group_added": true
+    },
+    {
+      "attempt": 86,
+      "indices": [
+        111,
+        129,
+        85,
+        127
+      ],
+      "group": [
+        85,
+        111,
+        127,
+        129
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "11743dd6cbe8bcab09a89320ac64dc699358931a55e6e81f22b31fe63174be08",
+      "new_group_added": true
+    },
+    {
+      "attempt": 87,
+      "indices": [
+        415,
+        433,
+        385,
+        373
+      ],
+      "group": [
+        373,
+        385,
+        415,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "3475c276b1177b57c6a59e602f9af2e6eea0b4c5ac74ef84dd64ad7946712c87",
+      "new_group_added": true
+    },
+    {
+      "attempt": 88,
+      "indices": [
+        58,
+        209,
+        359,
+        28
+      ],
+      "group": [
+        28,
+        58,
+        209,
+        359
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "a07ba724813c81cb9054798dc0dedc646ce4cbf59cbeca017f0acff064f87075",
+      "new_group_added": true
+    },
+    {
+      "attempt": 89,
+      "indices": [
+        433,
+        58,
+        359,
+        134
+      ],
+      "group": [
+        58,
+        134,
+        359,
+        433
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "0476eaff554db188719415aba0799e08f11c84ef4ad6e0c039d8bb3f20b84018",
+      "new_group_added": true
+    },
+    {
+      "attempt": 90,
+      "indices": [
+        58,
+        433,
+        12,
+        477
+      ],
+      "group": [
+        12,
+        58,
+        433,
+        477
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "42c2cbcd71928ab01d7992f746bc908f7d5d7a7f1a5114a479cfc4ef8de08678",
+      "new_group_added": true
+    },
+    {
+      "attempt": 91,
+      "indices": [
+        460,
+        415,
+        429,
+        444
+      ],
+      "group": [
+        415,
+        429,
+        444,
+        460
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "65dca6e6531f66d6cbd5d44533e00bb2b4551b147109b7c79d8b22409e75e3fb",
+      "new_group_added": true
+    },
+    {
+      "attempt": 92,
+      "indices": [
+        385,
+        415,
+        431,
+        371
+      ],
+      "group": [
+        371,
+        385,
+        415,
+        431
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "8472cd4f0fefd2bb352c24a7ca3cca761748b5bed4aa985f8bd6d5ab03fa25f5",
+      "new_group_added": true
+    },
+    {
+      "attempt": 93,
+      "indices": [
+        424,
+        469,
+        456,
+        441
+      ],
+      "group": [
+        424,
+        441,
+        456,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "9a6e30be8bf3d299f4d0198c5b830fc85dc8c4cc6a3f9dab60e3a09bae18607c",
+      "new_group_added": true
+    },
+    {
+      "attempt": 94,
+      "indices": [
+        272,
+        316,
+        347,
+        301
+      ],
+      "group": [
+        272,
+        301,
+        316,
+        347
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "c56db6141de6d929b1584b94279318dc65a38f0cc384ce2306600c1c6e23420d",
+      "new_group_added": true
+    },
+    {
+      "attempt": 95,
+      "indices": [
+        318,
+        272,
+        347,
+        303
+      ],
+      "group": [
+        272,
+        303,
+        318,
+        347
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "f2ba6b69ee0f3ee2007a70d48931ded367180bfc48680d865c6b150385df26a9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 96,
+      "indices": [
+        363,
+        318,
+        347,
+        332
+      ],
+      "group": [
+        318,
+        332,
+        347,
+        363
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "05c95f546e5b240369b340f0c0b1f1303f0440701bf3013ca89ae04f36ec6bda",
+      "new_group_added": true
+    },
+    {
+      "attempt": 97,
+      "indices": [
+        318,
+        363,
+        349,
+        334
+      ],
+      "group": [
+        318,
+        334,
+        349,
+        363
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "8c77c47c9d51b6f272455daf35c77f05f693d8064d33cc817792022ee77b6032",
+      "new_group_added": true
+    },
+    {
+      "attempt": 98,
+      "indices": [
+        366,
+        321,
+        349,
+        334
+      ],
+      "group": [
+        321,
+        334,
+        349,
+        366
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "18c2558c87763b45c624ea1a9b210fed7c7ce2b78b786a09cfb06adfd6ee5a34",
+      "new_group_added": true
+    },
+    {
+      "attempt": 99,
+      "indices": [
+        321,
+        366,
+        337,
+        352
+      ],
+      "group": [
+        321,
+        337,
+        352,
+        366
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "895a1c48a7de700e4eda296b9fc8b4800286542018780a8b9431c3213eca1160",
+      "new_group_added": true
+    },
+    {
+      "attempt": 100,
+      "indices": [
+        398,
+        368,
+        382,
+        384
+      ],
+      "group": [
+        368,
+        382,
+        384,
+        398
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "765968b95d83aa6d50e22860f56dcf6714f4c2667bf9f6378b37cb34ce986de1",
+      "new_group_added": true
+    },
+    {
+      "attempt": 101,
+      "indices": [
+        184,
+        274,
+        246,
+        216
+      ],
+      "group": [
+        184,
+        216,
+        246,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "9a70838db9dea7ba4de64ba0afdae80b522c2b76b44a6e0e728d2b07657b8280",
+      "new_group_added": true
+    },
+    {
+      "attempt": 102,
+      "indices": [
+        184,
+        274,
+        246,
+        242
+      ],
+      "group": [
+        184,
+        242,
+        246,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ea35d840a6e002050d20439c53ae73cc6b528ce5a8a3862bb12c4cfbf8ac2066",
+      "new_group_added": true
+    },
+    {
+      "attempt": 103,
+      "indices": [
+        47,
+        16,
+        91,
+        62
+      ],
+      "group": [
+        16,
+        47,
+        62,
+        91
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ece47bccf3d993b85427cdc63e881ed7fc703c3003004a79611c5ad8904d98c9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 104,
+      "indices": [
+        122,
+        47,
+        91,
+        76
+      ],
+      "group": [
+        47,
+        76,
+        91,
+        122
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "419f1ece8f63541d23a69dde0f2ec7158534d26c75fefce0b26fc97e4ce5cc0b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 105,
+      "indices": [
+        212,
+        122,
+        91,
+        241
+      ],
+      "group": [
+        91,
+        122,
+        212,
+        241
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ae4642c8d674a0e1714ca65b4e2fc2db5edb9271b6b79ef99ab6062506155b98",
+      "new_group_added": true
+    },
+    {
+      "attempt": 106,
+      "indices": [
+        47,
+        91,
+        77,
+        31
+      ],
+      "group": [
+        31,
+        47,
+        77,
+        91
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "93434f8acfab332d82ebca0f79656329684c838a476e40e1bd3ff073986bc7f9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 107,
+      "indices": [
+        91,
+        122,
+        77,
+        106
+      ],
+      "group": [
+        77,
+        91,
+        106,
+        122
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "805aac223921eecf13a9783ed46a2536eb8201b71e597c955717216c150d24e9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 108,
+      "indices": [
+        156,
+        111,
+        124,
+        139
+      ],
+      "group": [
+        111,
+        124,
+        139,
+        156
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e02223f738c83a1c5373adf491d070ef92962e58d35c68c8c0855c37183fff42",
+      "new_group_added": true
+    },
+    {
+      "attempt": 109,
+      "indices": [
+        16,
+        47,
+        32,
+        61
+      ],
+      "group": [
+        16,
+        32,
+        47,
+        61
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "55a8a7d87f5ae89163d499ff584b15710d94382380806e745852c164b008eb7b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 110,
+      "indices": [
+        32,
+        47,
+        18,
+        63
+      ],
+      "group": [
+        18,
+        32,
+        47,
+        63
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "e2f9d69e4d91c719390402d3eb8a604551ae91a253a35afe74a244b3f8d90918",
+      "new_group_added": true
+    },
+    {
+      "attempt": 111,
+      "indices": [
+        34,
+        469,
+        18,
+        3
+      ],
+      "group": [
+        3,
+        18,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2879b991c09d02fc920e7f02281fd188ce5b9276b472377cf4ef4d865a14ec92",
+      "new_group_added": true
+    },
+    {
+      "attempt": 112,
+      "indices": [
+        34,
+        469,
+        18,
+        20
+      ],
+      "group": [
+        18,
+        20,
+        34,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2cacfecebbdc31f72de81a5506eada22928c96f1c3b80da8b5d044212fb846c4",
+      "new_group_added": true
+    },
+    {
+      "attempt": 113,
+      "indices": [
+        469,
+        18,
+        4,
+        453
+      ],
+      "group": [
+        4,
+        18,
+        453,
+        469
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "335e54a4a2616670bd3d8e31fb7c3001d751b1dda93d9ea449aaedb6987125c7",
+      "new_group_added": true
+    },
+    {
+      "attempt": 114,
+      "indices": [
+        80,
+        51,
+        35,
+        66
+      ],
+      "group": [
+        35,
+        51,
+        66,
+        80
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4ea8aa85d6734c896beb266c89f2cc637f69495b79ee3f8bf72c9ebbf48bfe5f",
+      "new_group_added": true
+    },
+    {
+      "attempt": 115,
+      "indices": [
+        316,
+        272,
+        241,
+        287
+      ],
+      "group": [
+        241,
+        272,
+        287,
+        316
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "dd16fc25aeeb43c5c0ddde48ac611ff8ad9bcaabc4807972084042cb2f7c361b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 116,
+      "indices": [
+        184,
+        124,
+        168,
+        138
+      ],
+      "group": [
+        124,
+        138,
+        168,
+        184
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "1dfee9a47b148c56f23159ab1117773b1dc06874eacf485dedc133443e721f0b",
+      "new_group_added": true
+    },
+    {
+      "attempt": 117,
+      "indices": [
+        184,
+        212,
+        229,
+        197
+      ],
+      "group": [
+        184,
+        197,
+        212,
+        229
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "ab9e43cc63292c38c984ac1991d018783ffa5f23947f2c8b5be2996a3c681778",
+      "new_group_added": true
+    },
+    {
+      "attempt": 118,
+      "indices": [
+        202,
+        184,
+        229,
+        217
+      ],
+      "group": [
+        184,
+        202,
+        217,
+        229
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "312bd84dfa8c4255f1f35b9182ddbae4667fe22f4c7101b835eabdbfd993d672",
+      "new_group_added": true
+    },
+    {
+      "attempt": 119,
+      "indices": [
+        274,
+        246,
+        229,
+        261
+      ],
+      "group": [
+        229,
+        246,
+        261,
+        274
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "8a097e6326c97461710ae42c79524c5e23f2266d7863d3e6ce4c8c2b26ce7020",
+      "new_group_added": true
+    },
+    {
+      "attempt": 120,
+      "indices": [
+        111,
+        156,
+        142,
+        127
+      ],
+      "group": [
+        111,
+        127,
+        142,
+        156
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "026116fa9e24f66ea2e67bdf15967b6c3fe4bda1af6d09093bafe391f841dad3",
+      "new_group_added": true
+    },
+    {
+      "attempt": 121,
+      "indices": [
+        160,
+        173,
+        204,
+        159
+      ],
+      "group": [
+        159,
+        160,
+        173,
+        204
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "4901c0337a15ed9e8f7608b564742b59b75a2103090caeadac7cf50645f562d4",
+      "new_group_added": true
+    },
+    {
+      "attempt": 122,
+      "indices": [
+        160,
+        173,
+        204,
+        188
+      ],
+      "group": [
+        160,
+        173,
+        188,
+        204
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "28acc6a83c8a94e79ee36ad0a082b13b2b45eeabbf1f1072eef951bdeaaabc5a",
+      "new_group_added": true
+    },
+    {
+      "attempt": 123,
+      "indices": [
+        160,
+        173,
+        204,
+        205
+      ],
+      "group": [
+        160,
+        173,
+        204,
+        205
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "c115fe436a9c253a6a4cee60089d7e0576ec6ea0b5c23709cbc70b3e60aec1c5",
+      "new_group_added": true
+    },
+    {
+      "attempt": 124,
+      "indices": [
+        173,
+        160,
+        159,
+        188
+      ],
+      "group": [
+        159,
+        160,
+        173,
+        188
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "d45aabb6df59e57022e9e9c881d87eb91f6e054af4bdf28f92a012f2a7d73fd1",
+      "new_group_added": true
+    },
+    {
+      "attempt": 125,
+      "indices": [
+        173,
+        160,
+        159,
+        205
+      ],
+      "group": [
+        159,
+        160,
+        173,
+        205
+      ],
+      "root_of_unity_order": 32,
+      "determinant_remainder": [],
+      "groups_sha256": "2ba67038154e0bf671e0aa07dea05af8fcd1876974cdb7fc666a543f6944d5ec",
+      "new_group_added": true
+    },
+    {
+      "attempt": 126,
+      "exit_code": 124,
+      "groups_sha256": "b1ba91103a3c99ee2f4ab327798eeee7346bf42af613ce094ad3d1465a9a9ec9"
+    }
+  ],
+  "process_plus_oracle_wall_seconds": 600.0173992388882
+}

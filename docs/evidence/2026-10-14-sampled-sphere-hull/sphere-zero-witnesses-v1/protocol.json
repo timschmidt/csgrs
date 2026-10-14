@@ -1,0 +1,53 @@
+{
+  "inputs_sha256": {
+    "collect_sphere_zero_witnesses_v1.py": "033f66ff373b8b31f38e8b5aabed7e44b6e6f89311b93e9bac03888b4a83c61f",
+    "sphere_grid_oracle_probe_v1.rs": "18bae8704853012630621c7d8b80677e0b5771e3896090aeedbb620fb85a4786",
+    "check_sphere_trace_cyclotomic_v1.py": "60c4934f738eecc9daedae41a67a7fc611c775ee012b5103f4ab2ac49b999424"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/source",
+  "libraries": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/libcsgrs.rlib",
+      "sha256": "abe87a86690b12be1e0c1072781c693c9de19ac6b49a3c8f8ae831af3bea627a",
+      "features": []
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "f775957737b7bd9360237d8dc844fee5bd91d090eaa42b425fe153a4e7a9ef6f",
+      "features": [
+        "default"
+      ]
+    }
+  },
+  "cases": [
+    [
+      "fifteen_degrees",
+      24,
+      12
+    ],
+    [
+      "original_medium",
+      32,
+      16
+    ],
+    [
+      "fifth_turn",
+      10,
+      7
+    ],
+    [
+      "seventh_turn",
+      7,
+      5
+    ]
+  ],
+  "mode": "coordinate_symmetries",
+  "max_added_groups_per_case": 128,
+  "case_wall_budget_seconds": 600,
+  "individual_query_wall_stop_seconds": 180,
+  "algorithm": "Run unchanged original input; if native orientation is unknown, independently reduce its exact cyclotomic determinant. Append the four input indices only for zero remainder and retry. Preserve every attempt and group file.",
+  "not_a_performance_trial": true,
+  "not_a_native_certificate_carrier": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,19 @@
+{
+  "result_sha256": "ad6db8e4905f34e7dadbde4376cace9e41f04ec7d6bd47d4a798282d0fbd366e",
+  "assessment_sha256": "f89572f3f1e2dd80879365fb7aab2172fb9eff53183fbff428a689153d6bde55",
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "protocol_complete": true,
+  "query_exit_124": "original_medium attempt 126 reached the remaining portion of the predeclared 600-second case wall budget; this is not a native DRC limit.",
+  "retained_zero_groups": {
+    "original_medium": 126,
+    "fifth_turn": 10,
+    "seventh_turn": 7
+  },
+  "native_with_external_proofs": "The two smaller failures become Certified while preserving original points and closed 2V-4 topology; the original_medium trial stops at its fixed budget.",
+  "closed_trial_may_not_be_extended": true,
+  "next_protocol": "Maximal-plane grouping, with independently nonzero anchor normals and every member checked. Reuses all four original fixtures, the same scalar oracle and the same source-trace library; separately limited to 128 groups and 600 seconds per case.",
+  "runtime_admitted": false,
+  "sphere_certificate_pending": true,
+  "plan_complete": false
+}

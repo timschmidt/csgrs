@@ -1,0 +1,189 @@
+{
+  "case": "seventh_turn",
+  "outcome": "certified_with_independently_proven_groups",
+  "added_groups": [
+    [
+      2,
+      5,
+      17,
+      22
+    ],
+    [
+      2,
+      12,
+      16,
+      22
+    ],
+    [
+      8,
+      16,
+      22,
+      26
+    ],
+    [
+      2,
+      7,
+      23,
+      26
+    ],
+    [
+      3,
+      7,
+      16,
+      24
+    ],
+    [
+      2,
+      8,
+      24,
+      26
+    ],
+    [
+      4,
+      7,
+      11,
+      16
+    ]
+  ],
+  "records": [
+    {
+      "attempt": 0,
+      "indices": [
+        2,
+        5,
+        22,
+        17
+      ],
+      "group": [
+        2,
+        5,
+        17,
+        22
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "new_group_added": true
+    },
+    {
+      "attempt": 1,
+      "indices": [
+        22,
+        2,
+        16,
+        12
+      ],
+      "group": [
+        2,
+        12,
+        16,
+        22
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "63e37b4ad94f4e1ff75cfaa5374c009c698cb04925b5a36adb76fca31b6e25c6",
+      "new_group_added": true
+    },
+    {
+      "attempt": 2,
+      "indices": [
+        16,
+        22,
+        26,
+        8
+      ],
+      "group": [
+        8,
+        16,
+        22,
+        26
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "8de7c8e14ebea5297282b744e37e576da6009fa700b77d41d20b921f3e4d15b9",
+      "new_group_added": true
+    },
+    {
+      "attempt": 3,
+      "indices": [
+        26,
+        2,
+        7,
+        23
+      ],
+      "group": [
+        2,
+        7,
+        23,
+        26
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "20ede48cbff8cc2487c6a1fed11a6cf81ffe5ba59a792040f9f0c154f7b02c99",
+      "new_group_added": true
+    },
+    {
+      "attempt": 4,
+      "indices": [
+        7,
+        16,
+        24,
+        3
+      ],
+      "group": [
+        3,
+        7,
+        16,
+        24
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "523b142db626021c49ccca6bc64da1bde336f0a361d459e0dfce0130a2468142",
+      "new_group_added": true
+    },
+    {
+      "attempt": 5,
+      "indices": [
+        26,
+        2,
+        24,
+        8
+      ],
+      "group": [
+        2,
+        8,
+        24,
+        26
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "830151ae86a201043b04b27fa1f91d02813c2ed3aa845eec62f29ea7070d6ba1",
+      "new_group_added": true
+    },
+    {
+      "attempt": 6,
+      "indices": [
+        16,
+        7,
+        11,
+        4
+      ],
+      "group": [
+        4,
+        7,
+        11,
+        16
+      ],
+      "root_of_unity_order": 140,
+      "determinant_remainder": [],
+      "groups_sha256": "e3fb68767b22c88dccc6a5fccc64f47aef5ae598cfed65e4cdd63fdb70c11baa",
+      "new_group_added": true
+    },
+    {
+      "attempt": 7,
+      "certified": true,
+      "groups_sha256": "e46242cfd1532484f3b65fcdaa4fb43e27c805a5be0c8ec7f9d3d2a201a6226d"
+    }
+  ],
+  "process_plus_oracle_wall_seconds": 0.4183113197796047
+}

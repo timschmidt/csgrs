@@ -1,0 +1,13 @@
+{
+  "case": "fifteen_degrees",
+  "outcome": "certified_with_independently_proven_groups",
+  "added_groups": [],
+  "records": [
+    {
+      "attempt": 0,
+      "certified": true,
+      "groups_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "process_plus_oracle_wall_seconds": 11.061591716017574
+}
