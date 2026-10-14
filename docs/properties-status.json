@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "native-cyclotomic-feasibility-protocol-frozen",
+      "status": "native-cyclotomic-v1-build-failure-preserved-v2-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4960,9 +4960,10 @@
       "sphere_maximal_plane_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v2.py",
       "sphere_maximal_plane_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-assessment-v2.json",
       "sphere_maximal_plane_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v2.json",
-      "sphere_cyclotomic_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scope-v1.json",
-      "sphere_cyclotomic_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_v1.py",
-      "sphere_cyclotomic_executed": false
+      "sphere_cyclotomic_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scope-v2.json",
+      "sphere_cyclotomic_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_v2.py",
+      "sphere_cyclotomic_executed": false,
+      "sphere_cyclotomic_v1_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-closure-v1.json"
     }
   },
   "status_meanings": {

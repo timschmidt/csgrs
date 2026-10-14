@@ -1,0 +1,27 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "targeted-scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "cyclotomic",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 14.56400420377031,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "76442dae280bac262d5ed86e7f1e4360a194d65a6e25d2917130727e3633488e"
+  },
+  "runtime_admitted": false,
+  "preserve_executed_source": true,
+  "plan_complete": false
+}

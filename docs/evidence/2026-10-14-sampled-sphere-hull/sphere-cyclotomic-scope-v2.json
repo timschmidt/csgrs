@@ -1,0 +1,58 @@
+{
+  "purpose": "Native feasibility of bounded exact-zero reduction for retained rational-angle trigonometric expressions.",
+  "closed_diagnostic_assessment_sha256": "f69d8fe49827d4615052a8b4fe4ed4eeafc1b9b671f2af05bf1aa23597877d25",
+  "expected_source_delta_sha256": {
+    "crates/hyperreal/src/computable/node.rs": "66cbbef90aa636d64bfc87dc477776e9b295f91dd544116b4bf01c659e0e256f",
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "9188481cd464af456e540e9f3390c376fd5c5833b85f3343dfa859e2fd0320fd",
+    "crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs": "7c8daebde62c32937d1024cdb3bc563a6e206c1ea5f471e6d9062e741e771999",
+    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "194c6537b89059a2fed3ed0199537a88bb1263336ee7058d941f2e76b8b88aef",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
+  },
+  "integration": "Private Computable query used only after the existing bounded Laurent rational normal form returns None. Return exact zero only; no new public API, sign certificate variant, approximation, representation rewrite or cache publication.",
+  "supported": "Rational leaves; rational pi multiples as sine/cosine arguments; sqrt(2), sqrt(3), sqrt(6); arithmetic sums, products, squares, rational inverses, bounded binary scales and retained three-term linear combinations. At least one retained trig node is required.",
+  "caps": {
+    "root_of_unity_order": 256,
+    "field_degree": 128,
+    "graph_visits": 512,
+    "recursive_depth_exclusive": 96,
+    "charged_coefficient_work": 262144,
+    "raw_rational_numerator_and_denominator_bits": 64,
+    "binary_scale_absolute_shift": 63,
+    "coefficient_arithmetic": "checked i128; any overflow is Unknown"
+  },
+  "proof": "Exact monic cyclotomic division and polynomial zero remainder. Principal sqrt branches are 2cos(pi/4), 2cos(pi/6) and their product. Division is allowed only after the divisor reduces to a nonzero rational. Mathematical basis is recorded in sphere-cyclotomic-oracle-audit-v1.json; no formal verification is claimed.",
+  "controls": {
+    "distinct_prior_independently_proven_zero_determinants": 157,
+    "unit_tests": 6,
+    "other_cases": [
+      "exact nonzero face controls",
+      "signed 2^-20 perturbations",
+      "Pythagorean and double-angle identities",
+      "sqrt positive branches",
+      "field-order, recursion, shift and work rejection",
+      "checked overflow",
+      "unsupported transcendental and inverse-zero rejection",
+      "concurrent replay"
+    ]
+  },
+  "native_inputs": [
+    "fifteen_degrees r8 24x12",
+    "original_medium r10 32x16",
+    "fifth_turn r8 10x7",
+    "seventh_turn r8 7x5"
+  ],
+  "native_control": "Original ordinary solid::convex_hull_with_context STRICT APIs without external groups. Preserve every original point, closed manifold and 2V-4 triangles. Prior 24x12 position order, triangle rows and certainty must be byte-identical between separately linked baseline and candidate.",
+  "trial_type": "Fixed feasibility, not a matched performance comparison. Preserve failed sources and commands; later corrections get another version.",
+  "admission_pending": [
+    "broader scalar/predicate/mesh/grammar tests and feature combinations",
+    "independent negative/adversarial and resource-bound coverage",
+    "formal obligations and mathematical implementation review",
+    "native timing/allocation/retention/binary costs",
+    "monotone proof contracts and precise public normal-form documentation"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "prior_failure_sha256": "0ecd8ab33e1040e945258cc0dc2cc4abcb7d068e998277bf6bae45665afe3787",
+  "change_from_v1": "Only three checked integer conversions in the unit-test point helper; identical proof implementation, limits, tests and native protocol."
+}

@@ -1,0 +1,54 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-candidate-v1.patch"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 0.004648991860449314,
+    "stdout_sha256": "826277ac3303b015796f18b9274e113b6aab52366ceacc5fb8d8dc986dcafe1d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "source-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 10.478862179908901,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "targeted-scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "cyclotomic",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 14.56400420377031,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "76442dae280bac262d5ed86e7f1e4360a194d65a6e25d2917130727e3633488e"
+  }
+]

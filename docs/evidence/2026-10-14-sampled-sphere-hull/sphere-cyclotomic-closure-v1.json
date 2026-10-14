@@ -1,0 +1,14 @@
+{
+  "complete": true,
+  "trial_closed": true,
+  "commands": 3,
+  "passed": 2,
+  "failed_command": "targeted-scalar-tests",
+  "exit_code": 101,
+  "reason": "Three E0308 type mismatches in fixture point construction: usize supplied to Rational::fraction(i64,u64). No candidate tests or native consumer queries executed.",
+  "source_mapping_sha256": "bcdea2037eaec0097a327bb5d28e050919f3be1a2dd31bbd28b65b319b1197cf",
+  "all_executed_source_unchanged": true,
+  "followup": "V2 changes only fixture conversions; the proof implementation, resource limits and tested geometry remain identical.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
