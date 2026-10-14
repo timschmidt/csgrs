@@ -1,0 +1,51 @@
+{
+  "result_sha256": "a1a0d9e1a3206a4e858ec05246d61c8bfce7617c159562bc10a4a5ee613ed127",
+  "complete": true,
+  "commands_passed": 3,
+  "exact_rational_public_mutation_controls": 9,
+  "contract_violations": 9,
+  "controls": [
+    {
+      "control": "bounds_after_replacement",
+      "correct": "false",
+      "source_pointer_changed": "true"
+    },
+    {
+      "control": "bounds_after_make_mut",
+      "correct": "false",
+      "source_pointer_changed": "false"
+    },
+    {
+      "control": "edited_clone_cannot_publish_original_bounds",
+      "correct": "false"
+    },
+    {
+      "control": "validity_after_replacement",
+      "correct": "false"
+    },
+    {
+      "control": "reversed_winding_cannot_transfer_stale_validity",
+      "correct": "false"
+    },
+    {
+      "control": "subdivision_cannot_transfer_stale_validity",
+      "correct": "false"
+    },
+    {
+      "control": "validity_after_make_mut",
+      "correct": "false"
+    },
+    {
+      "control": "source_planes_after_translation",
+      "correct": "false"
+    },
+    {
+      "control": "source_planes_after_reindex",
+      "correct": "false"
+    }
+  ],
+  "interpretation": "Fresh-geometry oracles pass; unchanged native mesh caches return incorrect certified bounds/planes or accept open/non-PWN input after public edits. These are P3/P4/P22 correctness failures, not timing evidence.",
+  "borrowed_view_audit": "Public TriangleMeshRef slices can also diverge from native source; four independent controls prepared.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

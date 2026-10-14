@@ -1,0 +1,49 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_fact_identity_probe_v1.rs"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.01537191728129983,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/mesh_fact_identity_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-fact-identity-v1"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.3097067316994071,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "observe",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-fact-identity-v1"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.0020027928985655308,
+    "stdout_sha256": "01ff894c8378d53a0a0c9335b93f3bd9b3c40b4ccbcbdf74ba545191fe69a6c4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

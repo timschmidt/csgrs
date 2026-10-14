@@ -1,0 +1,9 @@
+control=bounds_after_replacement correct=false source_pointer_changed=true
+control=bounds_after_make_mut correct=false source_pointer_changed=false
+control=edited_clone_cannot_publish_original_bounds correct=false
+control=validity_after_replacement correct=false
+control=reversed_winding_cannot_transfer_stale_validity correct=false
+control=subdivision_cannot_transfer_stale_validity correct=false
+control=validity_after_make_mut correct=false
+control=source_planes_after_translation correct=false
+control=source_planes_after_reindex correct=false

@@ -1,0 +1,64 @@
+{
+  "complete": true,
+  "commands_passed": 3,
+  "controls": [
+    {
+      "control": "bounds_after_replacement",
+      "correct": "false",
+      "source_pointer_changed": "true"
+    },
+    {
+      "control": "bounds_after_make_mut",
+      "correct": "false",
+      "source_pointer_changed": "false"
+    },
+    {
+      "control": "edited_clone_cannot_publish_original_bounds",
+      "correct": "false"
+    },
+    {
+      "control": "validity_after_replacement",
+      "correct": "false"
+    },
+    {
+      "control": "reversed_winding_cannot_transfer_stale_validity",
+      "correct": "false"
+    },
+    {
+      "control": "subdivision_cannot_transfer_stale_validity",
+      "correct": "false"
+    },
+    {
+      "control": "validity_after_make_mut",
+      "correct": "false"
+    },
+    {
+      "control": "source_planes_after_translation",
+      "correct": "false"
+    },
+    {
+      "control": "source_planes_after_reindex",
+      "correct": "false"
+    }
+  ],
+  "controls_satisfying_contract": 0,
+  "baseline_source_unchanged": true,
+  "main_runtime_unchanged": true,
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/mesh-fact-identity-v1",
+    "sha256": "2994b1a151221327ac189119db337f0764834e3e9ad3b9224e0bf28906111610",
+    "bytes": 8396432
+  },
+  "artifacts_sha256": {
+    "commands.json": "f35c0608bcfd266e4feeba4b800403f4402f3eab89dcbe093cf1195a5dfb21d2",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "link.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "link.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "observe.stdout": "01ff894c8378d53a0a0c9335b93f3bd9b3c40b4ccbcbdf74ba545191fe69a6c4",
+    "protocol.json": "8e18913bc78db73c84d63d00db3ae584c08904bf783be726610894e5a2d2ceb6"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}
