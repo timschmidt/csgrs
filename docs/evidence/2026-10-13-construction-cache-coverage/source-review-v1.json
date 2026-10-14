@@ -1,0 +1,27 @@
+{
+  "all_five_paths_reviewed": true,
+  "preparation_sha256": "01f0ac83ff3acd42363357e3d9d3dabf538b70e3232adb357579707fc384ccbd",
+  "source_patch_sha256": "10c0588eaacdc229b92f4de7e931e6d79dd8f4b50b1d323dfd8cb9d064b83465",
+  "changed_paths": {
+    "crates/hyperreal/src/construction_cache_trace.rs": "62d71c7e6b3a17bd2548c35354ed93216a30d2659aaf8533e3f63f478fc7ad6e",
+    "crates/hyperreal/src/lib.rs": "c1fff4c1683d640aa01de18304b8d4ddecb208e2695fee42df3b09dcd8d5286d",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "be6da87c8bd9ac319e73d2e16bf0b52a68e0a77a7d8afdb697ccb870a0d10cb1",
+    "crates/hyperreal/src/computable/node/representation.rs": "b76a48f597783b0600c843c58cac8e92fff5dabbd5780ff0f91f3feea298156d",
+    "crates/hyperreal/src/computable/node/algebra.rs": "badb09687f7df8aa15e6ad3e9dbdb37df0f91d427103bba0f81029c98fa51211"
+  },
+  "findings": [
+    "All 17 insertion specifications and the resulting complete five-path patch were read. No arithmetic expression, query order, recognition limit, cache payload field, atomic ordering or returned value was changed.",
+    "Normalizer hooks distinguish retained/original entries, memo hits, budget declines and consumed expansion work. The first memo is still dropped before the original retry; the retry predicate is unchanged.",
+    "Closed payload hooks observe existing copies and sum only vector lengths. They do not clone or retain additional Rational/Computable owners, allocate, query facts or refine values.",
+    "Cache lookup hooks precede existing lookup; hit/shape hooks execute only during existing materialization. Store hooks leave opaque rejection, clone-before-lock and publish-only-empty behavior intact.",
+    "Evaluation-cell hooks count the existing Box request and unchanged atomic installation outcomes. The losing allocation is still dropped. TLS recording performs no callback into evaluation or any cache while locks are held.",
+    "The diagnostic module has 27 enum entries in the same order as 27 unique exported labels. Const-initialized Cell arrays and a boolean are thread-local; the scope guard turns recording off on return/unwind. No measured formatting, heap allocation or expression storage is introduced by the counter itself.",
+    "The appended positive control checks cold publication and one cache-cell allocation, then a zero-budget replay with one hit, no publication/allocation and no consumed expansion work.",
+    "The probe changes only the observation wrapper. Snapshots/JSON formatting occur after both scopes end; the complete fixture/expected/witness suffix is byte-identical to the prior probe. Existing counters and witnesses must match, without using instrumented timing."
+  ],
+  "format_passed": true,
+  "instrumentation_only": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
