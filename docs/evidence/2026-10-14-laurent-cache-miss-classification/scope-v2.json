@@ -1,0 +1,81 @@
+{
+  "source_files_expected": 10136,
+  "changed_or_added_source_paths_expected": 5,
+  "all_features_scalar_tests_expected": 881,
+  "test_groups_expected": {
+    "P4": 11,
+    "persistent_cache": 8,
+    "eligibility": 3,
+    "borrowed_integer": 2
+  },
+  "groups": [
+    "main",
+    "borrowed",
+    "eligibility",
+    "classified"
+  ],
+  "diagnostic_group": "classified: otherwise unchanged borrowed runtime",
+  "driver_suites": [
+    "rational",
+    "quadratic",
+    "integer"
+  ],
+  "fresh_driver_binaries": 12,
+  "fixed_inputs": 4096,
+  "fixed_orders": [
+    [
+      "main",
+      "borrowed",
+      "eligibility",
+      "classified"
+    ],
+    [
+      "classified",
+      "eligibility",
+      "borrowed",
+      "main"
+    ]
+  ],
+  "fixed_count_processes": 24,
+  "trace_windows": 544,
+  "classified_windows": 136,
+  "public_comparison_rows": 204,
+  "instrumented_parent_equivalence_rows": 68,
+  "header_format_checks": 1,
+  "library_qualification_commands": 4,
+  "driver_clippy_and_link_commands": 24,
+  "expected_commands_total": 53,
+  "strict_clippy": "All-feature/all-target release library and every generated driver, all with -D warnings and no warning suppressions.",
+  "historical_checks": "Compare old 27-event counts with prior rational and quadratic counter windows. Preserve the prior rational runner failure; do not require its absent opaque-refusal event to be positive.",
+  "instrumented_timings_are_cost_evidence": false,
+  "new_allocation_measurements": 0,
+  "new_native_gates": 0,
+  "status": "prospective-classified-cache-count-diagnostic-v2",
+  "parent_audit": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-audit-v1.json",
+  "old_events": 27,
+  "kind_buckets": 61,
+  "outcomes": 3,
+  "added_counter_edits": 3,
+  "original_counter_edits": 17,
+  "new_tests": 2,
+  "old_rational_runner_failure_preserved": true,
+  "counts_are_cost_shares": false,
+  "rules": [
+    "Preserve all old frozen sources, executables, runners, failures and fixed samples.",
+    "Keep original runtime semantics, budgets, synchronization and ownership. Observe the actual reader branches; do not gate them.",
+    "All builds and tests finish before count samples. Serialize every command and preserve all output.",
+    "Use all 68 original phases. Two fixed reversed orders; no filtering, replacements, extensions or pooling.",
+    "Expected zero categories are not coverage failures. A positive control for a counter does not require that event in every workload.",
+    "Only current_work may change in the ledger. Preserve main runtime and all 35 original native pending files.",
+    "All 39 properties, 14 targets and crate future work remain active."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "failed_v1_preserved": "failure-v1.json",
+  "changes_from_v1": [
+    "Correct only NormalInterval to the struct pattern { .. } in the exhaustive kind matcher.",
+    "Replace the two integer driver usize index % 2 == 0 expressions with index.is_multiple_of(2); all fixture values, independent expectations, workloads, schedule and budgets remain identical.",
+    "Use fresh source/build/output paths, new runners and assessment; guard every failed V1 input, snapshot and log as immutable. Reuse unchanged trace module, header and controls."
+  ]
+}
