@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "unconditional-early-sphere-filter-rejected-by-fixed-native-cost-screen",
+      "status": "finite-field-early-proof-screen-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5021,7 +5021,11 @@
       "sphere_cyclotomic_placement_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-placement-cost-closure-v1.json",
       "sphere_cyclotomic_early_placement_admitted": false,
       "sphere_cyclotomic_cached_filter_design": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-cached-filter-design-v1.json",
-      "sphere_cyclotomic_cached_filter_executed": false
+      "sphere_cyclotomic_cached_filter_executed": false,
+      "sphere_finite_image_table_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-finite-images-v1/result.json",
+      "sphere_cyclotomic_image_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-scope-v1.json",
+      "sphere_cyclotomic_image_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_image_v1.py",
+      "sphere_cyclotomic_image_executed": false
     }
   },
   "status_meanings": {

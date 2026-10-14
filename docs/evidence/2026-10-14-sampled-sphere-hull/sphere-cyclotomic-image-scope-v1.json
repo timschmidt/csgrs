@@ -1,0 +1,74 @@
+{
+  "purpose": "Test a bounded finite-field rejection step before the early exact affine determinant zero proof, avoiding coefficient arithmetic on most nonzero inputs without reading approximation caches.",
+  "closed_diagnostic_assessment_sha256": "f69d8fe49827d4615052a8b4fe4ed4eeafc1b9b671f2af05bf1aa23597877d25",
+  "expected_source_delta_sha256": {
+    "crates/hyperreal/src/computable/node.rs": "66cbbef90aa636d64bfc87dc477776e9b295f91dd544116b4bf01c659e0e256f",
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "3ed3cd6e3ea1537fa113dd26c5a6d0624ee4e5902e5a03aef5d2fd9d850b67fd",
+    "crates/hyperreal/src/computable/node/cyclotomic/images.rs": "21cf96b032ee249185bdade05c56d8a928607ac9a79268418d93b9d08b433936",
+    "crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs": "7c8daebde62c32937d1024cdb3bc563a6e206c1ea5f471e6d9062e741e771999",
+    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "f857164f992fac20f957ef16e151b31e1166f2526d1685536b7975ce0123e0ce",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "3d90f996d7b850e20d66b58e31de39bf1b91ce8f601d1d7866f960b1e5fd6eac",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "746b2bf818e2869dbc03a8a20cc0dbc7480301399a2b394318b7f17d98b02df3",
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "43df9ce730b4138a00e3bcbd9f0af4727a913982453a16e995714cf2b955f560",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
+  },
+  "integration": "Only the early affine entry point gains the image test. A nonzero modular image declines that zero proof; a zero or unavailable image invokes the unchanged exact coefficient reducer with its full previous budget. The V2 normal-form fallback and existing dyadic filter remain unchanged.",
+  "supported": "Rational leaves; rational pi multiples as sine/cosine arguments; sqrt(2), sqrt(3), sqrt(6); arithmetic sums, products, squares, rational inverses, bounded binary scales and retained three-term linear combinations. At least one retained trig node is required.",
+  "caps": {
+    "root_of_unity_order": 256,
+    "field_degree": 128,
+    "graph_visits": 512,
+    "recursive_depth_exclusive": 96,
+    "charged_coefficient_work": 262144,
+    "raw_rational_numerator_and_denominator_bits": 64,
+    "binary_scale_absolute_shift": 63,
+    "coefficient_arithmetic": "checked i128; any overflow is Unknown",
+    "separate_charged_modular_work": 32768,
+    "finite_images": "All 64 orders divisible by four from 4 through 256; generated primes below 2^17, compile-time primality and exact root-order checks, and independent direct cyclotomic-polynomial evaluation."
+  },
+  "proof": "A finite image is defined only when all scalar and expression divisors are invertible modulo the selected prime and Phi_L(root)=0. Polynomial evaluation then preserves zero remainders. Nonzero images can decline zero proofs; zero images never certify zero. The ordinary checked exact reducer retains sole authority to certify zero. Production formal verification remains open.",
+  "controls": {
+    "distinct_prior_independently_proven_zero_determinants": 157,
+    "unit_tests": 12,
+    "other_cases": [
+      "exact nonzero face controls",
+      "signed 2^-20 perturbations",
+      "Pythagorean and double-angle identities",
+      "sqrt positive branches",
+      "field-order, recursion, shift and work rejection",
+      "checked overflow",
+      "unsupported transcendental and inverse-zero rejection",
+      "concurrent replay",
+      "157 captured zero quadruples through early affine filter without per-value approximation-cache changes",
+      "314 signed 1/10^12 normal displacements and three original nonzero faces",
+      "abort and overlarge coordinate scale rejection",
+      "raw unreduced rational angle, pi/tau/offset/add/negate angle forms, exact rational inverse and retained three-term dot recipes with nonzero controls",
+      "joint field order overflow and broad shallow DAG rejection",
+      "After 256-bit coordinate sign warming, zero-refinement coordinate signs retain every known fact and all 157 affine zero proofs remain available",
+      "Direct native Phi_L evaluation at all 64 finite roots",
+      "Every finite expression variant compared with exact polynomial reduction for all supported orders",
+      "Modular collisions do not certify zero; missing denominator units and empty image work budgets leave exact fallback available"
+    ]
+  },
+  "native_inputs": [
+    "fifteen_degrees r8 24x12",
+    "original_medium r10 32x16",
+    "fifth_turn r8 10x7",
+    "seventh_turn r8 7x5"
+  ],
+  "native_control": "All four original ordinary STRICT native sphere calls must certify with full stdout byte-identical to isolated V2. The 24x12 case must also equal the separately linked admitted mesh baseline. No external plane tables, alternate samples or approximate coordinates.",
+  "trial_type": "Fixed twelve-test and four-case feasibility; per-command 900 seconds, original medium query 600 seconds, other native queries 180 seconds. No timing claim; preserve failures and do not edit or extend an executed version.",
+  "admission_pending": [
+    "broader scalar/predicate/mesh/grammar tests and feature combinations",
+    "independent negative/adversarial and resource-bound coverage",
+    "formal obligations and mathematical implementation review",
+    "native timing/allocation/retention/binary costs",
+    "monotone proof contracts and precise public normal-form documentation"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "qualification_prerequisite": "The unchanged V2 broad Rust qualification must finish all eleven commands before this fixed trial starts.",
+  "finite_table_result_sha256": "2e7977a8c23dce5113bbd1326b1d60b1c4cec4fe549d6dd1f3f567750c45bd30",
+  "design_selection": "The cached-coordinate interval design remains unimplemented. This bounded algebraic screen avoids a new cache projection and its precision-dependent allocation obligations while preserving the early exact zero capability."
+}
