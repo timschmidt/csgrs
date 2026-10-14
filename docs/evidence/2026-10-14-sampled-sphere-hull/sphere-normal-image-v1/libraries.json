@@ -1,0 +1,14 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/libcsgrs.rlib",
+    "sha256": "088833bffef5b2b92eb3735f2699d513a29659e3fc9c47fb7e5bbc97c14c0fa4",
+    "features": []
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "8be615052b2ac5a5a9987694e79f110669907a5db6fc27cdd715c555dd6068eb",
+    "features": [
+      "default"
+    ]
+  }
+}

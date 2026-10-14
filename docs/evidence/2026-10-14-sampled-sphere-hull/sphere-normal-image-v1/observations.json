@@ -1,0 +1,34 @@
+[
+  {
+    "case": "fifteen_degrees",
+    "all_three_full_transcripts_match_parent": true,
+    "all_three_certified": true,
+    "independent_support_reused_by_exact_witness_identity": true,
+    "full_stdout_sha256": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "full_stdout_bytes": 65827
+  },
+  {
+    "case": "original_medium",
+    "all_three_full_transcripts_match_parent": true,
+    "all_three_certified": true,
+    "independent_support_reused_by_exact_witness_identity": true,
+    "full_stdout_sha256": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "full_stdout_bytes": 120859
+  },
+  {
+    "case": "fifth_turn",
+    "all_three_full_transcripts_match_parent": true,
+    "all_three_certified": true,
+    "independent_support_reused_by_exact_witness_identity": true,
+    "full_stdout_sha256": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "full_stdout_bytes": 14627
+  },
+  {
+    "case": "seventh_turn",
+    "all_three_full_transcripts_match_parent": true,
+    "all_three_certified": true,
+    "independent_support_reused_by_exact_witness_identity": true,
+    "full_stdout_sha256": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "full_stdout_bytes": 7150
+  }
+]

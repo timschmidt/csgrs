@@ -1,0 +1,27 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "commands_all_zero": 10,
+  "targeted_scalar_tests_passed": 14,
+  "result_sha256": "137fbe10f5258e44bea5be043d514dd0cafee174d2db60151a297941560b8ac9",
+  "source_files_rechecked": 10136,
+  "root_source_files_rechecked": 10129,
+  "delta_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "ea890e52d459507ed1e6592120d449334b295b15dd695c38c0ced37d8ae38021",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "f14a1f8ae52eaa6f7b3f5f33fc76fe45ef2c41c609f3b23ab688cd54e953a69c",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "707234e41af8d11f3f730d2eea73c49d46e26518ebd2286d5e5c09faa46c4783"
+  },
+  "all_sources_inputs_libraries_binaries_rechecked": true,
+  "all_twelve_full_original_sphere_outputs_match_parent_byte_for_byte": true,
+  "independent_exact_support_evidence_reused_by_witness_identity": true,
+  "independent_exact_support_result_sha256": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+  "strict_scalar_library_test_clippy_and_workspace_format_passed": true,
+  "new_tests": "Nonzero modular rejection guards; nonzero modular collision cannot prove zero; zero collision and nonunit denominator fall back to exact proof; approximation caches remain empty in the raw-node controls.",
+  "cost_trial_executed": false,
+  "broader_qualification_executed": false,
+  "formal_proof_or_fuzz_campaign_executed": false,
+  "limits": "Focused feasibility and exact prior-witness reuse only. No timing, allocation, binary-size benefit or admission claim. All original inputs and executed versions remain preserved.",
+  "next_step": "Fixed paired scalar query cost/allocation comparison against the deterministic-selection parent, followed by native costs and broader qualification if the optimization remains viable.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,166 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-v1.patch"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.004218360874801874,
+    "stdout_sha256": "13aa8c26e035686f8180bc63e080ef38a47a6cc5e606ab21ba9427b6ecdb4dbb",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 10.884690664242953,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "targeted-scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "cyclotomic",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 25.676083986181766,
+    "stdout_sha256": "16e979ae6f965452ea11d2898e1ff0998d2a01c34a8263ad7007cfa2931475a3",
+    "stderr_sha256": "56860be8c04e94cb491982a262ab35612f4652cb9f63e041096a0952d54b0e61"
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 8.878871351946145,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "6f1fb36b19d82e39d114aff3ffc3b337530cfb5f8a69d0db3f26b2393880efcd"
+  },
+  {
+    "name": "build-native-consumer",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 72.93905811803415,
+    "stdout_sha256": "ee911345d219690eda69cae49c429d5eaab4282af4ac7d46c6ba788a6887d004",
+    "stderr_sha256": "2ca9df6c66eee5fa6a7ef8280c480bd309fd971250c8be82d37a92242163de0a"
+  },
+  {
+    "name": "link-sphere-probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.21273482777178288,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe",
+      "fifteen_degrees"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 22.049243125598878,
+    "stdout_sha256": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe",
+      "original_medium"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 52.26187720103189,
+    "stdout_sha256": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe",
+      "fifth_turn"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 1.4576368192210793,
+    "stdout_sha256": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe",
+      "seventh_turn"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.423740376252681,
+    "stdout_sha256": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]
