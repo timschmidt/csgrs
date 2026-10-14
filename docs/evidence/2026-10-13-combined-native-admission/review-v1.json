@@ -1,0 +1,109 @@
+{
+  "status": "combined-source-review-complete-direct-current-main-cost-comparison-required",
+  "previous_turn_classification": "progress: unchanged candidate passed both original native gates; closed allocator application trial preserved exact reports and startup tradeoffs",
+  "head": "a1c303f1b838fd39d0c4aff39c1ea2e5f3aad4ad",
+  "scope": {
+    "properties": "P1-P5, P8-P11, P14-P20, P27, P35-P37; target 11",
+    "full_plan_complete": false,
+    "six_crate_paths_compared": 1367,
+    "source_paths_changed_or_added": 17,
+    "wider_workspace_paths_compared": 10133,
+    "wider_changes": 18,
+    "wider_extra_change": "docs/properties-status.json is an evidence ledger, not a build input",
+    "excluded": "docs/evidence and target artifacts; explicitly workspace-excluded crates/comparisons (Cargo.toml lines 107-133). No claims about those independent comparison packages."
+  },
+  "reading": {
+    "diff": "reviewed-source-diff-v1.patch.gz",
+    "all_17_diffs_read": true,
+    "context": [
+      "algebra.rs coefficient/term limits and retained projection fallback",
+      "representation.rs lazy cache publication, access and NodeDrop",
+      "bezier_region.rs complete duplicate/source validation order",
+      "segment.rs endpoint callers and original policy-dependent points_equal",
+      "policy.rs approximate/preview and strict-pass accessors",
+      "all six persistent cache tests, three metadata tests, five endpoint tests and two allocator contract tests"
+    ],
+    "inventory_not_credited_as_reading": true
+  },
+  "findings": [
+    {
+      "component": "persistent Laurent cache",
+      "review": "Retained certificates own rational/radical pairs only. Opaque atom maps are rejected. Publication writes an empty cache slot under the existing lock and preserves approximation/tower fields. No graph-owning certificate is retained.",
+      "fallback": "Projection drops the first memo before retry. If a retained certificate participated and projection fails, the original recognizer runs with its original independent 512-expansion budget. Eight-term and coefficient limits remain. Integer operand width is not bounded by the expansion count.",
+      "tests": "Six frontier, ownership/reclamation, concurrent approximation, wide integer and independent coefficient controls. Finite tests and source reasoning are not a universal proof."
+    },
+    {
+      "component": "integer leaf reuse",
+      "review": "Exact signed-word leaves use the existing canonical Rational table; wider integers use the original exact BigInt conversion. The rejected quadratic prepasses are absent."
+    },
+    {
+      "component": "metadata validation",
+      "review": "Reorders the same metadata/fragment conjunction. Duplicate-loop errors still precede cross-loop source reuse errors. Three controls cover metadata combinations, independently constructed exact geometry, error priority and available warm facts."
+    },
+    {
+      "component": "endpoint coordinate proof reuse",
+      "review": "Global Point2 equality and the original policy comparison remain. Private equality proves negatives only from definite nonzero coordinate differences, evaluates coordinates lazily, and drops the x difference before y. Negative proof reuse is restricted to exact non-preview policy; unknown and terminal/preview policies keep the original retry. Five regression controls cover differential old sequencing, clone/warm/abort/budget and certainty receipts."
+    },
+    {
+      "component": "process allocator",
+      "review": "MiMalloc is installed only in the native CLI and native library test crate. Reusable library consumers, integration-test drivers and doctests choose their own allocator. The direct native dependency changes build inputs even for library consumers. Linux x86-64 selection was verified from ELF dispatch. Other platforms and WASM runtime selection are not established by this trial."
+    },
+    {
+      "component": "documentation",
+      "review": "The six-crate content comparison found no additional standalone documentation changes. The facts/compaction source changes are documentation and formatting; they describe allowed strengthening and the two bounded normalization passes."
+    }
+  ],
+  "preserved_adverse_evidence": [
+    {
+      "assessment": "2026-10-12-persistent-laurent-cache/early-assessment-v1.json",
+      "facts": "Cost V1 used identical binaries and remains invalidated. Corrected V2 has first-query median ratios about 1.144 and 1.155 for two radical cases, increased first-query retention, and opaque-path regressions alongside warm-query gains."
+    },
+    {
+      "assessment": "2026-10-12-small-integer-certificates/scalar-assessment-v1.json",
+      "facts": "136 fixed timing rows include construction/cloning and memory increases alongside exact integer/quadratic gains. This compares integer reuse against its cache-enabled parent, not current main."
+    },
+    {
+      "assessment": "2026-10-12-region-metadata-first/cost-assessment-v1.json",
+      "facts": "Unequal/mixed metadata is cheaper; absent-source first and duplicate warm/cloned rows include higher medians. Duplicate warm is higher in all five pairs."
+    },
+    {
+      "assessment": "2026-10-12-endpoint-coordinate-reuse/controls-assessment-v1.json",
+      "facts": "Most intended exact arc rows improve; approximate rows and nine broad rows have adverse fixed results. The later attribution found zero endpoint calls in the nine timed broad loops; their cost cause remains unestablished."
+    },
+    {
+      "assessment": "2026-10-13-drc-process-allocator/application-assessment-v2.json",
+      "facts": "Both full boards improve wall/CPU/RSS in every fixed pair and preserve complete reports. Help startup increases in all pairs (median wall 2.4075 to 2.9272 ms), and CLI grows 158256 bytes. Its baseline already includes all inherited cache/curve changes."
+    }
+  ],
+  "remaining_comparison": {
+    "baseline": "current main worktree including the 35 authorized native paths and admitted P4 sign repair",
+    "candidate": "exact reviewed 17-path delta: inherited cache/integer/curve changes plus process-owned allocator",
+    "reason": "No prior fixed experiment directly compares these two complete variants. Different ancestry, workloads and ratios cannot be multiplied, pooled or used to erase adverse observations.",
+    "library_boundary": "Public scalar/curve/DRC library probes retain their own System allocator; report CLI comparison uses the candidate process allocator.",
+    "planned_controls": [
+      "byte-identical rational, quadratic and integer probes; construction, first, warm, cloned queries and exact witnesses",
+      "byte-identical arc probe and all 231 broad native operation witnesses, plus effective final-coordinate abort receipts",
+      "six metadata families in both private instrumented copies with identical counting wrapper",
+      "original full-board/copper-neck assertions and complete full-resolution JSON reports",
+      "five alternating fresh-process pairs per cost class, exact output checks, requested allocation/live/peak and executable sizes; no sample extension or filtering"
+    ],
+    "new_contrast_not_extension_of_closed_allocator_sample": true
+  },
+  "overlap_resolution": {
+    "pending_native_paths": 35,
+    "overlap": [
+      "crates/hypercurve/src/bezier_region.rs",
+      "crates/hypercurve/src/segment.rs"
+    ],
+    "review": "Candidate bytes contain the existing native changes plus the reviewed hunks. Original user changes remain intact. No main runtime files have been promoted or replaced."
+  },
+  "runtime_admitted": false,
+  "new_measurements_executed": false,
+  "plan_complete": false,
+  "inputs_sha256": {
+    "reviewed-evidence-inputs-v1.json": "deaa2cde4c32171ed0a935ecd69b27123102e6b4bd4bf1a36176a0aa71c276a4",
+    "reviewed-source-diff-v1.patch.gz": "55daf41faace64208496ab769dfd4b57cc63d94804b79d51254c0a470c4b3afa",
+    "reviewed-source-inputs-v1.json": "23a9dcb3feb3dadd284d4e49a232832f229506b4fb18cb6285682b2c84195a3a",
+    "workspace-comparison-v1.json": "952004ff7f84e7bc5f96335b1f514a35aa60792c5b5343f1bcfe2d1c57a478cf"
+  }
+}

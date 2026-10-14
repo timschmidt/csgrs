@@ -4229,6 +4229,16 @@
           "candidate_lower_blocks": 0
         }
       ]
+    },
+    "combined_native_admission": {
+      "status": "combined-source-review-complete-direct-current-main-cost-comparison-required",
+      "evidence": "docs/evidence/2026-10-13-combined-native-admission/review-v1.json",
+      "source_review_complete": true,
+      "runtime_admitted": false,
+      "new_measurements_executed": false,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "next_step": "Freeze the distinct current-main versus complete-candidate comparison, retaining library consumers, original gates, full reports and all earlier adverse results.",
+      "plan_complete": false
     }
   },
   "status_meanings": {

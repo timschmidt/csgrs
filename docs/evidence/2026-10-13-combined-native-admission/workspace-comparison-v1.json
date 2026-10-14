@@ -1,0 +1,100 @@
+{
+  "excluded_prefixes": [
+    "docs/evidence/",
+    "crates/comparisons/",
+    "target/"
+  ],
+  "selected_paths": 10133,
+  "changes": [
+    {
+      "path": "Cargo.lock",
+      "main_sha256": "412328a79402c4a1615983f14799f3c0da19d2c4e0049d0a5c925504485964c2",
+      "candidate_sha256": "76070fa4a72353546495b18e13214c10fd8902b7c536a95aa786ffb2b17d628c"
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region.rs",
+      "main_sha256": "6ea7d9bb3bd2fadc96cb8736b59fc66b5f576460eee83ee5fb306b43a227bb1e",
+      "candidate_sha256": "f94f30baee3331690d8bb556b9d64ab45355dffb4c4d209683f0535d739fbfee"
+    },
+    {
+      "path": "crates/hypercurve/src/bezier_region/metadata_order_tests.rs",
+      "main_sha256": null,
+      "candidate_sha256": "58b97430f65150fc7eb8f408fdda8383a6e2eb6f9148ce28da7f39857038c92f"
+    },
+    {
+      "path": "crates/hypercurve/src/point.rs",
+      "main_sha256": "52ac57268371a643d6f9b52b71942af8cecbc1f196478596bab6372081ff2722",
+      "candidate_sha256": "de1aa84aeb802a42c419be3f1af0d2f680a5d3e5ee84321fe0892dcbae164786"
+    },
+    {
+      "path": "crates/hypercurve/src/segment.rs",
+      "main_sha256": "d253abef3276d8b56a99ad9a7273227d3c823b6f01a7b01a0ce3959b32057213",
+      "candidate_sha256": "e9ecf7c57aa3281373b41c6c69b3e94c63fc76edd8db6a25b4d87d8af1a3d8c3"
+    },
+    {
+      "path": "crates/hypercurve/src/segment/endpoint_proof_tests.rs",
+      "main_sha256": null,
+      "candidate_sha256": "83be67d1fd7bc49f2afa64568b286ea0fbec4db679bed885dd9ea526ec48c2a1"
+    },
+    {
+      "path": "crates/hyperdrc/Cargo.toml",
+      "main_sha256": "e9765cff947a765fd2990c582771a94c83546d5482bf374583de271d2c86b1c5",
+      "candidate_sha256": "06861fc83221fc060e59b9d728391a954615a62f25055513ff5790dde502ec3b"
+    },
+    {
+      "path": "crates/hyperdrc/src/allocator_contract_tests.rs",
+      "main_sha256": null,
+      "candidate_sha256": "14d82c0d58ea7f29d44260f5143e8ae5b505c4e22189379e6fa3321255c689ec"
+    },
+    {
+      "path": "crates/hyperdrc/src/lib.rs",
+      "main_sha256": "d32706daff1e54d6c1e481741b357837c431e59b8f396f8ee5b7daa87f996c29",
+      "candidate_sha256": "386115d6d7f43d7c901389e36784b296cc23fcd471b2323c65880e12de403b1c"
+    },
+    {
+      "path": "crates/hyperdrc/src/main.rs",
+      "main_sha256": "23725b908d9905b33878be1f35f95da0fca6ece7fccfdbbec366ab1ea2ab327f",
+      "candidate_sha256": "c40bfb9c0184f1d9c99dbea71465eb96defea4489bebd16528582f5e167ea7b4"
+    },
+    {
+      "path": "crates/hyperdrc/src/process_allocator.rs",
+      "main_sha256": null,
+      "candidate_sha256": "099d34a4ba6e8f4d5768b14e77d1a602ac1e614a47c8a76fe7ed9d2c3b21ed66"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "main_sha256": "344ff1fedb272531999a61836c9689bdd24ecfa528ab87b04a25632c09ddcd9d",
+      "candidate_sha256": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs",
+      "main_sha256": null,
+      "candidate_sha256": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "main_sha256": "ad937e21fa6568e56a0dc9a9fa9e27b5758a85cc94e813719f74d50d686cee31",
+      "candidate_sha256": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "main_sha256": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933",
+      "candidate_sha256": "fb8788a1dc8723d335d85150638cd2e4bab368806d25b92a9ff5537b007922ca"
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/facts.rs",
+      "main_sha256": "195c6abd8ba22527a0ec5712e8cb949665ff51f3c85ec7c215d3210750e4353b",
+      "candidate_sha256": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805"
+    },
+    {
+      "path": "crates/hyperreal/src/real/arithmetic/pi_laurent_compaction.rs",
+      "main_sha256": "ab51ce183d89db6c2ace7d92a38be60a2b4140423cc1d574ccf309eb9a7e96a3",
+      "candidate_sha256": "2497f82c7dfc85b71725e8c86f6c541c9f384678ba637b9a699aa56c03a534ee"
+    },
+    {
+      "path": "docs/properties-status.json",
+      "main_sha256": "6a88a6425a99bbfde3ef84bc45e5db4555fce2dc6627bb9c4009d32b07279292",
+      "candidate_sha256": "a0575469109962309264a829cbde36b0a86edebc9ee31174208c6e7785b6b174"
+    }
+  ]
+}
