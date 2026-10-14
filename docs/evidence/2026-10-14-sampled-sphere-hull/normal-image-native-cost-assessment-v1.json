@@ -1,0 +1,426 @@
+{
+  "complete": true,
+  "assessor_sha256": "6443c58d6efe57f7c644de482cbb752387ce55f28cd04c56b46120d23cd43402",
+  "result_sha256": "646f33391901ba7323730eacae18ff6c10140ae70197b375caa82f5531e30879",
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "all_outputs_match_group_specific_exactly_validated_reference": true,
+  "all_outputs_identical_across_groups": true,
+  "reference_output_bytes": {
+    "parent": {
+      "fifteen_degrees": 65827,
+      "original_medium": 120859,
+      "fifth_turn": 14627,
+      "seventh_turn": 7150
+    },
+    "candidate": {
+      "fifteen_degrees": 65827,
+      "original_medium": 120859,
+      "fifth_turn": 14627,
+      "seventh_turn": 7150
+    }
+  },
+  "reference_output_sha256": {
+    "parent": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    },
+    "candidate": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    }
+  },
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "pairs": [
+        {
+          "round": 1,
+          "parent_process_wall_seconds": 22.19362190971151,
+          "candidate_process_wall_seconds": 23.45374820707366,
+          "parent_child_cpu_seconds": 22.087637000000026,
+          "candidate_child_cpu_seconds": 23.341593999999983,
+          "process_wall_ratio": 1.0567787584418902,
+          "child_cpu_ratio": 1.0567718946123552
+        },
+        {
+          "round": 2,
+          "parent_process_wall_seconds": 22.505311492830515,
+          "candidate_process_wall_seconds": 22.870135135948658,
+          "parent_child_cpu_seconds": 22.343319000000015,
+          "candidate_child_cpu_seconds": 22.707402999999978,
+          "process_wall_ratio": 1.0162105573715061,
+          "child_cpu_ratio": 1.0162949828537096
+        },
+        {
+          "round": 3,
+          "parent_process_wall_seconds": 22.27241618093103,
+          "candidate_process_wall_seconds": 22.429370417259634,
+          "parent_child_cpu_seconds": 22.109038999999992,
+          "candidate_child_cpu_seconds": 22.257794000000057,
+          "process_wall_ratio": 1.0070470233248865,
+          "child_cpu_ratio": 1.006728243593042
+        },
+        {
+          "round": 4,
+          "parent_process_wall_seconds": 22.87238063197583,
+          "candidate_process_wall_seconds": 22.2766390517354,
+          "parent_child_cpu_seconds": 22.65368700000004,
+          "candidate_child_cpu_seconds": 22.167844000000027,
+          "process_wall_ratio": 0.973953669719558,
+          "child_cpu_ratio": 0.9785534690225034
+        },
+        {
+          "round": 5,
+          "parent_process_wall_seconds": 21.166137902997434,
+          "candidate_process_wall_seconds": 21.377435075119138,
+          "parent_child_cpu_seconds": 21.018960999999976,
+          "candidate_child_cpu_seconds": 21.222647999999946,
+          "process_wall_ratio": 1.0099827929445637,
+          "child_cpu_ratio": 1.0096906312352913
+        },
+        {
+          "round": 6,
+          "parent_process_wall_seconds": 22.3622203678824,
+          "candidate_process_wall_seconds": 21.497647987678647,
+          "parent_child_cpu_seconds": 22.18801600000001,
+          "candidate_child_cpu_seconds": 21.34395299999999,
+          "process_wall_ratio": 0.9613378114525027,
+          "child_cpu_ratio": 0.9619586086471174
+        }
+      ],
+      "median_process_wall_ratio": 1.008514908134725,
+      "min_process_wall_ratio": 0.9613378114525027,
+      "max_process_wall_ratio": 1.0567787584418902,
+      "median_child_cpu_ratio": 1.0082094374141666,
+      "median_process_wall_seconds": {
+        "parent": 22.317318274406716,
+        "candidate": 22.353004734497517
+      },
+      "median_child_cpu_seconds": {
+        "parent": 22.1485275,
+        "candidate": 22.212819000000042
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "pairs": [
+        {
+          "round": 1,
+          "parent_process_wall_seconds": 54.86001254012808,
+          "candidate_process_wall_seconds": 55.559569457080215,
+          "parent_child_cpu_seconds": 54.60254699999999,
+          "candidate_child_cpu_seconds": 55.29495300000003,
+          "process_wall_ratio": 1.0127516725673447,
+          "child_cpu_ratio": 1.0126808370312843
+        },
+        {
+          "round": 2,
+          "parent_process_wall_seconds": 55.34319957206026,
+          "candidate_process_wall_seconds": 55.496611159760505,
+          "parent_child_cpu_seconds": 54.90676800000001,
+          "candidate_child_cpu_seconds": 55.087574,
+          "process_wall_ratio": 1.0027720043092285,
+          "child_cpu_ratio": 1.0032929638109456
+        },
+        {
+          "round": 3,
+          "parent_process_wall_seconds": 55.163108402397484,
+          "candidate_process_wall_seconds": 54.391549229156226,
+          "parent_child_cpu_seconds": 54.76677000000002,
+          "candidate_child_cpu_seconds": 53.99126700000002,
+          "process_wall_ratio": 0.9860131309567804,
+          "child_cpu_ratio": 0.9858398989021993
+        },
+        {
+          "round": 4,
+          "parent_process_wall_seconds": 54.324488134123385,
+          "candidate_process_wall_seconds": 56.37570788525045,
+          "parent_child_cpu_seconds": 53.894262,
+          "candidate_child_cpu_seconds": 56.056294000000015,
+          "process_wall_ratio": 1.0377586576805427,
+          "child_cpu_ratio": 1.0401161815704985
+        },
+        {
+          "round": 5,
+          "parent_process_wall_seconds": 53.88270494481549,
+          "candidate_process_wall_seconds": 52.41101941419765,
+          "parent_child_cpu_seconds": 53.491871000000025,
+          "candidate_child_cpu_seconds": 52.03829900000001,
+          "process_wall_ratio": 0.9726872373589063,
+          "child_cpu_ratio": 0.9728263010280569
+        },
+        {
+          "round": 6,
+          "parent_process_wall_seconds": 54.10435982700437,
+          "candidate_process_wall_seconds": 54.38417046377435,
+          "parent_child_cpu_seconds": 53.69252599999989,
+          "candidate_child_cpu_seconds": 53.977787000000085,
+          "process_wall_ratio": 1.0051716837176274,
+          "child_cpu_ratio": 1.0053128623525778
+        }
+      ],
+      "median_process_wall_ratio": 1.003971844013428,
+      "min_process_wall_ratio": 0.9726872373589063,
+      "max_process_wall_ratio": 1.0377586576805427,
+      "median_child_cpu_ratio": 1.0043029130817618,
+      "median_process_wall_seconds": {
+        "parent": 54.59225033712573,
+        "candidate": 54.944080194458365
+      },
+      "median_child_cpu_seconds": {
+        "parent": 54.24840449999999,
+        "candidate": 54.539420500000006
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "fifth_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "parent_process_wall_seconds": 1.48612589109689,
+          "candidate_process_wall_seconds": 1.5868228320032358,
+          "parent_child_cpu_seconds": 1.4788769999999958,
+          "candidate_child_cpu_seconds": 1.5786189999999949,
+          "process_wall_ratio": 1.0677580153266981,
+          "child_cpu_ratio": 1.0674444189746675
+        },
+        {
+          "round": 2,
+          "parent_process_wall_seconds": 1.5212461147457361,
+          "candidate_process_wall_seconds": 1.4574739141389728,
+          "parent_child_cpu_seconds": 1.5061499999999826,
+          "candidate_child_cpu_seconds": 1.4469230000000157,
+          "process_wall_ratio": 0.9580789722395299,
+          "child_cpu_ratio": 0.9606765594396525
+        },
+        {
+          "round": 3,
+          "parent_process_wall_seconds": 1.6571103450842202,
+          "candidate_process_wall_seconds": 1.5659563108347356,
+          "parent_child_cpu_seconds": 1.6442639999999393,
+          "candidate_child_cpu_seconds": 1.5576969999999557,
+          "process_wall_ratio": 0.9449921759767592,
+          "child_cpu_ratio": 0.9473521283686884
+        },
+        {
+          "round": 4,
+          "parent_process_wall_seconds": 1.5384382172487676,
+          "candidate_process_wall_seconds": 1.6182340392842889,
+          "parent_child_cpu_seconds": 1.5270729999999233,
+          "candidate_child_cpu_seconds": 1.6023900000000033,
+          "process_wall_ratio": 1.0518680705801904,
+          "child_cpu_ratio": 1.049321152295983
+        },
+        {
+          "round": 5,
+          "parent_process_wall_seconds": 1.4550866377539933,
+          "candidate_process_wall_seconds": 1.4793642042204738,
+          "parent_child_cpu_seconds": 1.445143000000017,
+          "candidate_child_cpu_seconds": 1.4679049999999665,
+          "process_wall_ratio": 1.0166846192086227,
+          "child_cpu_ratio": 1.0157506904160691
+        },
+        {
+          "round": 6,
+          "parent_process_wall_seconds": 1.4660842837765813,
+          "candidate_process_wall_seconds": 1.717714442871511,
+          "parent_child_cpu_seconds": 1.4551410000001277,
+          "candidate_child_cpu_seconds": 1.7041999999999433,
+          "process_wall_ratio": 1.171634169931035,
+          "child_cpu_ratio": 1.171157984002783
+        }
+      ],
+      "median_process_wall_ratio": 1.0342763448944066,
+      "min_process_wall_ratio": 0.9449921759767592,
+      "max_process_wall_ratio": 1.171634169931035,
+      "median_child_cpu_ratio": 1.0325359213560261,
+      "median_process_wall_seconds": {
+        "parent": 1.503686002921313,
+        "candidate": 1.5763895714189857
+      },
+      "median_child_cpu_seconds": {
+        "parent": 1.4925134999999892,
+        "candidate": 1.5681579999999753
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "seventh_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "parent_process_wall_seconds": 0.44097502529621124,
+          "candidate_process_wall_seconds": 0.46903131203725934,
+          "parent_child_cpu_seconds": 0.43861500000001685,
+          "candidate_child_cpu_seconds": 0.46669200000001415,
+          "process_wall_ratio": 1.0636233009391,
+          "child_cpu_ratio": 1.064012858657356
+        },
+        {
+          "round": 2,
+          "parent_process_wall_seconds": 0.43065670086070895,
+          "candidate_process_wall_seconds": 0.5660973321646452,
+          "parent_child_cpu_seconds": 0.4266779999999917,
+          "candidate_child_cpu_seconds": 0.5603819999999773,
+          "process_wall_ratio": 1.3144979075752103,
+          "child_cpu_ratio": 1.3133604263636471
+        },
+        {
+          "round": 3,
+          "parent_process_wall_seconds": 0.4780236668884754,
+          "candidate_process_wall_seconds": 0.4534975760616362,
+          "parent_child_cpu_seconds": 0.4741590000000205,
+          "candidate_child_cpu_seconds": 0.45108699999999746,
+          "process_wall_ratio": 0.9486927268968018,
+          "child_cpu_ratio": 0.951341216764794
+        },
+        {
+          "round": 4,
+          "parent_process_wall_seconds": 0.45043727569282055,
+          "candidate_process_wall_seconds": 0.4547301419079304,
+          "parent_child_cpu_seconds": 0.44698600000003796,
+          "candidate_child_cpu_seconds": 0.45026999999993866,
+          "process_wall_ratio": 1.0095304417435411,
+          "child_cpu_ratio": 1.0073469862588547
+        },
+        {
+          "round": 5,
+          "parent_process_wall_seconds": 0.4517836938612163,
+          "candidate_process_wall_seconds": 0.519688141066581,
+          "parent_child_cpu_seconds": 0.4483390000000479,
+          "candidate_child_cpu_seconds": 0.5151449999999964,
+          "process_wall_ratio": 1.1503030059031398,
+          "child_cpu_ratio": 1.1490077820576425
+        },
+        {
+          "round": 6,
+          "parent_process_wall_seconds": 0.43881129333749413,
+          "candidate_process_wall_seconds": 0.46267332695424557,
+          "parent_child_cpu_seconds": 0.43533500000001646,
+          "candidate_child_cpu_seconds": 0.45876200000002,
+          "process_wall_ratio": 1.0543788046913343,
+          "child_cpu_ratio": 1.0538137296564776
+        }
+      ],
+      "median_process_wall_ratio": 1.0590010528152172,
+      "min_process_wall_ratio": 0.9486927268968018,
+      "max_process_wall_ratio": 1.3144979075752103,
+      "median_child_cpu_ratio": 1.0589132941569168,
+      "median_process_wall_seconds": {
+        "parent": 0.4457061504945159,
+        "candidate": 0.46585231949575245
+      },
+      "median_child_cpu_seconds": {
+        "parent": 0.4428005000000274,
+        "candidate": 0.4627270000000171
+      },
+      "reproducible_cost_increase_flagged": false
+    }
+  ],
+  "binary_file_bytes": {
+    "parent": 8761904,
+    "candidate": 8763584
+  },
+  "binary_sections_bytes": {
+    "parent": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44880,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435060,
+      ".rodata": 78688,
+      ".eh_frame_hdr": 17500,
+      ".eh_frame": 126760,
+      ".text": 1659695,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26544,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 312,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    },
+    "candidate": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44952,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435060,
+      ".rodata": 79032,
+      ".eh_frame_hdr": 17524,
+      ".eh_frame": 126956,
+      ".text": 1659807,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26624,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 3576,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    }
+  },
+  "binary_file_delta_candidate_minus_parent": 1680,
+  "text_delta_candidate_minus_parent": 112,
+  "interpretation": "Descriptive fixed paired whole-process cost comparison of the same full original finite-point hull tasks. Every process performs three queries. Every serialized row, byte size, certainty and checksum must be identical across both groups. All eight preflights are retained and excluded from the six predeclared measurement pairs.",
+  "limits": [
+    "No allocation, retained-byte, RSS, check-body or separate per-query timing evidence.",
+    "This finite row-preserving comparison does not establish universal performance; unflagged cases do not prove absence of regression.",
+    "No universal performance, formal verification, fuzz-campaign or runtime-admission claim."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

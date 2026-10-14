@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              336      2784
+.gnu.hash                    28      3120
+.dynstr                    1130      3148
+.rela.dyn                 44952      4280
+.rela.plt                    48     49232
+.gcc_except_table       1435060     49280
+.rodata                   79032   1484352
+.eh_frame_hdr             17524   1563384
+.eh_frame                126956   1580912
+.text                   1659807   1711968
+.init                        27   3371776
+.fini                        13   3371804
+.plt                         48   3371824
+.tdata                      576   3375968
+.tbss                       896   3376544
+.data.rel.ro              26624   3376544
+.fini_array                   8   3403168
+.init_array                  16   3403176
+.dynamic                    480   3403192
+.got                       4680   3403672
+.got.plt                     40   3408352
+.relro_padding             3576   3408392
+.tm_clone_table               0   3412488
+.data                    197480   3412488
+.bss                        208   3609968
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7702420
+
+

@@ -1,0 +1,48 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "result_sha256": "646f33391901ba7323730eacae18ff6c10140ae70197b375caa82f5531e30879",
+  "assessment_sha256": "7ecced919974611c927a4643b53ec5ab8ea1d4d4179893938e071e202ac5d888",
+  "driver_stdout_sha256": "81d1ab09bd354301317ff258e4bbefbd6b863e0d803877c66afcde9569d96183",
+  "assessor_stdout_sha256": "5641ab0ad4309e7306fc33bfc72036ca3daf2259c324f4ef16aeaa7ffd2d0a12",
+  "all_168_native_query_transcripts_identical_to_exactly_validated_reference": true,
+  "all_frozen_inputs_sources_libraries_and_binaries_rechecked_by_assessor": true,
+  "median_process_wall_ratios": {
+    "fifteen_degrees": 1.008514908134725,
+    "original_medium": 1.003971844013428,
+    "fifth_turn": 1.0342763448944066,
+    "seventh_turn": 1.0590010528152172
+  },
+  "median_process_wall_seconds": {
+    "fifteen_degrees": {
+      "parent": 22.317318274406716,
+      "candidate": 22.353004734497517
+    },
+    "original_medium": {
+      "parent": 54.59225033712573,
+      "candidate": 54.944080194458365
+    },
+    "fifth_turn": {
+      "parent": 1.503686002921313,
+      "candidate": 1.5763895714189857
+    },
+    "seventh_turn": {
+      "parent": 0.4457061504945159,
+      "candidate": 0.46585231949575245
+    }
+  },
+  "all_pairs_in_assessment_preserved": true,
+  "reproducible_cost_increase_flagged_cases": [],
+  "binary_file_delta_candidate_minus_parent": 1680,
+  "text_delta_candidate_minus_parent": 112,
+  "interpretation": "No native speedup is established. Every median paired wall ratio exceeds one; all individual ratios and absolute costs are retained. No case meets the predeclared reproducible-increase flag, which does not establish absence of regression. The scalar nonzero-query benefit remains a separate observation.",
+  "resource_trial_ready": true,
+  "resource_trial_executed": false,
+  "limits": "Whole-process wall and child CPU for four full original finite point sets. No per-query timing, allocation, RSS, sanitizer, directed campaign, formal proof or production admission claim.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              336      2784
+.gnu.hash                    28      3120
+.dynstr                    1130      3148
+.rela.dyn                 44880      4280
+.rela.plt                    48     49160
+.gcc_except_table       1435060     49208
+.rodata                   78688   1484272
+.eh_frame_hdr             17500   1562960
+.eh_frame                126760   1580464
+.text                   1659695   1711328
+.init                        27   3371024
+.fini                        13   3371052
+.plt                         48   3371072
+.tdata                      576   3375216
+.tbss                       896   3375792
+.data.rel.ro              26544   3375792
+.fini_array                   8   3402336
+.init_array                  16   3402344
+.dynamic                    480   3402360
+.got                       4680   3402840
+.got.plt                     40   3407520
+.relro_padding              312   3407560
+.tm_clone_table               0   3411656
+.data                    197480   3411656
+.bss                        208   3609136
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7698328
+
+

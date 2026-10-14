@@ -1,0 +1,117 @@
+{"start": "size-parent"}
+{"finished": "size-parent", "exit_code": 0}
+{"start": "size-candidate"}
+{"finished": "size-candidate", "exit_code": 0}
+{"start": "preflight-0-parent-fifteen_degrees"}
+{"finished": "preflight-0-parent-fifteen_degrees", "exit_code": 0}
+{"start": "preflight-0-parent-original_medium"}
+{"finished": "preflight-0-parent-original_medium", "exit_code": 0}
+{"start": "preflight-0-parent-fifth_turn"}
+{"finished": "preflight-0-parent-fifth_turn", "exit_code": 0}
+{"start": "preflight-0-parent-seventh_turn"}
+{"finished": "preflight-0-parent-seventh_turn", "exit_code": 0}
+{"start": "preflight-0-candidate-fifteen_degrees"}
+{"finished": "preflight-0-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "preflight-0-candidate-original_medium"}
+{"finished": "preflight-0-candidate-original_medium", "exit_code": 0}
+{"start": "preflight-0-candidate-fifth_turn"}
+{"finished": "preflight-0-candidate-fifth_turn", "exit_code": 0}
+{"start": "preflight-0-candidate-seventh_turn"}
+{"finished": "preflight-0-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-1-parent-fifteen_degrees"}
+{"finished": "sample-1-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-1-parent-original_medium"}
+{"finished": "sample-1-parent-original_medium", "exit_code": 0}
+{"start": "sample-1-parent-fifth_turn"}
+{"finished": "sample-1-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-1-parent-seventh_turn"}
+{"finished": "sample-1-parent-seventh_turn", "exit_code": 0}
+{"start": "sample-1-candidate-fifteen_degrees"}
+{"finished": "sample-1-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-1-candidate-original_medium"}
+{"finished": "sample-1-candidate-original_medium", "exit_code": 0}
+{"start": "sample-1-candidate-fifth_turn"}
+{"finished": "sample-1-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-1-candidate-seventh_turn"}
+{"finished": "sample-1-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-2-candidate-fifteen_degrees"}
+{"finished": "sample-2-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-2-candidate-original_medium"}
+{"finished": "sample-2-candidate-original_medium", "exit_code": 0}
+{"start": "sample-2-candidate-fifth_turn"}
+{"finished": "sample-2-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-2-candidate-seventh_turn"}
+{"finished": "sample-2-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-2-parent-fifteen_degrees"}
+{"finished": "sample-2-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-2-parent-original_medium"}
+{"finished": "sample-2-parent-original_medium", "exit_code": 0}
+{"start": "sample-2-parent-fifth_turn"}
+{"finished": "sample-2-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-2-parent-seventh_turn"}
+{"finished": "sample-2-parent-seventh_turn", "exit_code": 0}
+{"start": "sample-3-parent-fifteen_degrees"}
+{"finished": "sample-3-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-3-parent-original_medium"}
+{"finished": "sample-3-parent-original_medium", "exit_code": 0}
+{"start": "sample-3-parent-fifth_turn"}
+{"finished": "sample-3-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-3-parent-seventh_turn"}
+{"finished": "sample-3-parent-seventh_turn", "exit_code": 0}
+{"start": "sample-3-candidate-fifteen_degrees"}
+{"finished": "sample-3-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-3-candidate-original_medium"}
+{"finished": "sample-3-candidate-original_medium", "exit_code": 0}
+{"start": "sample-3-candidate-fifth_turn"}
+{"finished": "sample-3-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-3-candidate-seventh_turn"}
+{"finished": "sample-3-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-4-candidate-fifteen_degrees"}
+{"finished": "sample-4-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-4-candidate-original_medium"}
+{"finished": "sample-4-candidate-original_medium", "exit_code": 0}
+{"start": "sample-4-candidate-fifth_turn"}
+{"finished": "sample-4-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-4-candidate-seventh_turn"}
+{"finished": "sample-4-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-4-parent-fifteen_degrees"}
+{"finished": "sample-4-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-4-parent-original_medium"}
+{"finished": "sample-4-parent-original_medium", "exit_code": 0}
+{"start": "sample-4-parent-fifth_turn"}
+{"finished": "sample-4-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-4-parent-seventh_turn"}
+{"finished": "sample-4-parent-seventh_turn", "exit_code": 0}
+{"start": "sample-5-parent-fifteen_degrees"}
+{"finished": "sample-5-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-5-parent-original_medium"}
+{"finished": "sample-5-parent-original_medium", "exit_code": 0}
+{"start": "sample-5-parent-fifth_turn"}
+{"finished": "sample-5-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-5-parent-seventh_turn"}
+{"finished": "sample-5-parent-seventh_turn", "exit_code": 0}
+{"start": "sample-5-candidate-fifteen_degrees"}
+{"finished": "sample-5-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-5-candidate-original_medium"}
+{"finished": "sample-5-candidate-original_medium", "exit_code": 0}
+{"start": "sample-5-candidate-fifth_turn"}
+{"finished": "sample-5-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-5-candidate-seventh_turn"}
+{"finished": "sample-5-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-6-candidate-fifteen_degrees"}
+{"finished": "sample-6-candidate-fifteen_degrees", "exit_code": 0}
+{"start": "sample-6-candidate-original_medium"}
+{"finished": "sample-6-candidate-original_medium", "exit_code": 0}
+{"start": "sample-6-candidate-fifth_turn"}
+{"finished": "sample-6-candidate-fifth_turn", "exit_code": 0}
+{"start": "sample-6-candidate-seventh_turn"}
+{"finished": "sample-6-candidate-seventh_turn", "exit_code": 0}
+{"start": "sample-6-parent-fifteen_degrees"}
+{"finished": "sample-6-parent-fifteen_degrees", "exit_code": 0}
+{"start": "sample-6-parent-original_medium"}
+{"finished": "sample-6-parent-original_medium", "exit_code": 0}
+{"start": "sample-6-parent-fifth_turn"}
+{"finished": "sample-6-parent-fifth_turn", "exit_code": 0}
+{"start": "sample-6-parent-seventh_turn"}
+{"finished": "sample-6-parent-seventh_turn", "exit_code": 0}
+{"complete": true, "result_sha256": "646f33391901ba7323730eacae18ff6c10140ae70197b375caa82f5531e30879"}
