@@ -1,0 +1,4 @@
+
+thread 'original_sampled_sphere_hulls_preserve_rows_after_cache_warming' (97) panicked at /home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/tests/native_hull_determinism.rs:25:13:
+vertex row order changed for 32x16
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

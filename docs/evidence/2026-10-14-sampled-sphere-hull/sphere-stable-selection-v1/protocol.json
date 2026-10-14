@@ -1,0 +1,115 @@
+{
+  "inputs_sha256": {
+    "probe_sphere_stable_selection_v1.py": "6189d9f773fb003d0d22f4e946274f42c61b27da2db8a19fab55e2b9d10f6083",
+    "sphere-stable-selection-scope-v1.json": "1def8ddabffd6c359a583148ce9900b9f5293e1fb91f3d6659fd0ff7d6dd6963",
+    "sphere-stable-selection-v1.patch": "ca220f211a7c331edb7160955aa065ec986d021aee53c1ece7c715fda1385845",
+    "sphere_warm_replay_probe_v1.rs": "a65035ede9c8ef6a41013cc45135e56ab1fd7e3acfce8e2e862c18c3392e3ae5",
+    "dyadic_hull_rows_probe_v1.rs": "f1b6129e372ee5e074a4f8f5c6a6f49226cd495900774847347571cdef66dd49",
+    "probe_sphere_warm_replay_v1.py": "5bd58ee8ee022d8d8fa545ba33b5c77df9e9cca930c0f29382aadef4e6db5009",
+    "sphere-warm-trace-interpretation-v2.json": "96c3ade81b398463281877dae86cf2f544e06c1ae95ec80361ae039f3b9bfced",
+    "sphere-warm-trace-analysis-v2/result.json": "520a9f783298c0a6999ddde1d9fd7241df5b6c9bd01c7748aeaf647a55aa3248",
+    "sphere-cyclotomic-image-v1/result.json": "f252dcef2a8e7f4f5244472592a2aff1eb9fa4b8c3e7566901b72c6c8854c398",
+    "sphere-cyclotomic-image-v1/source-hashes.json.gz": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce",
+    "mesh-identity-preparation-v1/source-hashes.json.gz": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "sphere-cyclotomic-v2/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-v2/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-v2/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-cyclotomic-image-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/apply.stdout": "6dbe3bda4c917ed6da22179f796a7019f31a3ff7ad09b929b9513c51c624718e",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/binaries.json": "6364653e0d1c83897f1ca6d589ea745f64280075330fc57e4e61266eac8437b2",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stderr": "ff8c3c24b987122df531eced9be67cd262722fdf509c753ed8b79c6c7c599717",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stdout": "6f2d9bef8e06c30f6d78e6efd8f7e37615e64340c5b78b6b4dd56c87781b4420",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-cyclotomic-image-v1/commands.json": "13c7d5eb5e2ba657501631cf700cc38edc8a7ad27f309ff66425b960c354fee4",
+    "sphere-cyclotomic-image-v1/libraries.json": "3718a28da8e63aebed777b167493337a0390f25c4fca168423cb87cb65f01e8b",
+    "sphere-cyclotomic-image-v1/link-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/protocol.json": "dc52bef136539c9fb15809b4c23493caa0901d1c77fc199b6363e5128cb42bab",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stderr": "76051fdf881afa2ec79e3a87ca771576d74c919aa26de2c52ca820dcd0531586",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stderr": "01bfea4266c22bf46d6aae565c42d68e9ad90870cfca81b73ee9740c493adde5",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stdout": "03a9f0d96ff27f71a47158b396c372035e413d83b0dc5ef34bc23e2e17f9da59"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target",
+  "source_files": 10136,
+  "delta_sha256": {
+    "crates/hypermesh/src/convex_hull.rs": "b4fcd4f3c69cfe02cc81402c5632e18fa3e0fb8ac6f6605c184cffeb9d39ea7a",
+    "tests/native_hull_determinism.rs": "752490127cd32d6e7fadd1083ecf71301ea42beb30aa5b922987a68ba74a351e"
+  },
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target"
+  },
+  "parent_libraries": {
+    "csgrs": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+      "sha256": "18be766f9d8a401581858c281669fabf3c484db581e2cc3714cb2ad8ca0498be",
+      "features": []
+    },
+    "hypermesh": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "68f737e20835171cd4e414b0f569bc1c41ad953dee3bbe2840d5a1dd0033f870",
+      "features": [
+        "default"
+      ]
+    }
+  },
+  "pinned_cpu": 0,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "scope": {
+    "objective": "Prototype deterministic eye selection for exact hulls whose coordinates lack an immutable lossless finite dyadic f64 view.",
+    "parent_source": "target/sphere-cyclotomic-image-v1/source",
+    "trace_interpretation_sha256": "96c3ade81b398463281877dae86cf2f544e06c1ae95ec80361ae039f3b9bfced",
+    "expected_delta_sha256": {
+      "crates/hypermesh/src/convex_hull.rs": "b4fcd4f3c69cfe02cc81402c5632e18fa3e0fb8ac6f6605c184cffeb9d39ea7a",
+      "tests/native_hull_determinism.rs": "752490127cd32d6e7fadd1083ecf71301ea42beb30aa5b922987a68ba74a351e"
+    },
+    "selection": "Preserve the existing floating distance heuristic only when every original coordinate has an exact lossless dyadic f64 view. Otherwise choose the lowest source index among certified outside points, independently of approximation bits, BVH traversal and available cached refinements. BVH partitioning may still use lossy projections. No epsilon or display geometry enters classification.",
+    "cases": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "unchanged_original_points": {
+      "fifteen_degrees": 266,
+      "original_medium": 482,
+      "fifth_turn": 62,
+      "seventh_turn": 30
+    },
+    "source_files": 10136,
+    "commands": 18,
+    "expected_zero_exit_commands": 17,
+    "expected_negative_control_exit": 101,
+    "negative_control": "Compile the new full-resolution regression test against the unchanged finite-image native libraries. It must fail specifically on changed vertex row order for 32x16. The candidate must pass that same regression.",
+    "positive_controls": "Every original sphere receives three STRICT hull queries on one retained input without intervening validation. All output vertices, triangle counts and certainty remain intact, and all three full transcripts must agree. A dyadic cube control must preserve the unchanged parent full transcripts.",
+    "output_migration": "This proposed correctness repair is allowed to produce different triangulations from the previous non-dyadic cold and warm outputs for feasibility collection only. All old rows are retained and every difference is recorded. No admission follows until the new full hulls have independent exact support proofs and proportionate native cost evidence.",
+    "native_wall_stop_seconds": 600,
+    "build_wall_stop_seconds": 900,
+    "scope_limits": "No cost, allocation, formal-verification, fuzz-campaign or broad-qualification claim. This does not resume the closed resource trial or satisfy the frozen scalar-cost trial prerequisite.",
+    "runtime_admitted": false,
+    "plan_complete": false
+  },
+  "not_a_cost_trial": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

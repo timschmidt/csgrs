@@ -1,0 +1,42 @@
+[
+  {
+    "case": "fifteen_degrees",
+    "all_three_certified_closed_and_all_original_vertices_used": true,
+    "all_three_full_transcripts_identical": true,
+    "full_transcript_matches_prior_cold": false,
+    "oriented_faces_removed_from_prior": 228,
+    "oriented_faces_added_to_candidate": 228,
+    "new_faces_independently_support_checked": false,
+    "witness_sha256": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"
+  },
+  {
+    "case": "original_medium",
+    "all_three_certified_closed_and_all_original_vertices_used": true,
+    "all_three_full_transcripts_identical": true,
+    "full_transcript_matches_prior_cold": false,
+    "oriented_faces_removed_from_prior": 476,
+    "oriented_faces_added_to_candidate": 476,
+    "new_faces_independently_support_checked": false,
+    "witness_sha256": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"
+  },
+  {
+    "case": "fifth_turn",
+    "all_three_certified_closed_and_all_original_vertices_used": true,
+    "all_three_full_transcripts_identical": true,
+    "full_transcript_matches_prior_cold": false,
+    "oriented_faces_removed_from_prior": 48,
+    "oriented_faces_added_to_candidate": 48,
+    "new_faces_independently_support_checked": false,
+    "witness_sha256": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"
+  },
+  {
+    "case": "seventh_turn",
+    "all_three_certified_closed_and_all_original_vertices_used": true,
+    "all_three_full_transcripts_identical": true,
+    "full_transcript_matches_prior_cold": false,
+    "oriented_faces_removed_from_prior": 12,
+    "oriented_faces_added_to_candidate": 12,
+    "new_faces_independently_support_checked": false,
+    "witness_sha256": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"
+  }
+]

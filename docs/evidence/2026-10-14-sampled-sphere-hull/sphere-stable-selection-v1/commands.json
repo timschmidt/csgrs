@@ -1,0 +1,318 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-v1.patch"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.0034138369373977184,
+    "stdout_sha256": "66961e4fc8daff0f22408a9603d2ed7cff1c27cc08ab020934348806902f5d89",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 10.5723412418738,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "probe-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/dyadic_hull_rows_probe_v1.rs"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.016062933020293713,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-negative-regression",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "--test",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source/tests/native_hull_determinism.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/negative-regression"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.335065009072423,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "negative-regression",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/negative-regression",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 101,
+    "expected_exit_code": 101,
+    "diagnostic_process_wall_seconds": 64.43297150591388,
+    "stdout_sha256": "0f9e291e469ef5c04a33c27947ece48206dfe5287068fc2cdc099958fafbf6b6",
+    "stderr_sha256": "305916c7956f114179ab9202589f3f11f91ecf82c6fa6e155794ff33b9ebff32"
+  },
+  {
+    "name": "mesh-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 6.425369947683066,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "bd4f289e8c670931278fac1593f9863c7674341e1a4be66f8809188515ee4e03"
+  },
+  {
+    "name": "candidate-regression",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--test",
+      "native_hull_determinism",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 151.22359105478972,
+    "stdout_sha256": "b184e342fde5f149695ad3f74267c5b38e0c8a732e7693bec93b5e518020af9f",
+    "stderr_sha256": "ff726ba5b35b1b95927dba5ed4b8e9e74c5ca8088b377d2963234d8ec4826706"
+  },
+  {
+    "name": "regression-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--test",
+      "native_hull_determinism",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 23.05527766374871,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "efb74c1823d04f4ed7b3645eaa167d93c6b0f3f936f6b9b8d2d2098ac2651085"
+  },
+  {
+    "name": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 71.48060447070748,
+    "stdout_sha256": "b72377809ddd5d8cd73af39a38a592cdc9a7c398dc58b588c24580ab4037550a",
+    "stderr_sha256": "208bb8ad4d0d22554102ce18fdd851e5bc64a943f3b6f1bd49cbf6281af3ff74"
+  },
+  {
+    "name": "link-sphere-probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.20607941690832376,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-cube-parent",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/dyadic_hull_rows_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-parent"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.18022546218708158,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-cube-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/dyadic_hull_rows_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-candidate"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.1904414347372949,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "cube-parent",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-parent"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.002932390198111534,
+    "stdout_sha256": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "cube-candidate",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-candidate"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.002972177229821682,
+    "stdout_sha256": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+      "fifteen_degrees"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 21.334867536090314,
+    "stdout_sha256": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+      "original_medium"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 54.40298166917637,
+    "stdout_sha256": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+      "fifth_turn"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 1.5074619092047215,
+    "stdout_sha256": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+      "seventh_turn"
+    ],
+    "exit_code": 0,
+    "expected_exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.4212787221185863,
+    "stdout_sha256": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

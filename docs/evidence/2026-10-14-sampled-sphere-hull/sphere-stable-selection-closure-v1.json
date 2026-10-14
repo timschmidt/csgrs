@@ -1,0 +1,54 @@
+{
+  "complete": true,
+  "feasibility_driver_terminal_exit_code": 0,
+  "independent_support_driver_terminal_exit_code": 0,
+  "native_trial_result_sha256": "65d03c03494567d50eb64b1f5280918b816396897a4e7876807cdaf2334f9392",
+  "independent_support_result_sha256": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+  "commands_expected_zero": 17,
+  "expected_negative_control_failures": 1,
+  "negative_control": "The same new full-resolution regression test fails against unchanged finite-image libraries on 32x16 vertex row order, and passes against the candidate.",
+  "native_source_files": 10136,
+  "root_source_files_guarded": 10129,
+  "all_12_original_sphere_query_outputs_independently_validated": true,
+  "all_four_cold_warm_replay_transcripts_identical": true,
+  "complete_face_point_pairs": 612288,
+  "dyadic_cube_parent_full_transcript_preserved": true,
+  "row_migrations": [
+    {
+      "case": "fifteen_degrees",
+      "changed_oriented_triangles": 228,
+      "old_cold_stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+      "new_identical_cold_warm_replay_stdout_sha256": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+      "exact_supporting_planes_and_per_plane_triangle_counts_preserved": true
+    },
+    {
+      "case": "original_medium",
+      "changed_oriented_triangles": 476,
+      "old_cold_stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+      "new_identical_cold_warm_replay_stdout_sha256": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+      "exact_supporting_planes_and_per_plane_triangle_counts_preserved": true
+    },
+    {
+      "case": "fifth_turn",
+      "changed_oriented_triangles": 48,
+      "old_cold_stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+      "new_identical_cold_warm_replay_stdout_sha256": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+      "exact_supporting_planes_and_per_plane_triangle_counts_preserved": true
+    },
+    {
+      "case": "seventh_turn",
+      "changed_oriented_triangles": 12,
+      "old_cold_stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+      "new_identical_cold_warm_replay_stdout_sha256": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+      "exact_supporting_planes_and_per_plane_triangle_counts_preserved": true
+    }
+  ],
+  "interpretation": "The prototype repairs the observed warm-row failure while preserving the exact finite sampled convex hulls. All four non-dyadic sphere cases change triangulation rows relative to the prior cold output; this is a correctness repair with an explicitly recorded output migration, not a retained performance optimization.",
+  "qualification_limits": "Release regression, strict changed-mesh and regression-target Clippy, format checks and independent finite-corpus geometry proofs passed. Broader mesh/consumer tests, adversarial coverage and new native timing/allocation/size evidence remain open. The scalar source is identical to the previously qualified finite-image candidate; that does not qualify the changed hull implementation.",
+  "fuzz_coverage_gap": "The inspected existing mesh_and_hull target uses small integer coordinates, so it exercises the retained dyadic heuristic and does not cover the new non-dyadic source-order branch or explicit cache-warming replay. No fuzz campaign was executed here.",
+  "old_resource_trial_still_closed_failed": true,
+  "old_scalar_cost_trial_still_unexecuted": true,
+  "sphere_certificate_runtime_admitted": false,
+  "deterministic_selection_runtime_admitted": false,
+  "plan_complete": false
+}

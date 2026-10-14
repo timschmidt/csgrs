@@ -1,0 +1,73 @@
+{
+  "complete": true,
+  "native_trial_driver_terminal_exit_code": 0,
+  "native_commands_expected_zero": 17,
+  "expected_negative_control_failures": 1,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "points": 266,
+      "triangles": 528,
+      "face_point_pairs": 140448,
+      "strictly_inside": 138384,
+      "coplanar": 2064,
+      "all_faces_nondegenerate_outward_and_supporting": true,
+      "closed_connected_oriented_topology": true,
+      "supporting_planes": 288,
+      "all_supporting_planes_completely_triangulated": true,
+      "cold_warm_replay_transcripts_identical": true
+    },
+    {
+      "case": "original_medium",
+      "points": 482,
+      "triangles": 960,
+      "face_point_pairs": 462720,
+      "strictly_inside": 458944,
+      "coplanar": 3776,
+      "all_faces_nondegenerate_outward_and_supporting": true,
+      "closed_connected_oriented_topology": true,
+      "supporting_planes": 512,
+      "all_supporting_planes_completely_triangulated": true,
+      "cold_warm_replay_transcripts_identical": true
+    },
+    {
+      "case": "fifth_turn",
+      "points": 62,
+      "triangles": 120,
+      "face_point_pairs": 7440,
+      "strictly_inside": 6980,
+      "coplanar": 460,
+      "all_faces_nondegenerate_outward_and_supporting": true,
+      "closed_connected_oriented_topology": true,
+      "supporting_planes": 70,
+      "all_supporting_planes_completely_triangulated": true,
+      "cold_warm_replay_transcripts_identical": true
+    },
+    {
+      "case": "seventh_turn",
+      "points": 30,
+      "triangles": 56,
+      "face_point_pairs": 1680,
+      "strictly_inside": 1470,
+      "coplanar": 210,
+      "all_faces_nondegenerate_outward_and_supporting": true,
+      "closed_connected_oriented_topology": true,
+      "supporting_planes": 35,
+      "all_supporting_planes_completely_triangulated": true,
+      "cold_warm_replay_transcripts_identical": true
+    }
+  ],
+  "complete_face_point_pairs": 612288,
+  "all_frozen_sources_inputs_libraries_and_binaries_rechecked": true,
+  "artifacts_sha256": {
+    "fifteen_degrees.json": "07ca3f870c0e5dc7f8bcbd8d35479c6e0a2a8c308971f707ea46446aa85bc169",
+    "fifth_turn.json": "e6ff28ca5f80a2a9bd5f7ae8dd4b7c5939ee1e4eabed175e2552912bcc1249df",
+    "original_medium.json": "93470b2ac56d35c9bfb41ffcc61ecc30fd8150d32d7f42308544cf41a3dde41e",
+    "protocol.json": "aabdf7e632ed8ea24070b24f0a1e490433a73e631bbea9470e217d04aedcb481",
+    "seventh_turn.json": "554421965fdca8b825d3cd0ce4fbe69e17429e695f918f79442546e2ad129777"
+  },
+  "claim": "All twelve replay outputs describe the exact convex hulls of the four unchanged original finite sampled point sets. Each case has one identical cold/warm/replay transcript. Changed rows have been checked independently, not inferred from counts.",
+  "limits": "Finite corpus validation with exact Python arithmetic, not formal verification of the native implementation or a performance comparison.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

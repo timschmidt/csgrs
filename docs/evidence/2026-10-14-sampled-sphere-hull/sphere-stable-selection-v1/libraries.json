@@ -1,0 +1,14 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/libcsgrs.rlib",
+    "sha256": "ef8b7d9927b2824ab1a4f8dc487cdbe9c2e11f662cd1a0fbc85cbb6b2464cd5a",
+    "features": []
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "ef97fa0f2087576235ea21a30cb0b57d721c5ba5c25cd17dd3c2627bbbddf79e",
+    "features": [
+      "default"
+    ]
+  }
+}

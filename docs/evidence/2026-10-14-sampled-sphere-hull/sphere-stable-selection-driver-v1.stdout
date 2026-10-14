@@ -1,0 +1,41 @@
+{"start": "apply"}
+{"finished": "apply", "exit_code": 0, "expected_exit_code": 0}
+{"start": "format"}
+{"finished": "format", "exit_code": 0, "expected_exit_code": 0}
+{"start": "probe-format"}
+{"finished": "probe-format", "exit_code": 0, "expected_exit_code": 0}
+{"start": "link-negative-regression"}
+{"finished": "link-negative-regression", "exit_code": 0, "expected_exit_code": 0}
+{"start": "negative-regression"}
+{"finished": "negative-regression", "exit_code": 101, "expected_exit_code": 101}
+{"start": "mesh-clippy"}
+{"finished": "mesh-clippy", "exit_code": 0, "expected_exit_code": 0}
+{"start": "candidate-regression"}
+{"finished": "candidate-regression", "exit_code": 0, "expected_exit_code": 0}
+{"start": "regression-clippy"}
+{"finished": "regression-clippy", "exit_code": 0, "expected_exit_code": 0}
+{"start": "build"}
+{"finished": "build", "exit_code": 0, "expected_exit_code": 0}
+{"start": "link-sphere-probe"}
+{"finished": "link-sphere-probe", "exit_code": 0, "expected_exit_code": 0}
+{"start": "link-cube-parent"}
+{"finished": "link-cube-parent", "exit_code": 0, "expected_exit_code": 0}
+{"start": "link-cube-candidate"}
+{"finished": "link-cube-candidate", "exit_code": 0, "expected_exit_code": 0}
+{"start": "cube-parent"}
+{"finished": "cube-parent", "exit_code": 0, "expected_exit_code": 0}
+{"start": "cube-candidate"}
+{"finished": "cube-candidate", "exit_code": 0, "expected_exit_code": 0}
+{"start": "fifteen_degrees"}
+{"finished": "fifteen_degrees", "exit_code": 0, "expected_exit_code": 0}
+{"case": "fifteen_degrees", "all_three_certified_closed_and_all_original_vertices_used": true, "all_three_full_transcripts_identical": true, "full_transcript_matches_prior_cold": false, "oriented_faces_removed_from_prior": 228, "oriented_faces_added_to_candidate": 228, "new_faces_independently_support_checked": false, "witness_sha256": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"}
+{"start": "original_medium"}
+{"finished": "original_medium", "exit_code": 0, "expected_exit_code": 0}
+{"case": "original_medium", "all_three_certified_closed_and_all_original_vertices_used": true, "all_three_full_transcripts_identical": true, "full_transcript_matches_prior_cold": false, "oriented_faces_removed_from_prior": 476, "oriented_faces_added_to_candidate": 476, "new_faces_independently_support_checked": false, "witness_sha256": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"}
+{"start": "fifth_turn"}
+{"finished": "fifth_turn", "exit_code": 0, "expected_exit_code": 0}
+{"case": "fifth_turn", "all_three_certified_closed_and_all_original_vertices_used": true, "all_three_full_transcripts_identical": true, "full_transcript_matches_prior_cold": false, "oriented_faces_removed_from_prior": 48, "oriented_faces_added_to_candidate": 48, "new_faces_independently_support_checked": false, "witness_sha256": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"}
+{"start": "seventh_turn"}
+{"finished": "seventh_turn", "exit_code": 0, "expected_exit_code": 0}
+{"case": "seventh_turn", "all_three_certified_closed_and_all_original_vertices_used": true, "all_three_full_transcripts_identical": true, "full_transcript_matches_prior_cold": false, "oriented_faces_removed_from_prior": 12, "oriented_faces_added_to_candidate": 12, "new_faces_independently_support_checked": false, "witness_sha256": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"}
+{"complete": true, "result_sha256": "65d03c03494567d50eb64b1f5280918b816396897a4e7876807cdaf2334f9392"}

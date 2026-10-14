@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "warm-row-instability-traced-to-lossy-eye-ranking",
+      "status": "deterministic-selection-feasibility-and-exact-support-passed",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5105,8 +5105,20 @@
       "sphere_warm_trace_interpretation": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-interpretation-v2.json",
       "sphere_stable_selection_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-scope-v1.json",
       "sphere_stable_selection_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_stable_selection_v1.py",
-      "sphere_stable_selection_executed": false,
-      "sphere_stable_selection_runtime_admitted": false
+      "sphere_stable_selection_executed": true,
+      "sphere_stable_selection_runtime_admitted": false,
+      "sphere_stable_selection_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-v1/result.json",
+      "sphere_stable_selection_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-closure-v1.json",
+      "sphere_stable_support_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-support-scope-v1.json",
+      "sphere_stable_support_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-support-v1/result.json",
+      "sphere_stable_support_executed": true,
+      "sphere_stable_selection_all_12_outputs_exactly_validated": true,
+      "sphere_stable_selection_changed_triangle_rows": [
+        228,
+        476,
+        48,
+        12
+      ]
     }
   },
   "status_meanings": {

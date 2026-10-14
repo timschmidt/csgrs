@@ -1,0 +1,22 @@
+{
+  "negative-regression": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/negative-regression",
+    "sha256": "086269ed609bdee9a7693a9a1ac048cb70cc37908039db413a5b018c348d6491",
+    "bytes": 11361632
+  },
+  "sphere-probe": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+    "sha256": "07987ee2e297fd5e0d872793d62038ab2c61df924d554193052ba4245be59e20",
+    "bytes": 8761904
+  },
+  "cube-parent": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-parent",
+    "sha256": "a5cf5405e2e302977008b62695aab98cd57fb593ec7d72460cb076000fd08708",
+    "bytes": 8548584
+  },
+  "cube-candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/cube-candidate",
+    "sha256": "15f8035822ebaa232bfe55fb03b72b0b7f6f411b9c75510aad06fba4e54a3db0",
+    "bytes": 8549088
+  }
+}
