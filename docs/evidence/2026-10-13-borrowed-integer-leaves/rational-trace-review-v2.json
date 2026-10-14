@@ -1,0 +1,36 @@
+{
+  "preparation_sha256": "c42e5568a1bc14f99962228f82ce50f692ac8927d3a504bc3c869fde48805bb5",
+  "probe_sha256": "010222d130d7964cdf45a5cad878ee7f847683357321b84bef7b160e37aecdca",
+  "header_sha256": "5e017e2bc3fea7667bf5a24d34076bf586de59966635591d41a595502656f1ba",
+  "new_driver_reviewed": true,
+  "all_original_fixture_and_query_bytes_preserved": true,
+  "reviewed_new_wrapper": "The wrapper resets public counters, uses the original recording scope, optionally nests it inside the existing cache-event scope, takes counters after the body, emits all fields after recording ends and returns the original result through black_box. No clock or allocation measurement remains.",
+  "reviewed_original_workload": "All original numeric fixture, expected-value, representation, hashing and main/query expressions remain. The sole verifier spelling change .chain([b'\\n']) to .chain(*b\"\\n\") iterates the same [u8; 1] newline array. Removing that source spelling change recovers the v1 driver byte-for-byte.",
+  "reviewed_existing_cache_code": [
+    "algebra.rs: ClosedPiLaurentPolynomial conversion and opaque-atom rejection; 512-node/8-term bounds; retained lookup before memo/work; shared-node publication; original retry after dropping the first memo; rational projection and sign retention.",
+    "representation.rs: lazy evaluation-cell load/allocation, read-lock copy, write-lock publication, preservation of existing payloads, and exclusive drop.",
+    "facts.rs: exact_rational_normal_form leaf check, 64-depth bounded projection and exact rational scale.",
+    "All 17 existing counter insertion descriptions, the 27-event TLS module, and the publication/zero-work replay control were read. Existing instrumentation is reused without edits."
+  ],
+  "full_cache_and_repair_cache_code_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "e2276f9257c73c361f8fa862dcef09bc4909e99255254b34f2bf1f513a26f805"
+  },
+  "same_cache_code_does_not_prove_same_dynamic_events": true,
+  "source_hypothesis": "Failed closed-copy attempts and repeated retained lookups may add work around opaque atoms. The fixed trace will establish which paths execute; it cannot quantify their timing contribution.",
+  "coverage_boundary": "Only the old full-cache group has cache-event hooks. Its public counts must match the uninstrumented full-cache group. Main and repaired groups report public arithmetic/dispatch counts only.",
+  "new_runtime_sources": 0,
+  "new_library_builds": 0,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "original_fixture_suffix_bytes": 3967,
+  "generated_fixture_suffix_bytes": 3966,
+  "v1_failure_preserved": {
+    "path": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v1.json",
+    "sha256": "2de64874ad1436916733ce6a1c29dd9ba500e0a3505309b42309c51cc9b774ed"
+  },
+  "strict_clippy_warnings_denied": true,
+  "source_diff_reviewed": "The new generated driver differs from v1 only in the equivalent newline-array expression inside the original witness verifier. No lint suppression, numeric expression, expected answer, query, ownership or counter-scope change."
+}

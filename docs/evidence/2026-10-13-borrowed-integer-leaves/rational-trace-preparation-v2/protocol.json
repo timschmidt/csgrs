@@ -1,0 +1,342 @@
+{
+  "scope": "Freeze a new diagnostic driver; preserve all four libraries and source trees.",
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "groups": [
+    "main",
+    "full-cache",
+    "candidate",
+    "cache-coverage"
+  ],
+  "libraries": {
+    "main": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+        "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+        "bytes": 11697454,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "full-cache": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+        "sha256": "2e4eabb67f81045828dd3303a94de14d6500c4e266a61a902934ab7b95a3da85",
+        "bytes": 11700770,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "09d2f92170c0b940c26293f5ad803a13da7fb8a64ba6f9bc6dbe384909c88283",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "candidate": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+        "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+        "bytes": 11711762,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "8fceaedb0c660635799855940033f0d084fb799d1b1628ae942eb1371c790dc4",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "cache-coverage": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+        "sha256": "74dd24c2e8e04ee0346c9060fd1158b28f884e69a9d34af32e9a5cbbde8a3892",
+        "bytes": 11762878,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source/crates/hyperreal/Cargo.toml",
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ]
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "sha256": "f7e50485c8142b44717d509d8c26c7d838fceea6421725112f9f41ca5d70639e",
+        "bytes": 2042504,
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+        "features": [
+          "default",
+          "std"
+        ]
+      }
+    }
+  },
+  "inputs_sha256": {
+    "rational_trace_common_v2.py": "5d021f17eceadfd938ae3496a44fbc89ff45f5e1f82ca41d4b4c3f0bcdfb5c83",
+    "prepare_rational_trace_v2.py": "2c9c90d30646b344f9bc8cd464681c2164ea87ab0cf402693ed58380b2965760",
+    "trace_rational_v2.py": "9d930b4ac4a8090d2079f48ed752792bdf1229f85ff273ac2aaa46c2e51d3c4b",
+    "assess_rational_trace_v2.py": "b2dcd924f63703da86832ad681624af14535b240f1cc140bb7961d8e2a764869",
+    "rational_trace_header_v1.rs": "5e017e2bc3fea7667bf5a24d34076bf586de59966635591d41a595502656f1ba",
+    "rational-trace-scope-v2.json": "6461a2e06eb74b7433aba1078ca2e686b7606311885855fb106af41b88a66277"
+  },
+  "prior_inputs_sha256": {
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v1.json": "2de64874ad1436916733ce6a1c29dd9ba500e0a3505309b42309c51cc9b774ed",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-review-v1.json": "35b2ecf608fe1a15ad58b2e60856a82fdbb67febb08790984276941c489709ec",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-scope-v1.json": "e173f821d4fe7705f48b54e5d2f6b4e48b6bd37908e06c0a46d70e0493c9e298",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational_trace_common_v1.py": "2ab29e36eb4c65105d45e2c1ffd48dc2c664a72173a0eb3bd91c84e48a32d983",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/prepare_rational_trace_v1.py": "e113d66b2cfd03d571fc2195713a88b8511798a29a7c6e04589133126bcb1675",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/trace_rational_v1.py": "df194dd10f12f197e7ea47fdb157e64db188b2f25e79b15947279c613ba195c0",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/assess_rational_trace_v1.py": "6c7bd08c1c8c616d4fecefb6c46998c00d80cec30315ab4bfa7a57c5d74c290c",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/clippy-main.stderr.gz": "5e5a0deccf1e8e93bfd04ec741fa2ce64a7c6ce5c611ccdab2a8d28b3eb6fd39",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/clippy-main.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/commands.json": "16cc57c3403f7117c538df80a2d4d31e7783c38f0b6395f61ea7ace989eaea95",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/format-header.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/format-header.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-v1/protocol.json": "9f725a109b70b9742b8841b6f92cf8fbed7f791f88bf5e613e84344e50ec54e3",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v1/probe.rs": "1f66b71444c603597ad1c2b9da637d352e67153ad7f778253f154f2eba90e0f0",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v1/protocol.json": "4726f32d8696baa0913be0051671606a4993645be8eb4b6c29069a97f48a5096",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-interpretation-v1.json": "aec248f9b24791725c5bc49e7865512e03b81eff5893a9d5e6ad2ea1962247f6",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-assessment-v1.json": "bb5f18ed28684eabfeedd742b25e4428ca46aeb8ae2a213bc66a56d7eaee0e7b",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/protocol.json": "7aa987fc219c47a34c0a31dcbd59d835025effeae946a1bb52b272630516b28d",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/result.json": "93eda28173509840be3c5838c038362e9a966cdd5be89f9c56a1271aef65b14c",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/libraries.json": "8f6b2c1befe5e99e2a7c1563626ed403d99b0abcd61c3b26ae2a99dc1100d50e",
+    "docs/evidence/2026-10-13-construction-cache-coverage/preparation-v1/protocol.json": "01f0ac83ff3acd42363357e3d9d3dabf538b70e3232adb357579707fc384ccbd",
+    "docs/evidence/2026-10-13-construction-cache-coverage/diagnostic-v1/protocol.json": "173595fa3364df2831a95a1f35f90c347b553c859b90bbdedf1250bf25a985c0",
+    "docs/evidence/2026-10-13-construction-cache-coverage/diagnostic-v1/result.json": "32e56f9be59518674e4b15c3572701ea823ff05de0da00c3a00dbe1780ed4fb2",
+    "docs/evidence/2026-10-13-construction-cache-coverage/diagnostic-v1/libraries.json": "a6dcdb7e71b5d158ebc469ea86121b865588984ddfabbfbf30e6f6f7c38bcf41",
+    "docs/evidence/2026-10-13-construction-cache-coverage/diagnostic-v1/qualification.json": "0145c4b1b6180e72e1885f99ad5ec02e71f8510dfb7a551a6367283f8b9e7d32",
+    "docs/evidence/2026-10-13-construction-cache-coverage/instrumentation-edits-v1.json": "89850a0b984d6805746894784dd91123008b954f7caf4cc9914e2594efcb7eba",
+    "docs/evidence/2026-10-13-construction-cache-coverage/cache_trace_v1.rs": "62d71c7e6b3a17bd2548c35354ed93216a30d2659aaf8533e3f63f478fc7ad6e",
+    "docs/evidence/2026-10-13-construction-cache-coverage/cache_trace_control_v1.rs": "4af9efc970e262ae972f37e7f4621edfaf4fd708c8be02ae2bc52861685021b0",
+    "docs/evidence/2026-10-13-combined-native-admission/probes-v1/rational_probe.rs": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-1-main.stdout.gz": "20f9c1c280a88c19a432cde929c2cc3077b691f95bd907803852e0a52efaa1c4",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-2-main.stdout.gz": "a7b1fa8430bf04da6de43b303c3574b72827a132ed0478ab6036a39dcca3a789",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-3-main.stdout.gz": "362ff64f0bba7e4ad22e46784bb3da22c886d2cb1ecd0e236b1502bb219b517a",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-4-main.stdout.gz": "06ffbadfad712fc66d076ebad175a30ec2970cec99701efdc39dc72e0bef3e29",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-5-main.stdout.gz": "061ac1a4dcbc1074c6a726e709ac3edd70b023183c1d07064a60b511349eaa47",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-6-main.stdout.gz": "1c627eca09321e6dd799d0175445d6bb105ac5f1280332f49031ae29bf348f06",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-1-full-cache.stdout.gz": "352865cad88f90a24992f1dfde26641476117c3d703e041cc91204b6a778b2b4",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-2-full-cache.stdout.gz": "154f7d387ffdb76090db9457de619aa795f6b65e7f5513618aec3ec4985e2a18",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-3-full-cache.stdout.gz": "fb08476cb7b937090672cef1a6706bfabbe971b23979a897d5d7255102a7abd9",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-4-full-cache.stdout.gz": "cf8fe709a65f0d2bc4f8850f1e7250de3452cb7ec16b1a19f4b8ef4ea04624f2",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-5-full-cache.stdout.gz": "4ff5b3a8becf11ccd71424536eb80163c3eddf69c5b597530280393a745bc2de",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-6-full-cache.stdout.gz": "e9687c5b4635bdf3f5296d72b4d7784579959eaa734e365476b321fe8b62effb",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-1-candidate.stdout.gz": "92e2bdb9c22a71487fd66c11ec778426dfe7b3ca600c9caa9e1eb867ab4cda4b",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-2-candidate.stdout.gz": "ec851a62ed7e04892c91c2c7fc87be3accfaed0b8939077821b3a096539590dd",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-3-candidate.stdout.gz": "59d889365a39f63861fa49de2673cf40867a7292e16479c920827e60be9bbe20",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-4-candidate.stdout.gz": "8fe65239420e006c50b0ced2f0d58b41187e2d6daeb8c0315a9a48b23a1c8ccc",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-5-candidate.stdout.gz": "fef6fed3a6ae6b71493a9c4c3730b14d224eb0720fd6012fb40c978cc0b0029d",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/sample-rational-time-6-candidate.stdout.gz": "7bf1d674d3272728093b1371a02949dbc893b8cec7cd681abd20d74697c3c8b8"
+  },
+  "probe_sha256": "010222d130d7964cdf45a5cad878ee7f847683357321b84bef7b160e37aecdca",
+  "fixture_suffix_bytes": 3966,
+  "original_fixture_suffix_bytes": 3967,
+  "identity": [
+    {
+      "fixture": "multiradical_square",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "witness": "multiradical_square_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "multiradical_square_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "multiradical_square_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "fixture": "quadratic_reciprocal",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "witness": "quadratic_reciprocal_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "quadratic_reciprocal_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "quadratic_reciprocal_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "fixture": "pi_parameter_transport",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "witness": "pi_parameter_transport_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "pi_parameter_transport_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "pi_parameter_transport_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "fixture": "radical_laurent_transport",
+      "non_leaf_inputs": 0
+    },
+    {
+      "witness": "radical_laurent_transport_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "radical_laurent_transport_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "radical_laurent_transport_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "fixture": "opaque_linear_atom",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "witness": "opaque_linear_atom_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "opaque_linear_atom_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "opaque_linear_atom_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "fixture": "conjugate_product",
+      "non_leaf_inputs": 4096
+    },
+    {
+      "witness": "conjugate_product_first",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "conjugate_product_warm",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    },
+    {
+      "witness": "conjugate_product_cloned",
+      "negative": 1366,
+      "zero": 1365,
+      "positive": 1365,
+      "canonical_rational_fnv1a64": "f97a386af6b2fcba"
+    }
+  ],
+  "all_18_closed_rational_timing_identities_match": true,
+  "diagnostic_scalar_tests_reused": 875,
+  "production_candidate_scalar_tests_reused": 876,
+  "witness_printer_spelling_change": {
+    "before": ".chain([b'\\n'])",
+    "after": ".chain(*b\"\\n\")",
+    "reason": "Clippy byte_char_slices on the original witness printer; both iterate the same one-byte newline array."
+  },
+  "new_library_builds": 0,
+  "new_runtime_sources": 0,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
