@@ -1,0 +1,69 @@
+{
+  "status": "original-sphere-hull-failure-reproduced",
+  "result_sha256": "de7bd3f9c3566b7c1656458712ac7ebafbdf253977e32195ce3757e4ddc48ac8",
+  "commands_passed": 7,
+  "source_files": 10128,
+  "cases": [
+    {
+      "name": "fifteen_degrees",
+      "radius": 8,
+      "segments": 24,
+      "stacks": 12,
+      "positions": 266,
+      "triangles": 528,
+      "certified_hull": true,
+      "error": null,
+      "stdout_sha256": "18afefa640262fe6aedf4ebf6ed7aa7d51340a02e1dd6135de41455b800e9205"
+    },
+    {
+      "name": "original_medium",
+      "radius": 10,
+      "segments": 32,
+      "stacks": 16,
+      "positions": 482,
+      "triangles": 960,
+      "certified_hull": false,
+      "error": {
+        "ConvexHullPredicate": {
+          "stage": "face outside linear query"
+        }
+      },
+      "stdout_sha256": "9d86bb1abd9731068a2ea02af7cc68d14ac4e89a3dba60a71c7b84a717a62ffc"
+    },
+    {
+      "name": "fifth_turn",
+      "radius": 8,
+      "segments": 10,
+      "stacks": 7,
+      "positions": 62,
+      "triangles": 120,
+      "certified_hull": false,
+      "error": {
+        "ConvexHullPredicate": {
+          "stage": "face outside linear query"
+        }
+      },
+      "stdout_sha256": "226de282139beb716a1fa67c03b6eb9a8d1d497e2535438f63e1634c330ba440"
+    },
+    {
+      "name": "seventh_turn",
+      "radius": 8,
+      "segments": 7,
+      "stacks": 5,
+      "positions": 30,
+      "triangles": 56,
+      "certified_hull": false,
+      "error": {
+        "ConvexHullPredicate": {
+          "stage": "face outside linear query"
+        }
+      },
+      "stdout_sha256": "33561840b10754879c3890d40280501d076165c09afd6e8962a1737975f5b5c3"
+    }
+  ],
+  "baseline_runner_terminal_exit_code": 0,
+  "main_and_all_35_pending_native_paths_unchanged": true,
+  "next_step": "Reproduce the discovered public-buffer/cache identity problem before adding retained sphere construction facts.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

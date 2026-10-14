@@ -1,0 +1,2 @@
+input case=fifteen_degrees radius=8 segments=24 stacks=12 positions=266 triangles=528
+result case=fifteen_degrees certified=true original_positions_preserved=true positions=266 triangles=528

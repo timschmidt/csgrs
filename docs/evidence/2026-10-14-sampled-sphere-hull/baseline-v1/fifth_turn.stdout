@@ -1,0 +1,2 @@
+input case=fifth_turn radius=8 segments=10 stacks=7 positions=62 triangles=120
+result case=fifth_turn certified=false error=ConvexHullPredicate { stage: "face outside linear query" }

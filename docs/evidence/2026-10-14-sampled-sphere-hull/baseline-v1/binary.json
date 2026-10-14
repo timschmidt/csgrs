@@ -1,0 +1,8 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1",
+  "sha256": "e07abac71da082cba96e60fcef26180e61dae056d5d699bc74f7fd19856946c9",
+  "bytes": 8700400,
+  "library": "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/libcsgrs.rlib",
+  "library_sha256": "ca0f76f526790a3d87521c2dc1df0491844544cedf49fc4523c858d925373ecc",
+  "features": []
+}

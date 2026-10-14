@@ -1,0 +1,123 @@
+[
+  {
+    "name": "probe-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/reproduce_v1.rs"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.11815782496705651,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build-libraries",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 75.05910395877436,
+    "stdout_sha256": "7d402bc1ff2790c5b5d0c562693db5535fabd9dc69a9a25c7697679bb84688a4",
+    "stderr_sha256": "1969ad63233f39882f3b54c8aeaa89af10cefd92c8a5bea79c7e650b0d99eb14"
+  },
+  {
+    "name": "link-probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/reproduce_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.18707661284133792,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "fifteen_degrees",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1",
+      "fifteen_degrees"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 5.565683417022228,
+    "stdout_sha256": "18afefa640262fe6aedf4ebf6ed7aa7d51340a02e1dd6135de41455b800e9205",
+    "stderr_sha256": "2259aeafb55845e7b8596749743bf66600219d92dfcdd692d5400ba9b38e4339"
+  },
+  {
+    "name": "original_medium",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1",
+      "original_medium"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.06569965928792953,
+    "stdout_sha256": "9d86bb1abd9731068a2ea02af7cc68d14ac4e89a3dba60a71c7b84a717a62ffc",
+    "stderr_sha256": "b1ed9ba85b0db3eb353a345d322755266b88765a78fb7d1a26b63061a19101ff"
+  },
+  {
+    "name": "fifth_turn",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1",
+      "fifth_turn"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.009161782916635275,
+    "stdout_sha256": "226de282139beb716a1fa67c03b6eb9a8d1d497e2535438f63e1634c330ba440",
+    "stderr_sha256": "9438c3497fb43f5f335fd4cbffc676ef6c0adfc0770671df97ec5ca5eb9335b5"
+  },
+  {
+    "name": "seventh_turn",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/usr/bin/time",
+      "-v",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sampled-sphere-hull-v1/baseline/reproduce-v1",
+      "seventh_turn"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.007991761900484562,
+    "stdout_sha256": "33561840b10754879c3890d40280501d076165c09afd6e8962a1737975f5b5c3",
+    "stderr_sha256": "523f8218122e1a25c00695c638324b0a31ed8faa557db6e7d52cd456c9ef4b3d"
+  }
+]
