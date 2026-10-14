@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "stable-selection-resource-trial-closed-scalar-costs-open",
+      "status": "sphere-scalar-cost-v2-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5191,7 +5191,12 @@
         "original_medium": -2848,
         "fifth_turn": 168,
         "seventh_turn": 32
-      }
+      },
+      "sphere_cyclotomic_scalar_costs_v2_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scalar-costs-scope-v2.json",
+      "sphere_cyclotomic_scalar_costs_v2_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_scalar_costs_v2.py",
+      "sphere_cyclotomic_scalar_costs_v2_executed": false,
+      "sphere_cyclotomic_scalar_costs_v2_prerequisites_satisfied": true,
+      "sphere_scalar_mapped_files_identical_image_and_stable": 369
     }
   },
   "status_meanings": {
