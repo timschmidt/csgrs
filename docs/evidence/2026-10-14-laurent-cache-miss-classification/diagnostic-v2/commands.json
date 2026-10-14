@@ -1,0 +1,998 @@
+[
+  {
+    "name": "format-header",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source/crates/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/trace_header_v1.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-library",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "cda1a3c6dbd19aadadc06d0bccc1d74cc6d69ccf1f766fc995b5a41582a22d72"
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "1098b6e6e773221f8b446f1cd47b58b398a61a2f21e4093dd2d5898a9f602947",
+    "stderr_sha256": "570c6ab2eab244c0eb3ff37a08d228a11936ee9125b926421d438a255f54d914"
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "05f9bb48f6ca1e432d2cba60dd423f54046474deef84689e1571a574558f4f25",
+    "stderr_sha256": "30f743596e7759390b433285a9b95610597ced90cfe6915ebb64c99f65e6da6e"
+  },
+  {
+    "name": "scalar-library",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+    "exit_code": 0,
+    "stdout_sha256": "dda32cf6b88f86ff987b010fdc26accac9bea154f2f1d100e7f9b0f08ecd4f75",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-main",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/rational-main.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/rational-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-eligibility",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/rational-eligibility.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-eligibility",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-eligibility"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-rational-classified",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/rational-classified.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-rational-classified",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/rational_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-classified"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-main",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/quadratic-main.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/quadratic-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-eligibility",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/quadratic-eligibility.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-eligibility",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-eligibility"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-quadratic-classified",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/quadratic-classified.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-quadratic-classified",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/quadratic_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-classified"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-main",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/integer-main.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-borrowed",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/integer-borrowed.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-borrowed",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-borrowed"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-eligibility",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/integer-eligibility.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-eligibility",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-eligibility"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-integer-classified",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/integer-classified.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-classified",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v2/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "--cfg",
+      "feature=\"cache-events\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-classified"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "c42920d08419038cc528dd4108a21e5620366272fc55de65a3861198e229864b",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "d0c13366258555da19be7e254b0d6bcfe41080bac4b70fcb0638175d931ebdbb",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "d0c13366258555da19be7e254b0d6bcfe41080bac4b70fcb0638175d931ebdbb",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-1-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "6d4290bc5b7baa90d4dad316ae1b7891e1739942e44166b633db675a985f9649",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "6d4290bc5b7baa90d4dad316ae1b7891e1739942e44166b633db675a985f9649",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "d0c13366258555da19be7e254b0d6bcfe41080bac4b70fcb0638175d931ebdbb",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "d0c13366258555da19be7e254b0d6bcfe41080bac4b70fcb0638175d931ebdbb",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-rational-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "c42920d08419038cc528dd4108a21e5620366272fc55de65a3861198e229864b",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "7d16f6e520e376d77f64915d0adff62527ef75b37857e1749ae66089fd6af0ec",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "eabbffe22ae31fa94bcfdb5109d6548362b6693fc026d130039036542de57ca7",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "eabbffe22ae31fa94bcfdb5109d6548362b6693fc026d130039036542de57ca7",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-1-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "618e4c037eff2e66479c926870eeb18eadeeef09fde782b5ba22b671f35e7ea9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "618e4c037eff2e66479c926870eeb18eadeeef09fde782b5ba22b671f35e7ea9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "eabbffe22ae31fa94bcfdb5109d6548362b6693fc026d130039036542de57ca7",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "eabbffe22ae31fa94bcfdb5109d6548362b6693fc026d130039036542de57ca7",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-quadratic-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "7d16f6e520e376d77f64915d0adff62527ef75b37857e1749ae66089fd6af0ec",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "45130ee0028bd5f1f90b13e490e052322be0e4ec8bce2cad79b3ee839b284b2c",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "82a9b7e7deb2870baac4ce2d28f4a7824cc0c636bec7a1331dfdf4c66cb3b432",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "82a9b7e7deb2870baac4ce2d28f4a7824cc0c636bec7a1331dfdf4c66cb3b432",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-1-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "e8e7dfc2aef0a871b7a127029db92f582091b14887bc74b775414dbfdc059cba",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-classified",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-classified",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "e8e7dfc2aef0a871b7a127029db92f582091b14887bc74b775414dbfdc059cba",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-eligibility",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-eligibility",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "82a9b7e7deb2870baac4ce2d28f4a7824cc0c636bec7a1331dfdf4c66cb3b432",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-borrowed",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-borrowed",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "82a9b7e7deb2870baac4ce2d28f4a7824cc0c636bec7a1331dfdf4c66cb3b432",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "count-integer-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "45130ee0028bd5f1f90b13e490e052322be0e4ec8bce2cad79b3ee839b284b2c",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]

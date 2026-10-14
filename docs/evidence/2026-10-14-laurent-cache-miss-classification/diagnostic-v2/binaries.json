@@ -1,0 +1,76 @@
+{
+  "library-tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "b358d11e663e62cfa3d7c54caced5c58f7b75d5c58ee5dcd70ce314fad40728d",
+    "bytes": 10371432,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source/crates/hyperreal/Cargo.toml"
+  },
+  "rational-main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-main",
+    "sha256": "ef2c038839e23ce11d39bfe739fb14c4f27edf5d0abe30a19801edc7c939d28d",
+    "bytes": 6276216
+  },
+  "rational-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-borrowed",
+    "sha256": "ce421438f0c1a4b695519eb463af30adc0e27e2b2fddf17cb0d9e5e0ea73dea2",
+    "bytes": 6276160
+  },
+  "rational-eligibility": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-eligibility",
+    "sha256": "b497bd025db2e4130a09dc059bb5c522051a1e32220c8093876ff13826e11873",
+    "bytes": 6276400
+  },
+  "rational-classified": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-rational-classified",
+    "sha256": "ab8b93dd3db83d378641e85bd60842f3176f63b7058bed64df07fb9db0878b57",
+    "bytes": 6416144
+  },
+  "quadratic-main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-main",
+    "sha256": "ad901c5aab1ab1c2ae5e96b91bb6a9ec467fe921793a5a749b1f0ad9b63787f2",
+    "bytes": 6257080
+  },
+  "quadratic-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-borrowed",
+    "sha256": "41bb935f817740d7f275b95e54dbc767bd6cb18fec05d53db63a82edbeceb253",
+    "bytes": 6257176
+  },
+  "quadratic-eligibility": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-eligibility",
+    "sha256": "10b656cc70fefb6e472277963b84ab31bd5b1a62a3566870b1d9e5eca9b7bfba",
+    "bytes": 6257424
+  },
+  "quadratic-classified": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-quadratic-classified",
+    "sha256": "45aa1b5d6458b51c0fd56279de1e12aba689e6864e892ae56a29d9dbfe6223ea",
+    "bytes": 6390664
+  },
+  "integer-main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-main",
+    "sha256": "5c1606982c07859de56b2b13b432fd451f02c18c97bdfdd0a7e11c6b4d41ae57",
+    "bytes": 6146712
+  },
+  "integer-borrowed": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-borrowed",
+    "sha256": "770737682e025a8f3ef3266a71540ebee9e2d1c1271e80b4482b1c26a545e7ae",
+    "bytes": 6147288
+  },
+  "integer-eligibility": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-eligibility",
+    "sha256": "06333dd800f3940831fabfb07e096b8e0aaa09f6852ba83a53bb937a48568661",
+    "bytes": 6147528
+  },
+  "integer-classified": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/binaries/probe-integer-classified",
+    "sha256": "d534462f14be7a928b954779cdc58a6b47b98caf90573d326c72a9dbcf6625b0",
+    "bytes": 6284256
+  }
+}

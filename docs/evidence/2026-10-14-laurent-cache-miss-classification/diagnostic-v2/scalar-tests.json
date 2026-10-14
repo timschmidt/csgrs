@@ -1,0 +1,12 @@
+{
+  "passed": 881,
+  "prior_879_test_names_retained": true,
+  "counter_controls": [
+    "computable::node::persistent_laurent_cache_tests::diagnostic_cache_counters_observe_publication_and_zero_work_replay",
+    "computable::node::persistent_laurent_cache_tests::diagnostic_lookup_classes_observe_actual_cache_states"
+  ],
+  "P4": 11,
+  "persistent_cache": 8,
+  "eligibility": 3,
+  "borrowed_integer": 2
+}

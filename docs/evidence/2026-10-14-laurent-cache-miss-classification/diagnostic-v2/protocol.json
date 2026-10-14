@@ -1,0 +1,53 @@
+{
+  "scope": "Qualify one diagnostic overlay, then collect two fixed reversed count passes.",
+  "runner_sha256": "d173c4c513a270de4c1d8d1704e135b38d46c9297eb2fcbf0a70171e0446bcbe",
+  "assessor_sha256": "d184089e0f12d8b65bda7421c2e472606af1d51cb4e18cd314d523070df12626",
+  "preparation_sha256": "ed676a5bb5cff807a99ca4858b8093312d5a4ed289d1a13eba9cef35ac170d74",
+  "review_sha256": "2c2779639c94bad3f15e22905d39f2599539c7de6e1b24ae823fb9d4143de7d7",
+  "groups": [
+    "main",
+    "borrowed",
+    "eligibility",
+    "classified"
+  ],
+  "suites": [
+    "rational",
+    "quadratic",
+    "integer"
+  ],
+  "orders": [
+    [
+      "main",
+      "borrowed",
+      "eligibility",
+      "classified"
+    ],
+    [
+      "classified",
+      "eligibility",
+      "borrowed",
+      "main"
+    ]
+  ],
+  "inputs": 4096,
+  "commands": 53,
+  "fixed_count_processes": 24,
+  "trace_windows": 544,
+  "classified_windows": 136,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target"
+  },
+  "timeout_seconds": 1800,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "new_library_builds": 1,
+  "new_runtime_sources": 0,
+  "new_diagnostic_sources": 1,
+  "no_timing_or_allocation_comparison": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

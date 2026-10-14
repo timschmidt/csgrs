@@ -1,0 +1,33 @@
+{
+  "status": "diagnostic-closed-read-guard-remains-rejected",
+  "preparation_sha256": "ed676a5bb5cff807a99ca4858b8093312d5a4ed289d1a13eba9cef35ac170d74",
+  "source_review_sha256": "2c2779639c94bad3f15e22905d39f2599539c7de6e1b24ae823fb9d4143de7d7",
+  "result_sha256": "8f08a2cf0a44a88821a6226c4c6b7c24de5164331b4e4c32f0d13652eda6d35c",
+  "assessment_sha256": "fef874770d76cca0871c8226161434de78f6135e864cb2ee10bccd4f10037a51",
+  "interpretation_sha256": "3391053546454a76be9786c67bf63054cad7ba4414e3ddc7882b9861d56e944b",
+  "failed_v1_sha256": "6cc66506b6cfa1f211d2dacbec8a452521c2040dfa93cc9975ab9e115584d6df",
+  "commands_passed": 53,
+  "scalar_tests_passed": 881,
+  "fixed_count_processes": 24,
+  "trace_windows": 544,
+  "classified_windows": 136,
+  "distinct_phases": 68,
+  "initialized_miss_phases": 0,
+  "observed_node_kinds": 11,
+  "all_old_27_event_counts_match_in_56_phases": true,
+  "all_witnesses_match": true,
+  "all_samples_preserved": true,
+  "new_native_gates_run": false,
+  "new_timing_or_allocation_samples": 0,
+  "main_runtime_guard_files": 1134,
+  "original_native_pending_paths": 35,
+  "source_review_and_protocol_commits": [
+    "5001bdf0904f8be4f91c62eac48608d33e9d5ce7",
+    "71c3d0292590b415606b1737cb4eb63e175ee186",
+    "046501ffdd438875347d44860c371c226101e463",
+    "ba7afa40b4f0fade2569dedfd445d5b5ba2a3517"
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

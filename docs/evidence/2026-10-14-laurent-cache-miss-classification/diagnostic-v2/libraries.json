@@ -1,0 +1,106 @@
+{
+  "main": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+      "bytes": 11697454,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "borrowed": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+      "bytes": 11711762,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "8fceaedb0c660635799855940033f0d084fb799d1b1628ae942eb1371c790dc4",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "eligibility": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "sha256": "6cc1aa1a825948626f73b549fbd5aeea15bbc243650b7aae26476e30f702d8e8",
+      "bytes": 11714584,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "16acc78f03eb516867def84bf21458727f096e289857adba66a11b684af4062b",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "classified": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/libhyperreal.rlib",
+      "sha256": "f209c15621c7f98db853ceb5d415305023e111459c2067f00179affbfbfab228",
+      "bytes": 11792688,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source/crates/hyperreal/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "sha256": "13949cd9bd6de246cc8c751af2400e574fef608fb01b0c03b5c30881e2cdde70",
+      "bytes": 2042504,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  }
+}
