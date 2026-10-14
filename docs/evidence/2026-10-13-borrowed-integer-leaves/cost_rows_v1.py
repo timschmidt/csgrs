@@ -33,4 +33,3 @@ def parse(suite, raw, count):
     assert sum('witness' in r for r in rows) == witnesses and sum('fixture' in r for r in rows) == fixtures
     assert all(r['iterations'] == count for r in rows if 'name' in r)
     return rows, [r for r in rows if 'witness' in r or 'fixture' in r]
-

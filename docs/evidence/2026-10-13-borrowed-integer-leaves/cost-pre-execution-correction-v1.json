@@ -1,0 +1,10 @@
+{
+  "original_commit": "08e8e7e9b0d2a016fa11e58d87e8ea1104f07a54",
+  "stage_check": "git diff --cached --check through /tmp/verify-csgrs-evidence-commit.py",
+  "finding": "cost_rows_v1.py had one extra blank line at EOF after the verbatim parser block.",
+  "commit_proceeded_after_failed_stage_check": true,
+  "correction": "Remove only the added trailing newline before this runner has ever executed. The copied parser body remains byte-identical to its original source. The original commit is retained.",
+  "preparation_or_measurement_started": false,
+  "sample_plan_or_code_behavior_changed": false,
+  "dependent_commit_calls_now_require_successful_verifier_exit": true
+}
