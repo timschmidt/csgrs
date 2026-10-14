@@ -4505,15 +4505,15 @@
       "plan_complete": false
     },
     "laurent_cache_eligibility": {
-      "status": "qualified-scalar-cost-trial-prepared-and-reviewed",
-      "evidence": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-v1.json",
+      "status": "lookup-eligibility-preserves-proofs-but-scalar-costs-block-retention",
+      "evidence": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-interpretation-v1.json",
       "scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scope-v1.json",
       "immutable_node_kinds": 60,
       "publication_eligible_kinds": 8,
       "publication_ineligible_kinds": 52,
       "prototype_prepared": true,
       "qualification_executed": true,
-      "cost_samples": 0,
+      "cost_samples": 108,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": true,
       "runtime_admitted": false,
@@ -4534,7 +4534,59 @@
       "scalar_cost_scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-scope-v1.json",
       "scalar_costs_prepared": true,
       "scalar_cost_preparation": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-preparation-v1/protocol.json",
-      "scalar_cost_source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-source-review-v1.json"
+      "scalar_cost_source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-source-review-v1.json",
+      "source_audit": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-v1.json",
+      "source_audit_clarification": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-synchronization-clarification-v1.json",
+      "scalar_cost_assessment": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-assessment-v1.json",
+      "scalar_cost_result": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-costs-v1/result.json",
+      "scalar_cost_commands_passed": 133,
+      "preflight_processes": 18,
+      "timing_comparisons": 204,
+      "memory_comparisons": 204,
+      "binary_size_comparisons": 18,
+      "all_exact_witnesses_and_representations_preserved": true,
+      "all_allocation_fields_repeat": true,
+      "old_group_allocation_fields_match_closed_history": true,
+      "borrowed_to_candidate_all_68_allocation_rows_identical": true,
+      "scalar_cost_summary": [
+        {
+          "baseline_group": "main",
+          "candidate_group": "candidate",
+          "higher_all_six": 3,
+          "lower_all_six": 33,
+          "higher_at_least_five": 6,
+          "higher_median": 11,
+          "memory_increase_rows": 20,
+          "all_memory_fields_equal_rows": 8,
+          "larger_binaries": 6
+        },
+        {
+          "baseline_group": "borrowed",
+          "candidate_group": "candidate",
+          "higher_all_six": 2,
+          "lower_all_six": 11,
+          "higher_at_least_five": 8,
+          "higher_median": 15,
+          "memory_increase_rows": 0,
+          "all_memory_fields_equal_rows": 68,
+          "larger_binaries": 6
+        },
+        {
+          "baseline_group": "main",
+          "candidate_group": "borrowed",
+          "higher_all_six": 6,
+          "lower_all_six": 29,
+          "higher_at_least_five": 9,
+          "higher_median": 13,
+          "memory_increase_rows": 20,
+          "all_memory_fields_equal_rows": 8,
+          "larger_binaries": 4
+        }
+      ],
+      "broader_library_costs_opened": false,
+      "new_native_gates_run": false,
+      "new_runtime_admission": false,
+      "next_step": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-next-v1.json"
     }
   },
   "status_meanings": {
