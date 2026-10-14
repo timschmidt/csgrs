@@ -1,0 +1,22 @@
+{
+  "status": "source-eligibility-audit-pending-before-any-new-runtime-prototype",
+  "basis": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-assessment-v3.json",
+  "observed_work": "Opaque first/warm phases each perform 87186 retained-cache lookups with zero hits and zero publication attempts for 4096 original inputs. All counted public arithmetic is equal to main. The cloned phase publishes 4096 certificates after doing the same counted work.",
+  "audit_questions": [
+    "Inventory every production caller that reads or writes pi_laurent_polynomial, and every node kind that can receive this closed certificate.",
+    "Determine whether immutable node shape proves that any class of lookup can never succeed, including after warming, cloning and later dropping other owners.",
+    "Preserve reads of every already-published certificate before any depth/work budget check. A current unshared owner count does not prove that no earlier shared query published a certificate.",
+    "Review serialization defaults, private test controls, concurrency, approximation and tower coexistence, and the retry of the original recognizer after retained expansion declines.",
+    "Compare the proposed mechanism with the recorded rejected storage, memo, zero, scaling and helper experiments before choosing a prototype."
+  ],
+  "constraints": [
+    "Opaque-copy rejection did not execute in this workload; do not optimize that branch on the claim that it caused this slowdown.",
+    "Event counts do not quantify the timing cost of a lookup, branch, lock or code-layout change.",
+    "Keep all existing budgets, exact/Unknown behavior, ownership, retained facts and native deadlines. No shortcut may contradict or weaken a prior certificate.",
+    "Require a concrete source review and prospective qualification/cost protocol before retaining any resulting runtime candidate.",
+    "Keep the full 39-property, 14-target and crate-future-work scope active."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

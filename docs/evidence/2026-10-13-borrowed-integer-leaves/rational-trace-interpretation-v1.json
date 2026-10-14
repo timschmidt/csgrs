@@ -1,0 +1,612 @@
+{
+  "status": "opaque-query-cache-misses-with-unchanged-public-arithmetic",
+  "assessment": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-assessment-v3.json",
+  "assessment_sha256": "1c5763fbd88c78486515ce734f1a80a81fc993a8ff4405aad80426f349e99c54",
+  "original_runner_exit_code": 1,
+  "original_coverage_assertion_failure_preserved": true,
+  "failed_setup_and_control_records": [
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v1.json",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v2.json"
+  ],
+  "completed_fixed_commands": 17,
+  "fixed_processes": 8,
+  "trace_windows": 192,
+  "cache_event_windows": 48,
+  "all_original_witnesses_and_representations_preserved": true,
+  "all_counts_repeat_with_reversed_group_order": true,
+  "full_cache_instrumentation_public_count_equivalence": true,
+  "public_count_summary": [
+    {
+      "baseline": "main",
+      "candidate": "full-cache",
+      "compared_phases": 24,
+      "identical_public_count_phases": 10
+    },
+    {
+      "baseline": "main",
+      "candidate": "candidate",
+      "compared_phases": 24,
+      "identical_public_count_phases": 10
+    },
+    {
+      "baseline": "full-cache",
+      "candidate": "candidate",
+      "compared_phases": 24,
+      "identical_public_count_phases": 24
+    }
+  ],
+  "opaque_first_and_warm_events_per_4096_inputs": {
+    "closed_box_requested_bytes": 0,
+    "closed_copy_attempt": 0,
+    "closed_copy_declined_opaque": 0,
+    "closed_copy_success": 0,
+    "closed_radicals_copied": 0,
+    "closed_terms_copied": 0,
+    "evaluation_cell_allocated": 0,
+    "evaluation_cell_published": 0,
+    "evaluation_cell_race_lost": 0,
+    "evaluation_cell_requested_bytes": 0,
+    "local_memo_hit": 16384,
+    "local_memo_store": 8192,
+    "normalizer_budget_decline": 0,
+    "normalizer_work_visit": 70802,
+    "original_visit": 0,
+    "project_decline_without_reuse": 0,
+    "project_entry": 4096,
+    "project_retained_success": 4096,
+    "project_retry_original": 0,
+    "retained_hit": 0,
+    "retained_lookup": 87186,
+    "retained_radicals_copied": 0,
+    "retained_terms_copied": 0,
+    "retained_visit": 87186,
+    "store_already_present": 0,
+    "store_attempt": 0,
+    "store_published": 0
+  },
+  "opaque_cloned_events_per_4096_inputs": {
+    "closed_box_requested_bytes": 98304,
+    "closed_copy_attempt": 4096,
+    "closed_copy_declined_opaque": 0,
+    "closed_copy_success": 4096,
+    "closed_radicals_copied": 0,
+    "closed_terms_copied": 2731,
+    "evaluation_cell_allocated": 4096,
+    "evaluation_cell_published": 4096,
+    "evaluation_cell_race_lost": 0,
+    "evaluation_cell_requested_bytes": 327680,
+    "local_memo_hit": 16384,
+    "local_memo_store": 12288,
+    "normalizer_budget_decline": 0,
+    "normalizer_work_visit": 70802,
+    "original_visit": 0,
+    "project_decline_without_reuse": 0,
+    "project_entry": 4096,
+    "project_retained_success": 4096,
+    "project_retry_original": 0,
+    "retained_hit": 0,
+    "retained_lookup": 87186,
+    "retained_radicals_copied": 0,
+    "retained_terms_copied": 0,
+    "retained_visit": 87186,
+    "store_already_present": 0,
+    "store_attempt": 4096,
+    "store_published": 4096
+  },
+  "zero_cache_event_phases": [
+    "multiradical_square_construction",
+    "quadratic_reciprocal_construction",
+    "pi_parameter_transport_construction",
+    "radical_laurent_transport_construction",
+    "radical_laurent_transport_first",
+    "radical_laurent_transport_warm",
+    "radical_laurent_transport_cloned",
+    "conjugate_product_construction"
+  ],
+  "all_event_totals_per_instrumented_process": {
+    "closed_box_requested_bytes": 884736,
+    "closed_copy_attempt": 36864,
+    "closed_copy_declined_opaque": 0,
+    "closed_copy_success": 36864,
+    "closed_radicals_copied": 16384,
+    "closed_terms_copied": 34135,
+    "evaluation_cell_allocated": 36864,
+    "evaluation_cell_published": 36864,
+    "evaluation_cell_race_lost": 0,
+    "evaluation_cell_requested_bytes": 2949120,
+    "local_memo_hit": 86016,
+    "local_memo_store": 73728,
+    "normalizer_budget_decline": 0,
+    "normalizer_work_visit": 874194,
+    "original_visit": 0,
+    "project_decline_without_reuse": 4096,
+    "project_entry": 86016,
+    "project_retained_success": 81920,
+    "project_retry_original": 0,
+    "retained_hit": 81920,
+    "retained_lookup": 1042130,
+    "retained_radicals_copied": 81920,
+    "retained_terms_copied": 102400,
+    "retained_visit": 1042130,
+    "store_already_present": 0,
+    "store_attempt": 36864,
+    "store_published": 36864
+  },
+  "prior_counter_positive_control": {
+    "path": "docs/evidence/2026-10-13-construction-cache-coverage/diagnostic-v1/samples.json",
+    "sha256": "3922c56194dde3ffcd32bd80dfa0121a69e9d68292bffda9b01f6c833e4638da",
+    "opaque_declines_per_process": 3511
+  },
+  "unchanged_closed_timing_context": [
+    {
+      "baseline_group": "main",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        18265379,
+        11357323,
+        11439197,
+        11461506,
+        11515622,
+        11294097
+      ],
+      "candidate_ns": [
+        11284478,
+        10984978,
+        11301026,
+        11794303,
+        10845357,
+        11127528
+      ],
+      "baseline_median_ns": 11450351.5,
+      "candidate_median_ns": 11206003.0,
+      "ratio_of_medians": 0.978660174755334,
+      "paired_ratios": [
+        0.6178069450406696,
+        0.9672154256773361,
+        0.9879212675505108,
+        1.0290360621021357,
+        0.9417951544432424,
+        0.9852516761632205
+      ],
+      "median_paired_ratio": 0.9762335509202783,
+      "candidate_higher_pairs": 1,
+      "candidate_lower_pairs": 5
+    },
+    {
+      "baseline_group": "full-cache",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        12269130,
+        12097612,
+        11616114,
+        11603985,
+        11544650,
+        11270949
+      ],
+      "candidate_ns": [
+        11284478,
+        10984978,
+        11301026,
+        11794303,
+        10845357,
+        11127528
+      ],
+      "baseline_median_ns": 11610049.5,
+      "candidate_median_ns": 11206003.0,
+      "ratio_of_medians": 0.9651985549243352,
+      "paired_ratios": [
+        0.9197455728319774,
+        0.9080286258147475,
+        0.9728749218542448,
+        1.0164010897980307,
+        0.939427093935286,
+        0.987275162011646
+      ],
+      "median_paired_ratio": 0.9561510078947655,
+      "candidate_higher_pairs": 1,
+      "candidate_lower_pairs": 5
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "full-cache",
+      "suite": "rational",
+      "name": "opaque_linear_atom_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        18265379,
+        11357323,
+        11439197,
+        11461506,
+        11515622,
+        11294097
+      ],
+      "candidate_ns": [
+        12269130,
+        12097612,
+        11616114,
+        11603985,
+        11544650,
+        11270949
+      ],
+      "baseline_median_ns": 11450351.5,
+      "candidate_median_ns": 11610049.5,
+      "ratio_of_medians": 1.0139469954262976,
+      "paired_ratios": [
+        0.6717150517380449,
+        1.0651816453578014,
+        1.0154658583115581,
+        1.0124310888987886,
+        1.0025207496390556,
+        0.9979504337531367
+      ],
+      "median_paired_ratio": 1.0074759192689222,
+      "candidate_higher_pairs": 4,
+      "candidate_lower_pairs": 2
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_first",
+      "iterations": 4096,
+      "baseline_ns": [
+        6293499,
+        5415389,
+        5574159,
+        5529981,
+        5373482,
+        5301877
+      ],
+      "candidate_ns": [
+        6056745,
+        5824811,
+        6247872,
+        5895146,
+        5899777,
+        6034847
+      ],
+      "baseline_median_ns": 5472685.0,
+      "candidate_median_ns": 5967312.0,
+      "ratio_of_medians": 1.0903810469632365,
+      "paired_ratios": [
+        0.9623811809614969,
+        1.075603433105175,
+        1.120863613685939,
+        1.066033680766715,
+        1.0979430097653626,
+        1.138247266015413
+      ],
+      "median_paired_ratio": 1.0867732214352688,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 1
+    },
+    {
+      "baseline_group": "full-cache",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_first",
+      "iterations": 4096,
+      "baseline_ns": [
+        6897358,
+        6984912,
+        5979040,
+        5922714,
+        5815342,
+        5819161
+      ],
+      "candidate_ns": [
+        6056745,
+        5824811,
+        6247872,
+        5895146,
+        5899777,
+        6034847
+      ],
+      "baseline_median_ns": 5950877.0,
+      "candidate_median_ns": 5967312.0,
+      "ratio_of_medians": 1.0027617778018265,
+      "paired_ratios": [
+        0.8781253633637691,
+        0.8339132976907941,
+        1.0449624019909551,
+        0.9953453771362251,
+        1.0145193524301752,
+        1.0370647933611048
+      ],
+      "median_paired_ratio": 1.0049323647832002,
+      "candidate_higher_pairs": 3,
+      "candidate_lower_pairs": 3
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "full-cache",
+      "suite": "rational",
+      "name": "opaque_linear_atom_first",
+      "iterations": 4096,
+      "baseline_ns": [
+        6293499,
+        5415389,
+        5574159,
+        5529981,
+        5373482,
+        5301877
+      ],
+      "candidate_ns": [
+        6897358,
+        6984912,
+        5979040,
+        5922714,
+        5815342,
+        5819161
+      ],
+      "baseline_median_ns": 5472685.0,
+      "candidate_median_ns": 5950877.0,
+      "ratio_of_medians": 1.0873779506768615,
+      "paired_ratios": [
+        1.0959496458170566,
+        1.2898264556802845,
+        1.0726353518082279,
+        1.0710188696850858,
+        1.08222973483488,
+        1.097566201554657
+      ],
+      "median_paired_ratio": 1.0890896903259684,
+      "candidate_higher_pairs": 6,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_warm",
+      "iterations": 4096,
+      "baseline_ns": [
+        5362833,
+        5374692,
+        5459667,
+        5470956,
+        5450636,
+        5353314
+      ],
+      "candidate_ns": [
+        5977830,
+        5862449,
+        5903826,
+        8038710,
+        5877578,
+        6133090
+      ],
+      "baseline_median_ns": 5412664.0,
+      "candidate_median_ns": 5940828.0,
+      "ratio_of_medians": 1.09757930660392,
+      "paired_ratios": [
+        1.1146776340042661,
+        1.0907506885975977,
+        1.081352763822409,
+        1.4693428351461792,
+        1.0783288408912282,
+        1.1456622944217358
+      ],
+      "median_paired_ratio": 1.102714161300932,
+      "candidate_higher_pairs": 6,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "baseline_group": "full-cache",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_warm",
+      "iterations": 4096,
+      "baseline_ns": [
+        6479176,
+        10840298,
+        5881897,
+        5855279,
+        5886717,
+        5794924
+      ],
+      "candidate_ns": [
+        5977830,
+        5862449,
+        5903826,
+        8038710,
+        5877578,
+        6133090
+      ],
+      "baseline_median_ns": 5884307.0,
+      "candidate_median_ns": 5940828.0,
+      "ratio_of_medians": 1.009605379189087,
+      "paired_ratios": [
+        0.9226219506924954,
+        0.54080146136204,
+        1.0037282189742527,
+        1.3728995663571284,
+        0.9984475217680755,
+        1.0583555539296114
+      ],
+      "median_paired_ratio": 1.001087870371164,
+      "candidate_higher_pairs": 3,
+      "candidate_lower_pairs": 3
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "full-cache",
+      "suite": "rational",
+      "name": "opaque_linear_atom_warm",
+      "iterations": 4096,
+      "baseline_ns": [
+        5362833,
+        5374692,
+        5459667,
+        5470956,
+        5450636,
+        5353314
+      ],
+      "candidate_ns": [
+        6479176,
+        10840298,
+        5881897,
+        5855279,
+        5886717,
+        5794924
+      ],
+      "baseline_median_ns": 5412664.0,
+      "candidate_median_ns": 5884307.0,
+      "ratio_of_medians": 1.087136944026084,
+      "paired_ratios": [
+        1.208162924334955,
+        2.016915201838543,
+        1.0773362184909812,
+        1.0702478689282093,
+        1.0800055259606403,
+        1.082492825939222
+      ],
+      "median_paired_ratio": 1.0812491759499312,
+      "candidate_higher_pairs": 6,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "iterations": 4096,
+      "baseline_ns": [
+        5362853,
+        5588497,
+        7417243,
+        5496694,
+        5478305,
+        5444027
+      ],
+      "candidate_ns": [
+        6275490,
+        5871178,
+        6019468,
+        10059681,
+        5928494,
+        6136840
+      ],
+      "baseline_median_ns": 5487499.5,
+      "candidate_median_ns": 6078154.0,
+      "ratio_of_medians": 1.1076363651604888,
+      "paired_ratios": [
+        1.1701775155873189,
+        1.0505826521871624,
+        0.8115505990568194,
+        1.830132985390855,
+        1.0821766951639238,
+        1.127261124898903
+      ],
+      "median_paired_ratio": 1.1047189100314134,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 1
+    },
+    {
+      "baseline_group": "full-cache",
+      "candidate_group": "candidate",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "iterations": 4096,
+      "baseline_ns": [
+        6247552,
+        11402449,
+        6059366,
+        6031157,
+        5963432,
+        5883907
+      ],
+      "candidate_ns": [
+        6275490,
+        5871178,
+        6019468,
+        10059681,
+        5928494,
+        6136840
+      ],
+      "baseline_median_ns": 6045261.5,
+      "candidate_median_ns": 6078154.0,
+      "ratio_of_medians": 1.0054410384066925,
+      "paired_ratios": [
+        1.0044718315269725,
+        0.5149049997943425,
+        0.9934154827419238,
+        1.6679521027225788,
+        0.9941412931345575,
+        1.0429872531975777
+      ],
+      "median_paired_ratio": 0.999306562330765,
+      "candidate_higher_pairs": 3,
+      "candidate_lower_pairs": 3
+    },
+    {
+      "baseline_group": "main",
+      "candidate_group": "full-cache",
+      "suite": "rational",
+      "name": "opaque_linear_atom_cloned",
+      "iterations": 4096,
+      "baseline_ns": [
+        5362853,
+        5588497,
+        7417243,
+        5496694,
+        5478305,
+        5444027
+      ],
+      "candidate_ns": [
+        6247552,
+        11402449,
+        6059366,
+        6031157,
+        5963432,
+        5883907
+      ],
+      "baseline_median_ns": 5487499.5,
+      "candidate_median_ns": 6045261.5,
+      "ratio_of_medians": 1.1016422871655842,
+      "paired_ratios": [
+        1.1649679750684943,
+        2.040342689635514,
+        0.8169296866773813,
+        1.0972335371043032,
+        1.0885542152180283,
+        1.0808004809674896
+      ],
+      "median_paired_ratio": 1.0928938761611657,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 1
+    }
+  ],
+  "findings": [
+    "All eight fixed processes ran and all 17 commands exited zero. The original runner then failed an overly strict requirement that these fixtures must exercise opaque-copy rejection. That failure and every sample remain unchanged; a separate assessor verified the complete closed dataset and final guards.",
+    "Opaque first and warm phases each execute 87186 retained lookups, 70802 normalizer work visits, 16384 local memo hits and 8192 local memo stores. They record no retained hit, closed-copy attempt, publication or evaluation-cell allocation.",
+    "All four opaque phases have identical public arithmetic and dispatch counts in main, full-cache and the repair. First and warm cache event maps also match exactly in the instrumented full-cache group.",
+    "The opaque cloned phase does the same counted public arithmetic and has no retained hit, then publishes 4096 certificates and evaluation cells. It copies 2731 closed terms; event accounting records 98304 closed-box bytes and 327680 evaluation-cell bytes. These are instrumented allocation-site requests, not a replacement for the 1000-input allocator measurements or a whole-life retention total.",
+    "No opaque-copy rejection occurs anywhere in the six rational families. The same frozen instrumented library recorded 3511 such rejections per process in its earlier quadratic trace, so the zero is retained as evidence.",
+    "The borrowed repair and previous full-cache build have identical public counts in all 24 phases. Both differ from main in 14 phases. The eight phases with zero cache events include every radical-Laurent-transport phase.",
+    "Repeated unsuccessful lookups are a concrete additional path in the opaque query. Their share of the roughly 9 to 10 percent warm-query timing difference has not been measured; construction and other library regressions remain unresolved."
+  ],
+  "decision": "Preserve the observed lookup misses and cloned-phase publication events. Do not pursue opaque-copy rejection as the explanation for this workload. Audit immutable lookup eligibility and P4 requirements before proposing another runtime candidate; no optimization is admitted.",
+  "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-cache-eligibility-next-v1.json",
+  "limits": [
+    "The cache-event library is the previously qualified instrumented full-cache source, before the borrowed-integer repair. Its arithmetic counts match the actual full-cache library here; no candidate cache-event counts are claimed.",
+    "All 24 phases and all four groups are retained. Two runs per group are count-repeatability checks, not cost samples.",
+    "Diagnostic counters can perturb execution. No elapsed timings, allocator totals, RSS comparison, performance causality or native deadline claim is derived from these runs.",
+    "A cache-event count establishes that the path executed. It does not quantify that path's share of a prior timing difference.",
+    "Earlier cost results, native failures, runtime non-admission and the full properties.md scope remain unchanged."
+  ],
+  "new_samples_after_original_eight": 0,
+  "new_library_builds": 0,
+  "new_runtime_sources": 0,
+  "main_and_35_pending_native_paths_unchanged": true,
+  "new_native_gates_run": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

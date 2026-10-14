@@ -3,7 +3,7 @@
   "base_revision": "0c5508b89",
   "scope": "All 39 properties, all 14 known open targets, and crate-specific future work remain in scope. Inventory and documentation alone do not prove implementation.",
   "current_work": {
-    "updated_on": "2026-10-13",
+    "updated_on": "2026-10-14",
     "existing_worktree_changes_in_scope": true,
     "accepted_cache_contract": "Warming may strengthen Unknown into Certified and reuse prior higher-precision proofs; it must never contradict or weaken an available certificate.",
     "main_scalar_api": {
@@ -4416,7 +4416,7 @@
       "whole_cost_matrix_pending": false,
       "new_native_gates_run": false,
       "main_and_35_pending_native_paths_unchanged": true,
-      "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/library-interpretation-v1.json",
+      "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-interpretation-v1.json",
       "runtime_candidate": true,
       "runtime_admitted": false,
       "plan_complete": false,
@@ -4470,6 +4470,39 @@
         "native_gates_run": false,
         "runtime_admitted": false
       }
+    },
+    "rational_cache_work_coverage": {
+      "status": "opaque-query-cache-misses-with-unchanged-public-arithmetic",
+      "evidence": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-interpretation-v1.json",
+      "assessment": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-assessment-v3.json",
+      "failed_setup_and_control_records": [
+        "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v1.json",
+        "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v2.json"
+      ],
+      "fixed_commands_passed": 17,
+      "original_runner_exit_code": 1,
+      "fixed_processes": 8,
+      "trace_windows": 192,
+      "cache_event_windows": 48,
+      "public_count_comparisons": 72,
+      "all_witnesses_and_counts_preserved": true,
+      "repaired_and_full_cache_public_counts_equal_in_all_24_phases": true,
+      "opaque_first_and_warm_lookups_each": 87186,
+      "opaque_first_and_warm_retained_hits_each": 0,
+      "opaque_first_and_warm_publication_attempts_each": 0,
+      "opaque_cloned_certificates_published": 4096,
+      "opaque_copy_rejections_across_all_six_families": 0,
+      "prior_same_instrumentation_positive_control": 3511,
+      "timing_cause_quantified": false,
+      "new_library_builds": 0,
+      "new_runtime_sources": 0,
+      "new_samples_after_closure": 0,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "new_native_gates_run": false,
+      "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-cache-eligibility-next-v1.json",
+      "runtime_candidate": false,
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
