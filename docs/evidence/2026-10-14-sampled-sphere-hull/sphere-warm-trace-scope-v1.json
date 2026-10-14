@@ -1,0 +1,21 @@
+{
+  "objective": "Trace the first divergent point-selection input in the reproduced warm 32x16 hull, without adding scalar queries or changing selection logic.",
+  "parent_replay_result_sha256": "a6793ed7369cccce5d9bb914a3fa911d4315cbd49c67c7be2daab20ca3494344",
+  "parent_replay_assessment_sha256": "fd9a86fcf64fc90d59e972e7cf384c6f05d8a3adfe7208b178f0b3b0d8b21e0c",
+  "parent_source": "target/sphere-cyclotomic-image-v1/source",
+  "expected_delta_sha256": {
+    "crates/hypermesh/src/convex_hull.rs": "997d6285cb575bd2cbc81c77a29ccef6c10b56e23bdfb80f9be2f4a22dcde148"
+  },
+  "trace": "Print already-computed seed, approximate-coordinate bits, BVH availability, face outside vectors, BVH-to-linear fallback, and selected eye with its floating score. Extra score computation is only on the already-created f64 coordinate array; no new exact scalar query or cache write is introduced.",
+  "native_case": "original_medium",
+  "native_processes": 1,
+  "hull_queries": 3,
+  "commands": 6,
+  "native_wall_stop_seconds": 600,
+  "build_wall_stop_seconds": 900,
+  "required_output_control": "All three full stdout transcripts must exactly equal the default-allocator finite-image replay diagnostic.",
+  "interpretation": "This diagnostic may locate divergent scheduling data; it does not by itself prove a repair or a cache-contract violation. Stderr I/O prevents timing or allocation interpretation.",
+  "not_a_cost_trial": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
