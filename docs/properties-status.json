@@ -4721,9 +4721,9 @@
       "runtime_candidate_prepared": false
     },
     "pi_local_memo": {
-      "status": "pi-only-memo-protocol-prepared",
+      "status": "preparation-import-failure-preserved-v2-protocol-ready",
       "source_audit": "docs/evidence/2026-10-14-local-memo-leaf-coverage/pi-memo-source-audit-v1.json",
-      "scope": "docs/evidence/2026-10-14-pi-local-memo/scope-v1.json",
+      "scope": "docs/evidence/2026-10-14-pi-local-memo/scope-v2.json",
       "parent_source_files": 10135,
       "expected_source_files": 10136,
       "changed_or_added_paths": 2,
@@ -4734,7 +4734,11 @@
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": true,
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "failed_v1": "docs/evidence/2026-10-14-pi-local-memo/preparation-failure-v1.json",
+      "v1_source_created": false,
+      "v1_tests_executed": 0,
+      "v2_prepared": false
     }
   },
   "status_meanings": {

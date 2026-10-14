@@ -1,0 +1,40 @@
+{
+  "status": "v1-preparation-import-failure-preserved",
+  "failed_command": [
+    "python3",
+    "docs/evidence/2026-10-14-pi-local-memo/prepare_v1.py"
+  ],
+  "runner_exit_code": 1,
+  "failure_stage": "module imports before main()",
+  "diagnosis": "The new generic common_v1 module was partially initialized when the inherited borrowed-integer cost_common_v1 imported common_v1. Python resolved that import from sys.modules to the new helper, so sha was unavailable.",
+  "exception": "ImportError: cannot import name 'sha' from 'common_v1' (consider renaming '/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-pi-local-memo/common_v1.py' if it has the same name as a library you intended to import)",
+  "import_chain": [
+    "pi-local-memo/prepare_v1.py",
+    "pi-local-memo/common_v1.py",
+    "local-memo-leaf-coverage/leaf_memo_common_v2.py",
+    "laurent-cache-miss-classification/miss_classification_common_v2.py",
+    "laurent-cache-eligibility/eligibility_cost_common_v1.py",
+    "laurent-cache-eligibility/eligibility_common_v1.py",
+    "borrowed-integer-leaves/rational_trace_common_v2.py",
+    "borrowed-integer-leaves/cost_common_v1.py",
+    "partially initialized pi-local-memo/common_v1.py"
+  ],
+  "failure_evidence": "Exception and import chain transcribed from the terminal exec_command traceback; no preparation-owned log had been created.",
+  "old_inputs_sha256": {
+    "common_v1.py": "007f16409db47c35c57ff3408bfcb0dcdbfd4e159f1ede38e52920b8e8f1c9d0",
+    "prepare_v1.py": "a5a7884668cbb28aee5413d18b6fc681a89566092df4ac6a873ecda03445058e",
+    "qualify_v1.py": "fb3e9640ab85c053ebdae27d91e65b7d93eb764d4486585c5ebc3d8f6acd834a",
+    "assess_qualification_v1.py": "bd5f84e496f1be4304a677f3764a5d7f406bf8c4360b47bbadcd01e1d9ee34a8",
+    "scope-v1.json": "6d51bf7901b14538fc0b711805dc2a5b5513b470717f2f3be9676a5c2e837479",
+    "runtime-edits-v1.json": "518a54608c46b4c766a7fc1fb2385065d6ddd7c19d171c9be1db429075138941",
+    "pi_memo_tests_v1.rs": "7d83e63c5f01016befb442a0bb3189ff6f07e7c88ac7c121345ce0c21009e152"
+  },
+  "v1_source_created": false,
+  "v1_preparation_created": false,
+  "qualification_commands_executed": 0,
+  "tests_executed": 0,
+  "samples_executed": 0,
+  "follow_up": "Fresh V2 protocol uses unique pi_memo_common_v2 module name. Rust implementation and test input remain byte-identical. V1 inputs are immutable.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
