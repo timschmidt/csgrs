@@ -1,0 +1,58 @@
+{
+  "question": "Which construction identities let the existing exact hull certify unchanged original sphere coordinates?",
+  "cases": {
+    "fifteen_degrees": [
+      8,
+      24,
+      12,
+      266,
+      528
+    ],
+    "original_medium": [
+      10,
+      32,
+      16,
+      482,
+      960
+    ],
+    "fifth_turn": [
+      8,
+      10,
+      7,
+      62,
+      120
+    ],
+    "seventh_turn": [
+      8,
+      7,
+      5,
+      30,
+      56
+    ]
+  },
+  "modes": [
+    "adjacent quads",
+    "all longitude/latitude rectangles plus complete latitude and meridian groups",
+    "complete groups plus exact coordinate product symmetries"
+  ],
+  "derivation": [
+    "Each latitude has constant y=R*cos(phi).",
+    "Each meridian and its antipode, including poles, lie in span((cos(theta),0,sin(theta)),(0,1,0)).",
+    "For latitudes a,b and longitudes u,v, chord vectors R*sin(a)*(v-u) and R*sin(b)*(v-u) are parallel; the four corners are coplanar, including nonadjacent rectangles.",
+    "Coordinate IDs use sine periodicity, sin(pi-t)=sin(t), oddness, cos(t)=sin(t+pi/2), and product commutativity. The common radius is omitted from signed product keys. Distinct keys remain distinct IDs.",
+    "Unique per-point ruled-surface IDs disable that unrelated shortcut. Coordinate IDs prove equality without replacing native coordinates."
+  ],
+  "coverage_limits": [
+    "Twelve fixed original queries measure coverage; completeness is not presumed.",
+    "O(segments^2*stacks^2) rectangle enumeration is diagnostic, not an admitted runtime design.",
+    "The previously certified 24x12 control must preserve full hull coordinates, triangle rows, and certainty.",
+    "Successful hulls preserve all original points, closed topology, and 2V-4 triangles.",
+    "Small fixed diagnostic index arithmetic is not an unbounded public API.",
+    "No sphere certificate carrier or new runtime code is introduced."
+  ],
+  "runs": 12,
+  "commands": 14,
+  "diagnostic_wall_limit_seconds": 180,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
