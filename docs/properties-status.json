@@ -4829,16 +4829,78 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "original-geometry-failure-reproduction-prepared",
+      "status": "original-sphere-hull-failure-reproduced-cache-identity-audit-next",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
       "original_32_by_16_geometry_required": true,
-      "baseline_executed": false,
+      "baseline_executed": true,
       "runtime_candidate_prepared": false,
       "runtime_admitted": false,
       "plan_complete": false,
-      "other_native_and_scalar_admission_obligations_remain_open": true
+      "other_native_and_scalar_admission_obligations_remain_open": true,
+      "baseline_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/baseline-assessment-v1.json",
+      "baseline_commands_passed": 7,
+      "baseline_cases": [
+        {
+          "name": "fifteen_degrees",
+          "radius": 8,
+          "segments": 24,
+          "stacks": 12,
+          "positions": 266,
+          "triangles": 528,
+          "certified_hull": true,
+          "error": null,
+          "stdout_sha256": "18afefa640262fe6aedf4ebf6ed7aa7d51340a02e1dd6135de41455b800e9205"
+        },
+        {
+          "name": "original_medium",
+          "radius": 10,
+          "segments": 32,
+          "stacks": 16,
+          "positions": 482,
+          "triangles": 960,
+          "certified_hull": false,
+          "error": {
+            "ConvexHullPredicate": {
+              "stage": "face outside linear query"
+            }
+          },
+          "stdout_sha256": "9d86bb1abd9731068a2ea02af7cc68d14ac4e89a3dba60a71c7b84a717a62ffc"
+        },
+        {
+          "name": "fifth_turn",
+          "radius": 8,
+          "segments": 10,
+          "stacks": 7,
+          "positions": 62,
+          "triangles": 120,
+          "certified_hull": false,
+          "error": {
+            "ConvexHullPredicate": {
+              "stage": "face outside linear query"
+            }
+          },
+          "stdout_sha256": "226de282139beb716a1fa67c03b6eb9a8d1d497e2535438f63e1634c330ba440"
+        },
+        {
+          "name": "seventh_turn",
+          "radius": 8,
+          "segments": 7,
+          "stacks": 5,
+          "positions": 30,
+          "triangles": 56,
+          "certified_hull": false,
+          "error": {
+            "ConvexHullPredicate": {
+              "stage": "face outside linear query"
+            }
+          },
+          "stdout_sha256": "33561840b10754879c3890d40280501d076165c09afd6e8962a1737975f5b5c3"
+        }
+      ],
+      "cache_identity_controls_prepared": true,
+      "cache_identity_controls_executed": false
     }
   },
   "status_meanings": {
