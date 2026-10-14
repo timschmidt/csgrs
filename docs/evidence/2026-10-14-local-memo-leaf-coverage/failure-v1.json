@@ -1,0 +1,137 @@
+{
+  "status": "diagnostic-v1-control-failure-preserved",
+  "runner_exit_code": 1,
+  "failed_command": "scalar-library",
+  "command_exit_code": 101,
+  "commands_attempted": 5,
+  "commands_passed": 4,
+  "scalar_tests_passed": 883,
+  "scalar_tests_failed": 1,
+  "all_prior_881_tests_passed": true,
+  "other_two_new_controls_passed": true,
+  "count_processes_executed": 0,
+  "failed_test": "computable::node::memo_leaf_trace_tests::diagnostic_memo_sites_preserve_leaf_replay_and_graph_lifetimes",
+  "assertion": "value.cached().is_none()",
+  "diagnosis": "Computable::cached() routes every Constant to its process-wide shared-constant approximation cache. A newly constructed Node therefore does not imply that cached() is empty when other tests have warmed the constant. The control must inspect this raw node's own EvaluationCache.",
+  "diagnosis_limit": "The failure log does not identify which constant bucket was reached; no specific constant or warming test is inferred.",
+  "source_review_correction": "The V1 review missed the global shared-cache behavior of cached(). This is a control correction, not evidence of a runtime cache contradiction.",
+  "reviewed_source_sha256": {
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+    "crates/hyperreal/src/computable/node/representation.rs": "a6373619888ad023c0fc343db6f1facbdf7bcfd740e9efb3f8e76432cdb665ae",
+    "crates/hyperreal/src/computable/node/memo_leaf_trace_tests.rs": "f836ff96940da2695459ecf9a3c69a119897b141a31d864eb87d4bb261c63d6b"
+  },
+  "old_artifacts_sha256": {
+    "assess_v1.py": "c925772d7779da33bdf45cba429fd2b7027dd8b253dbb1a38010e6be734e88ea",
+    "diagnostic-v1/binaries.json": "72f210ecd551a8e8f0d21bfd82c8a7f80ea0d3691187d0eb3ba105c8fa124e50",
+    "diagnostic-v1/build-library.stderr.gz": "d80aa8bb3589e1b127b9cb2716783f482f5e4648d52968a4b9070b9d0274ba39",
+    "diagnostic-v1/build-library.stdout.gz": "067ec2826c26bb785c4d6ad21bb5aa9e0c810e3fa96043a409e140996a18b7f5",
+    "diagnostic-v1/build-tests.stderr.gz": "ccf675c04f08820c3e757f2d3b3694b3e163e805e958fcc507b4e97b93622cb2",
+    "diagnostic-v1/build-tests.stdout.gz": "a2653a96ac95240782a59c701cd74b6f9c8a6efe5947163747da318d2bc7a436",
+    "diagnostic-v1/clippy-library.stderr.gz": "9b352ad7424546620c7f0461499c3ac65f552fca0da4f15526dc7ae9b667c925",
+    "diagnostic-v1/clippy-library.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "diagnostic-v1/commands.json": "e7a8addd5359f6c1201321939419464eb379711e30981a2925f3ac686e370f90",
+    "diagnostic-v1/format-inputs.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "diagnostic-v1/format-inputs.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "diagnostic-v1/libraries.json": "29dbe29f359d65a48ff6bbf823ba8400ca0d7c00dcad64f098b03de95f637824",
+    "diagnostic-v1/protocol.json": "50904a7e1a55f17b06f52236b8c659764717381175ffb1a45b33b2d5a3a0f60b",
+    "diagnostic-v1/scalar-library.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "diagnostic-v1/scalar-library.stdout.gz": "b7e8abd04337487253fad2bcd32ec75b7416913dbd271c70d1cabe3f846bf730",
+    "fallback_control_v1.rs": "ad29e6e4578e3c73bc589a3cef4608533153da7bb121a50132d53e293f8d8f30",
+    "instrumentation-edits-v1.json": "9cdbfccd614ccbcfce6920ca7178460fdc0103b157b4719a308b8417c577afe7",
+    "leaf_memo_common_v1.py": "e6c3dd701cae59c03a0a40aedbfebb15a6db5ac038522e545a34ac71daeb47db",
+    "measure_v1.py": "b10ea0a41a1ab119976cf0090449d92ca08be4bc398a0db860925d30e391a233",
+    "memo_leaf_tests_v1.rs": "f836ff96940da2695459ecf9a3c69a119897b141a31d864eb87d4bb261c63d6b",
+    "memo_leaf_trace_v1.rs": "076ac29ae57b8faf99ea18161e47f5ca887ff9c707197089fb3bb630013282a7",
+    "memo_observer_v1.rs": "c367c35d31378147423180d916ff52fbe47c220d9cf054ff764a449834f6d6e5",
+    "preparation-v1/format.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "preparation-v1/integer_probe.rs": "490c37cae472847ab60b5dac08289e02c8c77a2b04fd78e1c607cf82f2ba009c",
+    "preparation-v1/protocol.json": "8c03a6dd8b2cc698c71ec36e717195cfdaba76af9d42476fa7c9b408a9507443",
+    "preparation-v1/quadratic_probe.rs": "a1f357765d3a7d19bda3c582766f87f63af758fb6db8ace2fa0efd6278579b0b",
+    "preparation-v1/rational_probe.rs": "2fb393a74bb5d40033e5ad35aedbdeeefb3fad96d69ed86c1b439e27d2c3a721",
+    "preparation-v1/source-delta.tar.gz": "a32827a85ad85d6a888f5eb6d732d28cdc1cf42760f293c2cb809bb4a5d1803e",
+    "preparation-v1/source-hashes.json.gz": "01ae19dc00993f15d418ecad3458607bc12ace7d9d76e15b851944361bf046b8",
+    "preparation-v1/source.patch.gz": "b117416e8e41f2ae08b820a9679bf49facbbf3999b2859ad2a7c1c5b81edd1d4",
+    "prepare_v1.py": "5d3b66d41043127683a2b7fca8acbe48be1c145e29ee7212b50e7f3f0d528418",
+    "scope-v1.json": "8925da96d587655e3cc6db1ba0d89d1e63f67fe6db4a92002585667227fe0f5f",
+    "source-review-v1.json": "b11f527bd5ff0a2d2fecadb75c5ebd384269d126bc9ab0d8d66ebb0cdcc7cd77",
+    "trace_header_v1.rs": "c60af5d84eb37b89482d34af9d6bc2b7a6091c2fcaa5cfb9a0f5b0786cf961bb"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+  "source_hashes_path": "preparation-v1/source-hashes.json.gz",
+  "source_hashes_sha256": "01ae19dc00993f15d418ecad3458607bc12ace7d9d76e15b851944361bf046b8",
+  "binaries": {
+    "library-tests": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "sha256": "54dbf49e5a1f5011b43cd19f5db4f5507c909ae3139b17252134db5039211174",
+      "bytes": 10440528,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source/crates/hyperreal/Cargo.toml"
+    }
+  },
+  "libraries": {
+    "borrowed": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+        "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+        "bytes": 11711762,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "8fceaedb0c660635799855940033f0d084fb799d1b1628ae942eb1371c790dc4",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "diagnostic": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target/release/libhyperreal.rlib",
+        "sha256": "15069ab694779a69cb12805452f9543ed3d69c207a14da0223459059e0d06eb7",
+        "bytes": 11855238,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "sha256": "778f7f1b5a5b137e7e66ea305fc63d0547a388dbb8b75e604b19b975041cb0f7",
+        "bytes": 2042504,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    }
+  },
+  "follow_up": "Fresh V2 source and runners replace only the invalid test assertion with a node-local empty-cell assertion, with a bucket failure message. All V1 files, source and binaries remain unchanged. No V1 count samples exist.",
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

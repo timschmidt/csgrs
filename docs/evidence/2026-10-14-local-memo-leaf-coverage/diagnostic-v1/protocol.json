@@ -1,0 +1,47 @@
+{
+  "scope": "Qualify one diagnostic overlay, then collect two fixed reversed count passes.",
+  "runner_sha256": "b10ea0a41a1ab119976cf0090449d92ca08be4bc398a0db860925d30e391a233",
+  "assessor_sha256": "c925772d7779da33bdf45cba429fd2b7027dd8b253dbb1a38010e6be734e88ea",
+  "preparation_sha256": "8c03a6dd8b2cc698c71ec36e717195cfdaba76af9d42476fa7c9b408a9507443",
+  "review_sha256": "b11f527bd5ff0a2d2fecadb75c5ebd384269d126bc9ab0d8d66ebb0cdcc7cd77",
+  "groups": [
+    "borrowed",
+    "diagnostic"
+  ],
+  "suites": [
+    "rational",
+    "quadratic",
+    "integer"
+  ],
+  "orders": [
+    [
+      "borrowed",
+      "diagnostic"
+    ],
+    [
+      "diagnostic",
+      "borrowed"
+    ]
+  ],
+  "inputs": 4096,
+  "commands": 29,
+  "fixed_count_processes": 12,
+  "trace_windows": 272,
+  "diagnostic_windows": 136,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target"
+  },
+  "timeout_seconds": 1800,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "new_library_builds": 1,
+  "new_runtime_sources": 0,
+  "new_diagnostic_sources": 1,
+  "no_timing_or_allocation_comparison": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

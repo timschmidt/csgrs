@@ -1,0 +1,90 @@
+[
+  {
+    "name": "format-inputs",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source/crates/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/trace_header_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_leaf_trace_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_observer_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/memo_leaf_tests_v1.rs",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-local-memo-leaf-coverage/fallback_control_v1.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-library",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9b352ad7424546620c7f0461499c3ac65f552fca0da4f15526dc7ae9b667c925"
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "a2653a96ac95240782a59c701cd74b6f9c8a6efe5947163747da318d2bc7a436",
+    "stderr_sha256": "ccf675c04f08820c3e757f2d3b3694b3e163e805e958fcc507b4e97b93622cb2"
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "067ec2826c26bb785c4d6ad21bb5aa9e0c810e3fa96043a409e140996a18b7f5",
+    "stderr_sha256": "d80aa8bb3589e1b127b9cb2716783f482f5e4648d52968a4b9070b9d0274ba39"
+  },
+  {
+    "name": "scalar-library",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source",
+    "exit_code": 101,
+    "stdout_sha256": "b7e8abd04337487253fad2bcd32ec75b7416913dbd271c70d1cabe3f846bf730",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]

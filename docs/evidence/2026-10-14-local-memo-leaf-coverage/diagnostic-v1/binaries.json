@@ -1,0 +1,16 @@
+{
+  "library-tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "54dbf49e5a1f5011b43cd19f5db4f5507c909ae3139b17252134db5039211174",
+    "bytes": 10440528,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/local-memo-leaf-coverage-v1/source/crates/hyperreal/Cargo.toml"
+  }
+}
