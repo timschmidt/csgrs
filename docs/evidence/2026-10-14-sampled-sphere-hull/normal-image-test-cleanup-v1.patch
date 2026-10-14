@@ -1,0 +1,333 @@
+--- a/crates/hyperreal/src/computable/approximation.rs
++++ b/crates/hyperreal/src/computable/approximation.rs
+@@ -36,6 +36,7 @@
+ 
+     #[test]
+     fn chudnovsky_pi_matches_mpfr_from_one_bit_through_many_digits() {
++        crate::mpfr_test::cleanup_on_thread_exit();
+         for bits in [
+             1_u32, 2, 3, 4, 7, 8, 15, 16, 31, 32, 43, 44, 63, 64, 65, 96, 127, 128, 255, 256, 511,
+             512, 1_023, 1_024, 2_047, 2_048, 4_095, 4_096, 4_097, 16_384, 65_536, 120_700,
+--- a/crates/hyperreal/src/computable/approximation/e_plan_tests.rs
++++ b/crates/hyperreal/src/computable/approximation/e_plan_tests.rs
+@@ -4,6 +4,7 @@
+ use std::sync::{Arc, atomic::AtomicBool, atomic::Ordering};
+ 
+ fn assert_e_enclosure(actual: &BigInt, p: i32) {
++    crate::mpfr_test::cleanup_on_thread_exit();
+     let precision = p.unsigned_abs().max(64) + 192;
+     let mut lower = Float::with_val(precision, 1);
+     let mut upper = lower.clone();
+--- a/crates/hyperreal/src/computable/node/certified_planning_tests.rs
++++ b/crates/hyperreal/src/computable/node/certified_planning_tests.rs
+@@ -30,6 +30,7 @@
+ 
+     #[test]
+     fn chained_sum_product_uses_certified_precision() {
++        crate::mpfr_test::cleanup_on_thread_exit();
+         for terms in [32, 128, 512, 1024] {
+             let actual = pi_sum(terms).multiply(Computable::pi()).approx(0);
+             let mut lower = Float::with_val_round(256, Constant::Pi, Round::Down).0;
+@@ -48,6 +49,7 @@
+ 
+     #[test]
+     fn chained_sum_square_root_does_not_use_a_stale_zero_cutoff() {
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let actual = pi_sum(512).sqrt().approx(3);
+         let mut lower = Float::with_val_round(256, Constant::Pi, Round::Down).0;
+         let mut upper = Float::with_val_round(256, Constant::Pi, Round::Up).0;
+@@ -105,6 +107,7 @@
+ 
+     #[test]
+     fn near_cancelled_reciprocals_use_certified_precision() {
++        crate::mpfr_test::cleanup_on_thread_exit();
+         for denominator in [256_u64, 1000, 65_536, 16_777_216] {
+             for with_pi in [false, true] {
+                 let radicand = Rational::fraction((4 * denominator - 1) as i64, denominator).unwrap();
+--- a/crates/hyperreal/src/computable/node/fractional_separation_tests.rs
++++ b/crates/hyperreal/src/computable/node/fractional_separation_tests.rs
+@@ -101,6 +101,7 @@
+     #[test]
+     fn fractional_separation_roots_with_negative_integral_denominators_match_mpfr() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         // Both numerator and denominator are negative. Roots of their positive
+         // quotient still have an integral numerator gamma*root(beta/gamma),
+         // whose selected sign may be negative. No principal-root shortcut is valid.
+--- a/crates/hyperreal/src/computable/node/tests.rs
++++ b/crates/hyperreal/src/computable/node/tests.rs
+@@ -7,6 +7,7 @@
+ 
+     fn check_inverse_series_wide_coefficients(asin: bool, generic: bool) {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         // At this precision, x=1/16 needs more than 23,170 recurrence steps.
+         // The next squared coefficient exceeds i32::MAX. Check both signs
+         // and both representations against a precision-matched, directed oracle.
+@@ -73,6 +74,7 @@
+     #[test]
+     fn log1p_domain_guard_covers_public_residuals_outside_the_series_range() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         for q in [Q::from((-255,256)), Q::from((-3,4)), Q::from((1,2)), Q::from((3,4)), Q::from(1), Q::from(2), Q::from(10), Q::from(1000)] {
+             let mut lo = Float::with_val(512, &q);
+             assert_eq!(lo.to_rational().unwrap(), q);
+@@ -94,6 +96,7 @@
+     #[test]
+     fn log1p_domain_guard_rechecks_every_working_sample_boundary_rounding() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut checks = 0;
+         for (p, s) in [(0_i32,-12_i32),(-1,-12),(-32,-45),(-128,-143)] {
+             let threshold = Integer::from(1)<<(-s-1);
+@@ -139,6 +142,7 @@
+     #[test]
+     fn log1p_domain_guard_covers_extreme_scales_and_cache_histories() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut checks = 0;
+         for bits in [8_i32,64,256,1024] {
+             let tiny = Q::from((1,Integer::from(1)<<bits));
+@@ -186,6 +190,7 @@
+     #[test]
+     fn log1p_domain_guard_matches_a_public_and_opaque_residual_grid() {
+         use rug::{Float,Integer,Rational as Q,float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut checks = 0;
+         for numerator in -63_i32..=256 {
+             let q = Q::from((numerator,64));
+@@ -218,6 +223,7 @@
+     #[test]
+     fn log1p_domain_guard_does_not_trust_estimated_sum_magnitudes() {
+         use rug::{Float,Integer,Rational as Q,float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let root = |n| {
+             let mut lo = Float::with_val(2048,n);
+             let mut hi = lo.clone();
+@@ -304,6 +310,7 @@
+     #[test]
+     fn atan_reduction_requires_a_positive_sign_for_large_reciprocal_shortcut() {
+         use rug::{Float, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut lower = Float::with_val(256, 100);
+         let mut upper = lower.clone();
+         lower.sin_round(Round::Down);
+@@ -328,6 +335,7 @@
+     #[test]
+     fn atan_reduction_boundary_accepts_every_valid_coarse_cache_rounding() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         for numerator in -145_i32..=145 {
+             let q = Q::from((numerator, 256));
+             let mut lower = Float::with_val(512, &q);
+@@ -386,6 +394,7 @@
+ 
+     fn check_inverse_series_domain(asin: bool, raw_prescaled: bool) {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let root = |n| {
+             let mut lo = Float::with_val(512, n);
+             let mut hi = lo.clone();
+@@ -457,6 +466,7 @@
+     #[test]
+     fn inverse_series_domain_boundary_accepts_valid_cache_roundings() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut checks = 0;
+         for numerator in -1023_i32..=1023 {
+             let q = Q::from((numerator, 1024));
+@@ -522,6 +532,7 @@
+     #[test]
+     fn inverse_series_domain_checks_every_working_sample_boundary_rounding() {
+         use rug::{Float, Integer, Rational as Q, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let mut checks = 0;
+         // These pairs include the kernels' iteration/rounding guard bits.
+         for (precision, operand_precision) in [(0_i32, -12_i32), (-1, -13), (-32, -46), (-128, -144)] {
+@@ -643,6 +654,7 @@
+     #[test]
+     fn exp_constructor_and_deferred_kernel_match_directed_mpfr() {
+         use rug::{Float, Integer, Rational as RugRational, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         fn check(input: Rational, raw: bool, precisions: &[Precision]) {
+             // Includes e^10000 at absolute 256-bit accuracy, so 2048 relative
+@@ -731,6 +743,7 @@
+             Float, Integer,
+             float::{Constant, Round},
+         };
++        crate::mpfr_test::cleanup_on_thread_exit();
+         let bits = 2048;
+         let pi_low = Float::with_val_round(bits, Constant::Pi, Round::Down).0;
+         let pi_high = Float::with_val_round(bits, Constant::Pi, Round::Up).0;
+@@ -825,6 +838,7 @@
+     #[test]
+     fn binary64_filter_constant_enclosures_cover_mpfr_values() {
+         use rug::{Float, float::Constant};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         let pi = Float::with_val(256, Constant::Pi);
+         let pi_lower = Float::with_val(256, f64::from_bits(0x4009_21fb_5444_2d17));
+@@ -847,6 +861,7 @@
+     #[test]
+     fn demand_sized_sqrt_seeds_match_directed_mpfr() {
+         use rug::{Float, Integer, Rational as RugRational, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         let check = |numerator: BigInt, denominator: BigUint, precisions: &[i32]| {
+             let exact = Rational::from_bigint_fraction(numerator.clone(), denominator.clone())
+@@ -920,6 +935,7 @@
+     #[test]
+     fn direct_nth_root_approximations_match_mpfr() {
+         use rug::{Float, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         for degree in 3_u32..=Computable::MAX_DIRECT_NTH_ROOT_DEGREE {
+             for radicand in [2_i64, 3, 17, 257] {
+@@ -1488,6 +1504,7 @@
+     #[test]
+     fn certified_small_angle_quotients_match_mpfr() {
+         use rug::{Float, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         fn rounded_scaled(mut value: Float, precision: Precision) -> BigInt {
+             value <<= precision.saturating_neg();
+@@ -3362,6 +3379,7 @@
+     #[test]
+     fn expm1_range_guard_and_cache_orders_match_directed_mpfr() {
+         use rug::{Float, Integer, Rational as RugRational, float::Round};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         fn check(input: Rational, precisions: &[Precision]) {
+             // e^10000 needs over 14,000 integer bits before absolute guards.
+--- a/crates/hyperreal/src/dispatch_trace.rs
++++ b/crates/hyperreal/src/dispatch_trace.rs
+@@ -762,9 +762,10 @@
+ 
+     #[test]
+     fn dispatch_snapshot_merges_equal_labels_from_distinct_static_storage() {
+-        let label = || -> &'static str { Box::leak(String::from("same").into_boxed_str()) };
+-        let first = (label(), label(), label());
+-        let second = (label(), label(), label());
++        static LABELS: [[u8; 4]; 6] = [*b"same"; 6];
++        let label = |index: usize| std::str::from_utf8(&LABELS[index]).unwrap();
++        let first = (label(0), label(1), label(2));
++        let second = (label(3), label(4), label(5));
+         assert!(!std::ptr::eq(first.0, second.0));
+ 
+         reset();
+--- a/crates/hyperreal/src/lib.rs
++++ b/crates/hyperreal/src/lib.rs
+@@ -56,3 +56,7 @@
+ 
+ #[cfg(feature = "serde")]
+ mod serde;
++
++#[cfg(test)]
++#[path = "../tests/support/mpfr.rs"]
++mod mpfr_test;
+--- a/crates/hyperreal/src/rational/arithmetic/tests.rs
++++ b/crates/hyperreal/src/rational/arithmetic/tests.rs
+@@ -3302,6 +3302,7 @@
+     #[test]
+     fn normal_dyadic_view_matches_gmp_rounding() {
+         use rug::{Float, Integer, Rational as GmpRational, integer::Order};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         let mut state = 0x6a09_e667_f3bc_c909_u64;
+         let mut checked = 0;
+--- a/crates/hyperreal/src/real/convert.rs
++++ b/crates/hyperreal/src/real/convert.rs
+@@ -954,6 +954,7 @@
+     fn borrowed_f64_preserves_values_with_large_denominators() {
+         use num::{BigUint, One};
+         use rug::{Float, Integer, Rational as GmpRational, float::Round, integer::Order};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         let check = |numerator: BigUint, denominator: BigUint, exact_float: bool| {
+             let exact = GmpRational::from((
+--- a/crates/hyperreal/src/real/tests.rs
++++ b/crates/hyperreal/src/real/tests.rs
+@@ -1817,6 +1817,7 @@
+     #[test]
+     fn large_signed_rational_powers_match_mpfr() {
+         use rug::{Float, Rational as MpfrRational, float::Round, ops::Pow};
++        crate::mpfr_test::cleanup_on_thread_exit();
+ 
+         for numerator in [-65_537_i64, -65_535, 65_535, 65_537] {
+             let rational = Rational::fraction(numerator, 65_536).unwrap();
+--- a/crates/hyperreal/tests/checked_scientific.rs
++++ b/crates/hyperreal/tests/checked_scientific.rs
+@@ -1,3 +1,6 @@
++#[path = "support/mpfr.rs"]
++mod mpfr;
++
+ use hyperreal::{Problem, Real, ScientificCase};
+ use rug::float::Round;
+ use rug::{Float, Rational as Mpq};
+@@ -95,6 +98,7 @@
+ 
+ #[test]
+ fn generated_exact_rationals_match_directed_mpfr_reference_brackets() {
++    mpfr::cleanup_on_thread_exit();
+     for denominator in [3_i64, 7, 11, 13, 17, 19, 23, 31, 97] {
+         for index in -32_i64..32 {
+             let numerator = index * 7919;
+@@ -123,6 +127,7 @@
+ 
+ #[test]
+ fn pi_and_square_root_match_directed_mpfr_reference_brackets() {
++    mpfr::cleanup_on_thread_exit();
+     let pi = Real::pi();
+     let root = Real::from(2).sqrt().unwrap();
+     let (pi_lower, _) = Float::with_val_round(256, rug::float::Constant::Pi, Round::Down);
+--- a/crates/hyperreal/tests/numerical_cross_reference.rs
++++ b/crates/hyperreal/tests/numerical_cross_reference.rs
+@@ -1,3 +1,6 @@
++#[path = "support/mpfr.rs"]
++mod mpfr;
++
+ use hyperreal::{Computable, Problem, Rational, Real};
+ use num::{BigInt, Signed};
+ use rug::{Float, Integer, Rational as RugRational, float::Round};
+@@ -28,6 +31,7 @@
+ 
+ #[test]
+ fn core2_zimmermann_exp_inputs_match_mpfr_at_256_bits() {
++    mpfr::cleanup_on_thread_exit();
+     for input in [
+         "0.09407822313572878",
+         "0.0000000000000009999999999999995",
+@@ -91,6 +95,7 @@
+ 
+ #[test]
+ fn core_heron_needle_triangles_match_exact_kahan_rearrangement_and_mpfr() {
++    mpfr::cleanup_on_thread_exit();
+     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+     enum AreaStatus {
+         Positive,
+--- /dev/null
++++ b/crates/hyperreal/tests/support/mpfr.rs
+@@ -0,0 +1,22 @@
++//! MPFR cache teardown for Rug-based test oracles.
++
++struct CacheCleanup;
++
++impl Drop for CacheCleanup {
++    fn drop(&mut self) {
++        rug::float::free_cache(rug::float::FreeCache::Local);
++    }
++}
++
++thread_local! {
++    static CLEANUP: CacheCleanup = const { CacheCleanup };
++}
++
++/// Register cleanup before the current test thread first uses MPFR.
++///
++/// The thread keeps its caches throughout the test. Thread exit releases them
++/// after local oracle values have dropped, including when a test unwinds.
++/// Shared caches are left alone because other test threads may still use them.
++pub(crate) fn cleanup_on_thread_exit() {
++    CLEANUP.with(|_| {});
++}

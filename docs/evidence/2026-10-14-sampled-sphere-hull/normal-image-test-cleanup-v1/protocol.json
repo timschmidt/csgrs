@@ -1,0 +1,727 @@
+{
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source",
+  "source_files": 10137,
+  "root_source_files": 10129,
+  "inputs_sha256": {
+    "qualify_normal_image_test_cleanup_v1.py": "ec3cad7f654540f2aaedb6e4efbdc6348db9636d12c21830c3572ec0b2ed27c1",
+    "normal-image-test-cleanup-scope-v1.json": "732dd8e52bef995287c430f85d168cf52b0371a3a03059370d5075b82197d35d",
+    "normal-image-test-cleanup-v1.patch": "14387127c18d9e4dbdb38288ec1a5369123f57f21e5060a1478fd51c60bd7336",
+    "normal_image_mpfr_thread_exit_v1.rs": "b160357801b16f67a31066b164fe3f2bb4e241c0cd3c8e0db24bc0d4a2f3fb48",
+    "normal_image_asan_control_v1.rs": "cfe4eeedeecdb7cc27f5dd3e5f3511e089778e292f3d815dd5a96d88600db806",
+    "normal-image-mpfr-cache-closure-v1.json": "7b00b2e2964285e9a59de50efeb9b2442d98ff206b91a657f4cd72643acfc024",
+    "normal-image-asan-closure-v2.json": "9158ffbf408259fd0cdba6c761533a42f7c91cf53626ee357d649c4a1da20c33",
+    "normal-image-mpfr-cache-v1/result.json": "7ac3a41345e9dfc49c49ebcbae6f12f6cd5620c08bf0ea29711dcafe947b01b7",
+    "sphere-normal-image-v1/protocol.json": "b161203063f3940d23f1087c4868e2fd809b13b42dc388085dacd05d01a3e126",
+    "sphere-normal-image-v1/source-hashes.json.gz": "9fb43297218853fc5bc75cda4f4fa9998cd5c9456055c63539b14ec369794a5f",
+    "normal-image-mpfr-cache-v1/binary.json": "1ad3d454ba6577827bc6df35afbed6e781e70b478d8efa827efda0c9182dad40",
+    "normal-image-mpfr-cache-v1/build.json": "6472269de6dd9510a45ee9ac906bf7e8ce420bb8ccb5b5bc6e566bf579bfe277",
+    "normal-image-mpfr-cache-v1/build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-v1/build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-v1/cleanup.json": "c0c2488e44ebf561fca7c730612603e32c907b123a7ab3ef94ba6f0805dc0d1e",
+    "normal-image-mpfr-cache-v1/cleanup.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-v1/cleanup.stdout": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+    "normal-image-mpfr-cache-v1/format.json": "19a94140cdd1cc04c6e4de83e43a73a1a1d4faff14ea986869b4ed3d994c025b",
+    "normal-image-mpfr-cache-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-v1/protocol.json": "6c6b9bba1bc2fd1cc5b0e37effc954c46919df6c4360b61592b3a1c97fbb41ab",
+    "normal-image-mpfr-cache-v1/retain.json": "57fcaf028dc0591164c953ea03c627f4dc087c094fe1eca32a5e1b1dc6d4f7ad",
+    "normal-image-mpfr-cache-v1/retain.stderr": "ca41d328386b698777f433bbda97935a4027288d428209388eb4ed3a8b543a1e",
+    "normal-image-mpfr-cache-v1/retain.stdout": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+    "normal-image-mpfr-cache-v1/root-source-hashes.json.gz": "0b5a22068812f8ceb06f77628605dc3a3fc184e9ce4f7197b7a850c97b5c28d5",
+    "normal-image-asan-v2/commands.json": "f9701e8bbd3dd856d90b48591966ef2cf182a37c9df8c5ad54e307c08ed4a683",
+    "normal-image-asan-v2/control-binary.json": "1aa14e301e45b3ee3d84efb985e1129ded9ea1c062aed7b4ea96f69fb84fd68c",
+    "normal-image-asan-v2/control-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v2/control-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v2/control-expected-failure.stderr": "eeb601230c96808c753182e67caf9b9a1b51e5b4b757b80843ee45d6e38f8e64",
+    "normal-image-asan-v2/control-expected-failure.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v2/control-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v2/control-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v2/default-tests.stderr": "d50a038bdf9f27b416afe0ddd03cff1636a624399e18695ec9b889852ee01c9f",
+    "normal-image-asan-v2/default-tests.stdout": "7084981eac7c1e68cbabb3201668e6bf4d29e6174b7841ed14d07d32dd7f5fee",
+    "normal-image-asan-v2/failure.json": "33feab58626e791d4afea49eb9c25f1362070d01c49ca870c9ad245866312459",
+    "normal-image-asan-v2/protocol.json": "3b572c681ecc47b7b4188c256d8e6ec8cb780db76f177e1993834ba027d9b5b4",
+    "normal-image-asan-v2/root-source-hashes.json.gz": "02181f1e5424ca4e274195c1cdb4a14b330afb802e033f961b4ee7700e78b8c7"
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target",
+    "RUSTC_BOOTSTRAP": "1",
+    "RUSTFLAGS": "-Zsanitizer=address -Cforce-frame-pointers=yes",
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": ""
+  },
+  "preserved_libraries_and_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libanes-91a04a0e3e199904.rlib",
+      "sha256": "2b8df4492837f37bc143d1485342c77cbaca48052a597b2a9f9d4583ab17ae92",
+      "bytes": 324984
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libanstyle-2cc5e27cc1ff907f.rlib",
+      "sha256": "1a2757e5b45c751f871a7282b54599393012eed69b9ec9961f61d837d1f6a8b2",
+      "bytes": 299540
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libapfp-26bba23347307f3a.rlib",
+      "sha256": "45d493913d82646a7e8ebe8f74edc3c81f456608561e50aa7533f8e2ef8b051a",
+      "bytes": 924860
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libapprox-251cd1a4a779b8c9.rlib",
+      "sha256": "2a5baad95da4ae90a93fdac9622db8fb90fb847394694c7b779260b0b253cd74",
+      "bytes": 122894
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libaz-7a19e8badc02dc90.rlib",
+      "sha256": "05663bf385cdd7db97d8d692e2b718775a1e7fb03db0cc96b75cc859cc2e1ade",
+      "bytes": 2113808
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libbit_set-2213684e9cf626a7.rlib",
+      "sha256": "02b38ba2f80afa623e04ab4cd5332392cf59b17a38c859967cf5f3e98e0d6a9e",
+      "bytes": 144506
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libbit_vec-934d19aeaca65647.rlib",
+      "sha256": "7161be13e73b947702de125fd33433398d44594c16409bbe63eb3206222c7033",
+      "bytes": 269632
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libbitflags-a567aa6cf3fa2947.rlib",
+      "sha256": "47337cd71ad47d0616681865fd0c52e4ef85660dda1d35a1ed2bb9ba7e125aa6",
+      "bytes": 257498
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libboolmesh-9b9d457f0a1921b9.rlib",
+      "sha256": "90a27193e449b6d3447c440a43c85e8e1202bb8592bff8fc0a9dff0d8eb805c7",
+      "bytes": 2385812
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcast-09c24df9ee7df64b.rlib",
+      "sha256": "b007ed21fb3705a4bdfbf047a88c2286f62d62103896e0851c26ba73bd22d6a5",
+      "bytes": 209634
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcfg_if-5c33abb6068e7714.rlib",
+      "sha256": "6ac0dac4fdfbe2b9cd1f30e05dc7bc53a574b9844f37817f0c7614d048fb7848",
+      "bytes": 8934
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcgmath-649fec3f70bb7771.rlib",
+      "sha256": "805b275e7338e4e62f1b5e45f9792a26b30ad29ac72b7657b11e1b158352893b",
+      "bytes": 3404660
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libciborium-ddb9c281615e6dc6.rlib",
+      "sha256": "fe7186e39a5461d7d47c7e105e3688085651e9a78730b9845b55182b05f89d93",
+      "bytes": 1035852
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libciborium_io-989ca67ce648f8ea.rlib",
+      "sha256": "9cb31d209b28df321a16d55bf7a6e8ad1b3c4ff4392b3c46961daf7096a77910",
+      "bytes": 11752
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libciborium_ll-b2a71c187dbd8a8b.rlib",
+      "sha256": "1f70064c51f370cc3c13a479ce7210f880fffbc079dcc501f4a805fa3222892b",
+      "bytes": 177740
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libclap-7f50740cc41bc7fa.rlib",
+      "sha256": "9cc3f0e1323147bed9ef88c139b5a8e2af7db72da3ca3a666199bae946892dca",
+      "bytes": 15138
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libclap_builder-0ccec39e2897191b.rlib",
+      "sha256": "f1d5fb8d0a31fc10d13d92738678016c715fa9fcd76fba3bce631a4042c7fb3f",
+      "bytes": 4468042
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libclap_lex-235afd31c6601686.rlib",
+      "sha256": "0db05ce4a0a0a1261674ee847824bf6c41168d24b0dd01acf751625ae253ff2e",
+      "bytes": 143852
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libclipper2_rust-e495b98ecf34ca90.rlib",
+      "sha256": "3c44b0875fedded6b93082a38059ce00103dbd4010b1dd5ae15be1cc11ac5ab0",
+      "bytes": 2795546
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcriterion-0ddd52e2fd20d9de.rlib",
+      "sha256": "61552ffdf9e7750d239c62e0b5213c4888a17676053b17a14a9314734ddc9073",
+      "bytes": 9012460
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcriterion_plot-cedc2114de509590.rlib",
+      "sha256": "19b77be29dbda88e69bbf8b03f714cf99e147302342be270aa5ac18075c8ab04",
+      "bytes": 698846
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcrossbeam_deque-202ee9dfac492bf6.rlib",
+      "sha256": "bedfcc18aac039f31595d16138f005c4bc6e5fb490be125eb43a4d2d03132ee4",
+      "bytes": 234632
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcrossbeam_epoch-3a78b77759d9a421.rlib",
+      "sha256": "30fabc0cfcee60d21b713b3a026473883a6761eadfbbe11c30ee4ad951248a4b",
+      "bytes": 437572
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libcrossbeam_utils-bb51d3ac177edd59.rlib",
+      "sha256": "0c71a9281dafd52c167aeb998263db8c8b5e804376c86bb1c3f1dfdf53d8339a",
+      "bytes": 842298
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libeither-3fdbdae6f8bf7b4b.rlib",
+      "sha256": "86b60953b2db97fa84753093c3cedf3096aa89cf3a70db25242039b23b8b63d2",
+      "bytes": 254870
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libequivalent-4597bbcc73ac5b0a.rlib",
+      "sha256": "60d88c6e9ca685dc92db560d14af3c517bf6b8f1678cef80d644d259b29a0e2b",
+      "bytes": 11766
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libfastrand-5d5c9287cfcc2c17.rlib",
+      "sha256": "d00b164e20974e9bcecfa5ae577a97dd290b3809be66a7c82083836505ce7236",
+      "bytes": 214320
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libfnv-5cba0715dd3ef2d1.rlib",
+      "sha256": "d122828536e047985fe5ced265f2e08e69db3fca83ffc9a27fed0b3ca7d15244",
+      "bytes": 16264
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libgeometry_predicates-c28c471315aa348d.rlib",
+      "sha256": "7986588e07615fae3b89957fef753dc0067f0370b6ece18bf8e7161cdd90dfa2",
+      "bytes": 1259892
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libgetrandom-298c2bc1bce2a667.rlib",
+      "sha256": "dd1a1975665afe0430cd43e216bb0cb90f2507378a8e95cdf0d0749f31b28464",
+      "bytes": 117608
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libgetrandom-43bebfd4f3913f58.rlib",
+      "sha256": "bb04a35b982a6f358c4bb4f53be5aca00fcd5d9c035405cb58ff1794abe54ea5",
+      "bytes": 130550
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libglam-5a85e84f0cd26aec.rlib",
+      "sha256": "56fb57fff018af5bb3318fb26453edaffc2e165dde3c1f27ce13900baf679c59",
+      "bytes": 21189250
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libgmp_mpfr_sys-f45af38367ac4ef5.rlib",
+      "sha256": "77469e6aaa9454a9eb99d7aa92596c5b4cf0fe9ce90c2311883d614b0fa92fca",
+      "bytes": 5538438
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhalf-99bd8615664f3946.rlib",
+      "sha256": "df3a484313183d7c1a70b87c3b116d64643259680be767c560c934d03870b68b",
+      "bytes": 1024680
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhashbrown-33c3b6b808d32536.rlib",
+      "sha256": "b1dc5e613fccf17e74697225a62da2c7c183d9264a308e55c2354b30c84c6ea8",
+      "bytes": 1502560
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhyperlattice-5e053e1b590ad30e.rlib",
+      "sha256": "7bbf0d009148e3186ba96c644578b1448d627e8c7c830124269f209c4c6d540e",
+      "bytes": 6833548
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhyperlimit-02aee1d90dad04ec.rlib",
+      "sha256": "2b53a18daa38347701ea54fd661288846b93846a5d147b0a78d90b7186e0a935",
+      "bytes": 4859402
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhypermesh-da266cd21e11b7ae.rlib",
+      "sha256": "341e1e0463681c4e20700ec5612c2d36f84c4e81a32d67cc8b87b00964e4a384",
+      "bytes": 7647100
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhyperreal-9ea68b3490b0c0ff.rlib",
+      "sha256": "7f98f26ad597a2389730ade6a4d593c154367a642c4b6a924dadaabe03587f21",
+      "bytes": 12097840
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libhypertri-2a8f7647776d5f96.rlib",
+      "sha256": "d5d5e78937ff9deb93cb79ed0102fc10e25d679239e10657e01db98952d80b14",
+      "bytes": 2501506
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libindexmap-cb51f28eba54e7de.rlib",
+      "sha256": "34d16fd18d137d56c3c859503801679c60074aa0fa9b34478b1481e3a5d7425c",
+      "bytes": 1780520
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libis_terminal-7031dab529e13262.rlib",
+      "sha256": "144c84d882adf469744663cb82ac60c02cca4aa31fb215f5db420b0de5fd254b",
+      "bytes": 10960
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libitertools-b975dbe17a7e7cbb.rlib",
+      "sha256": "806f2da21253c33cee67c3574ca74f3ffd9462489fe7267a3e9417a3b3b364af",
+      "bytes": 2722532
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libitoa-44ab8f4a68233d5b.rlib",
+      "sha256": "ffb9bd9500c0a97774c9aa963da973f0e9190653cc2e7057510fb6fcc582ef43",
+      "bytes": 106098
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/liblibc-f3fa71793083ca16.rlib",
+      "sha256": "ac2f08d1575c8648a11d477388498f2c074b826fce941cac8f60090073f4a064",
+      "bytes": 4098468
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/liblibm-1a7211e9f8f8c590.rlib",
+      "sha256": "e39472d097a46a05cdf0be820e1b3d912821000131186e5fbd849b96f5498901",
+      "bytes": 1813444
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/liblinux_raw_sys-e5d190d1e7d95f5c.rlib",
+      "sha256": "56ad40af6c4f230daee03aabc0934f3469aa0fbde0aa5fa9898b64dc6f79371d",
+      "bytes": 1388724
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libmanifold_rust-51b9b71175b4995f.rlib",
+      "sha256": "be5f8305210212ab4a32753c105f887cd541192a37593a3ae5f8f9b18e61ef0b",
+      "bytes": 7274310
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libmemchr-a2ad92f0c305cf81.rlib",
+      "sha256": "a01d9848c61e0d63640a30482fb70969f75e8243b3f296828cbf24becc87bd31",
+      "bytes": 1563114
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum-d38d3b2003f944be.rlib",
+      "sha256": "61fc0a9caf68126ed771c4b319439e6b8d3506e5405b2b0acff0c283b57f7ccf",
+      "bytes": 16264
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_bigint-084fba682eb07a27.rlib",
+      "sha256": "1c28233d32d5d5a513b7692ce9700317e08b49d9e70c3a54b547ad72a88c96fc",
+      "bytes": 3145802
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_complex-81394c7d78776514.rlib",
+      "sha256": "f5e84d4055a65557bffadd5860f9779d63059aa4ef8df66382e410920e3c580e",
+      "bytes": 865292
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_integer-e268b403607ea1c0.rlib",
+      "sha256": "97e11b19ec6aca0c1d4d8d56b41b8b2aa3ad624a553654fd622f4cd092edf814",
+      "bytes": 374970
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_iter-7cc891eb9fbeb757.rlib",
+      "sha256": "6afdec0b02234b482fb72df8e636e5e131358bc7523dee8e298171ceb4aee3ed",
+      "bytes": 47226
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_rational-992be1468b00821b.rlib",
+      "sha256": "d14b1bc2ddc1915fd0b6a2a6176b5274cac2f9a200f23fd019d1bc1d0f4a343d",
+      "bytes": 639010
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libnum_traits-e6c17ad6d51244e3.rlib",
+      "sha256": "f9306e64574261f28c8a60faa71da124fd4e95ef7258fad712482390ae154f3e",
+      "bytes": 2038484
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libonce_cell-bb9f9fed1d6c8d0f.rlib",
+      "sha256": "12426cf34131e7ad54475efc06c908c2c6650e5a0cc661dfada020d58ae9e246",
+      "bytes": 252036
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/liboorandom-ed1767594538ddc1.rlib",
+      "sha256": "8379471c4ae325295a745fe99f5447a66b5e7197917b8e91c0e49c98c39be26e",
+      "bytes": 39614
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libplotters-541e63d23243b6aa.rlib",
+      "sha256": "230c61fcb3cf00703839d19a4eff5c103b5b245cc4136cd21347d76dab39623f",
+      "bytes": 2251682
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libplotters_backend-2dc683ae2f4ef555.rlib",
+      "sha256": "dc469eb553e1161c98ddc0288dc162361d06d20f11f05094ed388763ffb15ea9",
+      "bytes": 286828
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libplotters_svg-4000b9cc7131af97.rlib",
+      "sha256": "6393ed0700098505f183188026e6931375ec49a3dff6bebc1033187f8a46aebb",
+      "bytes": 207266
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libppv_lite86-d6eead675e39286f.rlib",
+      "sha256": "870c7488172bf2106dc85555858d4816093b4fdc852da9d39c1b599fc5546e84",
+      "bytes": 1155014
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libproptest-4b7973fcb11f3026.rlib",
+      "sha256": "f79ef9f22324d95e8d156050237a2303a19a26c2ca80ef826734eaa94036281e",
+      "bytes": 8688760
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libquick_error-c22b9331ba7b8b6c.rlib",
+      "sha256": "4ccc18f2e48758c0efb5b8ddf907b659115d64f4f47dd155cf15f5ed1b4d95f8",
+      "bytes": 87240
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librand-3cd0f0d27d425f7d.rlib",
+      "sha256": "cdaa7a2c7900fbe0500ffd0abd0d7b83b4d3d3a51c5ed38b9c819df2386ddf97",
+      "bytes": 1107546
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librand_chacha-d77fa835e1d2121b.rlib",
+      "sha256": "a2d379d3f84a9a4fd85f4ec47bce4955525c5caef6f102f1ab1c7521623bddc5",
+      "bytes": 214136
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librand_core-23fbd220b554aa65.rlib",
+      "sha256": "5c4ffc405944d859ea9b887618facb47e352532770ceecb0302b3d8f3e0db2e8",
+      "bytes": 183456
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librand_xorshift-ea81fb4f1f2e3a7f.rlib",
+      "sha256": "42443d6ff3aa20b898168a47a660b88834a7a903c33ebf59ece4e8e39018e753",
+      "bytes": 28342
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librayon-cb4c17a1e3cee4fd.rlib",
+      "sha256": "d4903cda7ece3ceef1affb562cc48faef221abf001207d16afaf580a7e2d4342",
+      "bytes": 4590806
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librayon_core-d738fb70f4c3139e.rlib",
+      "sha256": "1328a8017c6b2bd0755b18b61801280b22ba77c5eabc68588fe036d48c2cd7cd",
+      "bytes": 1119124
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libregex-32b830888012af0e.rlib",
+      "sha256": "65edbe82b000f884b26782fc13034e90b9277e6ae2a4852d01b1fecf574970d7",
+      "bytes": 1206292
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libregex_automata-8b25cb2ed1d12eb0.rlib",
+      "sha256": "1c5535cf73f8763064d24ca336e34fcf939eeb6131dad1eac19d257cdaab350f",
+      "bytes": 5015652
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libregex_syntax-98e77bc9e05099de.rlib",
+      "sha256": "cfb038f89175edd366bcea1a33fe39487d5af5e43b9a6d7575e692920cf5e147",
+      "bytes": 12860528
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librobust-42144283a634e0bd.rlib",
+      "sha256": "2897a3a38ca729550a09f7744d0a39339ecfabdcd16e35347930033bcb06c3c7",
+      "bytes": 651918
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librug-44b35b22a243bc35.rlib",
+      "sha256": "c96cfc68944f5d40e08f71e8a46c0172ab733b383d5fde7870b72e94b1ad98a2",
+      "bytes": 15886980
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librustix-ec37f77473cb4d54.rlib",
+      "sha256": "9a62a3dceee21884105337450471eaeefcdebb676d94124b64359e04169e2d98",
+      "bytes": 5066704
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librusty_fork-03fbcbbe11548a9b.rlib",
+      "sha256": "ad38471eb548047e11ed1d0ae369f315359b6f94ac8bab7e9caac77dce1e10b1",
+      "bytes": 309122
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libsame_file-c7e74691f770eebe.rlib",
+      "sha256": "12971a224f29fd8edd4a2d2369b17b82c54765c66ba92ee3efb51e8552e47f93",
+      "bytes": 60182
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libserde-4292cbd2bad48fa0.rlib",
+      "sha256": "a96375c911e821f6202b319600792052d2cd5f6475b42c84e342b7e35f2c4079",
+      "bytes": 1023754
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libserde_core-95a3d04a95c74e84.rlib",
+      "sha256": "c9041b9bc824c9c70a69f364cb60495a7601b1c3f76863ddba5458aa0f320bce",
+      "bytes": 5544082
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libserde_json-da8428cddec2eec5.rlib",
+      "sha256": "fa7a459cffb7aa31f92c6a3167d93407a2639e4d0ece4acaf97f25ecd9b8d9e0",
+      "bytes": 2328618
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libserde_spanned-4fe157448907b4ce.rlib",
+      "sha256": "585460d661b4720da7c01d6b377a07b2385d5e0b62cf504a3a1b82b09dec1e2f",
+      "bytes": 46726
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtempfile-36d36f14faadd9af.rlib",
+      "sha256": "84f84aff9b441ea9f1200b29ac6bd02d3a96ea89553dfab0f205800e9a1fe3dc",
+      "bytes": 563444
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libthiserror-557895fe670b4b05.rlib",
+      "sha256": "ad01ca9d4751d40e9d7cdb8731cd8abd669175b846af0c325baadf9911f8147a",
+      "bytes": 33340
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libthree_d_asset-8ef020feebcaff44.rlib",
+      "sha256": "b99312d59bd72a407bb231449db7cd1a02187ddb62e3a5fa20e3bf0b5824cf13",
+      "bytes": 1372676
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtinytemplate-6481d563eaea1b55.rlib",
+      "sha256": "ca0986cbafc46a57c71bb079f45094c81901f509932ff8fb43b3bd4ebc10ba4b",
+      "bytes": 505128
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtoml-77247ead98e0da1f.rlib",
+      "sha256": "d47c23fd0605bf6568b468bc1dbaab469eb381544258177324d55ab144c0b385",
+      "bytes": 1604168
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtoml_datetime-d68e6779ec2c713d.rlib",
+      "sha256": "cf4520ebf922f478aa2bcf417e0d70ddcf13267428cf80acbe450e9501a65006",
+      "bytes": 202010
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtoml_edit-9c2395c709adfd1f.rlib",
+      "sha256": "6705b146688bde7cc75dacd92610fe06419527cc72a1bcc88737239d563f61e9",
+      "bytes": 4207708
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtoml_write-0ded779ece488aba.rlib",
+      "sha256": "bf43844689d12b959f52d7ff0af0c33cb6562f4ceabba3503e0a6d73ab51d1c6",
+      "bytes": 207378
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libtri_mesh-2ff30ba007e521fe.rlib",
+      "sha256": "f75a7e03ac4ab38368565e0ce003d984a74e28efedb7de6e4169fbc72e0c077e",
+      "bytes": 1360226
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libunarray-b8d19043454552da.rlib",
+      "sha256": "383df4eba288654f460e6c578458fd444a3d5962db4ed089e9fc6cb04f338489",
+      "bytes": 54024
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libwait_timeout-aa7ba717a07c9a8a.rlib",
+      "sha256": "b260324efb888ecd96ba64168ba2bea9215517eb17cdd67de08445d991928790",
+      "bytes": 107378
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libwalkdir-abb094f18cd771de.rlib",
+      "sha256": "5d9de8f728d4363ed4dc6d9db97a08403a8c8b4430952fceb82edf3ef325b1a7",
+      "bytes": 326932
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libwinnow-26624b5ec248bb8a.rlib",
+      "sha256": "b91df8d67e83757957f655c8fad6acacda05e12516aa3b85398fd89706f063fe",
+      "bytes": 4066692
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libzerocopy-285516920a9d93f2.rlib",
+      "sha256": "073820af92e1844053eafb1a8c1a0ee4442715260183768f89219d45ff8d4299",
+      "bytes": 15539962
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/libzmij-8ce4cfc2ee8453a1.rlib",
+      "sha256": "db4975bea467544937da7a2af92b1debc9e258768f417dce1b06811dc5213910",
+      "bytes": 402408
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/build/gmp-mpfr-sys-7470a8a184daabad/out/lib/libgmp.a",
+      "sha256": "75b2251a65389cf12716c9e01fb2211b1696b6977382f07e4b8d1ed872fa15c5",
+      "bytes": 1683864
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/build/gmp-mpfr-sys-7470a8a184daabad/out/lib/libmpfr.a",
+      "sha256": "ef12e3db75e56c54115e1617433c6c142a9b5500b94c896f90207b7db5fa34d8",
+      "bytes": 1285798
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/build/gmp-mpfr-sys-7470a8a184daabad/output",
+      "sha256": "612ade29a2696c39936645f20b0b5a7fc7567fec7130178aeaaed8b4436299b9",
+      "bytes": 2324
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/asan-control",
+      "sha256": "817e998be2530e5d6a6a0f06541de22f8436870880a3305c0717061a1f9e67c4",
+      "bytes": 5735152
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-9162eeee8c99e3a1",
+      "sha256": "d6919594749fae80e0d46c0a0cd840ce6d76fdb187e93d3f1155d4beb96171d1",
+      "bytes": 12094328
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_degeneracies-a6a4729cbef2b2e0",
+      "sha256": "1fc4ed6e9d78b3abbc0ecd73b444c4888bf2e56dd1dab379508e8364c7398e74",
+      "bytes": 6423408
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_predicates-f8ecb8afb3ed3a31",
+      "sha256": "ef490a0054b6cb36b1c4ed755f6bff644624c832b04ddf774fa60eaf949d2dda",
+      "bytes": 6774200
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-3d4b088657b6a8b3",
+      "sha256": "4cfc519663ac7da6063b49fecff5a8922cccde9d433049447455af7be4723ec3",
+      "bytes": 9047184
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/batch-166d82997ec65704",
+      "sha256": "024c554ae76549f941d3d634ae4d37694802814027d820322552da1520b932fb",
+      "bytes": 6436560
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/classification_contracts-63bd687d6b89fc54",
+      "sha256": "8aec81c8f409c6d407c254cea01c18ca7e9c9be2a55f2a63ff6de24190716269",
+      "bytes": 2760680
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/composite_policy-8f7b7de5f6c8a2dc",
+      "sha256": "e5d667c99ee6dc9da3a7cae54b612d4edb2148a1142678cf3171c7c56ae73867",
+      "bytes": 6656144
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/exactcore_xinwei-46ccb204e7540b57",
+      "sha256": "8b89255f422c06dcac71db421fbbb8bee9b8601d14f1c95ea353987cf4a72be3",
+      "bytes": 5731168
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/halfspace_feasibility-8179c0aec618f455",
+      "sha256": "b8808809a989ab7272f3688d89f1da12d0e9569a8e008f6644c99368a73c9992",
+      "bytes": 6044272
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/nd_predicates-ce7200bfe2832faa",
+      "sha256": "44547cc4621793b6e8a3f639f4ae937004d28baff052509194cc18ea8ddc8f3e",
+      "bytes": 5462336
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/promoted_mesh_helpers-d0e2c2a04404be35",
+      "sha256": "9bcca0bc74c7de88ac138e3536938f3b0aa2f3e8b88f127ee17cf808bf8aa9cb",
+      "bytes": 5942184
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/readme-5531451f5a9a5185",
+      "sha256": "ba5da1a6c69d80a24e8355ae2c073312850afd261012adf713199a8790e3e671",
+      "bytes": 2360360
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/real_representations-22c2b6aca1703b8a",
+      "sha256": "4893b8e8578fe7c8e61101cd62c365b6d7095af452e46497fea2ef8e9aa562b0",
+      "bytes": 6888000
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/retained_report_contracts-4291d4819b071d76",
+      "sha256": "84aad2b8e65430fa818c14cf752fafe52f6995678a5d002ff2ab3b433bf41a34",
+      "bytes": 6327264
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/robust_parity-622207b9d8650a7d",
+      "sha256": "a16ec6e8b4b6e572871ba20264e7311449fed13e3e615a5b3e05b8dc5ac24205",
+      "bytes": 7170104
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/support_dop-32fdd1afa897fac1",
+      "sha256": "0a6c9fb1b68b6edc760aa0446df78ff47aa0f10e3074cc01309b080b3b325943",
+      "bytes": 6473208
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hypermesh-f7958aa72a24e927",
+      "sha256": "1bcf68577877fbdc88ddcb8b81dea2a7bd6148e934065088d896939bf4cd8849",
+      "bytes": 14791376
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/boolean-9628e6bd71f42a6e",
+      "sha256": "41b3529929e8d8dde7b016ca609c1b093259ff53ba095ed1e811f4be732e5a0c",
+      "bytes": 10118384
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/competitive-4bc2ad01b5d26a65",
+      "sha256": "953ccb7f5555e59fe78cb6863ca3c146121ddd7298f13362adb5f54b9c235e14",
+      "bytes": 13766064
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/corpus_manifest-725cdc6b6465f796",
+      "sha256": "9229dc2cdd75e150f916394c585da142ddb83fdb4a380a90a87d3aea19fcff29",
+      "bytes": 7493832
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/intersection_corpus-e2d3209f212c5c82",
+      "sha256": "85d4d29f0dc247bcaa5a1b7577c660c9d67d92ecf0cb59dbb12475ec97cdebf9",
+      "bytes": 7906696
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/predicate_policy-c94fd698bf21b308",
+      "sha256": "2d526c9d90464e15550da9b0295e213df7f3dc4a7355a4a811db4b138b044f4f",
+      "bytes": 8204728
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/readme-0e8dd2c89010728f",
+      "sha256": "c5b8609a9d9686b4b4ead3baa4f53f06a3c39fb48123f6ee138028dcd920947b",
+      "bytes": 2351688
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-36143eba5fb8e452",
+      "sha256": "2939aa40cc896ef073e6ccc12c6fa6030256be82aaf33db804dd200b1dd3ed17",
+      "bytes": 17384160
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe",
+      "sha256": "f97b3093e3013ca987b4017a6717b6552feecd288e1dde67022ad708fc18c040",
+      "bytes": 6565256
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/sphere-probe",
+      "sha256": "f021e2f05e74ea2caa43349d4d194524c0d55aa5967781c393a4449e3b9b6515",
+      "bytes": 8763584
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/libcsgrs.rlib",
+      "sha256": "088833bffef5b2b92eb3735f2699d513a29659e3fc9c47fb7e5bbc97c14c0fa4",
+      "features": []
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "sha256": "8be615052b2ac5a5a9987694e79f110669907a5db6fc27cdd715c555dd6068eb",
+      "features": [
+        "default"
+      ]
+    }
+  ],
+  "rug_rlib": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librug-44b35b22a243bc35.rlib",
+  "native_search_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/build/gmp-mpfr-sys-7470a8a184daabad/out/lib",
+  "commands": 12,
+  "expected_exit_codes": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    66,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+  ],
+  "test_only_delta": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
