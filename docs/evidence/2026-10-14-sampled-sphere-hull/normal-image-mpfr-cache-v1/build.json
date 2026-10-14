@@ -1,0 +1,29 @@
+{
+  "name": "build",
+  "command": [
+    "rustc",
+    "--edition",
+    "2024",
+    "--target",
+    "x86_64-unknown-linux-gnu",
+    "-Zsanitizer=address",
+    "-Cforce-frame-pointers=yes",
+    "-Copt-level=1",
+    "-Cdebuginfo=1",
+    "-Dwarnings",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_mpfr_cache_probe_v1.rs",
+    "--extern",
+    "rug=/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/librug-44b35b22a243bc35.rlib",
+    "-L",
+    "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps",
+    "-L",
+    "native=/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/build/gmp-mpfr-sys-7470a8a184daabad/out/lib",
+    "-o",
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe"
+  ],
+  "exit_code": 0,
+  "expected_exit_code": 0,
+  "process_wall_seconds": 0.2561192619614303,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

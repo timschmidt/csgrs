@@ -1,0 +1,33 @@
+{
+  "complete": true,
+  "trial_closed": true,
+  "driver_phase_terminal_exit_codes": [
+    0,
+    0
+  ],
+  "commands_matching_expected_exit": 4,
+  "native_processes": 2,
+  "retain_leak_bytes": 7744,
+  "retain_leak_allocations": 68,
+  "cleanup_exit_code": 0,
+  "cleanup_stderr_empty": true,
+  "numeric_witnesses_byte_identical": true,
+  "repository_crates_linked": false,
+  "all_frozen_inputs_sources_libraries_and_executed_binaries_rechecked": true,
+  "result_sha256": "7ac3a41345e9dfc49c49ebcbae6f12f6cd5620c08bf0ea29711dcafe947b01b7",
+  "closure_reader_sha256": "2728065b98b7004abe8de077c752bedb750dc3c1d9dc53321034e69b61a611bd",
+  "driver_logs_sha256": {
+    "normal-image-mpfr-cache-prepare-v1.stdout": "adeb025ea0f28c2e205ce77f612e586841d6788c4edf1bdc250c1974d852702f",
+    "normal-image-mpfr-cache-prepare-v1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-mpfr-cache-compare-v1.stdout": "73b29e1e0d08f5853722234e522e8ddb8bdc1a8ec179136c23085c0d5126d4f7",
+    "normal-image-mpfr-cache-compare-v1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "interpretation": "Explicit worker-local MPFR cache cleanup removes the standalone GMP leak report while preserving numeric output. This establishes the mechanism for this control, not yet the cause of every allocation in the failed full-suite report.",
+  "limits": [
+    "This is a standalone cache-lifecycle control, not a new library qualification or a performance sample.",
+    "A positive result demonstrates this mechanism for two workers and three MPFR functions. It does not yet explain every allocation in the original 163672-byte report.",
+    "No Hyperreal production code is linked or changed. A test-harness cleanup fix still requires independent review and complete qualification."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

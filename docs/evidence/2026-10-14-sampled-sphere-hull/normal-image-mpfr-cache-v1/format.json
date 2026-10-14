@@ -1,0 +1,15 @@
+{
+  "name": "format",
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--check",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_mpfr_cache_probe_v1.rs"
+  ],
+  "exit_code": 0,
+  "expected_exit_code": 0,
+  "process_wall_seconds": 0.01620151987299323,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

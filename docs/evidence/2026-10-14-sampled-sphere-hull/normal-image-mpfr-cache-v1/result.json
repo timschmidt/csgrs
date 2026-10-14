@@ -1,0 +1,37 @@
+{
+  "complete": true,
+  "commands_matching_expected_exit": 4,
+  "native_processes": 2,
+  "retain_leak_bytes": 7744,
+  "retain_leak_allocations": 68,
+  "cleanup_exit_code": 0,
+  "cleanup_stderr_empty": true,
+  "both_numeric_witnesses_byte_identical": true,
+  "witness_sha256": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+  "repository_crates_linked": false,
+  "all_frozen_inputs_libraries_old_binaries_and_sources_unchanged": true,
+  "artifacts_sha256": {
+    "binary.json": "1ad3d454ba6577827bc6df35afbed6e781e70b478d8efa827efda0c9182dad40",
+    "build.json": "6472269de6dd9510a45ee9ac906bf7e8ce420bb8ccb5b5bc6e566bf579bfe277",
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanup.json": "c0c2488e44ebf561fca7c730612603e32c907b123a7ab3ef94ba6f0805dc0d1e",
+    "cleanup.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "cleanup.stdout": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+    "format.json": "19a94140cdd1cc04c6e4de83e43a73a1a1d4faff14ea986869b4ed3d994c025b",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "6c6b9bba1bc2fd1cc5b0e37effc954c46919df6c4360b61592b3a1c97fbb41ab",
+    "retain.json": "57fcaf028dc0591164c953ea03c627f4dc087c094fe1eca32a5e1b1dc6d4f7ad",
+    "retain.stderr": "ca41d328386b698777f433bbda97935a4027288d428209388eb4ed3a8b543a1e",
+    "retain.stdout": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+    "root-source-hashes.json.gz": "0b5a22068812f8ceb06f77628605dc3a3fc184e9ce4f7197b7a850c97b5c28d5"
+  },
+  "limits": [
+    "This is a standalone cache-lifecycle control, not a new library qualification or a performance sample.",
+    "A positive result demonstrates this mechanism for two workers and three MPFR functions. It does not yet explain every allocation in the original 163672-byte report.",
+    "No Hyperreal production code is linked or changed. A test-harness cleanup fix still requires independent review and complete qualification."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

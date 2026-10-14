@@ -1,0 +1,12 @@
+{
+  "name": "cleanup",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe",
+    "cleanup"
+  ],
+  "exit_code": 0,
+  "expected_exit_code": 0,
+  "process_wall_seconds": 0.013770376332104206,
+  "stdout_sha256": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

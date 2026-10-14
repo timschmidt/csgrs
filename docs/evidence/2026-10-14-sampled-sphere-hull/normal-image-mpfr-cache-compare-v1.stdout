@@ -1,0 +1,5 @@
+{"start": "retain", "expected_exit_code": 66}
+{"name": "retain", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe", "retain"], "exit_code": 66, "expected_exit_code": 66, "process_wall_seconds": 0.3612581887282431, "stdout_sha256": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9", "stderr_sha256": "ca41d328386b698777f433bbda97935a4027288d428209388eb4ed3a8b543a1e"}
+{"start": "cleanup", "expected_exit_code": 0}
+{"name": "cleanup", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe", "cleanup"], "exit_code": 0, "expected_exit_code": 0, "process_wall_seconds": 0.013770376332104206, "stdout_sha256": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9", "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"}
+{"complete": true, "retain_leak_bytes": 7744, "retain_leak_allocations": 68, "cleanup_exit_code": 0, "result_sha256": "7ac3a41345e9dfc49c49ebcbae6f12f6cd5620c08bf0ea29711dcafe947b01b7"}

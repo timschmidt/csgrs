@@ -1,0 +1,12 @@
+{
+  "name": "retain",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe",
+    "retain"
+  ],
+  "exit_code": 66,
+  "expected_exit_code": 66,
+  "process_wall_seconds": 0.3612581887282431,
+  "stdout_sha256": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+  "stderr_sha256": "ca41d328386b698777f433bbda97935a4027288d428209388eb4ed3a8b543a1e"
+}

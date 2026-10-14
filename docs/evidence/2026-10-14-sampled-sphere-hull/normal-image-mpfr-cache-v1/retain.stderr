@@ -1,0 +1,351 @@
+
+=================================================================
+==676412==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 352 byte(s) in 4 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+
+Direct leak of 240 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7cf62dbea7bf  (<unknown module>)
+
+Direct leak of 240 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7cf62dbf47bf  (<unknown module>)
+
+Direct leak of 224 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7cf62dbf42bf  (<unknown module>)
+
+Direct leak of 224 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7cf62dbea2bf  (<unknown module>)
+
+Direct leak of 216 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c662dbe431f  (<unknown module>)
+
+Direct leak of 216 byte(s) in 3 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+
+Direct leak of 216 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c662dbe831f  (<unknown module>)
+
+Direct leak of 200 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c662dbe411f  (<unknown module>)
+
+Direct leak of 200 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c662dbe811f  (<unknown module>)
+
+Direct leak of 176 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c662dbe831f  (<unknown module>)
+
+Direct leak of 176 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8f46 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133f46) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe039f  (<unknown module>)
+
+Direct leak of 176 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8f46 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133f46) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe3b9f  (<unknown module>)
+
+Direct leak of 176 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c662dbe431f  (<unknown module>)
+
+Direct leak of 160 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c662dbe411f  (<unknown module>)
+
+Direct leak of 160 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c662dbe811f  (<unknown module>)
+
+Direct leak of 144 byte(s) in 2 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54c7e806 in free (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9806) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe079f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c462dbe037f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c962dbe58ef  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe073f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe06df  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe067f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c962dbe00ef  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe379f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe373f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe367f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c462dbe337f  (<unknown module>)
+
+Direct leak of 128 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe36df  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe35bf  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe3b9f  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c462dbe319f  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c462dbe05bf  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc9132 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x134132) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe039f  (<unknown module>)
+
+Direct leak of 112 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e2e in S const_log2.c
+    #3 0x7c462dbe019f  (<unknown module>)
+
+Direct leak of 104 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8ef0 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133ef0) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe3b9f  (<unknown module>)
+
+Direct leak of 104 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c462dbe337f  (<unknown module>)
+
+Direct leak of 104 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8ef0 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133ef0) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c562dbe039f  (<unknown module>)
+
+Direct leak of 104 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e0b in S const_log2.c
+    #3 0x7c462dbe037f  (<unknown module>)
+
+Direct leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c562dbe40df  (<unknown module>)
+
+Direct leak of 88 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c562dbe08df  (<unknown module>)
+
+Direct leak of 80 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe06df  (<unknown module>)
+
+Direct leak of 80 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe379f  (<unknown module>)
+
+Direct leak of 80 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe36df  (<unknown module>)
+
+Direct leak of 80 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe079f  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe073f  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7be62b5fd957  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe067f  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe05bf  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe373f  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe367f  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7fe62e31cdff  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7ee9c in realloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9e9c) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb264 in __gmp_default_reallocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146264) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7c462dbe35bf  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0xc000000000000000  (<unknown module>)
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54c9da09 in __sanitizer::StackStore::Store(__sanitizer::StackTrace const&, unsigned long*) sanitizer_stack_store.cpp
+
+Direct leak of 72 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x7be62b3fc957  (<unknown module>)
+
+Direct leak of 64 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e9f in S const_log2.c
+    #3 0x7c262dbe220f  (<unknown module>)
+
+Direct leak of 64 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e9f in S const_log2.c
+    #3 0x7c262dbe420f  (<unknown module>)
+
+Direct leak of 56 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8ef0 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133ef0) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c162dbe36ff  (<unknown module>)
+
+Direct leak of 56 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cc8ef0 in mpfr_atan (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x133ef0) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #3 0x7c162dbe1eff  (<unknown module>)
+
+Direct leak of 48 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e9f in S const_log2.c
+    #3 0x7c462dbe337f  (<unknown module>)
+
+Direct leak of 48 byte(s) in 1 object(s) allocated from:
+    #0 0x563b54c7eaa4 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0xe9aa4) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #1 0x563b54cdb228 in __gmp_default_allocate (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-mpfr-cache-v1/mpfr-cache-probe+0x146228) (BuildId: b35146f82071a7fd8a0d82e93152de4af0763fa4)
+    #2 0x563b54cb8e9f in S const_log2.c
+    #3 0x7c462dbe037f  (<unknown module>)
+
+SUMMARY: AddressSanitizer: 7744 byte(s) leaked in 68 allocation(s).
