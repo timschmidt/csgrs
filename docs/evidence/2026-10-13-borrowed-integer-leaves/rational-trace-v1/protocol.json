@@ -1,0 +1,144 @@
+{
+  "scope": "Link four diagnostic drivers and record two fixed passes over six families.",
+  "runner_sha256": "df194dd10f12f197e7ea47fdb157e64db188b2f25e79b15947279c613ba195c0",
+  "assessor_sha256": "6c7bd08c1c8c616d4fecefb6c46998c00d80cec30315ab4bfa7a57c5d74c290c",
+  "preparation_sha256": "4726f32d8696baa0913be0051671606a4993645be8eb4b6c29069a97f48a5096",
+  "review_sha256": "35b2ecf608fe1a15ad58b2e60856a82fdbb67febb08790984276941c489709ec",
+  "orders": [
+    [
+      "main",
+      "full-cache",
+      "candidate",
+      "cache-coverage"
+    ],
+    [
+      "cache-coverage",
+      "candidate",
+      "full-cache",
+      "main"
+    ]
+  ],
+  "count": 4096,
+  "fixed_processes": 8,
+  "commands": 17,
+  "trace_windows": 192,
+  "counter_windows": 48,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "libraries": {
+    "main": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+        "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+        "bytes": 11697454,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "full-cache": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+        "sha256": "2e4eabb67f81045828dd3303a94de14d6500c4e266a61a902934ab7b95a3da85",
+        "bytes": 11700770,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "09d2f92170c0b940c26293f5ad803a13da7fb8a64ba6f9bc6dbe384909c88283",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "candidate": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+        "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+        "bytes": 11711762,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "8fceaedb0c660635799855940033f0d084fb799d1b1628ae942eb1371c790dc4",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "cache-coverage": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+        "sha256": "74dd24c2e8e04ee0346c9060fd1158b28f884e69a9d34af32e9a5cbbde8a3892",
+        "bytes": 11762878,
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source/crates/hyperreal/Cargo.toml",
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ]
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+        "sha256": "f7e50485c8142b44717d509d8c26c7d838fceea6421725112f9f41ca5d70639e",
+        "bytes": 2042504,
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+        "features": [
+          "default",
+          "std"
+        ]
+      }
+    }
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "new_library_builds": 0,
+  "new_runtime_sources": 0,
+  "no_timing_or_allocation_comparison": true,
+  "runtime_admitted": false
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "format-header",
+    "command": [
+      "rustfmt",
+      "--check",
+      "--edition",
+      "2024",
+      "--config-path",
+      "/home/tim/Documents/GitHub/workspace/csgrs/.rustfmt.toml",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational_trace_header_v1.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "clippy-main",
+    "command": [
+      "clippy-driver",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-preparation-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "--emit=metadata",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/rational-trace-v1/main.rmeta"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs",
+    "exit_code": 1,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "5e5a0deccf1e8e93bfd04ec741fa2ce64a7c6ce5c611ccdab2a8d28b3eb6fd39"
+  }
+]

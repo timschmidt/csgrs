@@ -1,0 +1,47 @@
+{
+  "purpose": "Determine which existing persistent-cache paths execute in the original rational workloads, including the opaque linear-atom first, warm and cloned queries whose timing costs remain unresolved.",
+  "groups": [
+    "unchanged original main scalar library from the closed cost trial",
+    "unchanged original full-cache scalar library from the closed cost trial",
+    "unchanged borrowed-integer scalar library from the closed cost trial",
+    "unchanged previously qualified cache-counter scalar library from construction-cache-coverage"
+  ],
+  "artifact_policy": "Reuse actual rlibs with identical compiler and feature sets. Guard every old source, library, binary and result. Link only four new drivers in a new directory; do not build or edit a production or diagnostic library.",
+  "fixture_policy": "Copy the original rational_probe.rs fixture, expected values, representation inventory and main/query bodies unchanged. In the preserved witness printer only, spell .chain([b'\\n']) as .chain(*b\"\\n\") to satisfy Clippy; both append exactly the same one-byte newline array. Replace only the measurement wrapper with public dispatch counters and optional existing cache-event counters.",
+  "source_review": "Review the new wrapper and equivalent one-byte-array spelling, preserve all original numeric and query expressions, and retain the prior review of existing cache hooks and bounds. Cache-event instrumentation belongs to the old full-cache source, not the borrowed-integer source.",
+  "fixed_orders": [
+    [
+      "main",
+      "full-cache",
+      "candidate",
+      "cache-coverage"
+    ],
+    [
+      "cache-coverage",
+      "candidate",
+      "full-cache",
+      "main"
+    ]
+  ],
+  "inputs_per_process": 4096,
+  "commands": 17,
+  "validation_commands": "One rustfmt header check, four standalone Clippy checks with warnings denied, and four rustc links with warnings denied, followed by eight diagnostic processes pinned to CPU 0. Reuse the earlier 875-test instrumented-library qualification and 876-test borrowed-integer qualification for unchanged source and features.",
+  "diagnostic_processes": 8,
+  "phase_rows": 192,
+  "cache_event_rows": 48,
+  "cache_event_fields": 27,
+  "public_comparison_rows": 72,
+  "required_evidence": "Reparse all logs. Require the exact 24 fixture/witness rows from all 18 closed timing processes, exact phase order and input counts, identical counts in each group's two runs, and identical public counts between the instrumented and production full-cache libraries. Record all phase comparisons across main/full-cache/borrowed-integer and every cache event, including zeros and adverse work.",
+  "sampling_policy": "Two fixed runs per group, with reversed group order. No filtering, extension or replacement. This is a count diagnostic, not a timing, allocation or binary-size comparison.",
+  "limits": [
+    "Counters perturb execution; event counts do not quantify performance causality.",
+    "Cache-event counts describe the previously instrumented full-cache source. No new borrowed-integer cache instrumentation is introduced.",
+    "4096-input event counts do not replace or rescale the original 1000-input allocation measurements.",
+    "Every prior timing result, memory increase, native failure and unchanged 120-second/60-second native limit remains in force.",
+    "The complete properties.md goal remains active."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "prior_setup_failure": "rational-trace-v1 passed the header format check, then failed Clippy on the original witness printer before any driver was linked or diagnostic samples ran. Preserve that run and all original source files; v2 performs the sole spelling correction in its new generated driver."
+}

@@ -1,0 +1,25 @@
+{
+  "status": "diagnostic-v1-stopped-before-linking-or-sampling",
+  "failed_command": "clippy-main",
+  "failed_exit_code": 1,
+  "successful_commands": [
+    "format-header"
+  ],
+  "reason": "Clippy byte_char_slices rejects .chain([b'\\n']) in the byte-identical original witness printer under -D warnings.",
+  "logs_preserved_sha256": {
+    "rational-trace-v1/clippy-main.stderr.gz": "5e5a0deccf1e8e93bfd04ec741fa2ce64a7c6ce5c611ccdab2a8d28b3eb6fd39",
+    "rational-trace-v1/clippy-main.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rational-trace-v1/commands.json": "16cc57c3403f7117c538df80a2d4d31e7783c38f0b6395f61ea7ace989eaea95",
+    "rational-trace-v1/format-header.stderr.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rational-trace-v1/format-header.stdout.gz": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "rational-trace-v1/protocol.json": "9f725a109b70b9742b8841b6f92cf8fbed7f791f88bf5e613e84344e50ec54e3"
+  },
+  "executed_sources_and_runner_preserved": true,
+  "new_runtime_sources": 0,
+  "new_library_builds": 0,
+  "new_driver_binaries": 0,
+  "diagnostic_processes": 0,
+  "correction": "v2 generates a new driver and work directory. Its single witness-printer spelling change .chain(*b\"\\n\") has the same [u8; 1] iterator contents. Keep all Clippy warnings denied, all 4096 inputs, all six families, all query phases, both group orders and every exact witness check.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
