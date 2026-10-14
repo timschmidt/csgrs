@@ -1,0 +1,447 @@
+{
+  "status": "do-not-admit-complete-combination-unresolved-material-library-regressions",
+  "classification": "progress: completed source review and a distinct fixed direct comparison with current main; all finite witnesses preserved and material consumer costs exposed.",
+  "governing_basis": "properties.md P36/P37 and target 11: retain measured improvements without significant regression; the exactness/completeness/performance/memory/size ladder remains unchanged.",
+  "candidate": "The unchanged complete cache/integer/metadata/endpoint/process-allocator combination; this result does not reject every component or establish a cause for each slower row.",
+  "evidence": {
+    "assessment": "library-assessment-v1.json",
+    "source_review": "review-v1.json",
+    "source_review_count_correction": "review-correction-v1.json",
+    "protocol": "scope-v1.json"
+  },
+  "qualification": {
+    "commands": 164,
+    "all_exit_zero": true,
+    "metadata_regressions_passed_each_variant": 3,
+    "metadata_probe_ignored_except_explicit_invocation": true,
+    "both_metadata_clippy_warning_denied": true,
+    "all_four_source_copies_fmt_checked": true,
+    "additional_full_stack_qualification_executed": false
+  },
+  "fixed_sample": {
+    "cost_processes": 110,
+    "abort_processes": 6,
+    "preflight_processes": 20,
+    "timing_rows": 365,
+    "allocation_rows": 134,
+    "pairs_per_cost_class": 5,
+    "extension_or_filtering": false
+  },
+  "semantic_evidence": {
+    "all_measured_witnesses_and_representation_inventories_match": true,
+    "abort_receipt_rows_each_of_six_runs": 210,
+    "all_231_historical_broad_witnesses_identical": true,
+    "universal_property_proof": false
+  },
+  "timing_summary": {
+    "rational": {
+      "timing_rows": 24,
+      "candidate_higher_all_five": 0,
+      "candidate_lower_all_five": 3
+    },
+    "quadratic": {
+      "timing_rows": 32,
+      "candidate_higher_all_five": 2,
+      "candidate_lower_all_five": 13
+    },
+    "integer": {
+      "timing_rows": 12,
+      "candidate_higher_all_five": 1,
+      "candidate_lower_all_five": 1
+    },
+    "arc": {
+      "timing_rows": 48,
+      "candidate_higher_all_five": 0,
+      "candidate_lower_all_five": 26
+    },
+    "metadata": {
+      "timing_rows": 18,
+      "candidate_higher_all_five": 2,
+      "candidate_lower_all_five": 6
+    },
+    "broad": {
+      "timing_rows": 231,
+      "candidate_higher_all_five": 29,
+      "candidate_lower_all_five": 11
+    }
+  },
+  "all_five_directions": {
+    "higher": 34,
+    "lower": 60,
+    "higher_at_least_four": 99
+  },
+  "material_examples": [
+    {
+      "suite": "quadratic",
+      "name": "negated_scaled_surd_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        3146355,
+        3125827,
+        3288975,
+        3198321,
+        3169953
+      ],
+      "candidate_ns": [
+        3465493,
+        5250221,
+        6076334,
+        3432336,
+        5849630
+      ],
+      "baseline_median_ns": 3169953,
+      "candidate_median_ns": 5250221,
+      "ratio_of_medians": 1.6562456919708273,
+      "paired_ratios": [
+        1.1014310209750648,
+        1.6796262237161557,
+        1.8474856148192067,
+        1.0731680778758605,
+        1.8453365081438116
+      ],
+      "median_paired_ratio": 1.6796262237161557,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "quadratic",
+      "name": "multiradical_square_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        2235067,
+        2146494,
+        2175262,
+        2166142,
+        2082187
+      ],
+      "candidate_ns": [
+        2310132,
+        3565886,
+        4092210,
+        2177521,
+        4133837
+      ],
+      "baseline_median_ns": 2166142,
+      "candidate_median_ns": 3565886,
+      "ratio_of_medians": 1.6461921702270672,
+      "paired_ratios": [
+        1.0335851229515716,
+        1.6612606417721176,
+        1.8812492472171167,
+        1.0052531182166267,
+        1.9853341702738514
+      ],
+      "median_paired_ratio": 1.6612606417721176,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "integer",
+      "name": "signed_word_boundary_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        2135114,
+        2123545,
+        2102386,
+        2263016,
+        2138053
+      ],
+      "candidate_ns": [
+        4199533,
+        2253306,
+        2349859,
+        2324281,
+        4247350
+      ],
+      "baseline_median_ns": 2135114,
+      "candidate_median_ns": 2349859,
+      "ratio_of_medians": 1.1005777677444857,
+      "paired_ratios": [
+        1.9668893557908382,
+        1.0611058395277708,
+        1.117710544115115,
+        1.0270722787642685,
+        1.9865503801823434
+      ],
+      "median_paired_ratio": 1.117710544115115,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_replacement_and_bounds",
+      "iterations": 100,
+      "baseline_ns": [
+        240464,
+        235374,
+        233564,
+        233414,
+        234074
+      ],
+      "candidate_ns": [
+        454109,
+        417631,
+        237284,
+        234234,
+        348356
+      ],
+      "baseline_median_ns": 234074,
+      "candidate_median_ns": 348356,
+      "ratio_of_medians": 1.4882302177943727,
+      "paired_ratios": [
+        1.8884697917359772,
+        1.7743293651805212,
+        1.01592711205494,
+        1.0035130711953868,
+        1.4882302177943727
+      ],
+      "median_paired_ratio": 1.4882302177943727,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_uncertain_polygon_bounds",
+      "iterations": 100,
+      "baseline_ns": [
+        383534,
+        391793,
+        368115,
+        368485,
+        361785
+      ],
+      "candidate_ns": [
+        646645,
+        401813,
+        389033,
+        676244,
+        592029
+      ],
+      "baseline_median_ns": 368485,
+      "candidate_median_ns": 592029,
+      "ratio_of_medians": 1.6066569873943308,
+      "paired_ratios": [
+        1.6860174065402285,
+        1.0255747295127784,
+        1.0568246336063458,
+        1.835200890131213,
+        1.6364111281562255
+      ],
+      "median_paired_ratio": 1.6364111281562255,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    }
+  ],
+  "memory": {
+    "rows_with_any_increased_field": 30,
+    "rows_with_increased_retained_delta": 29,
+    "all_counter_samples_identical_within_variant_row": true,
+    "note": "All 134 allocation rows remain in the assessment. These are requested Rust bytes and phase-relative live/peak deltas, not process RSS or proof of whole-life retention.",
+    "example": {
+      "suite": "rational",
+      "name": "multiradical_square_first",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            77118,
+            77118,
+            77118,
+            77118,
+            77118
+          ],
+          "candidate": [
+            35026,
+            35026,
+            35026,
+            35026,
+            35026
+          ],
+          "baseline_median": 77118,
+          "candidate_median": 35026,
+          "paired_deltas": [
+            -42092,
+            -42092,
+            -42092,
+            -42092,
+            -42092
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            4321048,
+            4321048,
+            4321048,
+            4321048,
+            4321048
+          ],
+          "candidate": [
+            2447376,
+            2447376,
+            2447376,
+            2447376,
+            2447376
+          ],
+          "baseline_median": 4321048,
+          "candidate_median": 2447376,
+          "paired_deltas": [
+            -1873672,
+            -1873672,
+            -1873672,
+            -1873672,
+            -1873672
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            53144,
+            53144,
+            53144,
+            53144,
+            53144
+          ],
+          "candidate": [
+            275096,
+            275096,
+            275096,
+            275096,
+            275096
+          ],
+          "baseline_median": 53144,
+          "candidate_median": 275096,
+          "paired_deltas": [
+            221952,
+            221952,
+            221952,
+            221952,
+            221952
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            55848,
+            55848,
+            55848,
+            55848,
+            55848
+          ],
+          "candidate": [
+            276184,
+            276184,
+            276184,
+            276184,
+            276184
+          ],
+          "baseline_median": 55848,
+          "candidate_median": 276184,
+          "paired_deltas": [
+            220336,
+            220336,
+            220336,
+            220336,
+            220336
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    }
+  },
+  "binary_sizes": [
+    {
+      "probe": "abort-control",
+      "baseline_bytes": 8539736,
+      "candidate_bytes": 8534448,
+      "candidate_minus_baseline_bytes": -5288
+    },
+    {
+      "probe": "arc-memory",
+      "baseline_bytes": 8604640,
+      "candidate_bytes": 8599472,
+      "candidate_minus_baseline_bytes": -5168
+    },
+    {
+      "probe": "arc-time",
+      "baseline_bytes": 8602288,
+      "candidate_bytes": 8597136,
+      "candidate_minus_baseline_bytes": -5152
+    },
+    {
+      "probe": "broad-time",
+      "baseline_bytes": 26375280,
+      "candidate_bytes": 26366592,
+      "candidate_minus_baseline_bytes": -8688
+    },
+    {
+      "probe": "integer-memory",
+      "baseline_bytes": 6055456,
+      "candidate_bytes": 6052832,
+      "candidate_minus_baseline_bytes": -2624
+    },
+    {
+      "probe": "integer-time",
+      "baseline_bytes": 6052552,
+      "candidate_bytes": 6049928,
+      "candidate_minus_baseline_bytes": -2624
+    },
+    {
+      "probe": "metadata",
+      "baseline_bytes": 41727056,
+      "candidate_bytes": 41386896,
+      "candidate_minus_baseline_bytes": -340160
+    },
+    {
+      "probe": "quadratic-memory",
+      "baseline_bytes": 6160712,
+      "candidate_bytes": 6157536,
+      "candidate_minus_baseline_bytes": -3176
+    },
+    {
+      "probe": "quadratic-time",
+      "baseline_bytes": 6157456,
+      "candidate_bytes": 6154240,
+      "candidate_minus_baseline_bytes": -3216
+    },
+    {
+      "probe": "rational-memory",
+      "baseline_bytes": 6184464,
+      "candidate_bytes": 6181120,
+      "candidate_minus_baseline_bytes": -3344
+    },
+    {
+      "probe": "rational-time",
+      "baseline_bytes": 6182576,
+      "candidate_bytes": 6179224,
+      "candidate_minus_baseline_bytes": -3352
+    }
+  ],
+  "interpretation": [
+    "There are large query gains, including 26 of 48 arc rows lower in all five pairs and all six unequal/mixed-metadata rows lower in all five pairs.",
+    "The two quadratic construction examples are higher in all five pairs, with median ratios 1.6562 and 1.6462; their paired ranges are wide and are preserved. Signed-word construction is also higher in all five pairs.",
+    "Twenty-nine broad rows are higher in every pair. Some differences are small; this is not a policy that every all-five direction proves a significant regression. The material construction and broad examples prevent an evidence-supported default admission of this whole combination.",
+    "Timing ratios and pair directions are descriptive, not statistical significance estimates. No sample was removed or extended. Source-level or allocator-state causes of individual regressions are not established.",
+    "All eleven linked probe/test binaries are smaller, but lower-rung size gains do not resolve performance costs. Independent consumers use System in this experiment.",
+    "The prior allocator-only comparison still demonstrates original native gate passes and full-board improvements versus its optimized parent, with startup/size tradeoffs. It does not erase the current library costs or establish a whole-application comparison with current main."
+  ],
+  "application_followup_for_this_complete_candidate": "Deferred: further application measurements cannot resolve the observed independent-library admission gap. No direct current-main CLI speedup or original-gate result is claimed by this experiment.",
+  "next_step": "next-combination-v1.json",
+  "all_original_35_pending_native_paths_unchanged": true,
+  "all_frozen_source_file_sets_and_bytes_unchanged": true,
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "inputs_sha256": {
+    "library-assessment-v1.json": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+    "library-costs-v1/result.json": "37428bdf40d4d944d8389908c3c37613d42f4f5b38ead39a97c4e82e3b9ee37c",
+    "review-v1.json": "e6eebee9dfabeadd65077f0044cc1adddbd5f4c4a3dc9f2db990f7671bffc3c4",
+    "review-correction-v1.json": "e5159134a312979f827cd064c89fb68eacb0ac33862897277865154676d81afb",
+    "scope-v1.json": "73b6479cc2324cb9459380ba3fddc371c6b140e2b2e098de76eb20dcc5b3e19d",
+    "preparation-v1/protocol.json": "2701bf2b3474c6ebf953b146c63e4c6abf880e21d920a790fffeb0082c6f836f",
+    "next-combination-v1.json": "92e16c336a1352ba6196fec73612a6eec24b7d726488fb35e134de913c7619ad"
+  }
+}

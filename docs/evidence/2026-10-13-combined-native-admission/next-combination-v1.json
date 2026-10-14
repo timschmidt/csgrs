@@ -1,0 +1,21 @@
+{
+  "action": "Evaluate a distinct combination without the unadmitted persistent Laurent certificate cache.",
+  "reason": "The complete combination improves many queries but has unresolved material construction/broad costs and retained-byte increases. Existing integer-leaf reuse, metadata ordering, endpoint proof reuse and process allocator are separable from persistent certificate storage. This is a hypothesis, not attribution of the observed regressions.",
+  "baseline": "Use the exact current-main baseline already frozen in preparation-v1; verify it still matches all relevant main inputs and the 35 authorized native paths.",
+  "candidate_changes": [
+    "Copy the five reviewed curve paths and six allocator/build paths from the unchanged full candidate.",
+    "Apply only the exact Int-leaf conversion branch using num::ToPrimitive::to_i64 with the original exact BigInt fallback to main structural_analysis.rs.",
+    "Keep algebra.rs, representation.rs, facts.rs and pi_laurent_compaction.rs byte-identical to main. Do not add the six private cache tests or retain any ClosedPiLaurentPolynomial storage or new cache lookup/fallback code.",
+    "Keep the admitted P4 sign-retention repair and all original native geometry, policy, budget, fixture and assertion contracts."
+  ],
+  "expected_delta_paths": 12,
+  "evidence_requirements": [
+    "Read and freeze the exact new diff, copied tests and build/source identities before execution.",
+    "Run proportionate correctness and fixed library comparisons against the same main baseline, retaining all construction/first/warm/cloned, opaque/unknown/approximate, metadata and broad rows.",
+    "If supported by library evidence, qualify the relevant stack, execute the original 120-second worker-CPU and 60-second check-body gates, replay full report bytes and run a separately frozen application/allocator cost comparison.",
+    "No reuse of old measurements as paired samples, no sample extension or filtering, no main promotion until the new combination has its own admission evidence."
+  ],
+  "new_prototype_prepared": false,
+  "new_measurements_executed": false,
+  "main_runtime_admitted": false
+}
