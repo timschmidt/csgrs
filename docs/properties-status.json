@@ -4505,14 +4505,14 @@
       "plan_complete": false
     },
     "laurent_cache_eligibility": {
-      "status": "isolated-snapshots-formatted-reviewed-qualification-pending",
+      "status": "lookup-eligibility-qualified-scalar-cost-protocol-frozen",
       "evidence": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-v1.json",
       "scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scope-v1.json",
       "immutable_node_kinds": 60,
       "publication_eligible_kinds": 8,
       "publication_ineligible_kinds": 52,
       "prototype_prepared": true,
-      "qualification_executed": false,
+      "qualification_executed": true,
       "cost_samples": 0,
       "main_and_35_pending_native_paths_unchanged": true,
       "runtime_candidate": true,
@@ -4521,7 +4521,18 @@
       "preparation": "docs/evidence/2026-10-14-laurent-cache-eligibility/preparation-v1/protocol.json",
       "source_review": "docs/evidence/2026-10-14-laurent-cache-eligibility/source-review-v1.json",
       "isolated_sources": 2,
-      "source_files_each": 10135
+      "source_files_each": 10135,
+      "qualification_assessment": "docs/evidence/2026-10-14-laurent-cache-eligibility/qualification-assessment-v1.json",
+      "qualification_commands_passed": 10,
+      "all_features_scalar_tests_passed": 879,
+      "baseline_new_controls_passed": 3,
+      "candidate_default_new_controls_passed": 2,
+      "strict_clippy_configurations": 3,
+      "P4_tests_passed": 11,
+      "persistent_cache_tests_passed": 6,
+      "borrowed_integer_tests_passed": 2,
+      "scalar_cost_scope": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-scope-v1.json",
+      "scalar_costs_prepared": false
     }
   },
   "status_meanings": {
