@@ -4586,7 +4586,8 @@
       "broader_library_costs_opened": false,
       "new_native_gates_run": false,
       "new_runtime_admission": false,
-      "next_step": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-next-v1.json"
+      "next_step": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-audit-v1.json",
+      "next_diagnostic_source_audit_complete": true
     }
   },
   "status_meanings": {

@@ -1,0 +1,217 @@
+{
+  "status": "actual-reader-classification-design-audited-prospective-diagnostic-not-prepared",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+  "parent_files": 10135,
+  "parent_runtime": "Borrowed-integer runtime with the three already-qualified cache-contract controls; no rejected entry guard.",
+  "parent_preparation_sha256": "7792ed589eb5dd9449fabf29ab3954614c498f30f1e3ef4d08fe4288cb4fb1ad",
+  "parent_source_hashes_sha256": "e5112a388086ff788e8e4cb6cc6363f327d40bab3f98e75cdb2e2b20fbb17017",
+  "reviewed_evidence_sha256": {
+    "docs/evidence/2026-10-13-construction-cache-coverage/prepare_v1.py": "1d42587957403af61e45cab11df81ab6acfa8cad97fd555b563008f150fab372",
+    "docs/evidence/2026-10-13-construction-cache-coverage/instrumentation-edits-v1.json": "89850a0b984d6805746894784dd91123008b954f7caf4cc9914e2594efcb7eba",
+    "docs/evidence/2026-10-13-construction-cache-coverage/cache_trace_v1.rs": "62d71c7e6b3a17bd2548c35354ed93216a30d2659aaf8533e3f63f478fc7ad6e",
+    "docs/evidence/2026-10-13-construction-cache-coverage/cache_trace_control_v1.rs": "4af9efc970e262ae972f37e7f4621edfaf4fd708c8be02ae2bc52861685021b0",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational_trace_header_v1.rs": "5e017e2bc3fea7667bf5a24d34076bf586de59966635591d41a595502656f1ba",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/rational-trace-failure-v2.json": "e6551cf7ff442b93b2aa82cf0b6ae8cd62fd6648a44846fed7b35e7c0d486447",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-interpretation-v1.json": "fc871836bdd4513ec454893baa8f2e89b6f3f35a0527c3350cdc3ac088ef764f",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-next-v1.json": "b51a27ba476ad21d62502724366a4758f1f79fb5d5758e2e840ff3a11650404e",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/source-audit-synchronization-clarification-v1.json": "3b74dab06f41056a4f030e632ecfa16df8f0e973f06375338f06d44e00654460"
+  },
+  "source_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "e57623e7b4f8c6293b9e754648743836a7d4b567a3290cd3d6e7dfc8ea91cf94",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs": "b9b91d3c20d1e63a4afb8ea4847334116d00808f7e0f62fbe5a9ddf35642293d",
+    "crates/hyperreal/src/computable/node/laurent_cache_eligibility_tests.rs": "e56f5c0a31782bbdc954c64bc09a7807bafddf5eca3043a2d5818834105b9265",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "c18e32769063a4afb47c77f67591c31572ca28afcead8a3172073305f6bf54e8"
+  },
+  "read_scope": "Complete prior 27-event module, insertion specification, positive control and preparation script; actual cache reader and its sole production caller; all 60 enum kinds from the prior complete enum audit; original probe imports/function boundaries and witness suffix spellings. Not a new claim of reading every file end to end.",
+  "draft_check_correction": "An initial metadata-generation assertion assumed a newline-array spelling in all three probes and stopped before writing any artifact. Only rational has that spelling; quadratic/integer suffixes need no edit. No source, binary or sample was created or changed by that failed check.",
+  "existing_counter_overlay": {
+    "events": 27,
+    "edits": 17,
+    "changed_or_added_paths": 5,
+    "missing_observations": [
+      "lookup node kind",
+      "empty evaluation pointer versus initialized evaluation cell without a Laurent proof"
+    ]
+  },
+  "observation_design": [
+    "Keep the original borrowed runtime lookup for every RETAIN=true node. Do not introduce the rejected read-eligibility predicate.",
+    "Immediately before the sole production reader call, put the immutable node kind in a thread-local diagnostic context using an exhaustive match over all 60 variants. Do not record a pending kind for RETAIN=false.",
+    "In the cache reader, keep its single actual cell() load. Record empty_cell if it is empty. Otherwise acquire the original read lock, inspect its actual Laurent field, and record initialized_miss or hit before the original conversion. Do not add a separately raced pointer or payload peek.",
+    "Consume the pending kind for each outcome. Reserve Unclassified for private reader calls outside the normalizer context. Reset pending context and class counts with every recording window, alongside the old events.",
+    "Keep all original 27 event names, ordering and with_recording result, so old counters and controls remain comparable. Add a separate per-kind three-outcome snapshot.",
+    "Use small per-kind thread-local cells. No node/cache payload changes, unsafe code, extra owners or new synchronization primitives are needed. The reader branches are expanded only to observe their original outcomes."
+  ],
+  "node_kinds": [
+    "Int",
+    "One",
+    "Constant",
+    "Inverse",
+    "Negate",
+    "Add",
+    "Multiply",
+    "LinearCombination3",
+    "Square",
+    "Ratio",
+    "Offset",
+    "PrescaledExp",
+    "Expm1",
+    "Sqrt",
+    "PrescaledLn",
+    "PrescaledLnRational",
+    "BinaryScaledLnRational",
+    "IntegralAtan",
+    "PrescaledAtan",
+    "AtanDeferred",
+    "AtanRational",
+    "AsinRational",
+    "PrescaledAsin",
+    "AsinDeferred",
+    "AcosPositive",
+    "AcosPositiveRational",
+    "AcosNegativeRational",
+    "AcoshNearOne",
+    "AcoshDirect",
+    "AsinhNearZero",
+    "AsinhDirect",
+    "PrescaledAsinh",
+    "AsinhRational",
+    "AtanhDirect",
+    "PrescaledAtanh",
+    "AtanhRational",
+    "PrescaledCos",
+    "PrescaledCosRational",
+    "CosLargeRational",
+    "PrescaledCosHalfPiMinusRational",
+    "PrescaledSin",
+    "PrescaledSinRational",
+    "SinLargeRational",
+    "PrescaledSinHalfPiMinusRational",
+    "PrescaledCotHalfPiMinusRational",
+    "TanLargeRational",
+    "PrescaledTan",
+    "PrescaledTanRational",
+    "PrescaledCot",
+    "ErfSeries",
+    "Erfc",
+    "NormalSf",
+    "NormalInterval",
+    "LogPnorm",
+    "LogNormalSf",
+    "LogDnorm",
+    "NormalQuantile",
+    "NthRoot",
+    "SincSmall",
+    "CoscSmall"
+  ],
+  "extra_kind": "Unclassified",
+  "outcomes": [
+    "empty_cell",
+    "initialized_miss",
+    "hit"
+  ],
+  "eligible_kinds": [
+    "Add",
+    "Multiply",
+    "Negate",
+    "Offset",
+    "Inverse",
+    "Square",
+    "Sqrt",
+    "LinearCombination3"
+  ],
+  "necessary_invariants": [
+    "The sum of all kinds and outcomes equals original retained_lookup; the sum of all hit outcomes equals retained_hit.",
+    "Unclassified is zero in public windows because there is one audited production reader caller. Demonstrate that bucket separately with a valid direct-reader control.",
+    "Ineligible node kinds have no hits. Zero ineligible-hit counts are expected; never require every event/category to be positive.",
+    "Retained/original visits retain all existing event partitions. Preserve old normalizer, memo, publication, retry and public arithmetic counts.",
+    "initialized_miss means an evaluation cell exists and lacks a Laurent proof under its lock. It does not identify which other payload created the cell."
+  ],
+  "control_design": [
+    "Use a raw Ratio at zero depth/work for an empty-pointer miss. Initialize it with its actual approximation, then show an initialized miss, the same Unknown answer and an unchanged payload.",
+    "Use raw Add of independent rationals 3 and 5 with a live clone to observe an eligible miss and exact publication. A valid tower of 8 can initialize the root cell without a Laurent certificate.",
+    "Drop the extra owner after publication. Zero-depth/zero-work replay must return 8, record an eligible hit and do no normalizer work.",
+    "Keep the original publication/replay counter control and add one classification control. Preserve all existing P4, concurrency, fallback, ownership, serde and borrowed-integer tests."
+  ],
+  "prospective_protocol": {
+    "source_files_expected": 10136,
+    "changed_or_added_source_paths_expected": 5,
+    "all_features_scalar_tests_expected": 881,
+    "test_groups_expected": {
+      "P4": 11,
+      "persistent_cache": 8,
+      "eligibility": 3,
+      "borrowed_integer": 2
+    },
+    "groups": [
+      "main",
+      "borrowed",
+      "eligibility",
+      "classified"
+    ],
+    "diagnostic_group": "classified: otherwise unchanged borrowed runtime",
+    "driver_suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "fresh_driver_binaries": 12,
+    "fixed_inputs": 4096,
+    "fixed_orders": [
+      [
+        "main",
+        "borrowed",
+        "eligibility",
+        "classified"
+      ],
+      [
+        "classified",
+        "eligibility",
+        "borrowed",
+        "main"
+      ]
+    ],
+    "fixed_count_processes": 24,
+    "trace_windows": 544,
+    "classified_windows": 136,
+    "public_comparison_rows": 204,
+    "instrumented_parent_equivalence_rows": 68,
+    "header_format_checks": 1,
+    "library_qualification_commands": 4,
+    "driver_clippy_and_link_commands": 24,
+    "expected_commands_total": 53,
+    "strict_clippy": "All-feature/all-target release library and every generated driver, all with -D warnings and no warning suppressions.",
+    "historical_checks": "Compare old 27-event counts with prior rational and quadratic counter windows. Preserve the prior rational runner failure; do not require its absent opaque-refusal event to be positive.",
+    "instrumented_timings_are_cost_evidence": false,
+    "new_allocation_measurements": 0,
+    "new_native_gates": 0
+  },
+  "probe_review": {
+    "rational": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/rational_probe.rs",
+      "sha256": "481a7af7b55902adb14f1929a38addbc8a470ac48d710346717b602ddca6f5ae",
+      "suffix_marker": "fn fixture(",
+      "witness_byte_char_array_occurrences": 1,
+      "allowed_suffix_edit": "Same one-byte newline spelling correction as the prior rational trace v2, only in the newly generated driver."
+    },
+    "quadratic": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/quadratic_probe.rs",
+      "sha256": "3e4d0f7494f7a6f22fcde14a35077279a06e091030585c7266745599e457ec60",
+      "suffix_marker": "fn inputs(",
+      "witness_byte_char_array_occurrences": 0,
+      "allowed_suffix_edit": "None; copy the original suffix verbatim."
+    },
+    "integer": {
+      "path": "docs/evidence/2026-10-13-combined-native-admission/probes-v1/integer_probe.rs",
+      "sha256": "53350d83a6b41e8abb4f9dcc3b609a7c61b5e9f50bea0ab55fa30101a1999294",
+      "suffix_marker": "fn integer(",
+      "witness_byte_char_array_occurrences": 0,
+      "allowed_suffix_edit": "None; copy the original suffix verbatim."
+    }
+  },
+  "next_step": "Implement and freeze the diagnostic overlay and runner, checking these prospective counts against generated source before execution. No new runtime optimization is chosen by this audit.",
+  "diagnostic_prepared": false,
+  "new_runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
