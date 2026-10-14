@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-unrestricted-sanitizer-ready",
+      "status": "normal-form-image-filter-gmp-leak-report-preserved",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5327,7 +5327,21 @@
       "sphere_normal_image_lsan_sandbox_restriction_demonstrated": true,
       "sphere_normal_image_asan_v2_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v2.json",
       "sphere_normal_image_asan_v2_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v2.py",
-      "sphere_normal_image_asan_v2_executed": false
+      "sphere_normal_image_asan_v2_executed": true,
+      "sphere_normal_image_asan_v2_complete": false,
+      "sphere_normal_image_asan_v2_failure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-v2/failure.json",
+      "sphere_normal_image_asan_v2_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-closure-v2.json",
+      "sphere_normal_image_asan_v2_partial_counts": {
+        "passed": 1379,
+        "failed": 0,
+        "ignored": 7,
+        "measured": 0,
+        "filtered_out": 0,
+        "summaries": 24
+      },
+      "sphere_normal_image_asan_v2_leak_bytes": 163672,
+      "sphere_normal_image_asan_v2_leak_allocations": 560,
+      "sphere_normal_image_asan_v2_all_reported_stacks_gmp": true
     }
   },
   "status_meanings": {
