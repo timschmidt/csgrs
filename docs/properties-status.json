@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-gmp-leak-report-preserved",
+      "status": "normal-form-image-filter-mpfr-thread-cache-control-complete",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5341,7 +5341,14 @@
       },
       "sphere_normal_image_asan_v2_leak_bytes": 163672,
       "sphere_normal_image_asan_v2_leak_allocations": 560,
-      "sphere_normal_image_asan_v2_all_reported_stacks_gmp": true
+      "sphere_normal_image_asan_v2_all_reported_stacks_gmp": true,
+      "sphere_normal_image_mpfr_cache_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-scope-v1.json",
+      "sphere_normal_image_mpfr_cache_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_normal_image_mpfr_cache_v1.py",
+      "sphere_normal_image_mpfr_cache_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-v1/result.json",
+      "sphere_normal_image_mpfr_cache_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-closure-v1.json",
+      "sphere_normal_image_mpfr_cache_complete": true,
+      "sphere_normal_image_mpfr_thread_cache_mechanism_demonstrated": true,
+      "sphere_normal_image_full_suite_leak_cause_established": false
     }
   },
   "status_meanings": {
