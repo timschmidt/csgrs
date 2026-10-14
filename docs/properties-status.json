@@ -4590,8 +4590,8 @@
       "next_diagnostic_source_audit_complete": true
     },
     "laurent_cache_miss_classification": {
-      "status": "diagnostic-prepared-formatted-reviewed-qualification-pending",
-      "scope": "docs/evidence/2026-10-14-laurent-cache-miss-classification/scope-v1.json",
+      "status": "v1-compile-failure-preserved-v2-protocol-prepared",
+      "scope": "docs/evidence/2026-10-14-laurent-cache-miss-classification/scope-v2.json",
       "source_audit": "docs/evidence/2026-10-14-laurent-cache-eligibility/cache-miss-classification-audit-v1.json",
       "old_events_retained": 27,
       "kind_buckets": 61,
@@ -4608,7 +4608,12 @@
       "source_files": 10136,
       "changed_or_added_paths": 5,
       "preparation": "docs/evidence/2026-10-14-laurent-cache-miss-classification/preparation-v1/protocol.json",
-      "source_review": "docs/evidence/2026-10-14-laurent-cache-miss-classification/source-review-v1.json"
+      "source_review": "docs/evidence/2026-10-14-laurent-cache-miss-classification/source-review-v1.json",
+      "failed_run": "docs/evidence/2026-10-14-laurent-cache-miss-classification/failure-v1.json",
+      "v1_commands_attempted": 2,
+      "v1_count_processes": 0,
+      "v2_prepared": false,
+      "v2_qualification_executed": false
     }
   },
   "status_meanings": {
