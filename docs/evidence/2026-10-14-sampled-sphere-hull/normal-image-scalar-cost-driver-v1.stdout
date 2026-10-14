@@ -1,0 +1,71 @@
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "link-parent-time"}
+{"finished": "link-parent-time", "exit_code": 0}
+{"start": "link-parent-memory"}
+{"finished": "link-parent-memory", "exit_code": 0}
+{"start": "link-candidate-time"}
+{"finished": "link-candidate-time", "exit_code": 0}
+{"start": "link-candidate-memory"}
+{"finished": "link-candidate-memory", "exit_code": 0}
+{"start": "size-parent"}
+{"finished": "size-parent", "exit_code": 0}
+{"start": "size-candidate"}
+{"finished": "size-candidate", "exit_code": 0}
+{"start": "preflight-time-0-parent"}
+{"finished": "preflight-time-0-parent", "exit_code": 0}
+{"start": "preflight-time-0-candidate"}
+{"finished": "preflight-time-0-candidate", "exit_code": 0}
+{"start": "sample-time-1-parent"}
+{"finished": "sample-time-1-parent", "exit_code": 0}
+{"start": "sample-time-1-candidate"}
+{"finished": "sample-time-1-candidate", "exit_code": 0}
+{"start": "sample-time-2-candidate"}
+{"finished": "sample-time-2-candidate", "exit_code": 0}
+{"start": "sample-time-2-parent"}
+{"finished": "sample-time-2-parent", "exit_code": 0}
+{"start": "sample-time-3-parent"}
+{"finished": "sample-time-3-parent", "exit_code": 0}
+{"start": "sample-time-3-candidate"}
+{"finished": "sample-time-3-candidate", "exit_code": 0}
+{"start": "sample-time-4-candidate"}
+{"finished": "sample-time-4-candidate", "exit_code": 0}
+{"start": "sample-time-4-parent"}
+{"finished": "sample-time-4-parent", "exit_code": 0}
+{"start": "sample-time-5-parent"}
+{"finished": "sample-time-5-parent", "exit_code": 0}
+{"start": "sample-time-5-candidate"}
+{"finished": "sample-time-5-candidate", "exit_code": 0}
+{"start": "sample-time-6-candidate"}
+{"finished": "sample-time-6-candidate", "exit_code": 0}
+{"start": "sample-time-6-parent"}
+{"finished": "sample-time-6-parent", "exit_code": 0}
+{"start": "preflight-memory-0-parent"}
+{"finished": "preflight-memory-0-parent", "exit_code": 0}
+{"start": "preflight-memory-0-candidate"}
+{"finished": "preflight-memory-0-candidate", "exit_code": 0}
+{"start": "sample-memory-1-parent"}
+{"finished": "sample-memory-1-parent", "exit_code": 0}
+{"start": "sample-memory-1-candidate"}
+{"finished": "sample-memory-1-candidate", "exit_code": 0}
+{"start": "sample-memory-2-candidate"}
+{"finished": "sample-memory-2-candidate", "exit_code": 0}
+{"start": "sample-memory-2-parent"}
+{"finished": "sample-memory-2-parent", "exit_code": 0}
+{"start": "sample-memory-3-parent"}
+{"finished": "sample-memory-3-parent", "exit_code": 0}
+{"start": "sample-memory-3-candidate"}
+{"finished": "sample-memory-3-candidate", "exit_code": 0}
+{"start": "sample-memory-4-candidate"}
+{"finished": "sample-memory-4-candidate", "exit_code": 0}
+{"start": "sample-memory-4-parent"}
+{"finished": "sample-memory-4-parent", "exit_code": 0}
+{"start": "sample-memory-5-parent"}
+{"finished": "sample-memory-5-parent", "exit_code": 0}
+{"start": "sample-memory-5-candidate"}
+{"finished": "sample-memory-5-candidate", "exit_code": 0}
+{"start": "sample-memory-6-candidate"}
+{"finished": "sample-memory-6-candidate", "exit_code": 0}
+{"start": "sample-memory-6-parent"}
+{"finished": "sample-memory-6-parent", "exit_code": 0}
+{"complete": true, "result_sha256": "1bfe2071c0e25db676c3fd7abdfa9d0e21cd76980184d7833f9468b4234c624f"}

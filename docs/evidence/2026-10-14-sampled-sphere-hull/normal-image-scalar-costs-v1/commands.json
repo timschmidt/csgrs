@@ -1,0 +1,555 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_scalar_probe_v1.rs"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0174858421087265,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-parent-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_scalar_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.3587367366999388,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-parent-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_scalar_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.37450049677863717,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_scalar_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.36046128906309605,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_scalar_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.39488524105399847,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-parent",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0032128398306667805,
+    "stdout_sha256": "8a532d06eb812ec733bd1a2c776c4855e3d70e87e3c5b0a08b6c93b2f6f3da5e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-candidate",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0029549268074333668,
+    "stdout_sha256": "e20086cee1f9d6b1473a69b722a387c82704c934744fd462b2d70b2c4bd9aabc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.17867024103179574,
+    "stdout_sha256": "c033cc8d6d9b39c898c3e2747f929ae73873b240c82aba257e42f3fad2b31c6f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10486170696094632,
+    "stdout_sha256": "891ca95aa350df439ada10650446b7513bab420c53f8127d49ceaf566c507857",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1795079638250172,
+    "stdout_sha256": "61b2bcf67ce049bdc486202404fd15fb685e8925405ce0c87fc73e3ea67c6e55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10636272514238954,
+    "stdout_sha256": "a6f1e8bc1264c2a63661538d327ff37ad644269ddf3cc85198261e4750f28401",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10935371881350875,
+    "stdout_sha256": "5be10ffd710e866d36080808ae900849f7aed4db88139ebd3c1efd8aba57568b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.18421083223074675,
+    "stdout_sha256": "f5f34a1e53feb4261503f3f20469698ccb529cdda97b6271b2ee6c4467aff455",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.18061212776228786,
+    "stdout_sha256": "c3304bd6563d1cfd6ee7ed69c8c095577ba98d73c1c864822cb408564e63f419",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13028790522366762,
+    "stdout_sha256": "f931078e9b6706e5b505773236f7d6214c49e0043fc52a6a2dc8a2d4206ae0f6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10585383884608746,
+    "stdout_sha256": "ce2bd45b58241a5cba7d8b2183555e8594d5efa0001ee669ab5c7c9484ec4a3a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.18295858800411224,
+    "stdout_sha256": "493438cee843f9c00cda62dec828748a5a70ee781f0fe12575f08a887895db57",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.18426249828189611,
+    "stdout_sha256": "cbb840e0a9e725b5977359b4d455bfc55ce45e80f7141ad27d14632ccdda59f4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10921995900571346,
+    "stdout_sha256": "c10dd5c0ac4f7ec1d2d45fcdd84ad4cf80d8316a2ff57dd46dfb966c97ef10af",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.10579087305814028,
+    "stdout_sha256": "f36afce37d7bf1168c8f09dc5a32a1fafab18114a0655b543ba32a225003595e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1783272549510002,
+    "stdout_sha256": "e2cca256c2721dc5c6e7e43067c8d4d33c0f0c224ce5ab41b06b9af6ba60681b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008188789244741201,
+    "stdout_sha256": "063e6b1fab79c02cc9204918f415384f0dc4e45d96a30176cdfcfe9903f6e634",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008493227884173393,
+    "stdout_sha256": "2922b075b3d4cd12ab23e6b73bb9d263443f6f91fb401cd7a81eddcafb38756a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.007618167903274298,
+    "stdout_sha256": "6a020c64331f9defb07edeb598de355ac4ffa8e6e342dbabe35b51770c045969",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.007296741008758545,
+    "stdout_sha256": "9c40d81166b24e540801ffe422b104173dfb30a89b972c862ae3a6af8896a55a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.007910897955298424,
+    "stdout_sha256": "0711966607183ae72881d182e5ee13f114a741cbeced25dd54e3a8c3e8400541",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008961027022451162,
+    "stdout_sha256": "e499972146c4ef45bb8bdc11b8a2662d41b9a6d2def3eb1e1db9b755cd0217b0",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008401374332606792,
+    "stdout_sha256": "97ae62481a968adb9d77ea1df2695b67b3106cad9c245d8f6b189e6db3689b9a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.010161833837628365,
+    "stdout_sha256": "635f85b905ef249b3e0cdddfe8ee5919aee63b8f4d54ee46f08630ca54f738ea",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.007291290909051895,
+    "stdout_sha256": "20da666049034308532553c023a810f342739863c6890849cca087a119f62ec9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008541864808648825,
+    "stdout_sha256": "5d7ca6203587c70af71be50b2a7e25388f9bd1e635cf1221278ee0d3e63b9545",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008545174729079008,
+    "stdout_sha256": "7033c319d000062d6fce10d331a4fde43f941321d334a871f04d65b507b77f75",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.00767091428861022,
+    "stdout_sha256": "dff16fd3d6a2379ce26bdf6354f3e4d675b4f66c6dcdeac469d4dc842cdb7d17",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+      "image"
+    ],
+    "group": "candidate",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0073271882720291615,
+    "stdout_sha256": "179b278e901d4e695198fbc085aafd3124d1e3b6ad6fc3b0eb314279287054fd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-parent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+      "image"
+    ],
+    "group": "parent",
+    "exit_code": 0,
+    "process_wall_seconds": 0.010704176966100931,
+    "stdout_sha256": "0310327027941d2b1e8ad3aa76f2742e51742d95264326466a6c3d07a4e1ed04",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

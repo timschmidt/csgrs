@@ -1,0 +1,7511 @@
+{
+  "complete": true,
+  "assessor_sha256": "70458729b9e0836f0ab82fe1ea82858feb86e63e33b2b04ff53750adead888cf",
+  "result_sha256": "1bfe2071c0e25db676c3fd7abdfa9d0e21cd76980184d7833f9468b4234c624f",
+  "commands_all_zero": 35,
+  "preflight_processes": 4,
+  "fixed_sample_processes": 24,
+  "query_recipes": 14,
+  "statistics": {
+    "time": {
+      "parent": {
+        "normal_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                460,
+                410,
+                510,
+                490,
+                370,
+                450
+              ],
+              "minimum": 370,
+              "maximum": 510,
+              "median": 455.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                262144,
+                262144,
+                262144,
+                262144,
+                262144,
+                262144
+              ],
+              "minimum": 262144,
+              "maximum": 262144,
+              "median": 262144.0
+            },
+            "nanos": {
+              "observations": [
+                3196001,
+                3032583,
+                3220840,
+                3529269,
+                3564386,
+                3002774
+              ],
+              "minimum": 3002774,
+              "maximum": 3564386,
+              "median": 3208420.5
+            }
+          }
+        },
+        "normal_pi_plus_e": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                6679,
+                10099,
+                12769,
+                16409,
+                9469,
+                5829
+              ],
+              "minimum": 5829,
+              "maximum": 16409,
+              "median": 9784.0
+            }
+          },
+          "repeated": {
+            "iterations": 16384,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                4231630,
+                4563808,
+                4303365,
+                4315584,
+                4194023,
+                4086460
+              ],
+              "minimum": 4086460,
+              "maximum": 4563808,
+              "median": 4267497.5
+            }
+          }
+        },
+        "normal_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                1859,
+                2340,
+                2090,
+                2390,
+                2019,
+                1680
+              ],
+              "minimum": 1680,
+              "maximum": 2390,
+              "median": 2054.5
+            }
+          },
+          "repeated": {
+            "iterations": 16384,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                3970278,
+                4154846,
+                3958539,
+                3948200,
+                3993577,
+                3945679
+              ],
+              "minimum": 3945679,
+              "maximum": 4154846,
+              "median": 3964408.5
+            }
+          }
+        },
+        "normal_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                9949,
+                10590,
+                9379,
+                9540,
+                9210,
+                8689
+              ],
+              "minimum": 8689,
+              "maximum": 10590,
+              "median": 9459.5
+            }
+          },
+          "repeated": {
+            "iterations": 32768,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                88131173,
+                91836560,
+                89405156,
+                89274124,
+                91961730,
+                87895349
+              ],
+              "minimum": 87895349,
+              "maximum": 91961730,
+              "median": 89339640.0
+            }
+          }
+        },
+        "normal_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                370,
+                910,
+                590,
+                570,
+                710,
+                580
+              ],
+              "minimum": 370,
+              "maximum": 910,
+              "median": 585.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                6989301,
+                7108163,
+                7172518,
+                7628048,
+                7280471,
+                7128502
+              ],
+              "minimum": 6989301,
+              "maximum": 7628048,
+              "median": 7150510.0
+            }
+          }
+        },
+        "normal_pythagorean_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                17568,
+                18699,
+                18308,
+                18619,
+                21039,
+                15489
+              ],
+              "minimum": 15489,
+              "maximum": 21039,
+              "median": 18463.5
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                5139928,
+                5204204,
+                5071673,
+                6514674,
+                5156756,
+                5100730
+              ],
+              "minimum": 5071673,
+              "maximum": 6514674,
+              "median": 5148342.0
+            }
+          }
+        },
+        "normal_double_angle_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                8570,
+                8529,
+                8090,
+                10549,
+                8829,
+                8500
+              ],
+              "minimum": 8090,
+              "maximum": 10549,
+              "median": 8549.5
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                4992438,
+                4925953,
+                4926982,
+                5535331,
+                5347194,
+                4858187
+              ],
+              "minimum": 4858187,
+              "maximum": 5535331,
+              "median": 4959710.0
+            }
+          }
+        },
+        "affine_dyadic": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                2130,
+                2340,
+                2140,
+                2110,
+                2510,
+                2060
+              ],
+              "minimum": 2060,
+              "maximum": 2510,
+              "median": 2135.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                262144,
+                262144,
+                262144,
+                262144,
+                262144,
+                262144
+              ],
+              "minimum": 262144,
+              "maximum": 262144,
+              "median": 262144.0
+            },
+            "nanos": {
+              "observations": [
+                10877715,
+                11248359,
+                11278248,
+                11052623,
+                11449915,
+                11305436
+              ],
+              "minimum": 10877715,
+              "maximum": 11449915,
+              "median": 11263303.5
+            }
+          }
+        },
+        "affine_nondyadic_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                450,
+                890,
+                720,
+                530,
+                580,
+                630
+              ],
+              "minimum": 450,
+              "maximum": 890,
+              "median": 605.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                5696200,
+                5675931,
+                5651043,
+                6179127,
+                6086583,
+                5652723
+              ],
+              "minimum": 5651043,
+              "maximum": 6179127,
+              "median": 5686065.5
+            }
+          }
+        },
+        "affine_unsupported_pi": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                1049,
+                1970,
+                1130,
+                1700,
+                1450,
+                1160
+              ],
+              "minimum": 1049,
+              "maximum": 1970,
+              "median": 1305.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                5222383,
+                5435918,
+                5003317,
+                5008147,
+                5005397,
+                4869276
+              ],
+              "minimum": 4869276,
+              "maximum": 5435918,
+              "median": 5006772.0
+            }
+          }
+        },
+        "affine_unsupported_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                900,
+                1100,
+                520,
+                620,
+                699,
+                490
+              ],
+              "minimum": 490,
+              "maximum": 1100,
+              "median": 659.5
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                5428858,
+                5410010,
+                5385901,
+                5155547,
+                5201834,
+                5130809
+              ],
+              "minimum": 5130809,
+              "maximum": 5428858,
+              "median": 5293867.5
+            }
+          }
+        },
+        "affine_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                10230,
+                11159,
+                10159,
+                10330,
+                10570,
+                15129
+              ],
+              "minimum": 10159,
+              "maximum": 15129,
+              "median": 10450.0
+            }
+          },
+          "repeated": {
+            "iterations": 4096,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                3081709,
+                2999745,
+                3033232,
+                2989186,
+                2964507,
+                3086959
+              ],
+              "minimum": 2964507,
+              "maximum": 3086959,
+              "median": 3016488.5
+            }
+          }
+        },
+        "affine_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                520,
+                1150,
+                470,
+                390,
+                510,
+                530
+              ],
+              "minimum": 390,
+              "maximum": 1150,
+              "median": 515.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                8510807,
+                8347388,
+                8523926,
+                8181460,
+                8255534,
+                8567143
+              ],
+              "minimum": 8181460,
+              "maximum": 8567143,
+              "median": 8429097.5
+            }
+          }
+        },
+        "affine_original_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                37447,
+                51196,
+                36967,
+                45627,
+                42567,
+                37217
+              ],
+              "minimum": 36967,
+              "maximum": 51196,
+              "median": 40007.0
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                20260472,
+                20332348,
+                19957183,
+                19907336,
+                19974602,
+                19974432
+              ],
+              "minimum": 19907336,
+              "maximum": 20332348,
+              "median": 19974517.0
+            }
+          }
+        }
+      },
+      "candidate": {
+        "normal_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                500,
+                490,
+                430,
+                290,
+                360,
+                450
+              ],
+              "minimum": 290,
+              "maximum": 500,
+              "median": 440.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                262144,
+                262144,
+                262144,
+                262144,
+                262144,
+                262144
+              ],
+              "minimum": 262144,
+              "maximum": 262144,
+              "median": 262144.0
+            },
+            "nanos": {
+              "observations": [
+                2380927,
+                4137536,
+                4198812,
+                2571824,
+                3737874,
+                2534626
+              ],
+              "minimum": 2380927,
+              "maximum": 4198812,
+              "median": 3154849.0
+            }
+          }
+        },
+        "normal_pi_plus_e": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                8870,
+                11689,
+                9170,
+                8370,
+                7210,
+                5159
+              ],
+              "minimum": 5159,
+              "maximum": 11689,
+              "median": 8620.0
+            }
+          },
+          "repeated": {
+            "iterations": 16384,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                4186704,
+                4978289,
+                7296460,
+                4076840,
+                4243589,
+                4123098
+              ],
+              "minimum": 4076840,
+              "maximum": 7296460,
+              "median": 4215146.5
+            }
+          }
+        },
+        "normal_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                2060,
+                2180,
+                2510,
+                1540,
+                2150,
+                1920
+              ],
+              "minimum": 1540,
+              "maximum": 2510,
+              "median": 2105.0
+            }
+          },
+          "repeated": {
+            "iterations": 16384,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                3992756,
+                4082160,
+                7052587,
+                3915692,
+                3852646,
+                3890333
+              ],
+              "minimum": 3852646,
+              "maximum": 7052587,
+              "median": 3954224.0
+            }
+          }
+        },
+        "normal_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                10509,
+                9360,
+                10449,
+                7510,
+                8659,
+                8630
+              ],
+              "minimum": 7510,
+              "maximum": 10509,
+              "median": 9009.5
+            }
+          },
+          "repeated": {
+            "iterations": 32768,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                15183880,
+                15069237,
+                22365998,
+                15385036,
+                15023281,
+                15756021
+              ],
+              "minimum": 15023281,
+              "maximum": 22365998,
+              "median": 15284458.0
+            }
+          }
+        },
+        "normal_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                570,
+                290,
+                600,
+                300,
+                410,
+                350
+              ],
+              "minimum": 290,
+              "maximum": 600,
+              "median": 380.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                6823673,
+                7009579,
+                12130469,
+                7160870,
+                7176329,
+                6816373
+              ],
+              "minimum": 6816373,
+              "maximum": 12130469,
+              "median": 7085224.5
+            }
+          }
+        },
+        "normal_pythagorean_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                18799,
+                20899,
+                23488,
+                15709,
+                16469,
+                15529
+              ],
+              "minimum": 15529,
+              "maximum": 23488,
+              "median": 17634.0
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                5590057,
+                5498604,
+                9803488,
+                5462536,
+                5480895,
+                5532431
+              ],
+              "minimum": 5462536,
+              "maximum": 9803488,
+              "median": 5515517.5
+            }
+          }
+        },
+        "normal_double_angle_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                8639,
+                9319,
+                9059,
+                9699,
+                8469,
+                8060
+              ],
+              "minimum": 8060,
+              "maximum": 9699,
+              "median": 8849.0
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                5404590,
+                5416459,
+                5826481,
+                5434088,
+                5626295,
+                5301816
+              ],
+              "minimum": 5301816,
+              "maximum": 5826481,
+              "median": 5425273.5
+            }
+          }
+        },
+        "affine_dyadic": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                1789,
+                1879,
+                1630,
+                950,
+                1360,
+                1020
+              ],
+              "minimum": 950,
+              "maximum": 1879,
+              "median": 1495.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                262144,
+                262144,
+                262144,
+                262144,
+                262144,
+                262144
+              ],
+              "minimum": 262144,
+              "maximum": 262144,
+              "median": 262144.0
+            },
+            "nanos": {
+              "observations": [
+                11094430,
+                10953710,
+                11030724,
+                11240440,
+                11561078,
+                11231751
+              ],
+              "minimum": 10953710,
+              "maximum": 11561078,
+              "median": 11163090.5
+            }
+          }
+        },
+        "affine_nondyadic_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                580,
+                730,
+                460,
+                570,
+                500,
+                530
+              ],
+              "minimum": 460,
+              "maximum": 730,
+              "median": 550.0
+            }
+          },
+          "repeated": {
+            "iterations": 262144,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                5925454,
+                5892116,
+                5916994,
+                6094493,
+                6768826,
+                5874898
+              ],
+              "minimum": 5874898,
+              "maximum": 6768826,
+              "median": 5921224.0
+            }
+          }
+        },
+        "affine_unsupported_pi": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                1230,
+                1530,
+                1160,
+                1100,
+                1310,
+                960
+              ],
+              "minimum": 960,
+              "maximum": 1530,
+              "median": 1195.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                4946932,
+                4977848,
+                4927172,
+                4992688,
+                6757157,
+                4916963
+              ],
+              "minimum": 4916963,
+              "maximum": 6757157,
+              "median": 4962390.0
+            }
+          }
+        },
+        "affine_unsupported_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                420,
+                500,
+                420,
+                460,
+                640,
+                400
+              ],
+              "minimum": 400,
+              "maximum": 640,
+              "median": 440.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                6161238,
+                5863448,
+                5410059,
+                5295548,
+                5325266,
+                5322215
+              ],
+              "minimum": 5295548,
+              "maximum": 6161238,
+              "median": 5367662.5
+            }
+          }
+        },
+        "affine_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                4990,
+                4759,
+                3949,
+                2920,
+                7060,
+                3080
+              ],
+              "minimum": 2920,
+              "maximum": 7060,
+              "median": 4354.0
+            }
+          },
+          "repeated": {
+            "iterations": 4096,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                3392237,
+                3314653,
+                3365390,
+                3267516,
+                3214370,
+                3302943
+              ],
+              "minimum": 3214370,
+              "maximum": 3392237,
+              "median": 3308798.0
+            }
+          }
+        },
+        "affine_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                500,
+                640,
+                740,
+                440,
+                340,
+                450
+              ],
+              "minimum": 340,
+              "maximum": 740,
+              "median": 475.0
+            }
+          },
+          "repeated": {
+            "iterations": 65536,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "nanos": {
+              "observations": [
+                8072757,
+                8020801,
+                8220887,
+                7840023,
+                7772837,
+                8411374
+              ],
+              "minimum": 7772837,
+              "maximum": 8411374,
+              "median": 8046779.0
+            }
+          }
+        },
+        "affine_original_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "nanos": {
+              "observations": [
+                39627,
+                41347,
+                36857,
+                35948,
+                33718,
+                37027
+              ],
+              "minimum": 33718,
+              "maximum": 41347,
+              "median": 36942.0
+            }
+          },
+          "repeated": {
+            "iterations": 1024,
+            "certified": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "nanos": {
+              "observations": [
+                19505664,
+                18999549,
+                18861638,
+                19513303,
+                19050025,
+                19077993
+              ],
+              "minimum": 18861638,
+              "maximum": 19513303,
+              "median": 19064009.0
+            }
+          }
+        }
+      }
+    },
+    "memory": {
+      "parent": {
+        "normal_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "normal_pi_plus_e": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                8,
+                8,
+                8,
+                8,
+                8,
+                8
+              ],
+              "minimum": 8,
+              "maximum": 8,
+              "median": 8.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                816,
+                816,
+                816,
+                816,
+                816,
+                816
+              ],
+              "minimum": 816,
+              "maximum": 816,
+              "median": 816.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                752,
+                752,
+                752,
+                752,
+                752,
+                752
+              ],
+              "minimum": 752,
+              "maximum": 752,
+              "median": 752.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                104448,
+                104448,
+                104448,
+                104448,
+                104448,
+                104448
+              ],
+              "minimum": 104448,
+              "maximum": 104448,
+              "median": 104448.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                752,
+                752,
+                752,
+                752,
+                752,
+                752
+              ],
+              "minimum": 752,
+              "maximum": 752,
+              "median": 752.0
+            }
+          }
+        },
+        "normal_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                14,
+                14,
+                14,
+                14,
+                14,
+                14
+              ],
+              "minimum": 14,
+              "maximum": 14,
+              "median": 14.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                520,
+                520,
+                520,
+                520,
+                520,
+                520
+              ],
+              "minimum": 520,
+              "maximum": 520,
+              "median": 520.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                504,
+                504,
+                504,
+                504,
+                504,
+                504
+              ],
+              "minimum": 504,
+              "maximum": 504,
+              "median": 504.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                1792,
+                1792,
+                1792,
+                1792,
+                1792,
+                1792
+              ],
+              "minimum": 1792,
+              "maximum": 1792,
+              "median": 1792.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                66560,
+                66560,
+                66560,
+                66560,
+                66560,
+                66560
+              ],
+              "minimum": 66560,
+              "maximum": 66560,
+              "median": 66560.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                504,
+                504,
+                504,
+                504,
+                504,
+                504
+              ],
+              "minimum": 504,
+              "maximum": 504,
+              "median": 504.0
+            }
+          }
+        },
+        "normal_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                29,
+                29,
+                29,
+                29,
+                29,
+                29
+              ],
+              "minimum": 29,
+              "maximum": 29,
+              "median": 29.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                5472,
+                5472,
+                5472,
+                5472,
+                5472,
+                5472
+              ],
+              "minimum": 5472,
+              "maximum": 5472,
+              "median": 5472.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2080,
+                2080,
+                2080,
+                2080,
+                2080,
+                2080
+              ],
+              "minimum": 2080,
+              "maximum": 2080,
+              "median": 2080.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                3712,
+                3712,
+                3712,
+                3712,
+                3712,
+                3712
+              ],
+              "minimum": 3712,
+              "maximum": 3712,
+              "median": 3712.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                700416,
+                700416,
+                700416,
+                700416,
+                700416,
+                700416
+              ],
+              "minimum": 700416,
+              "maximum": 700416,
+              "median": 700416.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2080,
+                2080,
+                2080,
+                2080,
+                2080,
+                2080
+              ],
+              "minimum": 2080,
+              "maximum": 2080,
+              "median": 2080.0
+            }
+          }
+        },
+        "normal_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ],
+              "minimum": 2,
+              "maximum": 2,
+              "median": 2.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                256,
+                256,
+                256,
+                256,
+                256,
+                256
+              ],
+              "minimum": 256,
+              "maximum": 256,
+              "median": 256.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                11264,
+                11264,
+                11264,
+                11264,
+                11264,
+                11264
+              ],
+              "minimum": 11264,
+              "maximum": 11264,
+              "median": 11264.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            }
+          }
+        },
+        "normal_pythagorean_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                60,
+                60,
+                60,
+                60,
+                60,
+                60
+              ],
+              "minimum": 60,
+              "maximum": 60,
+              "median": 60.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                10064,
+                10064,
+                10064,
+                10064,
+                10064,
+                10064
+              ],
+              "minimum": 10064,
+              "maximum": 10064,
+              "median": 10064.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4032,
+                4032,
+                4032,
+                4032,
+                4032,
+                4032
+              ],
+              "minimum": 4032,
+              "maximum": 4032,
+              "median": 4032.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                7680,
+                7680,
+                7680,
+                7680,
+                7680,
+                7680
+              ],
+              "minimum": 7680,
+              "maximum": 7680,
+              "median": 7680.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                1288192,
+                1288192,
+                1288192,
+                1288192,
+                1288192,
+                1288192
+              ],
+              "minimum": 1288192,
+              "maximum": 1288192,
+              "median": 1288192.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4032,
+                4032,
+                4032,
+                4032,
+                4032,
+                4032
+              ],
+              "minimum": 4032,
+              "maximum": 4032,
+              "median": 4032.0
+            }
+          }
+        },
+        "normal_double_angle_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                61,
+                61,
+                61,
+                61,
+                61,
+                61
+              ],
+              "minimum": 61,
+              "maximum": 61,
+              "median": 61.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                10584,
+                10584,
+                10584,
+                10584,
+                10584,
+                10584
+              ],
+              "minimum": 10584,
+              "maximum": 10584,
+              "median": 10584.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4176,
+                4176,
+                4176,
+                4176,
+                4176,
+                4176
+              ],
+              "minimum": 4176,
+              "maximum": 4176,
+              "median": 4176.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                7808,
+                7808,
+                7808,
+                7808,
+                7808,
+                7808
+              ],
+              "minimum": 7808,
+              "maximum": 7808,
+              "median": 7808.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                1354752,
+                1354752,
+                1354752,
+                1354752,
+                1354752,
+                1354752
+              ],
+              "minimum": 1354752,
+              "maximum": 1354752,
+              "median": 1354752.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4176,
+                4176,
+                4176,
+                4176,
+                4176,
+                4176
+              ],
+              "minimum": 4176,
+              "maximum": 4176,
+              "median": 4176.0
+            }
+          }
+        },
+        "affine_dyadic": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_nondyadic_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_unsupported_pi": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_unsupported_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                4,
+                4,
+                4,
+                4,
+                4,
+                4
+              ],
+              "minimum": 4,
+              "maximum": 4,
+              "median": 4.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                3648,
+                3648,
+                3648,
+                3648,
+                3648,
+                3648
+              ],
+              "minimum": 3648,
+              "maximum": 3648,
+              "median": 3648.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2112,
+                2112,
+                2112,
+                2112,
+                2112,
+                2112
+              ],
+              "minimum": 2112,
+              "maximum": 2112,
+              "median": 2112.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                512,
+                512,
+                512,
+                512,
+                512,
+                512
+              ],
+              "minimum": 512,
+              "maximum": 512,
+              "median": 512.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                466944,
+                466944,
+                466944,
+                466944,
+                466944,
+                466944
+              ],
+              "minimum": 466944,
+              "maximum": 466944,
+              "median": 466944.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2112,
+                2112,
+                2112,
+                2112,
+                2112,
+                2112
+              ],
+              "minimum": 2112,
+              "maximum": 2112,
+              "median": 2112.0
+            }
+          }
+        },
+        "affine_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_original_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                157,
+                157,
+                157,
+                157,
+                157,
+                157
+              ],
+              "minimum": 157,
+              "maximum": 157,
+              "median": 157.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                41424,
+                41424,
+                41424,
+                41424,
+                41424,
+                41424
+              ],
+              "minimum": 41424,
+              "maximum": 41424,
+              "median": 41424.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                13280,
+                13280,
+                13280,
+                13280,
+                13280,
+                13280
+              ],
+              "minimum": 13280,
+              "maximum": 13280,
+              "median": 13280.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                20096,
+                20096,
+                20096,
+                20096,
+                20096,
+                20096
+              ],
+              "minimum": 20096,
+              "maximum": 20096,
+              "median": 20096.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                5302272,
+                5302272,
+                5302272,
+                5302272,
+                5302272,
+                5302272
+              ],
+              "minimum": 5302272,
+              "maximum": 5302272,
+              "median": 5302272.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                13280,
+                13280,
+                13280,
+                13280,
+                13280,
+                13280
+              ],
+              "minimum": 13280,
+              "maximum": 13280,
+              "median": 13280.0
+            }
+          }
+        }
+      },
+      "candidate": {
+        "normal_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "normal_pi_plus_e": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                8,
+                8,
+                8,
+                8,
+                8,
+                8
+              ],
+              "minimum": 8,
+              "maximum": 8,
+              "median": 8.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                816,
+                816,
+                816,
+                816,
+                816,
+                816
+              ],
+              "minimum": 816,
+              "maximum": 816,
+              "median": 816.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                752,
+                752,
+                752,
+                752,
+                752,
+                752
+              ],
+              "minimum": 752,
+              "maximum": 752,
+              "median": 752.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                1024,
+                1024,
+                1024,
+                1024,
+                1024,
+                1024
+              ],
+              "minimum": 1024,
+              "maximum": 1024,
+              "median": 1024.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                104448,
+                104448,
+                104448,
+                104448,
+                104448,
+                104448
+              ],
+              "minimum": 104448,
+              "maximum": 104448,
+              "median": 104448.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                752,
+                752,
+                752,
+                752,
+                752,
+                752
+              ],
+              "minimum": 752,
+              "maximum": 752,
+              "median": 752.0
+            }
+          }
+        },
+        "normal_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                14,
+                14,
+                14,
+                14,
+                14,
+                14
+              ],
+              "minimum": 14,
+              "maximum": 14,
+              "median": 14.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                520,
+                520,
+                520,
+                520,
+                520,
+                520
+              ],
+              "minimum": 520,
+              "maximum": 520,
+              "median": 520.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                504,
+                504,
+                504,
+                504,
+                504,
+                504
+              ],
+              "minimum": 504,
+              "maximum": 504,
+              "median": 504.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                1792,
+                1792,
+                1792,
+                1792,
+                1792,
+                1792
+              ],
+              "minimum": 1792,
+              "maximum": 1792,
+              "median": 1792.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                66560,
+                66560,
+                66560,
+                66560,
+                66560,
+                66560
+              ],
+              "minimum": 66560,
+              "maximum": 66560,
+              "median": 66560.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                504,
+                504,
+                504,
+                504,
+                504,
+                504
+              ],
+              "minimum": 504,
+              "maximum": 504,
+              "median": 504.0
+            }
+          }
+        },
+        "normal_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                7,
+                7,
+                7,
+                7,
+                7,
+                7
+              ],
+              "minimum": 7,
+              "maximum": 7,
+              "median": 7.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                1008,
+                1008,
+                1008,
+                1008,
+                1008,
+                1008
+              ],
+              "minimum": 1008,
+              "maximum": 1008,
+              "median": 1008.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                576,
+                576,
+                576,
+                576,
+                576,
+                576
+              ],
+              "minimum": 576,
+              "maximum": 576,
+              "median": 576.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                896,
+                896,
+                896,
+                896,
+                896,
+                896
+              ],
+              "minimum": 896,
+              "maximum": 896,
+              "median": 896.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                129024,
+                129024,
+                129024,
+                129024,
+                129024,
+                129024
+              ],
+              "minimum": 129024,
+              "maximum": 129024,
+              "median": 129024.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                576,
+                576,
+                576,
+                576,
+                576,
+                576
+              ],
+              "minimum": 576,
+              "maximum": 576,
+              "median": 576.0
+            }
+          }
+        },
+        "normal_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                2,
+                2,
+                2,
+                2,
+                2,
+                2
+              ],
+              "minimum": 2,
+              "maximum": 2,
+              "median": 2.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                256,
+                256,
+                256,
+                256,
+                256,
+                256
+              ],
+              "minimum": 256,
+              "maximum": 256,
+              "median": 256.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                11264,
+                11264,
+                11264,
+                11264,
+                11264,
+                11264
+              ],
+              "minimum": 11264,
+              "maximum": 11264,
+              "median": 11264.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                88,
+                88,
+                88,
+                88,
+                88,
+                88
+              ],
+              "minimum": 88,
+              "maximum": 88,
+              "median": 88.0
+            }
+          }
+        },
+        "normal_pythagorean_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                60,
+                60,
+                60,
+                60,
+                60,
+                60
+              ],
+              "minimum": 60,
+              "maximum": 60,
+              "median": 60.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                10064,
+                10064,
+                10064,
+                10064,
+                10064,
+                10064
+              ],
+              "minimum": 10064,
+              "maximum": 10064,
+              "median": 10064.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4032,
+                4032,
+                4032,
+                4032,
+                4032,
+                4032
+              ],
+              "minimum": 4032,
+              "maximum": 4032,
+              "median": 4032.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                7680,
+                7680,
+                7680,
+                7680,
+                7680,
+                7680
+              ],
+              "minimum": 7680,
+              "maximum": 7680,
+              "median": 7680.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                1288192,
+                1288192,
+                1288192,
+                1288192,
+                1288192,
+                1288192
+              ],
+              "minimum": 1288192,
+              "maximum": 1288192,
+              "median": 1288192.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4032,
+                4032,
+                4032,
+                4032,
+                4032,
+                4032
+              ],
+              "minimum": 4032,
+              "maximum": 4032,
+              "median": 4032.0
+            }
+          }
+        },
+        "normal_double_angle_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                61,
+                61,
+                61,
+                61,
+                61,
+                61
+              ],
+              "minimum": 61,
+              "maximum": 61,
+              "median": 61.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                10584,
+                10584,
+                10584,
+                10584,
+                10584,
+                10584
+              ],
+              "minimum": 10584,
+              "maximum": 10584,
+              "median": 10584.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4176,
+                4176,
+                4176,
+                4176,
+                4176,
+                4176
+              ],
+              "minimum": 4176,
+              "maximum": 4176,
+              "median": 4176.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                7808,
+                7808,
+                7808,
+                7808,
+                7808,
+                7808
+              ],
+              "minimum": 7808,
+              "maximum": 7808,
+              "median": 7808.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                1354752,
+                1354752,
+                1354752,
+                1354752,
+                1354752,
+                1354752
+              ],
+              "minimum": 1354752,
+              "maximum": 1354752,
+              "median": 1354752.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                4176,
+                4176,
+                4176,
+                4176,
+                4176,
+                4176
+              ],
+              "minimum": 4176,
+              "maximum": 4176,
+              "median": 4176.0
+            }
+          }
+        },
+        "affine_dyadic": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_nondyadic_rational": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_unsupported_pi": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_unsupported_sqrt5": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_trig_nonzero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                4,
+                4,
+                4,
+                4,
+                4,
+                4
+              ],
+              "minimum": 4,
+              "maximum": 4,
+              "median": 4.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                3648,
+                3648,
+                3648,
+                3648,
+                3648,
+                3648
+              ],
+              "minimum": 3648,
+              "maximum": 3648,
+              "median": 3648.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2112,
+                2112,
+                2112,
+                2112,
+                2112,
+                2112
+              ],
+              "minimum": 2112,
+              "maximum": 2112,
+              "median": 2112.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                512,
+                512,
+                512,
+                512,
+                512,
+                512
+              ],
+              "minimum": 512,
+              "maximum": 512,
+              "median": 512.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                466944,
+                466944,
+                466944,
+                466944,
+                466944,
+                466944
+              ],
+              "minimum": 466944,
+              "maximum": 466944,
+              "median": 466944.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                2112,
+                2112,
+                2112,
+                2112,
+                2112,
+                2112
+              ],
+              "minimum": 2112,
+              "maximum": 2112,
+              "median": 2112.0
+            }
+          }
+        },
+        "affine_unsupported_order": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        },
+        "affine_original_zero": {
+          "first": {
+            "iterations": 1,
+            "certified": {
+              "observations": [
+                1,
+                1,
+                1,
+                1,
+                1,
+                1
+              ],
+              "minimum": 1,
+              "maximum": 1,
+              "median": 1.0
+            },
+            "allocation_calls": {
+              "observations": [
+                157,
+                157,
+                157,
+                157,
+                157,
+                157
+              ],
+              "minimum": 157,
+              "maximum": 157,
+              "median": 157.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                41424,
+                41424,
+                41424,
+                41424,
+                41424,
+                41424
+              ],
+              "minimum": 41424,
+              "maximum": 41424,
+              "median": 41424.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                13280,
+                13280,
+                13280,
+                13280,
+                13280,
+                13280
+              ],
+              "minimum": 13280,
+              "maximum": 13280,
+              "median": 13280.0
+            }
+          },
+          "repeated": {
+            "iterations": 128,
+            "certified": {
+              "observations": [
+                128,
+                128,
+                128,
+                128,
+                128,
+                128
+              ],
+              "minimum": 128,
+              "maximum": 128,
+              "median": 128.0
+            },
+            "allocation_calls": {
+              "observations": [
+                20096,
+                20096,
+                20096,
+                20096,
+                20096,
+                20096
+              ],
+              "minimum": 20096,
+              "maximum": 20096,
+              "median": 20096.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                5302272,
+                5302272,
+                5302272,
+                5302272,
+                5302272,
+                5302272
+              ],
+              "minimum": 5302272,
+              "maximum": 5302272,
+              "median": 5302272.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                13280,
+                13280,
+                13280,
+                13280,
+                13280,
+                13280
+              ],
+              "minimum": 13280,
+              "maximum": 13280,
+              "median": 13280.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "comparisons": {
+    "parent": {
+      "normal_rational": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.7449706680317059,
+            1.3643603489170784,
+            1.3036388023000212,
+            0.7287129431052153,
+            1.048672618509892,
+            0.8440948269833161
+          ],
+          "minimum": 0.7287129431052153,
+          "maximum": 1.3643603489170784,
+          "median": 0.9463837227466041
+        },
+        "median_phase_wall_ns": {
+          "reference": 3208420.5,
+          "candidate": 3154849.0
+        },
+        "median_ns_per_query": {
+          "reference": 12.239152908325195,
+          "candidate": 12.034793853759766
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "normal_pi_plus_e": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.9893832872911856,
+            1.0908191142133938,
+            1.6955243164360914,
+            0.9446786344559623,
+            1.0118182470625459,
+            1.0089657062592072
+          ],
+          "minimum": 0.9446786344559623,
+          "maximum": 1.6955243164360914,
+          "median": 1.0103919766608764
+        },
+        "median_phase_wall_ns": {
+          "reference": 4267497.5,
+          "candidate": 4215146.5
+        },
+        "median_ns_per_query": {
+          "reference": 260.4673767089844,
+          "candidate": 257.2721252441406
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "normal_sqrt5": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.0056615682831278,
+            0.9825057294542325,
+            1.7816136205807243,
+            0.991766374550428,
+            0.9647105840202905,
+            0.9859730099686265
+          ],
+          "minimum": 0.9647105840202905,
+          "maximum": 1.7816136205807243,
+          "median": 0.9888696922595273
+        },
+        "median_phase_wall_ns": {
+          "reference": 3964408.5,
+          "candidate": 3954224.0
+        },
+        "median_ns_per_query": {
+          "reference": 241.96829223632812,
+          "candidate": 241.3466796875
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "normal_trig_nonzero": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.1722872790993035,
+            0.16408755946433534,
+            0.250164520712877,
+            0.17233477418383852,
+            0.1633644886845865,
+            0.1792588706826797
+          ],
+          "minimum": 0.1633644886845865,
+          "maximum": 0.250164520712877,
+          "median": 0.172311026641571
+        },
+        "median_phase_wall_ns": {
+          "reference": 89339640.0,
+          "candidate": 15284458.0
+        },
+        "median_ns_per_query": {
+          "reference": 2726.429443359375,
+          "candidate": 466.44464111328125
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                -22,
+                -22,
+                -22,
+                -22,
+                -22,
+                -22
+              ],
+              "minimum": -22,
+              "maximum": -22,
+              "median": -22.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                -4464,
+                -4464,
+                -4464,
+                -4464,
+                -4464,
+                -4464
+              ],
+              "minimum": -4464,
+              "maximum": -4464,
+              "median": -4464.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                -1504,
+                -1504,
+                -1504,
+                -1504,
+                -1504,
+                -1504
+              ],
+              "minimum": -1504,
+              "maximum": -1504,
+              "median": -1504.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                -2816,
+                -2816,
+                -2816,
+                -2816,
+                -2816,
+                -2816
+              ],
+              "minimum": -2816,
+              "maximum": -2816,
+              "median": -2816.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                -571392,
+                -571392,
+                -571392,
+                -571392,
+                -571392,
+                -571392
+              ],
+              "minimum": -571392,
+              "maximum": -571392,
+              "median": -571392.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                -1504,
+                -1504,
+                -1504,
+                -1504,
+                -1504,
+                -1504
+              ],
+              "minimum": -1504,
+              "maximum": -1504,
+              "median": -1504.0
+            }
+          }
+        }
+      },
+      "normal_unsupported_order": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.9763026374168176,
+            0.9861308751642301,
+            1.6912427406944117,
+            0.9387552359397844,
+            0.9856957056761849,
+            0.9562139422840872
+          ],
+          "minimum": 0.9387552359397844,
+          "maximum": 1.6912427406944117,
+          "median": 0.9809991715465012
+        },
+        "median_phase_wall_ns": {
+          "reference": 7150510.0,
+          "candidate": 7085224.5
+        },
+        "median_ns_per_query": {
+          "reference": 109.10812377929688,
+          "candidate": 108.11194610595703
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "normal_pythagorean_zero": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.0875749621395474,
+            1.0565696502289303,
+            1.9329889762214558,
+            0.8384972141353504,
+            1.0628571528301902,
+            1.084635140460287
+          ],
+          "minimum": 0.8384972141353504,
+          "maximum": 1.9329889762214558,
+          "median": 1.0737461466452385
+        },
+        "median_phase_wall_ns": {
+          "reference": 5148342.0,
+          "candidate": 5515517.5
+        },
+        "median_ns_per_query": {
+          "reference": 5027.677734375,
+          "candidate": 5386.24755859375
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "normal_double_angle_zero": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.0825552565700365,
+            1.09957585872216,
+            1.1825659196644112,
+            0.9817096755370185,
+            1.0521957871736092,
+            1.0913157521519858
+          ],
+          "minimum": 0.9817096755370185,
+          "maximum": 1.1825659196644112,
+          "median": 1.0869355043610112
+        },
+        "median_phase_wall_ns": {
+          "reference": 4959710.0,
+          "candidate": 5425273.5
+        },
+        "median_ns_per_query": {
+          "reference": 4843.466796875,
+          "candidate": 5298.11865234375
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_dyadic": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.019922842251337,
+            0.9738051568233197,
+            0.9780529741853522,
+            1.0169929798564559,
+            1.0097086310247718,
+            0.9934823389385424
+          ],
+          "minimum": 0.9738051568233197,
+          "maximum": 1.019922842251337,
+          "median": 1.001595484981657
+        },
+        "median_phase_wall_ns": {
+          "reference": 11263303.5,
+          "candidate": 11163090.5
+        },
+        "median_ns_per_query": {
+          "reference": 42.96609306335449,
+          "candidate": 42.583810806274414
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_nondyadic_rational": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.040246831220814,
+            1.0380880246782422,
+            1.0470622856700966,
+            0.9863032431604012,
+            1.1120896568731586,
+            1.0393040663765056
+          ],
+          "minimum": 0.9863032431604012,
+          "maximum": 1.1120896568731586,
+          "median": 1.0397754487986597
+        },
+        "median_phase_wall_ns": {
+          "reference": 5686065.5,
+          "candidate": 5921224.0
+        },
+        "median_ns_per_query": {
+          "reference": 21.69061851501465,
+          "candidate": 22.587677001953125
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_unsupported_pi": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.947255687681275,
+            0.9157327244450707,
+            0.9847810962207671,
+            0.9969132295837163,
+            1.3499742378077104,
+            1.0097934477322708
+          ],
+          "minimum": 0.9157327244450707,
+          "maximum": 1.3499742378077104,
+          "median": 0.9908471629022417
+        },
+        "median_phase_wall_ns": {
+          "reference": 5006772.0,
+          "candidate": 4962390.0
+        },
+        "median_ns_per_query": {
+          "reference": 76.39727783203125,
+          "candidate": 75.72006225585938
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_unsupported_sqrt5": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.134904983700071,
+            1.0838146325053004,
+            1.004485414789466,
+            1.0271554114432475,
+            1.0237285541983847,
+            1.0373052280839143
+          ],
+          "minimum": 1.004485414789466,
+          "maximum": 1.134904983700071,
+          "median": 1.032230319763581
+        },
+        "median_phase_wall_ns": {
+          "reference": 5293867.5,
+          "candidate": 5367662.5
+        },
+        "median_ns_per_query": {
+          "reference": 80.77800750732422,
+          "candidate": 81.9040298461914
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_trig_nonzero": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            1.1007648678054935,
+            1.1049782564851345,
+            1.1095062955949297,
+            1.0931123054905247,
+            1.0842848406159944,
+            1.0699665917169616
+          ],
+          "minimum": 1.0699665917169616,
+          "maximum": 1.1095062955949297,
+          "median": 1.096938586648009
+        },
+        "median_phase_wall_ns": {
+          "reference": 3016488.5,
+          "candidate": 3308798.0
+        },
+        "median_ns_per_query": {
+          "reference": 736.4473876953125,
+          "candidate": 807.81201171875
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_unsupported_order": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.9485301452611956,
+            0.9608755457395775,
+            0.9644484243528159,
+            0.9582669841324165,
+            0.9415304933636032,
+            0.981817859232652
+          ],
+          "minimum": 0.9415304933636032,
+          "maximum": 0.981817859232652,
+          "median": 0.959571264935997
+        },
+        "median_phase_wall_ns": {
+          "reference": 8429097.5,
+          "candidate": 8046779.0
+        },
+        "median_ns_per_query": {
+          "reference": 128.6178207397461,
+          "candidate": 122.78410339355469
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      },
+      "affine_original_zero": {
+        "same_repeated_query_certification_counts": true,
+        "candidate_over_reference_wall_ratios": {
+          "observations": [
+            0.9627447968635676,
+            0.9344493316758103,
+            0.9451052285284952,
+            0.980206643420295,
+            0.9537123693378221,
+            0.9551206762725468
+          ],
+          "minimum": 0.9344493316758103,
+          "maximum": 0.980206643420295,
+          "median": 0.9544165228051844
+        },
+        "median_phase_wall_ns": {
+          "reference": 19974517.0,
+          "candidate": 19064009.0
+        },
+        "median_ns_per_query": {
+          "reference": 19506.3642578125,
+          "candidate": 18617.1962890625
+        },
+        "both_median_phase_times_at_least_two_ms": true,
+        "predeclared_overhead_flag": false,
+        "interpretation": "inconclusive under the predeclared screen",
+        "candidate_minus_reference_resource_deltas": {
+          "first": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          },
+          "repeated": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0,
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0.0
+            }
+          }
+        }
+      }
+    }
+  },
+  "overhead_flags": [],
+  "binary_raw_bytes": {
+    "parent-time": 6072520,
+    "parent-memory": 6079120,
+    "candidate-time": 6074200,
+    "candidate-memory": 6080808
+  },
+  "time_binary_text_bytes": {
+    "parent": 1105321,
+    "candidate": 1105433
+  },
+  "limits": [
+    "No first-query single-call timing or allocator-instrumented timing is used as performance evidence.",
+    "Repeated timing includes explicit result and monotonicity checks; this is not a universal API latency bound.",
+    "Both implementations must preserve the same exact expected answers and available facts; all repeated certification counts must match.",
+    "All six fixed samples are included. This changed candidate has new fixed repetition counts on five inexpensive cases; no samples from prior experiments are reused or pooled.",
+    "Requested allocation bytes are not stack-byte usage, allocator usable sizes or RSS.",
+    "The fourteen prepared recipes are finite cost cases, not an exhaustive representation matrix, formal proof or directed campaign.",
+    "A missing flag means inconclusive under this rule, not no regression. Runtime admission remains open."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

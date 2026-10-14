@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 37176      4344
+.rela.plt                    48     41520
+.gcc_except_table        111744     41568
+.rodata                   62128    153312
+.eh_frame_hdr             12644    215440
+.eh_frame                 85828    228088
+.text                   1105433    318016
+.init                        27   1423452
+.fini                        13   1423480
+.plt                         48   1423504
+.tdata                      448   1427648
+.tbss                       896   1428096
+.data.rel.ro              20720   1428096
+.fini_array                   8   1448816
+.init_array                  16   1448824
+.dynamic                    480   1448840
+.got                       4080   1449320
+.got.plt                     40   1453400
+.relro_padding              640   1453440
+.tm_clone_table               0   1457536
+.data                    197480   1457536
+.bss                        208   1655016
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6442         0
+.debug_info             1141087         0
+.debug_aranges            32400         0
+.debug_ranges            517808         0
+.debug_str              1921963         0
+.debug_line              474863         0
+Total                   5739031
+
+

@@ -1,0 +1,22 @@
+{
+  "parent-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-time",
+    "sha256": "8f01f840460c3f0ddbbb242520ca86bd7506614ce71c9e926c7bd48cd0723058",
+    "bytes": 6072520
+  },
+  "parent-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/parent-memory",
+    "sha256": "55cabbd5d6eba02392b1243e8ad8240d2a8af175cb260620b6f0a2cea7bd84eb",
+    "bytes": 6079120
+  },
+  "candidate-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-time",
+    "sha256": "5c845b9d48bcd4d1d18b86532d7eebada482f03ccaaff86c00b56f70ecf7238f",
+    "bytes": 6074200
+  },
+  "candidate-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-scalar-costs-v1/candidate-memory",
+    "sha256": "f6878f6fdeee385262b9502a52d08e303f8f587990023dd8da3ffae71d75e8ce",
+    "bytes": 6080808
+  }
+}
