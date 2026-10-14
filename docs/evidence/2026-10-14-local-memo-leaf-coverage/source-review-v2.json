@@ -1,0 +1,29 @@
+{
+  "status": "v2-source-delta-reviewed-before-qualification",
+  "preparation_sha256": "5f4c0360563c37c43310005aafd78db6d54101c080e8b5c16833a77f1a03040e",
+  "source_patch_sha256": "9d4b462450685e886db40021a3add69452645175219a53a89f699a40ffb1a29c",
+  "source_files": 10138,
+  "changed_or_added_paths": 5,
+  "all_five_source_paths_reviewed": true,
+  "all_three_drivers_reviewed": true,
+  "prior_review_sha256": "b11f527bd5ff0a2d2fecadb75c5ebd384269d126bc9ab0d8d66ebb0cdcc7cd77",
+  "failed_v1_sha256": "5dd45edbeb40a9095f0989e85a37acf403bc84de4020b373a2f05ca5c612381e",
+  "source_comparison": {
+    "identical_to_v1_paths": 10137,
+    "only_changed_path": "crates/hyperreal/src/computable/node/memo_leaf_trace_tests.rs",
+    "all_three_drivers_byte_identical": true,
+    "inverse_declared_edits_recover_qualified_parent": true
+  },
+  "source_review": [
+    "Read the complete V1-to-V2 source difference: one assertion now reads the raw node's EvaluationCache cell and reports its bucket. The two added comments explain process-wide constant warming.",
+    "EvaluationCache::cell reads the local AtomicPtr without initialization. None proves that no local approximation, tower or retained polynomial cell was created.",
+    "The failed V1 test and all 34 prior files, source snapshot, unit binary and libraries remain preserved. No V1 count samples ran.",
+    "All existing observation code and ownership, budget, replay, retry and publication order are byte-identical to V1. The metadata module, observer, fallback control and driver header were reviewed again.",
+    "The five-path overlay still exactly reverses to the qualified classifier parent. The old 27-event module and actual cache reader remain byte-identical.",
+    "Formatting passed. All 884 unit results, strict Clippy and fixed count comparisons remain qualification gates."
+  ],
+  "qualification_executed": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
