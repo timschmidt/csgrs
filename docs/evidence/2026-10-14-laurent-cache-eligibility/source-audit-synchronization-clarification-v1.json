@@ -1,0 +1,28 @@
+{
+  "status": "clarify-read-lock-elision-without-rewriting-frozen-audit",
+  "original_audit_sha256": "443a54e38cf6a4203b9846be8b14cd6d6f177ce53c0362af8d8fd9f702b91163",
+  "original_statement": "Concurrent approximation/tower publication cannot make an ineligible node eligible; no cache fields, synchronization or serialization format change.",
+  "correction": "The cache fields, synchronization implementation and serialization format are unchanged. The candidate changes synchronization traffic: it skips the cache pointer load and any read-lock acquisition for ineligible node kinds. Every eligible proof read and every publication retain the original synchronized implementation.",
+  "reason_the_skip_is_sound": "The sole production publication site uses the same eight-kind predicate as the candidate reader. Node shape is immutable and deserialization starts with an empty cache. Other payloads cannot create a Laurent certificate for an ineligible node. This argument does not assume that locking behavior is unchanged.",
+  "additional_source_review": {
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": [
+      "shared_constant_kind: direct immutable Constant match",
+      "exact_rational: direct immutable One/Int/Ratio match"
+    ],
+    "crates/hyperreal/src/computable/node/exp_trig.rs": [
+      "atan_argument, asin_argument, acos_argument: immutable kind/argument matches; any rational argument is reconstructed from the immutable payload"
+    ]
+  },
+  "source_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "887aedc2f4d5b1969f12f19d622bfee76cbc7a8ab650bbb037f2070dedc1dcae",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+    "crates/hyperreal/src/computable/node/exp_trig.rs": "28d4e515eb4f3412ff4936c06b327ab27399087d349b18694436caae14277b1d"
+  },
+  "other_cache_payloads": "Reads made by actual approximation/tower queries still use their original methods. The new coexistence control uses valid approximate/tower payloads and verifies answers and preservation; existing concurrent publication tests remain in the 879-test qualification.",
+  "measurement_limit": "No new event instrumentation counts skipped empty-pointer checks versus skipped nonempty-cell read locks; neither the number nor timing share is claimed.",
+  "original_audit_and_executed_protocols_preserved": true,
+  "runtime_change_required": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

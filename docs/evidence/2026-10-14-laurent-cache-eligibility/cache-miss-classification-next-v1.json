@@ -1,0 +1,25 @@
+{
+  "status": "diagnostic-source-audit-pending-before-any-new-runtime-variant",
+  "basis": "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-interpretation-v1.json",
+  "question": "How many retained-cache reads are hits, misses on an empty evaluation pointer, or misses on an initialized evaluation cell, split by publication-eligible node kind?",
+  "reason": "The unconditional node-kind predicate preserves correctness but slows the first mixed-field-decline query by about 8% in all six pairs versus its parent. Prior counters showed many opaque misses but did not distinguish a cheap empty-pointer return from a synchronized cell read. A different guard placement is not justified until that distinction is measured.",
+  "next_work": [
+    "Review the prior 27-event counter overlay and actual cache reader so new count categories describe the same read, not a separately raced before/after peek.",
+    "Keep the qualified parent runtime semantics unchanged in an isolated diagnostic overlay. Preserve every original sample and rejected source.",
+    "Classify retained lookups by the same audited immutable kind and actual empty-pointer / initialized-cell / hit result. Preserve total lookups, normalizer work, memo activity, publications, original retries and public arithmetic counts.",
+    "Include empty and initialized-cache controls using valid approximate/tower payloads, plus proof publication/reuse after clones are dropped. Retain the existing P4, concurrent publication and fallback controls.",
+    "Freeze a separate count-only protocol over all original rational, quadratic and integer families, including the mixed-field first/warm/cloned, pi-transport warm and opaque-query phases. Instrumented elapsed times are not performance evidence.",
+    "Use the completed counts and the frozen cost tradeoff to decide whether any different read placement deserves a new runtime prototype. Do not immediately retry another branch or helper layout."
+  ],
+  "constraints": [
+    "Never skip eligible proof reads based on current owner count or query budget.",
+    "Do not optimize opaque-copy rejection as the cause of a workload in which its counter is zero.",
+    "Do not infer timing share, frequency, instruction count or code-layout causality from event counts alone.",
+    "Keep all budgets, exact/Unknown/error contracts, ownership and original native deadlines.",
+    "Keep the full properties plan and all original pending native work in scope."
+  ],
+  "diagnostic_prepared": false,
+  "new_runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

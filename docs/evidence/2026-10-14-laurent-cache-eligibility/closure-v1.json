@@ -1,0 +1,100 @@
+{
+  "status": "qualified-candidate-rejected-on-closed-scalar-costs-all-artifacts-preserved",
+  "qualification_assessment_sha256": "bb659383856afd650098e7b995a71cdf24990c7ce9e4f1b9078770daf2c04cf1",
+  "scalar_cost_result_sha256": "b3a19b9e706f8d482e00b3f5bb78358858dcb538bafc50d186f34e89837149d9",
+  "scalar_cost_assessment_sha256": "4b452e35467fa04cc8aed19252d3cb95946d596cd8f189592bbf6a5c1d4a1ec5",
+  "scalar_cost_interpretation_sha256": "fc871836bdd4513ec454893baa8f2e89b6f3f35a0527c3350cdc3ac088ef764f",
+  "next_diagnostic_audit_sha256": "b51a27ba476ad21d62502724366a4758f1f79fb5d5758e2e840ff3a11650404e",
+  "synchronization_clarification_sha256": "3b74dab06f41056a4f030e632ecfa16df8f0e973f06375338f06d44e00654460",
+  "all_guard_checks_passed_in_terminal_successful_qualification_assessment_cost_runner_cost_assessment_and_interpreter": true,
+  "main_runtime_files_unchanged": 1134,
+  "original_pending_native_files_unchanged": 35,
+  "new_cost_binaries": {
+    "candidate-integer-memory": {
+      "sha256": "01cad5ddb7a8e78962d01ecca6255f8df0ffedbf4fa48ed67a7fb664beadda84",
+      "bytes": 6056272
+    },
+    "candidate-integer-time": {
+      "sha256": "b8652dd136478b66537b24bca3d26dce77d4a6d232d6f1550ed5942fa48edca9",
+      "bytes": 6053352
+    },
+    "candidate-quadratic-memory": {
+      "sha256": "7140393c059458171b4b37ae23d0789d22b64014e1e291dae21f116812cb7614",
+      "bytes": 6161024
+    },
+    "candidate-quadratic-time": {
+      "sha256": "60d5572be791ebf75a3b04833f14407a754eb2f7b4bebda63e8b206dfc625b8d",
+      "bytes": 6157752
+    },
+    "candidate-rational-memory": {
+      "sha256": "63a847ab6e67dc9605c71cf26f7363df13af1629db7ab11cfb7add16e5d88a24",
+      "bytes": 6184600
+    },
+    "candidate-rational-time": {
+      "sha256": "c3003553915b93561462e407e3ba437e9f42a1862cd7b605213e598109482406",
+      "bytes": 6182712
+    }
+  },
+  "new_production_libraries": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "sha256": "6cc1aa1a825948626f73b549fbd5aeea15bbc243650b7aae26476e30f702d8e8",
+      "bytes": 11714584,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperreal/Cargo.toml"
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+      "sha256": "ef0285fa1ead6cbae68f25f8a53a1bfa9d3c9953e4d965694c34df90188d7378",
+      "bytes": 4007500,
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperlimit/Cargo.toml"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhypercurve.rlib",
+      "sha256": "77f2c2d2b897013a0801861a248489eb1b42c2880d1a4c6b0c38394d9ef5d966",
+      "bytes": 48757790,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hypercurve/Cargo.toml"
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/libhyperdrc.rlib",
+      "sha256": "3f5c94633ff3aada02dcbd3dd6cca8849039bfbdb8ea1ba8089625b3ace4a171",
+      "bytes": 26694830,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/candidate/source/crates/hyperdrc/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "16acc78f03eb516867def84bf21458727f096e289857adba66a11b684af4062b",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "non_current_work_ledger_unchanged": true,
+  "new_native_gates_run": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
