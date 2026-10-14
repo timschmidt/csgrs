@@ -1,0 +1,14 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/target/release/libcsgrs.rlib",
+    "sha256": "8b9748abf403fccc74ed158a789408f4d8eb4550a3538b6ea3284a7a666bda5a",
+    "features": []
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "ff15410df1085ff8f6c37a5b4cb7127fff852e3706d0ed5fa9f02f3831404c6d",
+    "features": [
+      "default"
+    ]
+  }
+}

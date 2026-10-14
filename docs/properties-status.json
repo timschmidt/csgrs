@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "warm-row-instability-reproduced-in-both-candidates",
+      "status": "warm-row-instability-traced-to-lossy-eye-ranking",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5097,9 +5097,12 @@
       "sphere_warm_replay_both_candidates_change_118_original_medium_faces": true,
       "sphere_warm_trace_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-scope-v2.json",
       "sphere_warm_trace_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/trace_sphere_warm_v2.py",
-      "sphere_warm_trace_executed": false,
+      "sphere_warm_trace_executed": true,
       "sphere_warm_trace_v1_executed": true,
-      "sphere_warm_trace_v1_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-closure-v1.json"
+      "sphere_warm_trace_v1_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-closure-v1.json",
+      "sphere_warm_trace_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-v2/result.json",
+      "sphere_warm_trace_analysis": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-analysis-v2/result.json",
+      "sphere_warm_trace_interpretation": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-interpretation-v2.json"
     }
   },
   "status_meanings": {

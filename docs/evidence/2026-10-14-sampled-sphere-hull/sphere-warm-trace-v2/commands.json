@@ -1,0 +1,103 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-v2.patch"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.0029743281193077564,
+    "stdout_sha256": "e415514c6c78546ba38f6dfb70830a8cb19e690d1faa6dc00222315b7ea88c64",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 10.587260172702372,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 6.496566065587103,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "93652c4bd34dcdf5366d8a87d307084e13d1c91e631ceaecb562102866c025eb"
+  },
+  {
+    "name": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 71.83668742515147,
+    "stdout_sha256": "2d15e31be4a51afd63f284e308434708df9b8e9a66357a74f69de3add1b41ac6",
+    "stderr_sha256": "dc1b697e7a0211c3d45a2ec4435efa2e3f5cdaa0f4ba6487719f3436eea98824"
+  },
+  {
+    "name": "link",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_warm_replay_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/probe"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 0.21387391816824675,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-trace-v2/probe",
+      "original_medium"
+    ],
+    "exit_code": 0,
+    "diagnostic_process_wall_seconds": 46.025335596874356,
+    "stdout_sha256": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+    "stderr_sha256": "cc919ae108db0e30e19cda1ff39345afb3c1cacb29f08829edb61e247040d8fd"
+  }
+]

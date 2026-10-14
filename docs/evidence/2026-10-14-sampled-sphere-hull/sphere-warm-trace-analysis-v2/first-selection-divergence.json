@@ -1,0 +1,73 @@
+{
+  "selection_index": 70,
+  "cold": {
+    "face": [
+      364,
+      318,
+      363
+    ],
+    "outside": [
+      334,
+      333,
+      349,
+      348
+    ],
+    "eye": 349,
+    "score_bits": 4607564175010200898
+  },
+  "warm": {
+    "face": [
+      364,
+      318,
+      363
+    ],
+    "outside": [
+      334,
+      333,
+      349,
+      348
+    ],
+    "eye": 334,
+    "score_bits": 4607564175010200900
+  },
+  "same_face": true,
+  "same_outside_set": true,
+  "crossed_coordinate_and_outside_order_choices": [
+    {
+      "coordinates": "cold",
+      "outside_order": "cold",
+      "eye": 349,
+      "score_bits": 4607564175010200898,
+      "tied_maximum_points_in_iteration_order": [
+        349
+      ]
+    },
+    {
+      "coordinates": "cold",
+      "outside_order": "warm",
+      "eye": 349,
+      "score_bits": 4607564175010200898,
+      "tied_maximum_points_in_iteration_order": [
+        349
+      ]
+    },
+    {
+      "coordinates": "warm",
+      "outside_order": "cold",
+      "eye": 334,
+      "score_bits": 4607564175010200900,
+      "tied_maximum_points_in_iteration_order": [
+        334
+      ]
+    },
+    {
+      "coordinates": "warm",
+      "outside_order": "warm",
+      "eye": 334,
+      "score_bits": 4607564175010200900,
+      "tied_maximum_points_in_iteration_order": [
+        334
+      ]
+    }
+  ]
+}

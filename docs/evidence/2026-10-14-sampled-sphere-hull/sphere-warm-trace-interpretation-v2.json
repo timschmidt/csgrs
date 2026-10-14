@@ -1,0 +1,35 @@
+{
+  "complete": true,
+  "trace_result_sha256": "cbd40a72ac243e5bc3198235036f0893be76480fb2b2471c9d6428f326c2dce9",
+  "analysis_result_sha256": "520a9f783298c0a6999ddde1d9fd7241df5b6c9bd01c7748aeaf647a55aa3248",
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "first_selection_divergence_zero_based": 70,
+  "face_original_indices": [
+    364,
+    318,
+    363
+  ],
+  "outside_original_indices_identical": [
+    334,
+    333,
+    349,
+    348
+  ],
+  "cold_eye": 349,
+  "warm_eye": 334,
+  "changed_coordinate_components": 32,
+  "change_magnitude": "One f64 encoding step in absolute magnitude for each changed coordinate.",
+  "all_1434_native_selected_eyes_and_float_scores_reconstructed": true,
+  "mechanism": "The generic borrowed lossy conversion reads shared refinement state and can return an adjacent valid approximation. Convex-hull eye selection ranks candidates by determinants of these approximations. At the first differing eye, face and outside iteration order are identical; changing only coordinate bits reproduces the changed selection. Later exact predicates still produce the same geometric hull with different diagonals.",
+  "source_observations": [
+    "crates/hypermesh/src/convex_hull.rs computes approximate_points from cloned exact input coordinates, then pop_farthest_outside uses approximate_face_distance as its ranking.",
+    "crates/hyperreal/src/real/convert.rs to_f64_lossy has an independent primitive cache per Real, while generic Computable approximation caches are shared by clones.",
+    "The borrowed lossy conversion contract does not promise cache-independent bits. Scalar facts were not observed to contradict or weaken."
+  ],
+  "next_candidate": "Retain distance ranking only when every coordinate has an immutable lossless finite dyadic f64 representation. For other clouds, select the lowest original point index from the certified outside set. Approximate BVH partitioning may still affect work, but cannot select the eye or alter rows when all predicates succeed.",
+  "candidate_evaluation_required": "This is a proposed determinism repair, not an optimization or admitted implementation. Non-dyadic outputs may change relative to both old cold and warm rows; retain all old rows, independently prove the new full hulls, and measure native cost before deciding admission. No rounding epsilon or display geometry is introduced.",
+  "not_a_cost_trial": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

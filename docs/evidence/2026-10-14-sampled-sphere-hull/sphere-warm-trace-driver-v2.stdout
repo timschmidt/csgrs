@@ -1,0 +1,13 @@
+{"start": "apply"}
+{"finished": "apply", "exit_code": 0}
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "clippy"}
+{"finished": "clippy", "exit_code": 0}
+{"start": "build"}
+{"finished": "build", "exit_code": 0}
+{"start": "link"}
+{"finished": "link", "exit_code": 0}
+{"start": "original_medium"}
+{"finished": "original_medium", "exit_code": 0}
+{"complete": true, "result_sha256": "cbd40a72ac243e5bc3198235036f0893be76480fb2b2471c9d6428f326c2dce9"}

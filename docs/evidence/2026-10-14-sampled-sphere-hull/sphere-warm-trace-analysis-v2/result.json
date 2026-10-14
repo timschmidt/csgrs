@@ -1,0 +1,45 @@
+{
+  "complete": true,
+  "trace_driver_terminal_exit_code": 0,
+  "commands_all_zero": 6,
+  "trace_result_sha256": "cbd40a72ac243e5bc3198235036f0893be76480fb2b2471c9d6428f326c2dce9",
+  "assessor_sha256": "178f48108fac4c482b9ca40f635f9ab0701838a4123b9e6b7ac921f05316b21d",
+  "all_frozen_sources_inputs_and_binaries_rechecked": true,
+  "full_stdout_matches_uninstrumented_original_medium": true,
+  "coordinate_components_with_changed_bits": 32,
+  "warm_and_replay_coordinate_bits_equal": true,
+  "seeds_equal": true,
+  "phase_bvh_available": [
+    true,
+    true,
+    true
+  ],
+  "phase_face_counts": [
+    2308,
+    2309,
+    2309
+  ],
+  "phase_bvh_to_linear_fallback_counts": [
+    0,
+    0,
+    0
+  ],
+  "phase_selection_counts": [
+    478,
+    478,
+    478
+  ],
+  "every_native_eye_and_selected_score_reconstructed_from_logged_data": true,
+  "first_different_eye_or_face_index": 70,
+  "first_different_selection_same_face": true,
+  "first_different_selection_same_outside_set": true,
+  "warm_and_replay_selection_traces_equal": true,
+  "artifacts_sha256": {
+    "coordinate-differences.json": "ac32e8220138d9531ee7723714b211364f8bbba40a100862d46f2ad9e994e6bb",
+    "first-selection-divergence.json": "e885f4d70ab9e845f593265a213db4284639b64dad32748994e050e8dae4d8c9"
+  },
+  "limits": "Reconstruction concerns floating scheduling data and point order only; it is not an exact-geometry predicate or a repair. All native outputs match the independently proved reference hulls.",
+  "not_a_cost_trial": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
