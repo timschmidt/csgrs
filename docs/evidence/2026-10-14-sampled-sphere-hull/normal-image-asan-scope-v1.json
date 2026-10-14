@@ -1,0 +1,35 @@
+{
+  "objective": "Exercise the unchanged normal-form filter candidate and original sphere replay under AddressSanitizer after the fixed native cost trials have closed.",
+  "source": "target/sphere-normal-image-v1/source",
+  "commands": 6,
+  "expected_exit_codes": [0, 0, 66, 0, 0, 0],
+  "expected_control_exit_code": 66,
+  "prerequisites": [
+    "The twelve-command broader qualification completed successfully.",
+    "All 58 native cost commands completed, with no predeclared cost-increase flag.",
+    "All 29 native resource commands and their assessment completed."
+  ],
+  "checks": [
+    "Format and compile a standalone deliberately invalid heap-write control.",
+    "Require the control to exit 66 with an ASan heap-buffer-overflow and one-byte write diagnostic.",
+    "Default and all-feature release library and integration tests for hyperreal, hyperlimit and hypermesh, with ASan enabled for target Rust code.",
+    "The existing native_hull_determinism test, including all four full original sampled spheres and their cold/warm/replay rows."
+  ],
+  "target": "x86_64-unknown-linux-gnu",
+  "compiler": "Require exactly the compiler recorded for the frozen native feasibility candidate.",
+  "sanitizer_flags": ["-Zsanitizer=address", "-Cforce-frame-pointers=yes"],
+  "rustc_bootstrap": "1; explicitly enables sanitizer compiler support on the recorded stable toolchain.",
+  "asan_options": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+  "command_wall_limit_seconds": 1800,
+  "source_mutations_allowed": false,
+  "extension_filtering_or_retry_allowed": false,
+  "serialization": "Run only after every earlier build, test and measurement has terminated. Stop at the first unexpected exit or artifact mismatch; preserve the entire run.",
+  "limits": [
+    "The deliberate control failure is expected evidence that sanitizer detection works, not a library defect.",
+    "Target Rust crates are compiled with ASan. The standard library is not rebuilt; host proc macros and native dependencies are not claimed to be instrumented.",
+    "These are existing finite tests, not a directed fuzz campaign or an exhaustive memory-safety proof.",
+    "Ignored tests remain ignored. No complete workspace CI, formal verification, cost inference or runtime admission is claimed."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
