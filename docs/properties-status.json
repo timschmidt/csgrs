@@ -4646,7 +4646,20 @@
       "read_guard_lane_closed": true,
       "new_timing_or_allocation_samples": 0,
       "new_native_gates_run": false,
-      "next_step": "Audit distinct retained-normalizer work and callers against existing memo, projection and native-profile evidence before any new runtime prototype."
+      "next_step": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
+      "next_source_audit_complete": true
+    },
+    "local_memo_leaf_coverage": {
+      "status": "source-audit-complete-leaf-memo-coverage-question-ready-for-protocol",
+      "source_audit": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
+      "question": "Which existing local memo stores and hits copy exact leaf forms, and what result shapes do they carry?",
+      "diagnostic_prepared": false,
+      "diagnostic_executed": false,
+      "prior_closed_certificate_memo_rejection_preserved": true,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "runtime_candidate": false,
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {

@@ -1,0 +1,226 @@
+{
+  "status": "source-audit-complete-leaf-memo-coverage-question-ready-for-protocol",
+  "basis": "The cache-reader classification is closed: every observed miss is an empty-pointer return. Keep the read guard rejected and investigate a distinct existing copy site.",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+  "parent_source_files": 10135,
+  "parent_preparation": "docs/evidence/2026-10-14-laurent-cache-eligibility/preparation-v1/protocol.json",
+  "diagnostic_parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-miss-classification-v2/source",
+  "diagnostic_parent_files": 10136,
+  "source_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "e57623e7b4f8c6293b9e754648743836a7d4b567a3290cd3d6e7dfc8ea91cf94",
+    "crates/hyperreal/src/computable/node/representation.rs": "21d051e9be022fd12304999eb68c472d43df0ec253ea900bc353f6f12de6d40e",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+    "crates/hyperreal/src/computable/approximation/representation.rs": "c18e32769063a4afb47c77f67591c31572ca28afcead8a3172073305f6bf54e8"
+  },
+  "reviewed_source_sections": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "sections": [
+        "RadicalCoefficient fields and Clone, rational/atom construction",
+        "PiLaurentPolynomial fields and Clone, closed conversion and monomial construction",
+        "project_pi_laurent_polynomial and complete retained/original recursive normalizer",
+        "shared-result memo insertion followed by persistent publication"
+      ]
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "sections": [
+        "Node immutable approximation and construction",
+        "complete EvaluationCache implementation, publication and destruction"
+      ]
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "sections": [
+        "shared_constant_kind",
+        "complete exact_quadratic_surd_parts projection",
+        "exact_rational leaf matching"
+      ]
+    },
+    {
+      "path": "crates/hyperreal/src/computable/approximation/representation.rs",
+      "sections": [
+        "all 60 Approximation variants",
+        "all 18 SharedConstant variants"
+      ]
+    }
+  ],
+  "reviewed_evidence_sha256": {
+    "docs/evidence/2026-10-14-laurent-cache-miss-classification/assessment-v2.json": "fef874770d76cca0871c8226161434de78f6135e864cb2ee10bccd4f10037a51",
+    "docs/evidence/2026-10-14-laurent-cache-miss-classification/interpretation-v1.json": "3391053546454a76be9786c67bf63054cad7ba4414e3ddc7882b9861d56e944b",
+    "docs/evidence/2026-10-14-laurent-cache-miss-classification/closure-v1.json": "7b0b350b94ce94bc228fb020ed82cb8dcdf777d8405f66eb645b6457e0d692b6",
+    "docs/evidence/2026-10-13-closed-certificate-memo/scope-v1.json": "3ef976b73edc5e07ae9b705105f08d4901d1ea2db5c5b3b777e9159743080443",
+    "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/candidate.patch": "d9ed441a34a873fa6868f8f332fc6b19a9c6ea2165f688dc6bb0e743a44df0cf",
+    "docs/evidence/2026-10-13-closed-certificate-memo/decision-v1.json": "8cdfb2c643509569a4a6a6e1d9aeb6969bd81eeb08a2e098049043821d6e6db2",
+    "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json": "d8b7db17f1752eb68794561ab88e6e8fe0e41e8bee92e9aac600ee01485b36ba",
+    "docs/evidence/2026-10-13-native-normal-form-attribution/assessment-v1.json": "0425a84efda03164761df7dee93a3816140d179b9e5aa53cd6567174999be02a",
+    "docs/evidence/2026-10-13-native-normal-form-attribution/decision-v1.json": "336fb70b758e09664b699c238d5d3f3453747d553b04a5fb48921305c6edbcb1",
+    "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json": "59dba120ca62e95130ec78d092b071f923f752e0971f17da32216ee5dbbabb86",
+    "docs/evidence/2026-10-13-radical-union-storage/decision-v1.json": "79ddd87fa0f0fcbbee4edb16deae384543184a5b2c82960f7bafbe81ee8e85eb"
+  },
+  "evidence_review_scope": "Full current 68-phase summaries and relevant source sections; prior memo scope and complete candidate patch; prior decision/status/limits and selected profile groups/callers. Historical raw timing arrays were not rerun or all reread for this audit.",
+  "source_findings": [
+    "A retained visit reads the persistent certificate before querying the local memo, then checks depth/work limits. A memo hit clones its stored Option<PiLaurentPolynomial> and returns without charging normalizer work.",
+    "On a shared completed result, the current tail clones the result into the query memo before the separate eight-kind persistent publication attempt. Int, One, Ratio and Constant can enter the local memo but are not persistent-publication kinds.",
+    "Int, One and Ratio exact leaves construct an empty or single rational term with no Computable owners. Their local polynomial Clone copies the term Vec when nonempty. The number of executed leaf memo stores/hits is not known from aggregate event totals.",
+    "Only five SharedConstant values have direct closed Laurent construction here: Pi, InvPi, Tau, Sqrt2 and Sqrt3. The two square-root constants invoke radical reduction during construction; they must not be conflated with the three rational-coefficient pi monomials. Other constants remain a separate bucket.",
+    "Opaque memo payloads can retain Computable owners and affect later Arc sharing. Removing or replacing those owners can change recognition and publication. The mandatory first-memo drop before the original retry remains essential.",
+    "The quadratic projection consumes the completed polynomial and borrows its vectors to select an exact empty/rational/single-radical result. It cannot decide a general expression from a narrow intermediate shape before cancellation.",
+    "No cache read may be moved behind memo or budgets in this investigation. Any future leaf memo representation would have to preserve zero-budget memo replay, entry identity/order, exact values, ownership and concurrent proof visibility."
+  ],
+  "measured_aggregate_events_per_classified_process": {
+    "rational": {
+      "local_memo_hit": 86016,
+      "local_memo_store": 73728,
+      "normalizer_work_visit": 874194,
+      "retained_hit": 81920,
+      "original_visit": 0,
+      "project_retry_original": 0
+    },
+    "quadratic": {
+      "local_memo_hit": 49152,
+      "local_memo_store": 64951,
+      "normalizer_work_visit": 642497,
+      "retained_hit": 48568,
+      "original_visit": 0,
+      "project_retry_original": 0
+    },
+    "integer": {
+      "local_memo_hit": 0,
+      "local_memo_store": 12288,
+      "normalizer_work_visit": 161499,
+      "retained_hit": 0,
+      "original_visit": 0,
+      "project_retry_original": 0
+    }
+  },
+  "focus_observations": [
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_first",
+      "iterations": 4096,
+      "events": {
+        "local_memo_hit": 16384,
+        "local_memo_store": 8192,
+        "store_published": 0,
+        "closed_copy_attempt": 0,
+        "closed_copy_declined_opaque": 0
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_warm",
+      "iterations": 4096,
+      "events": {
+        "local_memo_hit": 16384,
+        "local_memo_store": 8192,
+        "store_published": 0,
+        "closed_copy_attempt": 0,
+        "closed_copy_declined_opaque": 0
+      }
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_cloned",
+      "iterations": 4096,
+      "events": {
+        "local_memo_hit": 16384,
+        "local_memo_store": 12288,
+        "store_published": 4096,
+        "closed_copy_attempt": 4096,
+        "closed_copy_declined_opaque": 0
+      }
+    },
+    {
+      "suite": "quadratic",
+      "phase": "mixed_field_decline_first",
+      "iterations": 4096,
+      "events": {
+        "local_memo_hit": 0,
+        "local_memo_store": 0,
+        "store_published": 0,
+        "closed_copy_attempt": 0,
+        "closed_copy_declined_opaque": 0
+      }
+    }
+  ],
+  "what_the_counts_do_not_establish": [
+    "The existing counters do not assign memo hits/stores to immutable node kind, constant subtype or stored result shape.",
+    "Ineligible empty cache lookups are not necessarily memo stores or hits. Do not assign their counts to leaf memo copies.",
+    "The fixed scalar suites execute no original retry. Separate controls must cover both RETAIN modes and the preserved fallback.",
+    "Mixed-field first query has zero local memo events; a memo hypothesis cannot explain or remove that row through direct memo work.",
+    "Counts do not establish allocation-call savings, total-memory savings, timing share or expected performance."
+  ],
+  "prior_memo_exclusion": {
+    "path": "docs/evidence/2026-10-13-closed-certificate-memo/decision-v1.json",
+    "mechanism": "Moved persistent publication before local insertion and omitted the local copy only after successful closed publication.",
+    "result": "Rejected: three scalar, five endpoint and eighteen broad rows slower in all five pairs; full-board assertion failed at 132.328922579 worker CPU seconds / 120.",
+    "distinction": "The new question concerns exact leaf memo entries which cannot publish persistently. No earlier memo mutation or storage candidate is inherited."
+  },
+  "prior_storage_exclusions": [
+    {
+      "path": "docs/evidence/2026-10-13-temporary-laurent-storage/decision-v1.json",
+      "status": "reject-all-three-nonunion-inline-storage-variants",
+      "decision": "Reject all three tested runtime variants. Allocation-call reductions are accompanied by repeated scalar slowdowns, larger temporary layouts, requested-byte/peak increases and larger probe executables. These data do not support advancing the variants to native admission. Performance ranks above memory and binary size; isolated heap savings do not justify the observed regressions."
+    },
+    {
+      "path": "docs/evidence/2026-10-13-radical-union-storage/decision-v1.json",
+      "status": "reject-radical-union-storage-feature-only-change-not-admitted",
+      "decision": "Reject the radical-only union-storage candidate. It preserves the seven measured layouts and reduces requested allocations, but repeated scalar slowdowns remain against both controls. The performance-before-memory ladder does not support admission on these data. The feature-only control also has mixed costs, unchanged requested memory and larger probes; it is not admitted as a separate optimization."
+    }
+  ],
+  "profile_context": {
+    "path": "docs/evidence/2026-10-13-native-normal-form-attribution/assessment-v1.json",
+    "normal_form_inclusive_cycle_percent": 26.983379437282338,
+    "quadratic_projection_inclusive_cycle_percent": 26.31250077798114,
+    "scope": "Historical endpoint/P4 parent profile, not the current borrowed-parent build. Inclusive recovered cycle groups overlap; they identify broad existing work, not the leaf memo share or a predicted saving.",
+    "does_not_erase_native_failure": true
+  },
+  "next_step": {
+    "question": "Which existing local memo stores and hits copy exact leaf forms, and what result shapes do they carry?",
+    "type": "separate-fixed-count-diagnostic-before-any-runtime-prototype",
+    "buckets": [
+      "Int",
+      "One",
+      "Ratio",
+      "Pi",
+      "InvPi",
+      "Tau",
+      "Sqrt2",
+      "Sqrt3",
+      "OtherConstant",
+      "OtherNode"
+    ],
+    "events": [
+      "memo_store",
+      "memo_hit"
+    ],
+    "modes": [
+      "retained",
+      "original"
+    ],
+    "observations": [
+      "Number of events, including explicit None results",
+      "Existing term, radical and opaque-atom vector lengths",
+      "Disjoint result-shape counts: None, empty, one rational term, one radical term, other closed, opaque-containing"
+    ],
+    "sites": "Observe borrowed existing result immediately at each original memo insertion and hit. Read immutable enum/constant tags and existing vector metadata only; preserve the original clone, push, return and drop order.",
+    "constraints": [
+      "Use small fixed thread-local integer cells. Retain no addresses, Rational values or Computable owners; add no mathematical queries, comparisons, normalization, cache write, recognition pass or allocation counter.",
+      "Keep the current qualified V2 old 27 counters and all 61-by-three actual-reader classes. Every event partition must reconcile with the old local memo counters, and every old class/count must match all 68 already closed phases.",
+      "Keep exact leaf and each recognized constant category distinct; do not assume the stored memo values or their cost from immutable node tags alone.",
+      "Use the original three drivers and all 68 phases at 4096 inputs, with an ordinary borrowed-parent library and a fresh diagnostic library. Freeze two opposite group orders before execution: 12 count processes, 272 total windows, 136 instrumented windows.",
+      "All qualification and driver builds finish before samples. Require strict all-feature/all-target library Clippy and every driver Clippy with -D warnings. Retain every prior 881 test name and add meaningful independent classification and memo-site/replay controls.",
+      "Controls must observe retained and original modes, fresh and zero-budget memo replay, rational/recognized/opaque constants, valid None metadata, shared and sole owners, opaque-owner lifetime and the original fallback. Expected zero workload categories are not failures.",
+      "No timing or memory inference from instrumented samples. No rerun, replacement, extension or pooling of any existing cost or count run. No new native gate for this count diagnostic.",
+      "Only after real leaf memo copy coverage is observed may a distinct representation be designed. Any future optimization still needs independent correctness, exact budget/P4/ownership controls, fixed scalar and broader consumer costs, complete reports and both original native limits."
+    ],
+    "runtime_candidate_prepared": false,
+    "diagnostic_prepared": false,
+    "diagnostic_executed": false
+  },
+  "main_and_35_pending_native_paths_unchanged": true,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
