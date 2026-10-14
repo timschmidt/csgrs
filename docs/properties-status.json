@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "resource-trial-closed-warm-triangulation-instability-proved",
+      "status": "warm-row-instability-reproduced-in-both-candidates",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5090,7 +5090,11 @@
       "sphere_cyclotomic_scalar_costs_prerequisite_satisfied": false,
       "sphere_warm_replay_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-scope-v1.json",
       "sphere_warm_replay_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_warm_replay_v1.py",
-      "sphere_warm_replay_executed": false
+      "sphere_warm_replay_executed": true,
+      "sphere_warm_replay_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-v1/result.json",
+      "sphere_warm_replay_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-assessment-v1.json",
+      "sphere_warm_replay_all_27_outputs_exact_support_proved": true,
+      "sphere_warm_replay_both_candidates_change_118_original_medium_faces": true
     }
   },
   "status_meanings": {
