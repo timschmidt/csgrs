@@ -1,0 +1,39 @@
+{
+  "reviewed_parent": "target/sphere-stable-selection-v1/source",
+  "parent_files_read_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "3ed3cd6e3ea1537fa113dd26c5a6d0624ee4e5902e5a03aef5d2fd9d850b67fd",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "3d90f996d7b850e20d66b58e31de39bf1b91ce8f601d1d7866f960b1e5fd6eac",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "746b2bf818e2869dbc03a8a20cc0dbc7480301399a2b394318b7f17d98b02df3",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/computable/node/approximation_queries.rs": "36c7bb2791a9738d74d9021b31e1813811d4eb317e5470d16d1d4345ac9d7ca8",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "631f2975f4498cbe98d524c30476abd9495442c902612f238dfd4beee7671933"
+  },
+  "patch_sha256": "2ad07a681402082db77b69c4eb1807125a186852acd5b7367731798d20a1d791",
+  "source_delta_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "ea890e52d459507ed1e6592120d449334b295b15dd695c38c0ced37d8ae38021",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "f14a1f8ae52eaa6f7b3f5f33fc76fe45ef2c41c609f3b23ab688cd54e953a69c",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "707234e41af8d11f3f730d2eea73c49d46e26518ebd2286d5e5c09faa46c4783"
+  },
+  "finding": "prove_zero constructs the exact modulus and all coefficient polynomials for nonzero retained trigonometric expressions. The same bounded finite-field evaluator already rejects nonzero affine determinants but was not used at this ordinary zero-only entry point.",
+  "proposal": "Evaluate the parsed root in the existing finite field and decline only when its residue is nonzero. Reuse the existing prime/root table, checked arithmetic and independent image work budget.",
+  "scope": "Eighteen added production lines in two private implementation files, plus two targeted tests in the existing test module. No public API, parser, field table, affine path, precision/refinement, representation or persistent cache change.",
+  "soundness_argument": [
+    "The finite image is evaluated only through supported arithmetic whose divisors have units in the chosen prime field. Existing table checks establish that the selected image annihilates the exact cyclotomic modulus.",
+    "Any exact zero polynomial remainder in the existing supported proof domain therefore maps to zero. A nonzero image can reject the zero proof without changing a successful exact result.",
+    "A zero image is only a collision candidate. Unsupported operations, nonunit divisors, expression bounds or image work exhaustion are inconclusive and return to the same fresh exact budget.",
+    "Plan child indexes are prefix-checked by the existing evaluator; the added root index is bounds-checked after the evaluator enforces its fixed array limit."
+  ],
+  "validation_prepared": [
+    "Fourteen targeted cyclotomic tests, including two added collision/nonunit/guard cases.",
+    "Strict scalar library/test Clippy and workspace formatting.",
+    "Twelve native hull query outputs must match the exact-validated deterministic-selection parent byte-for-byte."
+  ],
+  "not_claimed": [
+    "No new formal proof or directed fuzz campaign.",
+    "No measured optimization benefit before a separate fixed cost trial.",
+    "No production admission or overall plan completion."
+  ],
+  "prototype_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,32 @@
+{
+  "objective": "Reject proven nonzero finite images before ordinary cyclotomic exact-polynomial zero search, preserving every exact fallback and all existing native outputs.",
+  "parent_source": "target/sphere-stable-selection-v1/source",
+  "parent_source_mapping": "sphere-stable-selection-v1/source-hashes.json.gz",
+  "parent_qualification": "sphere-stable-selection-qualification-v1/result.json",
+  "scalar_cost_evidence": "sphere-cyclotomic-scalar-costs-assessment-v2.json",
+  "scalar_cost_evidence_sha256": "12737458e8b0be0234fac65787629b792c0a8a051109746f0821ce758e34a5a4",
+  "expected_delta_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "ea890e52d459507ed1e6592120d449334b295b15dd695c38c0ced37d8ae38021",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "f14a1f8ae52eaa6f7b3f5f33fc76fe45ef2c41c609f3b23ab688cd54e953a69c",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "707234e41af8d11f3f730d2eea73c49d46e26518ebd2286d5e5c09faa46c4783"
+  },
+  "source_files": 10136,
+  "targeted_scalar_test_count": 14,
+  "commands": 10,
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "command_wall_limit_seconds": 900,
+  "native_case_wall_limit_seconds": 600,
+  "output_contract": "All four full original sphere cold/warm/replay transcripts must be byte-identical to the independently validated deterministic-selection parent. No changed rows, output sizes, certainty or checksums are allowed for this optimization.",
+  "proof_rule": "The existing finite-field homomorphism maps an exact zero to zero whenever its operations are available. Only a nonzero root image rejects the zero attempt. Zero, unsupported images, nonunit denominators, invalid root indexes, expression limits and image-work exhaustion never certify anything and leave a fresh MAX_WORK exact reduction available.",
+  "cache_rule": "No refinement, retained representation rewrite, persistent memo or cache publication is added. The new root image reads only the already constructed immutable local Plan.",
+  "tests": "Reuse all twelve existing cyclotomic tests, including captured native zeros, perturbations, budget/abort/representation/concurrent replay and all 64 finite-field tables. Add two focused tests for root rejection guards and end-to-end modular collision/nonunit fallback with unchanged approximation caches.",
+  "measurement_scope": "Feasibility only. Diagnostic command duration does not establish performance. Separate fixed costs are required before retaining an optimization.",
+  "broader_qualification_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

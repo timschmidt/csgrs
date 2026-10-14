@@ -1,0 +1,126 @@
+--- a/crates/hyperreal/src/computable/node/cyclotomic.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic.rs
+@@ -494,6 +494,11 @@
+         has_trig: false,
+     };
+     let root = plan.parse(node, 0)?;
++    // Reject only a nonzero image. Collisions, unavailable inverses and image
++    // budget exhaustion leave the complete exact proof budget untouched.
++    if image::root_nonzero(&plan, root) {
++        return None;
++    }
+     let (values, _) = evaluate_plan(plan, &mut Work(MAX_WORK))?;
+     values[root]
+         .coefficients
+--- a/crates/hyperreal/src/computable/node/cyclotomic/image.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic/image.rs
+@@ -199,6 +199,19 @@
+     }
+ }
+ 
++fn root_image(plan: &Plan, root: usize, work: &mut Work) -> Option<u64> {
++    if !plan.has_trig {
++        return None;
++    }
++    let image = Image::new(plan.order, work)?;
++    let values = image.evaluate(plan, work)?;
++    values[..plan.expressions.len()].get(root).copied()
++}
++
++pub(super) fn root_nonzero(plan: &Plan, root: usize) -> bool {
++    root_image(plan, root, &mut Work(MAX_IMAGE_WORK)).is_some_and(|value| value != 0)
++}
++
+ fn affine_image(plan: &Plan, roots: [usize; 12], work: &mut Work) -> Option<u64> {
+     if !plan.has_trig {
+         return None;
+--- a/crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs
++++ b/crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs
+@@ -155,3 +155,87 @@
+         Some(RealSign::Zero)
+     );
+ }
++
++#[test]
++fn cyclotomic_root_images_reject_only_certified_nonzero_residues() {
++    let plan = make_plan(
++        28,
++        vec![Expression::Trig(Fraction::new(1, 7).unwrap(), true)],
++    );
++    assert!(root_nonzero(&plan, 0));
++    assert!(!root_nonzero(&plan, 1));
++    assert!(root_image(&plan, 0, &mut Work(0)).is_none());
++    let mut no_trig = make_plan(4, vec![Expression::Rational(Fraction::new(1, 1).unwrap())]);
++    no_trig.has_trig = false;
++    assert!(!root_nonzero(&no_trig, 0));
++    let oversized = make_plan(
++        28,
++        (0..=MAX_VISITS)
++            .map(|_| Expression::Trig(Fraction::new(1, 7).unwrap(), true))
++            .collect(),
++    );
++    assert!(!root_nonzero(&oversized, 0));
++}
++
++#[test]
++fn cyclotomic_root_collisions_and_bad_units_keep_exact_zero_search() {
++    use crate::Computable;
++    use crate::computable::approximation::Approximation;
++    use crate::computable::node::{BoundCache, ExactSignCache, Node};
++    use std::sync::Arc;
++
++    fn raw(approximation: Approximation) -> Computable {
++        Computable {
++            internal: Arc::new(Node::new(
++                approximation,
++                BoundCache::Invalid,
++                ExactSignCache::Invalid,
++            )),
++            signal: None,
++        }
++    }
++
++    fn plan_for(node: &Computable) -> (Plan, usize) {
++        let mut plan = make_plan(4, Vec::new());
++        plan.has_trig = false;
++        let root = plan.parse(node, 0).unwrap();
++        (plan, root)
++    }
++
++    let image = Image::new(28, &mut Work(MAX_IMAGE_WORK)).unwrap();
++    let angle = raw(Approximation::Multiply(
++        Computable::pi(),
++        Computable::rational(Rational::fraction(1, 7).unwrap()),
++    ));
++    let sine = raw(Approximation::PrescaledSin(angle));
++    for multiple in [image.prime, image.prime + 1] {
++        let value = raw(Approximation::Multiply(
++            sine.clone(),
++            Computable::rational(Rational::from(multiple)),
++        ));
++        let (plan, root) = plan_for(&value);
++        let residue = root_image(&plan, root, &mut Work(MAX_IMAGE_WORK)).unwrap();
++        assert_eq!(residue == 0, multiple == image.prime);
++        assert_eq!(root_nonzero(&plan, root), multiple != image.prime);
++        // A zero residue for a nonzero expression must not manufacture zero.
++        assert!(!value.bounded_cyclotomic_zero());
++        assert!(value.cached().is_none());
++    }
++    let zero = raw(Approximation::Add(
++        sine.clone(),
++        raw(Approximation::Negate(sine)),
++    ));
++    let (plan, root) = plan_for(&zero);
++    assert_eq!(root_image(&plan, root, &mut Work(MAX_IMAGE_WORK)), Some(0));
++    assert!(!root_nonzero(&plan, root));
++    assert!(zero.bounded_cyclotomic_zero());
++    let bad_unit = raw(Approximation::Multiply(
++        Computable::rational(Rational::fraction(1, image.prime).unwrap()),
++        zero,
++    ));
++    let (plan, root) = plan_for(&bad_unit);
++    assert!(root_image(&plan, root, &mut Work(MAX_IMAGE_WORK)).is_none());
++    assert!(!root_nonzero(&plan, root));
++    assert!(bad_unit.bounded_cyclotomic_zero());
++    assert!(bad_unit.cached().is_none());
++}

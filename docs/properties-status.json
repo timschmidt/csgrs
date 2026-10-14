@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "sphere-scalar-cost-v2-closed-nonzero-proof-work-audit-open",
+      "status": "normal-form-image-filter-feasibility-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5203,7 +5203,12 @@
       "sphere_cyclotomic_scalar_costs_v2_no_fact_contradictions_or_weakening": true,
       "sphere_cyclotomic_scalar_costs_v2_all_retained_deltas_zero": true,
       "sphere_cyclotomic_scalar_costs_v2_predeclared_flags": [],
-      "sphere_cyclotomic_scalar_costs_v2_large_unflagged_ratios_retained": true
+      "sphere_cyclotomic_scalar_costs_v2_large_unflagged_ratios_retained": true,
+      "sphere_normal_image_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-scope-v1.json",
+      "sphere_normal_image_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_normal_image_v1.py",
+      "sphere_normal_image_source_review": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-normal-image-source-review-v1.json",
+      "sphere_normal_image_executed": false,
+      "sphere_normal_image_runtime_admitted": false
     }
   },
   "status_meanings": {
