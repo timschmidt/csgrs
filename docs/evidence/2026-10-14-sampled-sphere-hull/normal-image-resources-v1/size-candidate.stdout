@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-resources-v1/candidate  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 45312      4312
+.rela.plt                    48     49624
+.gcc_except_table       1435164     49672
+.rodata                   79480   1484848
+.eh_frame_hdr             17564   1564328
+.eh_frame                127232   1581896
+.text                   1665247   1713232
+.init                        27   3378480
+.fini                        13   3378508
+.plt                         48   3378528
+.tdata                      576   3382672
+.tbss                       896   3383248
+.data.rel.ro              26864   3383248
+.fini_array                   8   3410112
+.init_array                  16   3410120
+.dynamic                    480   3410136
+.got                       4720   3410616
+.got.plt                     40   3415336
+.relro_padding              688   3415376
+.tm_clone_table               0   3419472
+.data                    197480   3419472
+.bss                        240   3616952
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7706546
+
+

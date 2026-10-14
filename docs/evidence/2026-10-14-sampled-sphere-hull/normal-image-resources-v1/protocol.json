@@ -1,0 +1,367 @@
+{
+  "inputs_sha256": {
+    "measure_normal_image_resources_v1.py": "76ce3dfb04c7e3ad27428ef4a93137d8b721d5a1ba9c00da89e11458c4b77d0e",
+    "assess_normal_image_resources_v1.py": "f9896226a1a3c054c72f06d1ddc0464973527b5326fdbc4bfed97a8db6470e75",
+    "sphere_resource_probe_v1.rs": "684e438d5099356ea9916f5477e2dcfc71b4d52e4a20a4b991a854249bc53a44",
+    "normal-image-resources-scope-v1.json": "873b40a22429d292f29d74a00fe8f9d10afa22d20a5a6e4377536d78e8ca39ff",
+    "sphere-normal-image-qualification-v1/result.json": "1f79384de0fdf831d90dc88c2fb619a4d39b7c87bf08c8ca0ac2944e0c7e3aeb",
+    "normal-image-native-cost-assessment-v1.json": "7ecced919974611c927a4643b53ec5ab8ea1d4d4179893938e071e202ac5d888",
+    "normal-image-scalar-cost-assessment-v1.json": "32ff5d075936d2492567138e073de4ddcb6c616794a7294042b164fb6d269fce",
+    "sphere-normal-image-feasibility-closure-v1.json": "1396641532ad19aff0b7e788392d7536c20fdeeae51c8a31e2936b3a8488f638",
+    "sphere-stable-selection-closure-v1.json": "ed545e6be8792c789dddc8d8dbc1bfef03bed314df4120a41cc06671ea1645a8",
+    "mesh-identity-preparation-v1/source-hashes.json.gz": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "sphere-stable-selection-v1/source-hashes.json.gz": "192ed8a5a058dec7e2b4b3e9ef2ebd3b4ad6c34d95daa06a7c0349614d83b7b6",
+    "sphere-normal-image-v1/source-hashes.json.gz": "9fb43297218853fc5bc75cda4f4fa9998cd5c9456055c63539b14ec369794a5f",
+    "sphere-stable-selection-v1/fifteen_degrees.stdout": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "sphere-stable-selection-v1/original_medium.stdout": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "sphere-stable-selection-v1/fifth_turn.stdout": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "sphere-stable-selection-v1/seventh_turn.stdout": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "sphere-normal-image-v1/fifteen_degrees.stdout": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "sphere-normal-image-v1/original_medium.stdout": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "sphere-normal-image-v1/fifth_turn.stdout": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "sphere-normal-image-v1/seventh_turn.stdout": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "sphere-normal-image-qualification-v1/all-features-clippy.stderr": "2a986cf2d3adcdb6540bde977b04988a86f368666a9cd31b412fcb4e1360e1e8",
+    "sphere-normal-image-qualification-v1/all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/all-features-tests.stderr": "52010ba03721db7a76a0967df6d2033f889d8ea85098ff1577585b0611492396",
+    "sphere-normal-image-qualification-v1/all-features-tests.stdout": "920210107ce19b00050ab385cc34a1df0b36aa33706aa98a1b95aa496c6c5a66",
+    "sphere-normal-image-qualification-v1/commands.json": "850bc1bf432ad8e407780f9040a39e8d4bfd31088d859bbe422415632c2e412b",
+    "sphere-normal-image-qualification-v1/default-clippy.stderr": "60264d86ecf24bfbbb9a6ab4457e673cee8ac76791e317e7c09d9342f4ba9f11",
+    "sphere-normal-image-qualification-v1/default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/default-tests.stderr": "eb2936547c283fa933a8c3de618671015a2718801309fd8f00d98ba96665da0f",
+    "sphere-normal-image-qualification-v1/default-tests.stdout": "f572b71dcedaa283a6c11e82c0383cbf5ffd5e7a7e045121b266f0701d0166cb",
+    "sphere-normal-image-qualification-v1/docs.stderr": "19ceaa91eb3baea1c50d769c73d5107c5bff750b756836f4e6a0b6ebcfc485ea",
+    "sphere-normal-image-qualification-v1/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/doctests.stderr": "911ce1346476a2fb6bd7d464546f8dcc61930626be4b8b9eb7f09f9e9f3527e6",
+    "sphere-normal-image-qualification-v1/doctests.stdout": "c546b040ec7c74c49e3a107b7ef3a779a68b75c67e47ed7cf1c83b70987f0880",
+    "sphere-normal-image-qualification-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/grammar-native-clippy.stderr": "107ee0f25e3e8c50bd912d2e97ed41c804cc78d30b4b62cd145f0a94c37c300e",
+    "sphere-normal-image-qualification-v1/grammar-native-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/grammar-native-consumers.stderr": "2d1b3cf5022914463600260e1a79b8605322f5ac689fe8371057d66b4b592158",
+    "sphere-normal-image-qualification-v1/grammar-native-consumers.stdout": "5720f7f0c5bc0818a3f1e5e447d2508d741418a92c47bc44333502fe3d588d3d",
+    "sphere-normal-image-qualification-v1/hyperlimit-fuzz-check.stderr": "31543f06a38055ada97455dae55ae323042f0eb5e8dc33b16d0de51d026d3f7d",
+    "sphere-normal-image-qualification-v1/hyperlimit-fuzz-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/hypermesh-fuzz-check.stderr": "6cea1043107395955e31a7ab919c087f5e02853da0d41c240f54b4fb4a177d2f",
+    "sphere-normal-image-qualification-v1/hypermesh-fuzz-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/hyperreal-fuzz-check.stderr": "df17a2f0ab13b237da75eb13d8e1d87e6d023925d97b59f8ab5c7969e31ac02c",
+    "sphere-normal-image-qualification-v1/hyperreal-fuzz-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-qualification-v1/protocol.json": "05ec94527c5aa54001cd37e7e40744834958822937a3ec2f252afd820e5d8a71",
+    "sphere-normal-image-qualification-v1/root-source-hashes.json.gz": "62815dc6d0c5c46f4ac75c5758900f943d554d79ea52dcdd047db5cfd9b863b1",
+    "sphere-stable-support-v1/result.json": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+    "sphere-stable-support-v1/fifteen_degrees.json": "07ca3f870c0e5dc7f8bcbd8d35479c6e0a2a8c308971f707ea46446aa85bc169",
+    "sphere-stable-support-v1/fifth_turn.json": "e6ff28ca5f80a2a9bd5f7ae8dd4b7c5939ee1e4eabed175e2552912bcc1249df",
+    "sphere-stable-support-v1/original_medium.json": "93470b2ac56d35c9bfb41ffcc61ecc30fd8150d32d7f42308544cf41a3dde41e",
+    "sphere-stable-support-v1/protocol.json": "aabdf7e632ed8ea24070b24f0a1e490433a73e631bbea9470e217d04aedcb481",
+    "sphere-stable-support-v1/seventh_turn.json": "554421965fdca8b825d3cd0ce4fbe69e17429e695f918f79442546e2ad129777",
+    "sphere-normal-image-v1/result.json": "137fbe10f5258e44bea5be043d514dd0cafee174d2db60151a297941560b8ac9",
+    "sphere-normal-image-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/apply.stdout": "13aa8c26e035686f8180bc63e080ef38a47a6cc5e606ab21ba9427b6ecdb4dbb",
+    "sphere-normal-image-v1/binaries.json": "600a41a12a1c2fe11ce13758471fb31312f977435da4e8508d7d0943ef1bfed5",
+    "sphere-normal-image-v1/build-native-consumer.stderr": "2ca9df6c66eee5fa6a7ef8280c480bd309fd971250c8be82d37a92242163de0a",
+    "sphere-normal-image-v1/build-native-consumer.stdout": "ee911345d219690eda69cae49c429d5eaab4282af4ac7d46c6ba788a6887d004",
+    "sphere-normal-image-v1/commands.json": "4673d29bbc37172923c198399a960c8e3e0876868e99a9396745092aed27a532",
+    "sphere-normal-image-v1/fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/libraries.json": "7781267cf51e1587452f50d12bd479dc0622406c7835aeda18da77863e1c09d3",
+    "sphere-normal-image-v1/link-sphere-probe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/link-sphere-probe.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/observations.json": "3a70c7e91a01f560738744c820fb43edf0cf637959c99fbc1537fce15df40377",
+    "sphere-normal-image-v1/original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/protocol.json": "b161203063f3940d23f1087c4868e2fd809b13b42dc388085dacd05d01a3e126",
+    "sphere-normal-image-v1/root-source-hashes.json.gz": "421403e5a8399f83c2162ae426bbfd4093ea3c3224acedc54e8caefccb70790c",
+    "sphere-normal-image-v1/scalar-clippy.stderr": "6f1fb36b19d82e39d114aff3ffc3b337530cfb5f8a69d0db3f26b2393880efcd",
+    "sphere-normal-image-v1/scalar-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-normal-image-v1/targeted-scalar-tests.stderr": "56860be8c04e94cb491982a262ab35612f4652cb9f63e041096a0952d54b0e61",
+    "sphere-normal-image-v1/targeted-scalar-tests.stdout": "16e979ae6f965452ea11d2898e1ff0998d2a01c34a8263ad7007cfa2931475a3",
+    "sphere-stable-selection-v1/result.json": "65d03c03494567d50eb64b1f5280918b816396897a4e7876807cdaf2334f9392",
+    "sphere-stable-selection-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/apply.stdout": "66961e4fc8daff0f22408a9603d2ed7cff1c27cc08ab020934348806902f5d89",
+    "sphere-stable-selection-v1/binaries.json": "36e735b776738f696b25c286ba14fd5071c278ad315bcd5c479ecb1878d48bb8",
+    "sphere-stable-selection-v1/build.stderr": "208bb8ad4d0d22554102ce18fdd851e5bc64a943f3b6f1bd49cbf6281af3ff74",
+    "sphere-stable-selection-v1/build.stdout": "b72377809ddd5d8cd73af39a38a592cdc9a7c398dc58b588c24580ab4037550a",
+    "sphere-stable-selection-v1/candidate-regression.stderr": "ff726ba5b35b1b95927dba5ed4b8e9e74c5ca8088b377d2963234d8ec4826706",
+    "sphere-stable-selection-v1/candidate-regression.stdout": "b184e342fde5f149695ad3f74267c5b38e0c8a732e7693bec93b5e518020af9f",
+    "sphere-stable-selection-v1/commands.json": "30bbbcefb83c3dafcd14b2122d293a601f8afd39331a078e8dde460226d1582a",
+    "sphere-stable-selection-v1/cube-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/cube-candidate.stdout": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "sphere-stable-selection-v1/cube-parent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/cube-parent.stdout": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "sphere-stable-selection-v1/fifteen_degrees-cold.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees-replay.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees-warm.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/fifth_turn-cold.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn-replay.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn-warm.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/libraries.json": "5987036fd2d0cd8a72581db6e9609a7784cd67ee19baf17a2a31d709073cddb1",
+    "sphere-stable-selection-v1/link-cube-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-parent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-parent.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-negative-regression.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-negative-regression.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-sphere-probe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-sphere-probe.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/mesh-clippy.stderr": "bd4f289e8c670931278fac1593f9863c7674341e1a4be66f8809188515ee4e03",
+    "sphere-stable-selection-v1/mesh-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/negative-regression.stderr": "305916c7956f114179ab9202589f3f11f91ecf82c6fa6e155794ff33b9ebff32",
+    "sphere-stable-selection-v1/negative-regression.stdout": "0f9e291e469ef5c04a33c27947ece48206dfe5287068fc2cdc099958fafbf6b6",
+    "sphere-stable-selection-v1/observations.json": "acc784084258917cd37fd3fbc8bd658e864b24f5463f0a668169360c638e2d15",
+    "sphere-stable-selection-v1/original_medium-cold.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium-replay.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium-warm.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/probe-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/probe-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/protocol.json": "7e6a68b573af1d6f6e637fd03ae72f12dc4aaf42928113308c50c0f880c18f26",
+    "sphere-stable-selection-v1/regression-clippy.stderr": "efb74c1823d04f4ed7b3645eaa167d93c6b0f3f936f6b9b8d2d2098ac2651085",
+    "sphere-stable-selection-v1/regression-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/root-source-hashes.json.gz": "0fb22a8c965733cc03789e66f7686048841b967a7128ddb4bd6637a432b9fde2",
+    "sphere-stable-selection-v1/seventh_turn-cold.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn-replay.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn-warm.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "libraries": {
+    "parent": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/libcsgrs.rlib",
+        "sha256": "ef8b7d9927b2824ab1a4f8dc487cdbe9c2e11f662cd1a0fbc85cbb6b2464cd5a",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "ef97fa0f2087576235ea21a30cb0b57d721c5ba5c25cd17dd3c2627bbbddf79e",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "candidate": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/libcsgrs.rlib",
+        "sha256": "088833bffef5b2b92eb3735f2699d513a29659e3fc9c47fb7e5bbc97c14c0fa4",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "8be615052b2ac5a5a9987694e79f110669907a5db6fc27cdd715c555dd6068eb",
+        "features": [
+          "default"
+        ]
+      }
+    }
+  },
+  "library_features": {
+    "parent": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    },
+    "candidate": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    }
+  },
+  "sources": {
+    "parent": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source",
+    "candidate": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-normal-image-v1/source"
+  },
+  "source_mappings_sha256": {
+    "parent": "192ed8a5a058dec7e2b4b3e9ef2ebd3b4ad6c34d95daa06a7c0349614d83b7b6",
+    "candidate": "9fb43297218853fc5bc75cda4f4fa9998cd5c9456055c63539b14ec369794a5f"
+  },
+  "source_files": {
+    "parent": 10136,
+    "candidate": 10136
+  },
+  "root_source_files": 10129,
+  "phases": [
+    "construct",
+    "cold_hull",
+    "warm_hull",
+    "replay_hull",
+    "drop_outputs_and_input",
+    "clear_grammar_cache"
+  ],
+  "orders": [
+    [
+      "parent",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "parent"
+    ],
+    [
+      "parent",
+      "candidate"
+    ]
+  ],
+  "case_sets": {
+    "parent": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "candidate": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ]
+  },
+  "reference_transcripts": {
+    "parent": {
+      "fifteen_degrees": "sphere-stable-selection-v1/fifteen_degrees.stdout",
+      "original_medium": "sphere-stable-selection-v1/original_medium.stdout",
+      "fifth_turn": "sphere-stable-selection-v1/fifth_turn.stdout",
+      "seventh_turn": "sphere-stable-selection-v1/seventh_turn.stdout"
+    },
+    "candidate": {
+      "fifteen_degrees": "sphere-normal-image-v1/fifteen_degrees.stdout",
+      "original_medium": "sphere-normal-image-v1/original_medium.stdout",
+      "fifth_turn": "sphere-normal-image-v1/fifth_turn.stdout",
+      "seventh_turn": "sphere-normal-image-v1/seventh_turn.stdout"
+    }
+  },
+  "reference_output_sha256": {
+    "parent": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    },
+    "candidate": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    }
+  },
+  "phase_witness_sha256": {
+    "parent": {
+      "fifteen_degrees": {
+        "cold": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "warm": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "replay": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"
+      },
+      "original_medium": {
+        "cold": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "warm": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "replay": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"
+      },
+      "fifth_turn": {
+        "cold": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "warm": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "replay": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"
+      },
+      "seventh_turn": {
+        "cold": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "warm": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "replay": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"
+      }
+    },
+    "candidate": {
+      "fifteen_degrees": {
+        "cold": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "warm": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "replay": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"
+      },
+      "original_medium": {
+        "cold": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "warm": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "replay": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"
+      },
+      "fifth_turn": {
+        "cold": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "warm": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "replay": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"
+      },
+      "seventh_turn": {
+        "cold": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "warm": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "replay": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"
+      }
+    }
+  },
+  "phase_witness_bytes": {
+    "parent": {
+      "fifteen_degrees": {
+        "cold": 21895,
+        "warm": 21895,
+        "replay": 21895
+      },
+      "original_medium": {
+        "cold": 40239,
+        "warm": 40239,
+        "replay": 40239
+      },
+      "fifth_turn": {
+        "cold": 4830,
+        "warm": 4830,
+        "replay": 4830
+      },
+      "seventh_turn": {
+        "cold": 2337,
+        "warm": 2337,
+        "replay": 2337
+      }
+    },
+    "candidate": {
+      "fifteen_degrees": {
+        "cold": 21895,
+        "warm": 21895,
+        "replay": 21895
+      },
+      "original_medium": {
+        "cold": 40239,
+        "warm": 40239,
+        "replay": 40239
+      },
+      "fifth_turn": {
+        "cold": 4830,
+        "warm": 4830,
+        "replay": 4830
+      },
+      "seventh_turn": {
+        "cold": 2337,
+        "warm": 2337,
+        "replay": 2337
+      }
+    }
+  },
+  "fixed_sample_processes": 24,
+  "hull_queries_per_process": 3,
+  "preflight_processes": 0,
+  "samples_may_be_extended_filtered_or_pooled": false,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3459.611\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "measurement": "Requested global allocator allocation/reallocation traffic, retained live-byte delta, and peak increase above each phase entry. Not usable allocator sizes, stack bytes, RSS or an uninstrumented timing benchmark.",
+  "cache_state": "Each process clears grammar caches, constructs one original sphere, then runs three STRICT hull queries on the same retained input. All three outputs stay alive until validation and disposal. No validation or serialization occurs between the three queries. Process startup/runtime I/O is initialized before lifecycle accounting; global shared scalar constants may survive cleanup.",
+  "comparison_scope": "Two isolated candidates on the same four full original exact inputs. Every cold, warm and replay output is byte-identical within and across groups. No failed or approximate work is substituted for a successful certified hull.",
+  "witness_scope": "All full original vertex orders, triangle rows, certainty, byte sizes and checksums must match the exact-validated parent across both groups and all three phases. All output meshes stay alive until after replay, with no intervening validation or serialization.",
+  "old_failed_trial_preserved_without_resumption": true,
+  "interpretation": "Publish all three resource observations per group/case/phase, including differences. Any repeat variation is reported, not filtered. No speedup or runtime admission follows from these measurements alone.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,12 @@
+{
+  "parent": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-resources-v1/parent",
+    "sha256": "a6f9240d5446636b972fa0cf9a102229cc92a201c174e02d2e1de33ad7be15f5",
+    "bytes": 8769672
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-resources-v1/candidate",
+    "sha256": "843ab999ca2f0511adb86d28b5ff70988b9a0c7018db0f70e7197234be3748f6",
+    "bytes": 8771352
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "commands_all_zero": 29,
+  "fixed_sample_processes": 24,
+  "exact_transcripts_rechecked": 72,
+  "result_sha256": "fdbf4639233aac95c879fe265c1124d58f75dc566fa18fe485193aa971889509",
+  "assessment_sha256": "83e621160bfaac95066f9246470578c6c14220505c043119bad5e0d6785c6280",
+  "driver_stdout_sha256": "ff083274b56c548c16256bdbc1cc3faced32d5bb7c1e1d32ca180b3db2b48d60",
+  "assessor_stdout_sha256": "93d8a368ad31f722a0971f5b3f9107f59d6c883ed29f83b95cf8241dcacbee1d",
+  "all_frozen_sources_inputs_libraries_and_binaries_rechecked_by_assessor": true,
+  "all_exact_native_outputs_preserved": true,
+  "all_three_resource_observations_per_group_case_phase_identical": true,
+  "all_paired_allocation_retention_and_heap_peak_deltas_zero": true,
+  "lifecycle_retained_requested_bytes_both_groups": {
+    "fifteen_degrees": [
+      746376,
+      746376,
+      746376
+    ],
+    "original_medium": [
+      66760,
+      66760,
+      66760
+    ],
+    "fifth_turn": [
+      30912,
+      30912,
+      30912
+    ],
+    "seventh_turn": [
+      25032,
+      25032,
+      25032
+    ]
+  },
+  "retention_outside_measured_phases_zero": true,
+  "instrumented_binary_raw_bytes": {
+    "parent": 8769672,
+    "candidate": 8771352
+  },
+  "instrumented_binary_text_bytes": {
+    "parent": 1665135,
+    "candidate": 1665247
+  },
+  "interpretation": "No native allocation or retention improvement was observed: every requested allocator metric is identical across the two groups and all repetitions. This does not contradict the separately measured 22-allocation and 4464-requested-byte reduction for a simple nonzero scalar normal-form query.",
+  "limits": "Requested allocator traffic and live/peak requested heap bytes only, not resident memory or stack usage. Instrumented time is diagnostic only. No leak-cause attribution, directed campaign, new formal proof, full workspace CI or production admission is claimed.",
+  "asan_qualification_ready": true,
+  "asan_qualification_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

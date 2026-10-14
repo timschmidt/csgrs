@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-native-cost-closed-resources-ready",
+      "status": "normal-form-image-filter-native-costs-closed-sanitizer-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5270,7 +5270,7 @@
       "sphere_normal_image_native_cost_executed": true,
       "sphere_normal_image_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-scope-v1.json",
       "sphere_normal_image_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_normal_image_resources_v1.py",
-      "sphere_normal_image_resources_executed": false,
+      "sphere_normal_image_resources_executed": true,
       "sphere_normal_image_asan_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v1.json",
       "sphere_normal_image_asan_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v1.py",
       "sphere_normal_image_asan_executed": false,
@@ -5285,7 +5285,35 @@
       },
       "sphere_normal_image_native_cost_flagged_cases": [],
       "sphere_normal_image_native_cost_all_observed_increases_retained": true,
-      "sphere_normal_image_native_speedup_claimed": false
+      "sphere_normal_image_native_speedup_claimed": false,
+      "sphere_normal_image_resources_complete": true,
+      "sphere_normal_image_resources_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-assessment-v1.json",
+      "sphere_normal_image_resources_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-resources-closure-v1.json",
+      "sphere_normal_image_resources_all_repeated_counters_identical": true,
+      "sphere_normal_image_resources_all_paired_deltas_zero": true,
+      "sphere_normal_image_resources_lifecycle_bytes_both_groups": {
+        "fifteen_degrees": [
+          746376,
+          746376,
+          746376
+        ],
+        "original_medium": [
+          66760,
+          66760,
+          66760
+        ],
+        "fifth_turn": [
+          30912,
+          30912,
+          30912
+        ],
+        "seventh_turn": [
+          25032,
+          25032,
+          25032
+        ]
+      },
+      "sphere_normal_image_native_heap_saving_claimed": false
     }
   },
   "status_meanings": {

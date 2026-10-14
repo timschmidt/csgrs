@@ -1,0 +1,3661 @@
+{
+  "complete": true,
+  "assessor_sha256": "f9896226a1a3c054c72f06d1ddc0464973527b5326fdbc4bfed97a8db6470e75",
+  "result_sha256": "fdbf4639233aac95c879fe265c1124d58f75dc566fa18fe485193aa971889509",
+  "commands_all_zero": 29,
+  "fixed_sample_processes": 24,
+  "exact_transcripts_rechecked": 72,
+  "resources": {
+    "parent": {
+      "fifteen_degrees": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                2045,
+                2045,
+                2045
+              ],
+              "minimum": 2045,
+              "maximum": 2045,
+              "median": 2045,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                219088,
+                219088,
+                219088
+              ],
+              "minimum": 219088,
+              "maximum": 219088,
+              "median": 219088,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                93416,
+                93416,
+                93416
+              ],
+              "minimum": 93416,
+              "maximum": 93416,
+              "median": 93416,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                135408,
+                135408,
+                135408
+              ],
+              "minimum": 135408,
+              "maximum": 135408,
+              "median": 135408,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                95216931,
+                95216931,
+                95216931
+              ],
+              "minimum": 95216931,
+              "maximum": 95216931,
+              "median": 95216931,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6133302754,
+                6133302754,
+                6133302754
+              ],
+              "minimum": 6133302754,
+              "maximum": 6133302754,
+              "median": 6133302754,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                637032,
+                637032,
+                637032
+              ],
+              "minimum": 637032,
+              "maximum": 637032,
+              "median": 637032,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1188170,
+                1188170,
+                1188170
+              ],
+              "minimum": 1188170,
+              "maximum": 1188170,
+              "median": 1188170,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                95207568,
+                95207568,
+                95207568
+              ],
+              "minimum": 95207568,
+              "maximum": 95207568,
+              "median": 95207568,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6132894978,
+                6132894978,
+                6132894978
+              ],
+              "minimum": 6132894978,
+              "maximum": 6132894978,
+              "median": 6132894978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                162096,
+                162096,
+                162096
+              ],
+              "minimum": 162096,
+              "maximum": 162096,
+              "median": 162096,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                713506,
+                713506,
+                713506
+              ],
+              "minimum": 713506,
+              "maximum": 713506,
+              "median": 713506,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                95206881,
+                95206881,
+                95206881
+              ],
+              "minimum": 95206881,
+              "maximum": 95206881,
+              "median": 95206881,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6132838962,
+                6132838962,
+                6132838962
+              ],
+              "minimum": 6132838962,
+              "maximum": 6132838962,
+              "median": 6132838962,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                108608,
+                108608,
+                108608
+              ],
+              "minimum": 108608,
+              "maximum": 108608,
+              "median": 108608,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                660194,
+                660194,
+                660194
+              ],
+              "minimum": 660194,
+              "maximum": 660194,
+              "median": 660194,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -153336,
+                -153336,
+                -153336
+              ],
+              "minimum": -153336,
+              "maximum": -153336,
+              "median": -153336,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -101440,
+                -101440,
+                -101440
+              ],
+              "minimum": -101440,
+              "maximum": -101440,
+              "median": -101440,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            746376,
+            746376,
+            746376
+          ],
+          "minimum": 746376,
+          "maximum": 746376,
+          "median": 746376,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "original_medium": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                3170,
+                3170,
+                3170
+              ],
+              "minimum": 3170,
+              "maximum": 3170,
+              "median": 3170,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                377840,
+                377840,
+                377840
+              ],
+              "minimum": 377840,
+              "maximum": 377840,
+              "median": 377840,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                187784,
+                187784,
+                187784
+              ],
+              "minimum": 187784,
+              "maximum": 187784,
+              "median": 187784,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                260880,
+                260880,
+                260880
+              ],
+              "minimum": 260880,
+              "maximum": 260880,
+              "median": 260880,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                346237307,
+                346237307,
+                346237307
+              ],
+              "minimum": 346237307,
+              "maximum": 346237307,
+              "median": 346237307,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21130355202,
+                21130355202,
+                21130355202
+              ],
+              "minimum": 21130355202,
+              "maximum": 21130355202,
+              "median": 21130355202,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                286616,
+                286616,
+                286616
+              ],
+              "minimum": 286616,
+              "maximum": 286616,
+              "median": 286616,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1779778,
+                1779778,
+                1779778
+              ],
+              "minimum": 1779778,
+              "maximum": 1779778,
+              "median": 1779778,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                346070075,
+                346070075,
+                346070075
+              ],
+              "minimum": 346070075,
+              "maximum": 346070075,
+              "median": 346070075,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21175357978,
+                21175357978,
+                21175357978
+              ],
+              "minimum": 21175357978,
+              "maximum": 21175357978,
+              "median": 21175357978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                92584,
+                92584,
+                92584
+              ],
+              "minimum": 92584,
+              "maximum": 92584,
+              "median": 92584,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1585746,
+                1585746,
+                1585746
+              ],
+              "minimum": 1585746,
+              "maximum": 1585746,
+              "median": 1585746,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                346070075,
+                346070075,
+                346070075
+              ],
+              "minimum": 346070075,
+              "maximum": 346070075,
+              "median": 346070075,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21175357978,
+                21175357978,
+                21175357978
+              ],
+              "minimum": 21175357978,
+              "maximum": 21175357978,
+              "median": 21175357978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                92584,
+                92584,
+                92584
+              ],
+              "minimum": 92584,
+              "maximum": 92584,
+              "median": 92584,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1585746,
+                1585746,
+                1585746
+              ],
+              "minimum": 1585746,
+              "maximum": 1585746,
+              "median": 1585746,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -277752,
+                -277752,
+                -277752
+              ],
+              "minimum": -277752,
+              "maximum": -277752,
+              "median": -277752,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -315056,
+                -315056,
+                -315056
+              ],
+              "minimum": -315056,
+              "maximum": -315056,
+              "median": -315056,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            66760,
+            66760,
+            66760
+          ],
+          "minimum": 66760,
+          "maximum": 66760,
+          "median": 66760,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "fifth_turn": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                886,
+                886,
+                886
+              ],
+              "minimum": 886,
+              "maximum": 886,
+              "median": 886,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                78640,
+                78640,
+                78640
+              ],
+              "minimum": 78640,
+              "maximum": 78640,
+              "median": 78640,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                36112,
+                36112,
+                36112
+              ],
+              "minimum": 36112,
+              "maximum": 36112,
+              "median": 36112,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                46424,
+                46424,
+                46424
+              ],
+              "minimum": 46424,
+              "maximum": 46424,
+              "median": 46424,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                7017780,
+                7017780,
+                7017780
+              ],
+              "minimum": 7017780,
+              "maximum": 7017780,
+              "median": 7017780,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                560921566,
+                560921566,
+                560921566
+              ],
+              "minimum": 560921566,
+              "maximum": 560921566,
+              "median": 560921566,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                62448,
+                62448,
+                62448
+              ],
+              "minimum": 62448,
+              "maximum": 62448,
+              "median": 62448,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                258078,
+                258078,
+                258078
+              ],
+              "minimum": 258078,
+              "maximum": 258078,
+              "median": 258078,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                6973148,
+                6973148,
+                6973148
+              ],
+              "minimum": 6973148,
+              "maximum": 6973148,
+              "median": 6973148,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                558775766,
+                558775766,
+                558775766
+              ],
+              "minimum": 558775766,
+              "maximum": 558775766,
+              "median": 558775766,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                11944,
+                11944,
+                11944
+              ],
+              "minimum": 11944,
+              "maximum": 11944,
+              "median": 11944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                208046,
+                208046,
+                208046
+              ],
+              "minimum": 208046,
+              "maximum": 208046,
+              "median": 208046,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                6973148,
+                6973148,
+                6973148
+              ],
+              "minimum": 6973148,
+              "maximum": 6973148,
+              "median": 6973148,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                558775766,
+                558775766,
+                558775766
+              ],
+              "minimum": 558775766,
+              "maximum": 558775766,
+              "median": 558775766,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                11944,
+                11944,
+                11944
+              ],
+              "minimum": 11944,
+              "maximum": 11944,
+              "median": 11944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                208046,
+                208046,
+                208046
+              ],
+              "minimum": 208046,
+              "maximum": 208046,
+              "median": 208046,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -35832,
+                -35832,
+                -35832
+              ],
+              "minimum": -35832,
+              "maximum": -35832,
+              "median": -35832,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -55704,
+                -55704,
+                -55704
+              ],
+              "minimum": -55704,
+              "maximum": -55704,
+              "median": -55704,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            30912,
+            30912,
+            30912
+          ],
+          "minimum": 30912,
+          "maximum": 30912,
+          "median": 30912,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "seventh_turn": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                628,
+                628,
+                628
+              ],
+              "minimum": 628,
+              "maximum": 628,
+              "median": 628,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                48960,
+                48960,
+                48960
+              ],
+              "minimum": 48960,
+              "maximum": 48960,
+              "median": 48960,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                22824,
+                22824,
+                22824
+              ],
+              "minimum": 22824,
+              "maximum": 22824,
+              "median": 22824,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                27376,
+                27376,
+                27376
+              ],
+              "minimum": 27376,
+              "maximum": 27376,
+              "median": 27376,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                1840623,
+                1840623,
+                1840623
+              ],
+              "minimum": 1840623,
+              "maximum": 1840623,
+              "median": 1840623,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                161118014,
+                161118014,
+                161118014
+              ],
+              "minimum": 161118014,
+              "maximum": 161118014,
+              "median": 161118014,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                40944,
+                40944,
+                40944
+              ],
+              "minimum": 40944,
+              "maximum": 40944,
+              "median": 40944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                198838,
+                198838,
+                198838
+              ],
+              "minimum": 198838,
+              "maximum": 198838,
+              "median": 198838,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                1809365,
+                1809365,
+                1809365
+              ],
+              "minimum": 1809365,
+              "maximum": 1809365,
+              "median": 1809365,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                159432750,
+                159432750,
+                159432750
+              ],
+              "minimum": 159432750,
+              "maximum": 159432750,
+              "median": 159432750,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                5800,
+                5800,
+                5800
+              ],
+              "minimum": 5800,
+              "maximum": 5800,
+              "median": 5800,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                163694,
+                163694,
+                163694
+              ],
+              "minimum": 163694,
+              "maximum": 163694,
+              "median": 163694,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                1809365,
+                1809365,
+                1809365
+              ],
+              "minimum": 1809365,
+              "maximum": 1809365,
+              "median": 1809365,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                159432750,
+                159432750,
+                159432750
+              ],
+              "minimum": 159432750,
+              "maximum": 159432750,
+              "median": 159432750,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                5800,
+                5800,
+                5800
+              ],
+              "minimum": 5800,
+              "maximum": 5800,
+              "median": 5800,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                163694,
+                163694,
+                163694
+              ],
+              "minimum": 163694,
+              "maximum": 163694,
+              "median": 163694,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -17400,
+                -17400,
+                -17400
+              ],
+              "minimum": -17400,
+              "maximum": -17400,
+              "median": -17400,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -32936,
+                -32936,
+                -32936
+              ],
+              "minimum": -32936,
+              "maximum": -32936,
+              "median": -32936,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            25032,
+            25032,
+            25032
+          ],
+          "minimum": 25032,
+          "maximum": 25032,
+          "median": 25032,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      }
+    },
+    "candidate": {
+      "fifteen_degrees": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                2045,
+                2045,
+                2045
+              ],
+              "minimum": 2045,
+              "maximum": 2045,
+              "median": 2045,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                219088,
+                219088,
+                219088
+              ],
+              "minimum": 219088,
+              "maximum": 219088,
+              "median": 219088,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                93416,
+                93416,
+                93416
+              ],
+              "minimum": 93416,
+              "maximum": 93416,
+              "median": 93416,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                135408,
+                135408,
+                135408
+              ],
+              "minimum": 135408,
+              "maximum": 135408,
+              "median": 135408,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                95216931,
+                95216931,
+                95216931
+              ],
+              "minimum": 95216931,
+              "maximum": 95216931,
+              "median": 95216931,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6133302754,
+                6133302754,
+                6133302754
+              ],
+              "minimum": 6133302754,
+              "maximum": 6133302754,
+              "median": 6133302754,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                637032,
+                637032,
+                637032
+              ],
+              "minimum": 637032,
+              "maximum": 637032,
+              "median": 637032,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1188170,
+                1188170,
+                1188170
+              ],
+              "minimum": 1188170,
+              "maximum": 1188170,
+              "median": 1188170,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                95207568,
+                95207568,
+                95207568
+              ],
+              "minimum": 95207568,
+              "maximum": 95207568,
+              "median": 95207568,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6132894978,
+                6132894978,
+                6132894978
+              ],
+              "minimum": 6132894978,
+              "maximum": 6132894978,
+              "median": 6132894978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                162096,
+                162096,
+                162096
+              ],
+              "minimum": 162096,
+              "maximum": 162096,
+              "median": 162096,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                713506,
+                713506,
+                713506
+              ],
+              "minimum": 713506,
+              "maximum": 713506,
+              "median": 713506,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                95206881,
+                95206881,
+                95206881
+              ],
+              "minimum": 95206881,
+              "maximum": 95206881,
+              "median": 95206881,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                6132838962,
+                6132838962,
+                6132838962
+              ],
+              "minimum": 6132838962,
+              "maximum": 6132838962,
+              "median": 6132838962,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                108608,
+                108608,
+                108608
+              ],
+              "minimum": 108608,
+              "maximum": 108608,
+              "median": 108608,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                660194,
+                660194,
+                660194
+              ],
+              "minimum": 660194,
+              "maximum": 660194,
+              "median": 660194,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -153336,
+                -153336,
+                -153336
+              ],
+              "minimum": -153336,
+              "maximum": -153336,
+              "median": -153336,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -101440,
+                -101440,
+                -101440
+              ],
+              "minimum": -101440,
+              "maximum": -101440,
+              "median": -101440,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            746376,
+            746376,
+            746376
+          ],
+          "minimum": 746376,
+          "maximum": 746376,
+          "median": 746376,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "original_medium": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                3170,
+                3170,
+                3170
+              ],
+              "minimum": 3170,
+              "maximum": 3170,
+              "median": 3170,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                377840,
+                377840,
+                377840
+              ],
+              "minimum": 377840,
+              "maximum": 377840,
+              "median": 377840,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                187784,
+                187784,
+                187784
+              ],
+              "minimum": 187784,
+              "maximum": 187784,
+              "median": 187784,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                260880,
+                260880,
+                260880
+              ],
+              "minimum": 260880,
+              "maximum": 260880,
+              "median": 260880,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                346237307,
+                346237307,
+                346237307
+              ],
+              "minimum": 346237307,
+              "maximum": 346237307,
+              "median": 346237307,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21130355202,
+                21130355202,
+                21130355202
+              ],
+              "minimum": 21130355202,
+              "maximum": 21130355202,
+              "median": 21130355202,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                286616,
+                286616,
+                286616
+              ],
+              "minimum": 286616,
+              "maximum": 286616,
+              "median": 286616,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1779778,
+                1779778,
+                1779778
+              ],
+              "minimum": 1779778,
+              "maximum": 1779778,
+              "median": 1779778,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                346070075,
+                346070075,
+                346070075
+              ],
+              "minimum": 346070075,
+              "maximum": 346070075,
+              "median": 346070075,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21175357978,
+                21175357978,
+                21175357978
+              ],
+              "minimum": 21175357978,
+              "maximum": 21175357978,
+              "median": 21175357978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                92584,
+                92584,
+                92584
+              ],
+              "minimum": 92584,
+              "maximum": 92584,
+              "median": 92584,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1585746,
+                1585746,
+                1585746
+              ],
+              "minimum": 1585746,
+              "maximum": 1585746,
+              "median": 1585746,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                346070075,
+                346070075,
+                346070075
+              ],
+              "minimum": 346070075,
+              "maximum": 346070075,
+              "median": 346070075,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                21175357978,
+                21175357978,
+                21175357978
+              ],
+              "minimum": 21175357978,
+              "maximum": 21175357978,
+              "median": 21175357978,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                92584,
+                92584,
+                92584
+              ],
+              "minimum": 92584,
+              "maximum": 92584,
+              "median": 92584,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                1585746,
+                1585746,
+                1585746
+              ],
+              "minimum": 1585746,
+              "maximum": 1585746,
+              "median": 1585746,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -277752,
+                -277752,
+                -277752
+              ],
+              "minimum": -277752,
+              "maximum": -277752,
+              "median": -277752,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -315056,
+                -315056,
+                -315056
+              ],
+              "minimum": -315056,
+              "maximum": -315056,
+              "median": -315056,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            66760,
+            66760,
+            66760
+          ],
+          "minimum": 66760,
+          "maximum": 66760,
+          "median": 66760,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "fifth_turn": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                886,
+                886,
+                886
+              ],
+              "minimum": 886,
+              "maximum": 886,
+              "median": 886,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                78640,
+                78640,
+                78640
+              ],
+              "minimum": 78640,
+              "maximum": 78640,
+              "median": 78640,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                36112,
+                36112,
+                36112
+              ],
+              "minimum": 36112,
+              "maximum": 36112,
+              "median": 36112,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                46424,
+                46424,
+                46424
+              ],
+              "minimum": 46424,
+              "maximum": 46424,
+              "median": 46424,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                7017780,
+                7017780,
+                7017780
+              ],
+              "minimum": 7017780,
+              "maximum": 7017780,
+              "median": 7017780,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                560921566,
+                560921566,
+                560921566
+              ],
+              "minimum": 560921566,
+              "maximum": 560921566,
+              "median": 560921566,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                62448,
+                62448,
+                62448
+              ],
+              "minimum": 62448,
+              "maximum": 62448,
+              "median": 62448,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                258078,
+                258078,
+                258078
+              ],
+              "minimum": 258078,
+              "maximum": 258078,
+              "median": 258078,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                6973148,
+                6973148,
+                6973148
+              ],
+              "minimum": 6973148,
+              "maximum": 6973148,
+              "median": 6973148,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                558775766,
+                558775766,
+                558775766
+              ],
+              "minimum": 558775766,
+              "maximum": 558775766,
+              "median": 558775766,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                11944,
+                11944,
+                11944
+              ],
+              "minimum": 11944,
+              "maximum": 11944,
+              "median": 11944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                208046,
+                208046,
+                208046
+              ],
+              "minimum": 208046,
+              "maximum": 208046,
+              "median": 208046,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                6973148,
+                6973148,
+                6973148
+              ],
+              "minimum": 6973148,
+              "maximum": 6973148,
+              "median": 6973148,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                558775766,
+                558775766,
+                558775766
+              ],
+              "minimum": 558775766,
+              "maximum": 558775766,
+              "median": 558775766,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                11944,
+                11944,
+                11944
+              ],
+              "minimum": 11944,
+              "maximum": 11944,
+              "median": 11944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                208046,
+                208046,
+                208046
+              ],
+              "minimum": 208046,
+              "maximum": 208046,
+              "median": 208046,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -35832,
+                -35832,
+                -35832
+              ],
+              "minimum": -35832,
+              "maximum": -35832,
+              "median": -35832,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -55704,
+                -55704,
+                -55704
+              ],
+              "minimum": -55704,
+              "maximum": -55704,
+              "median": -55704,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            30912,
+            30912,
+            30912
+          ],
+          "minimum": 30912,
+          "maximum": 30912,
+          "median": 30912,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      },
+      "seventh_turn": {
+        "phases": {
+          "construct": {
+            "allocation_calls": {
+              "observations": [
+                628,
+                628,
+                628
+              ],
+              "minimum": 628,
+              "maximum": 628,
+              "median": 628,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                48960,
+                48960,
+                48960
+              ],
+              "minimum": 48960,
+              "maximum": 48960,
+              "median": 48960,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                22824,
+                22824,
+                22824
+              ],
+              "minimum": 22824,
+              "maximum": 22824,
+              "median": 22824,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                27376,
+                27376,
+                27376
+              ],
+              "minimum": 27376,
+              "maximum": 27376,
+              "median": 27376,
+              "all_identical": true
+            }
+          },
+          "cold_hull": {
+            "allocation_calls": {
+              "observations": [
+                1840623,
+                1840623,
+                1840623
+              ],
+              "minimum": 1840623,
+              "maximum": 1840623,
+              "median": 1840623,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                161118014,
+                161118014,
+                161118014
+              ],
+              "minimum": 161118014,
+              "maximum": 161118014,
+              "median": 161118014,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                40944,
+                40944,
+                40944
+              ],
+              "minimum": 40944,
+              "maximum": 40944,
+              "median": 40944,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                198838,
+                198838,
+                198838
+              ],
+              "minimum": 198838,
+              "maximum": 198838,
+              "median": 198838,
+              "all_identical": true
+            }
+          },
+          "warm_hull": {
+            "allocation_calls": {
+              "observations": [
+                1809365,
+                1809365,
+                1809365
+              ],
+              "minimum": 1809365,
+              "maximum": 1809365,
+              "median": 1809365,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                159432750,
+                159432750,
+                159432750
+              ],
+              "minimum": 159432750,
+              "maximum": 159432750,
+              "median": 159432750,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                5800,
+                5800,
+                5800
+              ],
+              "minimum": 5800,
+              "maximum": 5800,
+              "median": 5800,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                163694,
+                163694,
+                163694
+              ],
+              "minimum": 163694,
+              "maximum": 163694,
+              "median": 163694,
+              "all_identical": true
+            }
+          },
+          "replay_hull": {
+            "allocation_calls": {
+              "observations": [
+                1809365,
+                1809365,
+                1809365
+              ],
+              "minimum": 1809365,
+              "maximum": 1809365,
+              "median": 1809365,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                159432750,
+                159432750,
+                159432750
+              ],
+              "minimum": 159432750,
+              "maximum": 159432750,
+              "median": 159432750,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                5800,
+                5800,
+                5800
+              ],
+              "minimum": 5800,
+              "maximum": 5800,
+              "median": 5800,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                163694,
+                163694,
+                163694
+              ],
+              "minimum": 163694,
+              "maximum": 163694,
+              "median": 163694,
+              "all_identical": true
+            }
+          },
+          "drop_outputs_and_input": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -17400,
+                -17400,
+                -17400
+              ],
+              "minimum": -17400,
+              "maximum": -17400,
+              "median": -17400,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          },
+          "clear_grammar_cache": {
+            "allocation_calls": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "allocated_bytes": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            },
+            "retained_bytes_delta": {
+              "observations": [
+                -32936,
+                -32936,
+                -32936
+              ],
+              "minimum": -32936,
+              "maximum": -32936,
+              "median": -32936,
+              "all_identical": true
+            },
+            "peak_bytes_delta": {
+              "observations": [
+                0,
+                0,
+                0
+              ],
+              "minimum": 0,
+              "maximum": 0,
+              "median": 0,
+              "all_identical": true
+            }
+          }
+        },
+        "lifecycle_retained_requested_bytes": {
+          "observations": [
+            25032,
+            25032,
+            25032
+          ],
+          "minimum": 25032,
+          "maximum": 25032,
+          "median": 25032,
+          "all_identical": true
+        },
+        "retention_outside_measured_phases": {
+          "observations": [
+            0,
+            0,
+            0
+          ],
+          "minimum": 0,
+          "maximum": 0,
+          "median": 0,
+          "all_identical": true
+        }
+      }
+    }
+  },
+  "paired_resource_deltas": {
+    "candidate_minus_parent": {
+      "fifteen_degrees": {
+        "construct": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "cold_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "warm_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "replay_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "drop_outputs_and_input": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "clear_grammar_cache": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        }
+      },
+      "original_medium": {
+        "construct": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "cold_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "warm_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "replay_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "drop_outputs_and_input": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "clear_grammar_cache": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        }
+      },
+      "fifth_turn": {
+        "construct": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "cold_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "warm_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "replay_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "drop_outputs_and_input": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "clear_grammar_cache": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        }
+      },
+      "seventh_turn": {
+        "construct": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "cold_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "warm_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "replay_hull": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "drop_outputs_and_input": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        },
+        "clear_grammar_cache": {
+          "allocation_calls": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "allocated_bytes": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "retained_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          },
+          "peak_bytes_delta": {
+            "observations": [
+              0,
+              0,
+              0
+            ],
+            "minimum": 0,
+            "maximum": 0,
+            "median": 0,
+            "all_identical": true
+          }
+        }
+      }
+    }
+  },
+  "phase_witness_sha256": {
+    "parent": {
+      "fifteen_degrees": {
+        "cold": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "warm": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "replay": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"
+      },
+      "original_medium": {
+        "cold": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "warm": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "replay": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"
+      },
+      "fifth_turn": {
+        "cold": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "warm": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "replay": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"
+      },
+      "seventh_turn": {
+        "cold": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "warm": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "replay": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"
+      }
+    },
+    "candidate": {
+      "fifteen_degrees": {
+        "cold": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "warm": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+        "replay": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31"
+      },
+      "original_medium": {
+        "cold": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "warm": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+        "replay": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d"
+      },
+      "fifth_turn": {
+        "cold": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "warm": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+        "replay": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077"
+      },
+      "seventh_turn": {
+        "cold": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "warm": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+        "replay": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9"
+      }
+    }
+  },
+  "phase_witness_bytes": {
+    "parent": {
+      "fifteen_degrees": {
+        "cold": 21895,
+        "warm": 21895,
+        "replay": 21895
+      },
+      "original_medium": {
+        "cold": 40239,
+        "warm": 40239,
+        "replay": 40239
+      },
+      "fifth_turn": {
+        "cold": 4830,
+        "warm": 4830,
+        "replay": 4830
+      },
+      "seventh_turn": {
+        "cold": 2337,
+        "warm": 2337,
+        "replay": 2337
+      }
+    },
+    "candidate": {
+      "fifteen_degrees": {
+        "cold": 21895,
+        "warm": 21895,
+        "replay": 21895
+      },
+      "original_medium": {
+        "cold": 40239,
+        "warm": 40239,
+        "replay": 40239
+      },
+      "fifth_turn": {
+        "cold": 4830,
+        "warm": 4830,
+        "replay": 4830
+      },
+      "seventh_turn": {
+        "cold": 2337,
+        "warm": 2337,
+        "replay": 2337
+      }
+    }
+  },
+  "all_outputs_match_group_phase_reference": true,
+  "all_outputs_identical_across_groups": true,
+  "old_trial_samples_pooled": false,
+  "interpretation": "Both groups must preserve the same independent exact-validated full original hull outputs, within and across all phases. Every requested-allocation observation and paired resource delta is retained. This isolates the normal-form filter change from the earlier correctness repairs.",
+  "instrumented_binary_raw_bytes": {
+    "parent": 8769672,
+    "candidate": 8771352
+  },
+  "instrumented_binary_text_bytes": {
+    "parent": 1665135,
+    "candidate": 1665247
+  },
+  "limits": [
+    "Requested global allocator bytes only: no stack-byte, allocator usable-size or RSS claim.",
+    "All three per-case observations are included; instrumentation times are not used as performance estimates.",
+    "Both groups are isolated candidates. This is not a new admitted-runtime comparison.",
+    "Cold/warm/replay share the same input and keep prior outputs alive. No per-query allocation is assumed to be a persistent proof cache.",
+    "Validation/serialization occur outside measured phases; their retained delta is reported separately.",
+    "Process-global shared scalar caches can survive input disposal and grammar-cache clearing.",
+    "No production formal proof, directed campaign, complete resource-bound proof, full workspace CI or runtime admission is claimed."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
