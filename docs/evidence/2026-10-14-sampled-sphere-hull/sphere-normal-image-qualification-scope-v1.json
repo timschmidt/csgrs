@@ -1,0 +1,38 @@
+{
+  "objective": "Broader qualification of the unchanged ordinary normal-form finite-image rejection candidate.",
+  "feasibility_result_sha256": "137fbe10f5258e44bea5be043d514dd0cafee174d2db60151a297941560b8ac9",
+  "independent_support_result_sha256": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+  "scalar_cost_assessment_sha256": "32ff5d075936d2492567138e073de4ddcb6c616794a7294042b164fb6d269fce",
+  "source": "target/sphere-normal-image-v1/source",
+  "source_files": 10136,
+  "source_mutations_allowed": false,
+  "commands": 12,
+  "packages": [
+    "hyperreal",
+    "hyperlimit",
+    "hypermesh",
+    "hypercurve"
+  ],
+  "features": [
+    "default",
+    "all-features"
+  ],
+  "checks": [
+    "Workspace cargo fmt --all -- --check.",
+    "Strict release all-target Clippy for all four packages at both feature settings.",
+    "All release library and integration tests for all four packages at both feature settings.",
+    "All-feature doctests and warning-denied docs for all four packages.",
+    "Strict no-default-feature root Clippy and tests for native_queries, geometry_context, solid_cache and native_hull_determinism.",
+    "Release compile checks for all hyperreal, hyperlimit and hypermesh fuzz binaries."
+  ],
+  "subcommand_wall_stop_seconds": 1800,
+  "serialization": "Every command must exit zero before the next starts. Preserve failures and executed sources; do not extend this frozen run.",
+  "excluded_from_claim": [
+    "Executed benches, ASan or directed fuzz campaign.",
+    "New production formal proof.",
+    "Native timing or resource admission.",
+    "Complete workspace CI or push readiness."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
