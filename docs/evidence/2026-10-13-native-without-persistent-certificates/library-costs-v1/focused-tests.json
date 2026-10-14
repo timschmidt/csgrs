@@ -1,0 +1,31 @@
+[
+  {
+    "variant": "baseline",
+    "suite": "metadata",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 1
+  },
+  {
+    "variant": "candidate",
+    "suite": "metadata",
+    "passed": 3,
+    "failed": 0,
+    "ignored": 1
+  },
+  {
+    "variant": "candidate",
+    "suite": "scalar-library",
+    "passed": 868,
+    "failed": 0,
+    "ignored": 0,
+    "included_P4_regressions": 11
+  },
+  {
+    "variant": "candidate",
+    "suite": "endpoint",
+    "passed": 5,
+    "failed": 0,
+    "ignored": 0
+  }
+]

@@ -1,0 +1,714 @@
+{
+  "scope": "Fixed current-main versus a combination without persistent Laurent storage.\n\nUnchanged baseline binaries are reused with verified identities; all samples\nare new. Candidate builds finish before controls or costs. Public time probes use System\nwithout counting; memory probes count requested Rust allocations over System.\nThe private metadata harness has the same TLS wrapper in both modes. No CLI\nallocator is imposed by any linked reusable library. Old samples stay closed.\n",
+  "runner_sha256": "fae5cd65e02a5c24f200efd44a8111646cf59582a32ce8cb4e9308713bd78ae1",
+  "assessor_sha256": "42b3c9239889ef76c5962c7ef8d8d6c63a8c8f3cdda45cf249d64c48f5a0af79",
+  "source_review_sha256": "eb6b6e6b3a10b69aa0fc45fb83e3d103228b2b8410cae040d91d64847e72fac6",
+  "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
+  "schedule": [
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "time",
+      "count": 8192,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "time",
+      "count": 8192,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "time",
+      "count": 8192,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "time",
+      "count": 8192,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "time",
+      "count": 8192,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "arc",
+      "mode": "memory",
+      "count": 1000,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "time",
+      "count": 1024,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "time",
+      "count": 1024,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "time",
+      "count": 1024,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "time",
+      "count": 1024,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "time",
+      "count": 1024,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "memory",
+      "count": 128,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "memory",
+      "count": 128,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "memory",
+      "count": 128,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "memory",
+      "count": 128,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "metadata",
+      "mode": "memory",
+      "count": 128,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "broad",
+      "mode": "time",
+      "count": null,
+      "pair": 1,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "broad",
+      "mode": "time",
+      "count": null,
+      "pair": 2,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "broad",
+      "mode": "time",
+      "count": null,
+      "pair": 3,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "broad",
+      "mode": "time",
+      "count": null,
+      "pair": 4,
+      "order": [
+        "candidate",
+        "baseline"
+      ]
+    },
+    {
+      "suite": "broad",
+      "mode": "time",
+      "count": null,
+      "pair": 5,
+      "order": [
+        "baseline",
+        "candidate"
+      ]
+    }
+  ],
+  "baseline_reuse": {
+    "libraries": {
+      "hyperreal": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+        "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+        "bytes": 11697454,
+        "features": [
+          "cached-f32-approx",
+          "cached-f64-approx",
+          "default",
+          "dispatch-trace",
+          "serde",
+          "simple"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+      },
+      "hyperlimit": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+        "sha256": "8d2c0074e1e76a5b86da47ae8d49dbcbac760c01cd0268f8523ed983be80aa87",
+        "bytes": 4007458,
+        "features": [
+          "default",
+          "dispatch-trace",
+          "std"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperlimit/Cargo.toml"
+      },
+      "hypercurve": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhypercurve.rlib",
+        "sha256": "9b006af05631f7a521db5b7e1e8cdeccc23184878fb1c0661c30e801f93be379",
+        "bytes": 48769786,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hypercurve/Cargo.toml"
+      },
+      "hyperdrc": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperdrc.rlib",
+        "sha256": "6543c3dfe602173019ffe9b7611c54e67e7d44356a165dea379ac4be7b0c6ec5",
+        "bytes": 26698760,
+        "features": [],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperdrc/Cargo.toml"
+      },
+      "serde_json": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+        "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+        "bytes": 2042466,
+        "features": [
+          "default",
+          "std"
+        ],
+        "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+      }
+    },
+    "binaries": {
+      "baseline-rational-time": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-time",
+        "sha256": "1fe09cc1f1133d1659348809e468757fb05b55d8eeafb037d0168e9528e3a58f",
+        "bytes": 6182576
+      },
+      "baseline-rational-memory": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-memory",
+        "sha256": "65b26069ccf005b73166609704f4d7a70f1022e2967e591e586e6a326a30f60e",
+        "bytes": 6184464
+      },
+      "baseline-quadratic-time": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-time",
+        "sha256": "53a2b5c79bab891916d480d33dfc3333476e466a1311a3962deb12b1cbb5f467",
+        "bytes": 6157456
+      },
+      "baseline-quadratic-memory": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-memory",
+        "sha256": "9a32909ff38a41d49b8a7ecc5d59fa04c770dbf38b52c51a2b48b15f25093c05",
+        "bytes": 6160712
+      },
+      "baseline-integer-time": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-time",
+        "sha256": "714b32d667405551b9bca2ebda9632b4d1ca1621a62ee680d32a7cf0d45a7ec0",
+        "bytes": 6052552
+      },
+      "baseline-integer-memory": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+        "sha256": "fb3a710d7dfc060c62e143ebe375b8cabb78a686699a7f1f7d81505b992f30b3",
+        "bytes": 6055456
+      },
+      "baseline-arc-time": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-time",
+        "sha256": "2bc4f85f1e8bd19e18bbdeca2b24e1ce0ec94d68dc462db4f24b82d13b20411f",
+        "bytes": 8602288
+      },
+      "baseline-arc-memory": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-memory",
+        "sha256": "e204bf40d7ae8741f17f57e54d7a0a2abb787cc75211100b8a2309787191cbe9",
+        "bytes": 8604640
+      },
+      "baseline-broad-time": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-broad-time",
+        "sha256": "fdb0f03e01cf1759d6198c34ee1d2795261ce6e3ac383b860257ab708ebbf25f",
+        "bytes": 26375280
+      },
+      "baseline-abort-control": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-abort-control",
+        "sha256": "cd5d59f5d342fd167dafecd8b34b630265cea4ff674e54852fb4546278bf70c3",
+        "bytes": 8539736
+      },
+      "baseline-metadata": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/target/release/deps/hypercurve-c64b9a6905916d79",
+        "sha256": "c43402cff51b09fef8144168a7d0393c2a85d41d308b968d2d1e431b382718e4",
+        "bytes": 41727056,
+        "features": [
+          "comparative-benchmarks",
+          "default",
+          "dispatch-trace",
+          "hershey",
+          "svg",
+          "triangulation"
+        ],
+        "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/source/crates/hypercurve/Cargo.toml"
+      }
+    },
+    "source": "Unchanged prior current-main production and instrumented metadata copies.",
+    "measurement_reuse": false,
+    "compiler_and_rustflags_identical": true,
+    "prior_protocol": "docs/evidence/2026-10-13-combined-native-admission/library-costs-v1/protocol.json",
+    "prior_protocol_sha256": "e7a9f0f5420c93a6024dc910dfff904103a99c3a2abb2678da28872a7ed8ed78"
+  },
+  "pinned_cpu": 0,
+  "preflight_inputs": 42,
+  "metadata_preflight_inputs": 2,
+  "final_abort_pairs": 3,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "timeout_seconds": 1800,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3495.436\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "all_builds_finish_before_measurements": true,
+  "sample_extension_or_filtering": false,
+  "runtime_admitted": false
+}

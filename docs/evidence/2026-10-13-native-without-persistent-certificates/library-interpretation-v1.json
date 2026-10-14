@@ -1,0 +1,2334 @@
+{
+  "status": "retain-isolated-with-consumer-tradeoffs-check-native-viability",
+  "assessment_sha256": "904020f218293a34a9572c9a53dea6e49129e458570fbb9720ce770306dfbf79",
+  "result_sha256": "23db44a3dd6c7a82ae266118e6fd9167d1544e7dfa1c9e62ebf187e29d84b14d",
+  "source_review_sha256": "eb6b6e6b3a10b69aa0fc45fb83e3d103228b2b8410cae040d91d64847e72fac6",
+  "qualification": {
+    "new_commands": 155,
+    "all_exit_zero": true,
+    "candidate_scalar_tests": 868,
+    "included_P4_tests": 11,
+    "candidate_endpoint_tests": 5,
+    "metadata_tests_each_variant": 3,
+    "candidate_scalar_and_metadata_clippy_warning_denied": true,
+    "candidate_source_copies_fmt_passed": true,
+    "baseline_artifacts_reused": 11,
+    "paired_measurements_reused": false
+  },
+  "closed_sampling": {
+    "cost_processes": 110,
+    "abort_processes": 6,
+    "preflights": 20,
+    "timing_rows": 365,
+    "allocation_rows": 134,
+    "sample_extension_or_filtering": false
+  },
+  "all_measured_witnesses_representation_inventories_and_receipts_preserved": true,
+  "all_231_historical_broad_witnesses_identical": true,
+  "timing_summary": {
+    "rational": {
+      "timing_rows": 24,
+      "candidate_higher_all_five": 0,
+      "candidate_lower_all_five": 13
+    },
+    "quadratic": {
+      "timing_rows": 32,
+      "candidate_higher_all_five": 1,
+      "candidate_lower_all_five": 21
+    },
+    "integer": {
+      "timing_rows": 12,
+      "candidate_higher_all_five": 1,
+      "candidate_lower_all_five": 3
+    },
+    "arc": {
+      "timing_rows": 48,
+      "candidate_higher_all_five": 2,
+      "candidate_lower_all_five": 23
+    },
+    "metadata": {
+      "timing_rows": 18,
+      "candidate_higher_all_five": 0,
+      "candidate_lower_all_five": 6
+    },
+    "broad": {
+      "timing_rows": 231,
+      "candidate_higher_all_five": 16,
+      "candidate_lower_all_five": 24
+    }
+  },
+  "higher_in_all_five": 20,
+  "lower_in_all_five": 90,
+  "all_adverse_timing_rows": [
+    {
+      "suite": "quadratic",
+      "name": "opaque_cancellation_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        11235431,
+        11038675,
+        10739905,
+        10975049,
+        11111750
+      ],
+      "candidate_ns": [
+        11299066,
+        11756185,
+        11799313,
+        11386321,
+        11490203
+      ],
+      "baseline_median_ns": 11038675,
+      "candidate_median_ns": 11490203,
+      "ratio_of_medians": 1.0409041846054894,
+      "paired_ratios": [
+        1.005663779164324,
+        1.0649996489614921,
+        1.098642213315667,
+        1.0374733634446645,
+        1.034058811618332
+      ],
+      "median_paired_ratio": 1.0374733634446645,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "integer",
+      "name": "signed_word_boundary_construction",
+      "iterations": 4096,
+      "baseline_ns": [
+        2098536,
+        2179141,
+        2159202,
+        2127595,
+        2170361
+      ],
+      "candidate_ns": [
+        2227848,
+        2193160,
+        2265975,
+        2157972,
+        3672879
+      ],
+      "baseline_median_ns": 2159202,
+      "candidate_median_ns": 2227848,
+      "ratio_of_medians": 1.0317923010445527,
+      "paired_ratios": [
+        1.061620100870321,
+        1.0064332688889797,
+        1.0494502135511175,
+        1.014277623325868,
+        1.6922894394066241
+      ],
+      "median_paired_ratio": 1.0494502135511175,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "arc",
+      "name": "copied_endpoint_coordinates_cloned",
+      "iterations": 8192,
+      "baseline_ns": [
+        570141,
+        581990,
+        574731,
+        575520,
+        581021
+      ],
+      "candidate_ns": [
+        584530,
+        588450,
+        614378,
+        582661,
+        599419
+      ],
+      "baseline_median_ns": 575520,
+      "candidate_median_ns": 588450,
+      "ratio_of_medians": 1.0224666388657215,
+      "paired_ratios": [
+        1.0252376166597386,
+        1.0110998470764103,
+        1.0689835766645612,
+        1.0124079093689184,
+        1.031664948426993
+      ],
+      "median_paired_ratio": 1.0252376166597386,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "arc",
+      "name": "approximate_non_endpoint_first",
+      "iterations": 8192,
+      "baseline_ns": [
+        13834533,
+        13963894,
+        14010721,
+        13966654,
+        14519197
+      ],
+      "candidate_ns": [
+        13908658,
+        22739553,
+        14014141,
+        18293398,
+        16556817
+      ],
+      "baseline_median_ns": 13966654,
+      "candidate_median_ns": 16556817,
+      "ratio_of_medians": 1.1854533662822893,
+      "paired_ratios": [
+        1.0053579690763685,
+        1.6284535674647773,
+        1.0002440987869219,
+        1.309791020812859,
+        1.1403397171344944
+      ],
+      "median_paired_ratio": 1.1403397171344944,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_warm_polygon_area_1000000",
+      "iterations": 10000,
+      "baseline_ns": [
+        298450,
+        288660,
+        300799,
+        294450,
+        294790
+      ],
+      "candidate_ns": [
+        336837,
+        297440,
+        307938,
+        355426,
+        298170
+      ],
+      "baseline_median_ns": 294790,
+      "candidate_median_ns": 307938,
+      "ratio_of_medians": 1.0446012415617898,
+      "paired_ratios": [
+        1.1286212095828447,
+        1.0304164068454236,
+        1.0237334565606933,
+        1.2070843946340635,
+        1.0114657892058754
+      ],
+      "median_paired_ratio": 1.0304164068454236,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_report_area_filter_128",
+      "iterations": 1000,
+      "baseline_ns": [
+        1365426,
+        1365976,
+        1433262,
+        1399924,
+        1421432
+      ],
+      "candidate_ns": [
+        1486159,
+        1441021,
+        1497378,
+        2617111,
+        1483338
+      ],
+      "baseline_median_ns": 1399924,
+      "candidate_median_ns": 1486159,
+      "ratio_of_medians": 1.0615997725590818,
+      "paired_ratios": [
+        1.0884214889712076,
+        1.0549387397728804,
+        1.0447343193358924,
+        1.869466485323489,
+        1.043551854749295
+      ],
+      "median_paired_ratio": 1.0549387397728804,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_overlapping_duplicate_layer_area",
+      "iterations": 1000,
+      "baseline_ns": [
+        1551764,
+        1574362,
+        1569243,
+        1574562,
+        1550113
+      ],
+      "candidate_ns": [
+        1583152,
+        1612820,
+        1577582,
+        2966077,
+        1682195
+      ],
+      "baseline_median_ns": 1569243,
+      "candidate_median_ns": 1612820,
+      "ratio_of_medians": 1.0277694404244595,
+      "paired_ratios": [
+        1.020227302605293,
+        1.0244276729240163,
+        1.0053140272092977,
+        1.8837473532322004,
+        1.085207981611663
+      ],
+      "median_paired_ratio": 1.0244276729240163,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_stencil_sparse_1002_pads",
+      "iterations": 20,
+      "baseline_ns": [
+        42725985,
+        44463207,
+        42759633,
+        42028663,
+        42412467
+      ],
+      "candidate_ns": [
+        46298762,
+        55661121,
+        46820206,
+        42455534,
+        45170168
+      ],
+      "baseline_median_ns": 42725985,
+      "candidate_median_ns": 46298762,
+      "ratio_of_medians": 1.0836207052921074,
+      "paired_ratios": [
+        1.0836207052921074,
+        1.2518467460073224,
+        1.094962765466205,
+        1.0101566637987032,
+        1.065020999603725
+      ],
+      "median_paired_ratio": 1.0836207052921074,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_affine_quadratic_cap",
+      "iterations": 100,
+      "baseline_ns": [
+        571501,
+        555162,
+        560282,
+        574991,
+        555981
+      ],
+      "candidate_ns": [
+        914257,
+        571381,
+        570901,
+        662215,
+        977253
+      ],
+      "baseline_median_ns": 560282,
+      "candidate_median_ns": 662215,
+      "ratio_of_medians": 1.1819315987306391,
+      "paired_ratios": [
+        1.5997469820700225,
+        1.0292148958322076,
+        1.0189529558329555,
+        1.1516962874201508,
+        1.7577093461826934
+      ],
+      "median_paired_ratio": 1.1516962874201508,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_drill_spacing_sparse_2002",
+      "iterations": 20,
+      "baseline_ns": [
+        42337282,
+        42921022,
+        41712305,
+        44496035,
+        41437694
+      ],
+      "candidate_ns": [
+        68634002,
+        45147700,
+        43503462,
+        64248303,
+        46607970
+      ],
+      "baseline_median_ns": 42337282,
+      "candidate_median_ns": 46607970,
+      "ratio_of_medians": 1.1008729847135676,
+      "paired_ratios": [
+        1.6211244264570408,
+        1.0518784944123651,
+        1.0429407341550652,
+        1.4439107439572987,
+        1.1247722906588382
+      ],
+      "median_paired_ratio": 1.1247722906588382,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_point_mouse_huge_centers",
+      "iterations": 50,
+      "baseline_ns": [
+        47106,
+        52996,
+        47947,
+        47917,
+        46857
+      ],
+      "candidate_ns": [
+        47657,
+        63406,
+        47957,
+        49436,
+        47577
+      ],
+      "baseline_median_ns": 47917,
+      "candidate_median_ns": 47957,
+      "ratio_of_medians": 1.0008347768015526,
+      "paired_ratios": [
+        1.011697023733707,
+        1.1964299192391878,
+        1.000208563622333,
+        1.0317006490389633,
+        1.0153659005057942
+      ],
+      "median_paired_ratio": 1.0153659005057942,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_authored_decoupling_unknown_radius",
+      "iterations": 25,
+      "baseline_ns": [
+        355366,
+        357825,
+        355406,
+        363305,
+        352846
+      ],
+      "candidate_ns": [
+        378084,
+        369064,
+        358936,
+        369624,
+        359285
+      ],
+      "baseline_median_ns": 355406,
+      "candidate_median_ns": 369064,
+      "ratio_of_medians": 1.0384292893198201,
+      "paired_ratios": [
+        1.0639284568585627,
+        1.0314092084119333,
+        1.0099323027748546,
+        1.0173930994618847,
+        1.018248754414107
+      ],
+      "median_paired_ratio": 1.018248754414107,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_authored_plating_unknown_radius",
+      "iterations": 25,
+      "baseline_ns": [
+        358586,
+        367765,
+        359765,
+        365875,
+        370174
+      ],
+      "candidate_ns": [
+        385833,
+        373425,
+        387073,
+        372944,
+        603269
+      ],
+      "baseline_median_ns": 365875,
+      "candidate_median_ns": 385833,
+      "ratio_of_medians": 1.0545486846600616,
+      "paired_ratios": [
+        1.0759845615835533,
+        1.0153902628036926,
+        1.0759051047211374,
+        1.0193208062863,
+        1.6296903618298422
+      ],
+      "median_paired_ratio": 1.0759051047211374,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_dense_fiducial_unknown_pitch",
+      "iterations": 10,
+      "baseline_ns": [
+        1444361,
+        1444132,
+        1446501,
+        1449901,
+        1466870
+      ],
+      "candidate_ns": [
+        1499398,
+        1560523,
+        1484728,
+        1628159,
+        1497968
+      ],
+      "baseline_median_ns": 1446501,
+      "candidate_median_ns": 1499398,
+      "ratio_of_medians": 1.036568934276575,
+      "paired_ratios": [
+        1.038104739743042,
+        1.0805958181108097,
+        1.02642721989131,
+        1.1229449458963061,
+        1.0212002426936266
+      ],
+      "median_paired_ratio": 1.038104739743042,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_dense_escape_unknown_pitch",
+      "iterations": 10,
+      "baseline_ns": [
+        1450571,
+        1468729,
+        1458410,
+        1458270,
+        1472639
+      ],
+      "candidate_ns": [
+        1512047,
+        1543534,
+        2632279,
+        1695114,
+        1488078
+      ],
+      "baseline_median_ns": 1458410,
+      "candidate_median_ns": 1543534,
+      "ratio_of_medians": 1.058367674385118,
+      "paired_ratios": [
+        1.0423805522101297,
+        1.050931792046048,
+        1.804896428302055,
+        1.1624143677096834,
+        1.0104838999917836
+      ],
+      "median_paired_ratio": 1.050931792046048,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_dense_viaspacing_unknown_pitch",
+      "iterations": 10,
+      "baseline_ns": [
+        1461470,
+        1464460,
+        1450721,
+        1466870,
+        1457440
+      ],
+      "candidate_ns": [
+        1526995,
+        1536755,
+        1479419,
+        1521966,
+        1486728
+      ],
+      "baseline_median_ns": 1461470,
+      "candidate_median_ns": 1521966,
+      "ratio_of_medians": 1.0413939389792468,
+      "paired_ratios": [
+        1.0448349949023927,
+        1.0493663193258949,
+        1.0197818877647735,
+        1.0375602473293475,
+        1.020095509935229
+      ],
+      "median_paired_ratio": 1.0375602473293475,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_dense_maskbridge_unknown_pitch",
+      "iterations": 10,
+      "baseline_ns": [
+        1489318,
+        1461890,
+        1446631,
+        1457341,
+        1467860
+      ],
+      "candidate_ns": [
+        1573062,
+        1550434,
+        1488258,
+        1557454,
+        1519326
+      ],
+      "baseline_median_ns": 1461890,
+      "candidate_median_ns": 1550434,
+      "ratio_of_medians": 1.060568168603657,
+      "paired_ratios": [
+        1.0562297642276532,
+        1.060568168603657,
+        1.028775133396146,
+        1.0686956587373855,
+        1.0350619268867602
+      ],
+      "median_paired_ratio": 1.0562297642276532,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_fixture_thermal_unknown_radius",
+      "iterations": 25,
+      "baseline_ns": [
+        355586,
+        359025,
+        357145,
+        359415,
+        366105
+      ],
+      "candidate_ns": [
+        387324,
+        371335,
+        373495,
+        360306,
+        375284
+      ],
+      "baseline_median_ns": 359025,
+      "candidate_median_ns": 373495,
+      "ratio_of_medians": 1.0403036000278532,
+      "paired_ratios": [
+        1.089255482499311,
+        1.034287305897918,
+        1.045779725321648,
+        1.0024790284211844,
+        1.0250720421736934
+      ],
+      "median_paired_ratio": 1.034287305897918,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_rectangle_construct_unit",
+      "iterations": 100,
+      "baseline_ns": [
+        2995194,
+        3076380,
+        2935579,
+        2892812,
+        2944708
+      ],
+      "candidate_ns": [
+        4561288,
+        3079989,
+        3059931,
+        2916651,
+        2970627
+      ],
+      "baseline_median_ns": 2944708,
+      "candidate_median_ns": 3059931,
+      "ratio_of_medians": 1.0391288372225702,
+      "paired_ratios": [
+        1.5228689694223478,
+        1.0011731320578081,
+        1.04236029757673,
+        1.0082407705720247,
+        1.0088018913929666
+      ],
+      "median_paired_ratio": 1.0088018913929666,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    },
+    {
+      "suite": "broad",
+      "name": "operation_pad_trapezoid_invalid_delta",
+      "iterations": 100,
+      "baseline_ns": [
+        85374,
+        86234,
+        88564,
+        84234,
+        85284
+      ],
+      "candidate_ns": [
+        85664,
+        95824,
+        89344,
+        87344,
+        91114
+      ],
+      "baseline_median_ns": 85374,
+      "candidate_median_ns": 89344,
+      "ratio_of_medians": 1.046501276735306,
+      "paired_ratios": [
+        1.0033968187035867,
+        1.1112090358791196,
+        1.0088071902804752,
+        1.0369209582828787,
+        1.0683598330284696
+      ],
+      "median_paired_ratio": 1.0369209582828787,
+      "candidate_higher_pairs": 5,
+      "candidate_lower_pairs": 0
+    }
+  ],
+  "allocation_rows_with_increases": [
+    {
+      "suite": "rational",
+      "name": "multiradical_square_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            62943,
+            62943,
+            62943,
+            62943,
+            62943
+          ],
+          "candidate": [
+            40403,
+            40403,
+            40403,
+            40403,
+            40403
+          ],
+          "baseline_median": 62943,
+          "candidate_median": 40403,
+          "paired_deltas": [
+            -22540,
+            -22540,
+            -22540,
+            -22540,
+            -22540
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            2966432,
+            2966432,
+            2966432,
+            2966432,
+            2966432
+          ],
+          "candidate": [
+            2114400,
+            2114400,
+            2114400,
+            2114400,
+            2114400
+          ],
+          "baseline_median": 2966432,
+          "candidate_median": 2114400,
+          "paired_deltas": [
+            -852032,
+            -852032,
+            -852032,
+            -852032,
+            -852032
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1273032,
+            1273032,
+            1273032,
+            1273032,
+            1273032
+          ],
+          "candidate": [
+            1276288,
+            1276288,
+            1276288,
+            1276288,
+            1276288
+          ],
+          "baseline_median": 1273032,
+          "candidate_median": 1276288,
+          "paired_deltas": [
+            3256,
+            3256,
+            3256,
+            3256,
+            3256
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1273320,
+            1273320,
+            1273320,
+            1273320,
+            1273320
+          ],
+          "candidate": [
+            1276360,
+            1276360,
+            1276360,
+            1276360,
+            1276360
+          ],
+          "baseline_median": 1273320,
+          "candidate_median": 1276360,
+          "paired_deltas": [
+            3040,
+            3040,
+            3040,
+            3040,
+            3040
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "name": "pi_parameter_transport_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            92319,
+            92319,
+            92319,
+            92319,
+            92319
+          ],
+          "candidate": [
+            55583,
+            55583,
+            55583,
+            55583,
+            55583
+          ],
+          "baseline_median": 92319,
+          "candidate_median": 55583,
+          "paired_deltas": [
+            -36736,
+            -36736,
+            -36736,
+            -36736,
+            -36736
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            4831344,
+            4831344,
+            4831344,
+            4831344,
+            4831344
+          ],
+          "candidate": [
+            3225904,
+            3225904,
+            3225904,
+            3225904,
+            3225904
+          ],
+          "baseline_median": 4831344,
+          "candidate_median": 3225904,
+          "paired_deltas": [
+            -1605440,
+            -1605440,
+            -1605440,
+            -1605440,
+            -1605440
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1667104,
+            1667104,
+            1667104,
+            1667104,
+            1667104
+          ],
+          "candidate": [
+            1667648,
+            1667648,
+            1667648,
+            1667648,
+            1667648
+          ],
+          "baseline_median": 1667104,
+          "candidate_median": 1667648,
+          "paired_deltas": [
+            544,
+            544,
+            544,
+            544,
+            544
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1667576,
+            1667576,
+            1667576,
+            1667576,
+            1667576
+          ],
+          "candidate": [
+            1667952,
+            1667952,
+            1667952,
+            1667952,
+            1667952
+          ],
+          "baseline_median": 1667576,
+          "candidate_median": 1667952,
+          "paired_deltas": [
+            376,
+            376,
+            376,
+            376,
+            376
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "rational",
+      "name": "conjugate_product_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            51133,
+            51133,
+            51133,
+            51133,
+            51133
+          ],
+          "candidate": [
+            27289,
+            27289,
+            27289,
+            27289,
+            27289
+          ],
+          "baseline_median": 51133,
+          "candidate_median": 27289,
+          "paired_deltas": [
+            -23844,
+            -23844,
+            -23844,
+            -23844,
+            -23844
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            2398312,
+            2398312,
+            2398312,
+            2398312,
+            2398312
+          ],
+          "candidate": [
+            1449136,
+            1449136,
+            1449136,
+            1449136,
+            1449136
+          ],
+          "baseline_median": 2398312,
+          "candidate_median": 1449136,
+          "paired_deltas": [
+            -949176,
+            -949176,
+            -949176,
+            -949176,
+            -949176
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            791616,
+            791616,
+            791616,
+            791616,
+            791616
+          ],
+          "candidate": [
+            797184,
+            797184,
+            797184,
+            797184,
+            797184
+          ],
+          "baseline_median": 791616,
+          "candidate_median": 797184,
+          "paired_deltas": [
+            5568,
+            5568,
+            5568,
+            5568,
+            5568
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            792240,
+            792240,
+            792240,
+            792240,
+            792240
+          ],
+          "candidate": [
+            797568,
+            797568,
+            797568,
+            797568,
+            797568
+          ],
+          "baseline_median": 792240,
+          "candidate_median": 797568,
+          "paired_deltas": [
+            5328,
+            5328,
+            5328,
+            5328,
+            5328
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "name": "multiradical_square_first",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            38024,
+            38024,
+            38024,
+            38024,
+            38024
+          ],
+          "candidate": [
+            15025,
+            15025,
+            15025,
+            15025,
+            15025
+          ],
+          "baseline_median": 38024,
+          "candidate_median": 15025,
+          "paired_deltas": [
+            -22999,
+            -22999,
+            -22999,
+            -22999,
+            -22999
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            2088976,
+            2088976,
+            2088976,
+            2088976,
+            2088976
+          ],
+          "candidate": [
+            1161152,
+            1161152,
+            1161152,
+            1161152,
+            1161152
+          ],
+          "baseline_median": 2088976,
+          "candidate_median": 1161152,
+          "paired_deltas": [
+            -927824,
+            -927824,
+            -927824,
+            -927824,
+            -927824
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            24824,
+            24824,
+            24824,
+            24824,
+            24824
+          ],
+          "candidate": [
+            25000,
+            25000,
+            25000,
+            25000,
+            25000
+          ],
+          "baseline_median": 24824,
+          "candidate_median": 25000,
+          "paired_deltas": [
+            176,
+            176,
+            176,
+            176,
+            176
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            26312,
+            26312,
+            26312,
+            26312,
+            26312
+          ],
+          "candidate": [
+            25832,
+            25832,
+            25832,
+            25832,
+            25832
+          ],
+          "baseline_median": 26312,
+          "candidate_median": 25832,
+          "paired_deltas": [
+            -480,
+            -480,
+            -480,
+            -480,
+            -480
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        }
+      }
+    },
+    {
+      "suite": "quadratic",
+      "name": "conjugate_then_affine_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            18246,
+            18246,
+            18246,
+            18246,
+            18246
+          ],
+          "candidate": [
+            13176,
+            13176,
+            13176,
+            13176,
+            13176
+          ],
+          "baseline_median": 18246,
+          "candidate_median": 13176,
+          "paired_deltas": [
+            -5070,
+            -5070,
+            -5070,
+            -5070,
+            -5070
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            992920,
+            992920,
+            992920,
+            992920,
+            992920
+          ],
+          "candidate": [
+            790144,
+            790144,
+            790144,
+            790144,
+            790144
+          ],
+          "baseline_median": 992920,
+          "candidate_median": 790144,
+          "paired_deltas": [
+            -202776,
+            -202776,
+            -202776,
+            -202776,
+            -202776
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            764200,
+            764200,
+            764200,
+            764200,
+            764200
+          ],
+          "candidate": [
+            764344,
+            764344,
+            764344,
+            764344,
+            764344
+          ],
+          "baseline_median": 764200,
+          "candidate_median": 764344,
+          "paired_deltas": [
+            144,
+            144,
+            144,
+            144,
+            144
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            764200,
+            764200,
+            764200,
+            764200,
+            764200
+          ],
+          "candidate": [
+            764344,
+            764344,
+            764344,
+            764344,
+            764344
+          ],
+          "baseline_median": 764200,
+          "candidate_median": 764344,
+          "paired_deltas": [
+            144,
+            144,
+            144,
+            144,
+            144
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "integer",
+      "name": "signed_word_boundary_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            12501,
+            12501,
+            12501,
+            12501,
+            12501
+          ],
+          "candidate": [
+            12501,
+            12501,
+            12501,
+            12501,
+            12501
+          ],
+          "baseline_median": 12501,
+          "candidate_median": 12501,
+          "paired_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 0
+        },
+        "allocated_bytes": {
+          "baseline": [
+            652000,
+            652000,
+            652000,
+            652000,
+            652000
+          ],
+          "candidate": [
+            664024,
+            664024,
+            664024,
+            664024,
+            664024
+          ],
+          "baseline_median": 652000,
+          "candidate_median": 664024,
+          "paired_deltas": [
+            12024,
+            12024,
+            12024,
+            12024,
+            12024
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            388000,
+            388000,
+            388000,
+            388000,
+            388000
+          ],
+          "candidate": [
+            388000,
+            388000,
+            388000,
+            388000,
+            388000
+          ],
+          "baseline_median": 388000,
+          "candidate_median": 388000,
+          "paired_deltas": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            388264,
+            388264,
+            388264,
+            388264,
+            388264
+          ],
+          "candidate": [
+            388288,
+            388288,
+            388288,
+            388288,
+            388288
+          ],
+          "baseline_median": 388264,
+          "candidate_median": 388288,
+          "paired_deltas": [
+            24,
+            24,
+            24,
+            24,
+            24
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "radical_non_endpoint_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            29802,
+            29802,
+            29802,
+            29802,
+            29802
+          ],
+          "candidate": [
+            25104,
+            25104,
+            25104,
+            25104,
+            25104
+          ],
+          "baseline_median": 29802,
+          "candidate_median": 25104,
+          "paired_deltas": [
+            -4698,
+            -4698,
+            -4698,
+            -4698,
+            -4698
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            2106200,
+            2106200,
+            2106200,
+            2106200,
+            2106200
+          ],
+          "candidate": [
+            1918400,
+            1918400,
+            1918400,
+            1918400,
+            1918400
+          ],
+          "baseline_median": 2106200,
+          "candidate_median": 1918400,
+          "paired_deltas": [
+            -187800,
+            -187800,
+            -187800,
+            -187800,
+            -187800
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1522688,
+            1522688,
+            1522688,
+            1522688,
+            1522688
+          ],
+          "candidate": [
+            1523408,
+            1523408,
+            1523408,
+            1523408,
+            1523408
+          ],
+          "baseline_median": 1522688,
+          "candidate_median": 1523408,
+          "paired_deltas": [
+            720,
+            720,
+            720,
+            720,
+            720
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1522744,
+            1522744,
+            1522744,
+            1522744,
+            1522744
+          ],
+          "candidate": [
+            1523408,
+            1523408,
+            1523408,
+            1523408,
+            1523408
+          ],
+          "baseline_median": 1522744,
+          "candidate_median": 1523408,
+          "paired_deltas": [
+            664,
+            664,
+            664,
+            664,
+            664
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "radical_non_endpoint_first",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            739928,
+            739928,
+            739928,
+            739928,
+            739928
+          ],
+          "candidate": [
+            131889,
+            131889,
+            131889,
+            131889,
+            131889
+          ],
+          "baseline_median": 739928,
+          "candidate_median": 131889,
+          "paired_deltas": [
+            -608039,
+            -608039,
+            -608039,
+            -608039,
+            -608039
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            36964112,
+            36964112,
+            36964112,
+            36964112,
+            36964112
+          ],
+          "candidate": [
+            7412336,
+            7412336,
+            7412336,
+            7412336,
+            7412336
+          ],
+          "baseline_median": 36964112,
+          "candidate_median": 7412336,
+          "paired_deltas": [
+            -29551776,
+            -29551776,
+            -29551776,
+            -29551776,
+            -29551776
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            300176,
+            300176,
+            300176,
+            300176,
+            300176
+          ],
+          "candidate": [
+            303264,
+            303264,
+            303264,
+            303264,
+            303264
+          ],
+          "baseline_median": 300176,
+          "candidate_median": 303264,
+          "paired_deltas": [
+            3088,
+            3088,
+            3088,
+            3088,
+            3088
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            303240,
+            303240,
+            303240,
+            303240,
+            303240
+          ],
+          "candidate": [
+            304408,
+            304408,
+            304408,
+            304408,
+            304408
+          ],
+          "baseline_median": 303240,
+          "candidate_median": 304408,
+          "paired_deltas": [
+            1168,
+            1168,
+            1168,
+            1168,
+            1168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "pi_scaled_non_endpoint_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            98052,
+            98052,
+            98052,
+            98052,
+            98052
+          ],
+          "candidate": [
+            58640,
+            58640,
+            58640,
+            58640,
+            58640
+          ],
+          "baseline_median": 98052,
+          "candidate_median": 58640,
+          "paired_deltas": [
+            -39412,
+            -39412,
+            -39412,
+            -39412,
+            -39412
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            6119424,
+            6119424,
+            6119424,
+            6119424,
+            6119424
+          ],
+          "candidate": [
+            3785560,
+            3785560,
+            3785560,
+            3785560,
+            3785560
+          ],
+          "baseline_median": 6119424,
+          "candidate_median": 3785560,
+          "paired_deltas": [
+            -2333864,
+            -2333864,
+            -2333864,
+            -2333864,
+            -2333864
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1874416,
+            1874416,
+            1874416,
+            1874416,
+            1874416
+          ],
+          "candidate": [
+            1874688,
+            1874688,
+            1874688,
+            1874688,
+            1874688
+          ],
+          "baseline_median": 1874416,
+          "candidate_median": 1874688,
+          "paired_deltas": [
+            272,
+            272,
+            272,
+            272,
+            272
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1874416,
+            1874416,
+            1874416,
+            1874416,
+            1874416
+          ],
+          "candidate": [
+            1874688,
+            1874688,
+            1874688,
+            1874688,
+            1874688
+          ],
+          "baseline_median": 1874416,
+          "candidate_median": 1874688,
+          "paired_deltas": [
+            272,
+            272,
+            272,
+            272,
+            272
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "opaque_translated_non_endpoint_construction",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            238340,
+            238340,
+            238340,
+            238340,
+            238340
+          ],
+          "candidate": [
+            170939,
+            170939,
+            170939,
+            170939,
+            170939
+          ],
+          "baseline_median": 238340,
+          "candidate_median": 170939,
+          "paired_deltas": [
+            -67401,
+            -67401,
+            -67401,
+            -67401,
+            -67401
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            15652048,
+            15652048,
+            15652048,
+            15652048,
+            15652048
+          ],
+          "candidate": [
+            12377768,
+            12377768,
+            12377768,
+            12377768,
+            12377768
+          ],
+          "baseline_median": 15652048,
+          "candidate_median": 12377768,
+          "paired_deltas": [
+            -3274280,
+            -3274280,
+            -3274280,
+            -3274280,
+            -3274280
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            2586384,
+            2586384,
+            2586384,
+            2586384,
+            2586384
+          ],
+          "candidate": [
+            2586464,
+            2586464,
+            2586464,
+            2586464,
+            2586464
+          ],
+          "baseline_median": 2586384,
+          "candidate_median": 2586464,
+          "paired_deltas": [
+            80,
+            80,
+            80,
+            80,
+            80
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            2589560,
+            2589560,
+            2589560,
+            2589560,
+            2589560
+          ],
+          "candidate": [
+            2588216,
+            2588216,
+            2588216,
+            2588216,
+            2588216
+          ],
+          "baseline_median": 2589560,
+          "candidate_median": 2588216,
+          "paired_deltas": [
+            -1344,
+            -1344,
+            -1344,
+            -1344,
+            -1344
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "off_circle_warm",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            6004,
+            6004,
+            6004,
+            6004,
+            6004
+          ],
+          "candidate": [
+            4431,
+            4431,
+            4431,
+            4431,
+            4431
+          ],
+          "baseline_median": 6004,
+          "candidate_median": 4431,
+          "paired_deltas": [
+            -1573,
+            -1573,
+            -1573,
+            -1573,
+            -1573
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            288120,
+            288120,
+            288120,
+            288120,
+            288120
+          ],
+          "candidate": [
+            244648,
+            244648,
+            244648,
+            244648,
+            244648
+          ],
+          "baseline_median": 288120,
+          "candidate_median": 244648,
+          "paired_deltas": [
+            -43472,
+            -43472,
+            -43472,
+            -43472,
+            -43472
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            48000,
+            48000,
+            48000,
+            48000,
+            48000
+          ],
+          "candidate": [
+            73168,
+            73168,
+            73168,
+            73168,
+            73168
+          ],
+          "baseline_median": 48000,
+          "candidate_median": 73168,
+          "paired_deltas": [
+            25168,
+            25168,
+            25168,
+            25168,
+            25168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            48120,
+            48120,
+            48120,
+            48120,
+            48120
+          ],
+          "candidate": [
+            73288,
+            73288,
+            73288,
+            73288,
+            73288
+          ],
+          "baseline_median": 48120,
+          "candidate_median": 73288,
+          "paired_deltas": [
+            25168,
+            25168,
+            25168,
+            25168,
+            25168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "aborted_unknown_first",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            1490248,
+            1490248,
+            1490248,
+            1490248,
+            1490248
+          ],
+          "candidate": [
+            1407676,
+            1407676,
+            1407676,
+            1407676,
+            1407676
+          ],
+          "baseline_median": 1490248,
+          "candidate_median": 1407676,
+          "paired_deltas": [
+            -82572,
+            -82572,
+            -82572,
+            -82572,
+            -82572
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            65666440,
+            65666440,
+            65666440,
+            65666440,
+            65666440
+          ],
+          "candidate": [
+            62471208,
+            62471208,
+            62471208,
+            62471208,
+            62471208
+          ],
+          "baseline_median": 65666440,
+          "candidate_median": 62471208,
+          "paired_deltas": [
+            -3195232,
+            -3195232,
+            -3195232,
+            -3195232,
+            -3195232
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            1469792,
+            1469792,
+            1469792,
+            1469792,
+            1469792
+          ],
+          "candidate": [
+            1469904,
+            1469904,
+            1469904,
+            1469904,
+            1469904
+          ],
+          "baseline_median": 1469792,
+          "candidate_median": 1469904,
+          "paired_deltas": [
+            112,
+            112,
+            112,
+            112,
+            112
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            1471216,
+            1471216,
+            1471216,
+            1471216,
+            1471216
+          ],
+          "candidate": [
+            1471304,
+            1471304,
+            1471304,
+            1471304,
+            1471304
+          ],
+          "baseline_median": 1471216,
+          "candidate_median": 1471304,
+          "paired_deltas": [
+            88,
+            88,
+            88,
+            88,
+            88
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "approximate_non_endpoint_first",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            8865,
+            8865,
+            8865,
+            8865,
+            8865
+          ],
+          "candidate": [
+            8868,
+            8868,
+            8868,
+            8868,
+            8868
+          ],
+          "baseline_median": 8865,
+          "candidate_median": 8868,
+          "paired_deltas": [
+            3,
+            3,
+            3,
+            3,
+            3
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "allocated_bytes": {
+          "baseline": [
+            616216,
+            616216,
+            616216,
+            616216,
+            616216
+          ],
+          "candidate": [
+            616384,
+            616384,
+            616384,
+            616384,
+            616384
+          ],
+          "baseline_median": 616216,
+          "candidate_median": 616384,
+          "paired_deltas": [
+            168,
+            168,
+            168,
+            168,
+            168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            324496,
+            324496,
+            324496,
+            324496,
+            324496
+          ],
+          "candidate": [
+            324664,
+            324664,
+            324664,
+            324664,
+            324664
+          ],
+          "baseline_median": 324496,
+          "candidate_median": 324664,
+          "paired_deltas": [
+            168,
+            168,
+            168,
+            168,
+            168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            324496,
+            324496,
+            324496,
+            324496,
+            324496
+          ],
+          "candidate": [
+            324664,
+            324664,
+            324664,
+            324664,
+            324664
+          ],
+          "baseline_median": 324496,
+          "candidate_median": 324664,
+          "paired_deltas": [
+            168,
+            168,
+            168,
+            168,
+            168
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    },
+    {
+      "suite": "arc",
+      "name": "near_endpoint_off_circle_warm",
+      "iterations": 1000,
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            31004,
+            31004,
+            31004,
+            31004,
+            31004
+          ],
+          "candidate": [
+            11432,
+            11432,
+            11432,
+            11432,
+            11432
+          ],
+          "baseline_median": 31004,
+          "candidate_median": 11432,
+          "paired_deltas": [
+            -19572,
+            -19572,
+            -19572,
+            -19572,
+            -19572
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "allocated_bytes": {
+          "baseline": [
+            1368152,
+            1368152,
+            1368152,
+            1368152,
+            1368152
+          ],
+          "candidate": [
+            649264,
+            649264,
+            649264,
+            649264,
+            649264
+          ],
+          "baseline_median": 1368152,
+          "candidate_median": 649264,
+          "paired_deltas": [
+            -718888,
+            -718888,
+            -718888,
+            -718888,
+            -718888
+          ],
+          "candidate_higher_pairs": 0,
+          "candidate_lower_pairs": 5
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            48000,
+            48000,
+            48000,
+            48000,
+            48000
+          ],
+          "candidate": [
+            94904,
+            94904,
+            94904,
+            94904,
+            94904
+          ],
+          "baseline_median": 48000,
+          "candidate_median": 94904,
+          "paired_deltas": [
+            46904,
+            46904,
+            46904,
+            46904,
+            46904
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            48440,
+            48440,
+            48440,
+            48440,
+            48440
+          ],
+          "candidate": [
+            95304,
+            95304,
+            95304,
+            95304,
+            95304
+          ],
+          "baseline_median": 48440,
+          "candidate_median": 95304,
+          "paired_deltas": [
+            46864,
+            46864,
+            46864,
+            46864,
+            46864
+          ],
+          "candidate_higher_pairs": 5,
+          "candidate_lower_pairs": 0
+        }
+      }
+    }
+  ],
+  "interpretation": [
+    "Intended scalar queries and exact arc queries have substantial gains; the two previously conspicuous quadratic construction workloads have current median ratios 1.0329 and 1.0067 against main. Different closed experiments are not paired against one another and do not establish causation.",
+    "The approximate non-endpoint first query remains higher in all five pairs (median ratio 1.1855). Broad affine quadratic and sparse drill rows have median ratios 1.1819 and 1.1009, also higher in all five pairs. Sixteen broad rows have that direction; all rows and sample ranges are retained.",
+    "Fourteen allocation rows have increases. No scalar cloned-query row has an increased measured field in this experiment. Arc off-circle and near-endpoint warm phases still have higher retained-byte deltas; these phase counters are not whole-life retention or RSS.",
+    "All eleven comparable probe/test binaries are smaller. Size does not resolve performance costs.",
+    "The sample supports further investigation of this simpler combination, not runtime admission. Timing ratios and pair directions are descriptive, not statistical significance claims."
+  ],
+  "next_action": {
+    "action": "Run the original two native assertions once on this unchanged candidate, after building its DRC test binary and checking the existing allocator contract tests.",
+    "purpose": "Determine whether removing persistent storage can meet the existing application limits before further tuning consumer paths. This is a new candidate viability check, not an admission or paired speedup claim.",
+    "limits_unchanged": {
+      "full_board": "120 seconds worker CPU",
+      "copper_neck": "60 seconds check-body wall"
+    },
+    "preserve": "The full library sample and all earlier results remain closed and unchanged. Native success cannot erase consumer costs. Complete stack qualification, exact full reports and application cost evidence remain required for admission."
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

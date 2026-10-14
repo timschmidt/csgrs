@@ -1,0 +1,144 @@
+{
+  "baseline-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-time",
+    "sha256": "1fe09cc1f1133d1659348809e468757fb05b55d8eeafb037d0168e9528e3a58f",
+    "bytes": 6182576
+  },
+  "baseline-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-memory",
+    "sha256": "65b26069ccf005b73166609704f4d7a70f1022e2967e591e586e6a326a30f60e",
+    "bytes": 6184464
+  },
+  "baseline-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-time",
+    "sha256": "53a2b5c79bab891916d480d33dfc3333476e466a1311a3962deb12b1cbb5f467",
+    "bytes": 6157456
+  },
+  "baseline-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-memory",
+    "sha256": "9a32909ff38a41d49b8a7ecc5d59fa04c770dbf38b52c51a2b48b15f25093c05",
+    "bytes": 6160712
+  },
+  "baseline-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-time",
+    "sha256": "714b32d667405551b9bca2ebda9632b4d1ca1621a62ee680d32a7cf0d45a7ec0",
+    "bytes": 6052552
+  },
+  "baseline-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+    "sha256": "fb3a710d7dfc060c62e143ebe375b8cabb78a686699a7f1f7d81505b992f30b3",
+    "bytes": 6055456
+  },
+  "baseline-arc-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-time",
+    "sha256": "2bc4f85f1e8bd19e18bbdeca2b24e1ce0ec94d68dc462db4f24b82d13b20411f",
+    "bytes": 8602288
+  },
+  "baseline-arc-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-arc-memory",
+    "sha256": "e204bf40d7ae8741f17f57e54d7a0a2abb787cc75211100b8a2309787191cbe9",
+    "bytes": 8604640
+  },
+  "baseline-broad-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-broad-time",
+    "sha256": "fdb0f03e01cf1759d6198c34ee1d2795261ce6e3ac383b860257ab708ebbf25f",
+    "bytes": 26375280
+  },
+  "baseline-abort-control": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-abort-control",
+    "sha256": "cd5d59f5d342fd167dafecd8b34b630265cea4ff674e54852fb4546278bf70c3",
+    "bytes": 8539736
+  },
+  "baseline-metadata": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/target/release/deps/hypercurve-c64b9a6905916d79",
+    "sha256": "c43402cff51b09fef8144168a7d0393c2a85d41d308b968d2d1e431b382718e4",
+    "bytes": 41727056,
+    "features": [
+      "comparative-benchmarks",
+      "default",
+      "dispatch-trace",
+      "hershey",
+      "svg",
+      "triangulation"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline-metadata/source/crates/hypercurve/Cargo.toml"
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-rational-time",
+    "sha256": "88e0e056c4d27a1f0efb45ec841f007f1bb418f4a6cf4e2529dc4b4e841636c8",
+    "bytes": 6166024
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-rational-memory",
+    "sha256": "0540f4cc8026b93272dfbe8d0b577f8b606c6cbd530e09708de4d60a95b86395",
+    "bytes": 6167928
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-quadratic-time",
+    "sha256": "bf17deba169139bfcb84f05129d5a121c5062ed1f421a030cc901ef9bbbdf104",
+    "bytes": 6140888
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-quadratic-memory",
+    "sha256": "f5ed1d277f42af03172023c8a24df50782257315c31f84a326a784d31fef0d3a",
+    "bytes": 6144176
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-integer-time",
+    "sha256": "3ed2973690472070e47f78f85c0fca2951468fed490e0190fb7edd705b41ba72",
+    "bytes": 6035992
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-integer-memory",
+    "sha256": "e0d3271cc782de61fae93866ff6540eb267a890ea669fbead1b50a2f231b4a7d",
+    "bytes": 6038904
+  },
+  "candidate-arc-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-arc-time",
+    "sha256": "faab7d2fbcaed9f8bb4dea0a05589bf332f7aa36a015afdbfb3200567de4f1c0",
+    "bytes": 8584264
+  },
+  "candidate-arc-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-arc-memory",
+    "sha256": "9f543886a178c01e6a0e26e1900f81fdfc6c867cd61bfe56801aa08427d1771a",
+    "bytes": 8586600
+  },
+  "candidate-broad-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-broad-time",
+    "sha256": "c8eb21b6398fad132b5cd396969847cd67f4e41302706cd100bf0a891a1faf50",
+    "bytes": 26354888
+  },
+  "candidate-abort-control": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/library-binaries-v1/candidate-abort-control",
+    "sha256": "47978cb457ae2c9594bf5533ea404f3bc3e7cd11fa7f9b57f5d1e458db0e84e4",
+    "bytes": 8521712
+  },
+  "candidate-metadata": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate-metadata/target/release/deps/hypercurve-c64b9a6905916d79",
+    "sha256": "928195232c3f655114b9a53a1fd94de9855c7e268a06e2d40cd57fe4592dd108",
+    "bytes": 41371760,
+    "features": [
+      "comparative-benchmarks",
+      "default",
+      "dispatch-trace",
+      "hershey",
+      "svg",
+      "triangulation"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate-metadata/source/crates/hypercurve/Cargo.toml"
+  },
+  "candidate-scalar-tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "a2f94f85680c7e79e585280daa2e194debca2f80fff641098a5c2acc075434b4",
+    "bytes": 10147216,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source/crates/hyperreal/Cargo.toml"
+  }
+}
