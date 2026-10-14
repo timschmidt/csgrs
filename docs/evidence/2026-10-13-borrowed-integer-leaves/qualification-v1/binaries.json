@@ -1,0 +1,22 @@
+{
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+    "sha256": "fb3a710d7dfc060c62e143ebe375b8cabb78a686699a7f1f7d81505b992f30b3",
+    "bytes": 6055456
+  },
+  "full-cache": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-integer-memory",
+    "sha256": "3d17164462c6ad8975e20541f948df1eb34110d814c89266c8a48ff1a9936dd3",
+    "bytes": 6052832
+  },
+  "tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "5339a7a28138c128ef8e868440cbc8bb48dfb16f0e4ea8ab0c8b9990a2f936a1",
+    "bytes": 10196816
+  },
+  "candidate": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/integer-memory",
+    "sha256": "df12ef4dd86889a71557ec3793399bd2a2ed91f882410f2174dbf9be70d7feb6",
+    "bytes": 6055656
+  }
+}

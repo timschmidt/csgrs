@@ -1,0 +1,14 @@
+{
+  "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/libhyperreal.rlib",
+  "sha256": "a180289bf7a3f6718cb796af8ce380e13f8881d0ae35a1854ef13b04b7081f40",
+  "bytes": 11714814,
+  "features": [
+    "cached-f32-approx",
+    "cached-f64-approx",
+    "default",
+    "dispatch-trace",
+    "serde",
+    "simple"
+  ],
+  "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+}

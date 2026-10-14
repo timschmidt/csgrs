@@ -1,0 +1,60 @@
+{
+  "status": "full-library-cost-protocol-design-pending",
+  "candidate_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+  "preparation_sha256": "6bc8a21241cf125b561bf681ad14acff9a606e57ff4a73fd98b89c9840c3c06f",
+  "qualification_assessment_sha256": "1bd264da9e1897cabfbfcfe3458b0046bb9fd68d638aec6916ce14032cd95d15",
+  "comparison_groups": [
+    "unchanged current-main baseline",
+    "unchanged previous full-cache candidate",
+    "qualified borrowed-integer candidate"
+  ],
+  "planned_library_builds": "Build the new candidate in a fresh cost target directory to preserve all qualification artifacts. Reuse the two original groups without rebuilds. Prepare a separate metadata-instrumented copy using the unchanged original module.",
+  "planned_cost_schedule": "Six fixed rounds covering all six permutations of the three groups. Each group occupies each position twice. All builds and correctness checks precede every cost observation.",
+  "planned_cost_coverage": {
+    "rational": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "quadratic": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "integer": {
+      "time": 4096,
+      "memory": 1000
+    },
+    "arc": {
+      "time": 8192,
+      "memory": 1000
+    },
+    "metadata": {
+      "time": 1024,
+      "memory": 128
+    },
+    "broad": {
+      "time": "all 231 original operations"
+    }
+  },
+  "planned_counts": {
+    "cost_processes": 198,
+    "preflight_processes": 30,
+    "abort_control_processes": 9,
+    "time_rows_each_contrast": 365,
+    "allocation_rows_each_contrast": 134,
+    "contrasts": 3
+  },
+  "correctness": "Require every original witness, representation inventory and abort receipt, plus the already passed 876 scalar tests and the metadata/endpoint controls in the new build. Carry all larger-stack and native obligations forward.",
+  "analysis": "Report every row and both original comparison groups. Preserve raw paired values, allocations and executable sizes. No filtering, replacement, extension or pooling with historical data. Descriptive results do not establish statistical significance.",
+  "native_policy": "No deadline relaxation or reinterpretation. The original 120-second worker-CPU board gate and 60-second body-wall neck gate remain mandatory for retention. No new gate runs before evaluating the full library costs.",
+  "remaining_blockers": [
+    "All library timing effects of the new helper are unmeasured.",
+    "Inherited persistent-cache retention increases remain, including 40000 bytes in both signed-word and wide-integer cloned phases.",
+    "Earlier approximately 1.65x construction regressions and broad-operation costs are unresolved.",
+    "The cache-free native board failure is unchanged; the full-cache prior native pass is a different trial.",
+    "The entire properties.md goal, all 39 properties, 14 targets and crate future work remain open where not otherwise proven."
+  ],
+  "measurement_protocol_frozen": false,
+  "measurements_started": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

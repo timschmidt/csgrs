@@ -1,0 +1,347 @@
+{
+  "status": "signed-word-fixture-allocation-repaired-broader-costs-pending",
+  "assessor_sha256": "bfb9720e439047857abaab105f5564d0744b741cd58fefb6878551961421d872",
+  "result_sha256": "a7f4d0bb4f38ffaedeb4b93515b02fb0676b3e1af67a4d31924efdcb2785118b",
+  "comparisons_sha256": "327d715672ec5c9b0886f195fc3510230d829eae72be4612ba2b96e154f5a659",
+  "commands_passed": 11,
+  "scalar_tests_passed": 876,
+  "P4_tests_passed": 11,
+  "persistent_cache_tests_passed": 6,
+  "new_tests_passed": 2,
+  "fixed_allocation_processes": 6,
+  "allocation_rows": 72,
+  "comparison_rows": 36,
+  "all_exact_witnesses_and_representation_inventories_match": true,
+  "all_allocation_rows_repeat_within_variant": true,
+  "unchanged_main_and_full_cache_allocations_match_closed_history": true,
+  "signed_word_construction_allocation_restored_to_main": true,
+  "signed_word_construction_comparisons": [
+    {
+      "baseline": "main",
+      "candidate": "candidate",
+      "phase": "signed_word_boundary_construction",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            12501,
+            12501
+          ],
+          "candidate": [
+            12501,
+            12501
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "allocated_bytes": {
+          "baseline": [
+            652000,
+            652000
+          ],
+          "candidate": [
+            652000,
+            652000
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            388000,
+            388000
+          ],
+          "candidate": [
+            388000,
+            388000
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            388264,
+            388264
+          ],
+          "candidate": [
+            388264,
+            388264
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "baseline": "full-cache",
+      "candidate": "candidate",
+      "phase": "signed_word_boundary_construction",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            12501,
+            12501
+          ],
+          "candidate": [
+            12501,
+            12501
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "allocated_bytes": {
+          "baseline": [
+            664024,
+            664024
+          ],
+          "candidate": [
+            652000,
+            652000
+          ],
+          "paired_deltas": [
+            -12024,
+            -12024
+          ]
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            388000,
+            388000
+          ],
+          "candidate": [
+            388000,
+            388000
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            388288,
+            388288
+          ],
+          "candidate": [
+            388264,
+            388264
+          ],
+          "paired_deltas": [
+            -24,
+            -24
+          ]
+        }
+      }
+    },
+    {
+      "baseline": "main",
+      "candidate": "full-cache",
+      "phase": "signed_word_boundary_construction",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            12501,
+            12501
+          ],
+          "candidate": [
+            12501,
+            12501
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "allocated_bytes": {
+          "baseline": [
+            652000,
+            652000
+          ],
+          "candidate": [
+            664024,
+            664024
+          ],
+          "paired_deltas": [
+            12024,
+            12024
+          ]
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            388000,
+            388000
+          ],
+          "candidate": [
+            388000,
+            388000
+          ],
+          "paired_deltas": [
+            0,
+            0
+          ]
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            388264,
+            388264
+          ],
+          "candidate": [
+            388288,
+            388288
+          ],
+          "paired_deltas": [
+            24,
+            24
+          ]
+        }
+      }
+    }
+  ],
+  "all_candidate_memory_increase_rows": [
+    {
+      "baseline": "main",
+      "candidate": "candidate",
+      "phase": "signed_word_boundary_cloned",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            22001,
+            22001
+          ],
+          "candidate": [
+            15001,
+            15001
+          ],
+          "paired_deltas": [
+            -7000,
+            -7000
+          ]
+        },
+        "allocated_bytes": {
+          "baseline": [
+            1128000,
+            1128000
+          ],
+          "candidate": [
+            912000,
+            912000
+          ],
+          "paired_deltas": [
+            -216000,
+            -216000
+          ]
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            264000,
+            264000
+          ],
+          "candidate": [
+            304000,
+            304000
+          ],
+          "paired_deltas": [
+            40000,
+            40000
+          ]
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            264464,
+            264464
+          ],
+          "candidate": [
+            304464,
+            304464
+          ],
+          "paired_deltas": [
+            40000,
+            40000
+          ]
+        }
+      }
+    },
+    {
+      "baseline": "main",
+      "candidate": "candidate",
+      "phase": "wide_integer_affine_cloned",
+      "fields": {
+        "allocation_calls": {
+          "baseline": [
+            22001,
+            22001
+          ],
+          "candidate": [
+            15001,
+            15001
+          ],
+          "paired_deltas": [
+            -7000,
+            -7000
+          ]
+        },
+        "allocated_bytes": {
+          "baseline": [
+            1181192,
+            1181192
+          ],
+          "candidate": [
+            965192,
+            965192
+          ],
+          "paired_deltas": [
+            -216000,
+            -216000
+          ]
+        },
+        "retained_bytes_delta": {
+          "baseline": [
+            317192,
+            317192
+          ],
+          "candidate": [
+            357192,
+            357192
+          ],
+          "paired_deltas": [
+            40000,
+            40000
+          ]
+        },
+        "peak_bytes_delta": {
+          "baseline": [
+            317656,
+            317656
+          ],
+          "candidate": [
+            357656,
+            357656
+          ],
+          "paired_deltas": [
+            40000,
+            40000
+          ]
+        }
+      }
+    }
+  ],
+  "native_gates_rerun": false,
+  "full_library_cost_matrix_pending": true,
+  "limits": [
+    "All original integer phases are included, but rational/quadratic/arc/metadata/broad cost matrices have not been measured for this new candidate.",
+    "The unchanged allocation probe prints durations. Those values are retained as raw output and are not a timing comparison.",
+    "Earlier construction regressions, cache retention costs, broad-operation costs and native deadline failures remain open. No runtime source is admitted into main."
+  ],
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

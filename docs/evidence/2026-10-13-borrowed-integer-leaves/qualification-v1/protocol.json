@@ -1,0 +1,36 @@
+{
+  "scope": "Qualify exact scalar behavior and original integer allocations; no timing admission.",
+  "preparation_sha256": "6bc8a21241cf125b561bf681ad14acff9a606e57ff4a73fd98b89c9840c3c06f",
+  "review_sha256": "3602ce91565637a193628ed7edc1a0b275abb721e80e9ee152f0a030f8b1ed00",
+  "runner_sha256": "e6b7479e2e59e73f1207f8d88696706adc9c671efc7b7a6fe97b1e67021aa75d",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target",
+  "orders": [
+    [
+      "main",
+      "full-cache",
+      "candidate"
+    ],
+    [
+      "candidate",
+      "full-cache",
+      "main"
+    ]
+  ],
+  "inputs_each": 1000,
+  "fixed_processes": 6,
+  "all_12_original_integer_phases": true,
+  "allocation_only": true,
+  "printed_timings_not_analyzed": true,
+  "original_binaries_reused_not_samples": true,
+  "full_library_cost_matrix_pending": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

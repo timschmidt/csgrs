@@ -1,0 +1,758 @@
+[
+  {
+    "round": 1,
+    "variant": "main",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 694222,
+        "allocation_accounting": true,
+        "allocation_calls": 8890,
+        "allocated_bytes": 488144,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361272
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 721030,
+        "allocation_accounting": true,
+        "allocation_calls": 17857,
+        "allocated_bytes": 739376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230128
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 586670,
+        "allocation_accounting": true,
+        "allocation_calls": 17857,
+        "allocated_bytes": 739376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230128
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 710001,
+        "allocation_accounting": true,
+        "allocation_calls": 20857,
+        "allocated_bytes": 1075376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230144
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 608808,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 652000,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388264
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 601879,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 792000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264448
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 615338,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 792000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264448
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 963834,
+        "allocation_accounting": true,
+        "allocation_calls": 22001,
+        "allocated_bytes": 1128000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264464
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1090255,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 598009,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 845192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317640
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 617678,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 845192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317640
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 718781,
+        "allocation_accounting": true,
+        "allocation_calls": 22001,
+        "allocated_bytes": 1181192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317656
+      }
+    ]
+  },
+  {
+    "round": 1,
+    "variant": "full-cache",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 696622,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 443504,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361152
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 419162,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 318736,
+        "retained_bytes_delta": 65040,
+        "peak_bytes_delta": 65248
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 320668,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 318736,
+        "retained_bytes_delta": 65040,
+        "peak_bytes_delta": 65248
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 587850,
+        "allocation_accounting": true,
+        "allocation_calls": 12570,
+        "allocated_bytes": 814736,
+        "retained_bytes_delta": 225040,
+        "peak_bytes_delta": 225504
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 592550,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 664024,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388288
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 375805,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 428024,
+        "retained_bytes_delta": 156024,
+        "peak_bytes_delta": 156232
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 411962,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 428024,
+        "retained_bytes_delta": 156024,
+        "peak_bytes_delta": 156232
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 780326,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 924024,
+        "retained_bytes_delta": 316024,
+        "peak_bytes_delta": 316488
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1098105,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 359195,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 476257,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 947566,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 965192,
+        "retained_bytes_delta": 357192,
+        "peak_bytes_delta": 357656
+      }
+    ]
+  },
+  {
+    "round": 1,
+    "variant": "candidate",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 780676,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 436664,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361152
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 481237,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 311896,
+        "retained_bytes_delta": 58200,
+        "peak_bytes_delta": 58408
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 424271,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 311896,
+        "retained_bytes_delta": 58200,
+        "peak_bytes_delta": 58408
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 638886,
+        "allocation_accounting": true,
+        "allocation_calls": 12570,
+        "allocated_bytes": 807896,
+        "retained_bytes_delta": 218200,
+        "peak_bytes_delta": 218664
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 724101,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 652000,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388264
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 565071,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 416000,
+        "retained_bytes_delta": 144000,
+        "peak_bytes_delta": 144208
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 548022,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 416000,
+        "retained_bytes_delta": 144000,
+        "peak_bytes_delta": 144208
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 609168,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 912000,
+        "retained_bytes_delta": 304000,
+        "peak_bytes_delta": 304464
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1096475,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 374234,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 386734,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 567951,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 965192,
+        "retained_bytes_delta": 357192,
+        "peak_bytes_delta": 357656
+      }
+    ]
+  },
+  {
+    "round": 2,
+    "variant": "candidate",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 788566,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 436664,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361152
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 498216,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 311896,
+        "retained_bytes_delta": 58200,
+        "peak_bytes_delta": 58408
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 458199,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 311896,
+        "retained_bytes_delta": 58200,
+        "peak_bytes_delta": 58408
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 608198,
+        "allocation_accounting": true,
+        "allocation_calls": 12570,
+        "allocated_bytes": 807896,
+        "retained_bytes_delta": 218200,
+        "peak_bytes_delta": 218664
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 583600,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 652000,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388264
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 382514,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 416000,
+        "retained_bytes_delta": 144000,
+        "peak_bytes_delta": 144208
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 390034,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 416000,
+        "retained_bytes_delta": 144000,
+        "peak_bytes_delta": 144208
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 608968,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 912000,
+        "retained_bytes_delta": 304000,
+        "peak_bytes_delta": 304464
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1087535,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 374754,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 392253,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 600149,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 965192,
+        "retained_bytes_delta": 357192,
+        "peak_bytes_delta": 357656
+      }
+    ]
+  },
+  {
+    "round": 2,
+    "variant": "full-cache",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 898608,
+        "allocation_accounting": true,
+        "allocation_calls": 7603,
+        "allocated_bytes": 443504,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361152
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 448000,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 318736,
+        "retained_bytes_delta": 65040,
+        "peak_bytes_delta": 65248
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 370374,
+        "allocation_accounting": true,
+        "allocation_calls": 5570,
+        "allocated_bytes": 318736,
+        "retained_bytes_delta": 65040,
+        "peak_bytes_delta": 65248
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 613418,
+        "allocation_accounting": true,
+        "allocation_calls": 12570,
+        "allocated_bytes": 814736,
+        "retained_bytes_delta": 225040,
+        "peak_bytes_delta": 225504
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 578031,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 664024,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388288
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 372564,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 428024,
+        "retained_bytes_delta": 156024,
+        "peak_bytes_delta": 156232
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 391853,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 428024,
+        "retained_bytes_delta": 156024,
+        "peak_bytes_delta": 156232
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 626577,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 924024,
+        "retained_bytes_delta": 316024,
+        "peak_bytes_delta": 316488
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1072696,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 354356,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 541163,
+        "allocation_accounting": true,
+        "allocation_calls": 8001,
+        "allocated_bytes": 469192,
+        "retained_bytes_delta": 197192,
+        "peak_bytes_delta": 197400
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 588700,
+        "allocation_accounting": true,
+        "allocation_calls": 15001,
+        "allocated_bytes": 965192,
+        "retained_bytes_delta": 357192,
+        "peak_bytes_delta": 357656
+      }
+    ]
+  },
+  {
+    "round": 2,
+    "variant": "main",
+    "rows": [
+      {
+        "name": "canonical_integer_boundary_construction",
+        "iterations": 1000,
+        "nanos": 1255814,
+        "allocation_accounting": true,
+        "allocation_calls": 8890,
+        "allocated_bytes": 488144,
+        "retained_bytes_delta": 361152,
+        "peak_bytes_delta": 361272
+      },
+      {
+        "name": "canonical_integer_boundary_first",
+        "iterations": 1000,
+        "nanos": 1107654,
+        "allocation_accounting": true,
+        "allocation_calls": 17857,
+        "allocated_bytes": 739376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230128
+      },
+      {
+        "name": "canonical_integer_boundary_warm",
+        "iterations": 1000,
+        "nanos": 825654,
+        "allocation_accounting": true,
+        "allocation_calls": 17857,
+        "allocated_bytes": 739376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230128
+      },
+      {
+        "name": "canonical_integer_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 1003781,
+        "allocation_accounting": true,
+        "allocation_calls": 20857,
+        "allocated_bytes": 1075376,
+        "retained_bytes_delta": 229680,
+        "peak_bytes_delta": 230144
+      },
+      {
+        "name": "signed_word_boundary_construction",
+        "iterations": 1000,
+        "nanos": 556052,
+        "allocation_accounting": true,
+        "allocation_calls": 12501,
+        "allocated_bytes": 652000,
+        "retained_bytes_delta": 388000,
+        "peak_bytes_delta": 388264
+      },
+      {
+        "name": "signed_word_boundary_first",
+        "iterations": 1000,
+        "nanos": 593269,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 792000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264448
+      },
+      {
+        "name": "signed_word_boundary_warm",
+        "iterations": 1000,
+        "nanos": 646316,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 792000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264448
+      },
+      {
+        "name": "signed_word_boundary_cloned",
+        "iterations": 1000,
+        "nanos": 680403,
+        "allocation_accounting": true,
+        "allocation_calls": 22001,
+        "allocated_bytes": 1128000,
+        "retained_bytes_delta": 264000,
+        "peak_bytes_delta": 264464
+      },
+      {
+        "name": "wide_integer_affine_construction",
+        "iterations": 1000,
+        "nanos": 1085076,
+        "allocation_accounting": true,
+        "allocation_calls": 13334,
+        "allocated_bytes": 926395,
+        "retained_bytes_delta": 441192,
+        "peak_bytes_delta": 441480
+      },
+      {
+        "name": "wide_integer_affine_first",
+        "iterations": 1000,
+        "nanos": 588270,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 845192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317640
+      },
+      {
+        "name": "wide_integer_affine_warm",
+        "iterations": 1000,
+        "nanos": 878110,
+        "allocation_accounting": true,
+        "allocation_calls": 19001,
+        "allocated_bytes": 845192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317640
+      },
+      {
+        "name": "wide_integer_affine_cloned",
+        "iterations": 1000,
+        "nanos": 692213,
+        "allocation_accounting": true,
+        "allocation_calls": 22001,
+        "allocated_bytes": 1181192,
+        "retained_bytes_delta": 317192,
+        "peak_bytes_delta": 317656
+      }
+    ]
+  }
+]

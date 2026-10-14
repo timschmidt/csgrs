@@ -1,0 +1,10 @@
+{
+  "passed": 876,
+  "original_874_retained": true,
+  "new_tests": [
+    "rational::arithmetic::borrowed_integer_tests::borrowed_integer_preserves_full_width_sign_and_magnitude",
+    "rational::arithmetic::borrowed_integer_tests::borrowed_integer_reuses_only_bounded_canonical_storage"
+  ],
+  "P4_tests": 11,
+  "persistent_cache_tests": 6
+}

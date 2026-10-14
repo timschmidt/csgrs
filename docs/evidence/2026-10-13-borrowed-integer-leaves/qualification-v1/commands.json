@@ -1,0 +1,177 @@
+[
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "eba96d2aa753f5fb7cbfeb5fd6221bbb6ceafdfebdd482af3eafd0f30ab44a6c"
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9222aa8db57f3c87635bfa9da6406072f9a1779cbee092515831352c1d65966c",
+    "stderr_sha256": "a4935702f852c2b103b2d801d70b6ede1ef0582466361bd3f1576424d0bc3cf1"
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "091f2a6fb0848a9c5001dac6af45422dc4528a46fdac702b82bffacd385ba723",
+    "stderr_sha256": "57fa170ee6ec9844e5088889c2baee1c45fb7c904d5e42beedf1b16275062118"
+  },
+  {
+    "name": "scalar-library",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=2"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "a14c3779805210008fcbb33be129ccaa268111d08aafb52ebe400326edbe5da5",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-integer-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-combined-native-admission/probes-v1/integer_probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/libhyperreal.rlib",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/integer-memory"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-1-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "stdout_sha256": "a37f8a6fd1bf04dc7b9994f66fbc1c05c2fb17aea55e4f65cad01ead092bfe62",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-1-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "d91e3feb81e0658fb824683ad950c5c53704d58925458d82f0ca6b5b0c2a5759",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-1-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "f3f53a14601920c4e2b4301915527214b9257540ee2ec53cc1840d7ba7796385",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-2-candidate",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "8ebfaddf12c7ded827562ebcc51b5aa2a9fbe5c69c60aa12417e2027ea300ab9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-2-full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/candidate-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "289e5733bdda4e5d859e36331ce0a40d58f1c1c7b909a802d0aebe27b3fcba53",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "allocations-2-main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+      "1000"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "stdout_sha256": "0ec901926859b1631e62b2ab322c7e1b97d6184595082dfff68591a5350974a5",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]
