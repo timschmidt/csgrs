@@ -5094,7 +5094,10 @@
       "sphere_warm_replay_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-v1/result.json",
       "sphere_warm_replay_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-assessment-v1.json",
       "sphere_warm_replay_all_27_outputs_exact_support_proved": true,
-      "sphere_warm_replay_both_candidates_change_118_original_medium_faces": true
+      "sphere_warm_replay_both_candidates_change_118_original_medium_faces": true,
+      "sphere_warm_trace_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-scope-v1.json",
+      "sphere_warm_trace_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/trace_sphere_warm_v1.py",
+      "sphere_warm_trace_executed": false
     }
   },
   "status_meanings": {
