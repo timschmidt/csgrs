@@ -1,0 +1,14 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/target/release/libcsgrs.rlib",
+    "sha256": "749d7d3b3731dbd73134d34af6eafe6eefeb72cc4f287da44f3317ce90ca4f5f",
+    "features": []
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "be24ce9c4da5fe8a3b755fbbf18a3721743f7248e94645840e229e1152010c32",
+    "features": [
+      "default"
+    ]
+  }
+}

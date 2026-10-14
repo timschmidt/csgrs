@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "native-four-sphere-broad-qualified-early-filter-frozen",
+      "status": "early-sphere-filter-correctness-passed-placement-cost-screen-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5011,7 +5011,12 @@
       },
       "sphere_cyclotomic_early_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-early-scope-v1.json",
       "sphere_cyclotomic_early_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_cyclotomic_early_v1.py",
-      "sphere_cyclotomic_early_executed": false
+      "sphere_cyclotomic_early_executed": true,
+      "sphere_cyclotomic_early_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-early-assessment-v1.json",
+      "sphere_cyclotomic_early_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-early-closure-v1.json",
+      "sphere_cyclotomic_placement_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-placement-cost-scope-v1.json",
+      "sphere_cyclotomic_placement_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_cyclotomic_placement_v1.py",
+      "sphere_cyclotomic_placement_cost_executed": false
     }
   },
   "status_meanings": {

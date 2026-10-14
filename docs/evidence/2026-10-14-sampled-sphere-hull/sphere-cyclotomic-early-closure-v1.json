@@ -1,0 +1,10 @@
+{
+  "status": "early_affine_feasibility_passed_native_cost_screen_required",
+  "assessment_sha256": "525953f11945c202e95a601fae7e35096360ebe398a6d241530e4bcce4931f50",
+  "commands_all_zero": 12,
+  "targeted_tests_passed": 9,
+  "all_four_original_native_outputs_identical": true,
+  "independent_support_reused_only_for_identical_rows": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

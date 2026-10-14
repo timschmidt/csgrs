@@ -1,0 +1,7 @@
+patching file crates/hyperreal/src/computable/node.rs
+patching file crates/hyperreal/src/computable/node/cyclotomic.rs
+patching file crates/hyperreal/src/computable/node/cyclotomic/tests.rs
+patching file crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs
+patching file crates/hyperreal/src/rational/arithmetic/queries_conversion.rs
+patching file crates/hyperreal/src/real/arithmetic/facts.rs
+patching file crates/hyperreal/src/real/arithmetic/linear_algebra.rs

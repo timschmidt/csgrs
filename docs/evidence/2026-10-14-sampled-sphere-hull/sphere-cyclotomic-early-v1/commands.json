@@ -1,0 +1,202 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-early-candidate-v1.patch"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 0.005440826993435621,
+    "stdout_sha256": "1a4be7ac1ef80c8f685352fe6824acd062d81d57147570fcb7c5fd3c02e2fdfc",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "source-format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 10.76178184337914,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "targeted-scalar-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "cyclotomic",
+      "--",
+      "--test-threads=1",
+      "--nocapture"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 26.654232380911708,
+    "stdout_sha256": "4c6d2643f7c5a24025a6d4e1f16b38c391ba1d4208400adfe70bf4adf8505a9b",
+    "stderr_sha256": "f36485e4072700b1dbf0b9e7c3543b6a7334c1c44b81f41d50abf5ac8d13bbb6"
+  },
+  {
+    "name": "scalar-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--lib",
+      "--tests",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 8.42022474296391,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "1c457bc1994ecc3d0ac142d3bb64f56eab8efcdd2e4f8d0c5b62b16e3a39a63f"
+  },
+  {
+    "name": "build-native-consumer",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 73.00944415992126,
+    "stdout_sha256": "ac8780edff5fd74cb1ddd78a737bbedf6e78036dfc99516e41094e955ed101ad",
+    "stderr_sha256": "c4cf618db6cc41b74bf1af4870db5a8689264383ba05e1bdd65fe60e79da88c4"
+  },
+  {
+    "name": "link-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/reproduce_rows_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-baseline"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 0.342937673907727,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-candidate",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/reproduce_rows_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/target/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-candidate"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 900,
+    "process_wall_seconds": 0.20663328282535076,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "baseline-fifteen_degrees",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-baseline",
+      "fifteen_degrees"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 180,
+    "process_wall_seconds": 5.270544132217765,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-fifteen_degrees",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 180,
+    "process_wall_seconds": 5.7701432020403445,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-original_medium",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 600,
+    "process_wall_seconds": 21.819654427934438,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-fifth_turn",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 180,
+    "process_wall_seconds": 1.0187424523755908,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "candidate-seventh_turn",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-early-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "exit_code": 0,
+    "timeout_seconds": 180,
+    "process_wall_seconds": 0.25761045003309846,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

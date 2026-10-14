@@ -1,0 +1,60 @@
+{
+  "complete": true,
+  "result_sha256": "f4f2ae55c722f5cf83ece9b26c5ad423f6154d202408c2497e20e435f6340a92",
+  "assessor_sha256": "d488061a0988a3f11937ec923c082f918773046e97fdb61c37ab055fbc5fee6d",
+  "commands_all_zero": 12,
+  "targeted_scalar_tests_passed": 9,
+  "captured_independent_zero_determinants": 157,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "certified": true,
+      "original_positions": 266,
+      "triangle_rows": 528,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df"
+    },
+    {
+      "case": "original_medium",
+      "certified": true,
+      "original_positions": 482,
+      "triangle_rows": 960,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd"
+    },
+    {
+      "case": "fifth_turn",
+      "certified": true,
+      "original_positions": 62,
+      "triangle_rows": 120,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4"
+    },
+    {
+      "case": "seventh_turn",
+      "certified": true,
+      "original_positions": 30,
+      "triangle_rows": 56,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+    }
+  ],
+  "prior_certified_24_by_12_order_rows_and_certainty_unchanged": true,
+  "all_four_prior_v2_full_outputs_identical": true,
+  "independent_support_result_sha256": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+  "affine_zero_fixtures": 157,
+  "signed_off_plane_displacement_controls": 314,
+  "source_files_rechecked": 10132,
+  "claim": "The early exact affine filter proves all 157 captured zero fixtures, rejects 314 displaced nonzero controls, and preserves full native hull outputs for all four original exact sphere point sets. The prior independent exact support check still applies to these identical rows.",
+  "limits": [
+    "This early-filter version has not completed broad scalar/predicate/mesh qualification, production formal verification, a fuzz campaign or matched cost comparison.",
+    "All native allocation, retention, binary-size and proportionate timing gates remain pending.",
+    "Only nine targeted tests ran; 781 other library tests were filtered by this frozen feasibility protocol. Earlier broad qualification applies to the unchanged V2 normal-form version, not this early-filter change."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
