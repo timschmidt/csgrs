@@ -1,0 +1,36 @@
+{
+  "status": "pi-memo-scalar-costs-closed-runtime-admission-rejected",
+  "artifacts_sha256": {
+    "interpret_scalar_costs_v1.py": "3b19c60ba5d9fa70d165951f5044218ec2d6383dbc7487424f21ed1075e34388",
+    "scalar-cost-interpretation-v1.json": "74262a9047c7cbcc93f525076af3460573800ecb851b69d73c0535ceebbd3876",
+    "scalar-cost-interpretation-v1.stdout": "83a2f7d514d1be8141414249522d6709bc43e80c117b9761da559650358575c6",
+    "scalar-cost-interpretation-v1.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "scalar-cost-assessment-v1.json": "3575f3d36dda070c0aa2e8f27eebe28643aa50d27c9e74810825c678a3e26a4e",
+    "scalar-costs-v1/result.json": "7d091f823e5a038749742b919336064c50d3b7fb7036cf1b1bd9a37502ba50ff",
+    "qualification-closure-v2.json": "d3119efa16fb06600165b3c8cd1ac7d199cafa04d3ab6e0328c50a0b6aa780fa"
+  },
+  "runner_terminal_exit_code": 0,
+  "independent_interpreter_command": [
+    "python3",
+    "docs/evidence/2026-10-14-pi-local-memo/interpret_scalar_costs_v1.py"
+  ],
+  "independent_interpreter_terminal_exit_code": 0,
+  "assessor_terminal_exit_code_recovered": false,
+  "assessor_artifact_independently_verified": true,
+  "commands_passed": 133,
+  "fixed_cost_processes": 108,
+  "preflight_processes": 18,
+  "timing_comparisons": 204,
+  "memory_comparisons": 204,
+  "binary_size_comparisons": 18,
+  "all_68_phases_retained": true,
+  "all_exact_witnesses_and_representations_preserved": true,
+  "all_allocation_repetitions_and_historical_controls_match": true,
+  "all_sources_and_prior_artifacts_unchanged": true,
+  "main_and_35_pending_native_paths_unchanged": true,
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "broader_library_costs_opened": false,
+  "new_native_gates_run": false,
+  "plan_complete": false
+}

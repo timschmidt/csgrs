@@ -1,0 +1,176 @@
+{
+  "main": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "sha256": "e464113814d6927e7a06401660a2076345f5b84e4c3906bea559af9245d3b4e1",
+      "bytes": 11697454,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperreal/Cargo.toml"
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+      "sha256": "8d2c0074e1e76a5b86da47ae8d49dbcbac760c01cd0268f8523ed983be80aa87",
+      "bytes": 4007458,
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperlimit/Cargo.toml"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhypercurve.rlib",
+      "sha256": "9b006af05631f7a521db5b7e1e8cdeccc23184878fb1c0661c30e801f93be379",
+      "bytes": 48769786,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hypercurve/Cargo.toml"
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperdrc.rlib",
+      "sha256": "6543c3dfe602173019ffe9b7611c54e67e7d44356a165dea379ac4be7b0c6ec5",
+      "bytes": 26698760,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source/crates/hyperdrc/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "805db435411150cbd63b08fc0180d592752be704c52deb4af751310afe50176b",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "borrowed": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+      "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+      "bytes": 11711762,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+      "sha256": "29c88bc726fd3ef47825acac50cefac6061931687164823d453a1984761eda62",
+      "bytes": 4006692,
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperlimit/Cargo.toml"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhypercurve.rlib",
+      "sha256": "83beab5fceac1aa8599226ab94e4953c96301fd545abd25aeb64d758b1050741",
+      "bytes": 48754862,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hypercurve/Cargo.toml"
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperdrc.rlib",
+      "sha256": "8697de1390313d6398ddbf6e56a9e0dfadab38a6270737cc28d309ce2176e392",
+      "bytes": 26691966,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperdrc/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "8fceaedb0c660635799855940033f0d084fb799d1b1628ae942eb1371c790dc4",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  },
+  "candidate": {
+    "hyperreal": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/candidate-target/release/libhyperreal.rlib",
+      "sha256": "bfbbec2e95355d63076c932238c6891d54d54a2458522302fa28909c296a3b0a",
+      "bytes": 11712262,
+      "features": [
+        "cached-f32-approx",
+        "cached-f64-approx",
+        "default",
+        "dispatch-trace",
+        "serde",
+        "simple"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperreal/Cargo.toml"
+    },
+    "hyperlimit": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/candidate-target/release/deps/libhyperlimit-b1f0276ca4eb4351.rlib",
+      "sha256": "c1eb7eb1776022b745258deaca07eafc1b4a6367b18a36eb2876ccbb1554877d",
+      "bytes": 4006028,
+      "features": [
+        "default",
+        "dispatch-trace",
+        "std"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperlimit/Cargo.toml"
+    },
+    "hypercurve": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/candidate-target/release/libhypercurve.rlib",
+      "sha256": "3fc535c01e0dbe270191890c9a925a88940bf2343f3440d66b8f478441720a89",
+      "bytes": 48752438,
+      "features": [
+        "comparative-benchmarks",
+        "default",
+        "dispatch-trace",
+        "hershey",
+        "svg",
+        "triangulation"
+      ],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hypercurve/Cargo.toml"
+    },
+    "hyperdrc": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/candidate-target/release/libhyperdrc.rlib",
+      "sha256": "fe21d15c5c22ddbbca1e95145dea800ebb5264f25027ea3b4b8a4e1fcd691b08",
+      "bytes": 26689630,
+      "features": [],
+      "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/source/crates/hyperdrc/Cargo.toml"
+    },
+    "serde_json": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/candidate-target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "sha256": "3e28bb939796844485026649b68255f7544aa65e103d68a49831634a5096e791",
+      "bytes": 2042466,
+      "features": [
+        "default",
+        "std"
+      ],
+      "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml"
+    }
+  }
+}

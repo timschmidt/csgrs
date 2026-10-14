@@ -1,0 +1,478 @@
+{
+  "scope": "Closed six-order scalar cost trial; all builds finish before all samples.",
+  "runner_sha256": "1aafb34aaff3f5f95cc25e49f6cf5bee7278a4bab2affaf7c3612e3ed6394ec1",
+  "assessor_sha256": "62d15dfc4763414635da48556f1e803451ce7f432bf38dcbd76f0790481f7dfa",
+  "parser_sha256": "25a72855da69aed2d2d262dd58f68a871b8c98ecede41318e22ead82551c7c20",
+  "source_review_sha256": "c590b97f4c367e294bf521406e2ab47ed84663f11972e9540cee1a5bb2f2c7f2",
+  "preparation_sha256": "23ff167d774b904dd1c83ca51564c04cdaa90df1c63ee2816bc2e4c35a01ae2b",
+  "schedule": [
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "time",
+      "count": 4096,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "rational",
+      "mode": "memory",
+      "count": 1000,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "time",
+      "count": 4096,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "quadratic",
+      "mode": "memory",
+      "count": 1000,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "time",
+      "count": 4096,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 1,
+      "order": [
+        "main",
+        "borrowed",
+        "candidate"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 2,
+      "order": [
+        "borrowed",
+        "candidate",
+        "main"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 3,
+      "order": [
+        "candidate",
+        "main",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 4,
+      "order": [
+        "main",
+        "candidate",
+        "borrowed"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 5,
+      "order": [
+        "candidate",
+        "borrowed",
+        "main"
+      ]
+    },
+    {
+      "suite": "integer",
+      "mode": "memory",
+      "count": 1000,
+      "round": 6,
+      "order": [
+        "borrowed",
+        "main",
+        "candidate"
+      ]
+    }
+  ],
+  "groups": [
+    "main",
+    "borrowed",
+    "candidate"
+  ],
+  "orders": [
+    [
+      "main",
+      "borrowed",
+      "candidate"
+    ],
+    [
+      "borrowed",
+      "candidate",
+      "main"
+    ],
+    [
+      "candidate",
+      "main",
+      "borrowed"
+    ],
+    [
+      "main",
+      "candidate",
+      "borrowed"
+    ],
+    [
+      "candidate",
+      "borrowed",
+      "main"
+    ],
+    [
+      "borrowed",
+      "main",
+      "candidate"
+    ]
+  ],
+  "fixed_cost_processes": 108,
+  "preflight_processes": 18,
+  "preflight_inputs": 42,
+  "pinned_cpu": 0,
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never"
+  },
+  "timeout_seconds": 1800,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 4321.409\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "frequency_before_builds": {
+    "scaling_driver": "amd-pstate-epp",
+    "scaling_governor": "powersave",
+    "scaling_cur_freq": "4321409",
+    "scaling_min_freq": "1755355",
+    "scaling_max_freq": "4552952"
+  },
+  "qualified_scalar_tests_reused": 882,
+  "all_builds_before_all_samples": true,
+  "old_binaries_reused_not_old_samples": true,
+  "sample_extension_or_filtering": false,
+  "native_gates_run": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

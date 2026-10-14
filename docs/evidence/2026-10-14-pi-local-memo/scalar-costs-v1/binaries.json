@@ -1,0 +1,92 @@
+{
+  "main-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-time",
+    "sha256": "1fe09cc1f1133d1659348809e468757fb05b55d8eeafb037d0168e9528e3a58f",
+    "bytes": 6182576
+  },
+  "main-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-rational-memory",
+    "sha256": "65b26069ccf005b73166609704f4d7a70f1022e2967e591e586e6a326a30f60e",
+    "bytes": 6184464
+  },
+  "main-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-time",
+    "sha256": "53a2b5c79bab891916d480d33dfc3333476e466a1311a3962deb12b1cbb5f467",
+    "bytes": 6157456
+  },
+  "main-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-quadratic-memory",
+    "sha256": "9a32909ff38a41d49b8a7ecc5d59fa04c770dbf38b52c51a2b48b15f25093c05",
+    "bytes": 6160712
+  },
+  "main-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-time",
+    "sha256": "714b32d667405551b9bca2ebda9632b4d1ca1621a62ee680d32a7cf0d45a7ec0",
+    "bytes": 6052552
+  },
+  "main-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/library-binaries-v1/baseline-integer-memory",
+    "sha256": "fb3a710d7dfc060c62e143ebe375b8cabb78a686699a7f1f7d81505b992f30b3",
+    "bytes": 6055456
+  },
+  "borrowed-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-rational-time",
+    "sha256": "054100a1af8a6b39257a3137f7362be25d99ef3e3f1edf5cfe2ededc2fa11603",
+    "bytes": 6182464
+  },
+  "borrowed-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-rational-memory",
+    "sha256": "e50d1f6299d7a34c6c1a2ae07c6cd544ea0f06b8abdc60e30c22bd3ae4461128",
+    "bytes": 6184352
+  },
+  "borrowed-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-quadratic-time",
+    "sha256": "76a0dc53a47624ec0b5850eae9e3546b00b9738af2452913f5034a464d8be4ed",
+    "bytes": 6157504
+  },
+  "borrowed-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-quadratic-memory",
+    "sha256": "e145e2968ee9f8f026c3d3f9a1d36e4b8ac58e1e737e8a9cc564e86617f72004",
+    "bytes": 6160776
+  },
+  "borrowed-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-integer-time",
+    "sha256": "490ffce998056949a61d9438fc5cae58886de359a12b648ccf6a57838d4b7bcd",
+    "bytes": 6053104
+  },
+  "borrowed-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/binaries/candidate-integer-memory",
+    "sha256": "142badd32777987264d50386369f7023887d70c646e0bdc21b93c65d6dea2651",
+    "bytes": 6056032
+  },
+  "candidate-rational-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-rational-time",
+    "sha256": "f12be18b8115d7f06162d1a6d5e7a5be403d7768c077aff770dd06a680f29459",
+    "bytes": 6183176
+  },
+  "candidate-rational-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-rational-memory",
+    "sha256": "5ac5213e86084d71e6d2a095465bb199c0e08946e498306bd88b14890d9fdbaa",
+    "bytes": 6185056
+  },
+  "candidate-quadratic-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-quadratic-time",
+    "sha256": "c8323e963f662ba01dbe4e5718d50fb712d67f6546383e87fe0cb27bad743257",
+    "bytes": 6158208
+  },
+  "candidate-quadratic-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-quadratic-memory",
+    "sha256": "c27309ef0c37b9f3850037c1c9efc6fa1344724ef5e430254ce76f6282319cdc",
+    "bytes": 6161472
+  },
+  "candidate-integer-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-integer-time",
+    "sha256": "0d79daf361b726a92c605caff9f23c04d6de1fc155889629caf23029936e8207",
+    "bytes": 6053800
+  },
+  "candidate-integer-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/pi-local-memo-v2/scalar-costs-v1/binaries/candidate-integer-memory",
+    "sha256": "a1c044f28d57bead4a1490438b8f3330fa78c24a8d806620ea40ca86939794b6",
+    "bytes": 6056720
+  }
+}
