@@ -4650,10 +4650,10 @@
       "next_source_audit_complete": true
     },
     "local_memo_leaf_coverage": {
-      "status": "diagnostic-protocol-prepared-source-snapshot-pending",
+      "status": "diagnostic-prepared-formatted-reviewed-qualification-pending",
       "source_audit": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
       "question": "Which existing local memo stores and hits copy exact leaf forms, and what result shapes do they carry?",
-      "diagnostic_prepared": false,
+      "diagnostic_prepared": true,
       "diagnostic_executed": false,
       "prior_closed_certificate_memo_rejection_preserved": true,
       "main_and_35_pending_native_paths_unchanged": true,
@@ -4666,7 +4666,11 @@
       "expected_scalar_tests": 884,
       "fixed_count_processes": 12,
       "expected_trace_windows": 272,
-      "expected_diagnostic_windows": 136
+      "expected_diagnostic_windows": 136,
+      "preparation": "docs/evidence/2026-10-14-local-memo-leaf-coverage/preparation-v1/protocol.json",
+      "source_review": "docs/evidence/2026-10-14-local-memo-leaf-coverage/source-review-v1.json",
+      "source_files": 10138,
+      "changed_or_added_source_paths": 5
     }
   },
   "status_meanings": {
