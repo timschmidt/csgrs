@@ -1,0 +1,23 @@
+{
+  "edits": [
+    {
+      "path": "crates/hyperreal/src/rational/arithmetic/construction.rs",
+      "before": "    /// The Rational corresponding to the provided [`BigInt`].\n    pub fn from_bigint(n: BigInt) -> Self {",
+      "after": "    /// Reuse bounded canonical integers without rebuilding larger magnitudes.\n    pub(crate) fn from_bigint_ref(n: &BigInt) -> Self {\n        if let Some(value) = n.to_i64() {\n            let sign = if value < 0 { Minus } else { Plus };\n            let magnitude = u128::from(value.unsigned_abs());\n            let cached = match magnitude {\n                0 => Some(Self::zero()),\n                1 => Some(if sign == Minus {\n                    Self::minus_one()\n                } else {\n                    Self::one()\n                }),\n                _ => Self::small_integer(sign, magnitude),\n            };\n            if let Some(cached) = cached {\n                return cached;\n            }\n        }\n        Self::from_bigint(n.clone())\n    }\n\n    /// The Rational corresponding to the provided [`BigInt`].\n    pub fn from_bigint(n: BigInt) -> Self {"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/structural_analysis.rs",
+      "before": "            // Reuse Rational's existing bounded canonical small-integer table.\n            // Wider integers retain the exact arbitrary-precision conversion.\n            Approximation::Int(n) => Some(num::ToPrimitive::to_i64(n).map_or_else(\n                || Rational::from_bigint(n.clone()),\n                Rational::new,\n            )),",
+      "after": "            Approximation::Int(n) => Some(Rational::from_bigint_ref(n)),"
+    },
+    {
+      "path": "crates/hyperreal/src/rational/arithmetic.rs",
+      "before": "include!(\"arithmetic/tests.rs\");\n",
+      "after": "include!(\"arithmetic/tests.rs\");\n\n#[cfg(test)]\nmod borrowed_integer_tests;\n"
+    }
+  ],
+  "new_test_module": {
+    "source": "borrowed_integer_tests_v1.rs",
+    "target": "crates/hyperreal/src/rational/arithmetic/borrowed_integer_tests.rs"
+  }
+}

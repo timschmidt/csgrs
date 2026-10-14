@@ -1,0 +1,22 @@
+{
+  "purpose": "Repair the confirmed integer-leaf digit reconstruction excess while retaining the existing canonical-value reuse.",
+  "parent": "Separate copy of the frozen full-cache combined candidate; 10133 source files. The earlier full candidate remains rejected, and no original source or artifact is overwritten.",
+  "runtime_delta": "New crate-private Rational::from_bigint_ref returns canonical zero/one/small_integer values when available, then uses the original Rational::from_bigint(n.clone()) fallback. Node::exact_rational calls it for Int leaves. The bound remains solely in the existing Rational::small_integer implementation.",
+  "test_delta": "One private test module with two tests: exact sign/magnitude/unit denominator for 133 nearby values plus 66 positive/negative word and arbitrary-width neighbors up to 4096 bits; pointer sharing across all 129 canonical integers and no sharing for six outside values. One cfg(test) module declaration.",
+  "preparation": "Exactly four changed/added paths, 10134 total files; archive and hash the full source map/delta and run cargo fmt --all -- --check before any build. Read the complete resulting patch before qualification.",
+  "qualification": [
+    "Strict scalar all-features/all-targets release Clippy",
+    "All 876 scalar unit tests: 874 prior names plus two new tests, preserving all 11 P4 and six persistent-cache tests",
+    "Build public all-feature scalar library with the same features and unchanged original integer memory probe"
+  ],
+  "fixed_allocation_qualification": "Exactly six processes: main/full-cache/candidate then candidate/full-cache/main, all original 1000-input integer families and 12 phases. Every witness and representation inventory must match. Compare all allocation fields and keep printed durations as raw output without timing analysis.",
+  "admission": "Scalar correctness and integer allocation repair are early qualification only. A separate frozen full library performance/allocation/size comparison and the unchanged original native gates remain required before any retention decision.",
+  "constraints": [
+    "No cache payload, recognition frontier, budget, arithmetic order, host policy or native gate changes.",
+    "No edits to executed runners, closed samples or old source trees. New versions preserve any failure.",
+    "All 35 original native paths remain untouched in main. All other properties and future work remain in scope."
+  ],
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
