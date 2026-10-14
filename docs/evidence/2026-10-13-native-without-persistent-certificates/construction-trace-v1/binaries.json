@@ -1,0 +1,17 @@
+{
+  "main": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/main",
+    "sha256": "e00a5302adff5770d896c18735eaa9b62a47461ebf96b143621caf26e229b54f",
+    "bytes": 6251584
+  },
+  "full-cache": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/full-cache",
+    "sha256": "1d3742662b9ccd7fe55511ea47af51c8dd5628531e2a0cbb8e51edd950bd28a8",
+    "bytes": 6248432
+  },
+  "no-persistent": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/no-persistent",
+    "sha256": "21c0ddb5b26340758a3124d95811849e6b45e11d27f920e79dad958dfa40d5d9",
+    "bytes": 6235040
+  }
+}

@@ -1,0 +1,164 @@
+[
+  {
+    "name": "build-main",
+    "variant": "main",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/main"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "build-full-cache",
+    "variant": "full-cache",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/full-cache"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "build-no-persistent",
+    "variant": "no-persistent",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/target/release/deps/libserde_json-9f19710c6540a4ad.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/no-persistent"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-main",
+    "variant": "main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "stdout_sha256": "91840663a7a559cfeb03d0cfb47ca308c5ed70ed0379e845d8994700b3c4f4c9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-full-cache",
+    "variant": "full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "b63f75a9a41f60389a5b244489ecfcddca1534fb49c4ac071a213d7fd298f11d",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1-no-persistent",
+    "variant": "no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "b2a5d3b6e8796817127fe0a7a22e2da79a7a17a8a14da96e1a3e9d0b965a10d1",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-no-persistent",
+    "variant": "no-persistent",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/no-persistent",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "b2a5d3b6e8796817127fe0a7a22e2da79a7a17a8a14da96e1a3e9d0b965a10d1",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-full-cache",
+    "variant": "full-cache",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/full-cache",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/candidate/source",
+    "exit_code": 0,
+    "stdout_sha256": "b63f75a9a41f60389a5b244489ecfcddca1534fb49c4ac071a213d7fd298f11d",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2-main",
+    "variant": "main",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/native-without-persistent-certificates-v1/construction-trace-binaries-v1/main",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/combined-native-admission-v1/baseline/source",
+    "exit_code": 0,
+    "stdout_sha256": "91840663a7a559cfeb03d0cfb47ca308c5ed70ed0379e845d8994700b3c4f4c9",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]
