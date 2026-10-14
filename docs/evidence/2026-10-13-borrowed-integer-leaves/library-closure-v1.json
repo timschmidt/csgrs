@@ -1,0 +1,16 @@
+{
+  "status": "closed-library-trial-verified-before-commit",
+  "all_source_and_input_guards_passed": true,
+  "actual_probe_binaries_unchanged": 33,
+  "actual_library_groups_unchanged": 3,
+  "main_runtime_files_unchanged": 1134,
+  "original_pending_native_files_unchanged": 35,
+  "native_guard_authority_sha256": "ccc9cd3865a5c81518d82286ee2503931d7d2456573d895c9adaf9721578a774",
+  "non_current_work_ledger_unchanged": true,
+  "result_sha256": "93eda28173509840be3c5838c038362e9a966cdd5be89f9c56a1271aef65b14c",
+  "assessment_sha256": "bb5f18ed28684eabfeedd742b25e4428ca46aeb8ae2a213bc66a56d7eaee0e7b",
+  "interpretation_sha256": "aec248f9b24791725c5bc49e7865512e03b81eff5893a9d5e6ad2ea1962247f6",
+  "new_native_gates_run": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

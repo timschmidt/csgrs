@@ -4390,8 +4390,8 @@
       "plan_complete": false
     },
     "borrowed_integer_leaf_repair": {
-      "status": "signed-word-fixture-allocation-repaired-broader-costs-pending",
-      "evidence": "docs/evidence/2026-10-13-borrowed-integer-leaves/qualification-assessment-v1.json",
+      "status": "allocation-repair-confirmed-combined-library-costs-block-retention",
+      "evidence": "docs/evidence/2026-10-13-borrowed-integer-leaves/library-interpretation-v1.json",
       "preparation": "docs/evidence/2026-10-13-borrowed-integer-leaves/preparation-v1/protocol.json",
       "source_review": "docs/evidence/2026-10-13-borrowed-integer-leaves/source-review-v1.json",
       "isolated_source_files": 10134,
@@ -4413,13 +4413,63 @@
         "signed_word_boundary_cloned: 40000 more retained/peak bytes",
         "wide_integer_affine_cloned: 40000 more retained/peak bytes"
       ],
-      "whole_cost_matrix_pending": true,
+      "whole_cost_matrix_pending": false,
       "new_native_gates_run": false,
       "main_and_35_pending_native_paths_unchanged": true,
-      "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/next-cost-plan-v1.json",
+      "next_step": "docs/evidence/2026-10-13-borrowed-integer-leaves/library-interpretation-v1.json",
       "runtime_candidate": true,
       "runtime_admitted": false,
-      "plan_complete": false
+      "plan_complete": false,
+      "qualification_assessment": "docs/evidence/2026-10-13-borrowed-integer-leaves/qualification-assessment-v1.json",
+      "combined_runtime_candidate_admission_rejected": true,
+      "library_costs": {
+        "assessment": "docs/evidence/2026-10-13-borrowed-integer-leaves/library-assessment-v1.json",
+        "interpretation_sha256": "aec248f9b24791725c5bc49e7865512e03b81eff5893a9d5e6ad2ea1962247f6",
+        "preparation": "docs/evidence/2026-10-13-borrowed-integer-leaves/cost-preparation-v1/protocol.json",
+        "result": "docs/evidence/2026-10-13-borrowed-integer-leaves/library-costs-v1/result.json",
+        "commands_passed": 254,
+        "fixed_cost_processes": 198,
+        "preflight_processes": 30,
+        "abort_control_processes": 9,
+        "scalar_tests_reused_for_identical_source_and_features": 876,
+        "new_scalar_rlib_byte_identical_to_qualification": false,
+        "focused_metadata_tests_each_group": 3,
+        "focused_endpoint_tests_candidate": 5,
+        "timing_comparisons": 1095,
+        "memory_comparisons": 402,
+        "binary_size_comparisons": 33,
+        "all_witnesses_representation_inventories_and_abort_receipts_preserved": true,
+        "all_allocation_fields_repeat": true,
+        "all_original_group_allocation_fields_match_closed_history": true,
+        "all_integer_allocation_fields_match_qualification": true,
+        "main_to_candidate": {
+          "timing_higher_all_six": 15,
+          "timing_lower_all_six": 51,
+          "timing_higher_at_least_five": 58,
+          "memory_increase_rows": 29,
+          "binaries_larger": 4,
+          "binaries_smaller": 7
+        },
+        "full_cache_to_candidate": {
+          "timing_higher_all_six": 3,
+          "timing_lower_all_six": 11,
+          "timing_higher_at_least_five": 49,
+          "memory_increase_rows": 0,
+          "allocation_calls_changed_rows": 0,
+          "requested_bytes_lower_rows": 12,
+          "retained_bytes_lower_rows": 6,
+          "peak_bytes_lower_rows": 8,
+          "binaries_larger": 11
+        },
+        "main_to_full_cache": {
+          "timing_higher_all_six": 24,
+          "timing_lower_all_six": 68,
+          "timing_higher_at_least_five": 70
+        },
+        "timing_cause_established": false,
+        "native_gates_run": false,
+        "runtime_admitted": false
+      }
     }
   },
   "status_meanings": {

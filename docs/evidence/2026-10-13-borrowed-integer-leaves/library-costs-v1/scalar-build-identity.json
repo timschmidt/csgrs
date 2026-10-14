@@ -1,0 +1,34 @@
+{
+  "qualified_library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/target/release/libhyperreal.rlib",
+    "sha256": "a180289bf7a3f6718cb796af8ce380e13f8881d0ae35a1854ef13b04b7081f40",
+    "bytes": 11714814,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+  },
+  "cost_library": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/cost-v1/candidate-target/release/libhyperreal.rlib",
+    "sha256": "bddf983b4a6749a148af3268fdeb027db0d19d1f15d8d90dec2849913df73acd",
+    "bytes": 11711762,
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ],
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source/crates/hyperreal/Cargo.toml"
+  },
+  "features_identical": true,
+  "bytes_identical": false,
+  "qualified_source_reused_unchanged": true,
+  "scalar_tests_reused": 876
+}
