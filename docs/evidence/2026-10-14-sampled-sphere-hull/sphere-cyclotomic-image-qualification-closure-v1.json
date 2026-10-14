@@ -1,0 +1,78 @@
+{
+  "status": "closed_all_eleven_commands_passed",
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "source": "target/sphere-cyclotomic-image-v1/source",
+  "source_files_rechecked": 10135,
+  "root_files_rechecked": 10129,
+  "qualification_result_sha256": "d25a2980a20b10851c913baaa28bcaf70c9961e99d18d8fe7c9100d57a596afb",
+  "qualification_assessment_sha256": "b90d58d6562f796859bc99f95b4f6ed314d346b83e1d2016d81baf032d0247b0",
+  "tests": {
+    "default-tests": {
+      "passed": 3926,
+      "failed": 0,
+      "ignored": 35,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 95
+    },
+    "all-features-tests": {
+      "passed": 4078,
+      "failed": 0,
+      "ignored": 40,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 96
+    },
+    "doctests": {
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    },
+    "grammar-native-consumers": {
+      "passed": 18,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 3
+    }
+  },
+  "coverage": "Default and all-feature library/integration tests and strict all-target Clippy for hyperreal, hyperlimit, hypermesh and hypercurve; all-feature doctests and warning-denied docs; selected native grammar consumers; three fuzz manifests with every binary target checked.",
+  "input_preservation": "Frozen candidate, baseline/root sources, source mappings and trial inputs passed their guards. The original 35 pending files remain unchanged. Qualification source snapshots and raw logs are preserved.",
+  "native_correctness": "The earlier four original ordinary STRICT native hulls remain byte-identical to the independently checked outputs; no new geometry is substituted by this qualification.",
+  "cost_context": "The earlier independent timing screen had no predeclared rejection flag, but the original 32x16 case still had about 9% median overhead versus late proof placement. This broad qualification does not supply new timing evidence.",
+  "next_fixed_trials": [
+    {
+      "scope": "sphere-cyclotomic-resources-scope-v1.json",
+      "protocol": "measure_sphere_resources_v1.py",
+      "commands": 34,
+      "sample_processes": 27,
+      "executed": false
+    },
+    {
+      "scope": "sphere-cyclotomic-scalar-costs-scope-v1.json",
+      "protocol": "measure_sphere_scalar_costs_v1.py",
+      "commands": 52,
+      "sample_processes": 36,
+      "preflight_processes": 6,
+      "executed": false
+    }
+  ],
+  "open": [
+    "Requested allocation/retention and common/unsupported scalar-path cost evidence",
+    "Independent directed adversarial/representation campaign and instrumentation coverage",
+    "Production formal proof obligations",
+    "Final precise resource documentation and admission record"
+  ],
+  "limits": [
+    "Ignored tests remain ignored; this is not complete input/branch coverage.",
+    "No executed fuzz campaign, ASan run, production formal proof, all-workspace CI or push qualification is claimed.",
+    "No sphere runtime code is admitted or copied into main. Earlier mesh source-identity admission is unchanged."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

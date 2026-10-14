@@ -1,0 +1,61 @@
+{
+  "complete": true,
+  "assessor_sha256": "9605e780498c3aa2cb18dbb9879f7e52af437db4ca05c2bd5e0ce7ed966c129e",
+  "result_sha256": "d25a2980a20b10851c913baaa28bcaf70c9961e99d18d8fe7c9100d57a596afb",
+  "commands_all_zero": 11,
+  "source_files_rechecked": 10135,
+  "root_files_rechecked": 10129,
+  "tests": {
+    "default-tests": {
+      "passed": 3926,
+      "failed": 0,
+      "ignored": 35,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 95
+    },
+    "all-features-tests": {
+      "passed": 4078,
+      "failed": 0,
+      "ignored": 40,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 96
+    },
+    "doctests": {
+      "passed": 29,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 4
+    },
+    "grammar-native-consumers": {
+      "passed": 18,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 3
+    }
+  },
+  "packages": [
+    "hyperreal",
+    "hyperlimit",
+    "hypermesh",
+    "hypercurve"
+  ],
+  "features": [
+    "default",
+    "all-features"
+  ],
+  "checks": "Format, strict all-target Clippy, library/integration tests, all-feature doctests and warning-denied docs, selected native grammar consumers, three fuzz manifests checked with all binary targets.",
+  "limits": [
+    "Ignored tests remain ignored. Counts describe these runs, not complete input or branch coverage.",
+    "This unchanged finite-field candidate remains isolated from main; its earlier timing screen is not a complete cost admission.",
+    "No executed fuzz campaign, benchmark, production formal proof, allocation/retention/size admission, all-workspace CI or push qualification is claimed.",
+    "No process timing in this qualification is a matched performance comparison."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
