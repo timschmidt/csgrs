@@ -4316,7 +4316,32 @@
       "counts_repeat_exactly_within_variant": true,
       "native_failure_and_closed_library_costs_retained": true,
       "main_and_35_pending_native_paths_unchanged": true,
-      "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-cache-coverage-v1.json",
+      "next_step": "docs/evidence/2026-10-13-construction-cache-coverage/decision-v1.json",
+      "runtime_admitted": false,
+      "plan_complete": false
+    },
+    "construction_cache_event_coverage": {
+      "status": "direct-cache-work-does-not-explain-two-construction-regressions",
+      "evidence": "docs/evidence/2026-10-13-construction-cache-coverage/decision-v1.json",
+      "assessment": "docs/evidence/2026-10-13-construction-cache-coverage/assessment-v1.json",
+      "preparation": "docs/evidence/2026-10-13-construction-cache-coverage/preparation-v1/protocol.json",
+      "scalar_tests_passed": 875,
+      "fixed_diagnostic_processes": 2,
+      "trace_rows": 64,
+      "event_fields_per_row": 27,
+      "all_counts_and_witnesses_preserved": true,
+      "zero_event_construction_phases": [
+        "affine_surd_construction",
+        "negated_scaled_surd_construction",
+        "multiradical_square_construction",
+        "pi_transport_construction",
+        "mixed_field_decline_construction",
+        "conjugate_then_affine_construction"
+      ],
+      "cause_of_prior_timing_difference_established": false,
+      "all_main_and_35_pending_native_paths_unchanged": true,
+      "next_step": "docs/evidence/2026-10-13-construction-cache-coverage/next-diagnostic-v1.json",
+      "runtime_candidate": false,
       "runtime_admitted": false,
       "plan_complete": false
     }
