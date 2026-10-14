@@ -1,0 +1,26 @@
+{
+  "status": "all-generated-source-and-driver-deltas-reviewed-before-qualification",
+  "preparation_sha256": "1d305de7ef10ce69e7211f36fd9f7c22a5090fbfd498d2cad3d046bb3bd6ceb5",
+  "source_patch_sha256": "642379c3db566fcb47cb6ae97aa04421e2d61dda9e8b487f94860079c456f052",
+  "all_five_source_paths_reviewed": true,
+  "all_three_drivers_reviewed": true,
+  "source_files": 10136,
+  "old_event_names_and_order_unchanged": 27,
+  "all_60_node_kind_indices_match_exported_names": true,
+  "unclassified_bucket_index": 60,
+  "one_actual_pointer_read_and_one_locked_field_read": true,
+  "driver_suffixes": "Quadratic/integer are byte-identical; rational has only the previously established equivalent newline-array spelling correction. Header and all three original fixture/witness/query suffixes read in full.",
+  "source_review": [
+    "The diagnostic parent has the original unconditional RETAIN lookup. The rejected entry predicate is absent.",
+    "The helper borrows the immutable approximation, stores only a numeric thread-local tag, and adds no Arc owners. The original lookup still precedes memo and budget checks.",
+    "The same actual pointer read determines empty_cell. A single original read lock protects the Laurent field for initialized_miss/hit, and remains held through the original closed conversion.",
+    "Thread-local category counts and pending kind reset with every old recording window. Every outcome consumes pending context; direct private calls enter the explicit Unclassified bucket.",
+    "Old arithmetic, publication eligibility, cache payloads, ownership, term/work limits and original retry are unchanged. Old 27 event insertions are reused, plus classification-only additions.",
+    "Two added controls cover original publication/replay and independent valid empty/initialized/hit states, preservation of another cache payload, owner-drop zero-budget replay and reclamation.",
+    "Qualification and all 12 driver Clippy/link commands precede all 24 fixed count processes. Instrumented timings and allocations are not analyzed."
+  ],
+  "qualification_executed": false,
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
