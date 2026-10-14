@@ -5087,7 +5087,10 @@
       "sphere_warm_support_executed": true,
       "sphere_warm_output_exact_geometry_preserved": true,
       "sphere_cyclotomic_resources_finite_image_sampled": false,
-      "sphere_cyclotomic_scalar_costs_prerequisite_satisfied": false
+      "sphere_cyclotomic_scalar_costs_prerequisite_satisfied": false,
+      "sphere_warm_replay_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-replay-scope-v1.json",
+      "sphere_warm_replay_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_warm_replay_v1.py",
+      "sphere_warm_replay_executed": false
     }
   },
   "status_meanings": {
