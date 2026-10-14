@@ -1,0 +1,9 @@
+{
+  "complete": false,
+  "reader_terminal_exit_code": 1,
+  "execution_mode": "Original Python stdin source archived verbatim after failure; not rerun.",
+  "reader_source_sha256": "27e666f87169a6c25437458ccac3610c178d02aae306e306fd77b41eb1a8cb34",
+  "failure": "The SHA helper accepted Path objects only but a frozen binary record supplied a string path.",
+  "closure_and_ledger_written": false,
+  "native_commands_reexecuted": false
+}

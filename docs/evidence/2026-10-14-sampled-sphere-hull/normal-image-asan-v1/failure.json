@@ -1,0 +1,32 @@
+{
+  "complete": false,
+  "failed_command": {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hyperlimit",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 66,
+    "process_wall_seconds": 54.991361644119024,
+    "stdout_sha256": "a23403619f6ccbe472604bde85bdd28cf9376cd7f489a21808230b5553d1442b",
+    "stderr_sha256": "4925b7b8394d11a2521416a9712cc32a6d51452ec7291c0fac6f2db604a90615"
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

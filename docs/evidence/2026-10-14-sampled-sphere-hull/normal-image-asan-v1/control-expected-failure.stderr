@@ -1,0 +1,73 @@
+=================================================================
+==68==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x7b966d1e0012 at pc 0x55bc87be3b7d bp 0x7fffb107a310 sp 0x7fffb107a308
+WRITE of size 1 at 0x7b966d1e0012 thread T0
+    #0 0x55bc87be3b7c in normal_image_asan_control_v1::main normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #1 0x55bc87be39a5 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #2 0x55bc87be39cb in std::rt::lang_start::<()>::{closure#0} normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #3 0x55bc87c091d6 in <&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync as core::ops::function::FnOnce<()>>::call_once /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:287:21
+    #4 0x55bc87c091d6 in std::panicking::catch_unwind::do_call::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #5 0x55bc87c091d6 in std::panicking::catch_unwind::<i32, &dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #6 0x55bc87c091d6 in std::panic::catch_unwind::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #7 0x55bc87c091d6 in std::rt::lang_start_internal::{closure#0} /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:175:24
+    #8 0x55bc87c091d6 in std::panicking::catch_unwind::do_call::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #9 0x55bc87c091d6 in std::panicking::catch_unwind::<isize, std::rt::lang_start_internal::{closure#0}> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #10 0x55bc87c091d6 in std::panic::catch_unwind::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #11 0x55bc87c091d6 in std::rt::lang_start_internal /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:171:5
+    #12 0x55bc87be3c37 in main (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control+0xfec37) (BuildId: 0384eca5af5c5e3c78ae0669e20ea894cb3c91c2)
+    #13 0x7f766e01e5b4 in __libc_start_call_main (/lib64/libc.so.6+0x35b4) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #14 0x7f766e01e667 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3667) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #15 0x55bc87b29e74 in _start (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control+0x44e74) (BuildId: 0384eca5af5c5e3c78ae0669e20ea894cb3c91c2)
+
+0x7b966d1e0012 is located 1 bytes after 1-byte region [0x7b966d1e0010,0x7b966d1e0011)
+allocated by thread T0 here:
+    #0 0x55bc87bb5534 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control+0xd0534) (BuildId: 0384eca5af5c5e3c78ae0669e20ea894cb3c91c2)
+    #1 0x55bc87be3a7e in normal_image_asan_control_v1::main normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #2 0x55bc87be39a5 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #3 0x55bc87be39cb in std::rt::lang_start::<()>::{closure#0} normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0
+    #4 0x55bc87c091d6 in <&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync as core::ops::function::FnOnce<()>>::call_once /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:287:21
+    #5 0x55bc87c091d6 in std::panicking::catch_unwind::do_call::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #6 0x55bc87c091d6 in std::panicking::catch_unwind::<i32, &dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #7 0x55bc87c091d6 in std::panic::catch_unwind::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #8 0x55bc87c091d6 in std::rt::lang_start_internal::{closure#0} /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:175:24
+    #9 0x55bc87c091d6 in std::panicking::catch_unwind::do_call::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #10 0x55bc87c091d6 in std::panicking::catch_unwind::<isize, std::rt::lang_start_internal::{closure#0}> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #11 0x55bc87c091d6 in std::panic::catch_unwind::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #12 0x55bc87c091d6 in std::rt::lang_start_internal /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:171:5
+    #13 0x55bc87be3c37 in main (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control+0xfec37) (BuildId: 0384eca5af5c5e3c78ae0669e20ea894cb3c91c2)
+    #14 0x7f766e01e5b4 in __libc_start_call_main (/lib64/libc.so.6+0x35b4) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #15 0x7f766e01e667 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3667) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #16 0x55bc87b29e74 in _start (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control+0x44e74) (BuildId: 0384eca5af5c5e3c78ae0669e20ea894cb3c91c2)
+
+SUMMARY: AddressSanitizer: heap-buffer-overflow normal_image_asan_control_v1.e5ce1558c4e0c040-cgu.0 in normal_image_asan_control_v1::main
+Shadow bytes around the buggy address:
+  0x7b966d1dfd80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7b966d1dfe00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7b966d1dfe80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7b966d1dff00: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+  0x7b966d1dff80: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+=>0x7b966d1e0000: fa fa[01]fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7b966d1e0080: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7b966d1e0100: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7b966d1e0180: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7b966d1e0200: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+  0x7b966d1e0280: fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa fa
+Shadow byte legend (one shadow byte represents 8 application bytes):
+  Addressable:           00
+  Partially addressable: 01 02 03 04 05 06 07 
+  Heap left redzone:       fa
+  Freed heap region:       fd
+  Stack left redzone:      f1
+  Stack mid redzone:       f2
+  Stack right redzone:     f3
+  Stack after return:      f5
+  Stack use after scope:   f8
+  Global redzone:          f9
+  Global init order:       f6
+  Poisoned by user:        f7
+  Container overflow:      fc
+  Array cookie:            ac
+  Intra object redzone:    bb
+  ASan internal:           fe
+  Left alloca redzone:     ca
+  Right alloca redzone:    cb
+==68==ABORTING

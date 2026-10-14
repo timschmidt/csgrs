@@ -1,0 +1,56 @@
+{
+  "complete": false,
+  "trial_closed": true,
+  "driver_terminal_exit_code": 1,
+  "commands_completed": 4,
+  "commands_matching_expected_exit": 3,
+  "deliberate_control_detected_expected_heap_buffer_overflow": true,
+  "failed_command": "default-tests",
+  "failed_command_exit_code": 66,
+  "completed_test_summaries": [
+    {
+      "passed": 242,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0
+    }
+  ],
+  "failure": "The first default test binary completed 242 tests successfully, then LeakSanitizer reported a fatal scanning error at shutdown. The run stopped; later default binaries, all-feature tests and the original hull replay did not execute.",
+  "diagnostic_classification": "LeakSanitizer infrastructure failure; the diagnostic gives a generic ptrace warning. Its exact cause has not yet been demonstrated. No leak report or library invalid-access diagnostic was produced.",
+  "executed_test_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-9162eeee8c99e3a1",
+    "sha256": "d6919594749fae80e0d46c0a0cd840ce6d76fdb187e93d3f1155d4beb96171d1",
+    "bytes": 12094328
+  },
+  "executed_control_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v1/asan-control",
+    "sha256": "817e998be2530e5d6a6a0f06541de22f8436870880a3305c0717061a1f9e67c4",
+    "bytes": 5735152
+  },
+  "frozen_source_files_rechecked": 10136,
+  "root_source_files_rechecked": 10129,
+  "all_frozen_sources_original_libraries_and_binaries_unchanged": true,
+  "artifacts_sha256": {
+    "commands.json": "7e1ad748926f426ff444eb62fedbc0cb8e6c7792223e49da7f0174d79c893ac0",
+    "control-binary.json": "8e200635c687f46e416b878ffa6bc84ff6e4f3fe041ca5e1cdc4cb7b90b17d8b",
+    "control-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-expected-failure.stderr": "dccddc2e812585dbb9445dc4788b3252da6354f99ea7d5d9bd15c275a6d44211",
+    "control-expected-failure.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stderr": "4925b7b8394d11a2521416a9712cc32a6d51452ec7291c0fac6f2db604a90615",
+    "default-tests.stdout": "a23403619f6ccbe472604bde85bdd28cf9376cd7f489a21808230b5553d1442b",
+    "failure.json": "fd2a22ba3577319cf52b06e36e65912b86612bc4d0af60ef9060113a1cde9b10",
+    "protocol.json": "2d2d20a50676bcb417cbd8333d1eef3b90e7707e4911bec4b9d3964d4102f741",
+    "root-source-hashes.json.gz": "7a7fd8eaf0c9cca01497bff71c7ae8f720868bcd1879a5e93dd2d3338d5e281c"
+  },
+  "driver_stdout_sha256": "386831d845def6bcf383a168abdc1cca3351dfb4ba8265da2848971e50eb11d6",
+  "driver_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "next_step": "A separately frozen standalone ASan/LSan control will compare sandboxed and separately authorized unrestricted execution. Preserve this failed run; do not relabel it, disable leak checks in place, or resume it.",
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "closure_reader_source_sha256": "34202af9f95d1b2ab884507df1ddfe4fab90a774a0bda6def761e8a031ef6f41",
+  "closure_reader_failure": "normal-image-asan-closure-reader-failure-v1.json"
+}
