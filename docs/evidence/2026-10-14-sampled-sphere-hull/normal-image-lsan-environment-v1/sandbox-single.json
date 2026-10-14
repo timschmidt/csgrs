@@ -1,0 +1,11 @@
+{
+  "name": "sandbox-single",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+    "single"
+  ],
+  "exit_code": 66,
+  "process_wall_seconds": 0.008088956121355295,
+  "stdout_sha256": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db",
+  "stderr_sha256": "d707a91f3753a40d0634ea539cce58fa6a8c0ae91afa6209c8b0ef283c6264ac"
+}

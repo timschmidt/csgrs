@@ -1,0 +1,11 @@
+{
+  "name": "unrestricted-threads",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+    "threads"
+  ],
+  "exit_code": 0,
+  "process_wall_seconds": 0.37126642279326916,
+  "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a",
+  "stderr_sha256": "e90e272912270480005b8b79c25ddd2b4b14225168c3c0a7e036261be71a4658"
+}

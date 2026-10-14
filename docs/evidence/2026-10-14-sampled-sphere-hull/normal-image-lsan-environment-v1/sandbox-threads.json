@@ -1,0 +1,11 @@
+{
+  "name": "sandbox-threads",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+    "threads"
+  ],
+  "exit_code": 66,
+  "process_wall_seconds": 0.008338268846273422,
+  "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a",
+  "stderr_sha256": "caa36a36301b7b18eef7ffc9ce46db5d403170542955aeb2622ab90bac213611"
+}

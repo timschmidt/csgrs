@@ -1,0 +1,307 @@
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60ef6007a0 of size 32
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_printf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_sprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_snprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_fprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_vprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_vsprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_vsnprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept '__isoc99_vfprintf'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60ef6007a0 of size 32
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef6007a0 of size 32
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept '__b64_ntop'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept '__b64_pton'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept '__dn_comp'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept '__dn_expand'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef6007a0 of size 32
+==660319==Registered root region at 0x7f60ef202620 of size 160
+==660319==Registered root region at 0x7f60ef6007a0 of size 32
+==660319==Unregistered root region at 0x7f60ef202620 of size 160
+==660319==Registered root region at 0x7f60ef202620 of size 160
+==660319==AddressSanitizer: failed to intercept 'pthread_mutexattr_getrobust_np'
+==660319==Unregistered root region at 0x7f60ef202620 of size 160
+==660319==Unregistered root region at 0x7f60ef6007a0 of size 32
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef6007a0 of size 32
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdrmem_create'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept 'xdrstdio_create'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_short'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_short'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_int'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_int'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_long'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_long'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_hyper'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_hyper'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept 'xdr_longlong_t'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60efa02250 of size 144
+==660319==AddressSanitizer: failed to intercept 'xdr_u_longlong_t'
+==660319==Unregistered root region at 0x7f60efa02250 of size 144
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_int8_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_uint8_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_int16_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_uint16_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_int32_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_uint32_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_int64_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_uint64_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_quad_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_quad_t'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_bool'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_enum'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_char'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_u_char'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_float'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_double'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_bytes'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_string'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdrrec_create'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept 'xdr_destroy'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Unregistered root region at 0x7f60ef6007a0 of size 32
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef6007a0 of size 32
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef401e80 of size 128
+==660319==AddressSanitizer: failed to intercept '__cxa_throw'
+==660319==Unregistered root region at 0x7f60ef401e80 of size 128
+==660319==Registered root region at 0x7f60ef202620 of size 160
+==660319==Unregistered root region at 0x7f60ef202620 of size 160
+==660319==Registered root region at 0x7f60ef202620 of size 160
+==660319==AddressSanitizer: failed to intercept '__cxa_rethrow_primary_exception'
+==660319==Unregistered root region at 0x7f60ef202620 of size 160
+==660319==Unregistered root region at 0x7f60ef6007a0 of size 32
+==660319==AddressSanitizer: libc interceptors initialized
+|| `[0x10007fff8000, 0x7fffffffffff]` || HighMem    ||
+|| `[0x02008fff7000, 0x10007fff7fff]` || HighShadow ||
+|| `[0x00008fff7000, 0x02008fff6fff]` || ShadowGap  ||
+|| `[0x00007fff8000, 0x00008fff6fff]` || LowShadow  ||
+|| `[0x000000000000, 0x00007fff7fff]` || LowMem     ||
+MemToShadow(shadow): 0x00008fff7000 0x000091ff6dff 0x004091ff6e00 0x02008fff6fff
+redzone=16
+max_redzone=2048
+quarantine_size_mb=256M
+thread_local_quarantine_size_kb=1024K
+malloc_context_size=30
+SHADOW_SCALE: 3
+SHADOW_GRANULARITY: 8
+SHADOW_OFFSET: 0x00007fff8000
+==660319==Installed the sigaction for signal 11
+==660319==Installed the sigaction for signal 7
+==660319==Installed the sigaction for signal 8
+==660319==T0: FakeStack created: 0x7b60edce7000 -- 0x7b60ee7f0000 stack_size_log: 20; mmapped 11300K, noreserve=0, true_start: 0x7b60edce7000, start of first frame: 0x7b60edcf0000
+==660319==T0: stack [0x7ffdb3e83000,0x7ffdb4683000) size 0x800000; local=0x7ffdb467ee94
+==660319==AddressSanitizer Init done
+==660319==LeakSanitizer: checking for leaks
+==660321==SuspendAllThreads retry: 0
+==660321==Processing thread 660319.
+==660321==Stack at 0x7ffdb3e83000-0x7ffdb4683000 (SP = 0x7ffdb467ec70).
+==660321==TLS at 0x7f60f00dd440-0x7f60f00de580.
+
+=================================================================
+==660319==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 4096 byte(s) in 1 object(s) allocated from:
+    #0 0x559019d0e404 in malloc (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control+0xd5404) (BuildId: 6e8ee850e340b09f68e1193867924060b8a4c894)
+    #1 0x559019d3f33e in alloc::alloc::alloc /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/alloc.rs:101:9
+    #2 0x559019d3f33e in <alloc::alloc::Global>::alloc_impl_runtime /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/alloc.rs:210:73
+    #3 0x559019d3f33e in <alloc::alloc::Global>::alloc_impl /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/alloc.rs:332:9
+    #4 0x559019d3f33e in <alloc::alloc::Global as core::alloc::Allocator>::allocate /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/alloc.rs:449:14
+    #5 0x559019d3f33e in alloc::boxed::box_new_uninit /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/boxed.rs:248:18
+    #6 0x559019d3f33e in <alloc::boxed::Box<[u8; 4096]>>::new /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/alloc/src/boxed.rs:286:19
+    #7 0x559019d3f33e in normal_image_lsan_control_v1::deliberate_leak /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_lsan_control_v1.rs:10:17
+    #8 0x559019d3fa14 in normal_image_lsan_control_v1::main /home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_lsan_control_v1.rs:25:19
+    #9 0x559019d3df05 in <fn() as core::ops::function::FnOnce<()>>::call_once /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/ops/function.rs:250:5
+    #10 0x559019d3df05 in std::sys::backtrace::__rust_begin_short_backtrace::<fn(), ()> /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/sys/backtrace.rs:166:18
+    #11 0x559019d3ee0b in std::rt::lang_start::<()>::{closure#0} /home/tim/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/std/src/rt.rs:206:18
+    #12 0x559019d66b06 in <&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync as core::ops::function::FnOnce<()>>::call_once /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/core/src/ops/function.rs:287:21
+    #13 0x559019d66b06 in std::panicking::catch_unwind::do_call::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #14 0x559019d66b06 in std::panicking::catch_unwind::<i32, &dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #15 0x559019d66b06 in std::panic::catch_unwind::<&dyn core::ops::function::Fn<(), Output = i32> + core::panic::unwind_safe::RefUnwindSafe + core::marker::Sync, i32> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #16 0x559019d66b06 in std::rt::lang_start_internal::{closure#0} /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:175:24
+    #17 0x559019d66b06 in std::panicking::catch_unwind::do_call::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:576:43
+    #18 0x559019d66b06 in std::panicking::catch_unwind::<isize, std::rt::lang_start_internal::{closure#0}> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panicking.rs:544:19
+    #19 0x559019d66b06 in std::panic::catch_unwind::<std::rt::lang_start_internal::{closure#0}, isize> /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/panic.rs:359:14
+    #20 0x559019d66b06 in std::rt::lang_start_internal /rustc/48a229ceaefd4985c50990b14116b6d856af0985/library/std/src/rt.rs:171:5
+    #21 0x559019d405ce in main (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control+0x1075ce) (BuildId: 6e8ee850e340b09f68e1193867924060b8a4c894)
+    #22 0x7f60f00e25b4 in __libc_start_call_main (/lib64/libc.so.6+0x35b4) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #23 0x7f60f00e2667 in __libc_start_main@GLIBC_2.2.5 (/lib64/libc.so.6+0x3667) (BuildId: 4586895ddf125800fcd0df1f77ad693eac681450)
+    #24 0x559019c820f4 in _start (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control+0x490f4) (BuildId: 6e8ee850e340b09f68e1193867924060b8a4c894)
+
+SUMMARY: AddressSanitizer: 4096 byte(s) leaked in 1 allocation(s).
+==660319==Thread T0/660319 was created by T-1
+    <empty stack>
+
+

@@ -1,0 +1,11 @@
+{
+  "name": "unrestricted-leak",
+  "command": [
+    "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+    "leak"
+  ],
+  "exit_code": 66,
+  "process_wall_seconds": 0.35340546630322933,
+  "stdout_sha256": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9",
+  "stderr_sha256": "e45e3c18201b3fdd8ee39e927a145c75ef678e1a90bd453567c2c26358845dff"
+}

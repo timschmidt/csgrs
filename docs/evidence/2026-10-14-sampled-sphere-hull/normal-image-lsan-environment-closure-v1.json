@@ -1,0 +1,33 @@
+{
+  "complete": true,
+  "all_four_phase_driver_terminal_exit_codes": 0,
+  "preparation_commands_zero": 2,
+  "standalone_native_executions": 6,
+  "result_sha256": "eeac319aa1039286c9b4f4089bf376078e12508939fa8576426fc0650869d143",
+  "sandbox_exit_codes": [
+    66,
+    66,
+    66
+  ],
+  "unrestricted_exit_codes": [
+    0,
+    0,
+    66
+  ],
+  "sandbox_thread_attach_permission_denied": true,
+  "unrestricted_cleanup_controls_passed": true,
+  "unrestricted_intentional_leak_bytes_reported": 4096,
+  "unrestricted_execution_authority": "The unrestricted phase used exec_command with sandbox_permissions=require_escalated; automatic review approved execution. Its terminal exit code was observed before assessment.",
+  "same_binary_in_both_contexts": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+    "sha256": "65f496c53a9e6ea369fa23785ab864e1acc510e8e099af70e832b3307bb604e3",
+    "bytes": 5888016
+  },
+  "all_frozen_sources_inputs_old_executed_binaries_and_new_control_rechecked": true,
+  "interpretation": "The standalone binary links no repository crates and reproduces the leak-scanner thread-attach permission failure in the sandbox. With the same compiler, binary and sanitizer settings, unrestricted cleanup runs succeed and the deliberate leak is detected. This demonstrates a sandbox-associated scanning restriction without attributing it to a specific kernel rule.",
+  "library_qualification_reexecuted": false,
+  "failed_qualification_preserved": "normal-image-asan-closure-v1.json",
+  "next_step": "Prepare a new complete qualification version with unchanged leak detection and source, and run it through separately authorized unrestricted execution. Do not resume or relabel the original failed qualification.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

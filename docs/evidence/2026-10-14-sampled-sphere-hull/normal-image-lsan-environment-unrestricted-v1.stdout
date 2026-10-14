@@ -1,0 +1,7 @@
+{"start": "unrestricted-single"}
+{"name": "unrestricted-single", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "single"], "exit_code": 0, "process_wall_seconds": 0.010907681658864021, "stdout_sha256": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db", "stderr_sha256": "41caf840c423d6417c93ec44e6902962966edff5c0835dce5009bf82bec2bb3b"}
+{"start": "unrestricted-threads"}
+{"name": "unrestricted-threads", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "threads"], "exit_code": 0, "process_wall_seconds": 0.37126642279326916, "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a", "stderr_sha256": "e90e272912270480005b8b79c25ddd2b4b14225168c3c0a7e036261be71a4658"}
+{"start": "unrestricted-leak"}
+{"name": "unrestricted-leak", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "leak"], "exit_code": 66, "process_wall_seconds": 0.35340546630322933, "stdout_sha256": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9", "stderr_sha256": "e45e3c18201b3fdd8ee39e927a145c75ef678e1a90bd453567c2c26358845dff"}
+{"context_complete": "unrestricted", "codes": [0, 0, 66]}

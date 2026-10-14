@@ -1,0 +1,53 @@
+{
+  "objective": "Repeat the complete sanitizer qualification as a new frozen version under authorized unrestricted execution, retaining the same source, compiler, flags, leak detection and test commands.",
+  "source": "target/sphere-normal-image-v1/source",
+  "commands": 6,
+  "expected_exit_codes": [
+    0,
+    0,
+    66,
+    0,
+    0,
+    0
+  ],
+  "expected_control_exit_code": 66,
+  "prerequisites": [
+    "The twelve-command broader qualification completed successfully.",
+    "All 58 native cost commands completed, with no predeclared cost-increase flag.",
+    "All 29 native resource commands and their assessment completed.",
+    "The original failed sanitizer qualification and all its inputs, outputs and executed binaries remain preserved.",
+    "The completed standalone comparison demonstrates sandbox scanning failure, successful unrestricted cleanup, and detection of the intentional leak."
+  ],
+  "checks": [
+    "Format and compile a standalone deliberately invalid heap-write control.",
+    "Require the control to exit 66 with an ASan heap-buffer-overflow and one-byte write diagnostic.",
+    "Default and all-feature release library and integration tests for hyperreal, hyperlimit and hypermesh, with ASan enabled for target Rust code.",
+    "The existing native_hull_determinism test, including all four full original sampled spheres and their cold/warm/replay rows."
+  ],
+  "target": "x86_64-unknown-linux-gnu",
+  "compiler": "Require exactly the compiler recorded for the frozen native feasibility candidate.",
+  "sanitizer_flags": [
+    "-Zsanitizer=address",
+    "-Cforce-frame-pointers=yes"
+  ],
+  "rustc_bootstrap": "1; explicitly enables sanitizer compiler support on the recorded stable toolchain.",
+  "asan_options": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+  "command_wall_limit_seconds": 1800,
+  "source_mutations_allowed": false,
+  "extension_filtering_or_retry_allowed": false,
+  "serialization": "Run only after every earlier build, test and measurement has terminated. Stop at the first unexpected exit or artifact mismatch; preserve the entire run.",
+  "limits": [
+    "The deliberate control failure is expected evidence that sanitizer detection works, not a library defect.",
+    "Target Rust crates are compiled with ASan. The standard library is not rebuilt; host proc macros and native dependencies are not claimed to be instrumented.",
+    "These are existing finite tests, not a directed fuzz campaign or an exhaustive memory-safety proof.",
+    "Ignored tests remain ignored. No complete workspace CI, formal verification, cost inference or runtime admission is claimed.",
+    "This is a new complete run, not a resumption or extension of v1. Its success would not relabel the failed sandbox qualification.",
+    "Unrestricted execution is needed for LeakSanitizer thread inspection; leak detection remains enabled without suppressions."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false,
+  "execution_context": "The driver must run through exec_command with sandbox_permissions=require_escalated. The standalone same-binary comparison demonstrated a thread-attach restriction inside the sandbox; successful standalone cleanup and deliberate-leak controls support this execution-context correction.",
+  "preserved_failed_qualification_closure_sha256": "c4377cb863ee88ecdfdd8e9717c4c2ba9892a18b21f5d67a69bb1ed791e7b057",
+  "environment_diagnostic_result_sha256": "eeac319aa1039286c9b4f4089bf376078e12508939fa8576426fc0650869d143",
+  "lsan_options": "Explicitly empty, so no inherited leak suppressions or scanner overrides apply."
+}

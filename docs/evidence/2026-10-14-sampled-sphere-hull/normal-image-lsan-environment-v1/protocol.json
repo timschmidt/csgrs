@@ -1,0 +1,44 @@
+{
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inputs_sha256": {
+    "diagnose_normal_image_lsan_v1.py": "2da0ce55e032ee0684b1526537b520e5b36190292e08e67ed694c2e23bce33ea",
+    "normal_image_lsan_control_v1.rs": "c703eb3a834802a5cbcf33d38fb2b9f55b22642b07cd680ed3eaab3a84d9599d",
+    "normal-image-lsan-environment-scope-v1.json": "b9f570a322b647690019485f008549b4b2bb65df43a1c408d997e1dd6ce2aeb3",
+    "normal-image-asan-closure-v1.json": "c4377cb863ee88ecdfdd8e9717c4c2ba9892a18b21f5d67a69bb1ed791e7b057",
+    "sphere-normal-image-v1/protocol.json": "b161203063f3940d23f1087c4868e2fd809b13b42dc388085dacd05d01a3e126",
+    "sphere-normal-image-v1/source-hashes.json.gz": "9fb43297218853fc5bc75cda4f4fa9998cd5c9456055c63539b14ec369794a5f",
+    "normal-image-asan-v1/commands.json": "7e1ad748926f426ff444eb62fedbc0cb8e6c7792223e49da7f0174d79c893ac0",
+    "normal-image-asan-v1/control-binary.json": "8e200635c687f46e416b878ffa6bc84ff6e4f3fe041ca5e1cdc4cb7b90b17d8b",
+    "normal-image-asan-v1/control-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v1/control-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v1/control-expected-failure.stderr": "dccddc2e812585dbb9445dc4788b3252da6354f99ea7d5d9bd15c275a6d44211",
+    "normal-image-asan-v1/control-expected-failure.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v1/control-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v1/control-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "normal-image-asan-v1/default-tests.stderr": "4925b7b8394d11a2521416a9712cc32a6d51452ec7291c0fac6f2db604a90615",
+    "normal-image-asan-v1/default-tests.stdout": "a23403619f6ccbe472604bde85bdd28cf9376cd7f489a21808230b5553d1442b",
+    "normal-image-asan-v1/failure.json": "fd2a22ba3577319cf52b06e36e65912b86612bc4d0af60ef9060113a1cde9b10",
+    "normal-image-asan-v1/protocol.json": "2d2d20a50676bcb417cbd8333d1eef3b90e7707e4911bec4b9d3964d4102f741",
+    "normal-image-asan-v1/root-source-hashes.json.gz": "7a7fd8eaf0c9cca01497bff71c7ae8f720868bcd1879a5e93dd2d3338d5e281c"
+  },
+  "environment": {
+    "RUSTC_BOOTSTRAP": "1",
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1:abort_on_error=0:exitcode=66",
+    "LSAN_OPTIONS": "verbosity=1:log_threads=1"
+  },
+  "source_files": 10136,
+  "root_source_files": 10129,
+  "contexts": [
+    "sandbox",
+    "unrestricted"
+  ],
+  "modes": [
+    "single",
+    "threads",
+    "leak"
+  ],
+  "native_executions": 6,
+  "native_wall_limit_seconds": 30,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,144 @@
+{
+  "complete": true,
+  "standalone_control_executions": 6,
+  "results": {
+    "sandbox": [
+      {
+        "name": "sandbox-single",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "single"
+        ],
+        "exit_code": 66,
+        "process_wall_seconds": 0.008088956121355295,
+        "stdout_sha256": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db",
+        "stderr_sha256": "d707a91f3753a40d0634ea539cce58fa6a8c0ae91afa6209c8b0ef283c6264ac",
+        "mode": "single",
+        "fatal_leak_scanner_error": true,
+        "leak_report": false,
+        "address_error": false
+      },
+      {
+        "name": "sandbox-threads",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "threads"
+        ],
+        "exit_code": 66,
+        "process_wall_seconds": 0.008338268846273422,
+        "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a",
+        "stderr_sha256": "caa36a36301b7b18eef7ffc9ce46db5d403170542955aeb2622ab90bac213611",
+        "mode": "threads",
+        "fatal_leak_scanner_error": true,
+        "leak_report": false,
+        "address_error": false
+      },
+      {
+        "name": "sandbox-leak",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "leak"
+        ],
+        "exit_code": 66,
+        "process_wall_seconds": 0.007923667319118977,
+        "stdout_sha256": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9",
+        "stderr_sha256": "79fb6a4a720bcac50d9cbb2259260faf8c67c450189b57cdc39c327c484b6626",
+        "mode": "leak",
+        "fatal_leak_scanner_error": true,
+        "leak_report": false,
+        "address_error": false
+      }
+    ],
+    "unrestricted": [
+      {
+        "name": "unrestricted-single",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "single"
+        ],
+        "exit_code": 0,
+        "process_wall_seconds": 0.010907681658864021,
+        "stdout_sha256": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db",
+        "stderr_sha256": "41caf840c423d6417c93ec44e6902962966edff5c0835dce5009bf82bec2bb3b",
+        "mode": "single",
+        "fatal_leak_scanner_error": false,
+        "leak_report": false,
+        "address_error": false
+      },
+      {
+        "name": "unrestricted-threads",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "threads"
+        ],
+        "exit_code": 0,
+        "process_wall_seconds": 0.37126642279326916,
+        "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a",
+        "stderr_sha256": "e90e272912270480005b8b79c25ddd2b4b14225168c3c0a7e036261be71a4658",
+        "mode": "threads",
+        "fatal_leak_scanner_error": false,
+        "leak_report": false,
+        "address_error": false
+      },
+      {
+        "name": "unrestricted-leak",
+        "command": [
+          "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control",
+          "leak"
+        ],
+        "exit_code": 66,
+        "process_wall_seconds": 0.35340546630322933,
+        "stdout_sha256": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9",
+        "stderr_sha256": "e45e3c18201b3fdd8ee39e927a145c75ef678e1a90bd453567c2c26358845dff",
+        "mode": "leak",
+        "fatal_leak_scanner_error": false,
+        "leak_report": true,
+        "address_error": false
+      }
+    ]
+  },
+  "sandbox_scanning_failure_reproduced": true,
+  "unrestricted_cleanup_controls_passed": true,
+  "unrestricted_deliberate_leak_detected": true,
+  "sandbox_associated_restriction_demonstrated": true,
+  "native_library_qualification_reexecuted": false,
+  "artifacts_sha256": {
+    "binary.json": "206e4cad14a99b110b7ca0d32a7475b05394e1c18befd81f7feb22856a881a83",
+    "build.json": "2c430988a2b1db0d644f6ea2d78a59815ead67e97d892c854419bd926bc16a13",
+    "build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.json": "f4e2e11311a12f71d3e141a9c685333b9a5c9d42957633890df0303dce15a090",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "c9fd34d5f82e0a81385e6cbc2a2dcb20ee31a9f88e697a831112480e89e8698e",
+    "root-source-hashes.json.gz": "a9c29bbfefe237a50a4c8be0e0e3b2332c386b4ab4c3d67b5b7f0fc358d50927",
+    "sandbox-leak.json": "b145d27ba03a5845386e5bea5ab7d8667c0bb40aea7f89d0f0e4fac36f0f9d1d",
+    "sandbox-leak.stderr": "79fb6a4a720bcac50d9cbb2259260faf8c67c450189b57cdc39c327c484b6626",
+    "sandbox-leak.stdout": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9",
+    "sandbox-results.json": "1c4d99af31fe3fb4edf4908636266ee26df00ebae7533e07baae1550b5010b43",
+    "sandbox-single.json": "c827e485ecb3dcfef4eb4740ba607ce05ca74d7663591f60f2a860c21d6d3658",
+    "sandbox-single.stderr": "d707a91f3753a40d0634ea539cce58fa6a8c0ae91afa6209c8b0ef283c6264ac",
+    "sandbox-single.stdout": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db",
+    "sandbox-threads.json": "153624646bc74d7df43cdc052065172c0e5fed8e53a0813aa2ae72d6ac2a2b11",
+    "sandbox-threads.stderr": "caa36a36301b7b18eef7ffc9ce46db5d403170542955aeb2622ab90bac213611",
+    "sandbox-threads.stdout": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a",
+    "unrestricted-leak.json": "503a573ea09757a19b1d45f1bcd9838a86b1f985f4f75b6d04f37cce08ad7191",
+    "unrestricted-leak.stderr": "e45e3c18201b3fdd8ee39e927a145c75ef678e1a90bd453567c2c26358845dff",
+    "unrestricted-leak.stdout": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9",
+    "unrestricted-results.json": "2cb1f1376f05877938d848a40c67a8f5401a050e09b2952de5dd967bf5afd1bc",
+    "unrestricted-single.json": "7685dfb33c1fbc5cc402ee07551b9113db0504a79a74d6b5939ba3532b36dbf1",
+    "unrestricted-single.stderr": "41caf840c423d6417c93ec44e6902962966edff5c0835dce5009bf82bec2bb3b",
+    "unrestricted-single.stdout": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db",
+    "unrestricted-threads.json": "8a66822dbe0d456bdfce35000f5de6c98b44ea71da8c5a9b9107886c133c3be0",
+    "unrestricted-threads.stderr": "e90e272912270480005b8b79c25ddd2b4b14225168c3c0a7e036261be71a4658",
+    "unrestricted-threads.stdout": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a"
+  },
+  "limits": [
+    "The test does not modify or resume the failed library qualification.",
+    "The standard library remains precompiled; no new production proof or memory-safety coverage claim.",
+    "Successful standalone controls do not establish that repository tests pass under the same configuration.",
+    "The observed context comparison can identify a sandbox-associated scanning restriction without proving which kernel permission caused it."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

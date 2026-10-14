@@ -1,0 +1,14 @@
+{
+  "name": "format",
+  "command": [
+    "rustfmt",
+    "--edition",
+    "2024",
+    "--check",
+    "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_lsan_control_v1.rs"
+  ],
+  "exit_code": 0,
+  "process_wall_seconds": 0.027243143878877163,
+  "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+}

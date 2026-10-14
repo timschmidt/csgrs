@@ -1,0 +1,7 @@
+{"start": "sandbox-single"}
+{"name": "sandbox-single", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "single"], "exit_code": 66, "process_wall_seconds": 0.008088956121355295, "stdout_sha256": "669e2dc92b9cbb465dce80ce46e58ce70301719a309194d856a1ca4f1b8435db", "stderr_sha256": "d707a91f3753a40d0634ea539cce58fa6a8c0ae91afa6209c8b0ef283c6264ac"}
+{"start": "sandbox-threads"}
+{"name": "sandbox-threads", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "threads"], "exit_code": 66, "process_wall_seconds": 0.008338268846273422, "stdout_sha256": "4282bf12c01c87c9cfa488e083dd5540e1a5a21ece761a326cf50a2115f1fa5a", "stderr_sha256": "caa36a36301b7b18eef7ffc9ce46db5d403170542955aeb2622ab90bac213611"}
+{"start": "sandbox-leak"}
+{"name": "sandbox-leak", "command": ["/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-lsan-environment-v1/lsan-control", "leak"], "exit_code": 66, "process_wall_seconds": 0.007923667319118977, "stdout_sha256": "e76ff70b887d8a2889e6c41f29d145e1c09c342be7c5ef1333c2c433e66876f9", "stderr_sha256": "79fb6a4a720bcac50d9cbb2259260faf8c67c450189b57cdc39c327c484b6626"}
+{"context_complete": "sandbox", "codes": [66, 66, 66]}
