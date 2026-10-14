@@ -1,0 +1,32 @@
+{
+  "edits": [
+    {
+      "path": "crates/hyperreal/src/lib.rs",
+      "before": "#[doc(hidden)]\npub mod construction_cache_trace;\n",
+      "after": "#[doc(hidden)]\npub mod construction_cache_trace;\n\n#[doc(hidden)]\npub mod memo_leaf_trace;\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "#[derive(Clone)]\nstruct PiAtanLinearForm {",
+      "after": "#[cfg(test)]\nmod memo_leaf_trace_tests;\n\nfn record_memo_payload<const RETAIN: bool>(\n    approximation: &Approximation,\n    value: &Option<PiLaurentPolynomial>,\n    event: crate::memo_leaf_trace::Event,\n) {\n    use crate::memo_leaf_trace::{Payload, Shape};\n    if !crate::memo_leaf_trace::active() {\n        return;\n    }\n    let kind = match approximation {\n        Approximation::Int(_) => 0,\n        Approximation::One => 1,\n        Approximation::Ratio(_) => 2,\n        Approximation::Constant(constant) => match constant {\n            SharedConstant::Pi => 3,\n            SharedConstant::InvPi => 4,\n            SharedConstant::Tau => 5,\n            SharedConstant::Sqrt2 => 6,\n            SharedConstant::Sqrt3 => 7,\n            _ => 8,\n        },\n        _ => 9,\n    };\n    let payload = match value {\n        None => Payload {\n            shape: Shape::None,\n            terms: 0,\n            radicals: 0,\n            atoms: 0,\n        },\n        Some(polynomial) => {\n            let terms = polynomial.terms.len();\n            let mut radicals = 0;\n            let mut atoms = 0;\n            for (_, coefficient) in &polynomial.terms {\n                radicals += coefficient.radicals.len();\n                atoms += coefficient.atoms.len();\n            }\n            let shape = if atoms != 0 {\n                Shape::Opaque\n            } else if terms == 0 {\n                Shape::Empty\n            } else if terms == 1 && radicals == 0 {\n                Shape::OneRationalTerm\n            } else if terms == 1 && radicals == 1 {\n                Shape::OneRadicalTerm\n            } else {\n                Shape::OtherClosed\n            };\n            Payload {\n                shape,\n                terms,\n                radicals,\n                atoms,\n            }\n        }\n    };\n    crate::memo_leaf_trace::record(kind, RETAIN, event, payload);\n}\n\n#[derive(Clone)]\nstruct PiAtanLinearForm {"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "            record_cache_coverage(CacheCoverageEvent::LocalMemoHit, 1);\n",
+      "after": "            record_cache_coverage(CacheCoverageEvent::LocalMemoHit, 1);\n            record_memo_payload::<RETAIN>(\n                &self.internal.approximation,\n                value,\n                crate::memo_leaf_trace::Event::Hit,\n            );\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "            record_cache_coverage(CacheCoverageEvent::LocalMemoStore, 1);\n",
+      "after": "            record_cache_coverage(CacheCoverageEvent::LocalMemoStore, 1);\n            record_memo_payload::<RETAIN>(\n                &self.internal.approximation,\n                &result,\n                crate::memo_leaf_trace::Event::Store,\n            );\n"
+    }
+  ],
+  "new_files": {
+    "crates/hyperreal/src/memo_leaf_trace.rs": "memo_leaf_trace_v1.rs",
+    "crates/hyperreal/src/computable/node/memo_leaf_trace_tests.rs": "memo_leaf_tests_v1.rs"
+  },
+  "appended_control": {
+    "target": "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs",
+    "input": "fallback_control_v1.rs"
+  }
+}

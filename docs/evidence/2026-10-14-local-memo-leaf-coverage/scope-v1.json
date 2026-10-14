@@ -1,0 +1,102 @@
+{
+  "status": "prospective-local-memo-payload-count-diagnostic",
+  "source_audit": "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json",
+  "parent": "qualified miss-classification V2 diagnostic, unchanged borrowed runtime with all original lookups",
+  "expected_source_files": 10138,
+  "changed_or_added_paths": 5,
+  "expected_scalar_tests": 884,
+  "prior_test_names_retained": 881,
+  "new_tests": 3,
+  "test_groups": {
+    "P4": 11,
+    "persistent_cache": 9,
+    "eligibility": 3,
+    "borrowed_integer": 2,
+    "memo_controls": 2
+  },
+  "groups": [
+    "borrowed",
+    "diagnostic"
+  ],
+  "suites": [
+    "rational",
+    "quadratic",
+    "integer"
+  ],
+  "orders": [
+    [
+      "borrowed",
+      "diagnostic"
+    ],
+    [
+      "diagnostic",
+      "borrowed"
+    ]
+  ],
+  "inputs": 4096,
+  "driver_binaries": 6,
+  "commands": 29,
+  "count_processes": 12,
+  "trace_windows": 272,
+  "diagnostic_windows": 136,
+  "distinct_phases": 68,
+  "new_library_builds": 1,
+  "new_runtime_candidates": 0,
+  "buckets": [
+    "Int",
+    "One",
+    "Ratio",
+    "Pi",
+    "InvPi",
+    "Tau",
+    "Sqrt2",
+    "Sqrt3",
+    "OtherConstant",
+    "OtherNode"
+  ],
+  "modes": [
+    "retained",
+    "original"
+  ],
+  "events": [
+    "memo_store",
+    "memo_hit"
+  ],
+  "fields": [
+    "events",
+    "none",
+    "empty",
+    "one_rational_term",
+    "one_radical_term",
+    "other_closed",
+    "opaque",
+    "terms",
+    "radicals",
+    "atoms"
+  ],
+  "shape_definitions": {
+    "none": "No existing polynomial payload.",
+    "empty": "An existing polynomial with zero terms.",
+    "one_rational_term": "One term at any pi power with no radicals or atoms; this does not mean the value is rational.",
+    "one_radical_term": "One term at any pi power with exactly one radical and no atoms; the rational coefficient part is unrestricted.",
+    "other_closed": "Any other polynomial with no opaque atoms.",
+    "opaque": "Any polynomial containing at least one opaque atom; this takes priority over term/radical shape."
+  },
+  "old_counters_retained": 27,
+  "old_lookup_kinds_retained": 61,
+  "old_lookup_outcomes_retained": 3,
+  "qualification": "All-feature/all-target release Clippy with -D warnings, all 884 scalar unit tests including exact old 881 names, source/header formatting and strict Clippy for all six generated drivers.",
+  "comparison": "Two separate fixed reversed passes. Every public count must match the reused borrowed library, every old cache/read count must match all 68 closed V2 phases, and every new memo partition must reconcile with the existing local memo counters.",
+  "rules": [
+    "All builds and tests precede all samples. Serialize every command.",
+    "Borrow immutable tags and existing vector metadata only; preserve original arithmetic, clone, push, return and owner-drop order.",
+    "Retain the original cache-before-memo-before-budget order, depth/work limits and first-memo drop before the original retry.",
+    "Expected zero workload buckets are not failures. Independent controls supply positive coverage.",
+    "No timing, allocation or native gate measurements. No extension, filtering, replacement or pooling of prior samples.",
+    "Keep all prior source snapshots, failures, binaries and results immutable; only current_work may change in the ledger.",
+    "Main runtime, all 35 pending native paths, all 39 properties, 14 targets and crate future work retain their scope."
+  ],
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
