@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-lsan-shutdown-failure-preserved",
+      "status": "normal-form-image-filter-unrestricted-sanitizer-ready",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5318,7 +5318,16 @@
       "sphere_normal_image_asan_failure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-v1/failure.json",
       "sphere_normal_image_asan_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-closure-v1.json",
       "sphere_normal_image_asan_partial_tests_passed": 242,
-      "sphere_normal_image_asan_failure_classification": "LeakSanitizer infrastructure failure; the diagnostic gives a generic ptrace warning. Its exact cause has not yet been demonstrated. No leak report or library invalid-access diagnostic was produced."
+      "sphere_normal_image_asan_failure_classification": "LeakSanitizer infrastructure failure; the diagnostic gives a generic ptrace warning. Its exact cause has not yet been demonstrated. No leak report or library invalid-access diagnostic was produced.",
+      "sphere_normal_image_lsan_environment_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-scope-v1.json",
+      "sphere_normal_image_lsan_environment_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/diagnose_normal_image_lsan_v1.py",
+      "sphere_normal_image_lsan_environment_executed": true,
+      "sphere_normal_image_lsan_environment_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-v1/result.json",
+      "sphere_normal_image_lsan_environment_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-lsan-environment-closure-v1.json",
+      "sphere_normal_image_lsan_sandbox_restriction_demonstrated": true,
+      "sphere_normal_image_asan_v2_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v2.json",
+      "sphere_normal_image_asan_v2_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v2.py",
+      "sphere_normal_image_asan_v2_executed": false
     }
   },
   "status_meanings": {
