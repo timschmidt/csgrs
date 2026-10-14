@@ -5161,7 +5161,10 @@
       "sphere_stable_selection_cost_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-cost-scope-v1.json",
       "sphere_stable_selection_cost_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_stable_selection_v1.py",
       "sphere_stable_selection_cost_executed": false,
-      "sphere_stable_selection_dyadic_cache_audit_open": true
+      "sphere_stable_selection_dyadic_cache_audit_open": true,
+      "dyadic_zero_replay_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/dyadic-zero-replay-scope-v1.json",
+      "dyadic_zero_replay_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_dyadic_zero_replay_v1.py",
+      "dyadic_zero_replay_executed": false
     }
   },
   "status_meanings": {

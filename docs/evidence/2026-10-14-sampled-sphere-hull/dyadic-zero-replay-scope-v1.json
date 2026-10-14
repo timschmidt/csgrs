@@ -1,0 +1,13 @@
+{
+  "objective": "Check whether display-cache warming changes tied hull selections for exact finite dyadic inputs through signed-zero ordering in the BVH.",
+  "groups": ["image", "stable"],
+  "exact_points": [[0, -1, -1], [0, -1, 1], [0, 1, -1], [0, 1, 1], [-1, 0, -1], [-1, 0, 1], [1, 0, -1], [1, 0, 1], [-1, -1, 0], [-1, 1, 0], [1, -1, 0], [1, 1, 0]],
+  "corpus": "The twelve integer vertices of a cuboctahedron. Each vertex has one zero coordinate. Enumerate masks 0 through 4095; each bit selects imported -0.0 rather than +0.0 for that vertex. All masks represent the same twelve exact mathematical points.",
+  "query_sequence": "Construct the exact points, record initial negative-zero f64 views, run one STRICT hull, project original coordinates through borrowed f32 display conversion, then run two more STRICT hulls before any result validation. Record whether primitive zero signs changed.",
+  "stop_rule": "For each implementation, stop at the first changed row transcript, or finish all 4096 masks. Preserve the first failure's mask and all three complete vertex-order/triangle-row transcripts. No case or budget extension.",
+  "commands": 5,
+  "native_wall_stop_seconds": 600,
+  "interpretation": "An additional small exact-input adversarial corpus, not a replacement or reduction of the four original full-resolution sphere cases. This is not a cost comparison. A counterexample establishes row instability, not automatically wrong geometry or contradictory scalar facts.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
