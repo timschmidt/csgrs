@@ -1,0 +1,54 @@
+{
+  "complete": true,
+  "trial_closed": true,
+  "driver_terminal_exit_code": null,
+  "driver_completion_recovered_from_final_record_and_all_child_exit_codes": true,
+  "outer_exec_session_unavailable_after_user_interruption": true,
+  "commands_matching_expected_exit": 12,
+  "test_counts": {
+    "default-tests": {
+      "passed": 1476,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 45
+    },
+    "all-features-tests": {
+      "passed": 1595,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 46
+    },
+    "native-hull-tests": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 1
+    }
+  },
+  "test_only_changed_files": 13,
+  "mpfr_registration_call_sites": 31,
+  "removing_declared_test_edits_reconstructs_exact_parent_files": true,
+  "production_arithmetic_and_geometry_unchanged_from_parent": true,
+  "thread_exit_normal_and_unwind_controls_clean": true,
+  "old_failed_runs_remain_closed_and_unchanged": true,
+  "all_frozen_sources_inputs_libraries_and_binaries_rechecked": true,
+  "result_sha256": "0300130486f593e6844e2ed925fda9babdb356d2a4835e87d006d16a628064d0",
+  "closure_reader_sha256": "d57e5b61d2943f666451d5394bfe508d619a42df7b806c2bd3fd8e02e5bc031c",
+  "driver_stdout_sha256": "eddcb9a2bbf26fd2ea2cf25d2ea5a46732a8500f7b6b2ce80873986c28e66083",
+  "driver_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "interpretation": "The selected complete default/all-feature test suites and original native hull test pass with ASan and leak detection enabled after test-only cache and fixture cleanup. The previous reports remain failures of their own frozen runs.",
+  "limits": [
+    "This is a new finite test-harness qualification. Earlier ASan failures remain closed and preserved; this run does not complete or replace either failed run.",
+    "The Rust standard library is not rebuilt with ASan. Host procedural macros and GMP/MPFR C code are not claimed instrumented; their intercepted heap allocations are checked by LeakSanitizer.",
+    "The cleanup inventory covers the selected unit/integration tests, not standalone comparison programs or every benchmark in the repository.",
+    "This is not a performance trial, exhaustive fuzzing, a formal proof, full CI validation, push readiness, or admission of the scalar/mesh runtime prototypes."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

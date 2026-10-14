@@ -1,0 +1,64 @@
+   Compiling serde_core v1.0.228
+   Compiling serde v1.0.228
+   Compiling serde_json v1.0.149
+   Compiling num-bigint v0.4.6
+   Compiling num-complex v0.4.6
+   Compiling ciborium v0.2.2
+   Compiling toml_datetime v0.6.11
+   Compiling serde_spanned v0.6.9
+   Compiling toml_edit v0.22.27
+   Compiling tinytemplate v1.2.1
+   Compiling criterion v0.5.1
+   Compiling num-rational v0.4.2
+   Compiling num v0.4.3
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperreal)
+   Compiling toml v0.8.23
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypertri)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypermesh)
+    Finished `release` profile [optimized] target(s) in 47.23s
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-c3d6276ea08d222f)
+     Running tests/adversarial_degeneracies.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_degeneracies-4fd1854ae8f1a64d)
+     Running tests/adversarial_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_predicates-9ea209d395783e8b)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-22c794081400c1b1)
+     Running tests/batch.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/batch-d72c97ddcc735683)
+     Running tests/classification_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/classification_contracts-a53fec16980c9b60)
+     Running tests/composite_policy.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/composite_policy-056708bfd8e912ab)
+     Running tests/exactcore_xinwei.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exactcore_xinwei-9210df65fe84d1f5)
+     Running tests/halfspace_feasibility.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/halfspace_feasibility-da093189c3616ad4)
+     Running tests/nd_predicates.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/nd_predicates-cf4898a0a1db7b1e)
+     Running tests/promoted_mesh_helpers.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/promoted_mesh_helpers-039143eba4093c76)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-4911df2c209b55f3)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-d998fb8b81c3793a)
+     Running tests/retained_report_contracts.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/retained_report_contracts-2c39f5d35bfa1134)
+     Running tests/robust_parity.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/robust_parity-3a92b747452d56dc)
+     Running tests/support_dop.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/support_dop-90497005c29179b7)
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hypermesh-5b7c7f27f4ed81df)
+     Running tests/boolean.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/boolean-9dd0b529d592c15b)
+     Running tests/competitive.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/competitive-64a3ec5d80535f48)
+     Running tests/corpus_manifest.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/corpus_manifest-26ab174cc0ef35a1)
+     Running tests/intersection_corpus.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/intersection_corpus-9f7cd4177441256c)
+     Running tests/predicate_policy.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/predicate_policy-1e0c720022e5f9a6)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-b04e7319cefac4f4)
+     Running unittests src/lib.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-5110c6fde73dfa55)
+     Running unittests src/main.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-0689fbcc792a05db)
+     Running tests/adversarial_props.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-17e934372cdd2ab3)
+     Running tests/adversarial_regressions.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-39ac1442b770058e)
+     Running tests/adversarial_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-b3e3500e84b02bd9)
+     Running tests/calculator_diagnostics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-f288c2384874cc09)
+     Running tests/checked_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-0f854bbadd457304)
+     Running tests/checked_scientific.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-a50f89918f29f545)
+     Running tests/cli.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-3396d6c91348ef44)
+     Running tests/exact_quadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-a247b1f96828fce9)
+     Running tests/fixed_decimal.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-56e2f86b34f3fd68)
+     Running tests/gmp_api_coverage.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-c7f787cf87f7488e)
+     Running tests/multiquadratic_normal_form.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-c1f4f3797f8c10e4)
+     Running tests/numeric_roundtrip_formats.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-e1c098e14adb05d2)
+     Running tests/numerical_cross_reference.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-d0e416dc58b060ba)
+     Running tests/precision_limits.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-ee717bc28b276edf)
+     Running tests/public_numeric_semantics.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-147f56d5f5d106e1)
+     Running tests/rational_oracle.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-2683c6be62248654)
+     Running tests/readme.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-d03916613e332d73)
+     Running tests/readme_metadata.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-bce3d087956e47fe)
+     Running tests/real_representations.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-9efc993f6cb0693b)

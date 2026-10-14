@@ -1,0 +1,56 @@
+   Compiling serde_core v1.0.228
+   Compiling libc v0.2.186
+   Compiling serde v1.0.228
+   Compiling memchr v2.8.0
+   Compiling camino v1.2.4
+   Compiling zmij v1.0.21
+   Compiling bitflags v2.11.1
+   Compiling version_check v0.9.5
+   Compiling serde_json v1.0.149
+   Compiling rustix v1.1.4
+   Compiling getrandom v0.4.2
+   Compiling pulldown-cmark v0.9.6
+   Compiling linux-raw-sys v0.12.1
+   Compiling cfg-if v1.0.4
+   Compiling itoa v1.0.18
+   Compiling hyperreal v0.13.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperreal)
+   Compiling unicase v2.9.0
+   Compiling once_cell v1.21.4
+   Compiling fastrand v2.4.1
+   Compiling same-file v1.0.6
+   Compiling bytecount v0.6.9
+   Compiling glob v0.3.3
+   Compiling syn v3.0.6
+   Compiling peg-runtime v0.6.3
+   Compiling walkdir v2.5.0
+   Compiling error-chain v0.12.4
+   Compiling thiserror v2.0.21
+   Compiling foldhash v0.1.5
+   Compiling base64 v0.22.1
+   Compiling peg-macros v0.6.3
+   Compiling tempfile v3.27.0
+   Compiling allocator-api2 v0.2.21
+   Compiling doc-image-embed v0.2.1
+   Compiling linked-hash-map v0.5.6
+   Compiling byteorder v1.5.0
+   Compiling rusty-fork v0.3.1
+   Compiling proptest v1.11.0
+   Compiling hashbrown v0.15.5
+   Compiling quick-xml v0.39.4
+   Compiling peg v0.6.3
+   Compiling thiserror-impl v2.0.21
+   Compiling semver v1.0.28
+   Compiling cargo-platform v0.1.9
+   Compiling cargo_metadata v0.14.2
+   Compiling skeptic v0.13.7
+   Compiling ply-rs v0.1.3
+   Compiling hyperlattice v0.6.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperlattice)
+   Compiling hyperlimit v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperlimit)
+   Compiling hypertri v0.4.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypertri)
+   Compiling hypersolve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypersolve)
+   Compiling hypermesh v0.1.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypermesh)
+   Compiling hyperphysics v0.3.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hyperphysics)
+   Compiling hypercurve v0.3.1 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source/crates/hypercurve)
+   Compiling csgrs v0.23.0 (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/source)
+    Finished `release` profile [optimized] target(s) in 1m 32s
+     Running tests/native_hull_determinism.rs (/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/native_hull_determinism-2aa0c1fbd2334f76)

@@ -1,0 +1,452 @@
+{
+  "overflow-control": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/asan-control",
+    "sha256": "817e998be2530e5d6a6a0f06541de22f8436870880a3305c0717061a1f9e67c4",
+    "bytes": 5735152
+  },
+  "thread-exit-control": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/thread-exit-control",
+    "sha256": "19af4ce8d38be73d7d6fccf4da64c111f2b601e42ec6ae648fb73d0412e61732",
+    "bytes": 6608976
+  },
+  "default-tests/hyperlimit-9162eeee8c99e3a1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-9162eeee8c99e3a1",
+    "sha256": "a955c2d0c532c7ee20f6c2f34a347eed6023cb10b6542ea042f088df9d04d604",
+    "bytes": 12094320
+  },
+  "default-tests/adversarial_degeneracies-a6a4729cbef2b2e0": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_degeneracies-a6a4729cbef2b2e0",
+    "sha256": "7319337ab9f16dc2d56c582cc2f04518767992234dbdc9c3b7604b8ca3606516",
+    "bytes": 6423400
+  },
+  "default-tests/adversarial_predicates-f8ecb8afb3ed3a31": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_predicates-f8ecb8afb3ed3a31",
+    "sha256": "559a717641949991ee20b4ff832ca169bfc3c45a53061a2e259f2a3edad2cc86",
+    "bytes": 6774192
+  },
+  "default-tests/adversarial_props-3d4b088657b6a8b3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-3d4b088657b6a8b3",
+    "sha256": "7d393ac005a5e079028c07410415a25a4e8a83459dc036e7001472bb575f05ed",
+    "bytes": 9047168
+  },
+  "default-tests/batch-166d82997ec65704": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/batch-166d82997ec65704",
+    "sha256": "a54a670d318cbc73d16bc19c8bffba214e6a1c523499476e095779152b756ae5",
+    "bytes": 6436544
+  },
+  "default-tests/classification_contracts-63bd687d6b89fc54": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/classification_contracts-63bd687d6b89fc54",
+    "sha256": "8aec81c8f409c6d407c254cea01c18ca7e9c9be2a55f2a63ff6de24190716269",
+    "bytes": 2760680
+  },
+  "default-tests/composite_policy-8f7b7de5f6c8a2dc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/composite_policy-8f7b7de5f6c8a2dc",
+    "sha256": "443e1272f179c91cd574c85052b86ad2c7f810770f7a6d6ceadc1442ffb6d9f7",
+    "bytes": 6656136
+  },
+  "default-tests/exactcore_xinwei-46ccb204e7540b57": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exactcore_xinwei-46ccb204e7540b57",
+    "sha256": "eef3e5a856545af22b132aadf75a067ca0c9ae55f66a530d01a3878a02fb8f6d",
+    "bytes": 5731160
+  },
+  "default-tests/halfspace_feasibility-8179c0aec618f455": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/halfspace_feasibility-8179c0aec618f455",
+    "sha256": "7ad1357dce45990f81998214fb1de73fe428ef700f292b7e064fb3d6a5c186d8",
+    "bytes": 6044264
+  },
+  "default-tests/nd_predicates-ce7200bfe2832faa": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/nd_predicates-ce7200bfe2832faa",
+    "sha256": "aea55295e7583d35f70497b708ed95a8c0abec81dca40cb991c23dfa1a4f28fc",
+    "bytes": 5462320
+  },
+  "default-tests/promoted_mesh_helpers-d0e2c2a04404be35": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/promoted_mesh_helpers-d0e2c2a04404be35",
+    "sha256": "cb5a264b7cec58a116ecf7b27a7b09a19c9678a8290122a6a0ec16eb5508ed01",
+    "bytes": 5942176
+  },
+  "default-tests/readme-5531451f5a9a5185": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-5531451f5a9a5185",
+    "sha256": "ba5da1a6c69d80a24e8355ae2c073312850afd261012adf713199a8790e3e671",
+    "bytes": 2360360
+  },
+  "default-tests/real_representations-22c2b6aca1703b8a": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-22c2b6aca1703b8a",
+    "sha256": "49e242a81b1de9d0549ab4660b4d61fd62ccd6104234ba646137004a1bfda842",
+    "bytes": 6888000
+  },
+  "default-tests/retained_report_contracts-4291d4819b071d76": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/retained_report_contracts-4291d4819b071d76",
+    "sha256": "d17c19b30ed18ab5895b21a405924f24880d4b1df6d297ff3b772a2faa4c76fd",
+    "bytes": 6327248
+  },
+  "default-tests/robust_parity-622207b9d8650a7d": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/robust_parity-622207b9d8650a7d",
+    "sha256": "087b3af47d5b2752b2ed532c6e36aa375be627781ad69ed97df06a88ad1e9304",
+    "bytes": 7170096
+  },
+  "default-tests/support_dop-32fdd1afa897fac1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/support_dop-32fdd1afa897fac1",
+    "sha256": "ac5569aa2b050f68f64e3f4889443988285d6b3f4f3ed6456ee03871b877a8e7",
+    "bytes": 6473200
+  },
+  "default-tests/hypermesh-f7958aa72a24e927": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hypermesh-f7958aa72a24e927",
+    "sha256": "3d3f32b248e656a95d16953a775d652324d13caf88bf43533a8811f4e87b3025",
+    "bytes": 14791376
+  },
+  "default-tests/boolean-9628e6bd71f42a6e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/boolean-9628e6bd71f42a6e",
+    "sha256": "134f23ae97df7386721962409df5d1e53b36fbebaa39ff9e0f369608847a3aaf",
+    "bytes": 10118384
+  },
+  "default-tests/competitive-4bc2ad01b5d26a65": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/competitive-4bc2ad01b5d26a65",
+    "sha256": "0e9c1847a3782fc70a3ddbb38de742968c8bb0dea620747e3149029f8c340897",
+    "bytes": 13766088
+  },
+  "default-tests/corpus_manifest-725cdc6b6465f796": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/corpus_manifest-725cdc6b6465f796",
+    "sha256": "8ab20f41bc76988450653edd6c871f1879d2e18289854fea02b1c1806f492b0a",
+    "bytes": 7493856
+  },
+  "default-tests/intersection_corpus-e2d3209f212c5c82": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/intersection_corpus-e2d3209f212c5c82",
+    "sha256": "4208b62f32a6c8949d38ac9110c8d174706657732607cedb1ec0957a5005b7cb",
+    "bytes": 7906688
+  },
+  "default-tests/predicate_policy-c94fd698bf21b308": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/predicate_policy-c94fd698bf21b308",
+    "sha256": "d8ae467d5cac2795c29ff7bbb5452c9eca63ccd8b9a67b1e90acef442497e7e0",
+    "bytes": 8204720
+  },
+  "default-tests/readme-0e8dd2c89010728f": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-0e8dd2c89010728f",
+    "sha256": "c5b8609a9d9686b4b4ead3baa4f53f06a3c39fb48123f6ee138028dcd920947b",
+    "bytes": 2351688
+  },
+  "default-tests/hyperreal-36143eba5fb8e452": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-36143eba5fb8e452",
+    "sha256": "66e036cf18dc3e9496d64635e88b8b924a78bf1e9372eda2334ee49b9078f0f5",
+    "bytes": 17400008
+  },
+  "default-tests/adversarial_props-e3bf6109cebb50c3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-e3bf6109cebb50c3",
+    "sha256": "65f54897c76b40cefd2a53331a0cd42a455d1ef6d78cd73bac5ac999760f0875",
+    "bytes": 6433224
+  },
+  "default-tests/adversarial_regressions-f67ba8553b3c7d0e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-f67ba8553b3c7d0e",
+    "sha256": "43587258ddd9431be16c6d3221af61033a140dea8b4190283d5e58575ef78551",
+    "bytes": 5582984
+  },
+  "default-tests/adversarial_semantics-c235e7187bbdc16d": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-c235e7187bbdc16d",
+    "sha256": "9816ae0b0aceb6596a1276a0f8811d9bb870a610e689355351f39d30ac06ec09",
+    "bytes": 5518200
+  },
+  "default-tests/calculator_diagnostics-4efd18547160b5db": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-4efd18547160b5db",
+    "sha256": "74b2f1520c63ebaf12565d2915c50cbbab2def47c240c7e4ed479c4ffce0412e",
+    "bytes": 2309432
+  },
+  "default-tests/checked_decimal-0d5331334ea101e2": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-0d5331334ea101e2",
+    "sha256": "751734352ea25e720de7ebcc2eec1e191718948758f9a01ca273e51f13a5e648",
+    "bytes": 5339240
+  },
+  "default-tests/checked_scientific-a3386bb41e0119da": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-a3386bb41e0119da",
+    "sha256": "a232ad9b5fa25a9d9200364569ab0b79532cf897869dd2d22212c3e531e64a63",
+    "bytes": 6001256
+  },
+  "default-tests/cli-2728c088bafd52d4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-2728c088bafd52d4",
+    "sha256": "04babf9518c5f5f447c348791c703fe939793f2f686428916a17d5549c1b43a2",
+    "bytes": 2309304
+  },
+  "default-tests/exact_quadratic_normal_form-ae9b50f617a775f6": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-ae9b50f617a775f6",
+    "sha256": "73113cb906eb7e25b4a210c311e4933971bb40015cc2d96fe76e7778bf931f79",
+    "bytes": 5176656
+  },
+  "default-tests/fixed_decimal-c0ab66e62cee0b0a": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-c0ab66e62cee0b0a",
+    "sha256": "6c4a84e97478ce8ac45f1fcd8ecd6b37b615cffccb0f7eff9e8194fa2d5db2c1",
+    "bytes": 5306664
+  },
+  "default-tests/gmp_api_coverage-c1b202916b00450a": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-c1b202916b00450a",
+    "sha256": "b4f1e57b600d505f33b051ab76ed2c605d4fa719b142501946cb1181c0c4114d",
+    "bytes": 2488448
+  },
+  "default-tests/multiquadratic_normal_form-729f9d6a7912cd7c": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-729f9d6a7912cd7c",
+    "sha256": "d414c2bddae45eb286868794bc79e1d4a53927c55d560dc54f68a69a545f61d6",
+    "bytes": 5380576
+  },
+  "default-tests/numeric_roundtrip_formats-e8184d08b48271d0": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-e8184d08b48271d0",
+    "sha256": "b2aac032f2369048b230871d6fc8eb0cc197eda68830c99255ca979d82f6299b",
+    "bytes": 2309456
+  },
+  "default-tests/numerical_cross_reference-42c45f98766894c7": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-42c45f98766894c7",
+    "sha256": "fd456f1f56417c145d88bed21eb6d886f8363d616715b8b920da78423bc24276",
+    "bytes": 6596304
+  },
+  "default-tests/precision_limits-5bf2c7e354110980": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-5bf2c7e354110980",
+    "sha256": "64f98dfc293f53177c17697e2275b3966dcdbf6d8209dc068dd2c235219f632d",
+    "bytes": 4410048
+  },
+  "default-tests/public_numeric_semantics-c1f504f8da495e8f": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-c1f504f8da495e8f",
+    "sha256": "535c910d90ded89ff2514280b1f5ef96b1408f6923e3bc698d89296ff50d8980",
+    "bytes": 6024688
+  },
+  "default-tests/rational_oracle-976b51de426cc46b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-976b51de426cc46b",
+    "sha256": "65690a62a3e0452f498c2566d185e4800126bc06978d627a681d473d725151f6",
+    "bytes": 4549408
+  },
+  "default-tests/readme-34f8efd5949a6fa0": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-34f8efd5949a6fa0",
+    "sha256": "a01d002b85770be81c741531f2ef0662c1e16e68ff814335149541a677e9f500",
+    "bytes": 2362984
+  },
+  "default-tests/readme_metadata-6284a853b030d6b4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-6284a853b030d6b4",
+    "sha256": "1b180c5a0e3c131e6ab5275cdfdc2c23331497d3944ca883a4c5270be1ee8602",
+    "bytes": 2378008
+  },
+  "default-tests/real_representations-20923e759e758e26": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-20923e759e758e26",
+    "sha256": "f817a8707bb95ee163da0a4b45f5d8a67933249c7c5bb98df66cd7ce06f2e9ad",
+    "bytes": 5819240
+  },
+  "all-features-tests/hyperlimit-c3d6276ea08d222f": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-c3d6276ea08d222f",
+    "sha256": "1c0fd9a0d4641d9113ef428c1b64815dab051f3bf2c2ff566560b470d6bc72fb",
+    "bytes": 13445216
+  },
+  "all-features-tests/adversarial_degeneracies-4fd1854ae8f1a64d": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_degeneracies-4fd1854ae8f1a64d",
+    "sha256": "9dc9406182e4c4e1a7c20ec8e7adffb971d0056e1ada6805371392d0f78d71c5",
+    "bytes": 7130888
+  },
+  "all-features-tests/adversarial_predicates-9ea209d395783e8b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_predicates-9ea209d395783e8b",
+    "sha256": "404fb88c8667a910a22f2ffba7b005c16afdd0931f83863239b8c77212832a4a",
+    "bytes": 7533072
+  },
+  "all-features-tests/adversarial_props-22c794081400c1b1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-22c794081400c1b1",
+    "sha256": "b613d2d23fef2bbb8a28518170c06dbc1d16e1c235479538c9af6072255f8e1f",
+    "bytes": 9822200
+  },
+  "all-features-tests/batch-d72c97ddcc735683": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/batch-d72c97ddcc735683",
+    "sha256": "fbc51855b4ad92aebaebb11bdf5ea807fc7ae25e651f66468f116b03e0be8457",
+    "bytes": 7952872
+  },
+  "all-features-tests/classification_contracts-a53fec16980c9b60": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/classification_contracts-a53fec16980c9b60",
+    "sha256": "3c29bb92aa54d9687ff3e3669e2f799cd8e675d6d860a0cdbd0a470bee6957bb",
+    "bytes": 2870560
+  },
+  "all-features-tests/composite_policy-056708bfd8e912ab": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/composite_policy-056708bfd8e912ab",
+    "sha256": "5725b3e2b23b85aeaf940ef05b886168f0f4e07f21c7224f2c3644bf1c92739f",
+    "bytes": 7420424
+  },
+  "all-features-tests/exactcore_xinwei-9210df65fe84d1f5": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exactcore_xinwei-9210df65fe84d1f5",
+    "sha256": "197c234ee5773ffca529c747d8479b9de982bfa9a3524ae4846bfcb81b4aa88b",
+    "bytes": 6239392
+  },
+  "all-features-tests/halfspace_feasibility-da093189c3616ad4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/halfspace_feasibility-da093189c3616ad4",
+    "sha256": "dea9a5685e9f1ca6599a938802680047bcccbce213dbfd78ad140cf075c98246",
+    "bytes": 6618816
+  },
+  "all-features-tests/nd_predicates-cf4898a0a1db7b1e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/nd_predicates-cf4898a0a1db7b1e",
+    "sha256": "df90ba2b9cf2e0b8ed7a54ed7e1a27cbf3667982bef2e8e6fc82bad2f48b4a34",
+    "bytes": 5877368
+  },
+  "all-features-tests/promoted_mesh_helpers-039143eba4093c76": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/promoted_mesh_helpers-039143eba4093c76",
+    "sha256": "f546594da6688fbace356ace9ec7bc6c170c4acb4374166732ad4db63b2ccefd",
+    "bytes": 6472792
+  },
+  "all-features-tests/readme-4911df2c209b55f3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-4911df2c209b55f3",
+    "sha256": "71dcf72b2b68776d43dbf4a39c9ff9e5b3766a3dd6477d9342dff999535f1954",
+    "bytes": 2360360
+  },
+  "all-features-tests/real_representations-d998fb8b81c3793a": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-d998fb8b81c3793a",
+    "sha256": "92d4f196cf4b3c3027c30e8fbb81f8348e2fdf3f5c4296cd13a986c8989968a1",
+    "bytes": 9851000
+  },
+  "all-features-tests/retained_report_contracts-2c39f5d35bfa1134": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/retained_report_contracts-2c39f5d35bfa1134",
+    "sha256": "5fabf326248d220c7422118204eaa6fe6ad3bc9ed885d25828736e2e2d343f6e",
+    "bytes": 6990384
+  },
+  "all-features-tests/robust_parity-3a92b747452d56dc": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/robust_parity-3a92b747452d56dc",
+    "sha256": "6067f4b66e488d7e50ba4d879af6f94d6189e6a7a3f0e7ccc2c884408b4a1cb0",
+    "bytes": 7702576
+  },
+  "all-features-tests/support_dop-90497005c29179b7": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/support_dop-90497005c29179b7",
+    "sha256": "b2f2a11a5028489169f14f0c16395a8b972fafa65c744f8204846cb9c6c820c0",
+    "bytes": 7092208
+  },
+  "all-features-tests/hypermesh-5b7c7f27f4ed81df": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hypermesh-5b7c7f27f4ed81df",
+    "sha256": "9a24be42b610f001c875b878a4f9e4fd0118b4d5def59a049b3d118b075dd987",
+    "bytes": 15992360
+  },
+  "all-features-tests/boolean-9dd0b529d592c15b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/boolean-9dd0b529d592c15b",
+    "sha256": "e497c89b766981d0a81f18351ebe0914ef0ea63e24ded1196d6c941f4027f839",
+    "bytes": 11180848
+  },
+  "all-features-tests/competitive-64a3ec5d80535f48": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/competitive-64a3ec5d80535f48",
+    "sha256": "30c3d95ce8a7268b861c0274fc971047bf1630413564e2d70bdfc2570633adad",
+    "bytes": 14814032
+  },
+  "all-features-tests/corpus_manifest-26ab174cc0ef35a1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/corpus_manifest-26ab174cc0ef35a1",
+    "sha256": "76401e464a31784fbfa56d4e9ca461567a98ae6086346e1fabf85088f014cdfd",
+    "bytes": 7959912
+  },
+  "all-features-tests/intersection_corpus-9f7cd4177441256c": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/intersection_corpus-9f7cd4177441256c",
+    "sha256": "6fc520aa1f9376b46b5f2d110eb55ce22b206a74831f8715f8624986767cfdde",
+    "bytes": 8629584
+  },
+  "all-features-tests/predicate_policy-1e0c720022e5f9a6": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/predicate_policy-1e0c720022e5f9a6",
+    "sha256": "f026b41624b1a1bbdf1d1f948cca0b1c56249b5f434a7b611b22bc5ce79b587d",
+    "bytes": 9227864
+  },
+  "all-features-tests/readme-b04e7319cefac4f4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-b04e7319cefac4f4",
+    "sha256": "be1f35c76f8b86f10306c397849db1ec5c120540a0008f32c8c43d25c6c17df2",
+    "bytes": 2351688
+  },
+  "all-features-tests/hyperreal-5110c6fde73dfa55": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-5110c6fde73dfa55",
+    "sha256": "84a5d171768f519e322fa692254b48b26ad7be6b428db8da5700191bbc7bd57f",
+    "bytes": 22705944
+  },
+  "all-features-tests/hyperreal-0689fbcc792a05db": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-0689fbcc792a05db",
+    "sha256": "5dfe6844460862337b6f5dc5a53dfad50986e41b2d3b770e71a6ee51a270b2a1",
+    "bytes": 2309336
+  },
+  "all-features-tests/adversarial_props-17e934372cdd2ab3": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-17e934372cdd2ab3",
+    "sha256": "c42ea40d0b4da20668557beb3f1ec65facf0b78867ee7f2d404fddb764156dea",
+    "bytes": 8209352
+  },
+  "all-features-tests/adversarial_regressions-39ac1442b770058e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_regressions-39ac1442b770058e",
+    "sha256": "31047150e74b116ade4e35de9288fb9937e8234e0eb18894e7bc01bc8a94578b",
+    "bytes": 7548528
+  },
+  "all-features-tests/adversarial_semantics-b3e3500e84b02bd9": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/adversarial_semantics-b3e3500e84b02bd9",
+    "sha256": "ea27bcecd97554855b9558ebe20b0151644c21e7b1f3aec9c35e1bf9cfebc30a",
+    "bytes": 6057504
+  },
+  "all-features-tests/calculator_diagnostics-f288c2384874cc09": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/calculator_diagnostics-f288c2384874cc09",
+    "sha256": "53c5911b4e0b8e94d7b7d5021811fcc4657093e58ca749dc2584b18a1c95fbd9",
+    "bytes": 2362560
+  },
+  "all-features-tests/checked_decimal-0f854bbadd457304": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_decimal-0f854bbadd457304",
+    "sha256": "198ebad27a56db020d597bf9e2f1712d0be62378b55205f330efeb8813af4434",
+    "bytes": 5795904
+  },
+  "all-features-tests/checked_scientific-a50f89918f29f545": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/checked_scientific-a50f89918f29f545",
+    "sha256": "9a7763e8d30e19f40ab53abd1ed5de5bd47455980497d28ad091e037963d9fbe",
+    "bytes": 6477904
+  },
+  "all-features-tests/cli-3396d6c91348ef44": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/cli-3396d6c91348ef44",
+    "sha256": "1fe9f247a4861d7436257e768f30122a244c3322cf48c54e34e225f5900ade9b",
+    "bytes": 2627544
+  },
+  "all-features-tests/exact_quadratic_normal_form-a247b1f96828fce9": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/exact_quadratic_normal_form-a247b1f96828fce9",
+    "sha256": "bf02277bb82fcf5da1c8ba5dc0f5203eaa6a353f7f2ba5e5c9ceb171a3c24847",
+    "bytes": 5607064
+  },
+  "all-features-tests/fixed_decimal-56e2f86b34f3fd68": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/fixed_decimal-56e2f86b34f3fd68",
+    "sha256": "f8f2b902bd9cd2193019a380edb302e35df513f6d0ee13b62946f170bcf39e61",
+    "bytes": 5783592
+  },
+  "all-features-tests/gmp_api_coverage-c7f787cf87f7488e": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/gmp_api_coverage-c7f787cf87f7488e",
+    "sha256": "2fa5b195c8ce88245b6f4609688e417f0d61e0a643e0590666cdba7946acdf14",
+    "bytes": 2488456
+  },
+  "all-features-tests/multiquadratic_normal_form-c1f4f3797f8c10e4": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/multiquadratic_normal_form-c1f4f3797f8c10e4",
+    "sha256": "5ae182f8875f8ff41224412aa485614f8fac18f2c0bcf353dac6ffa7cd552145",
+    "bytes": 5851344
+  },
+  "all-features-tests/numeric_roundtrip_formats-e1c098e14adb05d2": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numeric_roundtrip_formats-e1c098e14adb05d2",
+    "sha256": "38d0547b0144621b0a2ede732c55facd9c4cf85810ab8d1b0c362f5fbcbef7ca",
+    "bytes": 7886096
+  },
+  "all-features-tests/numerical_cross_reference-d0e416dc58b060ba": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/numerical_cross_reference-d0e416dc58b060ba",
+    "sha256": "135d57cd951969319641c65b19c24d78b6bd05c44dc8e07849a3e88a016e309a",
+    "bytes": 7323464
+  },
+  "all-features-tests/precision_limits-ee717bc28b276edf": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/precision_limits-ee717bc28b276edf",
+    "sha256": "162933adc623f36ee1e34a5aa7263c638a4d3288d3924efd9941d649164874fb",
+    "bytes": 4675448
+  },
+  "all-features-tests/public_numeric_semantics-147f56d5f5d106e1": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/public_numeric_semantics-147f56d5f5d106e1",
+    "sha256": "0fdcd7d25b65b371035bd073cb016b9c1b0a58c2a31ffae29ffea91f1a5454eb",
+    "bytes": 6684888
+  },
+  "all-features-tests/rational_oracle-2683c6be62248654": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/rational_oracle-2683c6be62248654",
+    "sha256": "a07aa50567309c82f4d9dd46c10094b6ba6adea3a9cf99947abb6d6162ed9473",
+    "bytes": 4714480
+  },
+  "all-features-tests/readme-d03916613e332d73": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme-d03916613e332d73",
+    "sha256": "fa0ea6b48c96b1c8db7ff421566abe27bcdb8d9ac6360f8140572f68b87f2e75",
+    "bytes": 2362984
+  },
+  "all-features-tests/readme_metadata-bce3d087956e47fe": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/readme_metadata-bce3d087956e47fe",
+    "sha256": "b524da5932d88f43a5f8d807ce69cc290cb5ccaaae035a889704f246eb72d363",
+    "bytes": 2378008
+  },
+  "all-features-tests/real_representations-9efc993f6cb0693b": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/real_representations-9efc993f6cb0693b",
+    "sha256": "41c74e8c23de4f8e060e29d442c04e43588d37762eb5245549c44e0e356e9c5a",
+    "bytes": 8589640
+  },
+  "native-hull-tests/native_hull_determinism-2aa0c1fbd2334f76": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-test-cleanup-v1/target/x86_64-unknown-linux-gnu/release/deps/native_hull_determinism-2aa0c1fbd2334f76",
+    "sha256": "f0ac12f85e5fbf9f65e01c664c4d77c7c8fd435bbf092e82f8c86dfbe42e26cd",
+    "bytes": 9440352
+  }
+}

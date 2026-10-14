@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-mpfr-thread-cache-control-complete",
+      "status": "normal-form-image-filter-test-cleanup-sanitizers-complete",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5348,7 +5348,39 @@
       "sphere_normal_image_mpfr_cache_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-mpfr-cache-closure-v1.json",
       "sphere_normal_image_mpfr_cache_complete": true,
       "sphere_normal_image_mpfr_thread_cache_mechanism_demonstrated": true,
-      "sphere_normal_image_full_suite_leak_cause_established": false
+      "sphere_normal_image_full_suite_leak_cause_established": false,
+      "sphere_normal_image_test_cleanup_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-scope-v1.json",
+      "sphere_normal_image_test_cleanup_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_test_cleanup_v1.py",
+      "sphere_normal_image_test_cleanup_result": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-v1/result.json",
+      "sphere_normal_image_test_cleanup_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-test-cleanup-closure-v1.json",
+      "sphere_normal_image_test_cleanup_complete": true,
+      "sphere_normal_image_test_cleanup_counts": {
+        "default-tests": {
+          "passed": 1476,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 45
+        },
+        "all-features-tests": {
+          "passed": 1595,
+          "failed": 0,
+          "ignored": 7,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 46
+        },
+        "native-hull-tests": {
+          "passed": 1,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 1
+        }
+      },
+      "sphere_normal_image_test_cleanup_admitted": false
     }
   },
   "status_meanings": {

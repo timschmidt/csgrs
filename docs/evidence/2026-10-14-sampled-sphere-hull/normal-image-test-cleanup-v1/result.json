@@ -1,0 +1,75 @@
+{
+  "complete": true,
+  "commands_matching_expected_exit": 12,
+  "commands_zero": 11,
+  "intentional_overflow_control_failures": 1,
+  "thread_exit_normal_and_unwind_clean": true,
+  "normal_numeric_witness_matches_prior_control": true,
+  "test_counts": {
+    "default-tests": {
+      "passed": 1476,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 45
+    },
+    "all-features-tests": {
+      "passed": 1595,
+      "failed": 0,
+      "ignored": 7,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 46
+    },
+    "native-hull-tests": {
+      "passed": 1,
+      "failed": 0,
+      "ignored": 0,
+      "measured": 0,
+      "filtered_out": 0,
+      "completed_test_summaries": 1
+    }
+  },
+  "test_only_changed_files": 13,
+  "all_frozen_sources_inputs_libraries_and_binaries_rechecked": true,
+  "artifacts_sha256": {
+    "all-features-clippy.stderr": "119b460f872dee4f6f0ff7fc50afbb977824ee7cd30900d9de39f4e09a0600ec",
+    "all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "all-features-tests.stderr": "27c73fc2c0ac82963ca255882f90cf512bde3017b3d0e1623827b9b5a0cb817c",
+    "all-features-tests.stdout": "d9e19000bf95a9ccebc9ec7501f75f8efb3b140e676df21e3370094f0c00c498",
+    "binaries.json": "480a06a17b7fd76d6a142f098fec551fbb28d893c91f952f2949d842a32af5a2",
+    "commands.json": "b4fad02598c400ef11ffde4de23700c740e525296fb6b5e1214a239ca59e157f",
+    "controls-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "controls-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-clippy.stderr": "4862d553be4b65f1bb29129bcd9b660989c6ae62f3aa56b0d0c5dcd5f3cdbc8c",
+    "default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stderr": "1c540c8cd528207b8d437cb420832dc9dad7ddc9e6d8853465b98f0de16465d4",
+    "default-tests.stdout": "5ea451dea5393e19a1c08968def89f1714161dbc70b66b5d0337289b497d3ea1",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "native-hull-tests.stderr": "7f48d76fd536bf53a8274b9004ec68e0955c8b0dd7421daea852aff2538fd305",
+    "native-hull-tests.stdout": "505a151955a58f32c33e11d27859e0dfe5f0b638dd2893feef23bb7d9956d8bb",
+    "overflow-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "overflow-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "overflow-expected-failure.stderr": "41915809e01341c66f021233704f76b70fb0af93f3a55dbd7f847c24c4aef5ed",
+    "overflow-expected-failure.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "protocol.json": "de8da8e8f105a2dc5150f762bdd3730a71dba60399f3923b1dc474756142546e",
+    "root-source-hashes.json.gz": "5d478f1430e9dcb203a17d3771076bb3bb27bffc45012fc61334c9ed9b64f033",
+    "source-hashes.json.gz": "1c4501a656fc813c5e21f545189053dcd527fe3a4c4323f1e7dceb68b03177ee",
+    "thread-exit-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "thread-exit-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "thread-exit-normal.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "thread-exit-normal.stdout": "69006de37a9394195fcf6662454ff4a97cf8b570f0dd2a0a5359db3e5eabe4e9",
+    "thread-exit-unwind.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "thread-exit-unwind.stdout": "a3f6233da9b19624500036eddab7a179b8c671324b2f1a1efd5a2cb512203494"
+  },
+  "limits": [
+    "This is a new finite test-harness qualification. Earlier ASan failures remain closed and preserved; this run does not complete or replace either failed run.",
+    "The Rust standard library is not rebuilt with ASan. Host procedural macros and GMP/MPFR C code are not claimed instrumented; their intercepted heap allocations are checked by LeakSanitizer.",
+    "The cleanup inventory covers the selected unit/integration tests, not standalone comparison programs or every benchmark in the repository.",
+    "This is not a performance trial, exhaustive fuzzing, a formal proof, full CI validation, push readiness, or admission of the scalar/mesh runtime prototypes."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
