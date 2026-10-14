@@ -1,0 +1,66 @@
+{
+  "objective": "Compare requested allocation traffic and retained live bytes for the admitted runtime, finite-image parent and deterministic-selection correctness repair on the original native spheres.",
+  "groups": [
+    "baseline",
+    "image",
+    "stable"
+  ],
+  "case_sets": {
+    "baseline": [
+      "fifteen_degrees"
+    ],
+    "image": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "stable": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ]
+  },
+  "orders": [
+    [
+      "baseline",
+      "image",
+      "stable"
+    ],
+    [
+      "image",
+      "stable",
+      "baseline"
+    ],
+    [
+      "stable",
+      "baseline",
+      "image"
+    ]
+  ],
+  "commands": 34,
+  "fixed_sample_processes": 27,
+  "hull_queries_per_process": 3,
+  "native_wall_stop_seconds": 600,
+  "preflight_processes": 0,
+  "measurement": "Six phases: construct, cold hull, warm hull, replay hull, drop outputs and input, clear grammar cache. Count requested allocator traffic, retained live-byte deltas and peaks above phase entry. Retain all three outputs until validation after replay. No timing inference from instrumented phase times.",
+  "output_contract": "Each full vertex-order and triangle-row witness must equal the independently exact-validated reference for its group, case and query phase. The finite-image parent has different cold/warm rows at 32x16; the deterministic candidate has changed rows relative to its parent. These known differences remain recorded and are not failures of this new resource protocol. All measured hulls use the unchanged full-resolution exact original inputs.",
+  "prerequisites": [
+    "Ten-command deterministic-selection qualification complete.",
+    "Closed 58-command six-pair native cost trial, including its observed slowdowns.",
+    "Exact support and topology validation for every group/phase reference."
+  ],
+  "sample_extension_filtering_or_pooling_allowed": false,
+  "old_failed_resource_trial_resumed_or_reused_as_samples": false,
+  "observations_per_group_case_phase": 3,
+  "interpretation": "Publish every resource observation and paired delta. Repetition variation is reported, not filtered. Baseline comparisons use only its already-certified 24x12 case.",
+  "limitations": [
+    "Requested allocator sizes are not usable allocator sizes, stack usage or RSS.",
+    "Process-global scalar caches may survive input disposal and grammar-cache clearing.",
+    "No uninstrumented timing or per-query performance claim.",
+    "The original failed resource trial and the frozen unexecuted scalar protocol remain unchanged."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
