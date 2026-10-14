@@ -1,0 +1,133 @@
+{
+  "status": "source-audit-complete-pi-only-memo-prototype-ready-for-protocol",
+  "audit_script_sha256": "5935e72c60cef5f6b54eab859dd3c03a5347050a0f02c4cf216ced8d29d49732",
+  "parent_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/laurent-cache-eligibility-v1/baseline/source",
+  "parent_source_files": 10135,
+  "parent_source_hashes_sha256": "e5112a388086ff788e8e4cb6cc6363f327d40bab3f98e75cdb2e2b20fbb17017",
+  "parent_runtime": "Borrowed-integer runtime plus three eligibility tests. Removing the test-only module declaration recovers the borrowed algebra byte for byte; the only other difference is that test module.",
+  "parent_excludes_diagnostic_observers_and_rejected_read_guard": true,
+  "source_sha256": {
+    "crates/hyperreal/src/computable/node/algebra.rs": "e57623e7b4f8c6293b9e754648743836a7d4b567a3290cd3d6e7dfc8ea91cf94",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs": "c654f42e4e1be8afbe4f44f28a27f1458dec075e192d92120b8870c7ad1cd0f2",
+    "crates/hyperreal/src/rational/arithmetic/construction.rs": "389c8a52713117794168c02fcd78e7193afb4371571158926f6bd61a7c3e3a43"
+  },
+  "evidence_sha256": {
+    "docs/evidence/2026-10-14-local-memo-leaf-coverage/assessment-v2.json": "20f214ff6c3742834519ea14db191771d79d4505aa97acd1b558b83e51bcedb8",
+    "docs/evidence/2026-10-14-local-memo-leaf-coverage/interpretation-v1.json": "1980e56169995ac8379f3322247b1e86fd23d881dc651e393ea8fc6f6175015a",
+    "docs/evidence/2026-10-14-local-memo-leaf-coverage/closure-v1.json": "41e7911a336b2b421bbd4e88344913aef263b88b763eb545042f473e4afe2d7d",
+    "docs/evidence/2026-10-14-local-memo-leaf-coverage/failure-v1.json": "5dd45edbeb40a9095f0989e85a37acf403bc84de4020b373a2f05ca5c612381e",
+    "docs/evidence/2026-10-14-local-memo-leaf-coverage/source-review-v2.json": "5965b8bc6ec55155346b9dab1b18816d99301008149b82c1d4d0f227f43a4f46",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/preparation-v1/protocol.json": "7792ed589eb5dd9449fabf29ab3954614c498f30f1e3ef4d08fe4288cb4fb1ad",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/preparation-v1/baseline-source-hashes.json.gz": "e5112a388086ff788e8e4cb6cc6363f327d40bab3f98e75cdb2e2b20fbb17017",
+    "docs/evidence/2026-10-14-laurent-cache-eligibility/scalar-cost-interpretation-v1.json": "fc871836bdd4513ec454893baa8f2e89b6f3f35a0527c3350cdc3ac088ef764f",
+    "docs/evidence/2026-10-13-borrowed-integer-leaves/preparation-v1/protocol.json": "6bc8a21241cf125b561bf681ad14acff9a606e57ff4a73fd98b89c9840c3c06f",
+    "docs/evidence/2026-10-14-laurent-cache-miss-classification/normalizer-work-audit-v1.json": "33a898bfcb0444cf234a3463a66ce19736fabe4d4eefb224a7fcc6a8ab91010e",
+    "docs/evidence/2026-10-13-closed-certificate-memo/preparation-v1/candidate.patch": "d9ed441a34a873fa6868f8f332fc6b19a9c6ea2165f688dc6bb0e743a44df0cf",
+    "docs/evidence/2026-10-13-closed-certificate-memo/decision-v1.json": "8cdfb2c643509569a4a6a6e1d9aeb6969bd81eeb08a2e098049043821d6e6db2",
+    "docs/evidence/2026-10-13-retained-quadratic-projection/decision-v1.json": "d8b7db17f1752eb68794561ab88e6e8fe0e41e8bee92e9aac600ee01485b36ba"
+  },
+  "review_scope": "Complete normalizer and projection/retry control flow, temporary polynomial/coefficient layouts and constructors, exact_rational and from_bigint_ref, full baseline-to-classifier algebra diff, all 68 phase inventories, and relevant prior decision/mechanism sections. This is a source audit, not a formal proof or a cost measurement.",
+  "observed_exact_leaf_kinds": [
+    "Pi"
+  ],
+  "observed_pi_phases": [
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_first",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_warm",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "rational",
+      "phase": "pi_parameter_transport_cloned",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_first",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_warm",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "rational",
+      "phase": "opaque_linear_atom_cloned",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_first",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_warm",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    },
+    {
+      "suite": "quadratic",
+      "phase": "opaque_cancellation_cloned",
+      "pi_stores": 4096,
+      "pi_hits": 12288
+    }
+  ],
+  "all_observed_pi_payloads": "One term at pi power 1, rational coefficient 1, no radicals or opaque owners. The direct constructor and independent site control establish the coefficient/power; the workload counters establish shape and copy counts.",
+  "none_payload_events_in_workloads": 0,
+  "source_invariants": [
+    "After the depth/work rejection, every normalizer result is Some: rational and recognized-constant branches wrap a monomial; inverse-trig branches wrap an opaque atom; the general branch replaces every declined expansion with an opaque atom.",
+    "The return None statements inside the expansion closure return from that closure. expanded.or_else supplies the atom fallback. A budget rejection occurs before memo insertion. Thus a fresh query memo never receives a None payload from this producer; the zero observed None counts are corroboration, not the proof of that invariant.",
+    "The projection creates an empty memo; recursive calls share it; the original retry drops the first memo before creating another. The two private normalizer signatures are the only production consumers of this memo type.",
+    "A Constant(Pi) leaf constructs a closed monomial and cannot publish a persistent Laurent certificate. Its memo polynomial contains no Computable owner. Other-node payloads can own opaque references and must retain their clone and release order.",
+    "Retained cache lookup precedes sharing/memo lookup, which precedes the budget check. A successful memo hit consumes no depth or work and may replay at zero budget. The shared-owner predicate also remains before memo lookup."
+  ],
+  "proposed_prototype": {
+    "scope": "Only the representation of completed local memo entries, with a special tag for immutable Constant(Pi).",
+    "type": "A private enum with Pi and Polynomial(PiLaurentPolynomial) variants; retain the existing address key, Vec capacity/order and per-query lifetime.",
+    "completed_result": "Express the existing always-Some post-budget result as a polynomial directly, using the same opaque fallback. Wrap it in Some at the external normalizer return. Do not add unwrap or expect.",
+    "store": "After the unchanged first-visit computation and charging, store Pi only for Constant(Pi); store the original polynomial clone for every other kind. Keep insertion before the unchanged persistent publication attempt.",
+    "hit": "Replay the same exact pi monomial for Pi and clone the original polynomial for every other entry, at the existing memo-hit site before all budget checks.",
+    "excluded_changes": "Do not tag other exact leaves, omit memo entries, change persistent eligibility/read order, introduce a global cache or alter the polynomial/coefficient vector storage. Broader leaf coverage is not demonstrated by these workloads.",
+    "layout": "Measure the enum, complete keyed entry, polynomial, coefficient, node and persistent layouts. Equal layout and lower requested memory are not assumed from Rust enum syntax."
+  },
+  "prior_experiment_distinction": [
+    "The rejected closed-publication memo experiment published first and skipped local insertion after successful publication. Pi is publication-ineligible, and the proposed tag preserves every memo entry and publication order.",
+    "The rejected entry eligibility predicate is absent from the selected parent. Every original cache read remains in place.",
+    "Earlier inline/union/shared storage experiments remain excluded. This proposal leaves all polynomial and coefficient vectors unchanged.",
+    "The root-only retained projection was deferred after coverage measurement; no runtime implementation of that shortcut was tested or rejected. This proposal does not add that shortcut."
+  ],
+  "qualification_requirements": [
+    "Freeze separate source, protocol, input hashes and original fixed sample schedules before execution. Keep main, all 35 pending native paths and every old source/result/binary unchanged.",
+    "Run source formatting, strict all-feature/all-target library Clippy and all existing parent tests plus meaningful controls before any samples. Qualify ordinary/default behavior as appropriate to the private implementation.",
+    "Check raw Pi first visit, cold zero depth/work rejection, shared zero-budget replay in retained/original modes, transition back to a sole owner, exact coefficient/power and no node-local cache allocation. Use independent expected values.",
+    "Check all other leaf/constant kinds remain ordinary polynomial entries, non-Pi expressions that simplify to pi are not mislabeled, opaque owners survive replay then reclaim, and the original eight/nine-term fallback preserves previous proofs.",
+    "Retain P4 sign proofs, all error/abort priorities, canonical integer behavior and all public exact witnesses. Instrumentation for work reconciliation must be a separate diagnostic source from cost binaries.",
+    "Measure fixed complete rational/quadratic/integer construction/first/warm/cloned costs, all allocation fields, representations and binary sizes versus main and the unmodified borrowed runtime. Include every zero-event phase and every adverse row.",
+    "Only a scalar-qualified improvement can progress to the broader library/consumer/report matrix and both original native gates: full board 120 seconds worker CPU, copper neck 60 seconds check-body wall time. Never substitute process wall for an internal duration."
+  ],
+  "limits": [
+    "Nine phases contain Pi copies. The remaining 59 phases still belong in validation and costs; their behavior can be affected by enum dispatch or code generation.",
+    "The three opaque rational phases contain both Pi copies and opaque-owner copies. The proposed tag addresses only Pi. No event count establishes a timing share or allocation saving.",
+    "Prototype preparation, compilation, layout measurement and costs have not run. No performance result or runtime admission follows from this audit.",
+    "All 39 properties, 14 targets, crate future work and original native failures retain their scope."
+  ],
+  "next_step": "Freeze a Pi-only local memo prototype and its qualification/cost protocol on this parent.",
+  "main_and_35_pending_native_paths_unchanged": true,
+  "runtime_candidate_prepared": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
