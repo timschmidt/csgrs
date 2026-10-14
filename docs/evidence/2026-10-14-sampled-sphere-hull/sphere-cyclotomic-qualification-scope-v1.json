@@ -1,0 +1,35 @@
+{
+  "objective": "Broader Rust qualification of the unchanged scalar feasibility candidate.",
+  "native_assessment_sha256": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+  "independent_support_result_sha256": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+  "source": "target/sphere-cyclotomic-v2/source",
+  "source_mutations_allowed": false,
+  "packages": [
+    "hyperreal",
+    "hyperlimit",
+    "hypermesh",
+    "hypercurve"
+  ],
+  "features": [
+    "default",
+    "all-features"
+  ],
+  "checks": [
+    "cargo fmt --all -- --check",
+    "strict all-target Clippy for four selected packages at both feature settings",
+    "all library and integration tests for four packages at both feature settings",
+    "all-feature doctests and warning-denied documentation for four packages",
+    "csgrs native_queries, geometry_context and solid_cache tests",
+    "release checks of all fuzz binaries for hyperreal, hyperlimit and hypermesh"
+  ],
+  "subcommand_wall_stop_seconds": 1800,
+  "serialization": "Every command must exit zero before the next starts; stop and preserve a failure without editing or extending this version.",
+  "excluded_from_claim": [
+    "executed benches or fuzz campaign",
+    "formal verification of new scalar proof",
+    "native timing/allocation/retention/size admission",
+    "all-workspace CI or push readiness"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

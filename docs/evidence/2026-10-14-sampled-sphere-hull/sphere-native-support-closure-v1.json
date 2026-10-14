@@ -1,0 +1,12 @@
+{
+  "complete": true,
+  "command_exit_code": 0,
+  "result_sha256": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+  "face_point_pairs": 612288,
+  "nondegenerate_outward_supporting_faces": 1664,
+  "outside_point_negative_controls": 1664,
+  "all_frozen_inputs_unchanged": true,
+  "scope": "Independent exact integer/rational check of all four finite original hull outputs; no native proof implementation or display approximations used in this checker.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

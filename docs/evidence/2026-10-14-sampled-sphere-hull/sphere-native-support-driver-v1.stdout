@@ -1,0 +1,5 @@
+{"case": "fifteen_degrees", "points": 266, "triangles": 528, "face_point_pairs": 140448, "strictly_inside": 138384, "coplanar": 2064, "all_faces_nondegenerate_and_supporting": true, "all_face_orientations_outward": true}
+{"case": "original_medium", "points": 482, "triangles": 960, "face_point_pairs": 462720, "strictly_inside": 458944, "coplanar": 3776, "all_faces_nondegenerate_and_supporting": true, "all_face_orientations_outward": true}
+{"case": "fifth_turn", "points": 62, "triangles": 120, "face_point_pairs": 7440, "strictly_inside": 6980, "coplanar": 460, "all_faces_nondegenerate_and_supporting": true, "all_face_orientations_outward": true}
+{"case": "seventh_turn", "points": 30, "triangles": 56, "face_point_pairs": 1680, "strictly_inside": 1470, "coplanar": 210, "all_faces_nondegenerate_and_supporting": true, "all_face_orientations_outward": true}
+{"complete": true, "face_point_pairs": 612288, "result_sha256": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73"}

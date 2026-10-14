@@ -1,0 +1,57 @@
+{
+  "complete": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "points": 266,
+      "triangles": 528,
+      "face_point_pairs": 140448,
+      "strictly_inside": 138384,
+      "coplanar": 2064,
+      "all_faces_nondegenerate_and_supporting": true,
+      "all_face_orientations_outward": true
+    },
+    {
+      "case": "original_medium",
+      "points": 482,
+      "triangles": 960,
+      "face_point_pairs": 462720,
+      "strictly_inside": 458944,
+      "coplanar": 3776,
+      "all_faces_nondegenerate_and_supporting": true,
+      "all_face_orientations_outward": true
+    },
+    {
+      "case": "fifth_turn",
+      "points": 62,
+      "triangles": 120,
+      "face_point_pairs": 7440,
+      "strictly_inside": 6980,
+      "coplanar": 460,
+      "all_faces_nondegenerate_and_supporting": true,
+      "all_face_orientations_outward": true
+    },
+    {
+      "case": "seventh_turn",
+      "points": 30,
+      "triangles": 56,
+      "face_point_pairs": 1680,
+      "strictly_inside": 1470,
+      "coplanar": 210,
+      "all_faces_nondegenerate_and_supporting": true,
+      "all_face_orientations_outward": true
+    }
+  ],
+  "all_inputs_unchanged": true,
+  "artifacts_sha256": {
+    "fifteen_degrees.json": "5b49bf6c706d0d4a4ba6cbbedc705a5e808c0c07c313f30b1f58e4a44fde637b",
+    "fifth_turn.json": "df1cb0e08514ca52e850b33cd99b48ea09b9a40eadd3125f1d98a9d112180898",
+    "original_medium.json": "d5a83951a87b31aef1236119334b615cbec64684e02438194c362ef837c76115",
+    "protocol.json": "81ac8ceb2862f66fa4f4e64c28abc226fab787ff3908db86ba95812e85d8552c",
+    "seventh_turn.json": "d7c6da2f67699bfaab4d5689db557d613e00ee92fa97ece8551e49fccef99197"
+  },
+  "claim": "Every returned triangle is nondegenerate and its outward plane contains or excludes every unchanged original point on the interior side. Combined with the independently checked closed oriented output rows and complete original vertex set, this validates these four convex hull outputs.",
+  "limits": "Finite corpus verification with exact integer/rational Python arithmetic, not formal verification of the native implementation.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,27 @@
+{
+  "inputs_sha256": {
+    "check_native_sphere_support_v1.py": "bae2f2a360399e54b80749a4a8446b33839175b57bd430f2218ea4cb132edefb",
+    "sphere-cyclotomic-assessment-v2.json": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+    "check_sphere_trace_cyclotomic_v1.py": "60c4934f738eecc9daedae41a67a7fc611c775ee012b5103f4ab2ac49b999424",
+    "sphere-native-support-scope-v1.json": "fa4e641427ea5ef0ec1c942e1724f8fc38054cc85f1a00ab702ee8ba5b3539bc",
+    "sphere-cyclotomic-v2/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-v2/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-v2/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+  },
+  "interval_bits": 96,
+  "atan_terms": 80,
+  "cos_terms": 40,
+  "pi_interval": [
+    [
+      267257146016241686964920093290467695825,
+      85070591730234615865843651857942052864
+    ],
+    [
+      1069028584064966747859680373161870783301,
+      340282366920938463463374607431768211456
+    ]
+  ],
+  "complete_face_point_pairs_expected": 612288,
+  "runtime_admitted": false
+}
