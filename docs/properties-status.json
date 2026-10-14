@@ -4716,7 +4716,9 @@
       },
       "new_timing_or_allocation_samples": 0,
       "new_native_gates_run": false,
-      "next_step": "Pi-specific local memo source audit before any distinct runtime prototype."
+      "next_step": "docs/evidence/2026-10-14-local-memo-leaf-coverage/pi-memo-source-audit-v1.json",
+      "next_source_audit_complete": true,
+      "runtime_candidate_prepared": false
     }
   },
   "status_meanings": {
