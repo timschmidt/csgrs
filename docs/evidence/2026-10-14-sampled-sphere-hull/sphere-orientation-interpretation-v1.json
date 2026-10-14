@@ -1,0 +1,88 @@
+{
+  "exact_oracle_sha256": "e085780b3313e4a7b6488a122d919cd0915d7903af1f5bad431d3495221b2eca",
+  "oracle_driver_exit_code": 0,
+  "native_orientation_trace_commands": 7,
+  "native_runtime_behavior_unchanged": true,
+  "independent_exact_zero_witnesses": 3,
+  "independent_nonzero_face_controls": 3,
+  "rational_orientation_sign_controls": 2,
+  "witnesses": [
+    {
+      "case": "original_medium",
+      "indices": [
+        0,
+        1,
+        368,
+        256
+      ],
+      "geometry": "N=(0,1,0), A=(sin(a),cos(a),0), E=(0,0,-1), D=(-sin(a)cos(a),cos(a),-sin(a)^2), scaled by radius, a=pi/16.",
+      "proof": "The plane (1-cos(a))*x + sin(a)*(y-1) - sin(a)*z = 0 contains N,A,E; substitution of D gives sin(a)*(cos(a)^2+sin(a)^2-1)=0.",
+      "why_previous_groups_miss": "Three latitude levels including a pole; neither a two-row rectangle nor paired equal-axis edges."
+    },
+    {
+      "case": "fifth_turn",
+      "indices": [
+        2,
+        51,
+        56,
+        9
+      ],
+      "ring_chords": [
+        {
+          "latitude": 2,
+          "longitudes": [
+            0,
+            9
+          ]
+        },
+        {
+          "latitude": 3,
+          "longitudes": [
+            8,
+            1
+          ]
+        }
+      ],
+      "segments": 10,
+      "shared_longitude_pair_sum_mod_segments": 9,
+      "proof": "Chord direction on a circle depends on the sum of its two azimuths modulo a full turn. Equal pair sums imply parallel chords; chords on separate latitude rings then lie in one plane."
+    },
+    {
+      "case": "seventh_turn",
+      "indices": [
+        2,
+        5,
+        22,
+        17
+      ],
+      "ring_chords": [
+        {
+          "latitude": 2,
+          "longitudes": [
+            0,
+            5
+          ]
+        },
+        {
+          "latitude": 1,
+          "longitudes": [
+            1,
+            4
+          ]
+        }
+      ],
+      "segments": 7,
+      "shared_longitude_pair_sum_mod_segments": 5,
+      "proof": "Same parallel-chord identity; identical longitude pairs are not required."
+    }
+  ],
+  "next_work": "Extend certificate coverage from proven identities or collect additional exact zero witnesses using a bounded, fully logged oracle-guided diagnostic. A runtime design must avoid enumerating all four-point subsets, bind facts to source identity, and preserve existing certified output rows.",
+  "scope_limits": [
+    "The independent polynomial oracle is not a native proof-carrying API.",
+    "All three original native hull calls remain typed failures.",
+    "No precision, coordinate, policy, or native runtime gate was relaxed.",
+    "Only the mesh source-identity repair has been admitted."
+  ],
+  "sphere_runtime_admitted": false,
+  "plan_complete": false
+}
