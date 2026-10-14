@@ -5,7 +5,7 @@
     "crates/hyperreal/src/computable/node.rs": "66cbbef90aa636d64bfc87dc477776e9b295f91dd544116b4bf01c659e0e256f",
     "crates/hyperreal/src/computable/node/cyclotomic.rs": "9db77eda2fa6d62e2b458dbfd12cf9facb5e714c2e611df6475c3d1bc40c2c2c",
     "crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs": "7c8daebde62c32937d1024cdb3bc563a6e206c1ea5f471e6d9062e741e771999",
-    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "415eb1659c21e032fc9d9f004a6d0d6ddbbc13785f6d0c3524361c12b2ea49ba",
+    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "a0a9d79f1582c5a563a66764560d8718ce6b390d904379a1a242d2e092681984",
     "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "eed0e0170fae9c264b2f9ab9a04981255f02106fbd6d65461d3ad30f86542da5",
     "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
     "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
@@ -39,7 +39,8 @@
       "314 signed 1/10^12 normal displacements and three original nonzero faces",
       "abort and overlarge coordinate scale rejection",
       "raw unreduced rational angle, pi/tau/offset/add/negate angle forms, exact rational inverse and retained three-term dot recipes with nonzero controls",
-      "joint field order overflow and broad shallow DAG rejection"
+      "joint field order overflow and broad shallow DAG rejection",
+      "After 256-bit coordinate sign warming, zero-refinement coordinate signs retain every known fact and all 157 affine zero proofs remain available"
     ]
   },
   "native_inputs": [
@@ -59,5 +60,6 @@
   ],
   "runtime_admitted": false,
   "plan_complete": false,
-  "qualification_prerequisite": "The unchanged V2 broad Rust qualification must finish all eleven commands before this fixed trial starts."
+  "qualification_prerequisite": "The unchanged V2 broad Rust qualification must finish all eleven commands before this fixed trial starts.",
+  "pre_execution_review_correction": "Clarify the displacement comment for the adopted orientation sign and add coordinate high/low refinement replay to the existing affine test. Native runtime bodies and fixed command limits are unchanged; no early trial version has executed."
 }

@@ -1,0 +1,61 @@
+{
+  "scope": "Source review of the new affine entry point, shared plan evaluation, determinant construction, and nine unit-test recipes; the V2 review covers the unchanged polynomial operations. Selected original conversion and predicate caller bodies were also read. This is not production formal verification or whole-source coverage.",
+  "reviewed_candidate_delta_sha256": {
+    "crates/hyperreal/src/computable/node.rs": "66cbbef90aa636d64bfc87dc477776e9b295f91dd544116b4bf01c659e0e256f",
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "9db77eda2fa6d62e2b458dbfd12cf9facb5e714c2e611df6475c3d1bc40c2c2c",
+    "crates/hyperreal/src/computable/node/cyclotomic/witnesses.rs": "7c8daebde62c32937d1024cdb3bc563a6e206c1ea5f471e6d9062e741e771999",
+    "crates/hyperreal/src/computable/node/cyclotomic/tests.rs": "a0a9d79f1582c5a563a66764560d8718ce6b390d904379a1a242d2e092681984",
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "eed0e0170fae9c264b2f9ab9a04981255f02106fbd6d65461d3ad30f86542da5",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
+  },
+  "selected_unchanged_callers_sha256": {
+    "crates/hyperreal/src/real/convert.rs": "9b88bb5d23bb7ede24fd97bf39c1a4142f9704fff6bf6a1c1233aebcd9a22fdd",
+    "crates/hyperreal/src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14",
+    "crates/hyperlimit/src/predicates/orient.rs": "6d21a7b2026b92292272b9c0e087baf419a77c70f4da009f2d7bb6c999363e9a"
+  },
+  "findings": [
+    {
+      "topic": "Mathematical input",
+      "finding": "The twelve coordinates are passed in a,b,c,d order. Each immutable Real contributes its separate raw rational scale and, unless Class::One, its retained Computable payload. The nine differences are a-d,b-d,c-d; the six products have the standard determinant signs."
+    },
+    {
+      "topic": "Bounded entry",
+      "finding": "Each of twelve coordinate attachments consumes a visit; recursive parsing uses the same remaining budget. Evaluation shares one common field and work counter with the determinant operations. Synthetic scale nodes precede later references, preserving topological expression indices."
+    },
+    {
+      "topic": "Primitive path",
+      "finding": "The existing exact-dyadic filter returns immediately with the same result, including None. Wholly rational values outside that path skip the new branch. The new work is outlined to limit fast-path code growth; actual performance still needs measurement."
+    },
+    {
+      "topic": "P4 and cache-dependent dispatch",
+      "finding": "exact_dyadic_f64_cached first requires exact_rational_ref, which requires the immutable Class::One tag. A nonrational coordinate cannot become eligible through cache warming. The new branch reads immutable raw ratio words and retained node kinds, not approximation or fact caches. Pointer memoization is local to the call; no new cache fact is published."
+    },
+    {
+      "topic": "Receipt",
+      "finding": "orient3d_with_policy consumes the existing affine filter before exact word/rational evaluation and determinant construction. It returns Certainty::Exact and Escalation::Exact for its result. No refinement certificate is reused to label the polynomial proof."
+    },
+    {
+      "topic": "Abort",
+      "finding": "The new private query observes abort signals on retained nonrational coordinate payloads before parsing. Rational coordinates retain existing exact structural behavior; this is not a new universal cancellation contract."
+    },
+    {
+      "topic": "Controls",
+      "finding": "The new public-filter test checks 157 independently proven zero quadruples, per-value cache snapshots, high/low coordinate sign replay, 314 signed exact normal displacements, three independent nonzero faces, a nonrational abort and an overlarge scale. Two additional tests construct raw retained angle, root, inverse, dot, common-field and graph-breadth cases."
+    },
+    {
+      "topic": "Pre-execution correction",
+      "finding": "Corrected the comment about determinant displacement to its absolute magnitude. Added explicit cold/warm replay before this trial executed. Runtime proof bodies are unchanged from the initially committed early draft."
+    }
+  ],
+  "open": [
+    "Compile and execute this frozen early-filter trial",
+    "Broader tests and feature combinations after the final code change",
+    "Independent representation/adversarial and directed campaign coverage",
+    "Production formal proof obligations",
+    "Matched timing, allocations, retention and binary size"
+  ],
+  "runtime_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

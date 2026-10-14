@@ -603,7 +603,7 @@
 +mod tests;
 --- a/crates/hyperreal/src/computable/node/cyclotomic/tests.rs
 +++ b/crates/hyperreal/src/computable/node/cyclotomic/tests.rs
-@@ -0,0 +1,447 @@
+@@ -0,0 +1,462 @@
 +use super::super::{BoundCache, ExactSignCache, Node};
 +use super::*;
 +use crate::{Rational, Real, RealSign};
@@ -851,6 +851,21 @@
 +            before,
 +            payloads.iter().map(Computable::cached).collect::<Vec<_>>()
 +        );
++        for coordinate in [&a, &b, &c, &d].into_iter().flatten() {
++            if let Some(sign) = coordinate.refine_sign_until(-256) {
++                assert_eq!(coordinate.refine_sign_until(0), Some(sign));
++            }
++        }
++        assert_eq!(
++            Real::certified_affine_det3_sign(
++                a.each_ref(),
++                b.each_ref(),
++                c.each_ref(),
++                d.each_ref()
++            ),
++            Some(RealSign::Zero),
++            "warmed {segments}x{stacks} {indices:?}",
++        );
 +        let ab = std::array::from_fn::<_, 3, _>(|axis| &b[axis] - &a[axis]);
 +        let ac = std::array::from_fn::<_, 3, _>(|axis| &c[axis] - &a[axis]);
 +        let normal = [(1, 2), (2, 0), (0, 1)].map(|(i, j)| {
@@ -858,7 +873,7 @@
 +        });
 +        // Every three distinct points on a sphere are noncollinear. Moving
 +        // a coplanar point by either sign of epsilon*normal is strictly off
-+        // the plane: the determinant changes by epsilon*|normal|^2.
++        // the plane: the absolute change is |epsilon|*|normal|^2.
 +        for sign in [-1, 1] {
 +            let epsilon = Real::new(Rational::fraction(sign, 1_000_000_000_000).unwrap());
 +            let moved = std::array::from_fn::<_, 3, _>(|axis| &d[axis] + &epsilon * &normal[axis]);
