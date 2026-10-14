@@ -1,0 +1,98 @@
+--- a/crates/hypermesh/src/convex_hull.rs
++++ b/crates/hypermesh/src/convex_hull.rs
+@@ -86,6 +86,15 @@
+         "seed selection",
+     )?;
+     let interior = hull_stage(tetrahedron_centroid(&points, seed), "seed centroid")?;
++    // Lossy projections may change by a low bit when shared scalar caches
++    // warm. They can partition the BVH, but must not choose a hull vertex.
++    // A lossless finite dyadic view is immutable, so retain the distance
++    // heuristic for that exact input family. Other clouds use source order.
++    let exact_dyadic_distances = points.iter().all(|point| {
++        [&point.x, &point.y, &point.z]
++            .iter()
++            .all(|coordinate| coordinate.to_f64_exact_dyadic().is_some())
++    });
+     let approximate_points = points
+         .iter()
+         .map(|point| {
+@@ -132,7 +141,13 @@
+         if !face.active {
+             return None;
+         }
+-        pop_farthest_outside(face, &approximate_points, &processed).map(|point| (index, point))
++        pop_outside(
++            face,
++            &approximate_points,
++            &processed,
++            exact_dyadic_distances,
++        )
++        .map(|point| (index, point))
+     }) {
+         processed[eye] = true;
+         let mut visible = Vec::new();
+@@ -190,12 +205,24 @@
+     compact_hull(points, faces, decisions.certainty())
+ }
+ 
+-fn pop_farthest_outside(
++fn pop_outside(
+     face: &mut HullFace,
+     points: &[[f64; 3]],
+     processed: &[bool],
++    exact_dyadic_distances: bool,
+ ) -> Option<usize> {
+     face.outside.retain(|&point| !processed[point]);
++    if !exact_dyadic_distances {
++        // BVH traversal and a linear fallback may report the same certified
++        // outside set in different orders. Select by immutable source index.
++        let first = face
++            .outside
++            .iter()
++            .enumerate()
++            .min_by_key(|(_, point)| **point)?
++            .0;
++        return Some(face.outside.swap_remove(first));
++    }
+     let farthest = face
+         .outside
+         .iter()
+--- /dev/null
++++ b/tests/native_hull_determinism.rs
+@@ -0,0 +1,36 @@
++use csgrs::{GeometryCertainty, GeometryContext, Real, solid};
++
++#[test]
++fn original_sampled_sphere_hulls_preserve_rows_after_cache_warming() {
++    for (radius, segments, stacks) in [(8_u8, 24, 12), (10, 32, 16), (8, 10, 7), (8, 7, 5)] {
++        solid::cache::clear();
++        let mesh = solid::sphere(Real::from(radius), segments, stacks);
++        // Retain all results. Querying or validating an earlier result here
++        // would introduce a different cache-warming sequence.
++        let cold = solid::convex_hull_with_context(&mesh, &GeometryContext::STRICT);
++        let warm = solid::convex_hull_with_context(&mesh, &GeometryContext::STRICT);
++        let replay = solid::convex_hull_with_context(&mesh, &GeometryContext::STRICT);
++        let outcomes = [
++            cold.expect("cold hull"),
++            warm.expect("warm hull"),
++            replay.expect("replay hull"),
++        ];
++        for outcome in &outcomes {
++            assert_eq!(outcome.certainty, GeometryCertainty::Certified);
++            assert_eq!(outcome.value.positions.len(), segments * (stacks - 1) + 2);
++            assert_eq!(outcome.value.triangles.len(), 2 * segments * (stacks - 1));
++            assert!(outcome.value.is_closed_manifold());
++        }
++        for outcome in &outcomes[1..] {
++            assert!(
++                outcomes[0].value.positions == outcome.value.positions,
++                "vertex row order changed for {segments}x{stacks}"
++            );
++            assert!(
++                outcomes[0].value.triangles == outcome.value.triangles,
++                "triangle rows changed for {segments}x{stacks}"
++            );
++        }
++    }
++    solid::cache::clear();
++}

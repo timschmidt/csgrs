@@ -5102,7 +5102,11 @@
       "sphere_warm_trace_v1_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-closure-v1.json",
       "sphere_warm_trace_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-v2/result.json",
       "sphere_warm_trace_analysis": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-analysis-v2/result.json",
-      "sphere_warm_trace_interpretation": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-interpretation-v2.json"
+      "sphere_warm_trace_interpretation": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-trace-interpretation-v2.json",
+      "sphere_stable_selection_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-stable-selection-scope-v1.json",
+      "sphere_stable_selection_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/probe_sphere_stable_selection_v1.py",
+      "sphere_stable_selection_executed": false,
+      "sphere_stable_selection_runtime_admitted": false
     }
   },
   "status_meanings": {

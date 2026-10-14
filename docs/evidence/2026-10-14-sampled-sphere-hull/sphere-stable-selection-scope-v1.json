@@ -1,0 +1,34 @@
+{
+  "objective": "Prototype deterministic eye selection for exact hulls whose coordinates lack an immutable lossless finite dyadic f64 view.",
+  "parent_source": "target/sphere-cyclotomic-image-v1/source",
+  "trace_interpretation_sha256": "96c3ade81b398463281877dae86cf2f544e06c1ae95ec80361ae039f3b9bfced",
+  "expected_delta_sha256": {
+    "crates/hypermesh/src/convex_hull.rs": "b4fcd4f3c69cfe02cc81402c5632e18fa3e0fb8ac6f6605c184cffeb9d39ea7a",
+    "tests/native_hull_determinism.rs": "752490127cd32d6e7fadd1083ecf71301ea42beb30aa5b922987a68ba74a351e"
+  },
+  "selection": "Preserve the existing floating distance heuristic only when every original coordinate has an exact lossless dyadic f64 view. Otherwise choose the lowest source index among certified outside points, independently of approximation bits, BVH traversal and available cached refinements. BVH partitioning may still use lossy projections. No epsilon or display geometry enters classification.",
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "unchanged_original_points": {
+    "fifteen_degrees": 266,
+    "original_medium": 482,
+    "fifth_turn": 62,
+    "seventh_turn": 30
+  },
+  "source_files": 10136,
+  "commands": 18,
+  "expected_zero_exit_commands": 17,
+  "expected_negative_control_exit": 101,
+  "negative_control": "Compile the new full-resolution regression test against the unchanged finite-image native libraries. It must fail specifically on changed vertex row order for 32x16. The candidate must pass that same regression.",
+  "positive_controls": "Every original sphere receives three STRICT hull queries on one retained input without intervening validation. All output vertices, triangle counts and certainty remain intact, and all three full transcripts must agree. A dyadic cube control must preserve the unchanged parent full transcripts.",
+  "output_migration": "This proposed correctness repair is allowed to produce different triangulations from the previous non-dyadic cold and warm outputs for feasibility collection only. All old rows are retained and every difference is recorded. No admission follows until the new full hulls have independent exact support proofs and proportionate native cost evidence.",
+  "native_wall_stop_seconds": 600,
+  "build_wall_stop_seconds": 900,
+  "scope_limits": "No cost, allocation, formal-verification, fuzz-campaign or broad-qualification claim. This does not resume the closed resource trial or satisfy the frozen scalar-cost trial prerequisite.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
