@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "exact-sphere-zero-witness-collection-prepared",
+      "status": "bounded-zero-collection-closed-maximal-plane-protocol-prepared",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -4951,8 +4951,13 @@
       "sphere_exact_oracle_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-exact-oracle-v1.json",
       "sphere_orientation_interpretation": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-interpretation-v1.json",
       "sphere_zero_collection_prepared": true,
-      "sphere_zero_collection_executed": false,
-      "sphere_zero_collection_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v1.py"
+      "sphere_zero_collection_executed": true,
+      "sphere_zero_collection_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v1.py",
+      "sphere_zero_collection_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-assessment-v1.json",
+      "sphere_zero_collection_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-zero-witness-closure-v1.json",
+      "sphere_maximal_plane_collection_prepared": true,
+      "sphere_maximal_plane_collection_executed": false,
+      "sphere_maximal_plane_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/collect_sphere_zero_witnesses_v2.py"
     }
   },
   "status_meanings": {
