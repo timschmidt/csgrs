@@ -1,0 +1,2655 @@
+{
+  "complete": false,
+  "trial_closed": true,
+  "driver_terminal_exit_code": 1,
+  "execution_context": "exec_command require_escalated; automatic review approved execution.",
+  "commands_completed": 4,
+  "commands_matching_expected_exit": 3,
+  "failed_command": "default-tests",
+  "failed_command_exit_code": 66,
+  "completed_test_counts": {
+    "passed": 1379,
+    "failed": 0,
+    "ignored": 7,
+    "measured": 0,
+    "filtered_out": 0,
+    "summaries": 24
+  },
+  "hyperreal_unit_tests_passed": 795,
+  "both_new_normal_form_tests_passed": true,
+  "leak_bytes": 163672,
+  "leak_allocations": 560,
+  "direct_leak_report_blocks": 412,
+  "all_reported_allocation_stacks_include_gmp_allocator": true,
+  "leak_report_blocks": [
+    {
+      "kind": "Direct",
+      "bytes": 99032,
+      "objects": 51,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 19944,
+      "objects": 22,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 2432,
+      "objects": 14,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 2272,
+      "objects": 28,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 1424,
+      "objects": 25,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 960,
+      "objects": 4,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 560,
+      "objects": 5,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 448,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 272,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 256,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 248,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 248,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 248,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 240,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 232,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 232,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 232,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 232,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 224,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 224,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 224,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 208,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 208,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 208,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 200,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 192,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 184,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 184,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 176,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 176,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 176,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 176,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 176,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 168,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 160,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 160,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 160,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 160,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 2,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 144,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 136,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 136,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 136,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 136,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 136,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 128,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 120,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 120,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 120,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 120,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 112,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 104,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 96,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 96,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 96,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 88,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 80,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 72,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 64,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 56,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 48,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 40,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 32,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 24,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    },
+    {
+      "kind": "Direct",
+      "bytes": 16,
+      "objects": 1,
+      "gmp_allocator_in_stack": true
+    }
+  ],
+  "executed_test_binaries": [
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hyperlimit-9162eeee8c99e3a1",
+      "sha256": "d6919594749fae80e0d46c0a0cd840ce6d76fdb187e93d3f1155d4beb96171d1",
+      "bytes": 12094328
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_degeneracies-a6a4729cbef2b2e0",
+      "sha256": "1fc4ed6e9d78b3abbc0ecd73b444c4888bf2e56dd1dab379508e8364c7398e74",
+      "bytes": 6423408
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_predicates-f8ecb8afb3ed3a31",
+      "sha256": "ef490a0054b6cb36b1c4ed755f6bff644624c832b04ddf774fa60eaf949d2dda",
+      "bytes": 6774200
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/adversarial_props-3d4b088657b6a8b3",
+      "sha256": "4cfc519663ac7da6063b49fecff5a8922cccde9d433049447455af7be4723ec3",
+      "bytes": 9047184
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/batch-166d82997ec65704",
+      "sha256": "024c554ae76549f941d3d634ae4d37694802814027d820322552da1520b932fb",
+      "bytes": 6436560
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/classification_contracts-63bd687d6b89fc54",
+      "sha256": "8aec81c8f409c6d407c254cea01c18ca7e9c9be2a55f2a63ff6de24190716269",
+      "bytes": 2760680
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/composite_policy-8f7b7de5f6c8a2dc",
+      "sha256": "e5d667c99ee6dc9da3a7cae54b612d4edb2148a1142678cf3171c7c56ae73867",
+      "bytes": 6656144
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/exactcore_xinwei-46ccb204e7540b57",
+      "sha256": "8b89255f422c06dcac71db421fbbb8bee9b8601d14f1c95ea353987cf4a72be3",
+      "bytes": 5731168
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/halfspace_feasibility-8179c0aec618f455",
+      "sha256": "b8808809a989ab7272f3688d89f1da12d0e9569a8e008f6644c99368a73c9992",
+      "bytes": 6044272
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/nd_predicates-ce7200bfe2832faa",
+      "sha256": "44547cc4621793b6e8a3f639f4ae937004d28baff052509194cc18ea8ddc8f3e",
+      "bytes": 5462336
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/promoted_mesh_helpers-d0e2c2a04404be35",
+      "sha256": "9bcca0bc74c7de88ac138e3536938f3b0aa2f3e8b88f127ee17cf808bf8aa9cb",
+      "bytes": 5942184
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/readme-5531451f5a9a5185",
+      "sha256": "ba5da1a6c69d80a24e8355ae2c073312850afd261012adf713199a8790e3e671",
+      "bytes": 2360360
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/real_representations-22c2b6aca1703b8a",
+      "sha256": "4893b8e8578fe7c8e61101cd62c365b6d7095af452e46497fea2ef8e9aa562b0",
+      "bytes": 6888000
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/retained_report_contracts-4291d4819b071d76",
+      "sha256": "84aad2b8e65430fa818c14cf752fafe52f6995678a5d002ff2ab3b433bf41a34",
+      "bytes": 6327264
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/robust_parity-622207b9d8650a7d",
+      "sha256": "a16ec6e8b4b6e572871ba20264e7311449fed13e3e615a5b3e05b8dc5ac24205",
+      "bytes": 7170104
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/support_dop-32fdd1afa897fac1",
+      "sha256": "0a6c9fb1b68b6edc760aa0446df78ff47aa0f10e3074cc01309b080b3b325943",
+      "bytes": 6473208
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hypermesh-f7958aa72a24e927",
+      "sha256": "1bcf68577877fbdc88ddcb8b81dea2a7bd6148e934065088d896939bf4cd8849",
+      "bytes": 14791376
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/boolean-9628e6bd71f42a6e",
+      "sha256": "41b3529929e8d8dde7b016ca609c1b093259ff53ba095ed1e811f4be732e5a0c",
+      "bytes": 10118384
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/competitive-4bc2ad01b5d26a65",
+      "sha256": "953ccb7f5555e59fe78cb6863ca3c146121ddd7298f13362adb5f54b9c235e14",
+      "bytes": 13766064
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/corpus_manifest-725cdc6b6465f796",
+      "sha256": "9229dc2cdd75e150f916394c585da142ddb83fdb4a380a90a87d3aea19fcff29",
+      "bytes": 7493832
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/intersection_corpus-e2d3209f212c5c82",
+      "sha256": "85d4d29f0dc247bcaa5a1b7577c660c9d67d92ecf0cb59dbb12475ec97cdebf9",
+      "bytes": 7906696
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/predicate_policy-c94fd698bf21b308",
+      "sha256": "2d526c9d90464e15550da9b0295e213df7f3dc4a7355a4a811db4b138b044f4f",
+      "bytes": 8204728
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/readme-0e8dd2c89010728f",
+      "sha256": "c5b8609a9d9686b4b4ead3baa4f53f06a3c39fb48123f6ee138028dcd920947b",
+      "bytes": 2351688
+    },
+    {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/target/x86_64-unknown-linux-gnu/release/deps/hyperreal-36143eba5fb8e452",
+      "sha256": "2939aa40cc896ef073e6ccc12c6fa6030256be82aaf33db804dd200b1dd3ed17",
+      "bytes": 17384160
+    }
+  ],
+  "executed_control_binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/asan-control",
+    "sha256": "817e998be2530e5d6a6a0f06541de22f8436870880a3305c0717061a1f9e67c4",
+    "bytes": 5735152
+  },
+  "source_files_rechecked": 10136,
+  "root_source_files_rechecked": 10129,
+  "all_frozen_sources_inputs_original_libraries_and_binaries_rechecked": true,
+  "artifacts_sha256": {
+    "commands.json": "f9701e8bbd3dd856d90b48591966ef2cf182a37c9df8c5ad54e307c08ed4a683",
+    "control-binary.json": "1aa14e301e45b3ee3d84efb985e1129ded9ea1c062aed7b4ea96f69fb84fd68c",
+    "control-build.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-build.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-expected-failure.stderr": "eeb601230c96808c753182e67caf9b9a1b51e5b4b757b80843ee45d6e38f8e64",
+    "control-expected-failure.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "control-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "default-tests.stderr": "d50a038bdf9f27b416afe0ddd03cff1636a624399e18695ec9b889852ee01c9f",
+    "default-tests.stdout": "7084981eac7c1e68cbabb3201668e6bf4d29e6174b7841ed14d07d32dd7f5fee",
+    "failure.json": "33feab58626e791d4afea49eb9c25f1362070d01c49ca870c9ad245866312459",
+    "protocol.json": "3b572c681ecc47b7b4188c256d8e6ec8cb780db76f177e1993834ba027d9b5b4",
+    "root-source-hashes.json.gz": "02181f1e5424ca4e274195c1cdb4a14b330afb802e033f961b4ee7700e78b8c7"
+  },
+  "driver_stdout_sha256": "8e2594e62d40261e58dd028d51984cec87d2913b918e2c5c3435a7e4e8645efb",
+  "driver_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "closure_reader_sha256": "fa3afbc4144f2ed6e04bfd6ee934e62dc24d15c9838797e1275cc47d216dd8a6",
+  "installed_rug_cache_documentation": {
+    "path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rug-1.30.0/src/float/mod.rs",
+    "sha256": "e62019e087f7bec7b565ec20926091f8c350a8d68521ac6e2ff946e8df2d5ae6"
+  },
+  "interpretation": "The unrestricted process completed its assertions but failed leak checking. All report blocks include GMP allocation, and Rug is a dev-dependency used by test oracles/benchmarks. MPFR thread-local cache cleanup is a hypothesis supported by installed Rug documentation; it has not yet been demonstrated as the cause of this whole report.",
+  "remaining_unexecuted": "Later default Hyperreal integration tests, all-feature tests and original native sphere replay.",
+  "next_step": "Preserve this failed run and independently compare a standalone Rug-only threaded program with and without explicit local cache cleanup. Do not suppress leaks, alter these executed inputs, or attribute the report to the new filter without evidence.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

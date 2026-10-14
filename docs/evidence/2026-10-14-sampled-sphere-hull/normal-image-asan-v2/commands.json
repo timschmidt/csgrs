@@ -1,0 +1,76 @@
+[
+  {
+    "name": "control-format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_asan_control_v1.rs"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "process_wall_seconds": 0.02748541720211506,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "control-build",
+    "command": [
+      "rustc",
+      "--edition",
+      "2024",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-Zsanitizer=address",
+      "-Cforce-frame-pointers=yes",
+      "-Copt-level=1",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/normal_image_asan_control_v1.rs",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/asan-control"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 0,
+    "process_wall_seconds": 0.09271951671689749,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "control-expected-failure",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/normal-image-asan-v2/asan-control"
+    ],
+    "expected_exit_code": 66,
+    "exit_code": 66,
+    "process_wall_seconds": 0.3406533095985651,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "eeb601230c96808c753182e67caf9b9a1b51e5b4b757b80843ee45d6e38f8e64"
+  },
+  {
+    "name": "default-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "--target",
+      "x86_64-unknown-linux-gnu",
+      "-p",
+      "hyperreal",
+      "-p",
+      "hyperlimit",
+      "-p",
+      "hypermesh",
+      "--lib",
+      "--tests",
+      "--",
+      "--test-threads=2",
+      "--show-output"
+    ],
+    "expected_exit_code": 0,
+    "exit_code": 66,
+    "process_wall_seconds": 82.834861272946,
+    "stdout_sha256": "7084981eac7c1e68cbabb3201668e6bf4d29e6174b7841ed14d07d32dd7f5fee",
+    "stderr_sha256": "d50a038bdf9f27b416afe0ddd03cff1636a624399e18695ec9b889852ee01c9f"
+  }
+]
