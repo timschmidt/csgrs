@@ -1,0 +1,90 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "assessor_terminal_exit_code": 0,
+  "result_sha256": "b451f2de9c5e7d42122ff6df63509e804ef555aab1c96ec3a2bd2bf875e77036",
+  "assessment_sha256": "a5cad8ca02c97cf934bfc8d9eb56facd21f30ac1e5cc7aa7a098eeab5aa39a82",
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "all_group_specific_full_transcripts_match": true,
+  "all_source_input_binary_guards_passed": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "median_process_wall_ratio": 1.1608547350347485,
+      "min_process_wall_ratio": 1.096824462324981,
+      "max_process_wall_ratio": 1.187965280469842,
+      "median_child_cpu_ratio": 1.1615690090850004,
+      "median_process_wall_seconds": {
+        "image": 17.955212007509544,
+        "stable": 20.96204939787276
+      },
+      "median_child_cpu_seconds": {
+        "image": 17.855960500000023,
+        "stable": 20.86340050000002
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "median_process_wall_ratio": 1.1380585561058028,
+      "min_process_wall_ratio": 1.105844535409607,
+      "max_process_wall_ratio": 1.1593164449574525,
+      "median_child_cpu_ratio": 1.137352187483899,
+      "median_process_wall_seconds": {
+        "image": 45.793313613627106,
+        "stable": 51.853594972984865
+      },
+      "median_child_cpu_seconds": {
+        "image": 45.57913649999999,
+        "stable": 51.55080400000002
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "fifth_turn",
+      "median_process_wall_ratio": 1.0910931302959446,
+      "min_process_wall_ratio": 1.0547573623875872,
+      "max_process_wall_ratio": 1.1073926506252074,
+      "median_child_cpu_ratio": 1.091280957784323,
+      "median_process_wall_seconds": {
+        "image": 1.32652838062495,
+        "stable": 1.437373397871852
+      },
+      "median_child_cpu_seconds": {
+        "image": 1.3201640000000516,
+        "stable": 1.4305915000000118
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "seventh_turn",
+      "median_process_wall_ratio": 1.109532756408826,
+      "min_process_wall_ratio": 1.0539771755613527,
+      "max_process_wall_ratio": 1.453995062756549,
+      "median_child_cpu_ratio": 1.1090544216528624,
+      "median_process_wall_seconds": {
+        "image": 0.39579980028793216,
+        "stable": 0.43645196547731757
+      },
+      "median_child_cpu_seconds": {
+        "image": 0.39378599999997393,
+        "stable": 0.434035499999994
+      },
+      "reproducible_cost_increase_flagged": false
+    }
+  ],
+  "binary_file_delta_stable_minus_image": 488,
+  "text_delta_stable_minus_image": 368,
+  "interpretation": "Every case has a higher median paired process wall ratio. No case satisfies both predeclared flag conditions; this is not evidence of no regression. The deterministic-row repair changes the triangulation while preserving the independently certified exact finite-point hull. Its measured time cost is retained as a correctness tradeoff, not an optimization claim.",
+  "trial_closed": true,
+  "resampling_or_extension_allowed": false,
+  "remaining": [
+    "Requested allocation and retained-byte comparison of the admitted baseline, finite-image parent and deterministic-selection candidate.",
+    "Public scalar cost/retention checks with a new prerequisite-aware protocol; the unexecuted old scalar protocol remains frozen.",
+    "Additional adversarial and formal obligations before any broader completion claim."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

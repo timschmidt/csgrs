@@ -1,0 +1,359 @@
+{
+  "inputs_sha256": {
+    "measure_sphere_stable_selection_v1.py": "09eefa05a1319a828e1f30abaff74b29e0b55fbf5b7af79c2c79deefc32374fa",
+    "assess_sphere_stable_selection_cost_v1.py": "8d24f32e4197564a1c424b79d54d32c4ed45cf497c7f8c48010f2b23789c9d7f",
+    "sphere-stable-selection-cost-scope-v1.json": "423e30e7dd2b2ae3779d9a39c20d50e9a50e391525ccf7e038e405fb088b973e",
+    "sphere_warm_replay_probe_v1.rs": "a65035ede9c8ef6a41013cc45135e56ab1fd7e3acfce8e2e862c18c3392e3ae5",
+    "sphere-stable-selection-qualification-v1/result.json": "41f7c06cf14875636a230ae744218914e235460f10eb53c2f0d754f7cb7ec5a7",
+    "sphere-stable-selection-closure-v1.json": "ed545e6be8792c789dddc8d8dbc1bfef03bed314df4120a41cc06671ea1645a8",
+    "sphere-stable-support-v1/result.json": "8898de4af3680c8da1cd9d0fba2bf7c01683c162578f81ddac45a985d1afb7b8",
+    "sphere-warm-replay-v1/result.json": "a6793ed7369cccce5d9bb914a3fa911d4315cbd49c67c7be2daab20ca3494344",
+    "sphere-warm-replay-assessment-v1.json": "fd9a86fcf64fc90d59e972e7cf384c6f05d8a3adfe7208b178f0b3b0d8b21e0c",
+    "sphere-warm-support-v1/result.json": "3c4ded3ed2ca943bf73d17d6a5c00771cb33378a9094d55fbc96cacd9d4e4cf4",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+    "sphere-stable-selection-qualification-v1/all-features-clippy.stderr": "850d19636c228f77042fc2b6f7661d78c908dcdd9eca062446c6251906cc4f01",
+    "sphere-stable-selection-qualification-v1/all-features-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/all-features-tests.stderr": "60b09c4c8a71734924e99f22bf94f6afa0fac0b643704c34b7e986311fa01c53",
+    "sphere-stable-selection-qualification-v1/all-features-tests.stdout": "cde17d6280e624505bbc6994287e10fe21f60dc52b1abb642500cfeb8474202f",
+    "sphere-stable-selection-qualification-v1/commands.json": "83027aab7a3f883cbd57aacd21a93999fd473216c0f9d72637979ab3f84ea20d",
+    "sphere-stable-selection-qualification-v1/default-clippy.stderr": "d58d2447e11d6e732b3cce0e89b88fc956bb386e03e4fbf0eeefa2e11953eb7d",
+    "sphere-stable-selection-qualification-v1/default-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/default-tests.stderr": "6a74427506d0f78f358ffbd7c8482a4a38c4ca5b9d502762839824f8db1550ef",
+    "sphere-stable-selection-qualification-v1/default-tests.stdout": "a053dd0dd338267b8971b50ed783ad03cda7a695f2a1779f9037957ed9651373",
+    "sphere-stable-selection-qualification-v1/docs.stderr": "e2f8ed9da71cb175b87635d2cf249fe74cd3ce010f6e5a84360c6dc74ce3d52b",
+    "sphere-stable-selection-qualification-v1/docs.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/doctests.stderr": "f7d8f7f49070985174602cbb0e35ff2279290eac022e85a3c7821d02b5740c33",
+    "sphere-stable-selection-qualification-v1/doctests.stdout": "df166913f47ff1f04202cae9b31df67ed272d692d99a0023a8117dc3029100dd",
+    "sphere-stable-selection-qualification-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/mesh-fuzz-check.stderr": "fb67e76334333ad31eeed766c8160a76862e533a23f596715ef715315fb74b2b",
+    "sphere-stable-selection-qualification-v1/mesh-fuzz-check.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/native-consumer-clippy.stderr": "af68f263738ff60ce2412dae160cc0375976d6b83693020d13daefc357f36605",
+    "sphere-stable-selection-qualification-v1/native-consumer-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-qualification-v1/native-consumer-tests.stderr": "b1a0151c5f9e244b9a6a028b7b59373c77679c4f447d2525c7c84f8b18bc457f",
+    "sphere-stable-selection-qualification-v1/native-consumer-tests.stdout": "7ba40b40b5133cc427d4b76f9a2b83c17ee08d9a0543b60b1034f3b1c13b5561",
+    "sphere-stable-selection-qualification-v1/protocol.json": "e24fa86957c94a6ae3655a78932fc0418353d79b5af43c74b8dd0d5789e108fb",
+    "sphere-stable-selection-qualification-v1/root-source-hashes.json.gz": "aa2e5a5bbd2a42806e1a587a329a0e1cde3fde5e3758d7150cb3852a4f567c08",
+    "sphere-stable-selection-qualification-v1/test-counts.json": "dc8d481dbeec189ce2b149abe19c8ebc86b3c350bec96f99144010fec373765b",
+    "sphere-stable-support-v1/fifteen_degrees.json": "07ca3f870c0e5dc7f8bcbd8d35479c6e0a2a8c308971f707ea46446aa85bc169",
+    "sphere-stable-support-v1/fifth_turn.json": "e6ff28ca5f80a2a9bd5f7ae8dd4b7c5939ee1e4eabed175e2552912bcc1249df",
+    "sphere-stable-support-v1/original_medium.json": "93470b2ac56d35c9bfb41ffcc61ecc30fd8150d32d7f42308544cf41a3dde41e",
+    "sphere-stable-support-v1/protocol.json": "aabdf7e632ed8ea24070b24f0a1e490433a73e631bbea9470e217d04aedcb481",
+    "sphere-stable-support-v1/seventh_turn.json": "554421965fdca8b825d3cd0ce4fbe69e17429e695f918f79442546e2ad129777",
+    "sphere-warm-replay-v1/baseline-fifteen_degrees-cold.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/baseline-fifteen_degrees-replay.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/baseline-fifteen_degrees-warm.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/baseline-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/baseline-fifteen_degrees.stdout": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "sphere-warm-replay-v1/binaries.json": "76840121f09aa5713ac92c31f3c71b1d888c8726e9cc78874ddd2e361e3374fb",
+    "sphere-warm-replay-v1/commands.json": "2185d618715d4f84d583e266d0036f0aa0673bebcf8cb96acfca2643d163ac25",
+    "sphere-warm-replay-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/image-fifteen_degrees-cold.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/image-fifteen_degrees-replay.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/image-fifteen_degrees-warm.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/image-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/image-fifteen_degrees.stdout": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "sphere-warm-replay-v1/image-fifth_turn-cold.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/image-fifth_turn-replay.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/image-fifth_turn-warm.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/image-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/image-fifth_turn.stdout": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+    "sphere-warm-replay-v1/image-original_medium-cold.witness": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-warm-replay-v1/image-original_medium-replay.witness": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-replay-v1/image-original_medium-warm.witness": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-replay-v1/image-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/image-original_medium.stdout": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+    "sphere-warm-replay-v1/image-seventh_turn-cold.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/image-seventh_turn-replay.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/image-seventh_turn-warm.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/image-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/image-seventh_turn.stdout": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced",
+    "sphere-warm-replay-v1/late-fifteen_degrees-cold.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/late-fifteen_degrees-replay.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/late-fifteen_degrees-warm.witness": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-warm-replay-v1/late-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/late-fifteen_degrees.stdout": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+    "sphere-warm-replay-v1/late-fifth_turn-cold.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/late-fifth_turn-replay.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/late-fifth_turn-warm.witness": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-warm-replay-v1/late-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/late-fifth_turn.stdout": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+    "sphere-warm-replay-v1/late-original_medium-cold.witness": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-warm-replay-v1/late-original_medium-replay.witness": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-replay-v1/late-original_medium-warm.witness": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-replay-v1/late-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/late-original_medium.stdout": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+    "sphere-warm-replay-v1/late-seventh_turn-cold.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/late-seventh_turn-replay.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/late-seventh_turn-warm.witness": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-warm-replay-v1/late-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/late-seventh_turn.stdout": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced",
+    "sphere-warm-replay-v1/link-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/link-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/link-image.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/link-image.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/link-late.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/link-late.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-warm-replay-v1/observations.json": "42f4bacb69c250a93ffe80adbdb7a23275d9a4d277776821614c9818b9faeac8",
+    "sphere-warm-replay-v1/protocol.json": "d9215f15e6b3ecd1d691c86c2dc66b1796f6f6af032c8b26cfb9aae2f081328a",
+    "sphere-warm-replay-v1/root-source-hashes.json.gz": "9dfd0d5934c8ec35b027a68e575f170775ffd1a727ecf52b7f014d2a4ff56801",
+    "sphere-warm-support-v1/changed-face-support.json": "0bf6058d9886a8c043cedec322c218f740f9bd72cf43ff7e0c1da07f7d83f029",
+    "sphere-warm-support-v1/changed-planes.json": "b95cc833c36fdc82bd7020b7791a7d933225e24fc96e0d23c1af56c6d044bbaa",
+    "sphere-warm-support-v1/protocol.json": "60cd5d2a00250d396e91bd3b1fba9f2810afd3e3d688b74289fbee7a1891dd80",
+    "sphere-native-support-v1/fifteen_degrees.json": "5b49bf6c706d0d4a4ba6cbbedc705a5e808c0c07c313f30b1f58e4a44fde637b",
+    "sphere-native-support-v1/fifth_turn.json": "df1cb0e08514ca52e850b33cd99b48ea09b9a40eadd3125f1d98a9d112180898",
+    "sphere-native-support-v1/original_medium.json": "d5a83951a87b31aef1236119334b615cbec64684e02438194c362ef837c76115",
+    "sphere-native-support-v1/protocol.json": "81ac8ceb2862f66fa4f4e64c28abc226fab787ff3908db86ba95812e85d8552c",
+    "sphere-native-support-v1/seventh_turn.json": "d7c6da2f67699bfaab4d5689db557d613e00ee92fa97ece8551e49fccef99197",
+    "sphere-cyclotomic-image-v1/result.json": "f252dcef2a8e7f4f5244472592a2aff1eb9fa4b8c3e7566901b72c6c8854c398",
+    "sphere-cyclotomic-image-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/apply.stdout": "6dbe3bda4c917ed6da22179f796a7019f31a3ff7ad09b929b9513c51c624718e",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/binaries.json": "6364653e0d1c83897f1ca6d589ea745f64280075330fc57e4e61266eac8437b2",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stderr": "ff8c3c24b987122df531eced9be67cd262722fdf509c753ed8b79c6c7c599717",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stdout": "6f2d9bef8e06c30f6d78e6efd8f7e37615e64340c5b78b6b4dd56c87781b4420",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "sphere-cyclotomic-image-v1/commands.json": "13c7d5eb5e2ba657501631cf700cc38edc8a7ad27f309ff66425b960c354fee4",
+    "sphere-cyclotomic-image-v1/libraries.json": "3718a28da8e63aebed777b167493337a0390f25c4fca168423cb87cb65f01e8b",
+    "sphere-cyclotomic-image-v1/link-baseline.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-baseline.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/link-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/protocol.json": "dc52bef136539c9fb15809b4c23493caa0901d1c77fc199b6363e5128cb42bab",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stderr": "76051fdf881afa2ec79e3a87ca771576d74c919aa26de2c52ca820dcd0531586",
+    "sphere-cyclotomic-image-v1/scalar-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-cyclotomic-image-v1/source-hashes.json.gz": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stderr": "01bfea4266c22bf46d6aae565c42d68e9ad90870cfca81b73ee9740c493adde5",
+    "sphere-cyclotomic-image-v1/targeted-scalar-tests.stdout": "03a9f0d96ff27f71a47158b396c372035e413d83b0dc5ef34bc23e2e17f9da59",
+    "sphere-stable-selection-v1/result.json": "65d03c03494567d50eb64b1f5280918b816396897a4e7876807cdaf2334f9392",
+    "sphere-stable-selection-v1/apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/apply.stdout": "66961e4fc8daff0f22408a9603d2ed7cff1c27cc08ab020934348806902f5d89",
+    "sphere-stable-selection-v1/binaries.json": "36e735b776738f696b25c286ba14fd5071c278ad315bcd5c479ecb1878d48bb8",
+    "sphere-stable-selection-v1/build.stderr": "208bb8ad4d0d22554102ce18fdd851e5bc64a943f3b6f1bd49cbf6281af3ff74",
+    "sphere-stable-selection-v1/build.stdout": "b72377809ddd5d8cd73af39a38a592cdc9a7c398dc58b588c24580ab4037550a",
+    "sphere-stable-selection-v1/candidate-regression.stderr": "ff726ba5b35b1b95927dba5ed4b8e9e74c5ca8088b377d2963234d8ec4826706",
+    "sphere-stable-selection-v1/candidate-regression.stdout": "b184e342fde5f149695ad3f74267c5b38e0c8a732e7693bec93b5e518020af9f",
+    "sphere-stable-selection-v1/commands.json": "30bbbcefb83c3dafcd14b2122d293a601f8afd39331a078e8dde460226d1582a",
+    "sphere-stable-selection-v1/cube-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/cube-candidate.stdout": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "sphere-stable-selection-v1/cube-parent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/cube-parent.stdout": "1f882c0f0afa96960d7f984e038efc65ffe4e453c566840bb54a2a2946e9150c",
+    "sphere-stable-selection-v1/fifteen_degrees-cold.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees-replay.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees-warm.witness": "d5b41e3318ed79398e72bce62e9e82a0593383d746b89f23c3fbac986d918e31",
+    "sphere-stable-selection-v1/fifteen_degrees.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/fifteen_degrees.stdout": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+    "sphere-stable-selection-v1/fifth_turn-cold.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn-replay.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn-warm.witness": "c1d6efbec45dbfc9b40501b3f97670946efabc307bb6511b456513bf69f0d077",
+    "sphere-stable-selection-v1/fifth_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/fifth_turn.stdout": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+    "sphere-stable-selection-v1/format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/libraries.json": "5987036fd2d0cd8a72581db6e9609a7784cd67ee19baf17a2a31d709073cddb1",
+    "sphere-stable-selection-v1/link-cube-candidate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-candidate.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-parent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-cube-parent.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-negative-regression.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-negative-regression.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-sphere-probe.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/link-sphere-probe.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/mesh-clippy.stderr": "bd4f289e8c670931278fac1593f9863c7674341e1a4be66f8809188515ee4e03",
+    "sphere-stable-selection-v1/mesh-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/negative-regression.stderr": "305916c7956f114179ab9202589f3f11f91ecf82c6fa6e155794ff33b9ebff32",
+    "sphere-stable-selection-v1/negative-regression.stdout": "0f9e291e469ef5c04a33c27947ece48206dfe5287068fc2cdc099958fafbf6b6",
+    "sphere-stable-selection-v1/observations.json": "acc784084258917cd37fd3fbc8bd658e864b24f5463f0a668169360c638e2d15",
+    "sphere-stable-selection-v1/original_medium-cold.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium-replay.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium-warm.witness": "fb70bfa3926db9e44fcaa9eb4ba542cc3e695526f9426b05c5b62ec44bae313d",
+    "sphere-stable-selection-v1/original_medium.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/original_medium.stdout": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+    "sphere-stable-selection-v1/probe-format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/probe-format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/protocol.json": "7e6a68b573af1d6f6e637fd03ae72f12dc4aaf42928113308c50c0f880c18f26",
+    "sphere-stable-selection-v1/regression-clippy.stderr": "efb74c1823d04f4ed7b3645eaa167d93c6b0f3f936f6b9b8d2d2098ac2651085",
+    "sphere-stable-selection-v1/regression-clippy.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/root-source-hashes.json.gz": "0fb22a8c965733cc03789e66f7686048841b967a7128ddb4bd6637a432b9fde2",
+    "sphere-stable-selection-v1/seventh_turn-cold.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn-replay.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn-warm.witness": "59b7c12563010d05feefc24ed202f8b4306aee4e4896dfc151f5a9cd575852a9",
+    "sphere-stable-selection-v1/seventh_turn.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "sphere-stable-selection-v1/seventh_turn.stdout": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a",
+    "sphere-stable-selection-v1/source-hashes.json.gz": "192ed8a5a058dec7e2b4b3e9ef2ebd3b4ad6c34d95daa06a7c0349614d83b7b6"
+  },
+  "binaries": {
+    "image": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-warm-replay-v1/image",
+      "sha256": "575b036d96bd8deae1feb63da49ab4cab3abd230b9fb357661b340e5e97bd02b",
+      "bytes": 8761416
+    },
+    "stable": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/sphere-probe",
+      "sha256": "07987ee2e297fd5e0d872793d62038ab2c61df924d554193052ba4245be59e20",
+      "bytes": 8761904
+    }
+  },
+  "libraries": {
+    "image": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+        "sha256": "18be766f9d8a401581858c281669fabf3c484db581e2cc3714cb2ad8ca0498be",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "68f737e20835171cd4e414b0f569bc1c41ad953dee3bbe2840d5a1dd0033f870",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "stable": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/libcsgrs.rlib",
+        "sha256": "ef8b7d9927b2824ab1a4f8dc487cdbe9c2e11f662cd1a0fbc85cbb6b2464cd5a",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "ef97fa0f2087576235ea21a30cb0b57d721c5ba5c25cd17dd3c2627bbbddf79e",
+        "features": [
+          "default"
+        ]
+      }
+    }
+  },
+  "library_features": {
+    "image": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    },
+    "stable": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    }
+  },
+  "source_protocols_sha256": {
+    "image": "dc52bef136539c9fb15809b4c23493caa0901d1c77fc199b6363e5128cb42bab",
+    "stable": "7e6a68b573af1d6f6e637fd03ae72f12dc4aaf42928113308c50c0f880c18f26"
+  },
+  "reference_transcripts": {
+    "image": {
+      "fifteen_degrees": "sphere-warm-replay-v1/image-fifteen_degrees.stdout",
+      "original_medium": "sphere-warm-replay-v1/image-original_medium.stdout",
+      "fifth_turn": "sphere-warm-replay-v1/image-fifth_turn.stdout",
+      "seventh_turn": "sphere-warm-replay-v1/image-seventh_turn.stdout"
+    },
+    "stable": {
+      "fifteen_degrees": "sphere-stable-selection-v1/fifteen_degrees.stdout",
+      "original_medium": "sphere-stable-selection-v1/original_medium.stdout",
+      "fifth_turn": "sphere-stable-selection-v1/fifth_turn.stdout",
+      "seventh_turn": "sphere-stable-selection-v1/seventh_turn.stdout"
+    }
+  },
+  "reference_output_bytes": {
+    "image": {
+      "fifteen_degrees": 65677,
+      "original_medium": 120709,
+      "fifth_turn": 14612,
+      "seventh_turn": 7141
+    },
+    "stable": {
+      "fifteen_degrees": 65827,
+      "original_medium": 120859,
+      "fifth_turn": 14627,
+      "seventh_turn": 7150
+    }
+  },
+  "reference_output_sha256": {
+    "image": {
+      "fifteen_degrees": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+      "original_medium": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+      "fifth_turn": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+      "seventh_turn": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced"
+    },
+    "stable": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    }
+  },
+  "root_source_files": 10129,
+  "source_files": {
+    "image": 10135,
+    "stable": 10136
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3463.724\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "load_average_before": [
+    2.8564453125,
+    2.8115234375,
+    3.27880859375
+  ],
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "orders": [
+    [
+      "image",
+      "stable"
+    ],
+    [
+      "stable",
+      "image"
+    ],
+    [
+      "image",
+      "stable"
+    ],
+    [
+      "stable",
+      "image"
+    ],
+    [
+      "image",
+      "stable"
+    ],
+    [
+      "stable",
+      "image"
+    ]
+  ],
+  "preflight_processes": 8,
+  "sample_processes": 48,
+  "hull_queries_per_process": 3,
+  "samples_may_be_extended_filtered_or_pooled": false,
+  "measurement": "Full default-allocator process wall and child user/system CPU for sphere construction, three STRICT hull calls with all outputs retained, validation and serialization. Each process has fresh process-local state; the second and third calls reuse the first call's input graph. No separate per-query or check-body times are inferred.",
+  "output_contract": "Every process must match its own group's full frozen three-query transcript. The parent 32x16 warm rows differ from its cold rows, and the repaired sphere rows differ from the parent. Both groups' outputs have independent exact support proofs for the same full original finite point sets. Record all reference byte sizes and hashes; do not claim row-preserving optimization.",
+  "limits": "No allocation, retained-byte, RSS, per-query timing, universal speedup or runtime-admission claim. This measures a correctness repair with recorded row changes.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -1,0 +1,426 @@
+{
+  "complete": true,
+  "assessor_sha256": "8d24f32e4197564a1c424b79d54d32c4ed45cf497c7f8c48010f2b23789c9d7f",
+  "result_sha256": "b451f2de9c5e7d42122ff6df63509e804ef555aab1c96ec3a2bd2bf875e77036",
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "all_outputs_match_group_specific_exactly_validated_reference": true,
+  "cross_group_row_changes_explicitly_retained": true,
+  "reference_output_bytes": {
+    "image": {
+      "fifteen_degrees": 65677,
+      "original_medium": 120709,
+      "fifth_turn": 14612,
+      "seventh_turn": 7141
+    },
+    "stable": {
+      "fifteen_degrees": 65827,
+      "original_medium": 120859,
+      "fifth_turn": 14627,
+      "seventh_turn": 7150
+    }
+  },
+  "reference_output_sha256": {
+    "image": {
+      "fifteen_degrees": "0b2188ee6a1bcacd020916bd5dd05dd34412c25c8fe2302db8071a5809e16a75",
+      "original_medium": "3c789147918e8c55a29fb353779aaf9b69df221d04d4f15e76d3bffb9f4c0db2",
+      "fifth_turn": "bb33a62a9fa2c79143fb5f94789e3f63fe9462d8ed0dd2b9c02415eca2d213fe",
+      "seventh_turn": "52c7c736e593a4595f2749a1bfcc457491697e7fa1920f9de39a9d361ceaeced"
+    },
+    "stable": {
+      "fifteen_degrees": "fd0e180621fc224b5d01556642dc9cb874c315aa94aa375c0581e096b4f75511",
+      "original_medium": "8d1a55a0b9e97a1b6b345813a8b4e9b0e2f988ea88cb036e6c392a5808089672",
+      "fifth_turn": "c64e1da3a5c75412de5ad47f20ff4c1f9abf5b6ba891564765f848a38637534c",
+      "seventh_turn": "9d49b9d3373b309a34e5893eb44cd1358ccf84027d575901b6727c2a8377c14a"
+    }
+  },
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "pairs": [
+        {
+          "round": 1,
+          "image_process_wall_seconds": 18.045248825103045,
+          "stable_process_wall_seconds": 20.751087591983378,
+          "image_child_cpu_seconds": 17.931033999999997,
+          "stable_child_cpu_seconds": 20.648768999999994,
+          "process_wall_ratio": 1.149947434535577,
+          "child_cpu_ratio": 1.151565994465238
+        },
+        {
+          "round": 2,
+          "image_process_wall_seconds": 18.269559192005545,
+          "stable_process_wall_seconds": 20.856407199054956,
+          "image_child_cpu_seconds": 18.184313999999983,
+          "stable_child_cpu_seconds": 20.760816000000037,
+          "process_wall_ratio": 1.1415933455133047,
+          "child_cpu_ratio": 1.141688160466216
+        },
+        {
+          "round": 3,
+          "image_process_wall_seconds": 17.798364754766226,
+          "stable_process_wall_seconds": 20.855448114220053,
+          "image_child_cpu_seconds": 17.715597999999968,
+          "stable_child_cpu_seconds": 20.755099000000012,
+          "process_wall_ratio": 1.17176203553392,
+          "child_cpu_ratio": 1.1715720237047629
+        },
+        {
+          "round": 4,
+          "image_process_wall_seconds": 19.20789727102965,
+          "stable_process_wall_seconds": 21.067691596690565,
+          "image_child_cpu_seconds": 19.11626499999996,
+          "stable_child_cpu_seconds": 20.965985000000003,
+          "process_wall_ratio": 1.096824462324981,
+          "child_cpu_ratio": 1.096761579733282
+        },
+        {
+          "round": 5,
+          "image_process_wall_seconds": 17.865175189916044,
+          "stable_process_wall_seconds": 21.223207855131477,
+          "image_child_cpu_seconds": 17.780887000000053,
+          "stable_child_cpu_seconds": 21.066008999999923,
+          "process_wall_ratio": 1.187965280469842,
+          "child_cpu_ratio": 1.1847557998653195
+        },
+        {
+          "round": 6,
+          "image_process_wall_seconds": 17.861260592006147,
+          "stable_process_wall_seconds": 21.13764754589647,
+          "image_child_cpu_seconds": 17.773839999999964,
+          "stable_child_cpu_seconds": 20.985384999999958,
+          "process_wall_ratio": 1.1834353704775282,
+          "child_cpu_ratio": 1.1806894289585144
+        }
+      ],
+      "median_process_wall_ratio": 1.1608547350347485,
+      "min_process_wall_ratio": 1.096824462324981,
+      "max_process_wall_ratio": 1.187965280469842,
+      "median_child_cpu_ratio": 1.1615690090850004,
+      "median_process_wall_seconds": {
+        "image": 17.955212007509544,
+        "stable": 20.96204939787276
+      },
+      "median_child_cpu_seconds": {
+        "image": 17.855960500000023,
+        "stable": 20.86340050000002
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "pairs": [
+        {
+          "round": 1,
+          "image_process_wall_seconds": 45.70093096792698,
+          "stable_process_wall_seconds": 52.98184082098305,
+          "image_child_cpu_seconds": 45.48957899999999,
+          "stable_child_cpu_seconds": 52.735145999999986,
+          "process_wall_ratio": 1.1593164449574525,
+          "child_cpu_ratio": 1.159279711074046
+        },
+        {
+          "round": 2,
+          "image_process_wall_seconds": 45.79545700410381,
+          "stable_process_wall_seconds": 51.64232048019767,
+          "image_child_cpu_seconds": 45.57647100000001,
+          "stable_child_cpu_seconds": 51.40671399999998,
+          "process_wall_ratio": 1.1276734387773424,
+          "child_cpu_ratio": 1.1279222123187196
+        },
+        {
+          "round": 3,
+          "image_process_wall_seconds": 46.21326811565086,
+          "stable_process_wall_seconds": 51.79527490399778,
+          "image_child_cpu_seconds": 45.99734000000003,
+          "stable_child_cpu_seconds": 51.558360999999984,
+          "process_wall_ratio": 1.1207879688226698,
+          "child_cpu_ratio": 1.1208987519713085
+        },
+        {
+          "round": 4,
+          "image_process_wall_seconds": 46.288073502946645,
+          "stable_process_wall_seconds": 51.18741313787177,
+          "image_child_cpu_seconds": 46.07057300000001,
+          "stable_child_cpu_seconds": 50.95231999999994,
+          "process_wall_ratio": 1.105844535409607,
+          "child_cpu_ratio": 1.1059623677786672
+        },
+        {
+          "round": 5,
+          "image_process_wall_seconds": 45.20196875371039,
+          "stable_process_wall_seconds": 51.91191504197195,
+          "image_child_cpu_seconds": 44.94597899999999,
+          "stable_child_cpu_seconds": 51.54324700000006,
+          "process_wall_ratio": 1.1484436734342633,
+          "child_cpu_ratio": 1.1467821626490786
+        },
+        {
+          "round": 6,
+          "image_process_wall_seconds": 45.7911702231504,
+          "stable_process_wall_seconds": 52.72003090009093,
+          "image_child_cpu_seconds": 45.58180199999996,
+          "stable_child_cpu_seconds": 52.34693700000008,
+          "process_wall_ratio": 1.1513143394932839,
+          "child_cpu_ratio": 1.148417453965513
+        }
+      ],
+      "median_process_wall_ratio": 1.1380585561058028,
+      "min_process_wall_ratio": 1.105844535409607,
+      "max_process_wall_ratio": 1.1593164449574525,
+      "median_child_cpu_ratio": 1.137352187483899,
+      "median_process_wall_seconds": {
+        "image": 45.793313613627106,
+        "stable": 51.853594972984865
+      },
+      "median_child_cpu_seconds": {
+        "image": 45.57913649999999,
+        "stable": 51.55080400000002
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "fifth_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "image_process_wall_seconds": 1.3007221692241728,
+          "stable_process_wall_seconds": 1.4404101707041264,
+          "image_child_cpu_seconds": 1.294420999999996,
+          "stable_child_cpu_seconds": 1.4337680000000217,
+          "process_wall_ratio": 1.1073926506252074,
+          "child_cpu_ratio": 1.1076519926670119
+        },
+        {
+          "round": 2,
+          "image_process_wall_seconds": 1.3159164884127676,
+          "stable_process_wall_seconds": 1.433968401979655,
+          "image_child_cpu_seconds": 1.3098390000000182,
+          "stable_child_cpu_seconds": 1.427415000000002,
+          "process_wall_ratio": 1.089710794420761,
+          "child_cpu_ratio": 1.0897637037834285
+        },
+        {
+          "round": 3,
+          "image_process_wall_seconds": 1.414330506697297,
+          "stable_process_wall_seconds": 1.559427360072732,
+          "image_child_cpu_seconds": 1.4073089999999904,
+          "stable_child_cpu_seconds": 1.5517569999999883,
+          "process_wall_ratio": 1.1025904855253816,
+          "child_cpu_ratio": 1.1026412820496414
+        },
+        {
+          "round": 4,
+          "image_process_wall_seconds": 1.3155131349340081,
+          "stable_process_wall_seconds": 1.4252294511534274,
+          "image_child_cpu_seconds": 1.3091180000000138,
+          "stable_child_cpu_seconds": 1.4186480000000585,
+          "process_wall_ratio": 1.0834019161845336,
+          "child_cpu_ratio": 1.0836670185575659
+        },
+        {
+          "round": 5,
+          "image_process_wall_seconds": 1.3598735369741917,
+          "stable_process_wall_seconds": 1.4343366250395775,
+          "image_child_cpu_seconds": 1.3494819999999939,
+          "stable_child_cpu_seconds": 1.4241289999999953,
+          "process_wall_ratio": 1.0547573623875872,
+          "child_cpu_ratio": 1.0553152987590808
+        },
+        {
+          "round": 6,
+          "image_process_wall_seconds": 1.3371402728371322,
+          "stable_process_wall_seconds": 1.460792942903936,
+          "image_child_cpu_seconds": 1.3304890000000849,
+          "stable_child_cpu_seconds": 1.453955999999995,
+          "process_wall_ratio": 1.0924754661711285,
+          "child_cpu_ratio": 1.0927982117852175
+        }
+      ],
+      "median_process_wall_ratio": 1.0910931302959446,
+      "min_process_wall_ratio": 1.0547573623875872,
+      "max_process_wall_ratio": 1.1073926506252074,
+      "median_child_cpu_ratio": 1.091280957784323,
+      "median_process_wall_seconds": {
+        "image": 1.32652838062495,
+        "stable": 1.437373397871852
+      },
+      "median_child_cpu_seconds": {
+        "image": 1.3201640000000516,
+        "stable": 1.4305915000000118
+      },
+      "reproducible_cost_increase_flagged": false
+    },
+    {
+      "case": "seventh_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "image_process_wall_seconds": 0.3910854230634868,
+          "stable_process_wall_seconds": 0.4239293332211673,
+          "image_child_cpu_seconds": 0.3891100000000063,
+          "stable_child_cpu_seconds": 0.42164799999998054,
+          "process_wall_ratio": 1.0839814225250446,
+          "child_cpu_ratio": 1.0836215980056378
+        },
+        {
+          "round": 2,
+          "image_process_wall_seconds": 0.39605657290667295,
+          "stable_process_wall_seconds": 0.41743458807468414,
+          "image_child_cpu_seconds": 0.3940700000000071,
+          "stable_child_cpu_seconds": 0.4154169999999966,
+          "process_wall_ratio": 1.0539771755613527,
+          "child_cpu_ratio": 1.0541705788311446
+        },
+        {
+          "round": 3,
+          "image_process_wall_seconds": 0.40638898499310017,
+          "stable_process_wall_seconds": 0.5908875777386129,
+          "image_child_cpu_seconds": 0.4042969999999857,
+          "stable_child_cpu_seconds": 0.5877610000000608,
+          "process_wall_ratio": 1.453995062756549,
+          "child_cpu_ratio": 1.4537852123564647
+        },
+        {
+          "round": 4,
+          "image_process_wall_seconds": 0.39554302766919136,
+          "stable_process_wall_seconds": 0.4489745977334678,
+          "image_child_cpu_seconds": 0.3935019999999408,
+          "stable_child_cpu_seconds": 0.44642300000000756,
+          "process_wall_ratio": 1.1350840902926076,
+          "child_cpu_ratio": 1.1344872453000867
+        },
+        {
+          "round": 5,
+          "image_process_wall_seconds": 0.3925887201912701,
+          "stable_process_wall_seconds": 0.42025138484314084,
+          "image_child_cpu_seconds": 0.38969600000003846,
+          "stable_child_cpu_seconds": 0.41719899999997967,
+          "process_wall_ratio": 1.0704621993173757,
+          "child_cpu_ratio": 1.0705755255376974
+        },
+        {
+          "round": 6,
+          "image_process_wall_seconds": 0.405956594273448,
+          "stable_process_wall_seconds": 0.46555709186941385,
+          "image_child_cpu_seconds": 0.4038499999999874,
+          "stable_child_cpu_seconds": 0.46068100000001155,
+          "process_wall_ratio": 1.1468149512453039,
+          "child_cpu_ratio": 1.1407230407330096
+        }
+      ],
+      "median_process_wall_ratio": 1.109532756408826,
+      "min_process_wall_ratio": 1.0539771755613527,
+      "max_process_wall_ratio": 1.453995062756549,
+      "median_child_cpu_ratio": 1.1090544216528624,
+      "median_process_wall_seconds": {
+        "image": 0.39579980028793216,
+        "stable": 0.43645196547731757
+      },
+      "median_child_cpu_seconds": {
+        "image": 0.39378599999997393,
+        "stable": 0.434035499999994
+      },
+      "reproducible_cost_increase_flagged": false
+    }
+  ],
+  "binary_file_bytes": {
+    "image": 8761416,
+    "stable": 8761904
+  },
+  "binary_sections_bytes": {
+    "image": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44880,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435060,
+      ".rodata": 78720,
+      ".eh_frame_hdr": 17492,
+      ".eh_frame": 126720,
+      ".text": 1659327,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26544,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 696,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    },
+    "stable": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44880,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435060,
+      ".rodata": 78688,
+      ".eh_frame_hdr": 17500,
+      ".eh_frame": 126760,
+      ".text": 1659695,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26544,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 312,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    }
+  },
+  "binary_file_delta_stable_minus_image": 488,
+  "text_delta_stable_minus_image": 368,
+  "interpretation": "Descriptive fixed paired whole-process cost comparison of the same original finite-point hull tasks. Every process performs three queries. The proposed repair changes serialized rows while preserving the independently verified exact geometry. All eight preflights are retained and excluded from the six predeclared measurement pairs.",
+  "limits": [
+    "No allocation, retained-byte, RSS, check-body or separate per-query timing evidence.",
+    "This is not a row-preserving optimization comparison. Unflagged cases do not prove absence of regression.",
+    "No universal performance, formal verification, fuzz-campaign or runtime-admission claim."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
