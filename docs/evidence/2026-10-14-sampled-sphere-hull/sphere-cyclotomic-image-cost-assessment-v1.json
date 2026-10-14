@@ -1,0 +1,316 @@
+{
+  "complete": true,
+  "assessor_sha256": "031571bc02fcb15ea42df33193dacee298561915b15afbc19d65dadc5626e4c2",
+  "result_sha256": "ae64449f703d407e036f763f9abbf20b5120e76f2578abf03275c5b97f016897",
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "all_original_native_output_rows_and_certainty_identical": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 5.7992931278422475,
+          "image_process_wall_seconds": 5.965167275164276,
+          "process_wall_ratio": 1.0286024768304385,
+          "child_cpu_ratio": 1.028796889561017
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 5.691586676985025,
+          "image_process_wall_seconds": 5.743041191715747,
+          "process_wall_ratio": 1.0090404517493843,
+          "child_cpu_ratio": 1.0090084620132493
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 5.801415773108602,
+          "image_process_wall_seconds": 5.974115451797843,
+          "process_wall_ratio": 1.029768540205265,
+          "child_cpu_ratio": 1.0296889605893869
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 5.474361569155008,
+          "image_process_wall_seconds": 5.7431332264095545,
+          "process_wall_ratio": 1.0490964387096617,
+          "child_cpu_ratio": 1.048807055654837
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 5.594902701210231,
+          "image_process_wall_seconds": 6.822702386882156,
+          "process_wall_ratio": 1.2194496939877686,
+          "child_cpu_ratio": 1.2182691613738124
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 5.641703634057194,
+          "image_process_wall_seconds": 5.856796738691628,
+          "process_wall_ratio": 1.0381255589776082,
+          "child_cpu_ratio": 1.038150288399766
+        }
+      ],
+      "median_process_wall_ratio": 1.0339470495914367,
+      "min_process_wall_ratio": 1.0090404517493843,
+      "max_process_wall_ratio": 1.2194496939877686,
+      "median_child_cpu_ratio": 1.0339196244945765,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 14.275581104215235,
+          "image_process_wall_seconds": 15.256080412771553,
+          "process_wall_ratio": 1.068683670485876,
+          "child_cpu_ratio": 1.0688508738470806
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 14.033763339743018,
+          "image_process_wall_seconds": 15.460733333136886,
+          "process_wall_ratio": 1.1016812068757602,
+          "child_cpu_ratio": 1.1017622194528989
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 14.12582622282207,
+          "image_process_wall_seconds": 15.421270245686173,
+          "process_wall_ratio": 1.0917074868704777,
+          "child_cpu_ratio": 1.0909784818094286
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 14.156227480154485,
+          "image_process_wall_seconds": 15.447587213013321,
+          "process_wall_ratio": 1.091222024700379,
+          "child_cpu_ratio": 1.0907563238627567
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 14.353782637044787,
+          "image_process_wall_seconds": 15.753669844940305,
+          "process_wall_ratio": 1.0975274074641925,
+          "child_cpu_ratio": 1.0973343585396802
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 14.669631308875978,
+          "image_process_wall_seconds": 15.6137048532255,
+          "process_wall_ratio": 1.0643556422429172,
+          "child_cpu_ratio": 1.06435777768237
+        }
+      ],
+      "median_process_wall_ratio": 1.0914647557854282,
+      "min_process_wall_ratio": 1.0643556422429172,
+      "max_process_wall_ratio": 1.1016812068757602,
+      "median_child_cpu_ratio": 1.0908674028360927,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "fifth_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 0.44066870072856545,
+          "image_process_wall_seconds": 0.4357356787659228,
+          "process_wall_ratio": 0.9888055994117876,
+          "child_cpu_ratio": 0.9884749225808402
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 0.4244719007983804,
+          "image_process_wall_seconds": 0.42564910976216197,
+          "process_wall_ratio": 1.0027733495705309,
+          "child_cpu_ratio": 1.0031673436922741
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 0.45539835235103965,
+          "image_process_wall_seconds": 0.42885674024000764,
+          "process_wall_ratio": 0.9417178126051439,
+          "child_cpu_ratio": 0.9419174139609472
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 0.4215514110401273,
+          "image_process_wall_seconds": 0.4289150470867753,
+          "process_wall_ratio": 1.0174679430641191,
+          "child_cpu_ratio": 1.0174182476880627
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 0.46755175990983844,
+          "image_process_wall_seconds": 0.42949422681704164,
+          "process_wall_ratio": 0.9186025241352194,
+          "child_cpu_ratio": 0.9186402646222992
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 0.44456084398552775,
+          "image_process_wall_seconds": 0.43302856385707855,
+          "process_wall_ratio": 0.9740591635892597,
+          "child_cpu_ratio": 0.9749303243086064
+        }
+      ],
+      "median_process_wall_ratio": 0.9814323815005237,
+      "min_process_wall_ratio": 0.9186025241352194,
+      "max_process_wall_ratio": 1.0174679430641191,
+      "median_child_cpu_ratio": 0.9817026234447233,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "seventh_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 0.12961394106969237,
+          "image_process_wall_seconds": 0.13064214074984193,
+          "process_wall_ratio": 1.007932786177659,
+          "child_cpu_ratio": 1.0073154081268936
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 0.1307299342006445,
+          "image_process_wall_seconds": 0.1298933820798993,
+          "process_wall_ratio": 0.9936009137780086,
+          "child_cpu_ratio": 0.9933906299292488
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 0.1354786087758839,
+          "image_process_wall_seconds": 0.13018356123939157,
+          "process_wall_ratio": 0.9609159882557422,
+          "child_cpu_ratio": 0.9612637892893136
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 0.1280800262466073,
+          "image_process_wall_seconds": 0.13501837104558945,
+          "process_wall_ratio": 1.0541719501651488,
+          "child_cpu_ratio": 1.0568296370967039
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 0.13642837386578321,
+          "image_process_wall_seconds": 0.141082595102489,
+          "process_wall_ratio": 1.0341147600372673,
+          "child_cpu_ratio": 1.026031184341481
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 0.13050369918346405,
+          "image_process_wall_seconds": 0.13730286434292793,
+          "process_wall_ratio": 1.052099405626085,
+          "child_cpu_ratio": 1.0519703731109333
+        }
+      ],
+      "median_process_wall_ratio": 1.0210237731074632,
+      "min_process_wall_ratio": 0.9609159882557422,
+      "max_process_wall_ratio": 1.0541719501651488,
+      "median_child_cpu_ratio": 1.0166732962341873,
+      "reproducible_cost_regression_flagged": false
+    }
+  ],
+  "binary_file_bytes": {
+    "late": 8739096,
+    "image": 8760200
+  },
+  "binary_sections_bytes": {
+    "late": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44448,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435052,
+      ".rodata": 77976,
+      ".eh_frame_hdr": 17420,
+      ".eh_frame": 125888,
+      ".text": 1641103,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26136,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4672,
+      ".got.plt": 40,
+      ".relro_padding": 936,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    },
+    "image": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44880,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435036,
+      ".rodata": 78592,
+      ".eh_frame_hdr": 17484,
+      ".eh_frame": 126704,
+      ".text": 1658591,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26544,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 1608,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    }
+  },
+  "binary_file_delta_image_minus_late": 21104,
+  "text_delta_image_minus_late": 17488,
+  "interpretation": "Descriptive fixed paired whole-process comparison for four original inputs and two isolated implementations. Preflight samples were retained but excluded from the six predeclared measurement pairs.",
+  "limits": [
+    "No allocation, retained-byte, RSS or check-body timing evidence.",
+    "No general performance, formal verification, broad image-filter qualification or runtime admission claim."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

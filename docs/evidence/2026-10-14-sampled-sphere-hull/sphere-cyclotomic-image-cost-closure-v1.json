@@ -1,0 +1,52 @@
+{
+  "status": "fixed_screen_closed_no_predeclared_regression_flag_broad_qualification_next",
+  "assessment_sha256": "493e7433af57c5da53bf57a8f25e8d03bd3021365c1bc0985ec02b44065b3402",
+  "commands_all_zero": 58,
+  "fixed_sample_processes": 48,
+  "preflight_processes": 8,
+  "all_exact_outputs_identical": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "median_process_wall_ratio": 1.0339470495914367,
+      "min_process_wall_ratio": 1.0090404517493843,
+      "max_process_wall_ratio": 1.2194496939877686,
+      "median_child_cpu_ratio": 1.0339196244945765,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "median_process_wall_ratio": 1.0914647557854282,
+      "min_process_wall_ratio": 1.0643556422429172,
+      "max_process_wall_ratio": 1.1016812068757602,
+      "median_child_cpu_ratio": 1.0908674028360927,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "fifth_turn",
+      "median_process_wall_ratio": 0.9814323815005237,
+      "min_process_wall_ratio": 0.9186025241352194,
+      "max_process_wall_ratio": 1.0174679430641191,
+      "median_child_cpu_ratio": 0.9817026234447233,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "seventh_turn",
+      "median_process_wall_ratio": 1.0210237731074632,
+      "min_process_wall_ratio": 0.9609159882557422,
+      "max_process_wall_ratio": 1.0541719501651488,
+      "median_child_cpu_ratio": 1.0166732962341873,
+      "reproducible_cost_regression_flagged": false
+    }
+  ],
+  "raw_binary_delta_bytes": 21104,
+  "text_section_delta_bytes": 17488,
+  "decision": "None of the four cases meets the predeclared rejection rule. This is an inconclusive screen for significant regression, not performance admission: the 32x16 median paired process-wall ratio is about 1.091 and the binary grows by 21104 bytes. Proceed to broader qualification of this unchanged candidate and retain all observed costs for final admission.",
+  "limits": [
+    "No allocation, retained-byte, RSS or check-body timing evidence.",
+    "No general performance, formal verification, broad image-filter qualification or runtime admission claim."
+  ],
+  "prior_samples_pooled": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

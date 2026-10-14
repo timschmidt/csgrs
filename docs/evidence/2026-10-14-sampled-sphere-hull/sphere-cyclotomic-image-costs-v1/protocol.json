@@ -1,0 +1,100 @@
+{
+  "inputs_sha256": {
+    "measure_sphere_cyclotomic_image_cost_v1.py": "e72777333227514868154b2efde4988561b26ce0074614108d19ffa26ab2064b",
+    "assess_sphere_cyclotomic_image_cost_v1.py": "031571bc02fcb15ea42df33193dacee298561915b15afbc19d65dadc5626e4c2",
+    "sphere-cyclotomic-image-cost-scope-v1.json": "c3ea060461c3e82390d2c44d2415f4d4bdaa65b7900aafdc81fccc08801da0bc",
+    "sphere-cyclotomic-image-assessment-v1.json": "4c9bfbffab6c311c39075c20e5fbb370ada2b4ff6c5f452de9676a7e812e8792",
+    "sphere-cyclotomic-assessment-v2.json": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+    "sphere-cyclotomic-qualification-assessment-v1.json": "ec9f5771599a1ec1fbddaf704947acb25f61f33ba1f5f15b9b51c439c99477d1",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73"
+  },
+  "binaries": {
+    "late": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "sha256": "5039838633eb30efb10c88601baaa2ec6cb55de3659fac5d82f77ac301652fa4",
+      "bytes": 8739096
+    },
+    "image": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "sha256": "0149616d97d13bf17e6fcafb01a384a28cd336b34d0e7ef4d0bb491081b98449",
+      "bytes": 8760200
+    }
+  },
+  "library_features": {
+    "late": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    },
+    "image": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    }
+  },
+  "source_protocols_sha256": {
+    "late": "b876fd591ddea3fb4e6540849a6748786d7d668fd0a198994fcd78bfea219dea",
+    "image": "dc52bef136539c9fb15809b4c23493caa0901d1c77fc199b6363e5128cb42bab"
+  },
+  "root_source_files": 10129,
+  "source_files": {
+    "late": 10132,
+    "image": 10135
+  },
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3459.527\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "load_average_before": [
+    2.82666015625,
+    3.41552734375,
+    3.57421875
+  ],
+  "cases": [
+    "fifteen_degrees",
+    "original_medium",
+    "fifth_turn",
+    "seventh_turn"
+  ],
+  "orders": [
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ],
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ],
+    [
+      "late",
+      "image"
+    ],
+    [
+      "image",
+      "late"
+    ]
+  ],
+  "preflight_processes": 8,
+  "sample_processes": 48,
+  "samples_may_be_extended_filtered_or_pooled": false,
+  "measurement": "Full original native reproducer process wall time and child user/system CPU, including sphere construction, hull query, exact checks and row serialization. Each process starts with fresh process-local caches; preflights warm operating-system code pages, not retained scalar values across processes.",
+  "limits": "Focused placement screen only. No allocation, retained-byte, RSS, check-body timing, full workspace qualification or runtime admission claim.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

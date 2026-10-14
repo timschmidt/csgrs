@@ -1,0 +1,984 @@
+[
+  {
+    "name": "size-late",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.01272563822567463,
+    "child_user_cpu_seconds": 0.002908,
+    "child_system_cpu_seconds": 0.0,
+    "stdout_sha256": "b57d2e8fc32854f11f7e3f915ee31d00a23735a05fc131d14f5f3e6a6f4836e1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-image",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0026666270568966866,
+    "child_user_cpu_seconds": 0.0,
+    "child_system_cpu_seconds": 0.0025319999999999995,
+    "stdout_sha256": "ef6fb9a30c9ec265d1fd1fd45dd28edb4144c49be786f1fe79ec887275341547",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.535785039886832,
+    "child_user_cpu_seconds": 5.507287,
+    "child_system_cpu_seconds": 0.003965,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.440855242311954,
+    "child_user_cpu_seconds": 14.374279,
+    "child_system_cpu_seconds": 0.0029850000000000015,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4185175891034305,
+    "child_user_cpu_seconds": 0.4134290000000007,
+    "child_system_cpu_seconds": 0.003191999999999997,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.12966870702803135,
+    "child_user_cpu_seconds": 0.12484099999999998,
+    "child_system_cpu_seconds": 0.004134000000000002,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 6.107207654975355,
+    "child_user_cpu_seconds": 6.076363000000001,
+    "child_system_cpu_seconds": 0.001982000000000001,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.892806963063776,
+    "child_user_cpu_seconds": 15.818363000000002,
+    "child_system_cpu_seconds": 0.0029840000000000005,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4515183470211923,
+    "child_user_cpu_seconds": 0.4458929999999981,
+    "child_system_cpu_seconds": 0.0031829999999999983,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-0-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.14085185108706355,
+    "child_user_cpu_seconds": 0.13660899999999998,
+    "child_system_cpu_seconds": 0.003280999999999999,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.7992931278422475,
+    "child_user_cpu_seconds": 5.766661999999997,
+    "child_system_cpu_seconds": 0.005385000000000001,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.275581104215235,
+    "child_user_cpu_seconds": 14.205599,
+    "child_system_cpu_seconds": 0.003980999999999998,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.44066870072856545,
+    "child_user_cpu_seconds": 0.4353000000000051,
+    "child_system_cpu_seconds": 0.0032220000000000026,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.12961394106969237,
+    "child_user_cpu_seconds": 0.12478300000000075,
+    "child_system_cpu_seconds": 0.004122999999999995,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 5.965167275164276,
+    "child_user_cpu_seconds": 5.937267999999996,
+    "child_system_cpu_seconds": 0.0009960000000000038,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.256080412771553,
+    "child_user_cpu_seconds": 15.183644999999999,
+    "child_system_cpu_seconds": 0.004277000000000003,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4357356787659228,
+    "child_user_cpu_seconds": 0.43048100000000034,
+    "child_system_cpu_seconds": 0.0029869999999999897,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13064214074984193,
+    "child_user_cpu_seconds": 0.1275980000000061,
+    "child_system_cpu_seconds": 0.002251000000000003,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 5.743041191715747,
+    "child_user_cpu_seconds": 5.713500999999994,
+    "child_system_cpu_seconds": 0.0032110000000000055,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.460733333136886,
+    "child_user_cpu_seconds": 15.390309000000002,
+    "child_system_cpu_seconds": 0.0009929999999999939,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.42564910976216197,
+    "child_user_cpu_seconds": 0.42277500000000146,
+    "child_system_cpu_seconds": 0.0009989999999999999,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1298933820798993,
+    "child_user_cpu_seconds": 0.12811100000000408,
+    "child_system_cpu_seconds": 0.0009969999999999979,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.691586676985025,
+    "child_user_cpu_seconds": 5.659452000000002,
+    "child_system_cpu_seconds": 0.006221000000000004,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.033763339743018,
+    "child_user_cpu_seconds": 13.967352999999989,
+    "child_system_cpu_seconds": 0.002360000000000001,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4244719007983804,
+    "child_user_cpu_seconds": 0.41925300000001187,
+    "child_system_cpu_seconds": 0.0031830000000000053,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-2-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1307299342006445,
+    "child_user_cpu_seconds": 0.12681099999998935,
+    "child_system_cpu_seconds": 0.003155999999999992,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.801415773108602,
+    "child_user_cpu_seconds": 5.769539000000009,
+    "child_system_cpu_seconds": 0.005099000000000006,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.12582622282207,
+    "child_user_cpu_seconds": 14.065718000000004,
+    "child_system_cpu_seconds": 0.002146999999999996,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.45539835235103965,
+    "child_user_cpu_seconds": 0.4498710000000017,
+    "child_system_cpu_seconds": 0.0032080000000000025,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1354786087758839,
+    "child_user_cpu_seconds": 0.1324109999999905,
+    "child_system_cpu_seconds": 0.0022949999999999915,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 5.974115451797843,
+    "child_user_cpu_seconds": 5.9418059999999855,
+    "child_system_cpu_seconds": 0.004275000000000001,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.421270245686173,
+    "child_user_cpu_seconds": 15.346743000000004,
+    "child_system_cpu_seconds": 0.0009949999999999959,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.42885674024000764,
+    "child_user_cpu_seconds": 0.4235920000000135,
+    "child_system_cpu_seconds": 0.003171000000000007,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-3-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13018356123939157,
+    "child_user_cpu_seconds": 0.12635199999999713,
+    "child_system_cpu_seconds": 0.003136,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 5.7431332264095545,
+    "child_user_cpu_seconds": 5.713175000000007,
+    "child_system_cpu_seconds": 0.0032220000000000026,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.447587213013321,
+    "child_user_cpu_seconds": 15.37147299999998,
+    "child_system_cpu_seconds": 0.004186999999999996,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4289150470867753,
+    "child_user_cpu_seconds": 0.4246740000000102,
+    "child_system_cpu_seconds": 0.0021940000000000015,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13501837104558945,
+    "child_user_cpu_seconds": 0.13103699999999208,
+    "child_system_cpu_seconds": 0.003154999999999991,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.474361569155008,
+    "child_user_cpu_seconds": 5.445268999999996,
+    "child_system_cpu_seconds": 0.005111000000000004,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.156227480154485,
+    "child_user_cpu_seconds": 14.090188000000012,
+    "child_system_cpu_seconds": 0.0061410000000000076,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.4215514110401273,
+    "child_user_cpu_seconds": 0.4173470000000066,
+    "child_system_cpu_seconds": 0.0022129999999999928,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-4-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.1280800262466073,
+    "child_user_cpu_seconds": 0.12597900000000095,
+    "child_system_cpu_seconds": 0.0009969999999999979,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.594902701210231,
+    "child_user_cpu_seconds": 5.566057999999998,
+    "child_system_cpu_seconds": 0.004028000000000004,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.353782637044787,
+    "child_user_cpu_seconds": 14.287686000000008,
+    "child_system_cpu_seconds": 0.004070999999999991,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.46755175990983844,
+    "child_user_cpu_seconds": 0.4630650000000003,
+    "child_system_cpu_seconds": 0.0022020000000000095,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13642837386578321,
+    "child_user_cpu_seconds": 0.1323719999999753,
+    "child_system_cpu_seconds": 0.003272999999999998,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 6.822702386882156,
+    "child_user_cpu_seconds": 6.783666000000011,
+    "child_system_cpu_seconds": 0.0021980000000000055,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.753669844940305,
+    "child_user_cpu_seconds": 15.680669999999992,
+    "child_system_cpu_seconds": 0.0021660000000000013,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.42949422681704164,
+    "child_user_cpu_seconds": 0.42511900000002356,
+    "child_system_cpu_seconds": 0.0022939999999999905,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-5-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.141082595102489,
+    "child_user_cpu_seconds": 0.13757299999997485,
+    "child_system_cpu_seconds": 0.0016029999999999933,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-image-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 5.856796738691628,
+    "child_user_cpu_seconds": 5.82587300000003,
+    "child_system_cpu_seconds": 0.004187999999999997,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-image-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 15.6137048532255,
+    "child_user_cpu_seconds": 15.540525000000002,
+    "child_system_cpu_seconds": 0.00325700000000001,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-image-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.43302856385707855,
+    "child_user_cpu_seconds": 0.42876400000000103,
+    "child_system_cpu_seconds": 0.0022020000000000095,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-image-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13730286434292793,
+    "child_user_cpu_seconds": 0.1322619999999688,
+    "child_system_cpu_seconds": 0.004227999999999982,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 5.641703634057194,
+    "child_user_cpu_seconds": 5.61063200000001,
+    "child_system_cpu_seconds": 0.005184000000000022,
+    "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 14.669631308875978,
+    "child_user_cpu_seconds": 14.600685999999996,
+    "child_system_cpu_seconds": 0.0032210000000000016,
+    "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-late-fifth_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "fifth_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.44456084398552775,
+    "child_user_cpu_seconds": 0.43872600000003104,
+    "child_system_cpu_seconds": 0.0033219999999999916,
+    "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-6-late-seventh_turn",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate",
+      "seventh_turn"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.13050369918346405,
+    "child_user_cpu_seconds": 0.12751999999994723,
+    "child_system_cpu_seconds": 0.0022270000000000068,
+    "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]
