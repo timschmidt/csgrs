@@ -1,0 +1,47 @@
+{
+  "status": "prospective-isolated-qualification",
+  "parent": "docs/evidence/2026-10-13-borrowed-integer-leaves",
+  "parent_runtime_admitted": false,
+  "change": "One shared node-kind predicate guards retained Laurent reads and publication; exactly the existing eight publication kinds.",
+  "variants": {
+    "baseline": "Parent runtime plus identical new contract tests.",
+    "candidate": "Same tests plus lookup eligibility guard."
+  },
+  "source_files_each": 10135,
+  "changed_or_added_paths_each": 2,
+  "qualification_commands": [
+    "baseline all-feature/all-target release Clippy -D warnings",
+    "baseline all-feature release library test build",
+    "baseline three new controls",
+    "candidate all-feature/all-target release Clippy -D warnings",
+    "candidate all-feature release library test build",
+    "candidate complete 879 scalar library tests",
+    "candidate default-feature/all-target release Clippy -D warnings",
+    "candidate default-feature release library test build",
+    "candidate two non-serde controls",
+    "candidate all-feature release library build"
+  ],
+  "formatting": "cargo fmt --all -- --check in each fresh source before freezing preparation",
+  "expected_retained_tests": {
+    "parent": 876,
+    "P4": 11,
+    "persistent_Laurent": 6,
+    "borrowed_integer": 2
+  },
+  "new_tests": 3,
+  "baseline_default_full_suite_claimed": false,
+  "candidate_default_full_suite_claimed": false,
+  "measurements_this_protocol": 0,
+  "native_gates_this_protocol": 0,
+  "later_cost_scope": "Freeze separately after qualification: original rational/quadratic/integer probes, all 68 phases, main/borrowed/eligibility six balanced orders, 4096 timing and 1000 allocation inputs. Broader arc/metadata/broad/native obligations remain before admission.",
+  "rules": [
+    "Preserve all executed runners, source snapshots, binaries, logs and failures; use a new version if execution fails.",
+    "Serialize builds and test processes, keep all warnings fatal, and gate dependent steps on terminal exit zero.",
+    "Keep exact answers, Unknown/error contracts, retained proofs, ownership, budgets and retry behavior.",
+    "Preserve main runtime 1134-file map and original 35 pending native paths; only current_work may change in the status ledger.",
+    "No scope narrowing: all 39 properties, 14 targets and crate future work remain active."
+  ],
+  "runtime_candidate": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

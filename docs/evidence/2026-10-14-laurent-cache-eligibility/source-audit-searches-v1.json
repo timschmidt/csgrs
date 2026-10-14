@@ -1,0 +1,38 @@
+[
+  {
+    "command": [
+      "rg",
+      "-n",
+      "pi_laurent_polynomial|ClosedPiLaurentPolynomial",
+      "crates/hyperreal/src"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout": "crates/hyperreal/src/computable/node/representation.rs:143:    pi_laurent_polynomial: Option<Box<ClosedPiLaurentPolynomial>>,\ncrates/hyperreal/src/computable/node/representation.rs:264:    fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {\ncrates/hyperreal/src/computable/node/representation.rs:269:        Some(guard.pi_laurent_polynomial.as_deref()?.to_polynomial())\ncrates/hyperreal/src/computable/node/representation.rs:272:    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {\ncrates/hyperreal/src/computable/node/representation.rs:273:        let Some(closed) = ClosedPiLaurentPolynomial::from_polynomial(polynomial) else {\ncrates/hyperreal/src/computable/node/representation.rs:280:        if guard.pi_laurent_polynomial.is_none() {\ncrates/hyperreal/src/computable/node/representation.rs:281:            guard.pi_laurent_polynomial = Some(Box::new(closed));\ncrates/hyperreal/src/computable/node/algebra.rs:221:struct ClosedPiLaurentPolynomial {\ncrates/hyperreal/src/computable/node/algebra.rs:230:impl ClosedPiLaurentPolynomial {\ncrates/hyperreal/src/computable/node/algebra.rs:454:    fn project_pi_laurent_polynomial<T>(\ncrates/hyperreal/src/computable/node/algebra.rs:463:            .pi_laurent_polynomial_retained::<true>(\ncrates/hyperreal/src/computable/node/algebra.rs:483:            self.pi_laurent_polynomial(budget).and_then(project)\ncrates/hyperreal/src/computable/node/algebra.rs:489:    fn pi_laurent_polynomial(&self, budget: usize) -> Option<PiLaurentPolynomial> {\ncrates/hyperreal/src/computable/node/algebra.rs:492:        self.pi_laurent_polynomial_with_memo(budget, &mut remaining_work, &mut memo)\ncrates/hyperreal/src/computable/node/algebra.rs:495:    fn pi_laurent_polynomial_with_memo(\ncrates/hyperreal/src/computable/node/algebra.rs:501:        self.pi_laurent_polynomial_retained::<false>(budget, remaining_work, memo, &mut false)\ncrates/hyperreal/src/computable/node/algebra.rs:504:    fn pi_laurent_polynomial_retained<const RETAIN: bool>(\ncrates/hyperreal/src/computable/node/algebra.rs:511:        if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {\ncrates/hyperreal/src/computable/node/algebra.rs:568:                    .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:574:                    .add(right.pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:581:                    .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:587:                    .multiply(right.pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:595:                        .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:605:                        .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:614:                    .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:622:                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:631:                    let child = child.pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:666:                                .pi_laurent_polynomial_retained::<RETAIN>(\ncrates/hyperreal/src/computable/node/algebra.rs:703:                self.internal.cache.store_pi_laurent_polynomial(polynomial);\ncrates/hyperreal/src/computable/node/algebra.rs:710:        let rational = self.project_pi_laurent_polynomial(budget, |polynomial| match polynomial\ncrates/hyperreal/src/computable/node/algebra.rs:731:        let polynomial = self.project_pi_laurent_polynomial(64, |polynomial| {\ncrates/hyperreal/src/computable/node/algebra.rs:1242:        self.project_pi_laurent_polynomial(48, |polynomial| match polynomial.terms.as_slice() {\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:32:        value.pi_laurent_polynomial_retained::<true>(depth, &mut remaining, &mut None, &mut reused);\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:44:    assert!(value.pi_laurent_polynomial(0).is_none());\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:46:    assert!(value.internal.cache.pi_laurent_polynomial().is_none());\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:71:    assert!(ClosedPiLaurentPolynomial::from_polynomial(&polynomial).is_none());\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:72:    assert!(value.internal.cache.pi_laurent_polynomial().is_none());\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:101:        expression.pi_laurent_polynomial(4).and_then(rational),\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:140:            let cold = value.pi_laurent_polynomial(depth).and_then(rational);\ncrates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs:179:    assert!(value.internal.cache.pi_laurent_polynomial().is_some());\ncrates/hyperreal/src/computable/node/structural_analysis.rs:1312:        let value = self.project_pi_laurent_polynomial(64, |polynomial| {\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rg",
+      "-n",
+      "struct Node|impl.*Node|serde\\(skip|struct CachedEvaluation|impl Default for EvaluationCache",
+      "crates/hyperreal/src/computable/node/representation.rs"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout": "11:    #[cfg_attr(feature = \"serde\", serde(skip))]\n21:pub(super) struct Node {\n22:    #[cfg_attr(feature = \"serde\", serde(skip, default))]\n25:    #[cfg_attr(feature = \"serde\", serde(skip, default))]\n30:impl Node {\n140:struct CachedEvaluation {\n312:impl Default for EvaluationCache {\n338:impl Deref for Node {\n",
+    "stderr": ""
+  },
+  {
+    "command": [
+      "rg",
+      "-n",
+      "\\bNode\\s*\\{|\\.internal\\s*=|\\.approximation\\s*=|Arc::(get_mut|try_unwrap)|DerefMut|UnsafeCell|as \\*mut Node",
+      "crates/hyperreal/src"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/borrowed-integer-leaves-v1/source",
+    "exit_code": 0,
+    "stdout": "crates/hyperreal/src/computable/node/representation.rs:21:pub(super) struct Node {\ncrates/hyperreal/src/computable/node/representation.rs:30:impl Node {\ncrates/hyperreal/src/computable/node/representation.rs:249:            guard.approximation = Some(CachedApproximation {\ncrates/hyperreal/src/computable/node/representation.rs:338:impl Deref for Node {\ncrates/hyperreal/src/rational/arithmetic/construction.rs:66:        } = Arc::try_unwrap(self.0).unwrap_or_else(|shared| RationalData {\ncrates/hyperreal/src/rational/arithmetic/construction.rs:707:        match Arc::try_unwrap(self.0) {\ncrates/hyperreal/src/rational/arithmetic/ops.rs:1257:        if let Some(data) = Arc::get_mut(&mut self.0) {\n",
+    "stderr": ""
+  }
+]

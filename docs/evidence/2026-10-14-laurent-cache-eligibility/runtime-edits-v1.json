@@ -1,0 +1,25 @@
+{
+  "common_edits": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "#[cfg(test)]\nmod persistent_laurent_cache_tests;",
+      "after": "#[cfg(test)]\nmod persistent_laurent_cache_tests;\n\n#[cfg(test)]\nmod laurent_cache_eligibility_tests;"
+    }
+  ],
+  "candidate_edits": [
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "        if RETAIN && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {",
+      "after": "        // Only these immutable node kinds can publish a closed certificate.\n        // A proof remains reusable after the last additional owner is dropped.\n        let cacheable = RETAIN\n            && matches!(\n                self.internal.approximation,\n                Approximation::Add(_, _)\n                    | Approximation::Multiply(_, _)\n                    | Approximation::Negate(_)\n                    | Approximation::Offset(_, _)\n                    | Approximation::Inverse(_)\n                    | Approximation::Square(_)\n                    | Approximation::Sqrt(_)\n                    | Approximation::LinearCombination3(_)\n            );\n        if cacheable && let Some(polynomial) = self.internal.cache.pi_laurent_polynomial() {"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "            if RETAIN\n                && matches!(\n                    self.internal.approximation,\n                    Approximation::Add(_, _)\n                        | Approximation::Multiply(_, _)\n                        | Approximation::Negate(_)\n                        | Approximation::Offset(_, _)\n                        | Approximation::Inverse(_)\n                        | Approximation::Square(_)\n                        | Approximation::Sqrt(_)\n                        | Approximation::LinearCombination3(_)\n                )\n                && let Some(polynomial) = &result\n            {",
+      "after": "            if cacheable && let Some(polynomial) = &result {"
+    }
+  ],
+  "new_test_module": {
+    "source": "eligibility_tests_v1.rs",
+    "target": "crates/hyperreal/src/computable/node/laurent_cache_eligibility_tests.rs"
+  }
+}
