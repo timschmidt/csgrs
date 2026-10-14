@@ -1,0 +1,56 @@
+{
+  "complete": true,
+  "result_sha256": "8f97b7add2dded81d4ab25e1297214a2b0b98d7dc069752e94a78a2ea3375f05",
+  "assessor_sha256": "060fee20fa53b3ed5ef2803626b66210d3a80720ff73fa704b3b9900c37cde05",
+  "commands_all_zero": 12,
+  "targeted_scalar_tests_passed": 6,
+  "captured_independent_zero_determinants": 157,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "certified": true,
+      "original_positions": 266,
+      "triangle_rows": 528,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df"
+    },
+    {
+      "case": "original_medium",
+      "certified": true,
+      "original_positions": 482,
+      "triangle_rows": 960,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd"
+    },
+    {
+      "case": "fifth_turn",
+      "certified": true,
+      "original_positions": 62,
+      "triangle_rows": 120,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4"
+    },
+    {
+      "case": "seventh_turn",
+      "certified": true,
+      "original_positions": 30,
+      "triangle_rows": 56,
+      "closed_oriented_edges_rechecked": true,
+      "all_original_indices_preserved_once": true,
+      "stdout_sha256": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+    }
+  ],
+  "prior_certified_24_by_12_order_rows_and_certainty_unchanged": true,
+  "source_files_rechecked": 10132,
+  "claim": "Native feasibility: the unchanged ordinary STRICT sphere hull API certifies all four original exact sampled point sets with the isolated scalar candidate. Prior complete hull rows remain identical.",
+  "limits": [
+    "This is not broad scalar/predicate/mesh qualification, formal verification, a complete proof of returned hull convexity, or a matched performance comparison.",
+    "All native allocation, retention, binary-size and proportionate timing gates remain pending.",
+    "Only six targeted tests ran; 781 other library tests were filtered by the frozen feasibility protocol."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

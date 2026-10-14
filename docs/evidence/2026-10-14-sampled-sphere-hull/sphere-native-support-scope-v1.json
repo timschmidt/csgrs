@@ -1,0 +1,61 @@
+{
+  "objective": "Independently verify every native output face against every unchanged original sampled point, with exact zero recognition and rational sign bounds.",
+  "native_assessment_sha256": "c5252385450169387996c12bcb9c1e3848d18ad9c163fb8370b620d56669f718",
+  "native_runtime_calls": false,
+  "complete_face_point_pairs": 612288,
+  "cases": [
+    [
+      24,
+      12,
+      266,
+      528
+    ],
+    [
+      32,
+      16,
+      482,
+      960
+    ],
+    [
+      10,
+      7,
+      62,
+      120
+    ],
+    [
+      7,
+      5,
+      30,
+      56
+    ]
+  ],
+  "exact_geometry": "The same index-to-coordinate construction as the prior independent oracle, scaled by positive 4/radius. This validates the convex hull of the finite original sampled set, not an analytic sphere.",
+  "zero_proof": "Integer polynomial determinant remainder modulo the field cyclotomic polynomial. A nonzero reduced normal component proves a nondegenerate face.",
+  "sign_proof": "Rational Taylor enclosures for cosine powers of the primitive root; interval arithmetic on the exact field normal and original point coordinates proves each strict inward sign. An interval containing zero is accepted only when the separate exact polynomial determinant is zero.",
+  "pi_proof": "pi = 4*(atan(1/2)+atan(1/3)); the arctangent addition formula gives atan(1), with positive arguments and product 1/6 < 1 selecting the principal branch. Eighty alternating terms bound each arctangent; outward rounding gives a dyadic 128-bit pi interval.",
+  "cosine_proof": "Forty cosine terms through degree 79, remainder at most abs(center)^80/80! by the real derivative bound 1; add half the argument interval width using the 1-Lipschitz bound. Round outward to 96-bit dyadics.",
+  "negative_controls": "For every emitted triangle the constructed point a+normal has strictly positive interval normal dot normal, proving the sign filter does not classify everything as inside.",
+  "primary_references": [
+    {
+      "url": "https://dlmf.nist.gov/4.24.E3",
+      "supports": "Arctangent power series."
+    },
+    {
+      "url": "https://dlmf.nist.gov/4.24.E15",
+      "supports": "Arctangent addition formula; the principal-branch restriction is explicitly checked in the derivation above."
+    },
+    {
+      "url": "https://dlmf.nist.gov/4.19.E2",
+      "supports": "Cosine power series."
+    },
+    {
+      "url": "https://leanprover-community.github.io/mathlib4_docs/Mathlib/RingTheory/Polynomial/Cyclotomic/Roots.html",
+      "supports": "Cyclotomic minimal polynomial of a primitive root in characteristic zero."
+    }
+  ],
+  "wall_stop_seconds": 600,
+  "precision_or_budget_extensions_allowed": false,
+  "runtime_admitted": false,
+  "formal_verification": false,
+  "plan_complete": false
+}

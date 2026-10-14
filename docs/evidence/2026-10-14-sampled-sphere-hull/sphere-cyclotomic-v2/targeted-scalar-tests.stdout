@@ -1,0 +1,11 @@
+
+running 6 tests
+test computable::node::cyclotomic::tests::cyclotomic_captured_exact_zero_determinants ... ok
+test computable::node::cyclotomic::tests::cyclotomic_concurrent_replay_preserves_available_facts ... ok
+test computable::node::cyclotomic::tests::cyclotomic_moduli_and_root_branches ... ok
+test computable::node::cyclotomic::tests::cyclotomic_nonzero_face_controls_and_signed_perturbations ... ok
+test computable::node::cyclotomic::tests::cyclotomic_resource_guards_are_unknown ... ok
+test computable::node::cyclotomic::tests::cyclotomic_sine_pythagorean_and_angle_addition ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 781 filtered out; finished in 0.02s
+
