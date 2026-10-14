@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "normal-form-image-filter-native-costs-closed-sanitizer-ready",
+      "status": "normal-form-image-filter-lsan-shutdown-failure-preserved",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5273,7 +5273,7 @@
       "sphere_normal_image_resources_executed": true,
       "sphere_normal_image_asan_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-scope-v1.json",
       "sphere_normal_image_asan_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_normal_image_asan_v1.py",
-      "sphere_normal_image_asan_executed": false,
+      "sphere_normal_image_asan_executed": true,
       "sphere_normal_image_native_cost_complete": true,
       "sphere_normal_image_native_cost_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-assessment-v1.json",
       "sphere_normal_image_native_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-native-cost-closure-v1.json",
@@ -5313,7 +5313,12 @@
           25032
         ]
       },
-      "sphere_normal_image_native_heap_saving_claimed": false
+      "sphere_normal_image_native_heap_saving_claimed": false,
+      "sphere_normal_image_asan_complete": false,
+      "sphere_normal_image_asan_failure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-v1/failure.json",
+      "sphere_normal_image_asan_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/normal-image-asan-closure-v1.json",
+      "sphere_normal_image_asan_partial_tests_passed": 242,
+      "sphere_normal_image_asan_failure_classification": "LeakSanitizer infrastructure failure; the diagnostic gives a generic ptrace warning. Its exact cause has not yet been demonstrated. No leak report or library invalid-access diagnostic was produced."
     }
   },
   "status_meanings": {
