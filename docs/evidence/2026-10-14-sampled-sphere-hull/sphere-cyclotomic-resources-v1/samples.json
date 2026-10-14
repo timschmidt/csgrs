@@ -1,0 +1,124 @@
+[
+  {
+    "name": "sample-1-baseline-fifteen_degrees",
+    "group": "baseline",
+    "case": "fifteen_degrees",
+    "round": 1,
+    "position": 1,
+    "rows": [
+      {
+        "phase": "construct",
+        "allocation_calls": 2045,
+        "allocated_bytes": 219088,
+        "retained_bytes_delta": 93416,
+        "peak_bytes_delta": 135408,
+        "nanos_with_allocator_accounting": 335317
+      },
+      {
+        "phase": "cold_hull",
+        "allocation_calls": 78647167,
+        "allocated_bytes": 4338100098,
+        "retained_bytes_delta": 602896,
+        "peak_bytes_delta": 854450,
+        "nanos_with_allocator_accounting": 5887108309
+      },
+      {
+        "phase": "warm_hull",
+        "allocation_calls": 78638433,
+        "allocated_bytes": 4337705946,
+        "retained_bytes_delta": 137672,
+        "peak_bytes_delta": 601368,
+        "nanos_with_allocator_accounting": 5869952144
+      },
+      {
+        "phase": "replay_hull",
+        "allocation_calls": 78637917,
+        "allocated_bytes": 4337660658,
+        "retained_bytes_delta": 98480,
+        "peak_bytes_delta": 601368,
+        "nanos_with_allocator_accounting": 5954185555
+      },
+      {
+        "phase": "drop_outputs_and_input",
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -153336,
+        "peak_bytes_delta": 0,
+        "nanos_with_allocator_accounting": 21758
+      },
+      {
+        "phase": "clear_grammar_cache",
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -101288,
+        "peak_bytes_delta": 0,
+        "nanos_with_allocator_accounting": 34678
+      }
+    ],
+    "lifecycle": {
+      "lifecycle_retained_requested_bytes": 677840
+    },
+    "all_three_exact_outputs_identical": true
+  },
+  {
+    "name": "sample-1-late-fifteen_degrees",
+    "group": "late",
+    "case": "fifteen_degrees",
+    "round": 1,
+    "position": 2,
+    "rows": [
+      {
+        "phase": "construct",
+        "allocation_calls": 2045,
+        "allocated_bytes": 219088,
+        "retained_bytes_delta": 93416,
+        "peak_bytes_delta": 135408,
+        "nanos_with_allocator_accounting": 400643
+      },
+      {
+        "phase": "cold_hull",
+        "allocation_calls": 78647167,
+        "allocated_bytes": 4338100098,
+        "retained_bytes_delta": 602896,
+        "peak_bytes_delta": 854450,
+        "nanos_with_allocator_accounting": 6112974908
+      },
+      {
+        "phase": "warm_hull",
+        "allocation_calls": 78638433,
+        "allocated_bytes": 4337705946,
+        "retained_bytes_delta": 137672,
+        "peak_bytes_delta": 601368,
+        "nanos_with_allocator_accounting": 6020652442
+      },
+      {
+        "phase": "replay_hull",
+        "allocation_calls": 78637917,
+        "allocated_bytes": 4337660658,
+        "retained_bytes_delta": 98480,
+        "peak_bytes_delta": 601368,
+        "nanos_with_allocator_accounting": 6247826602
+      },
+      {
+        "phase": "drop_outputs_and_input",
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -153336,
+        "peak_bytes_delta": 0,
+        "nanos_with_allocator_accounting": 15799
+      },
+      {
+        "phase": "clear_grammar_cache",
+        "allocation_calls": 0,
+        "allocated_bytes": 0,
+        "retained_bytes_delta": -101288,
+        "peak_bytes_delta": 0,
+        "nanos_with_allocator_accounting": 28689
+      }
+    ],
+    "lifecycle": {
+      "lifecycle_retained_requested_bytes": 677840
+    },
+    "all_three_exact_outputs_identical": true
+  }
+]

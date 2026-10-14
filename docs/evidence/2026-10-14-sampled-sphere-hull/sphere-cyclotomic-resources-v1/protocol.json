@@ -1,0 +1,167 @@
+{
+  "inputs_sha256": {
+    "measure_sphere_resources_v1.py": "3cad4ed36b0af879d2c3cc8ae49e39df6de9efc04984662d5188e87093021f8f",
+    "assess_sphere_resources_v1.py": "a57986e47431f97a1747d5b59f2fe8912b2d61613cf36c3908b67768f6ac5e3e",
+    "sphere_resource_probe_v1.rs": "684e438d5099356ea9916f5477e2dcfc71b4d52e4a20a4b991a854249bc53a44",
+    "sphere-cyclotomic-resources-scope-v1.json": "46bdb1b0152b08502ff4ebc2a352d07fdc7653f96215ec7499757e318a6430fb",
+    "sphere-cyclotomic-image-qualification-assessment-v1.json": "b90d58d6562f796859bc99f95b4f6ed314d346b83e1d2016d81baf032d0247b0",
+    "sphere-cyclotomic-image-qualification-v1/result.json": "d25a2980a20b10851c913baaa28bcaf70c9961e99d18d8fe7c9100d57a596afb",
+    "sphere-cyclotomic-image-cost-assessment-v1.json": "493e7433af57c5da53bf57a8f25e8d03bd3021365c1bc0985ec02b44065b3402",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+    "mesh-identity-qualification-v1/result.json": "cd2edefcb9e8f56efec1cf3abab0cb9a2fe268a0803bff966ad8913ae5230665",
+    "sphere-cyclotomic-v2/result.json": "8f97b7add2dded81d4ab25e1297214a2b0b98d7dc069752e94a78a2ea3375f05",
+    "sphere-cyclotomic-image-v1/result.json": "f252dcef2a8e7f4f5244472592a2aff1eb9fa4b8c3e7566901b72c6c8854c398",
+    "mesh-identity-preparation-v1/source-hashes.json.gz": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "sphere-cyclotomic-v2/source-hashes.json.gz": "e07e587012041626bebd796701af862e4d8a1125b11be1c12f088c1ff2138c27",
+    "sphere-cyclotomic-image-v1/source-hashes.json.gz": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce",
+    "sphere-cyclotomic-image-v1/baseline-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/candidate-fifteen_degrees.stdout": "cea4443dfe0dfb25649b1c8a119b095ae6732cddf1a75e7b94684fc9446a57df",
+    "sphere-cyclotomic-v2/candidate-original_medium.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-cyclotomic-v2/candidate-fifth_turn.stdout": "d710c14b2ae2ea951ca09bc66f8220ea97d1bbb791a489c9ddd02102e46be9d4",
+    "sphere-cyclotomic-v2/candidate-seventh_turn.stdout": "9fff55a213706bee2fc120a520c02cd9771d9047b819f3068cb343800720df67"
+  },
+  "libraries": {
+    "baseline": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+        "sha256": "ed39e41dbab80903de387c18e363201411f20dce839530a9fcbb3cc66698408d",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "0b76b6f09db87fb5d40b56d1565c1f3cffc0405a078686340ccaa4da85825e6d",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "late": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/libcsgrs.rlib",
+        "sha256": "12001c5230ae5c4c3235e785a07d4f602a08622a43ba83756eac203a210d1132",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "8ce9cfdd553fb579d3633c077436307970200ee2b91ad5ce9e6028a4f109b570",
+        "features": [
+          "default"
+        ]
+      }
+    },
+    "image": {
+      "csgrs": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+        "sha256": "18be766f9d8a401581858c281669fabf3c484db581e2cc3714cb2ad8ca0498be",
+        "features": []
+      },
+      "hypermesh": {
+        "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+        "sha256": "68f737e20835171cd4e414b0f569bc1c41ad953dee3bbe2840d5a1dd0033f870",
+        "features": [
+          "default"
+        ]
+      }
+    }
+  },
+  "library_features": {
+    "baseline": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    },
+    "late": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    },
+    "image": {
+      "csgrs": [],
+      "hypermesh": [
+        "default"
+      ]
+    }
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source",
+    "late": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/source",
+    "image": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/source"
+  },
+  "source_mappings_sha256": {
+    "baseline": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "late": "e07e587012041626bebd796701af862e4d8a1125b11be1c12f088c1ff2138c27",
+    "image": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce"
+  },
+  "source_files": {
+    "baseline": 10129,
+    "late": 10132,
+    "image": 10135
+  },
+  "root_source_files": 10129,
+  "phases": [
+    "construct",
+    "cold_hull",
+    "warm_hull",
+    "replay_hull",
+    "drop_outputs_and_input",
+    "clear_grammar_cache"
+  ],
+  "orders": [
+    [
+      "baseline",
+      "late",
+      "image"
+    ],
+    [
+      "late",
+      "image",
+      "baseline"
+    ],
+    [
+      "image",
+      "baseline",
+      "late"
+    ]
+  ],
+  "case_sets": {
+    "baseline": [
+      "fifteen_degrees"
+    ],
+    "late": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "image": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ]
+  },
+  "fixed_sample_processes": 27,
+  "hull_queries_per_process": 3,
+  "preflight_processes": 0,
+  "samples_may_be_extended_filtered_or_pooled": false,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3497.606\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "measurement": "Requested global allocator allocation/reallocation traffic, retained live-byte delta, and peak increase above each phase entry. Not usable allocator sizes, stack bytes, RSS or an uninstrumented timing benchmark.",
+  "cache_state": "Each process clears grammar caches, constructs one original sphere, then runs three STRICT hull queries on the same retained input. All three outputs stay alive until validation and disposal. No validation or serialization occurs between the three queries. Process startup/runtime I/O is initialized before lifecycle accounting; global shared scalar constants may survive cleanup.",
+  "baseline_scope": "The admitted runtime already certifies only 24x12. Other original cases are measured for the two isolated candidates, which both certify them; failed baseline calls are not substituted for successful work.",
+  "witness_scope": "Every successful cold/warm/replay full vertex-order and triangle-row transcript must equal the prior independently verified output. No floating projection or reduced input.",
+  "interpretation": "Publish all three resource observations per group/case/phase, including differences. Any repeat variation is reported, not filtered. No speedup or runtime admission follows from these measurements alone.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

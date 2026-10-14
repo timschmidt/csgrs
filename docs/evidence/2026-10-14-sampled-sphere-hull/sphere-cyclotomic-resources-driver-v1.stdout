@@ -1,0 +1,20 @@
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "link-baseline"}
+{"finished": "link-baseline", "exit_code": 0}
+{"start": "link-late"}
+{"finished": "link-late", "exit_code": 0}
+{"start": "link-image"}
+{"finished": "link-image", "exit_code": 0}
+{"start": "size-baseline"}
+{"finished": "size-baseline", "exit_code": 0}
+{"start": "size-late"}
+{"finished": "size-late", "exit_code": 0}
+{"start": "size-image"}
+{"finished": "size-image", "exit_code": 0}
+{"start": "sample-1-baseline-fifteen_degrees"}
+{"finished": "sample-1-baseline-fifteen_degrees", "exit_code": 0}
+{"start": "sample-1-late-fifteen_degrees"}
+{"finished": "sample-1-late-fifteen_degrees", "exit_code": 0}
+{"start": "sample-1-late-original_medium"}
+{"finished": "sample-1-late-original_medium", "exit_code": 0}

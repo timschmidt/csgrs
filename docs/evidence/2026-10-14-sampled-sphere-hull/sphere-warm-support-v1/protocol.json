@@ -1,0 +1,35 @@
+{
+  "inputs_sha256": {
+    "check_sphere_warm_support_v1.py": "e7fd7d41c494fed1336f6623271f9311176c5ec341b2b2e70b61980cd85a5ef5",
+    "sphere-warm-support-scope-v1.json": "a88b8d28355c88439cef8def3d74272c79eae77c0d762bff0255a89f588da5a9",
+    "check_sphere_trace_cyclotomic_v1.py": "60c4934f738eecc9daedae41a67a7fc611c775ee012b5103f4ab2ac49b999424",
+    "check_native_sphere_support_v1.py": "bae2f2a360399e54b80749a4a8446b33839175b57bd430f2218ea4cb132edefb",
+    "sphere-warm-row-counterexample-v1/result.json": "370ae69d6cc9cbd6af37e6637ef19498a69a267772f96b7f6b5ee0ba033de44b",
+    "sphere-native-support-v1/result.json": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+    "sphere-warm-row-counterexample-v1/changed-faces.json": "4bf6137698ae0b4e2d707466924cbcfc4a732540c773d9a998950dfefe43a0d7",
+    "sphere-warm-row-counterexample-v1/cold.stdout": "18616dd118cc6e980968a2cbce154ac074436ab5e40b2e5d15b46af29e8c43cd",
+    "sphere-warm-row-counterexample-v1/replay.stdout": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-warm-row-counterexample-v1/warm.stdout": "3eb8e013b037147589bd9bfbb26e46277d30bd94edb934884c6a9a270c2458e2",
+    "sphere-native-support-v1/fifteen_degrees.json": "5b49bf6c706d0d4a4ba6cbbedc705a5e808c0c07c313f30b1f58e4a44fde637b",
+    "sphere-native-support-v1/fifth_turn.json": "df1cb0e08514ca52e850b33cd99b48ea09b9a40eadd3125f1d98a9d112180898",
+    "sphere-native-support-v1/original_medium.json": "d5a83951a87b31aef1236119334b615cbec64684e02438194c362ef837c76115",
+    "sphere-native-support-v1/protocol.json": "81ac8ceb2862f66fa4f4e64c28abc226fab787ff3908db86ba95812e85d8552c",
+    "sphere-native-support-v1/seventh_turn.json": "d7c6da2f67699bfaab4d5689db557d613e00ee92fa97ece8551e49fccef99197"
+  },
+  "new_face_point_pairs": 56876,
+  "reused_oriented_faces": 842,
+  "interval_bits": 96,
+  "atan_terms": 80,
+  "cos_terms": 40,
+  "wall_stop_seconds": 600,
+  "pi_interval": [
+    [
+      267257146016241686964920093290467695825,
+      85070591730234615865843651857942052864
+    ],
+    [
+      1069028584064966747859680373161870783301,
+      340282366920938463463374607431768211456
+    ]
+  ]
+}

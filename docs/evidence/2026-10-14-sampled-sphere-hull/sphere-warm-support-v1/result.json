@@ -1,0 +1,25 @@
+{
+  "complete": true,
+  "new_faces_checked": 118,
+  "unchanged_original_points": 482,
+  "new_face_point_pairs": 56876,
+  "strictly_inside": 56404,
+  "coplanar": 472,
+  "previously_proved_shared_oriented_faces": 842,
+  "all_960_warm_faces_nondegenerate_outward_and_supporting": true,
+  "all_original_vertices_used_and_closed_connected_oriented_euler_two": true,
+  "changed_supporting_planes": 59,
+  "changed_plane_triangle_counts_preserved": true,
+  "warm_equals_replay": true,
+  "all_inputs_unchanged": true,
+  "artifacts_sha256": {
+    "changed-face-support.json": "0bf6058d9886a8c043cedec322c218f740f9bd72cf43ff7e0c1da07f7d83f029",
+    "changed-planes.json": "b95cc833c36fdc82bd7020b7791a7d933225e24fc96e0d23c1af56c6d044bbaa",
+    "protocol.json": "60cd5d2a00250d396e91bd3b1fba9f2810afd3e3d688b74289fbee7a1891dd80"
+  },
+  "claim": "The observed warm/replay output is the same exact convex hull of the original finite point set, with different triangulation and vertex order. All changed supporting planes and their triangle counts agree with the prior cold output.",
+  "limits": "Finite corpus proof using exact Python arithmetic and prior independently checked faces; not formal verification of the native implementation or evidence of the cause of row instability.",
+  "resource_trial_complete": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

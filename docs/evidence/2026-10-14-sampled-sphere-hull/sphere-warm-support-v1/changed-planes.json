@@ -1,0 +1,592 @@
+[
+  {
+    "coplanar_original_indices": [
+      56,
+      57,
+      71,
+      72
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      71,
+      72,
+      86,
+      87
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      86,
+      87,
+      101,
+      102
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      147,
+      148,
+      162,
+      163
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      162,
+      163,
+      177,
+      178
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      176,
+      177,
+      191,
+      192
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      177,
+      178,
+      192,
+      193
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      191,
+      192,
+      206,
+      207
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      192,
+      193,
+      207,
+      208
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      198,
+      199,
+      213,
+      214
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      199,
+      200,
+      214,
+      215
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      206,
+      207,
+      221,
+      222
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      207,
+      208,
+      222,
+      223
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      214,
+      215,
+      229,
+      230
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      221,
+      222,
+      236,
+      237
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      229,
+      230,
+      244,
+      245
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      236,
+      237,
+      251,
+      252
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      244,
+      245,
+      259,
+      260
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      245,
+      246,
+      260,
+      261
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      250,
+      251,
+      265,
+      266
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      251,
+      252,
+      266,
+      267
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      259,
+      260,
+      274,
+      275
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      260,
+      261,
+      275,
+      276
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      264,
+      265,
+      279,
+      280
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      265,
+      266,
+      280,
+      281
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      266,
+      267,
+      281,
+      282
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      268,
+      269,
+      283,
+      284
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      274,
+      275,
+      289,
+      290
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      275,
+      276,
+      290,
+      291
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      281,
+      282,
+      296,
+      297
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      284,
+      285,
+      299,
+      300
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      288,
+      289,
+      303,
+      304
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      289,
+      290,
+      304,
+      305
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      290,
+      291,
+      305,
+      306
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      294,
+      295,
+      309,
+      310
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      296,
+      297,
+      311,
+      312
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      303,
+      304,
+      318,
+      319
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      304,
+      305,
+      319,
+      320
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      309,
+      310,
+      324,
+      325
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      310,
+      311,
+      325,
+      326
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      311,
+      312,
+      326,
+      327
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      320,
+      321,
+      335,
+      336
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      325,
+      326,
+      340,
+      341
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      326,
+      327,
+      341,
+      342
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      341,
+      342,
+      356,
+      357
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      342,
+      343,
+      357,
+      358
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      348,
+      349,
+      363,
+      364
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      356,
+      357,
+      371,
+      372
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      357,
+      358,
+      372,
+      373
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      358,
+      359,
+      373,
+      374
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      371,
+      372,
+      386,
+      387
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      372,
+      373,
+      387,
+      388
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      394,
+      395,
+      409,
+      410
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      395,
+      396,
+      410,
+      411
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      409,
+      410,
+      424,
+      425
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      410,
+      411,
+      425,
+      426
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      423,
+      424,
+      438,
+      439
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      424,
+      425,
+      439,
+      440
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  },
+  {
+    "coplanar_original_indices": [
+      425,
+      426,
+      440,
+      441
+    ],
+    "removed_triangles": 2,
+    "added_triangles": 2
+  }
+]

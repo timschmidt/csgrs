@@ -1,0 +1,19 @@
+{
+  "objective": "Independently check the new warm/replay faces in the closed resource trial's original 32x16 sphere counterexample.",
+  "counterexample_result_sha256": "370ae69d6cc9cbd6af37e6637ef19498a69a267772f96b7f6b5ee0ba033de44b",
+  "prior_support_result_sha256": "cfb7b48b194fc52adf1eeb2c9134f1fe82fb353dc6558360be0ccc7ac1fc2e73",
+  "new_oriented_faces": 118,
+  "unchanged_original_points": 482,
+  "new_face_point_pairs": 56876,
+  "previously_proved_shared_oriented_faces": 842,
+  "geometry": "The unchanged 32x16 latitude/longitude samples at radius 10, represented in Q(zeta_32) at positive scale 4/radius. No reduced or floating input.",
+  "method": "Reuse the immutable independent integer cyclotomic oracle and outward rational Taylor interval helpers. Check every new face for nondegeneracy, outward support against every original point, and a strictly outside anchor-plus-normal control. Zero-containing intervals require an exact zero determinant remainder. Reuse old proofs only for exactly equal oriented original-index faces, with all prior artifacts hash-checked.",
+  "additional_checks": "Reparse warm/replay transcripts, check full vertex use, distinct faces, opposite edge incidence, connected face adjacency and Euler characteristic two. Compare exact coplanar original-index sets and triangle counts on changed supporting planes.",
+  "wall_stop_seconds": 600,
+  "native_library_calls": false,
+  "precision_or_budget_extensions_allowed": false,
+  "resource_trial_resumption": false,
+  "formal_verification": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

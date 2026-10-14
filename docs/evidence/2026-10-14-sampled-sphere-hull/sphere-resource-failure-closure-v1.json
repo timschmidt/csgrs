@@ -1,0 +1,31 @@
+{
+  "resource_trial_closed": true,
+  "resource_trial_complete": false,
+  "driver_terminal_exit_code": 1,
+  "failure_assessor_terminal_exit_code": 0,
+  "independent_warm_support_terminal_exit_code": 0,
+  "failure_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-row-counterexample-v1/result.json",
+  "failure_result_sha256": "370ae69d6cc9cbd6af37e6637ef19498a69a267772f96b7f6b5ee0ba033de44b",
+  "warm_support_result": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-warm-support-v1/result.json",
+  "warm_support_result_sha256": "3c4ded3ed2ca943bf73d17d6a5c00771cb33378a9094d55fbc96cacd9d4e4cf4",
+  "commands_completed_all_zero": 10,
+  "planned_commands": 34,
+  "sample_processes_completed": 3,
+  "planned_sample_processes": 27,
+  "accepted_sample_processes_before_failure": 2,
+  "changed_faces": 118,
+  "changed_supporting_planes": 59,
+  "interpretation": "Cold and warm/replay outputs represent the same exact original finite-point convex hull. Fifty-nine coplanar quadrilateral facets use different diagonals, changing 118 triangle rows and vertex order. This violates row determinism; it does not establish contradictory scalar facts or wrong geometry. The cause is still unproved.",
+  "source_guards": {
+    "root_files": 10129,
+    "all_root_candidate_libraries_and_original_inputs_unchanged": true
+  },
+  "finite_image_candidate_sampled": false,
+  "partial_resource_comparison_admitted": false,
+  "trial_may_be_resumed_extended_filtered_or_pooled": false,
+  "scalar_cost_trial_executed": false,
+  "scalar_cost_trial_prerequisite_satisfied": false,
+  "next_step": "Separate allocator-free replay diagnostic on the original cases, then trace the first source of divergence. Any changed implementation needs its own frozen validation and cost trials.",
+  "sphere_certificate_runtime_admitted": false,
+  "plan_complete": false
+}

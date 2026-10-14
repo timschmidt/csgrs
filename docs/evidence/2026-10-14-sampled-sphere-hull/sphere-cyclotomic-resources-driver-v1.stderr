@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_resources_v1.py", line 190, in <module>
+    main()
+    ~~~~^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_resources_v1.py", line 174, in main
+    rows, lifecycle = parse_output(raw, case, expected[case])
+                      ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_resources_v1.py", line 53, in parse_output
+    assert '\n'.join(lines) + '\n' == expected
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

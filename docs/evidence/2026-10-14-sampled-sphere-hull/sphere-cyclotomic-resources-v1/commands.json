@@ -1,0 +1,167 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_resource_probe_v1.rs"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0329974596388638,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_resource_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.38677447894588113,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-late",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_resource_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.3686982970684767,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-image",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_resource_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/libcsgrs.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.3986310460604727,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-baseline",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0032098200172185898,
+    "stdout_sha256": "d7c6b89ff2305f4be37e5a4baf6d35d0697691d67ec7ad46a1a084988b1e4bfe",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-late",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0027638007886707783,
+    "stdout_sha256": "72bb1cfbfc882817b04302d4d75fc2ca8f6924f2fc851d9e56dde34c49395581",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-image",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0030674999579787254,
+    "stdout_sha256": "99de2c11715ac715ce7ba3bbd0abc583fa310480915325aebf15bd9c6cda735f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-baseline-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/baseline",
+      "fifteen_degrees"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 17.718555136118084,
+    "stdout_sha256": "00eea57d21f64422b14a5c41fa1d1697ebfb0ada9b9e120c8636a7ec5c6a1aaa",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-fifteen_degrees",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late",
+      "fifteen_degrees"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 18.388596492819488,
+    "stdout_sha256": "0c2603a097ccb15dce2e113da8e627bf82a8dbd9b02766bb5ad6dffc7c00b612",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-1-late-original_medium",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late",
+      "original_medium"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 46.98569341376424,
+    "stdout_sha256": "a14f197c593c2bf8eb593551cceab460e427617ee56cd6de329aabad17691e75",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

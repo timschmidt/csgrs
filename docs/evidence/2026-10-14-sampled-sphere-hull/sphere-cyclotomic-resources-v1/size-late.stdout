@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              352      2784
+.gnu.hash                    28      3136
+.dynstr                    1148      3164
+.rela.dyn                 44808      4312
+.rela.plt                    48     49120
+.gcc_except_table       1435180     49168
+.rodata                   78552   1484352
+.eh_frame_hdr             17468   1562904
+.eh_frame                126180   1580376
+.text                   1647279   1710656
+.init                        27   3357936
+.fini                        13   3357964
+.plt                         48   3357984
+.tdata                      576   3362128
+.tbss                       896   3362704
+.data.rel.ro              26376   3362704
+.fini_array                   8   3389080
+.init_array                  16   3389088
+.dynamic                    480   3389104
+.got                       4712   3389584
+.got.plt                     40   3394296
+.relro_padding             1248   3394336
+.tm_clone_table               0   3398432
+.data                    197480   3398432
+.bss                        240   3595912
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7686078
+
+

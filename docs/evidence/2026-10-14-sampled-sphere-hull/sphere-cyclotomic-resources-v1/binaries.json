@@ -1,0 +1,17 @@
+{
+  "baseline": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/baseline",
+    "sha256": "efc960a4537512dd53302e2a1471e5964e1839c16c33bbff4768d106284650e3",
+    "bytes": 8712560
+  },
+  "late": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/late",
+    "sha256": "58e25a6b95def1d7b04c98db3c1e3d45e492036a031032e631c796599da82cea",
+    "bytes": 8748064
+  },
+  "image": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-resources-v1/image",
+    "sha256": "441b76b57be59f037a113a1a1dbbb3992edab757dd4758a11c57c69aae7acd57",
+    "bytes": 8769184
+  }
+}
