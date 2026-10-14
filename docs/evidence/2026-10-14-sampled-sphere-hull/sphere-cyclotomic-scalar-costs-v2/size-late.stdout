@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1824       832
+.gnu.version                152      2656
+.gnu.version_r              352      2808
+.gnu.hash                    28      3160
+.dynstr                    1155      3188
+.rela.dyn                 36672      4344
+.rela.plt                    48     41016
+.gcc_except_table        111760     41064
+.rodata                   61184    152832
+.eh_frame_hdr             12556    214016
+.eh_frame                 84816    226576
+.text                   1087689    315488
+.init                        27   1403180
+.fini                        13   1403208
+.plt                         48   1403232
+.tdata                      448   1407376
+.tbss                       896   1407824
+.data.rel.ro              20232   1407824
+.fini_array                   8   1428056
+.init_array                  16   1428064
+.dynamic                    480   1428080
+.got                       4072   1428560
+.got.plt                     40   1432632
+.relro_padding              928   1432672
+.tm_clone_table               0   1436768
+.data                    197480   1436768
+.bss                        208   1634248
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6442         0
+.debug_info             1141087         0
+.debug_aranges            32400         0
+.debug_ranges            517808         0
+.debug_str              1921963         0
+.debug_line              474863         0
+Total                   5718547
+
+

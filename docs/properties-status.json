@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "sphere-scalar-cost-v2-ready",
+      "status": "sphere-scalar-cost-v2-closed-nonzero-proof-work-audit-open",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5194,9 +5194,16 @@
       },
       "sphere_cyclotomic_scalar_costs_v2_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scalar-costs-scope-v2.json",
       "sphere_cyclotomic_scalar_costs_v2_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_scalar_costs_v2.py",
-      "sphere_cyclotomic_scalar_costs_v2_executed": false,
+      "sphere_cyclotomic_scalar_costs_v2_executed": true,
       "sphere_cyclotomic_scalar_costs_v2_prerequisites_satisfied": true,
-      "sphere_scalar_mapped_files_identical_image_and_stable": 369
+      "sphere_scalar_mapped_files_identical_image_and_stable": 369,
+      "sphere_cyclotomic_scalar_costs_v2_complete": true,
+      "sphere_cyclotomic_scalar_costs_v2_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scalar-costs-assessment-v2.json",
+      "sphere_cyclotomic_scalar_costs_v2_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scalar-costs-closure-v2.json",
+      "sphere_cyclotomic_scalar_costs_v2_no_fact_contradictions_or_weakening": true,
+      "sphere_cyclotomic_scalar_costs_v2_all_retained_deltas_zero": true,
+      "sphere_cyclotomic_scalar_costs_v2_predeclared_flags": [],
+      "sphere_cyclotomic_scalar_costs_v2_large_unflagged_ratios_retained": true
     }
   },
   "status_meanings": {

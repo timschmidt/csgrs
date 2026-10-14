@@ -1,0 +1,824 @@
+[
+  {
+    "name": "format",
+    "command": [
+      "rustfmt",
+      "--edition",
+      "2024",
+      "--check",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.02583023114129901,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.38863768987357616,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-baseline-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.41341106314212084,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-late-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.38671266194432974,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-late-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.41225945204496384,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-image-time",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.37589254323393106,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "link-image-memory",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_scalar_cost_probe_v1.rs",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps",
+      "--cfg",
+      "feature=\"count-alloc\"",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.3841547779738903,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-baseline",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0033823479898273945,
+    "stdout_sha256": "adb82c28118e517d730671116a1b213b0059d025a12b602c770113c01c4bc14d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-late",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.002833056263625622,
+    "stdout_sha256": "e2565d18563d145d36ccbbfd89a694ae424b6a654fdc080c0cded5fc6c14b319",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "size-image",
+    "command": [
+      "/usr/bin/size",
+      "-A",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0029011713340878487,
+    "stdout_sha256": "b82937a6122c6e1129f27346b1a165046adb6c67391efa34f5dec490f4319b82",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.03898218972608447,
+    "stdout_sha256": "e9749a977ea95336ff78f080d6dab16f651a41c4870e8a0dbb8997f61639f38e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.09197663003578782,
+    "stdout_sha256": "4163f457c266e28b6d62d68037c8ce12f2beb7d079e828268bf3a67d62eb1c74",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-time-0-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08032176783308387,
+    "stdout_sha256": "2361b9e75bec0b49f78c2fe032360691fcb7ec4215c1cab1e4af9b8353f6e70f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0458188122138381,
+    "stdout_sha256": "eabcacbb5396d9aa3a31b65130df0c6e2cd8636fefb740c1be91eb6a1d408a6a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.057726135943084955,
+    "stdout_sha256": "7bd8a6c06d5aa1b74671fe4bec41858e93a621b48cd686893955c2aba931f698",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-1-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08095829514786601,
+    "stdout_sha256": "b823188814bcefc923b3d5feda361ac8e2d574cfc391b87ba140ca7a40988151",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.055535076186060905,
+    "stdout_sha256": "54fae255c333473e727381bd9b471d2216557227af067bd2e3cb96381417c39d",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08069274295121431,
+    "stdout_sha256": "1a72aebd93ef81779ac4cb161b57b679d817681c1d2b870782de3178879d8024",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.034400113858282566,
+    "stdout_sha256": "77fc4d4e70aaed150144cdfe2c3223ed38a6cfc9aac8d1a040565207bd57a1a2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0812488947995007,
+    "stdout_sha256": "0ed3927660767c81402b3ab901aab77bcdc197ef9628858ffc3ddb22a9ffbc69",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.03492577839642763,
+    "stdout_sha256": "a803eba150fcc79cc3db4ef6bec66dfa7d88111f8026eafe8ed3bb4e345bb9c9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-3-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.06228593410924077,
+    "stdout_sha256": "e5f2ff76d760b7bab8a31a57fa1044f9c13feae62a338d6b161f2fe69b326ced",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0972121418453753,
+    "stdout_sha256": "5638677456ba720ac8c90b23f45c673f0eaf6eaaad15aaec43320dd3707a8e09",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.07077645184472203,
+    "stdout_sha256": "2a29e2cc55eecf88865dd9c4d8b7f6c9098b21c66d6d32851bf60de953faf2a9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.03422604501247406,
+    "stdout_sha256": "0de2fe8b3fe87f3cf02e311ec6b73c943c413b921eec90bc56476f464d9e4b1b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.05478964699432254,
+    "stdout_sha256": "bb7c60c0b67c499bd0a36a839a7ea8ce901033aaf7807be299181bf27590b02a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.033992521930485964,
+    "stdout_sha256": "e0a1ad6cec1ec370687a3c97e09644b85399c985ade92bf3f965c88fbfdeffbd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-5-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.07838999107480049,
+    "stdout_sha256": "2a3f614e62032514a2f4b3fb837e004f369d18106e1e6b3439c6406f547f2dae",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.03424052521586418,
+    "stdout_sha256": "1b63a295d73cc5065340a728b8733a4f219bcf5814c0c1be69d9f03dca093f31",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.08016299922019243,
+    "stdout_sha256": "9c161641edfa71a0bb25cc11db03920c796e2d9e040a396155882e886ccdfde9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-time-6-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.05866156192496419,
+    "stdout_sha256": "a775bbabede1dff9d9e2c6c2f3f95061157fff894c2b3bfb0aa2ee3c3a8abbae",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.003559685777872801,
+    "stdout_sha256": "93c88c18a987cbbbb1d75e2df1a31bfcc2874a741420fde781f354608293ba2c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.005845700390636921,
+    "stdout_sha256": "7d6148be1cc13c75659ad21c4893a86c7acfeca47f3d479929ad56dba5af27cd",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "preflight-memory-0-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.009647429920732975,
+    "stdout_sha256": "bba66d930d6ff3f63bd070a2e1f5e43593a7cbd53239645e7ab5d2a6b25c6ad1",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0034639216028153896,
+    "stdout_sha256": "8c9ff0770b58e13b58aeaf54435282958922deca1dd2dd4e6d471b84cc49b59f",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.00528554804623127,
+    "stdout_sha256": "f7ef8c8e4c280ad9672cc8b1d90a94c235171482aed376f899d8d217d47d4f8a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-1-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008023610804229975,
+    "stdout_sha256": "890c4ea613b44db71c38514964c241f4df7e51515fd892ea6bfec58b5683d91c",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.005971861071884632,
+    "stdout_sha256": "b56e4780716a18c7f7bf625da272b487364272cc6b814c502df7153034631b92",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.008455701172351837,
+    "stdout_sha256": "ad7972c171ff554eabf431f835a889c0e11ffc6c6bf7dd4c85fcec47db477d7a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-2-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.003990896977484226,
+    "stdout_sha256": "a658286febf5a55451eba061e0fbbbbce6458e6197ca85f10ac7bec683c39bce",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.009062679018825293,
+    "stdout_sha256": "3419993fdb5ec999531ac8fe42e1268140911620c51b1fa19132192aa1a55e55",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.003745103720575571,
+    "stdout_sha256": "38ce4a7e4d257516f1aa69f41042fbd302068d6f575b4e0a4738e3686e169a3b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-3-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0057355971075594425,
+    "stdout_sha256": "93c2d9c2c292dd0e727512d01f2b18793a79d7d1d7fae3f1880ae48a3517594b",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.00878920778632164,
+    "stdout_sha256": "abb9dd7c30f1fae455113adc6602becde1f449042336237972d3f0e56d31a62e",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.005731977056711912,
+    "stdout_sha256": "49912ea31e8746ed9bd480a144f73a703deab60946567e3aa9371d45cf6a0814",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-4-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.003609652165323496,
+    "stdout_sha256": "259d641ee8908d80d935543e06d550b44a6a9dab2079c4cadbf72bc365d9ec20",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.006755148060619831,
+    "stdout_sha256": "2a1ceb1f93861899a116aba407af32ca5743aa6268d98269ec95ab68c363b728",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.003586764447391033,
+    "stdout_sha256": "f958ab27a66eca5a9cfa126b81e240d71cd84605a171c17dbc64857e5b98d2c6",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-5-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0076362271793186665,
+    "stdout_sha256": "692cf26b67d6e41de188471e57ba84fb4cc597e035bafe88763d47b19909e8b9",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-baseline",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+      "baseline"
+    ],
+    "group": "baseline",
+    "exit_code": 0,
+    "process_wall_seconds": 0.0035558869130909443,
+    "stdout_sha256": "95778731293dbb6d9440a655173d93a51ede94005053f0593c28ff34cea9aaf2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-image",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+      "image"
+    ],
+    "group": "image",
+    "exit_code": 0,
+    "process_wall_seconds": 0.007288850378245115,
+    "stdout_sha256": "564c2df7b54f44520bb92cda4ca01dbc7ca5c4115893a0e7d9bef9508a634f6a",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "sample-memory-6-late",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+      "late"
+    ],
+    "group": "late",
+    "exit_code": 0,
+    "process_wall_seconds": 0.005060323979705572,
+    "stdout_sha256": "65832f2c326139b57de63b0502fada1556dceaf4997bf9e1c7b67a8236891a04",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+]

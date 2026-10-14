@@ -1,0 +1,32 @@
+{
+  "baseline-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-time",
+    "sha256": "65364da3a5390dbdb9ebe8dc8fa1da4bf0716e0e0431eabbc831225a30e3ce86",
+    "bytes": 6016256
+  },
+  "baseline-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/baseline-memory",
+    "sha256": "3e5cc9dd0b30f30656b7cf4c43f061758fe119db70ca9203ff0d6dbe17b42e68",
+    "bytes": 6022864
+  },
+  "late-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-time",
+    "sha256": "07b81293c45d700aa17f22d5966d0d5e309f3a3ef30f7cc81a54af9dc0493856",
+    "bytes": 6051216
+  },
+  "late-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/late-memory",
+    "sha256": "6bbfa4e3db2883eedceed5fc5192fc82f78e22354c8cb92df27bccfec2637366",
+    "bytes": 6057816
+  },
+  "image-time": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-time",
+    "sha256": "272b7d889048e6b06b8dc340484926578d4e1499626b52cdeee03a472a8ba3d6",
+    "bytes": 6072456
+  },
+  "image-memory": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-scalar-costs-v2/image-memory",
+    "sha256": "a3d6b2d89f26bc33b91efd620d9a3a77f5b0cf86963b0d91a81dd957f585f95c",
+    "bytes": 6079040
+  }
+}

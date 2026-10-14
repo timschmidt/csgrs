@@ -1,0 +1,138 @@
+{
+  "inputs_sha256": {
+    "measure_sphere_scalar_costs_v2.py": "56c74599b8c1eb472650397b6965983698d50aa5b96fc9fb561de4efef5eeb84",
+    "assess_sphere_scalar_costs_v2.py": "2e9962efeef62327d698ff599ddd82908c699b6f05d274b3a443c60a7fa8a5f7",
+    "sphere_scalar_cost_probe_v1.rs": "6138756057d91da98cd47d90aadc8d543a8ce202eca471b66016c5fcf0812c1e",
+    "sphere-cyclotomic-scalar-costs-scope-v2.json": "b550015f8cc9193eb08e6f5354837de97ac95d742da100b44020251c2430632a",
+    "sphere-cyclotomic-image-qualification-assessment-v1.json": "b90d58d6562f796859bc99f95b4f6ed314d346b83e1d2016d81baf032d0247b0",
+    "sphere-stable-selection-resources-assessment-v1.json": "9edf6a71a0bc03586df1e8b8bfb72a3f61a88727cd2616eeeecd66fcb4870a3d",
+    "sphere-stable-selection-resources-closure-v1.json": "255c168af3253c94dad20384665978aae1d4c8b8e448ca7c6a3d0f8ed0cd739b",
+    "sphere-stable-selection-qualification-v1/result.json": "41f7c06cf14875636a230ae744218914e235460f10eb53c2f0d754f7cb7ec5a7",
+    "sphere-stable-selection-cost-assessment-v1.json": "a5cad8ca02c97cf934bfc8d9eb56facd21f30ac1e5cc7aa7a098eeab5aa39a82",
+    "sphere-stable-selection-v1/protocol.json": "7e6a68b573af1d6f6e637fd03ae72f12dc4aaf42928113308c50c0f880c18f26",
+    "sphere-stable-selection-v1/source-hashes.json.gz": "192ed8a5a058dec7e2b4b3e9ef2ebd3b4ad6c34d95daa06a7c0349614d83b7b6",
+    "mesh-identity-qualification-v1/build-consumer-library.stdout": "210c5b6baf821da83a6be845627bb5d8cf18709cc01c9ff050af6de1d9ae9a18",
+    "sphere-cyclotomic-v2/build-native-consumer.stdout": "1c89e2d0134d1bb54477442101e186b7971b842fd371f2a8c82e1e94bec810c6",
+    "sphere-cyclotomic-image-v1/build-native-consumer.stdout": "6f2d9bef8e06c30f6d78e6efd8f7e37615e64340c5b78b6b4dd56c87781b4420",
+    "mesh-identity-preparation-v1/source-hashes.json.gz": "c822a405f55ea058a0df690cd41749c00d40a9baf3b96ea520cab03fdd051590",
+    "sphere-cyclotomic-v2/source-hashes.json.gz": "e07e587012041626bebd796701af862e4d8a1125b11be1c12f088c1ff2138c27",
+    "sphere-cyclotomic-image-v1/source-hashes.json.gz": "7e3c9de2a69890b3dc5b91c0c82a9b1cdf0049575af941218ab95e1b90abc0ce"
+  },
+  "libraries": {
+    "baseline": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "sha256": "59800cf522d44de9108b01a8f657ddd83f37840a91fafcecb764f551d39243ff",
+      "features": [
+        "cached-f64-approx",
+        "default"
+      ]
+    },
+    "late": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "sha256": "31f7e12a8634c5f6ee8b25c29c82fdee44f81daee79f006fca4ee70e2814cc39",
+      "features": [
+        "cached-f64-approx",
+        "default"
+      ]
+    },
+    "image": {
+      "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/target/release/deps/libhyperreal-bd1ab828184ac69a.rlib",
+      "sha256": "064f15abc2d32011bdac4acf6cb55fbf535c3c9ea2db3206ae429dd8af476417",
+      "features": [
+        "cached-f64-approx",
+        "default"
+      ]
+    }
+  },
+  "sources": {
+    "baseline": "/home/tim/Documents/GitHub/workspace/csgrs/target/mesh-fact-identity-v1/source",
+    "late": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/source",
+    "image": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-image-v1/source"
+  },
+  "source_mapping_files": {
+    "baseline": "mesh-identity-preparation-v1/source-hashes.json.gz",
+    "late": "sphere-cyclotomic-v2/source-hashes.json.gz",
+    "image": "sphere-cyclotomic-image-v1/source-hashes.json.gz"
+  },
+  "source_files": {
+    "baseline": 10129,
+    "late": 10132,
+    "image": 10135
+  },
+  "root_source_files": 10129,
+  "stable_source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-stable-selection-v1/source",
+  "stable_source_files": 10136,
+  "stable_source_mapping_file": "sphere-stable-selection-v1/source-hashes.json.gz",
+  "scalar_source_files_identical_image_and_stable": 369,
+  "old_resource_trial_resumed": false,
+  "old_scalar_protocol_executed": false,
+  "orders": [
+    [
+      "baseline",
+      "late",
+      "image"
+    ],
+    [
+      "late",
+      "image",
+      "baseline"
+    ],
+    [
+      "image",
+      "baseline",
+      "late"
+    ],
+    [
+      "image",
+      "late",
+      "baseline"
+    ],
+    [
+      "late",
+      "baseline",
+      "image"
+    ],
+    [
+      "baseline",
+      "image",
+      "late"
+    ]
+  ],
+  "repetitions": {
+    "normal_rational": 262144,
+    "normal_pi_plus_e": 16384,
+    "normal_sqrt5": 16384,
+    "normal_trig_nonzero": 4096,
+    "normal_unsupported_order": 4096,
+    "normal_pythagorean_zero": 1024,
+    "normal_double_angle_zero": 1024,
+    "affine_dyadic": 262144,
+    "affine_nondyadic_rational": 262144,
+    "affine_unsupported_pi": 16384,
+    "affine_unsupported_sqrt5": 16384,
+    "affine_trig_nonzero": 4096,
+    "affine_unsupported_order": 4096,
+    "affine_original_zero": 1024
+  },
+  "memory_repetitions": 128,
+  "preflight_processes": 6,
+  "fixed_sample_processes": 36,
+  "compiler": "rustc 1.98.1 (48a229cea 2026-09-01)\nbinary: rustc\ncommit-hash: 48a229ceaefd4985c50990b14116b6d856af0985\ncommit-date: 2026-09-01\nhost: x86_64-unknown-linux-gnu\nrelease: 1.98.1\nLLVM version: 22.1.8\n",
+  "inherited_rustflags": null,
+  "host": [
+    "Linux",
+    "fedora",
+    "7.2.5-100.fc43.x86_64",
+    "#1 SMP PREEMPT_DYNAMIC Fri Sep 11 14:07:47 UTC 2026",
+    "x86_64"
+  ],
+  "cpuinfo": "processor\t: 0\nvendor_id\t: AuthenticAMD\ncpu family\t: 25\nmodel\t\t: 33\nmodel name\t: AMD Ryzen 7 5800X3D 8-Core Processor\nstepping\t: 2\nmicrocode\t: 0xa201211\ncpu MHz\t\t: 3433.120\ncache size\t: 512 KB\nphysical id\t: 0\nsiblings\t: 16\ncore id\t\t: 0\ncpu cores\t: 8\napicid\t\t: 0\ninitial apicid\t: 0\nfpu\t\t: yes\nfpu_exception\t: yes\ncpuid level\t: 16\nwp\t\t: yes\nflags\t\t: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt pdpe1gb rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid aperfmperf rapl pni pclmulqdq monitor ssse3 fma cx16 sse4_1 sse4_2 x2apic movbe popcnt aes xsave avx f16c rdrand lahf_lm cmp_legacy svm extapic cr8_legacy abm sse4a misalignsse 3dnowprefetch osvw ibs skinit wdt tce topoext perfctr_core perfctr_nb bpext perfctr_llc mwaitx cpb cat_l3 cdp_l3 hw_pstate ssbd mba ibrs ibpb stibp vmmcall fsgsbase bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a rdseed adx smap clflushopt clwb sha_ni xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local user_shstk clzero irperf xsaveerptr rdpru wbnoinvd arat npt lbrv svm_lock nrip_save tsc_scale vmcb_clean flushbyasid decodeassists pausefilter pfthreshold avic v_vmsave_vmload vgif v_spec_ctrl umip pku ospke vaes vpclmulqdq rdpid overflow_recov succor smca fsrm debug_swap\nbugs\t\t: sysret_ss_attrs spectre_v1 spectre_v2 spec_store_bypass srso ibpb_no_ret spectre_v2_user tsa vmscape\nbogomips\t: 6800.15\nTLB size\t: 2560 4K pages\nclflush size\t: 64\ncache_alignment\t: 64\naddress sizes\t: 48 bits physical, 48 bits virtual\npower management: ts ttp tm hwpstate cpb eff_freq_ro [13] [14]",
+  "pinned_cpu": 0,
+  "cache_state": "Fresh process prepares the same fourteen recipes, then queries each once and repeatedly on the same value. Constructors and shared constants may already have caches; first means first explicit query in this harness, not an assertion that every internal cache is empty.",
+  "measurement": "Query-body wall time includes black-box barriers, exact-result assertions and monotone-fact checks. Allocation mode separately records requested allocator traffic and live-byte deltas, not RSS or stack bytes.",
+  "compatibility": "Every definite rational/sign result has an explicit exact expected value. Previously available facts may not disappear during replay. New zero capabilities may strengthen baseline Unknown and are reported separately from same-output comparisons.",
+  "screen_rule": "For repeated-query phases with identical per-iteration outcome counts, flag an image/reference overhead only when every one of six paired ratios exceeds 1.10, their median exceeds 1.15, and both median phase times are at least 2000000 ns. Otherwise inconclusive. First-query single-call times and memory-mode times are not used for this flag.",
+  "samples_may_be_extended_filtered_or_pooled": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

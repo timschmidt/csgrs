@@ -1,0 +1,105 @@
+{"start": "format"}
+{"finished": "format", "exit_code": 0}
+{"start": "link-baseline-time"}
+{"finished": "link-baseline-time", "exit_code": 0}
+{"start": "link-baseline-memory"}
+{"finished": "link-baseline-memory", "exit_code": 0}
+{"start": "link-late-time"}
+{"finished": "link-late-time", "exit_code": 0}
+{"start": "link-late-memory"}
+{"finished": "link-late-memory", "exit_code": 0}
+{"start": "link-image-time"}
+{"finished": "link-image-time", "exit_code": 0}
+{"start": "link-image-memory"}
+{"finished": "link-image-memory", "exit_code": 0}
+{"start": "size-baseline"}
+{"finished": "size-baseline", "exit_code": 0}
+{"start": "size-late"}
+{"finished": "size-late", "exit_code": 0}
+{"start": "size-image"}
+{"finished": "size-image", "exit_code": 0}
+{"start": "preflight-time-0-baseline"}
+{"finished": "preflight-time-0-baseline", "exit_code": 0}
+{"start": "preflight-time-0-late"}
+{"finished": "preflight-time-0-late", "exit_code": 0}
+{"start": "preflight-time-0-image"}
+{"finished": "preflight-time-0-image", "exit_code": 0}
+{"start": "sample-time-1-baseline"}
+{"finished": "sample-time-1-baseline", "exit_code": 0}
+{"start": "sample-time-1-late"}
+{"finished": "sample-time-1-late", "exit_code": 0}
+{"start": "sample-time-1-image"}
+{"finished": "sample-time-1-image", "exit_code": 0}
+{"start": "sample-time-2-late"}
+{"finished": "sample-time-2-late", "exit_code": 0}
+{"start": "sample-time-2-image"}
+{"finished": "sample-time-2-image", "exit_code": 0}
+{"start": "sample-time-2-baseline"}
+{"finished": "sample-time-2-baseline", "exit_code": 0}
+{"start": "sample-time-3-image"}
+{"finished": "sample-time-3-image", "exit_code": 0}
+{"start": "sample-time-3-baseline"}
+{"finished": "sample-time-3-baseline", "exit_code": 0}
+{"start": "sample-time-3-late"}
+{"finished": "sample-time-3-late", "exit_code": 0}
+{"start": "sample-time-4-image"}
+{"finished": "sample-time-4-image", "exit_code": 0}
+{"start": "sample-time-4-late"}
+{"finished": "sample-time-4-late", "exit_code": 0}
+{"start": "sample-time-4-baseline"}
+{"finished": "sample-time-4-baseline", "exit_code": 0}
+{"start": "sample-time-5-late"}
+{"finished": "sample-time-5-late", "exit_code": 0}
+{"start": "sample-time-5-baseline"}
+{"finished": "sample-time-5-baseline", "exit_code": 0}
+{"start": "sample-time-5-image"}
+{"finished": "sample-time-5-image", "exit_code": 0}
+{"start": "sample-time-6-baseline"}
+{"finished": "sample-time-6-baseline", "exit_code": 0}
+{"start": "sample-time-6-image"}
+{"finished": "sample-time-6-image", "exit_code": 0}
+{"start": "sample-time-6-late"}
+{"finished": "sample-time-6-late", "exit_code": 0}
+{"start": "preflight-memory-0-baseline"}
+{"finished": "preflight-memory-0-baseline", "exit_code": 0}
+{"start": "preflight-memory-0-late"}
+{"finished": "preflight-memory-0-late", "exit_code": 0}
+{"start": "preflight-memory-0-image"}
+{"finished": "preflight-memory-0-image", "exit_code": 0}
+{"start": "sample-memory-1-baseline"}
+{"finished": "sample-memory-1-baseline", "exit_code": 0}
+{"start": "sample-memory-1-late"}
+{"finished": "sample-memory-1-late", "exit_code": 0}
+{"start": "sample-memory-1-image"}
+{"finished": "sample-memory-1-image", "exit_code": 0}
+{"start": "sample-memory-2-late"}
+{"finished": "sample-memory-2-late", "exit_code": 0}
+{"start": "sample-memory-2-image"}
+{"finished": "sample-memory-2-image", "exit_code": 0}
+{"start": "sample-memory-2-baseline"}
+{"finished": "sample-memory-2-baseline", "exit_code": 0}
+{"start": "sample-memory-3-image"}
+{"finished": "sample-memory-3-image", "exit_code": 0}
+{"start": "sample-memory-3-baseline"}
+{"finished": "sample-memory-3-baseline", "exit_code": 0}
+{"start": "sample-memory-3-late"}
+{"finished": "sample-memory-3-late", "exit_code": 0}
+{"start": "sample-memory-4-image"}
+{"finished": "sample-memory-4-image", "exit_code": 0}
+{"start": "sample-memory-4-late"}
+{"finished": "sample-memory-4-late", "exit_code": 0}
+{"start": "sample-memory-4-baseline"}
+{"finished": "sample-memory-4-baseline", "exit_code": 0}
+{"start": "sample-memory-5-late"}
+{"finished": "sample-memory-5-late", "exit_code": 0}
+{"start": "sample-memory-5-baseline"}
+{"finished": "sample-memory-5-baseline", "exit_code": 0}
+{"start": "sample-memory-5-image"}
+{"finished": "sample-memory-5-image", "exit_code": 0}
+{"start": "sample-memory-6-baseline"}
+{"finished": "sample-memory-6-baseline", "exit_code": 0}
+{"start": "sample-memory-6-image"}
+{"finished": "sample-memory-6-image", "exit_code": 0}
+{"start": "sample-memory-6-late"}
+{"finished": "sample-memory-6-late", "exit_code": 0}
+{"complete": true, "result_sha256": "ce2a034e0ef98a7c0fda3e5cf200d17a2d678551d47d31b3f8da4e0d98f6b4c5"}

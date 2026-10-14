@@ -1,0 +1,43 @@
+scalar_group=baseline cases=14
+{"case":"normal_rational","phase":"first","iterations":1,"certified":1,"nanos":450,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"normal_rational","phase":"repeated","iterations":128,"certified":128,"nanos":1310,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=normal_rational ExactRational
+{"case":"normal_pi_plus_e","phase":"first","iterations":1,"certified":0,"nanos":4860,"allocation_accounting":true,"allocation_calls":8,"allocated_bytes":816,"retained_bytes_delta":0,"peak_bytes_delta":752}
+{"case":"normal_pi_plus_e","phase":"repeated","iterations":128,"certified":0,"nanos":36297,"allocation_accounting":true,"allocation_calls":1024,"allocated_bytes":104448,"retained_bytes_delta":0,"peak_bytes_delta":752}
+kind case=normal_pi_plus_e ComputableOpaque
+{"case":"normal_sqrt5","phase":"first","iterations":1,"certified":0,"nanos":1260,"allocation_accounting":true,"allocation_calls":14,"allocated_bytes":520,"retained_bytes_delta":0,"peak_bytes_delta":504}
+{"case":"normal_sqrt5","phase":"repeated","iterations":128,"certified":0,"nanos":42757,"allocation_accounting":true,"allocation_calls":1792,"allocated_bytes":66560,"retained_bytes_delta":0,"peak_bytes_delta":504}
+kind case=normal_sqrt5 SqrtLike
+{"case":"normal_trig_nonzero","phase":"first","iterations":1,"certified":0,"nanos":280,"allocation_accounting":true,"allocation_calls":5,"allocated_bytes":432,"retained_bytes_delta":0,"peak_bytes_delta":432}
+{"case":"normal_trig_nonzero","phase":"repeated","iterations":128,"certified":0,"nanos":17029,"allocation_accounting":true,"allocation_calls":640,"allocated_bytes":55296,"retained_bytes_delta":0,"peak_bytes_delta":432}
+kind case=normal_trig_nonzero TrigExact
+{"case":"normal_unsupported_order","phase":"first","iterations":1,"certified":0,"nanos":140,"allocation_accounting":true,"allocation_calls":2,"allocated_bytes":88,"retained_bytes_delta":0,"peak_bytes_delta":88}
+{"case":"normal_unsupported_order","phase":"repeated","iterations":128,"certified":0,"nanos":9189,"allocation_accounting":true,"allocation_calls":256,"allocated_bytes":11264,"retained_bytes_delta":0,"peak_bytes_delta":88}
+kind case=normal_unsupported_order TrigExact
+{"case":"normal_pythagorean_zero","phase":"first","iterations":1,"certified":0,"nanos":2500,"allocation_accounting":true,"allocation_calls":24,"allocated_bytes":1312,"retained_bytes_delta":0,"peak_bytes_delta":824}
+{"case":"normal_pythagorean_zero","phase":"repeated","iterations":128,"certified":0,"nanos":110302,"allocation_accounting":true,"allocation_calls":3072,"allocated_bytes":167936,"retained_bytes_delta":0,"peak_bytes_delta":824}
+kind case=normal_pythagorean_zero ComputableOpaque
+{"case":"normal_double_angle_zero","phase":"first","iterations":1,"certified":0,"nanos":2130,"allocation_accounting":true,"allocation_calls":23,"allocated_bytes":1496,"retained_bytes_delta":0,"peak_bytes_delta":1200}
+{"case":"normal_double_angle_zero","phase":"repeated","iterations":128,"certified":0,"nanos":92434,"allocation_accounting":true,"allocation_calls":2944,"allocated_bytes":191488,"retained_bytes_delta":0,"peak_bytes_delta":1200}
+kind case=normal_double_angle_zero ComputableOpaque
+{"case":"affine_dyadic","phase":"first","iterations":1,"certified":1,"nanos":1060,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_dyadic","phase":"repeated","iterations":128,"certified":128,"nanos":6180,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_dyadic [ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_nondyadic_rational","phase":"first","iterations":1,"certified":0,"nanos":240,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_nondyadic_rational","phase":"repeated","iterations":128,"certified":0,"nanos":2879,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_nondyadic_rational [ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_unsupported_pi","phase":"first","iterations":1,"certified":0,"nanos":170,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_unsupported_pi","phase":"repeated","iterations":128,"certified":0,"nanos":2270,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_unsupported_pi [PiLike, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_unsupported_sqrt5","phase":"first","iterations":1,"certified":0,"nanos":220,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_unsupported_sqrt5","phase":"repeated","iterations":128,"certified":0,"nanos":2209,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_unsupported_sqrt5 [SqrtLike, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_trig_nonzero","phase":"first","iterations":1,"certified":0,"nanos":160,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_trig_nonzero","phase":"repeated","iterations":128,"certified":0,"nanos":2180,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_trig_nonzero [TrigExact, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_unsupported_order","phase":"first","iterations":1,"certified":0,"nanos":120,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_unsupported_order","phase":"repeated","iterations":128,"certified":0,"nanos":2179,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_unsupported_order [TrigExact, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational, ExactRational]
+{"case":"affine_original_zero","phase":"first","iterations":1,"certified":0,"nanos":50,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+{"case":"affine_original_zero","phase":"repeated","iterations":128,"certified":0,"nanos":620,"allocation_accounting":true,"allocation_calls":0,"allocated_bytes":0,"retained_bytes_delta":0,"peak_bytes_delta":0}
+kind case=affine_original_zero [ExactRational, ExactRational, ExactRational, TrigExact, TrigExact, ExactRational, ExactRational, ExactRational, ExactRational, ComputableOpaque, TrigExact, ComputableOpaque]
