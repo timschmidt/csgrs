@@ -1,0 +1,87 @@
+{
+  "purpose": "Measure requested allocation traffic, peak live-byte increase and retained bytes across construction, cold/warm/replay native hull queries and cleanup, with exact output checks.",
+  "qualification_prerequisite": "The unchanged finite-field candidate broad qualification must complete all eleven commands and its assessor must pass before this trial begins.",
+  "candidate_sources": {
+    "baseline": "target/mesh-fact-identity-v1/source",
+    "late": "target/sphere-cyclotomic-v2/source",
+    "image": "target/sphere-cyclotomic-image-v1/source"
+  },
+  "features": "Reuse the already-frozen csgrs no-default-feature native libraries with matched transitive feature metadata. No Cargo rebuild occurs during this trial.",
+  "inputs": [
+    "fifteen_degrees r8 24x12",
+    "original_medium r10 32x16",
+    "fifth_turn r8 10x7",
+    "seventh_turn r8 7x5"
+  ],
+  "case_sets": {
+    "baseline": [
+      "fifteen_degrees"
+    ],
+    "late": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "image": [
+      "fifteen_degrees",
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ]
+  },
+  "baseline_scope_reason": "Only the original 24x12 native case is already certified by the admitted runtime. The other three retain their previously recorded failures; failed work is not used as a resource baseline for successful hulls.",
+  "fixed_schedule": [
+    [
+      "baseline",
+      "late",
+      "image"
+    ],
+    [
+      "late",
+      "image",
+      "baseline"
+    ],
+    [
+      "image",
+      "baseline",
+      "late"
+    ]
+  ],
+  "commands": 34,
+  "fixed_sample_processes": 27,
+  "preflight_processes": 0,
+  "hull_queries_per_process": 3,
+  "exact_transcripts": 81,
+  "timeout_seconds_per_command": 600,
+  "cache_state": "Fresh process per sample; clear grammar caches, construct the original sphere once, run three STRICT queries consecutively on the same retained input with all previous outputs alive, then validate/serialize all outputs, drop input/outputs and clear grammar caches. Shared process-global scalar constants may remain.",
+  "measurements": [
+    "requested allocator allocation/reallocation call count",
+    "requested allocation/reallocation bytes",
+    "retained live requested-byte delta",
+    "peak live requested bytes above phase entry",
+    "whole lifecycle retained requested bytes after grammar cleanup",
+    "instrumented binary size"
+  ],
+  "phases": [
+    "construct",
+    "cold_hull",
+    "warm_hull",
+    "replay_hull",
+    "drop_outputs_and_input",
+    "clear_grammar_cache"
+  ],
+  "oracle": "Every full position-order/triangle-row/certainty transcript must equal the independently checked late candidate transcript, including every warm and replay output. The baseline 24x12 transcript must also match. No display conversions or reduced samples.",
+  "interpretation": "All three observations and paired resource deltas are retained. Variation is reported, never filtered; no samples are added or pooled. Allocator-instrumented timing is diagnostic only and is not combined with the earlier uninstrumented process timing screen. These are requested heap-byte counts, not usable allocator sizes, stack usage or RSS.",
+  "guards": "Original 35 pending files, baseline source map, each frozen candidate map, input artifacts, linked libraries and binaries must remain unchanged. The trial performs no admission or runtime edits.",
+  "open_after_this_trial": [
+    "common/unsupported/nonzero scalar-query timing and allocation evidence",
+    "independent directed adversarial/representation campaign and instrumentation coverage",
+    "production formal proof obligations",
+    "final resource documentation and admission decision"
+  ],
+  "probe_sha256": "684e438d5099356ea9916f5477e2dcfc71b4d52e4a20a4b991a854249bc53a44",
+  "runtime_executed": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

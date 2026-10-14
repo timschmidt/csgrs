@@ -1,0 +1,62 @@
+{
+  "scope": "Read all finite-image evaluator bodies, generated constants and three image test bodies; reread the exact reducer and selected integration/accessor bodies. Earlier reviews cover other unchanged callers. Not whole-source coverage or production formal verification.",
+  "reviewed_files_sha256": {
+    "crates/hyperreal/src/computable/node/cyclotomic.rs": "3ed3cd6e3ea1537fa113dd26c5a6d0624ee4e5902e5a03aef5d2fd9d850b67fd",
+    "crates/hyperreal/src/computable/node/cyclotomic/image.rs": "3d90f996d7b850e20d66b58e31de39bf1b91ce8f601d1d7866f960b1e5fd6eac",
+    "crates/hyperreal/src/computable/node/cyclotomic/images.rs": "21cf96b032ee249185bdade05c56d8a928607ac9a79268418d93b9d08b433936",
+    "crates/hyperreal/src/computable/node/cyclotomic/image/tests.rs": "746b2bf818e2869dbc03a8a20cc0dbc7480301399a2b394318b7f17d98b02df3",
+    "crates/hyperreal/src/real/arithmetic/linear_algebra.rs": "43df9ce730b4138a00e3bcbd9f0af4727a913982453a16e995714cf2b955f560",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "c4357156ea87c68268eb3c49a63d2a078a1757e2aceaf784a9ab1d54dd15f2d7",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "af9ba7569ed45091a6fbd35a57799f0cb6f0888f952eeca58eb46be6500c42aa"
+  },
+  "findings": [
+    {
+      "topic": "One-sided authority",
+      "finding": "Only affine_nonzero can skip exact reduction, and only for an available nonzero image. A zero image, unavailable denominator inverse, unsupported order or exhausted image work returns to the prior exact proof with a fresh full coefficient budget. The image never certifies zero."
+    },
+    {
+      "topic": "Evaluation map",
+      "finding": "The selected prime exceeds the field order; a root of exact order L annihilates Phi_L modulo that prime. Constants are independently checked by direct integer-polynomial evaluation and native tests, in addition to compile-time primality/exact-order checks. These finite checks do not prove the evaluator bodies."
+    },
+    {
+      "topic": "Denominators and inverse",
+      "finding": "Fraction evaluation first maps signed numerator and positive denominator with Euclidean remainder, then requires a nonzero denominator image. Every inverse node similarly needs a nonzero image. Multiplicative inversion uses exponent p-2. Unavailable inverse images retain the exact fallback, including rational values whose denominator or numerator is a multiple of p."
+    },
+    {
+      "topic": "Trig and roots",
+      "finding": "Sine uses (zeta^-k-zeta^k)*zeta^(L/4)/2; cosine uses (zeta^k+zeta^-k)/2. Root 2 and root 3 use conjugate powers with denominators 8 and 12; root 6 multiplies them. These match the exact reducer embeddings and preserve their positive real branch selection through the shared plan."
+    },
+    {
+      "topic": "Plan and determinant",
+      "finding": "Finite child reads require an earlier expression index. At most 512 values and 256 powers are held in fixed arrays. The nine differences use a-d,b-d,c-d. The three cyclic cross-product terms match the six signed products in exact reduction."
+    },
+    {
+      "topic": "Arithmetic and resources",
+      "finding": "Modular add/subtract/multiply charge a separate counter and use checked u64 arithmetic. Valid residues and primes below 2^17 bound products. Fraction and angle exponent intermediates retain checked i128 arithmetic. Work counters do not count every loop, integer division or GCD step; separate fixed array, width, visit and depth bounds remain necessary. No exact latency, stack-byte or heap-byte bound is proved."
+    },
+    {
+      "topic": "P4",
+      "finding": "The added image reads immutable plan data and fixed constants, never approximation caches. It changes neither representations nor facts. Coordinate Real payload access borrows an existing nonrational Computable; it does not build a new graph. Existing cached dyadic eligibility still requires the immutable rational class."
+    },
+    {
+      "topic": "Test limits",
+      "finding": "All 64 orders exercise each finite expression variant with selected rational scales. Collision and bad-unit tests cover false-zero prevention and fallback. This is finite recipe coverage, not an exhaustive pair matrix, directed fuzz campaign, branch coverage measurement or formal proof."
+    }
+  ],
+  "links": {
+    "finite_table": "sphere-finite-images-v1/result.json",
+    "feasibility": "sphere-cyclotomic-image-assessment-v1.json",
+    "cost_screen": "sphere-cyclotomic-image-cost-assessment-v1.json",
+    "exact_reducer_review": "sphere-cyclotomic-source-review-v1.json",
+    "early_entry_review": "sphere-cyclotomic-early-source-review-v1.json"
+  },
+  "open_before_admission": [
+    "Finish and assess the active broad qualification",
+    "Direct independent adversarial/representation campaign and applicable instrumentation coverage",
+    "Production proof of plan denotation, checked rational/polynomial arithmetic, modulus and root embeddings, and finite-image rejection preservation",
+    "Native allocation/retention evidence and common/unsupported scalar-path timing and allocation costs",
+    "Final precise public normal-form resource documentation and admission record"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
