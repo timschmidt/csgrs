@@ -1,0 +1,43 @@
+{
+  "inputs_sha256": {
+    "trace_sphere_orientation_v1.py": "e71b090ac241963d849c8615ec2f4f5238b48df00d7a586fa1d95024bee68f11",
+    "sphere-orientation-trace-v1.patch": "f73bc2b3d642762aa656080e67f2c2946a1839471088f064392f30cc930749c3",
+    "sphere-orientation-trace-scope-v1.json": "1e81e693af9f778e44998fd38d07bd8ae8baa0a1e1114720b64d6c72910849e8",
+    "sphere_grid_facts_probe_v1.rs": "44abc2326fb0de85e108911adf02bec23110455e219fb71120fb10ac127ed35d"
+  },
+  "source": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/source",
+  "target": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target",
+  "source_files": 10129,
+  "delta_sha256": {
+    "crates/hypermesh/src/convex_hull.rs": "1965c69876773e612f8e75d597d8a63cca88c5a12f78947aae4ff2d44ee51409"
+  },
+  "source_hashes_sha256": "ba27c0be41bbbfbf912966d1cccb064b029ebc699da8c7ad3dd30b0112ce4ca7",
+  "environment": {
+    "CARGO_HOME": "/tmp/csgrs-properties-cargo",
+    "CCACHE_DIR": "/tmp/csgrs-properties-ccache",
+    "CARGO_NET_OFFLINE": "true",
+    "CARGO_TERM_COLOR": "never",
+    "CARGO_TARGET_DIR": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target"
+  },
+  "baseline_grid_result_sha256": "8f5fc856cfcb99e453e3f5cbf54f563890e252b4c005bcfe8bc1abc9e8b61068",
+  "scope": {
+    "expected_delta_sha256": {
+      "crates/hypermesh/src/convex_hull.rs": "1965c69876773e612f8e75d597d8a63cca88c5a12f78947aae4ff2d44ee51409"
+    },
+    "cases": [
+      "original_medium",
+      "fifth_turn",
+      "seventh_turn"
+    ],
+    "mode": "coordinate_symmetries",
+    "purpose": "Record point indices for the actual undecided orientation after the strongest fixed construction-fact probe.",
+    "intervention": "A diagnostic stderr record after orientation returns PredicateUndecided; no additional scalar query, precision, policy, point, or predicate changes.",
+    "required_outcomes": "All three stdout records byte-identical to original grid-fact diagnostic; at least one undecided orientation stderr row each.",
+    "commands": 7,
+    "runtime_candidate": false,
+    "runtime_admitted": false,
+    "plan_complete": false
+  },
+  "runtime_admitted": false,
+  "plan_complete": false
+}

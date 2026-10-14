@@ -1,0 +1,14 @@
+{
+  "csgrs": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/libcsgrs.rlib",
+    "sha256": "abe87a86690b12be1e0c1072781c693c9de19ac6b49a3c8f8ae831af3bea627a",
+    "features": []
+  },
+  "hypermesh": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+    "sha256": "f775957737b7bd9360237d8dc844fee5bd91d090eaa42b425fe153a4e7a9ef6f",
+    "features": [
+      "default"
+    ]
+  }
+}

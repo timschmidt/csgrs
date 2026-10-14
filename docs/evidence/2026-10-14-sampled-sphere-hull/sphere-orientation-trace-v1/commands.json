@@ -1,0 +1,120 @@
+[
+  {
+    "name": "apply",
+    "command": [
+      "patch",
+      "--batch",
+      "--forward",
+      "-p1",
+      "-i",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere-orientation-trace-v1.patch"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.0028139580972492695,
+    "stdout_sha256": "e415514c6c78546ba38f6dfb70830a8cb19e690d1faa6dc00222315b7ea88c64",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "format",
+    "command": [
+      "cargo",
+      "fmt",
+      "--all",
+      "--",
+      "--check"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 10.692716731224209,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "build",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "csgrs",
+      "--no-default-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 71.47336358483881,
+    "stdout_sha256": "568f731322bdd71903eb04a283a04ded1e5ded3a358c459e543e6c8e0749d808",
+    "stderr_sha256": "e8575a55a278abe4a3e195a12e661c5e66a6980ffe169c8c4a78864b07bd9ce8"
+  },
+  {
+    "name": "link",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-14-sampled-sphere-hull/sphere_grid_facts_probe_v1.rs",
+      "--extern",
+      "csgrs=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/libcsgrs.rlib",
+      "--extern",
+      "hypermesh=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/deps/libhypermesh-ae6470a5143cc580.rlib",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/target/release/deps",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/probe"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.3850243608467281,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "name": "original_medium",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/probe",
+      "original_medium",
+      "coordinate_symmetries"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.10346899088472128,
+    "stdout_sha256": "25da92c98688cb7f59f44081a7f35ef406f0a964195fc6397f00072fa218dea2",
+    "stderr_sha256": "6281437079ebdf0d51af630ec1a90816c7465044a40d20bc59887f344e8ff234"
+  },
+  {
+    "name": "fifth_turn",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/probe",
+      "fifth_turn",
+      "coordinate_symmetries"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.03164220182225108,
+    "stdout_sha256": "a3241f66c5dec78d15b63c70b5a53a067c20b68a7effb56e3ccd60dc35b72cc4",
+    "stderr_sha256": "c5931d843bd8f7b312d9f7df7325a611bb2b30b28ab286995c84101961839294"
+  },
+  {
+    "name": "seventh_turn",
+    "command": [
+      "timeout",
+      "--signal=TERM",
+      "--kill-after=10s",
+      "180s",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/probe",
+      "seventh_turn",
+      "coordinate_symmetries"
+    ],
+    "exit_code": 0,
+    "process_wall_seconds": 0.00901170214638114,
+    "stdout_sha256": "be59f496f534e3b8158ae37305c38ca362d09df838873dc6202b29af5ed89cc6",
+    "stderr_sha256": "809057df97d7672aa3645d7562faf2c62b379a12738db408b42233e4ffb2c27b"
+  }
+]

@@ -1,0 +1,74 @@
+{
+  "complete": true,
+  "commands_passed": 7,
+  "observations": [
+    {
+      "case": "original_medium",
+      "traces": [
+        [
+          0,
+          1,
+          368,
+          256,
+          482
+        ]
+      ],
+      "stdout_unchanged": true
+    },
+    {
+      "case": "fifth_turn",
+      "traces": [
+        [
+          2,
+          51,
+          56,
+          9,
+          62
+        ]
+      ],
+      "stdout_unchanged": true
+    },
+    {
+      "case": "seventh_turn",
+      "traces": [
+        [
+          2,
+          5,
+          22,
+          17,
+          30
+        ]
+      ],
+      "stdout_unchanged": true
+    }
+  ],
+  "binary": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-orientation-trace-v1/probe",
+    "sha256": "39312850b345d0ad2091267fc74120e13b184abcd359926c32fb732015e710de",
+    "bytes": 8821152
+  },
+  "all_sources_and_inputs_unchanged": true,
+  "artifacts_sha256": {
+    "apply.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "apply.stdout": "e415514c6c78546ba38f6dfb70830a8cb19e690d1faa6dc00222315b7ea88c64",
+    "build.stderr": "e8575a55a278abe4a3e195a12e661c5e66a6980ffe169c8c4a78864b07bd9ce8",
+    "build.stdout": "568f731322bdd71903eb04a283a04ded1e5ded3a358c459e543e6c8e0749d808",
+    "commands.json": "f3b5ce8fa0b5cb80cb2b6aad46a8de6c40f88979c3b982575f08b2f9228b2664",
+    "fifth_turn.stderr": "c5931d843bd8f7b312d9f7df7325a611bb2b30b28ab286995c84101961839294",
+    "fifth_turn.stdout": "a3241f66c5dec78d15b63c70b5a53a067c20b68a7effb56e3ccd60dc35b72cc4",
+    "format.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "format.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "libraries.json": "833c0f8cb0bd5f6dc148b292629a3b68cc8d4edb6420c27cba71f01fd128770a",
+    "link.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "link.stdout": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original_medium.stderr": "6281437079ebdf0d51af630ec1a90816c7465044a40d20bc59887f344e8ff234",
+    "original_medium.stdout": "25da92c98688cb7f59f44081a7f35ef406f0a964195fc6397f00072fa218dea2",
+    "protocol.json": "def089a4750280899fabeed1d8023e6daded0bc87350436bf1dbf828f78a35b7",
+    "seventh_turn.stderr": "809057df97d7672aa3645d7562faf2c62b379a12738db408b42233e4ffb2c27b",
+    "seventh_turn.stdout": "be59f496f534e3b8158ae37305c38ca362d09df838873dc6202b29af5ed89cc6",
+    "source-hashes.json.gz": "ba27c0be41bbbfbf912966d1cccb064b029ebc699da8c7ad3dd30b0112ce4ca7"
+  },
+  "runtime_admitted": false,
+  "sphere_certificate_pending": true,
+  "plan_complete": false
+}
