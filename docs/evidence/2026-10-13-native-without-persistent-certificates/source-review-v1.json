@@ -1,0 +1,37 @@
+{
+  "all_new_runtime_diff_read": true,
+  "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
+  "runtime_patch": {
+    "path": "preparation-v1/candidate.patch.gz",
+    "sha256": "9579bb20b579682adda1032e122a60bd3a36116ba88955e0ef75bfcfbdb65aff",
+    "paths": 12
+  },
+  "reading": [
+    "Entire 12-path candidate patch, including three metadata tests, five endpoint tests and two allocator contract tests.",
+    "Current-main exact_rational match and reviewed full-candidate branch at structural_analysis.rs:1335-1382.",
+    "The eleven copied paths exactly match the prior reviewed candidate; its necessary caller/policy/ownership context remains applicable."
+  ],
+  "previous_context_review": {
+    "path": "docs/evidence/2026-10-13-combined-native-admission/review-v1.json",
+    "sha256": "e6eebee9dfabeadd65077f0044cc1adddbd5f4c4a3dc9f2db990f7671bffc3c4"
+  },
+  "invariants": [
+    "The scalar difference is only checked signed-word conversion into the existing exact Rational table; arbitrary-width inputs retain the original BigInt conversion. The method still recognizes exact leaves only.",
+    "Algebra, persistent storage representation, fact APIs and Laurent compaction equal the main baseline byte-for-byte. The unadmitted persistent cache module is absent. No original proof budget or algebra frontier changes.",
+    "The admitted P4 sign-retention repair and cached interval API are inherited from main and remain unchanged.",
+    "Metadata order retains the same conjunction and error priority. Endpoint coordinate queries remain lazy, Unknown keeps its retry, and preview/terminal policy follows the old sequence.",
+    "The process allocator remains restricted to native CLI and standalone library tests; independent library probe roots use System. Native dependency/build effects remain in scope.",
+    "Only the two reviewed overlapping curve paths differ from the 35 authorized native paths; their original native changes are retained as in the prior candidate. Other pending paths are byte-identical."
+  ],
+  "metadata_instrumentation": {
+    "delta_paths": [
+      "crates/hypercurve/src/bezier_region.rs",
+      "crates/hypercurve/src/bezier_region/combined_admission_metadata.rs"
+    ],
+    "helper_byte_identical_to_reused_baseline": true,
+    "separate_from_production": true
+  },
+  "scope_limit": "Source reasoning and forthcoming finite controls are not a universal P1-P39 proof. No new original gate, full-report or whole-application result is yet established.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

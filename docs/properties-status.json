@@ -4272,6 +4272,22 @@
       "result": "Exact witnesses and receipts match. The closed 365-row timing comparison has 34 rows higher in all five pairs, including two quadratic construction cases with median ratios about 1.65 and 29 broad rows. Thirty allocation rows have increased fields. Do not admit the complete combination; preserve its query/allocator gains and all adverse observations.",
       "next_prototype_prepared": false,
       "next_measurements_executed": false
+    },
+    "native_without_persistent_certificates": {
+      "status": "source-reviewed-and-frozen-library-qualification-and-costs-next",
+      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/source-review-v1.json",
+      "scope": "docs/evidence/2026-10-13-native-without-persistent-certificates/scope-v1.json",
+      "preparation": "docs/evidence/2026-10-13-native-without-persistent-certificates/preparation-v1/protocol.json",
+      "preparation_sha256": "2fc88038d7ef5c49b81bcd69a36179b2e10ea5ffb7b32ff1cceba67c32cae5bc",
+      "candidate_changed_paths": 12,
+      "baseline_binaries_reused": 11,
+      "baseline_measurements_reused": false,
+      "source_review_complete": true,
+      "prototype_prepared": true,
+      "measurements_executed": false,
+      "all_main_and_35_pending_native_paths_unchanged": true,
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {
