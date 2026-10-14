@@ -1,0 +1,44 @@
+/home/tim/Documents/GitHub/workspace/csgrs/target/sphere-cyclotomic-v2/sphere-candidate  :
+section                    size      addr
+.interp                      28       736
+.note.ABI-tag                32       764
+.note.gnu.build-id           36       796
+.dynsym                    1800       832
+.gnu.version                150      2632
+.gnu.version_r              336      2784
+.gnu.hash                    28      3120
+.dynstr                    1130      3148
+.rela.dyn                 44448      4280
+.rela.plt                    48     48728
+.gcc_except_table       1435052     48776
+.rodata                   77976   1483840
+.eh_frame_hdr             17420   1561816
+.eh_frame                125888   1579240
+.text                   1641103   1709232
+.init                        27   3350336
+.fini                        13   3350364
+.plt                         48   3350384
+.tdata                      576   3354528
+.tbss                       896   3355104
+.data.rel.ro              26136   3355104
+.fini_array                   8   3381240
+.init_array                  16   3381248
+.dynamic                    480   3381264
+.got                       4672   3381744
+.got.plt                     40   3386416
+.relro_padding              936   3386456
+.tm_clone_table               0   3390552
+.data                    197480   3390552
+.bss                        208   3588032
+.comment                    185         0
+.annobin.notes              247         0
+.gnu.build.attributes       324         0
+.debug_abbrev              6741         0
+.debug_info             1142353         0
+.debug_aranges            32496         0
+.debug_ranges            518032         0
+.debug_str              1923926         0
+.debug_line              476525         0
+Total                   7677840
+
+

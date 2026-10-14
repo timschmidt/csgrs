@@ -1,0 +1,32 @@
+{
+  "status": "design_only_not_implemented_or_executed",
+  "motivation": "The fixed placement comparison flagged three native regressions despite identical exact hull outputs. A new prefilter should reuse existing numerical certificates before attempting the field reduction.",
+  "owning_layer": "Private hyperreal affine determinant filter",
+  "candidate": "Try a checked fixed-width interval determinant from already cached certified coordinate enclosures. Return a definite nonzero sign only when the entire determinant interval excludes zero. Otherwise preserve the exact cyclotomic zero branch and all existing fallbacks.",
+  "constraints": [
+    "No numerical refinement or display-float input",
+    "No weaker result when a cache holds a finer approximation",
+    "Retain every prior exact zero proof and existing dyadic primitive result",
+    "Bound input magnitude and projection work before allocating; the current cached_rational_interval path does not by itself promise fixed-width allocation",
+    "Do not mutate or overwrite either executed scalar candidate or any fixed timing input",
+    "Use a new source snapshot, fixed correctness matrix and original full native output controls before any admission"
+  ],
+  "source_observation": "EvaluationCache::value_at_precision clones the complete cached BigInt for equal precision or a one-bit gap. For larger gaps it right-shifts borrowed data, then rounds. A fixed-width consumer must audit and bound these paths, including signed shifts and negative scaling, before relying on them for bounded speculative work.",
+  "read_sources": [
+    "crates/hyperreal/src/computable/node/representation.rs",
+    "crates/hyperreal/src/computable/node/structural_analysis.rs",
+    "crates/hyperreal/src/real/arithmetic/facts.rs",
+    "crates/hyperreal/src/real/convert.rs",
+    "crates/hypermesh/src/convex_hull.rs",
+    "crates/hypermesh/src/bvh.rs"
+  ],
+  "open": [
+    "Select a minimal existing or new bounded cache projection with precise enclosure proof",
+    "Test cold/warm/high/low/concurrent and abort behavior, including huge precision gaps and coefficient widths",
+    "Independent interval arithmetic and determinant boundary controls",
+    "Preserve all 157 zero fixtures, 314 displaced controls, nine recipes and four complete native hull outputs",
+    "New fixed timing/allocation/retention/size and production formal verification evidence"
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}

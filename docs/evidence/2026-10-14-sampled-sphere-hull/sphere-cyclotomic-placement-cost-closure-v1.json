@@ -1,0 +1,53 @@
+{
+  "status": "closed_unconditional_early_placement_rejected_for_runtime_admission",
+  "assessment_sha256": "2b0658c8284f3629e32aee196daa612a4f944c181d9e635062d260ac0d7402bb",
+  "commands_all_zero": 58,
+  "fixed_sample_processes": 48,
+  "preflight_processes": 8,
+  "all_exact_outputs_identical": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "median_process_wall_ratio": 1.07442186431499,
+      "min_process_wall_ratio": 0.9967267705657274,
+      "max_process_wall_ratio": 1.1042046542218038,
+      "median_child_cpu_ratio": 1.0739302400155497,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "median_process_wall_ratio": 1.5714017745186322,
+      "min_process_wall_ratio": 1.5094918913558781,
+      "max_process_wall_ratio": 1.6913077981389153,
+      "median_child_cpu_ratio": 1.5709978986482547,
+      "reproducible_cost_regression_flagged": true
+    },
+    {
+      "case": "fifth_turn",
+      "median_process_wall_ratio": 2.2763238756790916,
+      "min_process_wall_ratio": 1.6566714076894182,
+      "max_process_wall_ratio": 2.455388577347559,
+      "median_child_cpu_ratio": 2.276983942662,
+      "reproducible_cost_regression_flagged": true
+    },
+    {
+      "case": "seventh_turn",
+      "median_process_wall_ratio": 1.9656880080449155,
+      "min_process_wall_ratio": 1.921716382429885,
+      "max_process_wall_ratio": 2.1204352088578506,
+      "median_child_cpu_ratio": 1.965002543125419,
+      "reproducible_cost_regression_flagged": true
+    }
+  ],
+  "raw_binary_delta_bytes": 13360,
+  "text_section_delta_bytes": 11072,
+  "decision": "The unconditional early affine field reduction preserves all native results and cold/warm controls, but breaches the predeclared native cost screen on three original cases. Preserve the early source, binaries, tests and all samples. Do not admit this placement or spend a broad qualification pass on it unchanged. The late V2 candidate also remains unadmitted pending proof placement, formal and cost obligations.",
+  "next": "Design a bounded cached-coordinate interval proof ahead of field arithmetic, without initiating numeric refinement, losing zero proofs when caches warm, or cloning arbitrarily large cached integers. Qualify any such revision as a new immutable version on the same original inputs.",
+  "limits": [
+    "No allocation, retained-byte, RSS or check-body timing evidence.",
+    "No general performance, formal verification, broad early-filter qualification or runtime admission claim."
+  ],
+  "goal_turn_classification": "progress",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

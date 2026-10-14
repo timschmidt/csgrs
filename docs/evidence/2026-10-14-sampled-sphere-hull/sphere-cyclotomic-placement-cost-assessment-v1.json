@@ -1,0 +1,316 @@
+{
+  "complete": true,
+  "assessor_sha256": "f865c7a1ed3004fa5bb84a9a1c407cc3502b1333f029bffed166a39a1958c72e",
+  "result_sha256": "7559a0027c1a59a822b757eae7b406d0ccfb12f41541761b2dbc088fd1311256",
+  "commands_all_zero": 58,
+  "preflight_processes": 8,
+  "fixed_sample_processes": 48,
+  "all_original_native_output_rows_and_certainty_identical": true,
+  "cases": [
+    {
+      "case": "fifteen_degrees",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 5.720654443837702,
+          "early_process_wall_seconds": 5.769385036081076,
+          "process_wall_ratio": 1.0085183596949936,
+          "child_cpu_ratio": 1.0090433730108477
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 5.617993297986686,
+          "early_process_wall_seconds": 6.011834324803203,
+          "process_wall_ratio": 1.0701035059898802,
+          "child_cpu_ratio": 1.0699408501222174
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 5.43693079194054,
+          "early_process_wall_seconds": 5.8650359329767525,
+          "process_wall_ratio": 1.0787402226401,
+          "child_cpu_ratio": 1.077919629908882
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 5.540861751884222,
+          "early_process_wall_seconds": 6.118245334830135,
+          "process_wall_ratio": 1.1042046542218038,
+          "child_cpu_ratio": 1.1042452818181574
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 5.652651522774249,
+          "early_process_wall_seconds": 6.172357928007841,
+          "process_wall_ratio": 1.0919402873394408,
+          "child_cpu_ratio": 1.0917360489821533
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 5.760863609146327,
+          "early_process_wall_seconds": 5.74200698081404,
+          "process_wall_ratio": 0.9967267705657274,
+          "child_cpu_ratio": 0.9989719595270082
+        }
+      ],
+      "median_process_wall_ratio": 1.07442186431499,
+      "min_process_wall_ratio": 0.9967267705657274,
+      "max_process_wall_ratio": 1.1042046542218038,
+      "median_child_cpu_ratio": 1.0739302400155497,
+      "reproducible_cost_regression_flagged": false
+    },
+    {
+      "case": "original_medium",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 15.078021105844527,
+          "early_process_wall_seconds": 22.760150596965104,
+          "process_wall_ratio": 1.5094918913558781,
+          "child_cpu_ratio": 1.5089966703134559
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 14.222750240005553,
+          "early_process_wall_seconds": 22.526921596378088,
+          "process_wall_ratio": 1.5838653717629576,
+          "child_cpu_ratio": 1.5832002304411639
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 14.507510402239859,
+          "early_process_wall_seconds": 22.87372286617756,
+          "process_wall_ratio": 1.5766814726974805,
+          "child_cpu_ratio": 1.57612558218093
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 14.549814173020422,
+          "early_process_wall_seconds": 22.78678518300876,
+          "process_wall_ratio": 1.5661220763397838,
+          "child_cpu_ratio": 1.5658702151155794
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 14.348295959178358,
+          "early_process_wall_seconds": 24.267384845763445,
+          "process_wall_ratio": 1.6913077981389153,
+          "child_cpu_ratio": 1.6905835349455842
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 14.609888346865773,
+          "early_process_wall_seconds": 22.3402620437555,
+          "process_wall_ratio": 1.52911928642823,
+          "child_cpu_ratio": 1.5280246843489491
+        }
+      ],
+      "median_process_wall_ratio": 1.5714017745186322,
+      "min_process_wall_ratio": 1.5094918913558781,
+      "max_process_wall_ratio": 1.6913077981389153,
+      "median_child_cpu_ratio": 1.5709978986482547,
+      "reproducible_cost_regression_flagged": true
+    },
+    {
+      "case": "fifth_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 0.604130660649389,
+          "early_process_wall_seconds": 1.0008459920063615,
+          "process_wall_ratio": 1.6566714076894182,
+          "child_cpu_ratio": 1.6542010676719132
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 0.42238193238154054,
+          "early_process_wall_seconds": 1.0310616018250585,
+          "process_wall_ratio": 2.441064645004023,
+          "child_cpu_ratio": 2.4421966765145697
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 0.41904230089858174,
+          "early_process_wall_seconds": 1.0289116790518165,
+          "process_wall_ratio": 2.455388577347559,
+          "child_cpu_ratio": 2.44777776976498
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 0.4844351909123361,
+          "early_process_wall_seconds": 1.0071153920143843,
+          "process_wall_ratio": 2.078947629955795,
+          "child_cpu_ratio": 2.0774778106508274
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 0.46122464118525386,
+          "early_process_wall_seconds": 1.0098858922719955,
+          "process_wall_ratio": 2.1895748884465354,
+          "child_cpu_ratio": 2.1923635101840424
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 0.4270464228466153,
+          "early_process_wall_seconds": 1.009141813032329,
+          "process_wall_ratio": 2.3630728629116473,
+          "child_cpu_ratio": 2.3616043751399576
+        }
+      ],
+      "median_process_wall_ratio": 2.2763238756790916,
+      "min_process_wall_ratio": 1.6566714076894182,
+      "max_process_wall_ratio": 2.455388577347559,
+      "median_child_cpu_ratio": 2.276983942662,
+      "reproducible_cost_regression_flagged": true
+    },
+    {
+      "case": "seventh_turn",
+      "pairs": [
+        {
+          "round": 1,
+          "late_process_wall_seconds": 0.1293048309162259,
+          "early_process_wall_seconds": 0.2741825161501765,
+          "process_wall_ratio": 2.1204352088578506,
+          "child_cpu_ratio": 2.116133951635507
+        },
+        {
+          "round": 2,
+          "late_process_wall_seconds": 0.13150920998305082,
+          "early_process_wall_seconds": 0.2559579652734101,
+          "process_wall_ratio": 1.946312089521323,
+          "child_cpu_ratio": 1.9482892124165374
+        },
+        {
+          "round": 3,
+          "late_process_wall_seconds": 0.13055179500952363,
+          "early_process_wall_seconds": 0.2661442756652832,
+          "process_wall_ratio": 2.0386106192248694,
+          "child_cpu_ratio": 2.039726556465328
+        },
+        {
+          "round": 4,
+          "late_process_wall_seconds": 0.13151569897308946,
+          "early_process_wall_seconds": 0.25740916514769197,
+          "process_wall_ratio": 1.9572504815593357,
+          "child_cpu_ratio": 1.9559609290079423
+        },
+        {
+          "round": 5,
+          "late_process_wall_seconds": 0.13360742619261146,
+          "early_process_wall_seconds": 0.25675557972863317,
+          "process_wall_ratio": 1.921716382429885,
+          "child_cpu_ratio": 1.9246294021439614
+        },
+        {
+          "round": 6,
+          "late_process_wall_seconds": 0.13098927587270737,
+          "early_process_wall_seconds": 0.2585892742499709,
+          "process_wall_ratio": 1.974125534530495,
+          "child_cpu_ratio": 1.9740441572428955
+        }
+      ],
+      "median_process_wall_ratio": 1.9656880080449155,
+      "min_process_wall_ratio": 1.921716382429885,
+      "max_process_wall_ratio": 2.1204352088578506,
+      "median_child_cpu_ratio": 1.965002543125419,
+      "reproducible_cost_regression_flagged": true
+    }
+  ],
+  "binary_file_bytes": {
+    "late": 8739096,
+    "early": 8752456
+  },
+  "binary_sections_bytes": {
+    "late": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44448,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435052,
+      ".rodata": 77976,
+      ".eh_frame_hdr": 17420,
+      ".eh_frame": 125888,
+      ".text": 1641103,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26136,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4672,
+      ".got.plt": 40,
+      ".relro_padding": 936,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    },
+    "early": {
+      ".interp": 28,
+      ".note.ABI-tag": 32,
+      ".note.gnu.build-id": 36,
+      ".dynsym": 1800,
+      ".gnu.version": 150,
+      ".gnu.version_r": 336,
+      ".gnu.hash": 28,
+      ".dynstr": 1130,
+      ".rela.dyn": 44592,
+      ".rela.plt": 48,
+      ".gcc_except_table": 1435148,
+      ".rodata": 77984,
+      ".eh_frame_hdr": 17468,
+      ".eh_frame": 126564,
+      ".text": 1652175,
+      ".init": 27,
+      ".fini": 13,
+      ".plt": 48,
+      ".tdata": 576,
+      ".tbss": 896,
+      ".data.rel.ro": 26256,
+      ".fini_array": 8,
+      ".init_array": 16,
+      ".dynamic": 480,
+      ".got": 4680,
+      ".got.plt": 40,
+      ".relro_padding": 1048,
+      ".tm_clone_table": 0,
+      ".data": 197480,
+      ".bss": 208,
+      ".comment": 185,
+      ".annobin.notes": 247,
+      ".gnu.build.attributes": 324,
+      ".debug_abbrev": 6741,
+      ".debug_info": 1142353,
+      ".debug_aranges": 32496,
+      ".debug_ranges": 518032,
+      ".debug_str": 1923926,
+      ".debug_line": 476525
+    }
+  },
+  "binary_file_delta_early_minus_late": 13360,
+  "text_delta_early_minus_late": 11072,
+  "interpretation": "Descriptive fixed paired whole-process comparison for four original inputs and two isolated implementations. Preflight samples were retained but excluded from the six predeclared measurement pairs.",
+  "limits": [
+    "No allocation, retained-byte, RSS or check-body timing evidence.",
+    "No general performance, formal verification, broad early-filter qualification or runtime admission claim."
+  ],
+  "runtime_admitted": false,
+  "plan_complete": false
+}
