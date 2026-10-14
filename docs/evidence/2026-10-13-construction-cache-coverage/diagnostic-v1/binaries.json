@@ -1,0 +1,12 @@
+{
+  "tests": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+    "sha256": "13d6fe6ce71a0becf86efe5dbfcae109927470aa25f45c181ef1b9c8cfbeb2ab",
+    "bytes": 10279736
+  },
+  "probe": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/cache-coverage-probe",
+    "sha256": "0aeedf0e7b36c1204bebdfc4a0004daadbb22f85368c3ec2a6b415a3cb4a1bb8",
+    "bytes": 6309520
+  }
+}

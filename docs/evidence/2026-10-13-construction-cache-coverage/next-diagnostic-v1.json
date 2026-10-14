@@ -1,0 +1,22 @@
+{
+  "status": "phase-hardware-counter-diagnostic-review-pending",
+  "purpose": "Investigate the remaining elapsed-cost differences after equal construction arithmetic/allocation accounting and zero direct cache activity in the two expensive construction windows.",
+  "capabilities": {
+    "evidence": "docs/evidence/2026-10-13-construction-cache-coverage/performance-counter-capabilities-v1.json",
+    "cycles_and_instructions_available": true,
+    "reference_cycles_available": false,
+    "current_cpu0_governor": "powersave",
+    "historical_governor_or_frequency_state_established": false
+  },
+  "source_review_required": "Review the installed Linux perf-event API and available per-thread user-space cycle/instruction counters. Establish safe RAII descriptor ownership, group read format, enabled/running coverage and failure reporting before creating a diagnostic driver.",
+  "proposed_scope": "Use the existing unchanged main, full-cache and cache-free release libraries. Replace only the standalone quadratic probe observation wrapper to report per-phase user cycles, retired instructions, thread CPU and wall durations. Keep every fixture, mathematical expected value, witness, family order and 4096-input count unchanged. Include separately recorded empty-window controls for instrumentation cost; freeze a new balanced process order before collecting anything.",
+  "limits": [
+    "This would be a distinct instrumentation diagnostic. Its observations cannot replace, pool with or erase any closed cost sample.",
+    "Do not call cycles divided by CPU time a calibrated clock frequency. Reference-cycle support is absent and user hardware events and thread CPU have different accounting boundaries.",
+    "Current powersave/governor state is not evidence of the environment during the prior runs. Do not tune hardware or host policy as part of this diagnostic.",
+    "Require full counter scheduling coverage or mark a sample unusable without deleting it; no adaptive extra runs to replace adverse or unavailable samples.",
+    "Keep exact witnesses and all original costs/native limits intact. No runtime change or admission follows from this coverage result alone."
+  ],
+  "runtime_candidate_prepared": false,
+  "diagnostic_prepared": false
+}

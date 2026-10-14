@@ -1,0 +1,41 @@
+{
+  "status": "direct-cache-work-does-not-explain-two-construction-regressions",
+  "assessment_sha256": "920cd9b70f81a8c7df833bb5ccabdfc11a92a3a3afbdc2c187ec8e66785f1c98",
+  "source_review_sha256": "97a23f847673301078c52b2378aa40e03e4a4bdd6fa1cc0d2919c7dc1c23f770",
+  "prior_trace_interpretation_sha256": "296a05f896acd57816a4d894a8592fc787ff8a071017a9ebead63c48a86a2cc6",
+  "capabilities_sha256": "3855aede03a669731fe1df6c712e8fedb76173bf11219bfb60d1455690fc9bb4",
+  "qualification": {
+    "format_passed": true,
+    "all_features_all_targets_clippy_warnings_denied": true,
+    "scalar_tests_passed": 875,
+    "prior_scalar_tests_preserved": 868,
+    "existing_persistent_cache_tests": 6,
+    "new_counter_sanity_test": 1
+  },
+  "observations": {
+    "fixed_diagnostic_processes": 2,
+    "rows": 64,
+    "event_fields_per_row": 27,
+    "counts_repeat_exactly": true,
+    "all_prior_arithmetic_counts_witnesses_and_inventories_match": true,
+    "zero_event_construction_phases": [
+      "affine_surd_construction",
+      "negated_scaled_surd_construction",
+      "multiradical_square_construction",
+      "pi_transport_construction",
+      "mixed_field_decline_construction",
+      "conjugate_then_affine_construction"
+    ],
+    "all_eight_construction_phases_have_no_retained_hits_publications_or_cell_allocations": true,
+    "opaque_decline_construction_lookups": 15799,
+    "opaque_cancellation_construction_lookups": 24576,
+    "all_phase_retained_hits_one_process": 48568,
+    "all_phase_publications_one_process": 36279
+  },
+  "interpretation": "The two expensive construction windows execute none of the instrumented normalizer/cache sites. Cache-copy removal therefore has no observed direct work to remove inside those windows. Earlier-phase cache effects, code generation/layout and environment remain possible explanations, not established causes. The positive replay control and nonzero query-phase events show the hook pipeline is active.",
+  "retention": "Retain this diagnostic as evidence. Do not select a cache-storage/lookup prototype as a direct remedy for these two windows from the present data. Both prior runtime combinations remain unadmitted, with every adverse timing/allocation row and the original cache-free board failure preserved.",
+  "next_step": "docs/evidence/2026-10-13-construction-cache-coverage/next-diagnostic-v1.json",
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

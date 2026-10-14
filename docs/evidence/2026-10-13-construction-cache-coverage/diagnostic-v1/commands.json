@@ -1,0 +1,121 @@
+[
+  {
+    "name": "clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--all-targets",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "808295b790858d01c48648f73fe5532d4fc5e7a1c634cb4a9be6ae675d3d99c3"
+  },
+  {
+    "name": "build-library",
+    "command": [
+      "cargo",
+      "build",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "3b533bf570d715a32e3a31d9b2232ca1300576128dfb543fef5d12cce535b6bc",
+    "stderr_sha256": "22891c4c9f9b88fb102f9389513bd535d4efbeffb7f47a414e78d420172ef0a2"
+  },
+  {
+    "name": "build-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--locked",
+      "--release",
+      "-p",
+      "hyperreal",
+      "--all-features",
+      "--lib",
+      "--no-run",
+      "--message-format=json"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "c7d98efda0c14ac243f4bc2d7347b4e0ccd3726f2e78916cf224cb22025925df",
+    "stderr_sha256": "2642e865d18f3f537dd1add3707ccb1ab632ed6dd04e54e7b145b057fe077ef6"
+  },
+  {
+    "name": "library-tests",
+    "command": [
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/hyperreal-c4ce5bbc6487bbcc",
+      "--test-threads=1"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "c65547292b414141ac4e6ab0a84ff9f5e985bab43bb08570de271f3842444c65",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "link-probe",
+    "command": [
+      "rustc",
+      "--edition=2024",
+      "-O",
+      "-D",
+      "warnings",
+      "/home/tim/Documents/GitHub/workspace/csgrs/docs/evidence/2026-10-13-construction-cache-coverage/preparation-v1/probe.rs",
+      "-L",
+      "dependency=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps",
+      "--extern",
+      "hyperreal=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+      "--extern",
+      "serde_json=/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+      "-o",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/cache-coverage-probe"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-1",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/cache-coverage-probe",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "67a802714b8b0408ba3f3672c5ec685b800998fb5cecc92c221cbfcb6634d62d",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  },
+  {
+    "name": "trace-2",
+    "command": [
+      "taskset",
+      "-c",
+      "0",
+      "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/cache-coverage-probe",
+      "4096"
+    ],
+    "cwd": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source",
+    "exit_code": 0,
+    "stdout_sha256": "67a802714b8b0408ba3f3672c5ec685b800998fb5cecc92c221cbfcb6634d62d",
+    "stderr_sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+  }
+]

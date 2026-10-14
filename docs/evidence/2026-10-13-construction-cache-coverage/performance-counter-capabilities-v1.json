@@ -1,0 +1,45 @@
+{
+  "purpose": "Read-only capability check for a distinct performance attribution diagnostic; no timing sample or runtime candidate.",
+  "commands": [
+    {
+      "command": [
+        "perf",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "perf version 7.2.5-100.fc43.x86_64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "perf",
+        "stat",
+        "--no-big-num",
+        "-x,",
+        "-e",
+        "cycles:u,instructions:u,ref-cycles:u,task-clock",
+        "--",
+        "true"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": "247306,,cycles:u,974588,100.00,,\n161861,,instructions:u,974588,100.00,,\n<not supported>,,ref-cycles:u,0,100.00,,\n0.97,msec,task-clock:u,974588,100.00,,\n"
+    }
+  ],
+  "cpu0_cpufreq_snapshot": {
+    "scaling_driver": "amd-pstate-epp",
+    "scaling_governor": "powersave",
+    "scaling_available_governors": "performance powersave",
+    "cpuinfo_min_freq": "575976",
+    "cpuinfo_max_freq": "4552952",
+    "scaling_min_freq": "1755355",
+    "scaling_max_freq": "4552952",
+    "scaling_cur_freq": "4225054",
+    "affected_cpus": "0"
+  },
+  "hardware_or_governor_modified": false,
+  "interpretation_limit": "Current governor/frequency state does not establish the state during any prior timing run. Whole-process event availability does not establish per-phase attribution.",
+  "prior_samples_reexecuted": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

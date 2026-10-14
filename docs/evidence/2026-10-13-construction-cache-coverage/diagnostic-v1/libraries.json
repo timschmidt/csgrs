@@ -1,0 +1,26 @@
+{
+  "hyperreal": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/libhyperreal.rlib",
+    "sha256": "74dd24c2e8e04ee0346c9060fd1158b28f884e69a9d34af32e9a5cbbde8a3892",
+    "bytes": 11762878,
+    "manifest_path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/source/crates/hyperreal/Cargo.toml",
+    "features": [
+      "cached-f32-approx",
+      "cached-f64-approx",
+      "default",
+      "dispatch-trace",
+      "serde",
+      "simple"
+    ]
+  },
+  "serde_json": {
+    "path": "/home/tim/Documents/GitHub/workspace/csgrs/target/construction-cache-coverage-v1/target/release/deps/libserde_json-5014cdedc53ad9a3.rlib",
+    "sha256": "f7e50485c8142b44717d509d8c26c7d838fceea6421725112f9f41ca5d70639e",
+    "bytes": 2042504,
+    "manifest_path": "/tmp/csgrs-properties-cargo/registry/src/index.crates.io-1949cf8c6b5b557f/serde_json-1.0.149/Cargo.toml",
+    "features": [
+      "default",
+      "std"
+    ]
+  }
+}

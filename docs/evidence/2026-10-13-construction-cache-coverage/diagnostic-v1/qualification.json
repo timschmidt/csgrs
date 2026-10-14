@@ -1,0 +1,16 @@
+{
+  "library_tests_passed": 875,
+  "all_prior_868_scalar_tests_preserved": true,
+  "existing_cache_tests_passed": 6,
+  "new_counter_sanity_tests_passed": 1,
+  "extra_test_names": [
+    "computable::node::persistent_laurent_cache_tests::concurrent_publication_keeps_approximations_and_releases_the_graph",
+    "computable::node::persistent_laurent_cache_tests::diagnostic_cache_counters_observe_publication_and_zero_work_replay",
+    "computable::node::persistent_laurent_cache_tests::expansion_at_a_term_limit_retries_the_original_proof",
+    "computable::node::persistent_laurent_cache_tests::integer_leaf_values_survive_word_boundaries_warming_and_cloning",
+    "computable::node::persistent_laurent_cache_tests::opaque_coefficients_are_not_retained_and_nodes_are_reclaimed",
+    "computable::node::persistent_laurent_cache_tests::successful_cold_rational_facts_survive_warming_and_cloning",
+    "computable::node::persistent_laurent_cache_tests::warm_proof_is_available_with_no_new_work"
+  ],
+  "clippy_all_features_all_targets_warnings_denied": true
+}

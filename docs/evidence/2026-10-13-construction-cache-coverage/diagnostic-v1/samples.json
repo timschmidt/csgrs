@@ -1,0 +1,6000 @@
+[
+  {
+    "repetition": 1,
+    "rows": [
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 4094,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 25846
+        },
+        "trace_phase": "affine_surd_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 390,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 386,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 390,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "rhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 4,
+          "reductions": 4096,
+          "temporary_rationals": 37651
+        },
+        "trace_phase": "negated_scaled_surd_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 195,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 4486,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 4486,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29651
+        },
+        "trace_phase": "negated_scaled_surd_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 2927,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 26335
+        },
+        "trace_phase": "negated_scaled_surd_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 2927,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 26335
+        },
+        "trace_phase": "negated_scaled_surd_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 12288,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 12284,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 18627,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 8192,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 24576,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 4096,
+          "retained_lookup": 28672,
+          "retained_radicals_copied": 8192,
+          "retained_terms_copied": 4096,
+          "retained_visit": 28672,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "add",
+            "path": "word-sized"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "arithmetic-reuse",
+            "path": "first-observation"
+          },
+          {
+            "count": 4095,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8191,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 16382,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 49154
+        },
+        "trace_phase": "multiradical_square_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 4096,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 8192,
+          "retained_lookup": 12288,
+          "retained_radicals_copied": 16384,
+          "retained_terms_copied": 8192,
+          "retained_visit": 12288,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 4096,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 8192,
+          "retained_lookup": 12288,
+          "retained_radicals_copied": 16384,
+          "retained_terms_copied": 8192,
+          "retained_visit": 12288,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 3511,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-inv-pi"
+          },
+          {
+            "count": 586,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 4097,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "shared-constant-wrapper"
+          },
+          {
+            "count": 1170,
+            "layer": "computable",
+            "operation": "sqrt",
+            "path": "generic-sqrt-node"
+          },
+          {
+            "count": 3510,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 8192,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "div",
+            "path": "const-product-sqrt"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "inverse_ref",
+            "path": "prechecked-pi"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 22238
+        },
+        "trace_phase": "pi_transport_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 12288,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 12288,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 18627,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 8192,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15799,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 15799,
+          "project_retained_success": 11703,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15799,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15799,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "atan",
+            "path": "exact-rational-deferred"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "atan-rational-deferred"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 7022,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 15214,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 11703,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "rhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "atan",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "definitely_zero",
+            "path": "rational-sign"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 3,
+          "reductions": 4096,
+          "temporary_rationals": 78996
+        },
+        "trace_phase": "opaque_decline_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 3511,
+          "closed_copy_declined_opaque": 3511,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 3511,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 24576,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 24576,
+          "project_retained_success": 20480,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 24576,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 24576,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "atan",
+            "path": "exact-rational-deferred"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "atan-rational-deferred"
+          },
+          {
+            "count": 16384,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 7022,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 32768,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 16384,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "shared-constant-wrapper"
+          },
+          {
+            "count": 20480,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "rhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "atan",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "definitely_zero",
+            "path": "rational-sign"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "inverse_ref",
+            "path": "const-product"
+          },
+          {
+            "count": 16384,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          },
+          {
+            "count": 8192,
+            "layer": "real",
+            "operation": "sub",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "zero_status",
+            "path": "symbolic-nonzero-scale"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 3,
+          "reductions": 4096,
+          "temporary_rationals": 232303
+        },
+        "trace_phase": "opaque_cancellation_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 16384,
+          "local_memo_store": 8192,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 16384,
+          "local_memo_store": 8192,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 3511,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 16384,
+          "local_memo_store": 12288,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 1170,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 11898,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "sub",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "sub",
+            "path": "lhs-zero"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 37354
+        },
+        "trace_phase": "conjugate_then_affine_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 84264,
+          "closed_copy_attempt": 3511,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 3511,
+          "closed_radicals_copied": 3511,
+          "closed_terms_copied": 3511,
+          "evaluation_cell_allocated": 3511,
+          "evaluation_cell_published": 3511,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 280880,
+          "local_memo_hit": 0,
+          "local_memo_store": 3511,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 39400,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 7022,
+          "retained_lookup": 46422,
+          "retained_radicals_copied": 7022,
+          "retained_terms_copied": 7022,
+          "retained_visit": 46422,
+          "store_already_present": 0,
+          "store_attempt": 3511,
+          "store_published": 3511
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 6,
+            "layer": "rational",
+            "operation": "add",
+            "path": "word-sized"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "arithmetic-reuse",
+            "path": "first-observation"
+          },
+          {
+            "count": 4676,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1168,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1173,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1175,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 40481
+        },
+        "trace_phase": "conjugate_then_affine_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 32378,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 10533,
+          "retained_lookup": 42911,
+          "retained_radicals_copied": 10533,
+          "retained_terms_copied": 10533,
+          "retained_visit": 42911,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4682,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 585,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29940
+        },
+        "trace_phase": "conjugate_then_affine_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 32378,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 10533,
+          "retained_lookup": 42911,
+          "retained_radicals_copied": 10533,
+          "retained_terms_copied": 10533,
+          "retained_visit": 42911,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4682,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 585,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29940
+        },
+        "trace_phase": "conjugate_then_affine_cloned"
+      }
+    ]
+  },
+  {
+    "repetition": 2,
+    "rows": [
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 4094,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 25846
+        },
+        "trace_phase": "affine_surd_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 23994
+        },
+        "trace_phase": "affine_surd_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 390,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 386,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 390,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "rhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 4,
+          "reductions": 4096,
+          "temporary_rationals": 37651
+        },
+        "trace_phase": "negated_scaled_surd_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 195,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 4486,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 4486,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29651
+        },
+        "trace_phase": "negated_scaled_surd_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 2927,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 26335
+        },
+        "trace_phase": "negated_scaled_surd_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 19896,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 19896,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 19896,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 2927,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-dyadic"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 26335
+        },
+        "trace_phase": "negated_scaled_surd_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 12288,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 12284,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 18627,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 8192,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 24576,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 4096,
+          "retained_lookup": 28672,
+          "retained_radicals_copied": 8192,
+          "retained_terms_copied": 4096,
+          "retained_visit": 28672,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "add",
+            "path": "word-sized"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "arithmetic-reuse",
+            "path": "first-observation"
+          },
+          {
+            "count": 4095,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8191,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 16382,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "reuse-observed"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 49154
+        },
+        "trace_phase": "multiradical_square_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 4096,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 8192,
+          "retained_lookup": 12288,
+          "retained_radicals_copied": 16384,
+          "retained_terms_copied": 8192,
+          "retained_visit": 12288,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 4096,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 8192,
+          "retained_lookup": 12288,
+          "retained_radicals_copied": 16384,
+          "retained_terms_copied": 8192,
+          "retained_visit": 12288,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-product"
+          },
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "multiradical_square_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 3511,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-inv-pi"
+          },
+          {
+            "count": 586,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 8192,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 4097,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "shared-constant-wrapper"
+          },
+          {
+            "count": 1170,
+            "layer": "computable",
+            "operation": "sqrt",
+            "path": "generic-sqrt-node"
+          },
+          {
+            "count": 3510,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 8192,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "div",
+            "path": "const-product-sqrt"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "inverse_ref",
+            "path": "prechecked-pi"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 22238
+        },
+        "trace_phase": "pi_transport_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15214,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15214,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15214,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 16384
+        },
+        "trace_phase": "pi_transport_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 12288,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 12288,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 18627,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 12288,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 8192,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 20480,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 20480,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 20480,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 8192,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 24576
+        },
+        "trace_phase": "mixed_field_decline_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 15799,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 15799,
+          "project_retained_success": 11703,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 15799,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 15799,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "atan",
+            "path": "exact-rational-deferred"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "atan-rational-deferred"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 7022,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 15214,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 11703,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "rhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "atan",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "definitely_zero",
+            "path": "rational-sign"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 3,
+          "reductions": 4096,
+          "temporary_rationals": 78996
+        },
+        "trace_phase": "opaque_decline_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 3511,
+          "closed_copy_declined_opaque": 3511,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 11118,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 4096,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 11118,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 11118,
+          "store_already_present": 0,
+          "store_attempt": 3511,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 11703
+        },
+        "trace_phase": "opaque_decline_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 24576,
+          "original_visit": 0,
+          "project_decline_without_reuse": 4096,
+          "project_entry": 24576,
+          "project_retained_success": 20480,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 24576,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 24576,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "atan",
+            "path": "exact-rational-deferred"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "atan-rational-deferred"
+          },
+          {
+            "count": 16384,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 585,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 7022,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 32768,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 16384,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "shared-constant-wrapper"
+          },
+          {
+            "count": 20480,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "rhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "atan",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "cached-pi"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 14531,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "definitely_zero",
+            "path": "rational-sign"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "inverse_ref",
+            "path": "const-product"
+          },
+          {
+            "count": 16384,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          },
+          {
+            "count": 8192,
+            "layer": "real",
+            "operation": "sub",
+            "path": "generic-computable"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "zero_status",
+            "path": "symbolic-nonzero-scale"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 4096,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 3,
+          "reductions": 4096,
+          "temporary_rationals": 232303
+        },
+        "trace_phase": "opaque_cancellation_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 16384,
+          "local_memo_store": 8192,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 16384,
+          "local_memo_store": 8192,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 3511,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 16384,
+          "local_memo_store": 12288,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 68462,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 84846,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 84846,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-node"
+          },
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "inverse",
+            "path": "retained"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 86601
+        },
+        "trace_phase": "opaque_cancellation_cloned"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 0,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 0,
+          "project_retained_success": 0,
+          "project_retry_original": 0,
+          "retained_hit": 0,
+          "retained_lookup": 0,
+          "retained_radicals_copied": 0,
+          "retained_terms_copied": 0,
+          "retained_visit": 0,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 1170,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 11898,
+            "layer": "computable",
+            "operation": "constructor",
+            "path": "rational-integer-canonicalized"
+          },
+          {
+            "count": 584,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 7607,
+            "layer": "real",
+            "operation": "add",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "add",
+            "path": "lhs-zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "certified_sign_until",
+            "path": "structural-facts"
+          },
+          {
+            "count": 1268,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "one"
+          },
+          {
+            "count": 10435,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "rational"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "constructor",
+            "path": "zero"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "lhs-rational-scale"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "mul",
+            "path": "symbolic-class-table"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "sqrt",
+            "path": "rational-sqrt-special-form"
+          },
+          {
+            "count": 4096,
+            "layer": "real",
+            "operation": "structural_facts",
+            "path": "exact-rational"
+          },
+          {
+            "count": 3511,
+            "layer": "real",
+            "operation": "sub",
+            "path": "generic-computable"
+          },
+          {
+            "count": 585,
+            "layer": "real",
+            "operation": "sub",
+            "path": "lhs-zero"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 37354
+        },
+        "trace_phase": "conjugate_then_affine_construction"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 84264,
+          "closed_copy_attempt": 3511,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 3511,
+          "closed_radicals_copied": 3511,
+          "closed_terms_copied": 3511,
+          "evaluation_cell_allocated": 3511,
+          "evaluation_cell_published": 3511,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 280880,
+          "local_memo_hit": 0,
+          "local_memo_store": 3511,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 39400,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 7022,
+          "retained_lookup": 46422,
+          "retained_radicals_copied": 7022,
+          "retained_terms_copied": 7022,
+          "retained_visit": 46422,
+          "store_already_present": 0,
+          "store_attempt": 3511,
+          "store_published": 3511
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 6,
+            "layer": "rational",
+            "operation": "add",
+            "path": "word-sized"
+          },
+          {
+            "count": 2,
+            "layer": "rational",
+            "operation": "arithmetic-reuse",
+            "path": "first-observation"
+          },
+          {
+            "count": 4676,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1168,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1173,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 4096,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1175,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 40481
+        },
+        "trace_phase": "conjugate_then_affine_first"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 0,
+          "closed_copy_attempt": 0,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 0,
+          "closed_radicals_copied": 0,
+          "closed_terms_copied": 0,
+          "evaluation_cell_allocated": 0,
+          "evaluation_cell_published": 0,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 0,
+          "local_memo_hit": 0,
+          "local_memo_store": 0,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 32378,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 10533,
+          "retained_lookup": 42911,
+          "retained_radicals_copied": 10533,
+          "retained_terms_copied": 10533,
+          "retained_visit": 42911,
+          "store_already_present": 0,
+          "store_attempt": 0,
+          "store_published": 0
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4682,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 585,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29940
+        },
+        "trace_phase": "conjugate_then_affine_warm"
+      },
+      {
+        "cache_events": {
+          "closed_box_requested_bytes": 98304,
+          "closed_copy_attempt": 4096,
+          "closed_copy_declined_opaque": 0,
+          "closed_copy_success": 4096,
+          "closed_radicals_copied": 4096,
+          "closed_terms_copied": 4096,
+          "evaluation_cell_allocated": 4096,
+          "evaluation_cell_published": 4096,
+          "evaluation_cell_race_lost": 0,
+          "evaluation_cell_requested_bytes": 327680,
+          "local_memo_hit": 0,
+          "local_memo_store": 4096,
+          "normalizer_budget_decline": 0,
+          "normalizer_work_visit": 32378,
+          "original_visit": 0,
+          "project_decline_without_reuse": 0,
+          "project_entry": 4096,
+          "project_retained_success": 4096,
+          "project_retry_original": 0,
+          "retained_hit": 10533,
+          "retained_lookup": 42911,
+          "retained_radicals_copied": 10533,
+          "retained_terms_copied": 10533,
+          "retained_visit": 42911,
+          "store_already_present": 0,
+          "store_attempt": 4096,
+          "store_published": 4096
+        },
+        "dispatch": [
+          {
+            "count": 4096,
+            "layer": "computable",
+            "operation": "structural",
+            "path": "quadratic-surd"
+          },
+          {
+            "count": 4682,
+            "layer": "rational",
+            "operation": "linear",
+            "path": "retained-sum"
+          },
+          {
+            "count": 1170,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "retained-secondary-product"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "mul",
+            "path": "word-sized"
+          },
+          {
+            "count": 5852,
+            "layer": "rational",
+            "operation": "neg",
+            "path": "retained"
+          },
+          {
+            "count": 585,
+            "layer": "rational",
+            "operation": "square_extraction",
+            "path": "retained-reduction"
+          },
+          {
+            "count": 1171,
+            "layer": "rational",
+            "operation": "word-result",
+            "path": "cached-small-integer"
+          }
+        ],
+        "iterations": 4096,
+        "rational": {
+          "common_factors": {
+            "large": 0,
+            "medium": 0,
+            "none": 0,
+            "power_of_two": 0,
+            "small": 0
+          },
+          "gcd_operand_widths": {
+            "arbitrary_precision": 0,
+            "both_u128": 0,
+            "both_u64": 0,
+            "mixed_u64_u128": 0
+          },
+          "gcds": 0,
+          "peak_operand_bits": 0,
+          "reductions": 0,
+          "temporary_rationals": 29940
+        },
+        "trace_phase": "conjugate_then_affine_cloned"
+      }
+    ]
+  }
+]
