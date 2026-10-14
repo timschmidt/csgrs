@@ -1,0 +1,97 @@
+{
+  "edits": [
+    {
+      "path": "crates/hyperreal/src/lib.rs",
+      "before": "mod trace;",
+      "after": "#[doc(hidden)]\npub mod construction_cache_trace;\n\nmod trace;"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "/// Computable approximation of a Real number.",
+      "after": "use crate::construction_cache_trace::{Event as CacheCoverageEvent, record as record_cache_coverage};\n\n/// Computable approximation of a Real number."
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "        let allocated = Box::into_raw(Box::new(\n",
+      "after": "        record_cache_coverage(CacheCoverageEvent::EvaluationCellAllocated, 1);\n        record_cache_coverage(\n            CacheCoverageEvent::EvaluationCellRequestedBytes,\n            std::mem::size_of::<std::sync::RwLock<CachedEvaluation>>(),\n        );\n        let allocated = Box::into_raw(Box::new(\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "            Ok(_) => allocated,\n",
+      "after": "            Ok(_) => {\n                record_cache_coverage(CacheCoverageEvent::EvaluationCellPublished, 1);\n                allocated\n            },\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "            Err(installed) => {\n",
+      "after": "            Err(installed) => {\n                record_cache_coverage(CacheCoverageEvent::EvaluationCellRaceLost, 1);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "    fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {\n",
+      "after": "    fn pi_laurent_polynomial(&self) -> Option<PiLaurentPolynomial> {\n        record_cache_coverage(CacheCoverageEvent::RetainedLookup, 1);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {\n",
+      "after": "    fn store_pi_laurent_polynomial(&self, polynomial: &PiLaurentPolynomial) {\n        record_cache_coverage(CacheCoverageEvent::StoreAttempt, 1);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/representation.rs",
+      "before": "        if guard.pi_laurent_polynomial.is_none() {\n            guard.pi_laurent_polynomial = Some(Box::new(closed));\n        }\n",
+      "after": "        if guard.pi_laurent_polynomial.is_none() {\n            record_cache_coverage(CacheCoverageEvent::StorePublished, 1);\n            record_cache_coverage(\n                CacheCoverageEvent::ClosedBoxRequestedBytes,\n                std::mem::size_of::<ClosedPiLaurentPolynomial>(),\n            );\n            guard.pi_laurent_polynomial = Some(Box::new(closed));\n        } else {\n            record_cache_coverage(CacheCoverageEvent::StoreAlreadyPresent, 1);\n        }\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "    fn from_polynomial(polynomial: &PiLaurentPolynomial) -> Option<Self> {\n",
+      "after": "    fn from_polynomial(polynomial: &PiLaurentPolynomial) -> Option<Self> {\n        record_cache_coverage(CacheCoverageEvent::ClosedCopyAttempt, 1);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "            .any(|(_, coefficient)| !coefficient.atoms.is_empty())\n        {\n            return None;\n        }\n        Some(Self {\n            terms: polynomial\n",
+      "after": "            .any(|(_, coefficient)| !coefficient.atoms.is_empty())\n        {\n            record_cache_coverage(CacheCoverageEvent::ClosedCopyDeclinedOpaque, 1);\n            return None;\n        }\n        record_cache_coverage(CacheCoverageEvent::ClosedCopySuccess, 1);\n        record_cache_coverage(CacheCoverageEvent::ClosedTermsCopied, polynomial.terms.len());\n        record_cache_coverage(\n            CacheCoverageEvent::ClosedRadicalsCopied,\n            polynomial.terms.iter().map(|(_, coefficient)| coefficient.radicals.len()).sum(),\n        );\n        Some(Self {\n            terms: polynomial\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "    fn to_polynomial(&self) -> PiLaurentPolynomial {\n",
+      "after": "    fn to_polynomial(&self) -> PiLaurentPolynomial {\n        record_cache_coverage(CacheCoverageEvent::RetainedHit, 1);\n        record_cache_coverage(CacheCoverageEvent::RetainedTermsCopied, self.terms.len());\n        record_cache_coverage(\n            CacheCoverageEvent::RetainedRadicalsCopied,\n            self.terms.iter().map(|(_, coefficient)| coefficient.radicals.len()).sum(),\n        );\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "        project: impl Fn(PiLaurentPolynomial) -> Option<T>,\n    ) -> Option<T> {\n        let mut memo = None;\n",
+      "after": "        project: impl Fn(PiLaurentPolynomial) -> Option<T>,\n    ) -> Option<T> {\n        record_cache_coverage(CacheCoverageEvent::ProjectEntry, 1);\n        let mut memo = None;\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "            .and_then(&project)\n        {\n            return Some(value);\n",
+      "after": "            .and_then(&project)\n        {\n            record_cache_coverage(CacheCoverageEvent::ProjectRetainedSuccess, 1);\n            return Some(value);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "        if reused {\n            self.pi_laurent_polynomial(budget).and_then(project)\n        } else {\n            None\n        }\n",
+      "after": "        if reused {\n            record_cache_coverage(CacheCoverageEvent::ProjectRetryOriginal, 1);\n            self.pi_laurent_polynomial(budget).and_then(project)\n        } else {\n            record_cache_coverage(CacheCoverageEvent::ProjectDeclineWithoutReuse, 1);\n            None\n        }\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "        reused: &mut bool,\n    ) -> Option<PiLaurentPolynomial> {\n        if RETAIN",
+      "after": "        reused: &mut bool,\n    ) -> Option<PiLaurentPolynomial> {\n        record_cache_coverage(\n            if RETAIN { CacheCoverageEvent::RetainedVisit } else { CacheCoverageEvent::OriginalVisit },\n            1,\n        );\n        if RETAIN"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "                .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))\n        {\n            return value.clone();\n        }\n        if budget == 0 || *remaining_work == 0 {\n            return None;\n        }\n        *remaining_work -= 1;\n",
+      "after": "                .and_then(|memo| memo.iter().find(|(candidate, _)| *candidate == key))\n        {\n            record_cache_coverage(CacheCoverageEvent::LocalMemoHit, 1);\n            return value.clone();\n        }\n        if budget == 0 || *remaining_work == 0 {\n            record_cache_coverage(CacheCoverageEvent::NormalizerBudgetDecline, 1);\n            return None;\n        }\n        *remaining_work -= 1;\n        record_cache_coverage(CacheCoverageEvent::NormalizerWorkVisit, 1);\n"
+    },
+    {
+      "path": "crates/hyperreal/src/computable/node/algebra.rs",
+      "before": "        if shared {\n            memo.get_or_insert_with(|| Vec::with_capacity(8))\n                .push((key, result.clone()));\n            if RETAIN\n",
+      "after": "        if shared {\n            record_cache_coverage(CacheCoverageEvent::LocalMemoStore, 1);\n            memo.get_or_insert_with(|| Vec::with_capacity(8))\n                .push((key, result.clone()));\n            if RETAIN\n"
+    }
+  ],
+  "new_module": {
+    "source": "cache_trace_v1.rs",
+    "target": "crates/hyperreal/src/construction_cache_trace.rs"
+  },
+  "appended_control": {
+    "source": "cache_trace_control_v1.rs",
+    "target": "crates/hyperreal/src/computable/node/persistent_laurent_cache_tests.rs"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "purpose": "Attribute whether retained-cache operations execute in the scalar construction windows with earlier large timing regressions.",
+  "parent": "Frozen full-cache combined native candidate, unchanged; 10133 source files.",
+  "diagnostic_delta": "Three existing implementation/facade files gain counter hooks; one diagnostic-only module and one appended positive cache-replay control. No algorithms, certificate storage, budgets, arithmetic order or ownership are changed.",
+  "qualification": [
+    "cargo fmt --all -- --check",
+    "cargo clippy --locked --release -p hyperreal --all-features --all-targets -- -D warnings",
+    "All 875 scalar library unit tests, preserving the prior 868, six existing cache tests and one new instrumentation control."
+  ],
+  "fixed_runs": "Two fresh processes at 4096 inputs, all eight original quadratic families and construction/first/warm/cloned phases. All diagnostic builds precede both processes.",
+  "identity": "Original fixture/expected/witness suffix remains byte-identical. Every existing dispatch and rational counter, exact witness and representation inventory must match the two unchanged full-cache traces.",
+  "event_fields": 27,
+  "events": "Projection entry/success/retry/decline, retained/original visits, local memo hits/stores, lookup/hit, closed payload copies and shape counts, publication, evaluation-cache allocation/publish/race and Box request sizes.",
+  "counter_scope": "Current thread only. Fixed Cell arrays, no allocation/formatting while recording; RAII ends recording on return or unwind. No expression references are retained by counters.",
+  "analysis": "Check event conservation and positive controls; report every construction row and the complete phase matrix. A zero event count is scoped evidence only. Instrumented durations are not runtime measurements.",
+  "closed_evidence": "No edits or rebuilds to earlier source trees, libraries, binaries, runners, results or samples. No native gate rerun in this diagnostic.",
+  "runtime_candidate": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
