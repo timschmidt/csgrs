@@ -48,6 +48,20 @@ duration is unprinted; the 127.080-second process wall includes setup.
 
 The [consumer source review](consumer-source-review-v1.json) records untested
 integer/endpoint hypotheses and the cache copy/publication paths. The
-[next diagnostic](next-diagnostic-v1.json) will use existing library builds
-to compare arithmetic traces across construction and query phases. Trace
-counts cannot establish elapsed costs or erase any closed adverse sample.
+[fixed diagnostic](next-diagnostic-v1.json) reused existing library builds
+to compare arithmetic traces across construction and query phases.
+
+The [trace assessment](construction-trace-assessment-v1.json) verifies six
+fresh processes, 192 trace rows and 192 comparison rows. Every exact witness
+and representation inventory agrees with twenty prior cost processes.
+Counters repeat exactly within each build. All eight construction phases
+have identical recorded arithmetic across the three builds. The cache-bearing
+build saves recorded work in four warm/cloned query phases.
+
+The [interpretation](construction-trace-interpretation-v1.json) also preserves
+the historical allocation rows: negated-scaled construction uses fewer calls
+and requested bytes, while multiradical-square construction has equal counts
+and bytes. These observations do not establish the cause of the earlier
+elapsed-time regressions. The [next coverage check](next-cache-coverage-v1.json)
+will determine whether cache lookup, copying, publication or cell allocation
+executes in those construction windows. No new runtime candidate is prepared.

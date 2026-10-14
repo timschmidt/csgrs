@@ -1,0 +1,256 @@
+{
+  "status": "construction-arithmetic-counts-equal-elapsed-cost-attribution-open",
+  "assessor_sha256": "ef8bd4195e43325d823e052eb4691b1d549dbd54d264735dd974d52166ec4cce",
+  "result_sha256": "44b99e92d7202124832b884a53810f59b95cbbb495cd0fe5a99a80edfdc908a4",
+  "new_library_builds": 0,
+  "diagnostic_builds": 3,
+  "diagnostic_processes": 6,
+  "inputs_each_process": 4096,
+  "trace_rows": 192,
+  "comparison_rows": 192,
+  "all_counts_repeat_exactly_within_variant": true,
+  "all_eight_construction_phases_equal_across_three_variants_and_two_runs": true,
+  "all_exact_witnesses_and_representations_match_twenty_closed_cost_processes": true,
+  "nonidentical_cache_vs_no_cache_query_rows_one_repetition": [
+    {
+      "repetition": 1,
+      "baseline": "no-persistent",
+      "candidate": "full-cache",
+      "phase": "multiradical_square_warm",
+      "rational_candidate_minus_baseline": {
+        "common_factors.large": 0,
+        "common_factors.medium": 0,
+        "common_factors.none": 0,
+        "common_factors.power_of_two": 0,
+        "common_factors.small": 0,
+        "gcd_operand_widths.arbitrary_precision": 0,
+        "gcd_operand_widths.both_u128": 0,
+        "gcd_operand_widths.both_u64": 0,
+        "gcd_operand_widths.mixed_u64_u128": 0,
+        "gcds": 0,
+        "peak_operand_bits": 0,
+        "reductions": 0,
+        "temporary_rationals": -24576
+      },
+      "dispatch_candidate_minus_baseline": [
+        {
+          "layer": "computable",
+          "operation": "structural",
+          "path": "quadratic-surd",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "linear",
+          "path": "retained-sum",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "retained-product",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "square_extraction",
+          "path": "retained-reduction",
+          "count_delta": -8192
+        }
+      ],
+      "all_recorded_counters_equal": false
+    },
+    {
+      "repetition": 1,
+      "baseline": "no-persistent",
+      "candidate": "full-cache",
+      "phase": "multiradical_square_cloned",
+      "rational_candidate_minus_baseline": {
+        "common_factors.large": 0,
+        "common_factors.medium": 0,
+        "common_factors.none": 0,
+        "common_factors.power_of_two": 0,
+        "common_factors.small": 0,
+        "gcd_operand_widths.arbitrary_precision": 0,
+        "gcd_operand_widths.both_u128": 0,
+        "gcd_operand_widths.both_u64": 0,
+        "gcd_operand_widths.mixed_u64_u128": 0,
+        "gcds": 0,
+        "peak_operand_bits": 0,
+        "reductions": 0,
+        "temporary_rationals": -24576
+      },
+      "dispatch_candidate_minus_baseline": [
+        {
+          "layer": "computable",
+          "operation": "structural",
+          "path": "quadratic-surd",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "linear",
+          "path": "retained-sum",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "retained-product",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "square_extraction",
+          "path": "retained-reduction",
+          "count_delta": -8192
+        }
+      ],
+      "all_recorded_counters_equal": false
+    },
+    {
+      "repetition": 1,
+      "baseline": "no-persistent",
+      "candidate": "full-cache",
+      "phase": "conjugate_then_affine_warm",
+      "rational_candidate_minus_baseline": {
+        "common_factors.large": 0,
+        "common_factors.medium": 0,
+        "common_factors.none": 0,
+        "common_factors.power_of_two": 0,
+        "common_factors.small": 0,
+        "gcd_operand_widths.arbitrary_precision": 0,
+        "gcd_operand_widths.both_u128": 0,
+        "gcd_operand_widths.both_u64": 0,
+        "gcd_operand_widths.mixed_u64_u128": 0,
+        "gcds": 0,
+        "peak_operand_bits": 0,
+        "reductions": 0,
+        "temporary_rationals": -10533
+      },
+      "dispatch_candidate_minus_baseline": [
+        {
+          "layer": "computable",
+          "operation": "structural",
+          "path": "quadratic-surd",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "linear",
+          "path": "retained-sum",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "retained-secondary-product",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "word-sized",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "neg",
+          "path": "retained",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "square_extraction",
+          "path": "retained-reduction",
+          "count_delta": -3511
+        },
+        {
+          "layer": "rational",
+          "operation": "word-result",
+          "path": "cached-small-integer",
+          "count_delta": 0
+        }
+      ],
+      "all_recorded_counters_equal": false
+    },
+    {
+      "repetition": 1,
+      "baseline": "no-persistent",
+      "candidate": "full-cache",
+      "phase": "conjugate_then_affine_cloned",
+      "rational_candidate_minus_baseline": {
+        "common_factors.large": 0,
+        "common_factors.medium": 0,
+        "common_factors.none": 0,
+        "common_factors.power_of_two": 0,
+        "common_factors.small": 0,
+        "gcd_operand_widths.arbitrary_precision": 0,
+        "gcd_operand_widths.both_u128": 0,
+        "gcd_operand_widths.both_u64": 0,
+        "gcd_operand_widths.mixed_u64_u128": 0,
+        "gcds": 0,
+        "peak_operand_bits": 0,
+        "reductions": 0,
+        "temporary_rationals": -10533
+      },
+      "dispatch_candidate_minus_baseline": [
+        {
+          "layer": "computable",
+          "operation": "structural",
+          "path": "quadratic-surd",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "linear",
+          "path": "retained-sum",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "retained-secondary-product",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "mul",
+          "path": "word-sized",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "neg",
+          "path": "retained",
+          "count_delta": 0
+        },
+        {
+          "layer": "rational",
+          "operation": "square_extraction",
+          "path": "retained-reduction",
+          "count_delta": -3511
+        },
+        {
+          "layer": "rational",
+          "operation": "word-result",
+          "path": "cached-small-integer",
+          "count_delta": 0
+        }
+      ],
+      "all_recorded_counters_equal": false
+    }
+  ],
+  "interpretation": [
+    "No extra recorded rational temporary, reduction, GCD or dispatch event occurs in any construction phase.",
+    "This includes both earlier large construction regressions: negated-scaled surds and multiradical squares.",
+    "The retained-cache build reduces recorded work in four warm/cloned query phases; every other recorded phase matches the cache-free build.",
+    "These diagnostics do not measure time or requested allocation bytes. The public counters do not count every cache lookup, payload copy, lock or allocator action.",
+    "Equal recorded work does not establish equal runtime. Neither cache handling, code generation/layout nor environment effects have been established as the cause of the closed timing differences."
+  ],
+  "next_step": "Use a separate instrumented snapshot to establish whether retained-cache lookup, payload copying/publication and evaluation-cache allocation execute in the expensive construction windows. Preserve all eight families and first/warm/cloned controls; compare witnesses and existing counters with this frozen full-cache driver before drawing conclusions. No runtime candidate is selected yet.",
+  "closed_cost_samples_extended_or_discarded": false,
+  "native_failure_and_library_costs_remain_open": true,
+  "runtime_admitted": false,
+  "plan_complete": false
+}

@@ -4294,13 +4294,31 @@
       "allocation_rows_with_increases": 14,
       "all_measured_witnesses_preserved": true,
       "native_viability_executed": true,
-      "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-diagnostic-v1.json",
+      "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-interpretation-v1.json",
       "native_assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/native-gates-assessment-v1.json",
       "native_full_board_worker_cpu_seconds": 136.717191044,
       "native_full_board_limit_seconds": 120,
       "native_full_board_passed": false,
       "native_copper_neck_passed": true,
       "native_copper_neck_assertion_seconds": null
+    },
+    "native_construction_cost_attribution": {
+      "status": "construction-arithmetic-counts-equal-elapsed-cost-attribution-open",
+      "evidence": "docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-interpretation-v1.json",
+      "assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/construction-trace-assessment-v1.json",
+      "fixed_diagnostic_processes": 6,
+      "diagnostic_builds": 3,
+      "new_library_builds": 0,
+      "trace_rows": 192,
+      "comparison_rows": 192,
+      "all_eight_construction_arithmetic_counts_equal": true,
+      "all_exact_witnesses_preserved": true,
+      "counts_repeat_exactly_within_variant": true,
+      "native_failure_and_closed_library_costs_retained": true,
+      "main_and_35_pending_native_paths_unchanged": true,
+      "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-cache-coverage-v1.json",
+      "runtime_admitted": false,
+      "plan_complete": false
     }
   },
   "status_meanings": {

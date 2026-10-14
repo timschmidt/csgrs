@@ -1,0 +1,16 @@
+{
+  "status": "bounded-cache-event-coverage-review-pending",
+  "purpose": "Determine whether retained-cache activity executes in the expensive construction windows before selecting a cache runtime change. Arithmetic equality and identical allocation counts alone do not identify elapsed costs.",
+  "parent": "Unchanged full cache-bearing combination in target/combined-native-admission-v1/candidate/source.",
+  "proposed_diagnostic": "Create a separate source copy and target. Add scoped counters only for retained-normalizer entry/fallback, cache lookup/hit, closed-payload copy/publication and evaluation-cache cell allocation. No algorithm, arithmetic order, budget, cache ownership or output changes.",
+  "driver": "Reuse the original fixture/expected/witness suffix and all eight construction/first/warm/cloned families at 4096 inputs. Match every existing public trace row and witness against construction-trace-v1 full-cache runs; discard no failures or adverse rows.",
+  "scope_limits": [
+    "Review every counter insertion and reset/snapshot boundary before building.",
+    "Count diagnostic events without using instrumented durations as runtime comparisons. Avoid tracing allocations or formatting inside counted bodies.",
+    "Preserve the full cache-free failure, full-cache consumer regressions and all closed samples. No rerun to replace them.",
+    "If a construction window has no cache activity, do not claim cache-copy removal can cure that window. Code generation and environment remain unproven alternatives.",
+    "No runtime candidate is prepared, and complete native reports, full qualification and required application/library costs still govern admission."
+  ],
+  "candidate_prepared": false,
+  "diagnostic_prepared": false
+}

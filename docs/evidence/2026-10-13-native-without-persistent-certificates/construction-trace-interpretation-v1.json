@@ -1,0 +1,489 @@
+{
+  "status": "construction-arithmetic-counts-equal-elapsed-cost-attribution-open",
+  "assessment_sha256": "880b8d08cef6a2bc6f32ee00fa0563535d1267c6f1366d0d895df391e78bf97a",
+  "closed_allocation_context": [
+    {
+      "assessment": "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json",
+      "assessment_sha256": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+      "row": {
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              19858,
+              19858,
+              19858,
+              19858,
+              19858
+            ],
+            "candidate": [
+              15577,
+              15577,
+              15577,
+              15577,
+              15577
+            ],
+            "baseline_median": 19858,
+            "candidate_median": 15577,
+            "paired_deltas": [
+              -4281,
+              -4281,
+              -4281,
+              -4281,
+              -4281
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 5
+          },
+          "allocated_bytes": {
+            "baseline": [
+              1222616,
+              1222616,
+              1222616,
+              1222616,
+              1222616
+            ],
+            "candidate": [
+              1051376,
+              1051376,
+              1051376,
+              1051376,
+              1051376
+            ],
+            "baseline_median": 1222616,
+            "candidate_median": 1051376,
+            "paired_deltas": [
+              -171240,
+              -171240,
+              -171240,
+              -171240,
+              -171240
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 5
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              772448,
+              772448,
+              772448,
+              772448,
+              772448
+            ],
+            "candidate": [
+              772448,
+              772448,
+              772448,
+              772448,
+              772448
+            ],
+            "baseline_median": 772448,
+            "candidate_median": 772448,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              772688,
+              772688,
+              772688,
+              772688,
+              772688
+            ],
+            "candidate": [
+              772688,
+              772688,
+              772688,
+              772688,
+              772688
+            ],
+            "baseline_median": 772688,
+            "candidate_median": 772688,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    },
+    {
+      "assessment": "docs/evidence/2026-10-13-combined-native-admission/library-assessment-v1.json",
+      "assessment_sha256": "8d6497a1f38ac8221ee940a051740771f92ce6bd84acf22596bcd3ef3afd6b00",
+      "row": {
+        "suite": "quadratic",
+        "name": "multiradical_square_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              11033,
+              11033,
+              11033,
+              11033,
+              11033
+            ],
+            "candidate": [
+              11033,
+              11033,
+              11033,
+              11033,
+              11033
+            ],
+            "baseline_median": 11033,
+            "candidate_median": 11033,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "allocated_bytes": {
+            "baseline": [
+              649024,
+              649024,
+              649024,
+              649024,
+              649024
+            ],
+            "candidate": [
+              649024,
+              649024,
+              649024,
+              649024,
+              649024
+            ],
+            "baseline_median": 649024,
+            "candidate_median": 649024,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              496480,
+              496480,
+              496480,
+              496480,
+              496480
+            ],
+            "candidate": [
+              496480,
+              496480,
+              496480,
+              496480,
+              496480
+            ],
+            "baseline_median": 496480,
+            "candidate_median": 496480,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              496632,
+              496632,
+              496632,
+              496632,
+              496632
+            ],
+            "candidate": [
+              496632,
+              496632,
+              496632,
+              496632,
+              496632
+            ],
+            "baseline_median": 496632,
+            "candidate_median": 496632,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    },
+    {
+      "assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-assessment-v1.json",
+      "assessment_sha256": "904020f218293a34a9572c9a53dea6e49129e458570fbb9720ce770306dfbf79",
+      "row": {
+        "suite": "quadratic",
+        "name": "negated_scaled_surd_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              19858,
+              19858,
+              19858,
+              19858,
+              19858
+            ],
+            "candidate": [
+              15577,
+              15577,
+              15577,
+              15577,
+              15577
+            ],
+            "baseline_median": 19858,
+            "candidate_median": 15577,
+            "paired_deltas": [
+              -4281,
+              -4281,
+              -4281,
+              -4281,
+              -4281
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 5
+          },
+          "allocated_bytes": {
+            "baseline": [
+              1222616,
+              1222616,
+              1222616,
+              1222616,
+              1222616
+            ],
+            "candidate": [
+              1051376,
+              1051376,
+              1051376,
+              1051376,
+              1051376
+            ],
+            "baseline_median": 1222616,
+            "candidate_median": 1051376,
+            "paired_deltas": [
+              -171240,
+              -171240,
+              -171240,
+              -171240,
+              -171240
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 5
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              772448,
+              772448,
+              772448,
+              772448,
+              772448
+            ],
+            "candidate": [
+              772448,
+              772448,
+              772448,
+              772448,
+              772448
+            ],
+            "baseline_median": 772448,
+            "candidate_median": 772448,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              772688,
+              772688,
+              772688,
+              772688,
+              772688
+            ],
+            "candidate": [
+              772688,
+              772688,
+              772688,
+              772688,
+              772688
+            ],
+            "baseline_median": 772688,
+            "candidate_median": 772688,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    },
+    {
+      "assessment": "docs/evidence/2026-10-13-native-without-persistent-certificates/library-assessment-v1.json",
+      "assessment_sha256": "904020f218293a34a9572c9a53dea6e49129e458570fbb9720ce770306dfbf79",
+      "row": {
+        "suite": "quadratic",
+        "name": "multiradical_square_construction",
+        "iterations": 1000,
+        "fields": {
+          "allocation_calls": {
+            "baseline": [
+              11033,
+              11033,
+              11033,
+              11033,
+              11033
+            ],
+            "candidate": [
+              11033,
+              11033,
+              11033,
+              11033,
+              11033
+            ],
+            "baseline_median": 11033,
+            "candidate_median": 11033,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "allocated_bytes": {
+            "baseline": [
+              649024,
+              649024,
+              649024,
+              649024,
+              649024
+            ],
+            "candidate": [
+              649024,
+              649024,
+              649024,
+              649024,
+              649024
+            ],
+            "baseline_median": 649024,
+            "candidate_median": 649024,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "retained_bytes_delta": {
+            "baseline": [
+              496480,
+              496480,
+              496480,
+              496480,
+              496480
+            ],
+            "candidate": [
+              496480,
+              496480,
+              496480,
+              496480,
+              496480
+            ],
+            "baseline_median": 496480,
+            "candidate_median": 496480,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          },
+          "peak_bytes_delta": {
+            "baseline": [
+              496632,
+              496632,
+              496632,
+              496632,
+              496632
+            ],
+            "candidate": [
+              496632,
+              496632,
+              496632,
+              496632,
+              496632
+            ],
+            "baseline_median": 496632,
+            "candidate_median": 496632,
+            "paired_deltas": [
+              0,
+              0,
+              0,
+              0,
+              0
+            ],
+            "candidate_higher_pairs": 0,
+            "candidate_lower_pairs": 0
+          }
+        }
+      }
+    }
+  ],
+  "construction_interpretation": "All eight construction windows have identical recorded arithmetic across all three builds in both diagnostic processes. For the two prior largest construction regressions, both closed cost trials also have identical per-variant allocation rows at 1000 inputs: negated-scaled construction saves 4281 calls and 171240 requested bytes versus its baseline with unchanged retained/peak bytes; multiradical-square construction has equal counts/bytes throughout. This is historical accounting, not a new paired timing comparison or a universal cost claim.",
+  "query_interpretation": "The full-cache and no-persistent builds differ in only four recorded phases. Multiradical-square warm/cloned queries each save 24576 rational temporaries and 8192 retained square-extraction events; conjugate-then-affine warm/cloned queries each save 10533 temporaries and 3511 such events at 4096 inputs. All other recorded counters agree.",
+  "cause_of_prior_elapsed_costs_established": false,
+  "next_step": "docs/evidence/2026-10-13-native-without-persistent-certificates/next-cache-coverage-v1.json",
+  "next_step_sha256": "72d9e1660c2fcc99ecb030c69179a85d472d52f86e792361dc3be3891b0af837",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
