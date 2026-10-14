@@ -1,0 +1,56 @@
+{
+  "complete": true,
+  "driver_terminal_exit_code": 0,
+  "commands_all_zero": 5,
+  "result_sha256": "3e1886a45f98c40523523e03a8bee76b7fd4cf5f9c872ad8bf9d464ac7239ad6",
+  "groups": 2,
+  "masks_per_group": 4096,
+  "hull_queries_per_group": 12288,
+  "observed_replay_mismatches": 0,
+  "all_frozen_sources_inputs_and_binaries_rechecked": true,
+  "source_review_sha256": {
+    "crates/hyperreal/src/real/convert.rs": "9b88bb5d23bb7ede24fd97bf39c1a4142f9704fff6bf6a1c1233aebcd9a22fdd",
+    "crates/hyperreal/src/real/arithmetic/facts.rs": "195c6abd8ba22527a0ec5712e8cb949665ff51f3c85ec7c215d3210750e4353b",
+    "crates/hyperreal/src/real/arithmetic/representation.rs": "74cd89bc252c1ce69727cb29d3a45cf9bb2bbe0d2ef279a76abe1e87f594bd14",
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": "efd5258b2111325451ad2b396a03e5f0e0c180351a11d501fe85f78a4a62aab6",
+    "crates/hyperreal/src/real/arithmetic/mul_div.rs": "0ec8e8570e24c027a2af7e48039b7551dba3012cfcc1d134b64705d7ef60b356"
+  },
+  "reviewed_function_bodies": {
+    "crates/hyperreal/src/real/convert.rs": [
+      "to_f64_exact_dyadic",
+      "exact_dyadic_f64_cached",
+      "to_f32_lossy",
+      "to_f32_lossy_uncached",
+      "to_f64_lossy",
+      "to_f64_lossy_uncached"
+    ],
+    "crates/hyperreal/src/real/arithmetic/facts.rs": [
+      "exact_rational_ref"
+    ],
+    "crates/hyperreal/src/real/arithmetic/representation.rs": [
+      "clone"
+    ],
+    "crates/hyperreal/src/rational/arithmetic/queries_conversion.rs": [
+      "dyadic_to_f64_exact",
+      "is_exact_f64_with_denominator_shift",
+      "exact_subnormal_dyadic_f64_magnitude",
+      "denominator_could_be_dyadic",
+      "has_exact_f64_view",
+      "mark_exact_f64_view"
+    ],
+    "crates/hyperreal/src/real/arithmetic/mul_div.rs": [
+      "mul_assign"
+    ]
+  },
+  "reviewed_bodies_match_both_frozen_implementations": true,
+  "source_review_scope": [
+    "Unreduced ratios are canonicalized for the structural exact-f64 representability decision; it does not depend on refinement precision.",
+    "Existing F64 values are retained by f32 display conversion. The cached-f64-only nonzero rational fast path writes the same exact finite value, while the zero path does not overwrite the F64 slot.",
+    "The in-place rational multiplication cache reset requires mutable input and is outside this immutable-input warming sequence."
+  ],
+  "interpretation": "The hypothesized signed-zero cache change is not reproduced by this display-warming sequence. Existing signed-zero F64 slots remain retained in the inspected path. All 4096 sign masks per implementation preserve rows across their three queries.",
+  "limits": "Passing cases do not emit before/after zero-sign counts, so no measured cache-bit-transition coverage is claimed. This does not establish row equality across different masks, cache-discarding serialization, explicit input mutation, all representation families or a formal proof. No cost measurement was made.",
+  "next_step": "Proceed with the already-frozen six-pair whole-process cost comparison for the qualified candidate.",
+  "runtime_admitted": false,
+  "plan_complete": false
+}
