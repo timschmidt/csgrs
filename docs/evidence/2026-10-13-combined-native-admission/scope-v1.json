@@ -1,0 +1,44 @@
+{
+  "scope": "Distinct current-main worktree versus complete reviewed native candidate; no extension of old fixed samples.",
+  "baseline": "Exact current main project files, including all 35 pending native paths and the admitted P4 repair. Evidence artifacts and explicitly workspace-excluded crates/comparisons are outside the snapshot.",
+  "candidate": "Exact 17-path reviewed delta, byte-identical to the frozen allocator candidate in runtime/build/test files. Both snapshots carry the same current evidence ledger.",
+  "metadata": "Separate measurement copies add the same private three-control test helper and counting probe to both variants. Production copies remain uninstrumented.",
+  "sampling": {
+    "fixed_pairs_per_suite_mode": 5,
+    "pair_orders": [
+      "BC",
+      "CB",
+      "BC",
+      "CB",
+      "BC"
+    ],
+    "scalar_suites": [
+      "rational",
+      "quadratic",
+      "integer"
+    ],
+    "scalar_time_inputs": 4096,
+    "scalar_memory_inputs": 1000,
+    "arc_time_inputs": 8192,
+    "arc_memory_inputs": 1000,
+    "metadata_time_inputs": 1024,
+    "metadata_memory_inputs": 128,
+    "broad_witness_rows": 231,
+    "broad_fixed_processes": 10,
+    "effective_abort_pairs": 3,
+    "abort_rows_per_process": 210,
+    "public_preflight_inputs": 42,
+    "metadata_preflight_inputs": 2,
+    "public_and_metadata_preflight_processes": 20,
+    "fixed_cost_processes": 110,
+    "abort_processes": 6,
+    "sample_extension_or_filtering": false
+  },
+  "builds": "Separate source/target directories for all four copies. Build all public libraries and 22 probe/test binaries before controls or costs; verify compiler artifacts bind each crate to its own source.",
+  "allocator_scope": "Public library time/abort/broad probes use System; allocation probes count requested Rust bytes over System. The private metadata wrapper is present in both modes. MiMalloc belongs to the separate native CLI/test crate, not these consumers.",
+  "correctness": "Every original probe assertion remains and every output/representation/receipt comparison is preserved. Metadata controls run in both copies. Existing frozen qualification evidence remains valid for the same production source; this phase alone is not final qualification or admission.",
+  "deferred_application": "Original gates, full-report replay and five fixed board/startup pairs will be specified in a separate frozen runner after interpreting library results. No old application sample is extended or pooled.",
+  "reading_correction": "review-correction-v1.json",
+  "runtime_admitted": false,
+  "plan_complete": false
+}

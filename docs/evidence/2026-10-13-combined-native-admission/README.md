@@ -16,3 +16,8 @@ all adverse first-query, memory, curve and startup observations. The allocator
 trial compared an already optimized parent with its allocator variant. A new
 fixed comparison with current main is required to assess their combination.
 No runtime change is admitted by this review, and the full plan remains open.
+
+The [row-count correction](review-correction-v1.json) records that the earlier
+scalar trial had 68 timing and 68 allocation rows. The original review is
+preserved. The [new fixed design](scope-v1.json) covers independent library
+consumers before further application admission work.

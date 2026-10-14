@@ -1,0 +1,7 @@
+{
+  "corrects": "review-v1.json",
+  "original_sha256": "e6eebee9dfabeadd65077f0044cc1adddbd5f4c4a3dc9f2db990f7671bffc3c4",
+  "field": "preserved_adverse_evidence[1].facts",
+  "correction": "The small-integer trial retained 136 time/allocation rows: 68 timing rows and 68 allocation rows. The original review incorrectly called all 136 timing rows. Adverse findings and admission status are unchanged.",
+  "source": "docs/evidence/2026-10-12-small-integer-certificates/scalar-assessment-v1.json"
+}
