@@ -4829,7 +4829,7 @@
       "new_native_gates_run": false
     },
     "sampled_sphere_hull": {
-      "status": "finite-field-native-cost-screen-closed-broad-qualification-frozen",
+      "status": "finite-field-broad-qualification-passed-resource-trials-frozen",
       "scope": "docs/evidence/2026-10-14-sampled-sphere-hull/scope-v1.json",
       "future_work": "crates/hypermesh/FUTURE_WORK.md",
       "cases": 4,
@@ -5035,7 +5035,50 @@
       "sphere_cyclotomic_image_cost_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-cost-closure-v1.json",
       "sphere_cyclotomic_image_qualification_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-qualification-scope-v1.json",
       "sphere_cyclotomic_image_qualification_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/qualify_sphere_cyclotomic_image_v1.py",
-      "sphere_cyclotomic_image_qualification_executed": false
+      "sphere_cyclotomic_image_qualification_executed": true,
+      "sphere_cyclotomic_image_qualification_assessment": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-qualification-assessment-v1.json",
+      "sphere_cyclotomic_image_qualification_closure": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-qualification-closure-v1.json",
+      "sphere_cyclotomic_image_source_review": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-image-source-review-v1.json",
+      "sphere_cyclotomic_image_qualification_counts": {
+        "default-tests": {
+          "passed": 3926,
+          "failed": 0,
+          "ignored": 35,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 95
+        },
+        "all-features-tests": {
+          "passed": 4078,
+          "failed": 0,
+          "ignored": 40,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 96
+        },
+        "doctests": {
+          "passed": 29,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 4
+        },
+        "grammar-native-consumers": {
+          "passed": 18,
+          "failed": 0,
+          "ignored": 0,
+          "measured": 0,
+          "filtered_out": 0,
+          "completed_test_summaries": 3
+        }
+      },
+      "sphere_cyclotomic_resources_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-resources-scope-v1.json",
+      "sphere_cyclotomic_resources_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_resources_v1.py",
+      "sphere_cyclotomic_resources_executed": false,
+      "sphere_cyclotomic_scalar_costs_scope": "docs/evidence/2026-10-14-sampled-sphere-hull/sphere-cyclotomic-scalar-costs-scope-v1.json",
+      "sphere_cyclotomic_scalar_costs_protocol": "docs/evidence/2026-10-14-sampled-sphere-hull/measure_sphere_scalar_costs_v1.py",
+      "sphere_cyclotomic_scalar_costs_executed": false
     }
   },
   "status_meanings": {
