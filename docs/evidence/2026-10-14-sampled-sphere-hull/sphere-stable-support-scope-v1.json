@@ -1,0 +1,14 @@
+{
+  "objective": "Independently verify every face of the deterministic-selection candidate against every unchanged original sampled point, after its fixed feasibility trial succeeds.",
+  "native_trial": "sphere-stable-selection-v1",
+  "original_cases": [[24, 12, 266, 528], [32, 16, 482, 960], [10, 7, 62, 120], [7, 5, 30, 56]],
+  "complete_face_point_pairs": 612288,
+  "method": "Reuse the immutable independent cyclotomic integer arithmetic and outward rational Taylor bounds from check_sphere_trace_cyclotomic_v1.py and check_native_sphere_support_v1.py. Recheck every candidate face-point pair; do not infer new supporting faces from matching counts or reuse old support for changed rows.",
+  "controls": "Check exact nondegeneracy and a strictly outside anchor-plus-normal point for every face. Zero-containing intervals require exact polynomial zero. Check all original vertices, connected closed oriented topology, and complete triangulation counts on exact three- or four-vertex supporting planes. Require all three native query transcripts to agree.",
+  "wall_stop_seconds": 600,
+  "precision_or_budget_extensions_allowed": false,
+  "native_library_calls": false,
+  "formal_verification": false,
+  "runtime_admitted": false,
+  "plan_complete": false
+}
